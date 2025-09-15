@@ -143,33 +143,34 @@ let escrow_receipt = alice_client
 **Python**
 
 ```python
-from eth_utils import to_wei
+from eth_abi import encode
 import time
+from alkahest_py import TrustedOracleArbiterDemandData
 
-# Encode the demand with TrustedOracleArbiter
-demand = alice_client.arbiters.encode_trusted_oracle_demand({
-    "oracle": charlie,  # Charlie's address as the trusted oracle
-    "data": encode_abi(["(string query)"], [{"query": "capitalize hello world"}])
-})
+# Encode the demand with TrustedOracleArbiter (address + abi-encoded inner bytes)
+inner = encode(['string'], ['capitalize hello world'])
+demand = TrustedOracleArbiterDemandData(charlie, inner).encode_self()
 
 # Deposit ERC-20 into escrow with permit (gasless approval)
-escrow = alice_client.erc20.permit_and_buy_with_erc20(
-    {"address": erc20_token, "value": to_wei(100, "ether")},
+escrow_receipt = await alice_client.erc20.permit_and_buy_with_erc20(
+    {"address": erc20_token, "value": 100},
     {"arbiter": trusted_oracle_arbiter, "demand": demand},
-    int(time.time()) + 86400  # 24 hour expiration
+    int(time.time()) + 86400,  # 24 hour expiration
 )
+escrow_uid = escrow_receipt["log"]["uid"]
 
 # Or with traditional approve + deposit
-alice_client.erc20.approve(
-    {"address": erc20_token, "value": to_wei(100, "ether")},
-    "escrow"
+await alice_client.erc20.approve(
+    {"address": erc20_token, "value": 100},
+    "escrow",
 )
 
-escrow = alice_client.erc20.buy_with_erc20(
-    {"address": erc20_token, "value": to_wei(100, "ether")},
+escrow_receipt = await alice_client.erc20.buy_with_erc20(
+    {"address": erc20_token, "value": 100},
     {"arbiter": trusted_oracle_arbiter, "demand": demand},
-    int(time.time()) + 86400
+    int(time.time()) + 86400,
 )
+escrow_uid = escrow_receipt["log"]["uid"]
 ```
 
 ## Fulfilling a job and requesting arbitration
@@ -228,15 +229,9 @@ bob_client
 
 ```python
 # Bob fulfills the job with the result
-fulfillment = bob_client.string_obligation.do_obligation(
+fulfillment_uid = await bob_client.string_obligation.do_obligation(
     "HELLO WORLD",  # The computed result (capitalized)
-    escrow["attested"]["uid"]  # Reference to the escrow being fulfilled
-)
-
-# Bob requests arbitration from Charlie
-bob_client.oracle.request_arbitration(
-    fulfillment["attested"]["uid"],
-    charlie
+    escrow_uid      # Reference to the escrow being fulfilled
 )
 ```
 
@@ -368,37 +363,70 @@ let result = charlie_client
 **Python**
 
 ```python
-# Charlie sets up an automatic validator
-def validate_job(obligation, demand):
-    """Validate that the fulfillment matches the demand"""
-    query = demand["query"]
-    result = obligation["item"]
+# Charlie sets up an automatic validator using the Python SDK
+from eth_abi import decode as abi_decode
+from alkahest_py import (
+    AttestationFilter,
+    FulfillmentParams,
+    EscrowParams,
+    ArbitrateOptions,
+    StringObligationData,
+    TrustedOracleArbiterDemandData,
+)
 
-    # Check if this is a capitalization query
+# Build filters/params
+escrow_filter = AttestationFilter(
+    attester=addresses["erc20EscrowObligation"],
+    recipient=None,
+    schema_uid=None,
+    uid=None,
+    ref_uid=None,
+    from_block=0,
+    to_block=None,
+)
+fulfillment_filter = AttestationFilter(
+    attester=addresses["stringObligation"],
+    recipient=None,
+    schema_uid=None,
+    uid=None,
+    ref_uid=None,
+    from_block=0,
+    to_block=None,
+)
+
+# Decoder helpers
+obligation_abi = StringObligationData(item="")
+fulfillment_params = FulfillmentParams(obligation_abi, fulfillment_filter)
+
+# Demand ABI: pass an encoded TrustedOracleArbiter demand template so the SDK knows how to decode the outer struct.
+# The inner "data" field (bytes) will be decoded below in the decision function.
+demand_abi = TrustedOracleArbiterDemandData(charlie, b"").encode_self()
+escrow_params = EscrowParams(demand_abi, escrow_filter)
+
+options = ArbitrateOptions(require_oracle=True, skip_arbitrated=False, require_request=False, only_new=False)
+
+def validate_job(obligation_str, demand_data):
+    # obligation_str is the decoded string from StringObligation
+    # demand_data is a TrustedOracleArbiterDemandData object with fields: oracle, data (bytes)
+    try:
+        (query,) = abi_decode(['string'], demand_data.data)
+    except Exception:
+        return False
+
     if query.startswith("capitalize "):
-        # Extract the text that should be capitalized
         text_to_capitalize = query[11:]
-        # Validate: did Bob capitalize the string correctly?
-        expected_result = text_to_capitalize.upper()
-        return result == expected_result
+        expected = text_to_capitalize.upper()
+        return obligation_str == expected
 
-    # Unknown query type
     return False
 
-unwatch = charlie_client.oracle.listen_and_arbitrate_for_escrow(
-    escrow={
-        "attester": addresses["erc20EscrowObligation"],
-        "demand_abi": "(string query)",
-    },
-    fulfillment={
-        "attester": addresses["stringObligation"],
-        "obligation_abi": "(string item)",
-    },
-    arbitrate=validate_job,
-    on_after_arbitrate=lambda decision: print(
-        f"Arbitrated {decision['attestation']['uid']}: {decision['decision']}"
-    ),
-    polling_interval=1000,
+unwatch = await charlie_client.oracle.listen_and_arbitrate_for_escrow_no_spawn(
+    escrow_params,
+    fulfillment_params,
+    validate_job,
+    lambda decision: print(f"Arbitrated {decision.attestation.uid}: {decision.decision}"),
+    options,
+    1000,
 )
 ```
 
@@ -482,12 +510,12 @@ for log in logs {
 
 ```python
 # Bob listens for arbitration decision
-def check_arbitration():
-    logs = public_client.get_logs({
+async def check_arbitration():
+    logs = await public_client.get_logs({
         "address": trusted_oracle_arbiter,
         "topics": [
             Web3.keccak(text="ArbitrationMade(bytes32,address,bool)"),
-            fulfillment["attested"]["uid"],
+            fulfillment_uid,
         ],
     })
 
@@ -495,9 +523,9 @@ def check_arbitration():
         decision = decode_log(logs[0], "ArbitrationMade")["decision"]
         if decision:
             # Positive decision - Bob claims the escrow
-            tx_hash = bob_client.erc20.collect_escrow(
-                escrow["attested"]["uid"],
-                fulfillment["attested"]["uid"]
+            tx_hash = await bob_client.erc20.collect_escrow(
+                escrow_uid,
+                fulfillment_uid,
             )
             print(f"Successfully claimed escrow! TX: {tx_hash}")
             return True
@@ -507,7 +535,7 @@ def check_arbitration():
     return None
 
 # Poll for arbitration
-result = check_arbitration()
+result = await check_arbitration()
 ```
 
 If no valid fulfillment is made, Alice can reclaim the escrow after it expires.
@@ -540,7 +568,7 @@ alice_client
 
 ```python
 # Alice reclaims her expired escrow
-alice_client.erc20.reclaim_expired(escrow["attested"]["uid"])
+await alice_client.erc20.reclaim_expired(escrow_uid)
 ```
 
 ## SDK utilities
@@ -730,65 +758,95 @@ let decisions = charlie_client
 
 ```python
 # Set up an automatic oracle that validates string capitalization
-def validate_capitalization(obligation):
-    """Custom validation logic for any capitalization task"""
-    result = obligation["item"]
-    # Check if result is all uppercase (simple heuristic)
-    is_capitalized = len(result) > 0 and result == result.upper()
-    return is_capitalized
+from alkahest_py import AttestationFilter, FulfillmentParams, ArbitrateOptions, StringObligationData
 
-# Listen and arbitrate new fulfillments
-unwatch = charlie_client.oracle.listen_and_arbitrate(
-    fulfillment={
-        "attester": string_obligation,
-        "obligation_abi": "(string item)",
-    },
-    arbitrate=validate_capitalization,
-    on_after_arbitrate=lambda decision: print(f"Arbitrated {decision['attestation']['uid']}: {decision['decision']}"),
-    polling_interval=1000,  # Check every second
+def validate_capitalization(obligation_str):
+    """Custom validation logic for any capitalization task"""
+    return len(obligation_str) > 0 and obligation_str == obligation_str.upper()
+
+fulfillment_filter = AttestationFilter(
+    attester=string_obligation,
+    recipient=None,
+    schema_uid=None,
+    uid=None,
+    ref_uid=None,
+    from_block=0,
+    to_block=None,
+)
+obligation_abi = StringObligationData(item="")
+fulfillment_params = FulfillmentParams(obligation_abi, fulfillment_filter)
+options = ArbitrateOptions(require_oracle=True, skip_arbitrated=False, require_request=False, only_new=False)
+
+unwatch = await charlie_client.oracle.listen_and_arbitrate_no_spawn(
+    fulfillment_params,
+    validate_capitalization,
+    lambda decision: print(f"Arbitrated {decision.attestation.uid}: {decision.decision}"),
+    options,
+    1000,  # Check every second
 )
 
 # For more complex validation with access to the original demand
-def validate_with_demand(obligation, demand):
-    """Validate that the fulfillment matches the demand"""
-    query = demand["query"]
-    result = obligation["item"]
+from eth_abi import decode as abi_decode
+from alkahest_py import EscrowParams, TrustedOracleArbiterDemandData
 
-    # Support different query types
+def validate_with_demand(obligation_str, demand_data):
+    """Validate that the fulfillment matches the demand"""
+    # demand_data is a TrustedOracleArbiterDemandData object with fields: oracle, data (bytes)
+    try:
+        (query,) = abi_decode(['string'], demand_data.data)
+    except Exception:
+        return False
+
     if query.startswith("capitalize "):
         text_to_capitalize = query[11:]
-        return result == text_to_capitalize.upper()
+        return obligation_str == text_to_capitalize.upper()
     elif query.startswith("reverse "):
         text_to_reverse = query[8:]
-        return result == text_to_reverse[::-1]
+        return obligation_str == text_to_reverse[::-1]
     elif query.startswith("length "):
         text_to_measure = query[7:]
-        return result == str(len(text_to_measure))
+        return obligation_str == str(len(text_to_measure))
 
     return False
 
-unwatch_escrow = charlie_client.oracle.listen_and_arbitrate_for_escrow(
-    escrow={
-        "attester": erc20_escrow_obligation,
-        "demand_abi": "(string query)",
-    },
-    fulfillment={
-        "attester": string_obligation,
-        "obligation_abi": "(string item)",
-    },
-    arbitrate=validate_with_demand,
-    on_after_arbitrate=lambda decision: print(f"Validated job: {decision['decision']}"),
-    polling_interval=1000,
+escrow_filter = AttestationFilter(
+    attester=erc20_escrow_obligation,
+    recipient=None,
+    schema_uid=None,
+    uid=None,
+    ref_uid=None,
+    from_block=0,
+    to_block=None,
+)
+fulfillment_filter = AttestationFilter(
+    attester=string_obligation,
+    recipient=None,
+    schema_uid=None,
+    uid=None,
+    ref_uid=None,
+    from_block=0,
+    to_block=None,
+)
+
+demand_abi = TrustedOracleArbiterDemandData(charlie, b"").encode_self()
+escrow_params = EscrowParams(demand_abi, escrow_filter)
+obligation_abi = StringObligationData(item="")
+fulfillment_params = FulfillmentParams(obligation_abi, fulfillment_filter)
+
+unwatch_escrow = await charlie_client.oracle.listen_and_arbitrate_for_escrow_no_spawn(
+    escrow_params,
+    fulfillment_params,
+    validate_with_demand,
+    lambda decision: print(f"Validated job: {decision.decision}"),
+    options,
+    1000,
 )
 
 # Arbitrate past fulfillments (useful for catching up)
-decisions = charlie_client.oracle.arbitrate_past(
-    fulfillment={
-        "attester": string_obligation,
-        "obligation_abi": "(string item)",
-    },
-    arbitrate=lambda obligation: obligation["item"] == obligation["item"].upper(),
-    skip_already_arbitrated=True,  # Don't re-arbitrate
+decisions = await charlie_client.oracle.arbitrate_past_sync(
+    fulfillment_params,
+    lambda obligation_str: obligation_str == obligation_str.upper(),
+    ArbitrateOptions(require_oracle=True, skip_arbitrated=True, require_request=False, only_new=False),
 )
 ```
 
@@ -924,7 +982,7 @@ async def wait_for_fulfillment(escrow_uid, timeout=60):
     raise TimeoutError("Timeout waiting for fulfillment")
 
 # Alice waits for her escrow to be fulfilled
-fulfillment_result = await wait_for_fulfillment(escrow["attested"]["uid"])
+fulfillment_result = await wait_for_fulfillment(escrow_uid)
 if fulfillment_result["success"]:
     print(f"Escrow fulfilled by {fulfillment_result['fulfiller']}")
     print(f"Fulfillment UID: {fulfillment_result['fulfillment']}")
@@ -960,8 +1018,8 @@ async def wait_for_arbitration_and_claim(fulfillment_uid, escrow_uid, timeout=60
 
 # Bob waits and claims
 result = await wait_for_arbitration_and_claim(
-    fulfillment["attested"]["uid"],
-    escrow["attested"]["uid"]
+    fulfillment_uid,
+    escrow_uid,
 )
 if result["success"]:
     print(f"Successfully claimed escrow! TX: {result['tx_hash']}")
