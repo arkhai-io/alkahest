@@ -12,35 +12,959 @@ Here's how Alice buys a compute job from Bob with her ERC-20 token, where the va
 ## Depositing escrow using TrustedOracleArbiter
 
 You can use TrustedOracleArbiter when you want an off-chain judge to decide whether a deal has been validly fulfilled. The judge could be a real person or an automated program. In this example, we'll demand that Bob capitalize a string for us, and Charlie will verify off-chain whether Bob did so correctly. In practice, this might represent Bob doing a complex computation, and Charlie verifying if it meets Alice's criteria.
-[code example]
+
+**Solidity**
+
+```solidity
+// Encode the demand with TrustedOracleArbiter
+bytes memory demand = abi.encode(
+    TrustedOracleArbiter.DemandData({
+        oracle: charlie,  // Charlie's address as the trusted oracle
+        data: abi.encode("capitalize hello world")  // The job query
+    })
+);
+
+// Approve and deposit ERC-20 into escrow
+IERC20(erc20Token).approve(address(erc20EscrowObligation), 100 * 10**18);
+
+bytes32 escrowUid = erc20EscrowObligation.doObligation(
+    ERC20EscrowObligation.ObligationData({
+        token: erc20Token,
+        amount: 100 * 10**18,
+        arbiter: address(trustedOracleArbiter),
+        demand: demand
+    }),
+    block.timestamp + 86400  // 24 hour expiration
+);
+```
+
+**TypeScript**
+
+```typescript
+import { encodeAbiParameters, parseAbiParameters } from "viem";
+
+// Encode the demand with TrustedOracleArbiter
+const demand = aliceClient.arbiters.encodeTrustedOracleDemand({
+  oracle: charlie, // Charlie's address as the trusted oracle
+  data: encodeAbiParameters(parseAbiParameters("(string query)"), [
+    { query: "capitalize hello world" },
+  ]),
+});
+
+// Deposit ERC-20 into escrow with permit (gasless approval)
+const { attested: escrow } = await aliceClient.erc20.permitAndBuyWithErc20(
+  {
+    address: erc20Token,
+    value: parseEther("100"),
+  },
+  {
+    arbiter: trustedOracleArbiter,
+    demand: demand,
+  },
+  BigInt(Math.floor(Date.now() / 1000) + 86400), // 24 hour expiration
+);
+
+// Or with traditional approve + deposit
+await aliceClient.erc20.approve(
+  { address: erc20Token, value: parseEther("100") },
+  "escrow",
+);
+
+const { attested: escrow } = await aliceClient.erc20.buyWithErc20(
+  {
+    address: erc20Token,
+    value: parseEther("100"),
+  },
+  {
+    arbiter: trustedOracleArbiter,
+    demand: demand,
+  },
+  BigInt(Math.floor(Date.now() / 1000) + 86400),
+);
+```
+
+**Rust**
+
+```rust
+use alloy::sol_types::SolValue;
+use alkahest_rs::sol_types::ArbiterDemand;
+
+// Encode the demand with TrustedOracleArbiter
+let demand_data = ArbiterDemand {
+    oracle: charlie_address,
+    demand: "capitalize hello world".abi_encode().into(),
+};
+let demand = demand_data.abi_encode().into();
+
+// Deposit ERC-20 into escrow with permit (gasless approval)
+let escrow_receipt = alice_client
+    .erc20()
+    .permit_and_buy_with_erc20(
+        &Erc20Data {
+            address: erc20_token,
+            value: U256::from(100e18),
+        },
+        &ArbiterData {
+            arbiter: trusted_oracle_arbiter,
+            demand: demand,
+        },
+        expiration_time,
+    )
+    .await?;
+
+// Or with traditional approve + deposit
+alice_client
+    .erc20()
+    .approve(
+        &Erc20Data {
+            address: erc20_token,
+            value: U256::from(100e18),
+        },
+        "escrow",
+    )
+    .await?;
+
+let escrow_receipt = alice_client
+    .erc20()
+    .buy_with_erc20(
+        &Erc20Data {
+            address: erc20_token,
+            value: U256::from(100e18),
+        },
+        &ArbiterData {
+            arbiter: trusted_oracle_arbiter,
+            demand: demand,
+        },
+        expiration_time,
+    )
+    .await?;
+```
+
+**Python**
+
+```python
+from eth_utils import to_wei
+import time
+
+# Encode the demand with TrustedOracleArbiter
+demand = alice_client.arbiters.encode_trusted_oracle_demand({
+    "oracle": charlie,  # Charlie's address as the trusted oracle
+    "data": encode_abi(["(string query)"], [{"query": "capitalize hello world"}])
+})
+
+# Deposit ERC-20 into escrow with permit (gasless approval)
+escrow = alice_client.erc20.permit_and_buy_with_erc20(
+    {"address": erc20_token, "value": to_wei(100, "ether")},
+    {"arbiter": trusted_oracle_arbiter, "demand": demand},
+    int(time.time()) + 86400  # 24 hour expiration
+)
+
+# Or with traditional approve + deposit
+alice_client.erc20.approve(
+    {"address": erc20_token, "value": to_wei(100, "ether")},
+    "escrow"
+)
+
+escrow = alice_client.erc20.buy_with_erc20(
+    {"address": erc20_token, "value": to_wei(100, "ether")},
+    {"arbiter": trusted_oracle_arbiter, "demand": demand},
+    int(time.time()) + 86400
+)
+```
 
 ## Fulfilling a job and requesting arbitration
 
 The `data` field of TrustedOracleArbiter doesn't enforce any kind of schema, so you have to come to an agreement with a buyer beforehand in order to understand and parse their query. StringObligation is a similarly flexible contract that you can use for fulfillments when the data won't be used directly by other on-chain contracts.
 
 Note that the fulfillment should contain a copy or reference to the demand it's intended to fulfill. This is needed to prevent a fulfillment that's valid for one query being used to claim another escrow demanding the same judge, but with a different query. Usually, this is done by setting the escrow attestation as the refUID of the fulfillment.
-[code example]
 
-After making a fulfillment attestation via StringObligation, you can call requestArbitration on TrustedOracleArbiter to request an arbitration.
-[code example]
+**Solidity**
+
+```solidity
+// Bob fulfills the job with the result
+bytes32 fulfillmentUid = stringObligation.doObligation(
+    "HELLO WORLD",  // The computed result (capitalized)
+    escrowUid  // Reference to the escrow being fulfilled
+);
+
+// Bob requests arbitration from Charlie
+trustedOracleArbiter.requestArbitration(fulfillmentUid, charlie);
+```
+
+**TypeScript**
+
+```typescript
+// Bob fulfills the job with the result
+const { attested: fulfillment } = await bobClient.stringObligation.doObligation(
+  "HELLO WORLD", // The computed result (capitalized)
+  escrow.uid, // Reference to the escrow being fulfilled
+);
+
+// Bob requests arbitration from Charlie
+await bobClient.oracle.requestArbitration(fulfillment.uid, charlie);
+```
+
+**Rust**
+
+```rust
+// Bob fulfills the job with the result
+let fulfillment_receipt = bob_client
+    .string_obligation()
+    .do_obligation(
+        "HELLO WORLD", // The computed result (capitalized)
+        escrow_uid,    // Reference to the escrow being fulfilled
+    )
+    .await?;
+let fulfillment_uid = get_attested_event(fulfillment_receipt)?.uid;
+
+// Bob requests arbitration from Charlie
+bob_client
+    .oracle()
+    .request_arbitration(fulfillment_uid, charlie_address)
+    .await?;
+```
+
+**Python**
+
+```python
+# Bob fulfills the job with the result
+fulfillment = bob_client.string_obligation.do_obligation(
+    "HELLO WORLD",  # The computed result (capitalized)
+    escrow["attested"]["uid"]  # Reference to the escrow being fulfilled
+)
+
+# Bob requests arbitration from Charlie
+bob_client.oracle.request_arbitration(
+    fulfillment["attested"]["uid"],
+    charlie
+)
+```
 
 Charlie should listen for `ArbitrationRequested` events demanding him as the oracle. Then he can retrieve the attestation from EAS, decide if it's valid, and use the arbitrate function on TrustedOracleArbiter to submit his decision on-chain.
 
 Note that the `ArbitrationRequested` event doesn't have a reference to an escrow/demand. As explained above, the demand should be retrieved from the fulfillment attestation. If it's an escrow attestation referenced by refUID, you can get the attestation from EAS and parse the demand.
-[code example]
+
+**Solidity**
+
+```solidity
+// Charlie listens for ArbitrationRequested events (off-chain)
+// When an event is found, Charlie retrieves the fulfillment attestation
+Attestation memory fulfillment = eas.getAttestation(fulfillmentUid);
+
+// Get the escrow attestation from the fulfillment's refUID
+Attestation memory escrow = eas.getAttestation(fulfillment.refUID);
+
+// Parse the demand to get the original query
+TrustedOracleArbiter.DemandData memory demandData = abi.decode(
+    escrow.data,
+    (TrustedOracleArbiter.DemandData)
+);
+string memory query = abi.decode(demandData.data, (string));
+
+// Parse the fulfillment result
+string memory result = abi.decode(fulfillment.data, (string));
+
+// Charlie validates the result
+bool isValid = false;
+if (bytes(query).length > 10 && keccak256(bytes(substring(query, 0, 10))) == keccak256(bytes("capitalize"))) {
+    // Extract the text to capitalize (everything after "capitalize ")
+    string memory textToCapitalize = substring(query, 11, bytes(query).length);
+    // Convert to uppercase and compare
+    isValid = keccak256(bytes(result)) == keccak256(bytes(toUpperCase(textToCapitalize)));
+}
+
+trustedOracleArbiter.arbitrate(fulfillmentUid, isValid);
+```
+
+**TypeScript**
+
+```typescript
+// Charlie sets up an automatic validator
+const { unwatch } = await charlieClient.oracle.listenAndArbitrateForEscrow({
+  escrow: {
+    attester: addresses.erc20EscrowObligation,
+    demandAbi: parseAbiParameters("(string query)"),
+  },
+  fulfillment: {
+    attester: addresses.stringObligation,
+    obligationAbi: parseAbiParameters("(string item)"),
+  },
+  arbitrate: async (obligation, demand) => {
+    // Parse the query and result
+    const query = demand[0].query;
+    const result = obligation[0].item;
+
+    // Check if this is a capitalization query
+    if (query.startsWith("capitalize ")) {
+      // Extract the text that should be capitalized
+      const textToCapitalize = query.substring(11);
+      // Validate: did Bob capitalize the string correctly?
+      const expectedResult = textToCapitalize.toUpperCase();
+      return result === expectedResult;
+    }
+
+    // Unknown query type
+    return false;
+  },
+  onAfterArbitrate: async (decision) => {
+    console.log(`Arbitrated ${decision.attestation.uid}: ${decision.decision}`);
+  },
+  pollingInterval: 1000,
+});
+```
+
+**Rust**
+
+```rust
+use alkahest_rs::oracle::{ArbitrateOptions, EscrowParams, FulfillmentParams};
+
+// Charlie sets up an automatic validator
+let result = charlie_client
+    .oracle()
+    .listen_and_arbitrate_for_escrow_sync(
+        &EscrowParams {
+            filter: AttestationFilter {
+                attester: Some(ValueOrArray::Value(erc20_escrow_obligation)),
+                ..Default::default()
+            },
+            _demand_data: PhantomData::<QueryDemand>,
+        },
+        &FulfillmentParams {
+            filter: AttestationFilter {
+                attester: Some(ValueOrArray::Value(string_obligation)),
+                ..Default::default()
+            },
+            _obligation_data: PhantomData::<StringObligation>,
+        },
+        |obligation: &StringObligation, demand: &QueryDemand| {
+            // Parse the query and result
+            let query = &demand.query;
+            let result = &obligation.item;
+
+            // Check if this is a capitalization query
+            if query.starts_with("capitalize ") {
+                // Extract the text that should be capitalized
+                let text_to_capitalize = &query[11..];
+                // Validate: did Bob capitalize the string correctly?
+                let expected_result = text_to_capitalize.to_uppercase();
+                Some(result == &expected_result)
+            } else {
+                // Unknown query type
+                Some(false)
+            }
+        },
+        |decision| async move {
+            println!(
+                "Arbitrated {}: {}",
+                decision.attestation.uid,
+                decision.decision
+            );
+        },
+        &ArbitrateOptions::default(),
+    )
+    .await?;
+```
+
+**Python**
+
+```python
+# Charlie sets up an automatic validator
+def validate_job(obligation, demand):
+    """Validate that the fulfillment matches the demand"""
+    query = demand["query"]
+    result = obligation["item"]
+
+    # Check if this is a capitalization query
+    if query.startswith("capitalize "):
+        # Extract the text that should be capitalized
+        text_to_capitalize = query[11:]
+        # Validate: did Bob capitalize the string correctly?
+        expected_result = text_to_capitalize.upper()
+        return result == expected_result
+
+    # Unknown query type
+    return False
+
+unwatch = charlie_client.oracle.listen_and_arbitrate_for_escrow(
+    escrow={
+        "attester": addresses["erc20EscrowObligation"],
+        "demand_abi": "(string query)",
+    },
+    fulfillment={
+        "attester": addresses["stringObligation"],
+        "obligation_abi": "(string item)",
+    },
+    arbitrate=validate_job,
+    on_after_arbitrate=lambda decision: print(
+        f"Arbitrated {decision['attestation']['uid']}: {decision['decision']}"
+    ),
+    polling_interval=1000,
+)
+```
 
 ## Waiting for arbitration and claiming escrow
 
 Bob can listen for the `ArbitrationMade` event from TrustedOracleArbiter, then claim the escrow if the decision was positive, or retry if not.
-[code example]
+
+**Solidity**
+
+```solidity
+// Bob listens for ArbitrationMade events (off-chain)
+// Filter for events related to Bob's fulfillment
+// When a positive decision is found:
+
+// Bob claims the escrow using the fulfillment attestation
+erc20EscrowObligation.collectEscrow(escrowUid, fulfillmentUid);
+```
+
+**TypeScript**
+
+```typescript
+// Bob listens for arbitration decision
+const filter = await publicClient.createEventFilter({
+  address: trustedOracleArbiter,
+  event: parseAbiEvent(
+    "event ArbitrationMade(bytes32 indexed obligation, address indexed oracle, bool decision)",
+  ),
+  args: {
+    obligation: fulfillment.uid,
+  },
+});
+
+const checkArbitration = async () => {
+  const logs = await publicClient.getFilterLogs({ filter });
+  if (logs.length > 0 && logs[0].args.decision) {
+    // Positive decision - Bob claims the escrow
+    await bobClient.erc20.collectEscrow(escrow.uid, fulfillment.uid);
+    return true;
+  }
+  return false;
+};
+
+// Poll for arbitration
+const result = await checkArbitration();
+if (!result) {
+  console.log("Arbitration failed, consider retrying");
+}
+```
+
+**Rust**
+
+```rust
+use alloy::rpc::types::Filter;
+use alloy::sol_types::SolEvent;
+
+// Bob listens for arbitration decision
+let filter = Filter::new()
+    .address(trusted_oracle_arbiter_address)
+    .event_signature(TrustedOracleArbiter::ArbitrationMade::SIGNATURE_HASH)
+    .topic1(fulfillment_uid);
+
+let logs = provider.get_logs(&filter).await?;
+
+for log in logs {
+    let event = log.log_decode::<TrustedOracleArbiter::ArbitrationMade>()?;
+
+    if event.inner.decision {
+        // Positive decision - Bob claims the escrow
+        bob_client
+            .erc20()
+            .collect_escrow(escrow_uid, fulfillment_uid)
+            .await?;
+        println!("Successfully claimed escrow!");
+    } else {
+        println!("Arbitration failed, consider retrying");
+    }
+}
+```
+
+**Python**
+
+```python
+# Bob listens for arbitration decision
+def check_arbitration():
+    logs = public_client.get_logs({
+        "address": trusted_oracle_arbiter,
+        "topics": [
+            Web3.keccak(text="ArbitrationMade(bytes32,address,bool)"),
+            fulfillment["attested"]["uid"],
+        ],
+    })
+
+    if logs:
+        decision = decode_log(logs[0], "ArbitrationMade")["decision"]
+        if decision:
+            # Positive decision - Bob claims the escrow
+            tx_hash = bob_client.erc20.collect_escrow(
+                escrow["attested"]["uid"],
+                fulfillment["attested"]["uid"]
+            )
+            print(f"Successfully claimed escrow! TX: {tx_hash}")
+            return True
+        else:
+            print("Arbitration failed, consider retrying")
+            return False
+    return None
+
+# Poll for arbitration
+result = check_arbitration()
+```
 
 If no valid fulfillment is made, Alice can reclaim the escrow after it expires.
-[code example]
+
+**Solidity**
+
+```solidity
+// Alice reclaims her expired escrow
+erc20EscrowObligation.reclaimExpired(escrowUid);
+```
+
+**TypeScript**
+
+```typescript
+// Alice reclaims her expired escrow
+await aliceClient.erc20.reclaimExpired(escrow.uid);
+```
+
+**Rust**
+
+```rust
+// Alice reclaims her expired escrow
+alice_client
+    .erc20()
+    .reclaim_expired(escrow_uid)
+    .await?;
+```
+
+**Python**
+
+```python
+# Alice reclaims her expired escrow
+alice_client.erc20.reclaim_expired(escrow["attested"]["uid"])
+```
 
 ## SDK utilities
 
 The SDK provides functions to make it easier to set up an automatic validator server that interacts with TrustedOracleArbiter.
-[code example]
+
+**TypeScript**
+
+```typescript
+// Set up an automatic oracle that validates string capitalization
+const { unwatch } = await charlieClient.oracle.listenAndArbitrate({
+  fulfillment: {
+    attester: stringObligation,
+    obligationAbi: parseAbiParameters("(string item)"),
+  },
+  arbitrate: async (obligation) => {
+    // Custom validation logic for any capitalization task
+    const result = obligation[0].item;
+    // Check if result is all uppercase (simple heuristic)
+    const isCapitalized = result === result.toUpperCase() && result.length > 0;
+    return isCapitalized ? true : false;
+  },
+  onAfterArbitrate: async (decision) => {
+    console.log(`Arbitrated ${decision.attestation.uid}: ${decision.decision}`);
+  },
+  pollingInterval: 1000, // Check every second
+});
+
+// For more complex validation with access to the original demand
+const { unwatch: unwatchEscrow } =
+  await charlieClient.oracle.listenAndArbitrateForEscrow({
+    escrow: {
+      attester: erc20EscrowObligation,
+      demandAbi: parseAbiParameters("(string query)"),
+    },
+    fulfillment: {
+      attester: stringObligation,
+      obligationAbi: parseAbiParameters("(string item)"),
+    },
+    arbitrate: async (obligation, demand) => {
+      // Validate that the fulfillment matches the demand
+      const query = demand[0].query;
+      const result = obligation[0].item;
+
+      // Support different query types
+      if (query.startsWith("capitalize ")) {
+        const textToCapitalize = query.substring(11);
+        return result === textToCapitalize.toUpperCase();
+      } else if (query.startsWith("reverse ")) {
+        const textToReverse = query.substring(8);
+        return result === textToReverse.split("").reverse().join("");
+      } else if (query.startsWith("length ")) {
+        const textToMeasure = query.substring(7);
+        return result === textToMeasure.length.toString();
+      }
+
+      return false;
+    },
+    onAfterArbitrate: async (decision) => {
+      console.log(`Validated job: ${decision.decision}`);
+    },
+    pollingInterval: 1000,
+  });
+
+// Arbitrate past fulfillments (useful for catching up)
+const decisions = await charlieClient.oracle.arbitratePast({
+  fulfillment: {
+    attester: stringObligation,
+    obligationAbi: parseAbiParameters("(string item)"),
+  },
+  arbitrate: async (obligation) => {
+    return obligation[0].item === obligation[0].item.toUpperCase();
+  },
+  skipAlreadyArbitrated: true, // Don't re-arbitrate
+});
+```
+
+**Rust**
+
+```rust
+use alloy::dyn_abi::SolType;
+use alloy::sol_types::sol;
+
+sol! {
+    struct StringObligation {
+        string item;
+    }
+
+    struct QueryDemand {
+        string query;
+    }
+}
+
+// Set up an automatic oracle that validates string capitalization
+let result = charlie_client
+    .oracle()
+    .listen_and_arbitrate_sync(
+        &FulfillmentParams {
+            filter: AttestationFilter {
+                attester: Some(ValueOrArray::Value(string_obligation_address)),
+                ..Default::default()
+            },
+            _obligation_data: PhantomData::<StringObligation>,
+        },
+        &|obligation: &StringObligation| {
+            // Custom validation logic for any capitalization task
+            let result = &obligation.item;
+            // Check if result is all uppercase (simple heuristic)
+            let is_capitalized = !result.is_empty() && result == &result.to_uppercase();
+            Some(is_capitalized)
+        },
+        |decision| async move {
+            println!("Arbitrated {}: {}", decision.attestation.uid, decision.decision);
+        },
+        &ArbitrateOptions::default(),
+    )
+    .await?;
+
+// For more complex validation with access to the original demand
+let escrow_result = charlie_client
+    .oracle()
+    .listen_and_arbitrate_for_escrow_sync(
+        &EscrowParams {
+            filter: AttestationFilter {
+                attester: Some(ValueOrArray::Value(escrow_obligation_address)),
+                ..Default::default()
+            },
+            _demand_data: PhantomData::<QueryDemand>,
+        },
+        &FulfillmentParams {
+            filter: AttestationFilter {
+                attester: Some(ValueOrArray::Value(string_obligation_address)),
+                ..Default::default()
+            },
+            _obligation_data: PhantomData::<StringObligation>,
+        },
+        |obligation: &StringObligation, demand: &QueryDemand| {
+            // Validate that the fulfillment matches the demand
+            let query = &demand.query;
+            let result = &obligation.item;
+
+            // Support different query types
+            if query.starts_with("capitalize ") {
+                let text_to_capitalize = &query[11..];
+                Some(result == &text_to_capitalize.to_uppercase())
+            } else if query.starts_with("reverse ") {
+                let text_to_reverse = &query[8..];
+                let reversed: String = text_to_reverse.chars().rev().collect();
+                Some(result == &reversed)
+            } else if query.starts_with("length ") {
+                let text_to_measure = &query[7..];
+                Some(result == &text_to_measure.len().to_string())
+            } else {
+                Some(false)
+            }
+        },
+        |decision| async move {
+            println!("Validated job: {}", decision.decision);
+        },
+        &ArbitrateOptions::default(),
+    )
+    .await?;
+
+// Arbitrate past fulfillments (useful for catching up)
+let decisions = charlie_client
+    .oracle()
+    .arbitrate_past_sync(
+        &FulfillmentParams {
+            filter: AttestationFilter {
+                attester: Some(ValueOrArray::Value(string_obligation_address)),
+                ..Default::default()
+            },
+            _obligation_data: PhantomData::<StringObligation>,
+        },
+        &|obligation: &StringObligation| {
+            Some(obligation.item == obligation.item.to_uppercase())
+        },
+        &ArbitrateOptions {
+            skip_arbitrated: true, // Don't re-arbitrate
+            ..Default::default()
+        },
+    )
+    .await?;
+```
+
+**Python**
+
+```python
+# Set up an automatic oracle that validates string capitalization
+def validate_capitalization(obligation):
+    """Custom validation logic for any capitalization task"""
+    result = obligation["item"]
+    # Check if result is all uppercase (simple heuristic)
+    is_capitalized = len(result) > 0 and result == result.upper()
+    return is_capitalized
+
+# Listen and arbitrate new fulfillments
+unwatch = charlie_client.oracle.listen_and_arbitrate(
+    fulfillment={
+        "attester": string_obligation,
+        "obligation_abi": "(string item)",
+    },
+    arbitrate=validate_capitalization,
+    on_after_arbitrate=lambda decision: print(f"Arbitrated {decision['attestation']['uid']}: {decision['decision']}"),
+    polling_interval=1000,  # Check every second
+)
+
+# For more complex validation with access to the original demand
+def validate_with_demand(obligation, demand):
+    """Validate that the fulfillment matches the demand"""
+    query = demand["query"]
+    result = obligation["item"]
+
+    # Support different query types
+    if query.startswith("capitalize "):
+        text_to_capitalize = query[11:]
+        return result == text_to_capitalize.upper()
+    elif query.startswith("reverse "):
+        text_to_reverse = query[8:]
+        return result == text_to_reverse[::-1]
+    elif query.startswith("length "):
+        text_to_measure = query[7:]
+        return result == str(len(text_to_measure))
+
+    return False
+
+unwatch_escrow = charlie_client.oracle.listen_and_arbitrate_for_escrow(
+    escrow={
+        "attester": erc20_escrow_obligation,
+        "demand_abi": "(string query)",
+    },
+    fulfillment={
+        "attester": string_obligation,
+        "obligation_abi": "(string item)",
+    },
+    arbitrate=validate_with_demand,
+    on_after_arbitrate=lambda decision: print(f"Validated job: {decision['decision']}"),
+    polling_interval=1000,
+)
+
+# Arbitrate past fulfillments (useful for catching up)
+decisions = charlie_client.oracle.arbitrate_past(
+    fulfillment={
+        "attester": string_obligation,
+        "obligation_abi": "(string item)",
+    },
+    arbitrate=lambda obligation: obligation["item"] == obligation["item"].upper(),
+    skip_already_arbitrated=True,  # Don't re-arbitrate
+)
+```
 
 It also provides functions for waiting for an escrow to be fulfilled (claimed), and for listening for the ArbitrationMade event.
-[code example]
+
+**TypeScript**
+
+```typescript
+// Alice waits for her escrow to be fulfilled
+const fulfillmentResult = await aliceClient.waitForFulfillment(
+  aliceClient.contractAddresses.erc20EscrowObligation,
+  escrow.uid,
+  1000, // Optional polling interval
+);
+
+if (fulfillmentResult.fulfillment) {
+  console.log(`Escrow fulfilled by ${fulfillmentResult.fulfiller}`);
+  console.log(`Fulfillment UID: ${fulfillmentResult.fulfillment}`);
+}
+
+// Bob waits for arbitration and then claims
+const waitForArbitrationAndClaim = async () => {
+  // Wait for arbitration decision
+  return new Promise((resolve) => {
+    const unwatch = publicClient.watchEvent({
+      address: trustedOracleArbiter,
+      event: parseAbiEvent(
+        "event ArbitrationMade(bytes32 indexed obligation, address indexed oracle, bool decision)",
+      ),
+      args: { obligation: fulfillment.uid },
+      onLogs: async (logs) => {
+        if (logs[0].args.decision) {
+          // Positive decision - claim the escrow
+          await bobClient.erc20.collectEscrow(escrow.uid, fulfillment.uid);
+          resolve({ success: true });
+        } else {
+          resolve({ success: false });
+        }
+        unwatch();
+      },
+      pollingInterval: 1000,
+    });
+  });
+};
+
+const result = await waitForArbitrationAndClaim();
+```
+
+**Rust**
+
+```rust
+// Alice waits for her escrow to be fulfilled
+let fulfillment_result = alice_client
+    .wait_for_fulfillment(
+        erc20_escrow_obligation_address,
+        escrow_uid,
+        None, // Use default block to start from
+    )
+    .await?;
+
+match fulfillment_result {
+    Ok(log) => {
+        println!("Escrow fulfilled!");
+        println!("Fulfillment UID: {}", log.args.fulfillment);
+        println!("Fulfiller: {}", log.args.fulfiller);
+    }
+    Err(e) => {
+        println!("Error waiting for fulfillment: {}", e);
+    }
+}
+
+// Bob waits for arbitration and then claims
+use futures::StreamExt;
+
+let filter = Filter::new()
+    .address(trusted_oracle_arbiter_address)
+    .event_signature(TrustedOracleArbiter::ArbitrationMade::SIGNATURE_HASH)
+    .topic1(fulfillment_uid);
+
+let sub = provider.subscribe_logs(&filter).await?;
+let mut stream = sub.into_stream();
+
+while let Some(log) = stream.next().await {
+    let event = log.log_decode::<TrustedOracleArbiter::ArbitrationMade>()?;
+
+    if event.inner.decision {
+        // Positive decision - claim the escrow
+        bob_client
+            .erc20()
+            .collect_escrow(escrow_uid, fulfillment_uid)
+            .await?;
+        println!("Successfully claimed escrow!");
+        break;
+    } else {
+        println!("Arbitration failed");
+        break;
+    }
+}
+```
+
+**Python**
+
+```python
+import asyncio
+import time
+
+# Alice waits for her escrow to be fulfilled
+async def wait_for_fulfillment(escrow_uid, timeout=60):
+    """Wait for an escrow to be fulfilled"""
+    start_time = time.time()
+
+    while time.time() - start_time < timeout:
+        # Check for EscrowCollected events
+        logs = await public_client.get_logs({
+            "address": erc20_escrow_obligation,
+            "topics": [
+                Web3.keccak(text="EscrowCollected(bytes32,bytes32,address)"),
+                escrow_uid,
+            ],
+            "fromBlock": "earliest",
+        })
+
+        if logs:
+            event_data = decode_log(logs[0], "EscrowCollected")
+            return {
+                "fulfillment": event_data["fulfillment"],
+                "fulfiller": event_data["fulfiller"],
+                "success": True
+            }
+
+        await asyncio.sleep(1)
+
+    raise TimeoutError("Timeout waiting for fulfillment")
+
+# Alice waits for her escrow to be fulfilled
+fulfillment_result = await wait_for_fulfillment(escrow["attested"]["uid"])
+if fulfillment_result["success"]:
+    print(f"Escrow fulfilled by {fulfillment_result['fulfiller']}")
+    print(f"Fulfillment UID: {fulfillment_result['fulfillment']}")
+
+# Bob waits for arbitration and then claims
+async def wait_for_arbitration_and_claim(fulfillment_uid, escrow_uid, timeout=60):
+    """Wait for arbitration decision and claim if positive"""
+    start_time = time.time()
+
+    while time.time() - start_time < timeout:
+        # Check for ArbitrationMade events
+        logs = await public_client.get_logs({
+            "address": trusted_oracle_arbiter,
+            "topics": [
+                Web3.keccak(text="ArbitrationMade(bytes32,address,bool)"),
+                fulfillment_uid,
+            ],
+            "fromBlock": "latest",
+        })
+
+        if logs:
+            decision = decode_log(logs[0], "ArbitrationMade")["decision"]
+            if decision:
+                # Positive decision - claim the escrow
+                tx_hash = await bob_client.erc20.collect_escrow(escrow_uid, fulfillment_uid)
+                return {"success": True, "tx_hash": tx_hash}
+            else:
+                return {"success": False, "reason": "Negative arbitration"}
+
+        await asyncio.sleep(1)
+
+    raise TimeoutError("Timeout waiting for arbitration")
+
+# Bob waits and claims
+result = await wait_for_arbitration_and_claim(
+    fulfillment["attested"]["uid"],
+    escrow["attested"]["uid"]
+)
+if result["success"]:
+    print(f"Successfully claimed escrow! TX: {result['tx_hash']}")
+else:
+    print(f"Failed to claim: {result['reason']}")
+```
