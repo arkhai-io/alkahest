@@ -17,25 +17,7 @@ Your oracle service needs to:
 
 The `TrustedOracleArbiter` contract handles the on-chain logic - your job is to implement the validation logic and submit decisions.
 
-## Oracle Flow Overview
-
-```
-1. Alice creates escrow → demands oracle=charlie_address, data="capitalize hello world"
-                         offers 100 tokens
-
-2. Bob fulfills → submits "HELLO WORLD"
-                 references Alice's escrow via refUID
-
-3. Bob requests arbitration → asks Charlie to validate
-
-4. Charlie validates → extracts Bob's result and Alice's query
-                      checks if "HELLO WORLD" matches uppercase("hello world")
-                      submits decision on-chain
-
-5. Bob claims payment → uses approved attestation to collect escrow
-```
-
-For a complete example of the Alice/Bob interaction flow, see "Escrow Flow (pt 2 - Job Trading)".
+For a complete example of how oracles fit into the escrow/fulfillment flow, see "Escrow Flow (pt 2 - Job Trading)".
 
 ## Three Validation Patterns
 
@@ -61,6 +43,8 @@ Contextless oracles validate fulfillments based purely on the fulfillment's intr
 **When to use**: Signature verification, format checking, identity validation, standard verification against a maintained registry.
 
 **Why contextless**: The oracle provides a generic service (e.g., "I verify signatures from known identities") rather than validating against buyer-specific criteria. The validation logic doesn't depend on what Alice requested - only on what Bob submitted.
+
+**Composability**: Because contextless oracles are generic and reusable, they can be easily composed with other arbiters using logical combinators like `AllArbiter` and `AnyArbiter`. For example, you could require that a fulfillment is both signed by a verified identity (contextless oracle) AND meets specific job criteria (demand-based oracle). See "Escrow Flow (pt 3 - Composing Demands)" for composition patterns.
 
 **Reference implementation**: `alkahest-rs/tests/offchain_oracle_identity.rs`
 
@@ -242,6 +226,23 @@ Demand-based oracles validate fulfillments against specific criteria provided by
 **When to use**: Custom validation criteria per escrow, need to compare fulfillment against buyer's specifications, computational validation with test cases.
 
 **Why demand-based**: Alice specifies exactly what she wants (e.g., "capitalize these specific test cases"), and the oracle verifies Bob's work matches those requirements. Different escrows have different demands, all validated by the same oracle.
+
+**Example flow**:
+```
+1. Alice creates escrow → demands oracle=charlie, data="capitalize hello world"
+                         offers 100 tokens
+
+2. Bob fulfills → submits "HELLO WORLD"
+                 references Alice's escrow via refUID
+
+3. Bob requests arbitration → asks Charlie to validate
+
+4. Charlie validates → extracts Bob's result and Alice's query
+                      checks if "HELLO WORLD" matches uppercase("hello world")
+                      submits decision on-chain
+
+5. Bob claims payment → uses approved attestation to collect escrow
+```
 
 **Reference implementation**: `alkahest-rs/tests/offchain_oracle_capitalization.rs`
 
