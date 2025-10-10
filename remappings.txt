@@ -2,6 +2,8 @@
 @test/=test/
 
 @eas/=lib/eas-contracts/contracts/
+@erc8004/=lib/trustless-agents-erc-ri/src/
+@erc8004-oz/contracts/=lib/trustless-agents-erc-ri/lib/reference/lib/openzeppelin-contracts/contracts/
 @openzeppelin/=lib/openzeppelin-contracts/
 ds-test/=lib/openzeppelin-contracts/lib/forge-std/lib/ds-test/src/
 erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/

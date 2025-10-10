@@ -13,3 +13,9 @@
 [submodule "alkahest-ts"]
     path = alkahest-ts
     url = https://github.com/CoopHive/alkahest-ts
+[submodule "alkahest-py"]
+    path = alkahest-py
+    url = https://github.com/CoopHive/alkahest-py
+[submodule "lib/trustless-agents-erc-ri"]
+	path = lib/trustless-agents-erc-ri
+	url = https://github.com/ChaosChain/trustless-agents-erc-ri

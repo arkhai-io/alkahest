@@ -1,0 +1,17 @@
+{
+  "lib/eas-contracts": {
+    "rev": "558250dae4cb434859b1ac3b6d32833c6448be21"
+  },
+  "alkahest-ts": {
+    "rev": "93b373cc2d342c8d709c4c1fac35a1e4053265d0"
+  },
+  "lib/openzeppelin-contracts": {
+    "rev": "cceac54953ccda8a9a028d0b9bf4378605fdf67e"
+  },
+  "alkahest-rs": {
+    "rev": "0b15ccae0f7ee4e3ba4ddc391cc43ed94d23e8b5"
+  },
+  "alkahest-py": {
+    "rev": "5b32dd6e4249fea229373d0717810e383ae0f1c7"
+  }
+}
