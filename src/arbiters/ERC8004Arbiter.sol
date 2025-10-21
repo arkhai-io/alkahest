@@ -6,13 +6,18 @@ import {IArbiter} from "../IArbiter.sol";
 import {ArbiterUtils} from "../ArbiterUtils.sol";
 
 interface IValidationRegistry {
-    function getValidationStatus(bytes32 requestHash) external view returns (
-        address validatorAddress,
-        uint256 agentId,
-        uint8 response,
-        bytes32 tag,
-        uint256 lastUpdate
-    );
+    function getValidationStatus(
+        bytes32 requestHash
+    )
+        external
+        view
+        returns (
+            address validatorAddress,
+            uint256 agentId,
+            uint8 response,
+            bytes32 tag,
+            uint256 lastUpdate
+        );
 }
 
 /**
@@ -22,17 +27,19 @@ interface IValidationRegistry {
  *      The fulfillment attestation's UID is used as the requestHash
  *      in the ValidationRegistry's getValidationStatus call
  */
-contract ValidationRegistryArbiter is IArbiter {
+contract ERC8004Arbiter is IArbiter {
     using ArbiterUtils for Attestation;
 
     struct DemandData {
         address validationRegistry;
+        address validatorAddress;
         uint8 minResponse;
     }
 
     error InvalidMinResponse();
     error ValidationNotFound();
     error ResponseBelowMinimum();
+    error ValidatorMismatch();
 
     /**
      * @notice Check if the validation response meets the minimum requirement
@@ -54,17 +61,24 @@ contract ValidationRegistryArbiter is IArbiter {
         bytes32 requestHash = obligation.uid;
 
         // Query the ValidationRegistry
-        IValidationRegistry registry = IValidationRegistry(demand_.validationRegistry);
+        IValidationRegistry registry = IValidationRegistry(
+            demand_.validationRegistry
+        );
         (
-            address validatorAddress,
-            ,  // agentId (unused)
-            uint8 response,
-            ,  // tag (unused)
-               // lastUpdate (unused)
-        ) = registry.getValidationStatus(requestHash);
+            address validatorAddress, // agentId (unused)
+            ,
+            uint8 response, // tag (unused)
+            ,
+
+        ) = // lastUpdate (unused)
+            registry.getValidationStatus(requestHash);
 
         // Check if validation exists (validatorAddress != address(0))
         if (validatorAddress == address(0)) revert ValidationNotFound();
+
+        // Check if validator matches expected validator
+        if (validatorAddress != demand_.validatorAddress)
+            revert ValidatorMismatch();
 
         // Check if response meets minimum requirement
         if (response < demand_.minResponse) revert ResponseBelowMinimum();

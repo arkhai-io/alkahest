@@ -6,13 +6,17 @@ import {Attestation} from "@eas/Common.sol";
 import {IEAS} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {IArbiter} from "@src/IArbiter.sol";
-import {ValidationRegistryArbiter} from "@src/arbiters/ValidationRegistryArbiter.sol";
+import {ERC8004Arbiter} from "@src/arbiters/ERC8004Arbiter.sol";
 import {EASDeployer} from "@test/utils/EASDeployer.sol";
 
 // Interfaces for the ERC-8004 reference contracts
 interface IIdentityRegistry {
-    function register(string calldata tokenURI_) external returns (uint256 agentId);
+    function register(
+        string calldata tokenURI_
+    ) external returns (uint256 agentId);
+
     function ownerOf(uint256 agentId) external view returns (address);
+
     function agentExists(uint256 agentId) external view returns (bool);
 }
 
@@ -32,17 +36,22 @@ interface IValidationRegistry {
         bytes32 tag
     ) external;
 
-    function getValidationStatus(bytes32 requestHash) external view returns (
-        address validatorAddress,
-        uint256 agentId,
-        uint8 response,
-        bytes32 tag,
-        uint256 lastUpdate
-    );
+    function getValidationStatus(
+        bytes32 requestHash
+    )
+        external
+        view
+        returns (
+            address validatorAddress,
+            uint256 agentId,
+            uint8 response,
+            bytes32 tag,
+            uint256 lastUpdate
+        );
 }
 
-contract ValidationRegistryArbiterTest is Test {
-    ValidationRegistryArbiter arbiter;
+contract ERC8004ArbiterTest is Test {
+    ERC8004Arbiter arbiter;
     IValidationRegistry validationRegistry;
     IIdentityRegistry identityRegistry;
     IEAS public eas;
@@ -56,10 +65,12 @@ contract ValidationRegistryArbiterTest is Test {
     function setUp() public {
         EASDeployer easDeployer = new EASDeployer();
         (eas, schemaRegistry) = easDeployer.deployEAS();
-        arbiter = new ValidationRegistryArbiter();
+        arbiter = new ERC8004Arbiter();
 
         // Deploy IdentityRegistry using precompiled bytecode from the ERC-8004 submodule
-        address identityAddr = deployCode("lib/trustless-agents-erc-ri/out/IdentityRegistry.sol/IdentityRegistry.json");
+        address identityAddr = deployCode(
+            "lib/trustless-agents-erc-ri/out/IdentityRegistry.sol/IdentityRegistry.json"
+        );
         identityRegistry = IIdentityRegistry(identityAddr);
 
         // Deploy ValidationRegistry using precompiled bytecode
@@ -74,18 +85,20 @@ contract ValidationRegistryArbiterTest is Test {
         agentId = identityRegistry.register("ipfs://test-agent");
 
         // Compute requestHash for tests to use
-        requestHash = keccak256(abi.encodePacked(
-            validator,
-            agentId,
-            "ipfs://validation-request",
-            block.timestamp,
-            agentOwner
-        ));
+        requestHash = keccak256(
+            abi.encodePacked(
+                validator,
+                agentId,
+                "ipfs://validation-request",
+                block.timestamp,
+                agentOwner
+            )
+        );
     }
 
     function testConstructor() public {
         // Create a new arbiter to test constructor
-        ValidationRegistryArbiter newArbiter = new ValidationRegistryArbiter();
+        ERC8004Arbiter newArbiter = new ERC8004Arbiter();
 
         // Create a temporary validation request
         bytes32 tempRequestHash = keccak256(abi.encodePacked("temp"));
@@ -104,15 +117,16 @@ contract ValidationRegistryArbiterTest is Test {
             data: bytes("")
         });
 
-        ValidationRegistryArbiter.DemandData memory demandData = ValidationRegistryArbiter
+        ERC8004Arbiter.DemandData memory demandData = ERC8004Arbiter
             .DemandData({
                 validationRegistry: address(validationRegistry),
+                validatorAddress: validator,
                 minResponse: 50
             });
         bytes memory demand = abi.encode(demandData);
 
         // Should revert with ValidationNotFound since no validation response exists
-        vm.expectRevert(ValidationRegistryArbiter.ValidationNotFound.selector);
+        vm.expectRevert(ERC8004Arbiter.ValidationNotFound.selector);
         newArbiter.checkObligation(attestation, demand, bytes32(0));
     }
 
@@ -149,9 +163,10 @@ contract ValidationRegistryArbiterTest is Test {
             data: bytes("")
         });
 
-        ValidationRegistryArbiter.DemandData memory demandData = ValidationRegistryArbiter
+        ERC8004Arbiter.DemandData memory demandData = ERC8004Arbiter
             .DemandData({
                 validationRegistry: address(validationRegistry),
+                validatorAddress: validator,
                 minResponse: 50
             });
         bytes memory demand = abi.encode(demandData);
@@ -193,9 +208,10 @@ contract ValidationRegistryArbiterTest is Test {
             data: bytes("")
         });
 
-        ValidationRegistryArbiter.DemandData memory demandData = ValidationRegistryArbiter
+        ERC8004Arbiter.DemandData memory demandData = ERC8004Arbiter
             .DemandData({
                 validationRegistry: address(validationRegistry),
+                validatorAddress: validator,
                 minResponse: 50
             });
         bytes memory demand = abi.encode(demandData);
@@ -237,15 +253,16 @@ contract ValidationRegistryArbiterTest is Test {
             data: bytes("")
         });
 
-        ValidationRegistryArbiter.DemandData memory demandData = ValidationRegistryArbiter
+        ERC8004Arbiter.DemandData memory demandData = ERC8004Arbiter
             .DemandData({
                 validationRegistry: address(validationRegistry),
+                validatorAddress: validator,
                 minResponse: 50
             });
         bytes memory demand = abi.encode(demandData);
 
         // Should revert since response (30) < minResponse (50)
-        vm.expectRevert(ValidationRegistryArbiter.ResponseBelowMinimum.selector);
+        vm.expectRevert(ERC8004Arbiter.ResponseBelowMinimum.selector);
         arbiter.checkObligation(attestation, demand, bytes32(0));
     }
 
@@ -266,15 +283,16 @@ contract ValidationRegistryArbiterTest is Test {
             data: bytes("")
         });
 
-        ValidationRegistryArbiter.DemandData memory demandData = ValidationRegistryArbiter
+        ERC8004Arbiter.DemandData memory demandData = ERC8004Arbiter
             .DemandData({
                 validationRegistry: address(validationRegistry),
+                validatorAddress: validator,
                 minResponse: 50
             });
         bytes memory demand = abi.encode(demandData);
 
         // Should revert since no validation response exists
-        vm.expectRevert(ValidationRegistryArbiter.ValidationNotFound.selector);
+        vm.expectRevert(ERC8004Arbiter.ValidationNotFound.selector);
         arbiter.checkObligation(attestation, demand, bytes32(0));
     }
 
@@ -312,15 +330,16 @@ contract ValidationRegistryArbiterTest is Test {
         });
 
         // Create demand with invalid minResponse > 100
-        ValidationRegistryArbiter.DemandData memory demandData = ValidationRegistryArbiter
+        ERC8004Arbiter.DemandData memory demandData = ERC8004Arbiter
             .DemandData({
                 validationRegistry: address(validationRegistry),
+                validatorAddress: validator,
                 minResponse: 101
             });
         bytes memory demand = abi.encode(demandData);
 
         // Should revert since minResponse > 100
-        vm.expectRevert(ValidationRegistryArbiter.InvalidMinResponse.selector);
+        vm.expectRevert(ERC8004Arbiter.InvalidMinResponse.selector);
         arbiter.checkObligation(attestation, demand, bytes32(0));
     }
 
@@ -357,9 +376,10 @@ contract ValidationRegistryArbiterTest is Test {
             data: bytes("")
         });
 
-        ValidationRegistryArbiter.DemandData memory demandData = ValidationRegistryArbiter
+        ERC8004Arbiter.DemandData memory demandData = ERC8004Arbiter
             .DemandData({
                 validationRegistry: address(validationRegistry),
+                validatorAddress: validator,
                 minResponse: 0
             });
         bytes memory demand = abi.encode(demandData);
@@ -401,9 +421,10 @@ contract ValidationRegistryArbiterTest is Test {
             data: bytes("")
         });
 
-        ValidationRegistryArbiter.DemandData memory demandData = ValidationRegistryArbiter
+        ERC8004Arbiter.DemandData memory demandData = ERC8004Arbiter
             .DemandData({
                 validationRegistry: address(validationRegistry),
+                validatorAddress: validator,
                 minResponse: 100
             });
         bytes memory demand = abi.encode(demandData);
@@ -412,37 +433,93 @@ contract ValidationRegistryArbiterTest is Test {
         assertTrue(arbiter.checkObligation(attestation, demand, bytes32(0)));
     }
 
-    function testDecodeDemandData() public {
-        // Test the helper function
-        ValidationRegistryArbiter.DemandData memory demandData = ValidationRegistryArbiter
+    function testCheckObligationValidatorMismatch() public {
+        // Create validation request
+        vm.prank(agentOwner);
+        validationRegistry.validationRequest(
+            validator,
+            agentId,
+            "ipfs://validation-request",
+            requestHash
+        );
+
+        // Validator provides response
+        vm.prank(validator);
+        validationRegistry.validationResponse(
+            requestHash,
+            75,
+            "",
+            bytes32(0),
+            bytes32(0)
+        );
+
+        Attestation memory attestation = Attestation({
+            uid: requestHash,
+            schema: bytes32(0),
+            time: uint64(block.timestamp),
+            expirationTime: uint64(0),
+            revocationTime: uint64(0),
+            refUID: bytes32(0),
+            recipient: address(0),
+            attester: address(0),
+            revocable: true,
+            data: bytes("")
+        });
+
+        // Create demand with different validator address
+        address wrongValidator = address(0x999);
+        ERC8004Arbiter.DemandData memory demandData = ERC8004Arbiter
             .DemandData({
                 validationRegistry: address(validationRegistry),
+                validatorAddress: wrongValidator,
+                minResponse: 50
+            });
+        bytes memory demand = abi.encode(demandData);
+
+        // Should revert since validator addresses don't match
+        vm.expectRevert(ERC8004Arbiter.ValidatorMismatch.selector);
+        arbiter.checkObligation(attestation, demand, bytes32(0));
+    }
+
+    function testDecodeDemandData() public {
+        // Test the helper function
+        ERC8004Arbiter.DemandData memory demandData = ERC8004Arbiter
+            .DemandData({
+                validationRegistry: address(validationRegistry),
+                validatorAddress: validator,
                 minResponse: 75
             });
         bytes memory encoded = abi.encode(demandData);
 
-        ValidationRegistryArbiter.DemandData memory decoded = arbiter.decodeDemandData(encoded);
+        ERC8004Arbiter.DemandData memory decoded = arbiter.decodeDemandData(
+            encoded
+        );
 
         assertEq(decoded.validationRegistry, address(validationRegistry));
+        assertEq(decoded.validatorAddress, validator);
         assertEq(decoded.minResponse, 75);
     }
 
     function testWithDifferentRequestHashes() public {
         // Create multiple validation requests with different request hashes
-        bytes32 requestHash1 = keccak256(abi.encodePacked(
-            validator,
-            agentId,
-            "ipfs://validation-request-1",
-            block.timestamp,
-            agentOwner
-        ));
-        bytes32 requestHash2 = keccak256(abi.encodePacked(
-            validator,
-            agentId,
-            "ipfs://validation-request-2",
-            block.timestamp + 1,
-            agentOwner
-        ));
+        bytes32 requestHash1 = keccak256(
+            abi.encodePacked(
+                validator,
+                agentId,
+                "ipfs://validation-request-1",
+                block.timestamp,
+                agentOwner
+            )
+        );
+        bytes32 requestHash2 = keccak256(
+            abi.encodePacked(
+                validator,
+                agentId,
+                "ipfs://validation-request-2",
+                block.timestamp + 1,
+                agentOwner
+            )
+        );
 
         // Create first validation request
         vm.prank(agentOwner);
@@ -483,9 +560,10 @@ contract ValidationRegistryArbiterTest is Test {
             bytes32(0)
         );
 
-        ValidationRegistryArbiter.DemandData memory demandData = ValidationRegistryArbiter
+        ERC8004Arbiter.DemandData memory demandData = ERC8004Arbiter
             .DemandData({
                 validationRegistry: address(validationRegistry),
+                validatorAddress: validator,
                 minResponse: 50
             });
         bytes memory demand = abi.encode(demandData);
@@ -518,7 +596,7 @@ contract ValidationRegistryArbiterTest is Test {
             revocable: true,
             data: bytes("")
         });
-        vm.expectRevert(ValidationRegistryArbiter.ResponseBelowMinimum.selector);
+        vm.expectRevert(ERC8004Arbiter.ResponseBelowMinimum.selector);
         arbiter.checkObligation(attestation2, demand, bytes32(0));
     }
 }
