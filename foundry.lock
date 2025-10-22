@@ -1,0 +1,17 @@
+{
+  "alkahest-docs": {
+    "rev": "95e6f9fbc6c41056e8543ac5830663621ab3958f"
+  },
+  "alkahest-rs": {
+    "rev": "f655e342db0e8600d8db80df1833d308210abd0c"
+  },
+  "alkahest-ts": {
+    "rev": "2524ea0e09d7601a481fd29919e19bf45ec7604b"
+  },
+  "lib/eas-contracts": {
+    "rev": "558250dae4cb434859b1ac3b6d32833c6448be21"
+  },
+  "lib/openzeppelin-contracts": {
+    "rev": "cceac54953ccda8a9a028d0b9bf4378605fdf67e"
+  }
+}
