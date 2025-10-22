@@ -40,19 +40,25 @@ contract ERC8004Arbiter is IArbiter {
     error ValidationNotFound();
     error ResponseBelowMinimum();
     error ValidatorMismatch();
+    error FulfillmentMustReferenceEscrow();
 
     /**
      * @notice Check if the validation response meets the minimum requirement
      * @param obligation The attestation representing the fulfillment
      * @param demand ABI-encoded DemandData containing registry address and min response
+     * @param counteroffer The escrow UID that this fulfillment must reference
      * @return bool True if the validation response >= minResponse
      */
     function checkObligation(
         Attestation memory obligation,
         bytes memory demand,
-        bytes32 /*counteroffer*/
+        bytes32 counteroffer
     ) public view override returns (bool) {
         DemandData memory demand_ = abi.decode(demand, (DemandData));
+
+        // Ensure fulfillment references the escrow
+        if (obligation.refUID != counteroffer)
+            revert FulfillmentMustReferenceEscrow();
 
         // Validate minResponse is in valid range
         if (demand_.minResponse > 100) revert InvalidMinResponse();

@@ -172,7 +172,7 @@ contract ERC8004IntegrationTest is Test {
         // === Step 2: Bob creates a fulfillment obligation ===
         vm.prank(bob);
         bytes32 fulfillmentUid = fulfillmentObligation.doObligation(
-            StringObligation.ObligationData({item: "Bob completed the work"}),
+            StringObligation.ObligationData({item: "<fullfillment data>"}),
             escrowUid // Reference the escrow
         );
 
@@ -282,7 +282,7 @@ contract ERC8004IntegrationTest is Test {
         // === Step 2: Bob creates a fulfillment obligation ===
         vm.prank(bob);
         bytes32 fulfillmentUid = fulfillmentObligation.doObligation(
-            StringObligation.ObligationData({item: "Bob completed the work"}),
+            StringObligation.ObligationData({item: "<fulfillment data>"}),
             escrowUid
         );
 
@@ -356,7 +356,7 @@ contract ERC8004IntegrationTest is Test {
         // === Step 2: Bob creates a fulfillment obligation ===
         vm.prank(bob);
         bytes32 fulfillmentUid = fulfillmentObligation.doObligation(
-            StringObligation.ObligationData({item: "Bob completed the work"}),
+            StringObligation.ObligationData({item: "<fulfillment data>"}),
             escrowUid
         );
 
@@ -427,7 +427,7 @@ contract ERC8004IntegrationTest is Test {
         // === Step 2: Bob creates a fulfillment obligation ===
         vm.prank(bob);
         bytes32 fulfillmentUid = fulfillmentObligation.doObligation(
-            StringObligation.ObligationData({item: "Bob completed the work"}),
+            StringObligation.ObligationData({item: "<fulfillment data>"}),
             escrowUid
         );
 
