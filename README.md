@@ -1,6 +1,6 @@
 ## Alkahest
 
-![logo](https://discord.com/channels/1418531660957220895/1418531663859683329/1434753855341723758)
+![logo](https://cdn.discordapp.com/attachments/1418531663859683329/1434753855152717894/image0.jpg?ex=69097a27&is=690828a7&hm=cb17127207624518ed2bdd957f41503b464b402178880491615980a7c51030aa)
 
 Alkahest is a library and ecosystem for peer-to-peer exchange.
 
