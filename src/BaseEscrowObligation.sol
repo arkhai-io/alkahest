@@ -79,6 +79,10 @@ abstract contract BaseEscrowObligation is BaseObligation {
             revert AttestationNotFound(_fulfillment);
         }
 
+        // Validate escrow uses correct schema
+        if (escrow.schema != ATTESTATION_SCHEMA)
+            revert InvalidEscrowAttestation();
+
         if (!escrow._checkIntrinsic()) revert InvalidEscrowAttestation();
 
         // Extract arbiter and demand from escrow data
@@ -123,8 +127,27 @@ abstract contract BaseEscrowObligation is BaseObligation {
             revert AttestationNotFound(uid);
         }
 
+        // Validate attestation uses correct schema
+        if (attestation.schema != ATTESTATION_SCHEMA)
+            revert InvalidEscrowAttestation();
+
+        // Prevent reclaiming non-expiring attestations (expirationTime 0 means never expires)
+        if (attestation.expirationTime == 0) revert UnauthorizedCall();
+
         if (block.timestamp < attestation.expirationTime)
             revert UnauthorizedCall();
+
+        // Revoke attestation to prevent re-entry
+        try
+            eas.revoke(
+                RevocationRequest({
+                    schema: ATTESTATION_SCHEMA,
+                    data: RevocationRequestData({uid: uid, value: 0})
+                })
+            )
+        {} catch {
+            revert RevocationFailed(uid);
+        }
 
         // Return escrowed value to original recipient
         _returnEscrow(attestation.data, attestation.recipient);

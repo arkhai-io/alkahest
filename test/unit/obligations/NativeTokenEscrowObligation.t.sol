@@ -14,6 +14,7 @@ import {EASDeployer} from "@test/utils/EASDeployer.sol";
 
 contract NativeTokenEscrowObligationTest is Test {
     NativeTokenEscrowObligation public escrowObligation;
+    NativeTokenEscrowObligation public wrongSchemaObligation;
     IEAS public eas;
     ISchemaRegistry public schemaRegistry;
     MockArbiter public mockArbiter;
@@ -30,6 +31,8 @@ contract NativeTokenEscrowObligationTest is Test {
         (eas, schemaRegistry) = easDeployer.deployEAS();
 
         escrowObligation = new NativeTokenEscrowObligation(eas, schemaRegistry);
+        // Create a second instance with a different schema ID (different resolver = different schema)
+        wrongSchemaObligation = new NativeTokenEscrowObligation(eas, schemaRegistry);
         mockArbiter = new MockArbiter(true);
         rejectingArbiter = new MockArbiter(false);
         stringObligation = new StringObligation(eas, schemaRegistry);
@@ -234,6 +237,90 @@ contract NativeTokenEscrowObligationTest is Test {
         assertEq(buyer.balance, buyerBalanceBefore + AMOUNT);
     }
 
+    function testReclaimExpiredWithZeroExpirationTime() public {
+        // Create an escrow with no expiration (expirationTime = 0 means never expires)
+        NativeTokenEscrowObligation.ObligationData
+            memory data = NativeTokenEscrowObligation.ObligationData({
+                arbiter: address(mockArbiter),
+                demand: abi.encode("test demand"),
+                amount: AMOUNT
+            });
+
+        vm.prank(buyer);
+        bytes32 uid = escrowObligation.doObligation{value: AMOUNT}(
+            data,
+            0 // Never expires
+        );
+
+        // Move time forward arbitrarily
+        vm.warp(block.timestamp + 365 days);
+
+        // Try to reclaim non-expiring escrow - should revert
+        vm.prank(buyer);
+        vm.expectRevert(BaseEscrowObligation.UnauthorizedCall.selector);
+        escrowObligation.reclaimExpired(uid);
+    }
+
+    function testReclaimExpiredRevokesAttestation() public {
+        // Create an escrow with short expiration
+        NativeTokenEscrowObligation.ObligationData
+            memory data = NativeTokenEscrowObligation.ObligationData({
+                arbiter: address(mockArbiter),
+                demand: abi.encode("test demand"),
+                amount: AMOUNT
+            });
+
+        vm.prank(buyer);
+        bytes32 uid = escrowObligation.doObligation{value: AMOUNT}(
+            data,
+            uint64(block.timestamp + 100)
+        );
+
+        // Move time forward past expiration
+        vm.warp(block.timestamp + 101);
+
+        // Reclaim expired escrow
+        vm.prank(buyer);
+        escrowObligation.reclaimExpired(uid);
+
+        // Check attestation was revoked
+        Attestation memory revokedAttestation = eas.getAttestation(uid);
+        assertTrue(revokedAttestation.revocationTime > 0);
+    }
+
+    function testReclaimExpiredPreventsReentry() public {
+        // Create an escrow with short expiration
+        NativeTokenEscrowObligation.ObligationData
+            memory data = NativeTokenEscrowObligation.ObligationData({
+                arbiter: address(mockArbiter),
+                demand: abi.encode("test demand"),
+                amount: AMOUNT
+            });
+
+        vm.prank(buyer);
+        bytes32 uid = escrowObligation.doObligation{value: AMOUNT}(
+            data,
+            uint64(block.timestamp + 100)
+        );
+
+        // Move time forward past expiration
+        vm.warp(block.timestamp + 101);
+
+        // Reclaim expired escrow first time
+        vm.prank(buyer);
+        escrowObligation.reclaimExpired(uid);
+
+        // Try to reclaim again - should fail because attestation is already revoked
+        vm.prank(buyer);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                BaseEscrowObligation.RevocationFailed.selector,
+                uid
+            )
+        );
+        escrowObligation.reclaimExpired(uid);
+    }
+
     function testCheckObligation() public {
         NativeTokenEscrowObligation.ObligationData
             memory data = NativeTokenEscrowObligation.ObligationData({
@@ -346,6 +433,58 @@ contract NativeTokenEscrowObligationTest is Test {
             address(escrowObligation).balance,
             contractBalanceBefore + 1 ether
         );
+    }
+
+    function testCollectEscrowWithWrongSchema() public {
+        // Create escrow with wrong schema (using wrongSchemaObligation)
+        NativeTokenEscrowObligation.ObligationData
+            memory escrowData = NativeTokenEscrowObligation.ObligationData({
+                arbiter: address(mockArbiter),
+                demand: abi.encode("test demand"),
+                amount: AMOUNT
+            });
+
+        vm.prank(buyer);
+        bytes32 wrongSchemaEscrowUid = wrongSchemaObligation.doObligation{value: AMOUNT}(
+            escrowData,
+            uint64(block.timestamp + EXPIRATION_TIME)
+        );
+
+        // Create valid fulfillment
+        vm.prank(seller);
+        bytes32 fulfillmentUid = stringObligation.doObligation(
+            StringObligation.ObligationData({item: "hello"}),
+            bytes32(0)
+        );
+
+        // Try to collect escrow with wrong schema - should revert
+        vm.prank(seller);
+        vm.expectRevert(BaseEscrowObligation.InvalidEscrowAttestation.selector);
+        escrowObligation.collectEscrow(wrongSchemaEscrowUid, fulfillmentUid);
+    }
+
+    function testReclaimExpiredWithWrongSchema() public {
+        // Create escrow with wrong schema (using wrongSchemaObligation)
+        NativeTokenEscrowObligation.ObligationData
+            memory data = NativeTokenEscrowObligation.ObligationData({
+                arbiter: address(mockArbiter),
+                demand: abi.encode("test demand"),
+                amount: AMOUNT
+            });
+
+        vm.prank(buyer);
+        bytes32 wrongSchemaUid = wrongSchemaObligation.doObligation{value: AMOUNT}(
+            data,
+            uint64(block.timestamp + 100)
+        );
+
+        // Move time forward past expiration
+        vm.warp(block.timestamp + 101);
+
+        // Try to reclaim with wrong schema - should revert
+        vm.prank(buyer);
+        vm.expectRevert(BaseEscrowObligation.InvalidEscrowAttestation.selector);
+        escrowObligation.reclaimExpired(wrongSchemaUid);
     }
 
     function testNativeTokenTransferFailed() public {
