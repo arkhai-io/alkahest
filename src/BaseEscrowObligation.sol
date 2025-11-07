@@ -157,7 +157,7 @@ abstract contract BaseEscrowObligation is BaseObligation {
 
     // Hook implementations
     function _beforeAttest(
-        bytes calldata data,
+        bytes memory data,
         address payer,
         address /*recipient*/
     ) internal virtual override {
@@ -168,7 +168,7 @@ abstract contract BaseEscrowObligation is BaseObligation {
 
     function _afterAttest(
         bytes32 uid,
-        bytes calldata /*data*/,
+        bytes memory /*data*/,
         address /*payer*/,
         address recipient
     ) internal override {

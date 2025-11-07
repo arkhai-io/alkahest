@@ -91,7 +91,6 @@ contract NativeTokenPaymentObligationTest is Test {
         vm.prank(buyer);
         bytes32 uid = paymentObligation.doObligationFor{value: AMOUNT}(
             data,
-            buyer,
             randomUser
         );
 

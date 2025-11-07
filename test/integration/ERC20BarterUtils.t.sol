@@ -96,7 +96,7 @@ contract ERC20BarterUtilsIntegrationTest is Test {
 
         // Alice creates buy order
         vm.startPrank(alice);
-        erc1155TokenA.approve(address(escrowObligation), bidAmount);
+        erc1155TokenA.approve(address(barterUtils), bidAmount);
         bytes32 buyAttestation = barterUtils.buyErc20ForErc20(
             address(erc1155TokenA),
             bidAmount,
@@ -108,7 +108,7 @@ contract ERC20BarterUtilsIntegrationTest is Test {
 
         // Bob fulfills the order
         vm.startPrank(bob);
-        erc1155TokenB.approve(address(paymentObligation), askAmount);
+        erc1155TokenB.approve(address(barterUtils), askAmount);
         bytes32 sellAttestation = barterUtils.payErc20ForErc20(buyAttestation);
         vm.stopPrank();
 
@@ -157,7 +157,7 @@ contract ERC20BarterUtilsIntegrationTest is Test {
         (uint8 v1, bytes32 r1, bytes32 s1) = _getPermitSignature(
             erc1155TokenA,
             ALICE_PRIVATE_KEY,
-            address(escrowObligation),
+            address(barterUtils),
             bidAmount,
             deadline
         );
@@ -179,7 +179,7 @@ contract ERC20BarterUtilsIntegrationTest is Test {
         (uint8 v2, bytes32 r2, bytes32 s2) = _getPermitSignature(
             erc1155TokenB,
             BOB_PRIVATE_KEY,
-            address(paymentObligation),
+            address(barterUtils),
             askAmount,
             deadline
         );
@@ -216,7 +216,7 @@ contract ERC20BarterUtilsIntegrationTest is Test {
         (uint8 v1, bytes32 r1, bytes32 s1) = _getPermitSignature(
             erc1155TokenA,
             ALICE_PRIVATE_KEY,
-            address(escrowObligation),
+            address(barterUtils),
             bidAmount,
             deadline
         );
@@ -245,7 +245,7 @@ contract ERC20BarterUtilsIntegrationTest is Test {
         (uint8 v2, bytes32 r2, bytes32 s2) = _getPermitSignature(
             erc1155TokenB,
             BOB_PRIVATE_KEY,
-            address(paymentObligation),
+            address(barterUtils),
             askAmount,
             deadline
         );

@@ -111,10 +111,10 @@ contract AttestationEscrowObligation2 is BaseEscrowObligation, IArbiter {
         uint64 expirationTime
     ) external returns (bytes32) {
         return
-            this.doObligationForRaw(
+            _doObligationForRaw(
                 abi.encode(data),
                 expirationTime,
-                msg.sender,
+
                 msg.sender,
                 bytes32(0)
             );
@@ -126,10 +126,10 @@ contract AttestationEscrowObligation2 is BaseEscrowObligation, IArbiter {
         address recipient
     ) external returns (bytes32) {
         return
-            this.doObligationForRaw(
+            _doObligationForRaw(
                 abi.encode(data),
                 expirationTime,
-                msg.sender,
+
                 recipient,
                 bytes32(0)
             );

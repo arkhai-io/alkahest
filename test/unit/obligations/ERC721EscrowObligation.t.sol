@@ -127,11 +127,10 @@ contract ERC721EscrowObligationTest is Test {
         address recipient = makeAddr("recipient");
         uint64 expiration = uint64(block.timestamp + EXPIRATION_TIME);
 
-        vm.prank(address(this));
+        vm.prank(buyer);
         bytes32 uid = escrowObligation.doObligationFor(
             data,
             expiration,
-            buyer,
             recipient
         );
 
@@ -425,10 +424,10 @@ contract ERC721EscrowObligationTest is Test {
                 otherTokenId
             )
         );
+        vm.prank(otherOwner);
         escrowObligation.doObligationFor(
             data,
             expiration,
-            otherOwner,
             otherOwner
         );
     }

@@ -102,10 +102,9 @@ contract NativeTokenEscrowObligation is BaseEscrowObligation, IArbiter {
         uint64 expirationTime
     ) external payable returns (bytes32) {
         return
-            this.doObligationForRaw{value: msg.value}(
+            _doObligationForRaw(
                 abi.encode(data),
                 expirationTime,
-                msg.sender,
                 msg.sender,
                 bytes32(0)
             );
@@ -114,14 +113,12 @@ contract NativeTokenEscrowObligation is BaseEscrowObligation, IArbiter {
     function doObligationFor(
         ObligationData calldata data,
         uint64 expirationTime,
-        address payer,
         address recipient
     ) external payable returns (bytes32) {
         return
-            this.doObligationForRaw{value: msg.value}(
+            _doObligationForRaw(
                 abi.encode(data),
                 expirationTime,
-                payer,
                 recipient,
                 bytes32(0)
             );

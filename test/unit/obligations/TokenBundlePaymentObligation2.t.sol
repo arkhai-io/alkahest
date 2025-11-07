@@ -177,27 +177,44 @@ contract TokenBundlePaymentObligation2Test is Test {
         TokenBundlePaymentObligation2.ObligationData
             memory data = createFullBundleData();
 
+        // Update NFT IDs to Bob's NFTs
+        data.erc721TokenIds[0] = NFT1_ID + 10;
+        data.erc721TokenIds[1] = NFT2_ID + 10;
+
         uint256 payeeBalanceBefore = payee.balance;
 
-        // Alice approves tokens
-        vm.startPrank(alice);
+        // Bob approves tokens and calls doObligationFor
+        vm.startPrank(bob);
         token1.approve(address(obligation), TOKEN1_AMOUNT);
         token2.approve(address(obligation), TOKEN2_AMOUNT);
-        nft1.approve(address(obligation), NFT1_ID);
-        nft2.approve(address(obligation), NFT2_ID);
+        nft1.approve(address(obligation), NFT1_ID + 10);
+        nft2.approve(address(obligation), NFT2_ID + 10);
         multiToken.setApprovalForAll(address(obligation), true);
-        vm.stopPrank();
 
-        // Bob calls doObligationFor on behalf of Alice
-        vm.startPrank(bob);
-
-        obligation.doObligationFor{value: NATIVE_AMOUNT}(data, alice, charlie);
+        obligation.doObligationFor{value: NATIVE_AMOUNT}(data, charlie);
 
         vm.stopPrank();
 
         // Verify all transfers
         assertEq(payee.balance, payeeBalanceBefore + NATIVE_AMOUNT);
-        verifyTokensTransferredToPayee();
+
+        // Verify ERC20 transfers
+        assertEq(token1.balanceOf(payee), TOKEN1_AMOUNT);
+        assertEq(token2.balanceOf(payee), TOKEN2_AMOUNT);
+
+        // Verify ERC721 transfers (Bob's NFTs)
+        assertEq(nft1.ownerOf(NFT1_ID + 10), payee);
+        assertEq(nft2.ownerOf(NFT2_ID + 10), payee);
+
+        // Verify ERC1155 transfers
+        assertEq(
+            multiToken.balanceOf(payee, MULTI_TOKEN_ID_1),
+            MULTI_TOKEN_AMOUNT_1
+        );
+        assertEq(
+            multiToken.balanceOf(payee, MULTI_TOKEN_ID_2),
+            MULTI_TOKEN_AMOUNT_2
+        );
     }
 
     function testExcessNativeTokenRefund() public {

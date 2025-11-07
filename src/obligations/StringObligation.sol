@@ -21,10 +21,9 @@ contract StringObligation is BaseObligation {
         bytes32 refUID
     ) public returns (bytes32 uid_) {
         bytes memory encodedData = abi.encode(data);
-        uid_ = this.doObligationForRaw(
+        uid_ = _doObligationForRaw(
             encodedData,
             0,
-            msg.sender,
             msg.sender,
             refUID
         );

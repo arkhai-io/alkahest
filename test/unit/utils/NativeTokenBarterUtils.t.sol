@@ -215,7 +215,6 @@ contract NativeTokenBarterUtilsTest is Test {
                 )
             }),
             EXPIRATION,
-            bob,
             bob
         );
         vm.stopPrank();
@@ -277,7 +276,6 @@ contract NativeTokenBarterUtilsTest is Test {
                 )
             }),
             EXPIRATION,
-            bob,
             bob
         );
         vm.stopPrank();
@@ -337,7 +335,6 @@ contract NativeTokenBarterUtilsTest is Test {
                 )
             }),
             EXPIRATION,
-            bob,
             bob
         );
         vm.stopPrank();
@@ -440,7 +437,6 @@ contract NativeTokenBarterUtilsTest is Test {
         bytes32 buyAttestation = bundleEscrow.doObligationFor(
             bundleData,
             EXPIRATION,
-            bob,
             bob
         );
         vm.stopPrank();

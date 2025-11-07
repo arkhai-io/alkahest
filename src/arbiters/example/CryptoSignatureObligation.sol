@@ -79,10 +79,9 @@ contract CryptoSignatureObligation is BaseObligation, IArbiter {
         bytes32 refUID
     ) public returns (bytes32 uid) {
         bytes memory encodedData = encodeObligationData(data);
-        uid = this.doObligationForRaw(
+        uid = _doObligationForRaw(
             encodedData,
             0,
-            msg.sender,
             msg.sender,
             refUID
         );
@@ -120,10 +119,9 @@ contract CryptoSignatureObligation is BaseObligation, IArbiter {
 
         bytes memory encodedData = encodeObligationData(data);
         return
-            this.doObligationForRaw(
+            _doObligationForRaw(
                 encodedData,
                 0,
-                msg.sender,
                 msg.sender,
                 refUID
             );

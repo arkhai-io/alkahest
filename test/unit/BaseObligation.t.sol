@@ -29,7 +29,7 @@ contract MockBaseObligation is BaseObligation {
 
     // Override hooks to track calls
     function _beforeAttest(
-        bytes calldata data,
+        bytes memory data,
         address payer,
         address recipient
     ) internal override {
@@ -41,7 +41,7 @@ contract MockBaseObligation is BaseObligation {
 
     function _afterAttest(
         bytes32 uid,
-        bytes calldata data,
+        bytes memory data,
         address payer,
         address recipient
     ) internal override {
@@ -79,6 +79,16 @@ contract MockBaseObligation is BaseObligation {
         lastAfterAttestData = "";
         lastAfterAttestPayer = address(0);
         lastAfterAttestRecipient = address(0);
+    }
+
+    // Public wrapper for _doObligationForRaw for testing
+    function doObligationForRaw(
+        bytes memory data,
+        uint64 expirationTime,
+        address recipient,
+        bytes32 refUID
+    ) public returns (bytes32) {
+        return _doObligationForRaw(data, expirationTime, recipient, refUID);
     }
 }
 
@@ -203,7 +213,6 @@ contract BaseObligationTest is Test {
         bytes32 uid = baseObligation.doObligationForRaw(
             testData,
             expirationTime,
-            testUser, // payer
             testRecipient, // recipient
             refUID
         );

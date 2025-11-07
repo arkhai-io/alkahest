@@ -69,10 +69,9 @@ contract ApiResultObligation is BaseObligation {
 
         bytes memory encodedData = encodeObligationData(data);
 
-        uid = this.doObligationForRaw(
+        uid = _doObligationForRaw(
             encodedData,
             0, // no expiration
-            msg.sender,
             msg.sender,
             refUID
         );

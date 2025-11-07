@@ -206,29 +206,45 @@ contract TokenBundleEscrowObligation2Test is Test {
         TokenBundleEscrowObligation2.ObligationData
             memory data = createFullBundleData();
 
-        // Alice approves tokens
-        vm.startPrank(alice);
+        // Update NFT IDs to Bob's NFTs
+        data.erc721TokenIds[0] = NFT1_ID + 10;
+        data.erc721TokenIds[1] = NFT2_ID + 10;
+
+        // Bob approves and creates escrow
+        vm.startPrank(bob);
         token1.approve(address(escrow), TOKEN1_AMOUNT);
         token2.approve(address(escrow), TOKEN2_AMOUNT);
-        nft1.approve(address(escrow), NFT1_ID);
-        nft2.approve(address(escrow), NFT2_ID);
+        nft1.approve(address(escrow), NFT1_ID + 10);
+        nft2.approve(address(escrow), NFT2_ID + 10);
         multiToken.setApprovalForAll(address(escrow), true);
-        vm.stopPrank();
-
-        // Bob creates escrow on behalf of Alice
-        vm.startPrank(bob);
 
         bytes32 escrowId = escrow.doObligationFor{value: NATIVE_AMOUNT}(
             data,
             uint64(block.timestamp + EXPIRATION_TIME),
-            alice,
             charlie
         );
 
         vm.stopPrank();
 
         // Verify all assets are in escrow
-        verifyTokensInEscrow();
+        // Verify ERC20 transfers
+        assertEq(token1.balanceOf(address(escrow)), TOKEN1_AMOUNT);
+        assertEq(token2.balanceOf(address(escrow)), TOKEN2_AMOUNT);
+
+        // Verify ERC721 transfers (Bob's NFTs)
+        assertEq(nft1.ownerOf(NFT1_ID + 10), address(escrow));
+        assertEq(nft2.ownerOf(NFT2_ID + 10), address(escrow));
+
+        // Verify ERC1155 transfers
+        assertEq(
+            multiToken.balanceOf(address(escrow), MULTI_TOKEN_ID_1),
+            MULTI_TOKEN_AMOUNT_1
+        );
+        assertEq(
+            multiToken.balanceOf(address(escrow), MULTI_TOKEN_ID_2),
+            MULTI_TOKEN_AMOUNT_2
+        );
+
         assertTrue(escrowId != bytes32(0));
     }
 

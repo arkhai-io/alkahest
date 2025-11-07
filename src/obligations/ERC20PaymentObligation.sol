@@ -43,10 +43,9 @@ contract ERC20PaymentObligation is BaseObligation, IArbiter {
         ObligationData calldata data
     ) public returns (bytes32 uid_) {
         bytes memory encodedData = abi.encode(data);
-        uid_ = this.doObligationForRaw(
+        uid_ = _doObligationForRaw(
             encodedData,
             0,
-            msg.sender,
             msg.sender,
             bytes32(0)
         );
@@ -54,21 +53,19 @@ contract ERC20PaymentObligation is BaseObligation, IArbiter {
 
     function doObligationFor(
         ObligationData calldata data,
-        address payer,
         address recipient
     ) public returns (bytes32 uid_) {
         bytes memory encodedData = abi.encode(data);
-        uid_ = this.doObligationForRaw(
+        uid_ = _doObligationForRaw(
             encodedData,
             0,
-            payer,
             recipient,
             bytes32(0)
         );
     }
 
     function _beforeAttest(
-        bytes calldata data,
+        bytes memory data,
         address payer,
         address /* recipient */
     ) internal override {
@@ -103,7 +100,7 @@ contract ERC20PaymentObligation is BaseObligation, IArbiter {
 
     function _afterAttest(
         bytes32 uid,
-        bytes calldata /* data */,
+        bytes memory /* data */,
         address /* payer */,
         address recipient
     ) internal override {

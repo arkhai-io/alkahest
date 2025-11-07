@@ -116,10 +116,9 @@ contract ERC721PaymentObligationTest is Test {
 
         address recipient = makeAddr("recipient");
 
-        vm.prank(address(this));
+        vm.prank(payer);
         bytes32 attestationId = paymentObligation.doObligationFor(
             data,
-            payer,
             recipient
         );
 
@@ -294,7 +293,8 @@ contract ERC721PaymentObligationTest is Test {
             });
 
         // Should revert because the token transfer will fail
+        vm.prank(otherOwner);
         vm.expectRevert();
-        paymentObligation.doObligationFor(data, otherOwner, otherOwner);
+        paymentObligation.doObligationFor(data, otherOwner);
     }
 }

@@ -118,10 +118,9 @@ contract ERC20PaymentObligationTest is Test {
                 payee: payee
             });
 
-        vm.prank(address(this));
+        vm.prank(payer);
         bytes32 attestationId = paymentObligation.doObligationFor(
             data,
-            payer,
             recipient
         );
 

@@ -189,8 +189,8 @@ contract TokenBundlePaymentObligationTest is Test {
 
         address recipient = makeAddr("recipient");
 
-        vm.prank(address(this));
-        bytes32 uid = paymentObligation.doObligationFor(data, payer, recipient);
+        vm.prank(payer);
+        bytes32 uid = paymentObligation.doObligationFor(data, recipient);
 
         // Verify attestation exists
         assertNotEq(uid, bytes32(0), "Attestation should be created");

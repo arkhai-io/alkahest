@@ -344,10 +344,10 @@ contract TokenBundleEscrowObligation2 is
         uint64 expirationTime
     ) external payable returns (bytes32) {
         return
-            this.doObligationForRaw{value: msg.value}(
+            _doObligationForRaw(
                 abi.encode(data),
                 expirationTime,
-                msg.sender,
+
                 msg.sender,
                 bytes32(0)
             );
@@ -356,14 +356,13 @@ contract TokenBundleEscrowObligation2 is
     function doObligationFor(
         ObligationData calldata data,
         uint64 expirationTime,
-        address payer,
         address recipient
     ) external payable returns (bytes32) {
         return
-            this.doObligationForRaw{value: msg.value}(
+            _doObligationForRaw(
                 abi.encode(data),
                 expirationTime,
-                payer,
+
                 recipient,
                 bytes32(0)
             );

@@ -59,10 +59,10 @@ contract RedisProvisionObligation is BaseObligation, IArbiter {
     ) public returns (bytes32) {
         bytes memory encodedData = abi.encode(data);
         return
-            this.doObligationForRaw(
+            _doObligationForRaw(
                 encodedData,
                 expirationTime,
-                msg.sender,
+
                 msg.sender,
                 bytes32(0)
             );

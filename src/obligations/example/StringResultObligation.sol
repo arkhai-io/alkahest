@@ -33,10 +33,9 @@ contract StringResultObligation is BaseObligation, IArbiter {
     ) public returns (bytes32) {
         bytes memory encodedData = abi.encode(data);
         return
-            this.doObligationForRaw(
+            _doObligationForRaw(
                 encodedData,
                 0,
-                msg.sender,
                 msg.sender,
                 refUID
             );

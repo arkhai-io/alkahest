@@ -130,11 +130,10 @@ contract ERC20EscrowObligationTest is Test {
         address recipient = makeAddr("recipient");
         uint64 expiration = uint64(block.timestamp + EXPIRATION_TIME);
 
-        vm.prank(address(this));
+        vm.prank(buyer);
         bytes32 uid = escrowObligation.doObligationFor(
             data,
             expiration,
-            buyer,
             recipient
         );
 

@@ -20,37 +20,35 @@ abstract contract BaseObligation is BaseAttester {
         uint64 expirationTime,
         bytes32 refUID
     ) public payable virtual returns (bytes32 uid_) {
-        uid_ = doObligationForRaw(
+        uid_ = _doObligationForRaw(
             data,
             expirationTime,
-            msg.sender,
             msg.sender,
             refUID
         );
     }
 
-    function doObligationForRaw(
-        bytes calldata data,
+    function _doObligationForRaw(
+        bytes memory data,
         uint64 expirationTime,
-        address payer,
         address recipient,
         bytes32 refUID
-    ) public payable virtual returns (bytes32 uid_) {
-        _beforeAttest(data, payer, recipient);
+    ) internal virtual returns (bytes32 uid_) {
+        _beforeAttest(data, msg.sender, recipient);
         uid_ = _attest(data, recipient, expirationTime, refUID);
-        _afterAttest(uid_, data, payer, recipient);
+        _afterAttest(uid_, data, msg.sender, recipient);
     }
 
     // Hooks for obligations to implement
     function _beforeAttest(
-        bytes calldata data,
+        bytes memory data,
         address payer,
         address recipient
     ) internal virtual {}
 
     function _afterAttest(
         bytes32 uid,
-        bytes calldata data,
+        bytes memory data,
         address payer,
         address recipient
     ) internal virtual {}

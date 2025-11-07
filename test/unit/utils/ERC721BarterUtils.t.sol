@@ -131,7 +131,7 @@ contract ERC721BarterUtilsUnitTest is Test {
         uint64 expiration = uint64(block.timestamp + 1 days);
 
         vm.startPrank(alice);
-        erc721TokenA.approve(address(escrowObligation), aliceErc721Id);
+        erc721TokenA.approve(address(barterUtils), aliceErc721Id);
         bytes32 buyAttestation = barterUtils.buyErc721ForErc721(
             address(erc721TokenA),
             aliceErc721Id,
@@ -159,7 +159,7 @@ contract ERC721BarterUtilsUnitTest is Test {
         assertEq(
             escrowData.arbiter,
             address(paymentObligation),
-            "Arbiter should be payment statement"
+            "Arbiter should be payment obligation"
         );
 
         // Extract the demand data
@@ -193,7 +193,7 @@ contract ERC721BarterUtilsUnitTest is Test {
         uint64 expiration = uint64(block.timestamp + 1 days);
 
         vm.startPrank(alice);
-        erc721TokenA.approve(address(escrowObligation), aliceErc721Id);
+        erc721TokenA.approve(address(barterUtils), aliceErc721Id);
         bytes32 buyAttestation = barterUtils.buyErc721ForErc721(
             address(erc721TokenA),
             aliceErc721Id,
@@ -205,7 +205,7 @@ contract ERC721BarterUtilsUnitTest is Test {
 
         // Now Bob fulfills the request
         vm.startPrank(bob);
-        erc721TokenB.approve(address(paymentObligation), bobErc721Id);
+        erc721TokenB.approve(address(barterUtils), bobErc721Id);
         bytes32 payAttestation = barterUtils.payErc721ForErc721(buyAttestation);
         vm.stopPrank();
 
@@ -233,7 +233,7 @@ contract ERC721BarterUtilsUnitTest is Test {
         uint64 expiration = uint64(block.timestamp + 1 days);
 
         vm.startPrank(alice);
-        erc721TokenA.approve(address(escrowObligation), aliceErc721Id);
+        erc721TokenA.approve(address(barterUtils), aliceErc721Id);
         bytes32 buyAttestation = barterUtils.buyErc721ForErc721(
             address(erc721TokenA),
             aliceErc721Id,
@@ -282,7 +282,7 @@ contract ERC721BarterUtilsUnitTest is Test {
 
         // Alice makes bid
         vm.startPrank(alice);
-        erc721TokenA.approve(address(escrowObligation), aliceErc721Id);
+        erc721TokenA.approve(address(barterUtils), aliceErc721Id);
         bytes32 buyAttestation = barterUtils.buyErc721ForErc721(
             address(erc721TokenA),
             aliceErc721Id,
@@ -318,7 +318,7 @@ contract ERC721BarterUtilsUnitTest is Test {
         uint64 expiration = uint64(block.timestamp + 10 minutes);
 
         vm.startPrank(alice);
-        erc721TokenA.approve(address(escrowObligation), aliceErc721Id);
+        erc721TokenA.approve(address(barterUtils), aliceErc721Id);
         bytes32 buyAttestation = barterUtils.buyErc721ForErc721(
             address(erc721TokenA),
             aliceErc721Id,
@@ -333,7 +333,7 @@ contract ERC721BarterUtilsUnitTest is Test {
 
         // Bob tries to fulfill expired bid
         vm.startPrank(bob);
-        erc721TokenB.approve(address(paymentObligation), bobErc721Id);
+        erc721TokenB.approve(address(barterUtils), bobErc721Id);
         vm.expectRevert();
         barterUtils.payErc721ForErc721(buyAttestation);
         vm.stopPrank();
@@ -346,7 +346,7 @@ contract ERC721BarterUtilsUnitTest is Test {
         uint64 expiration = uint64(block.timestamp + 1 days);
 
         vm.startPrank(alice);
-        erc721TokenA.approve(address(escrowObligation), aliceErc721Id);
+        erc721TokenA.approve(address(barterUtils), aliceErc721Id);
         bytes32 buyAttestation = barterUtils.buyErc20WithErc721(
             address(erc721TokenA),
             aliceErc721Id,
@@ -399,14 +399,13 @@ contract ERC721BarterUtilsUnitTest is Test {
                 )
             }),
             expiration,
-            bob,
             bob
         );
         vm.stopPrank();
 
         // Alice fulfills the order
         vm.startPrank(alice);
-        erc721TokenA.approve(address(paymentObligation), aliceErc721Id);
+        erc721TokenA.approve(address(barterUtils), aliceErc721Id);
         bytes32 payAttestation = barterUtils.payErc721ForErc20(bobSellOrder);
         vm.stopPrank();
 
@@ -435,7 +434,7 @@ contract ERC721BarterUtilsUnitTest is Test {
         uint64 expiration = uint64(block.timestamp + 1 days);
 
         vm.startPrank(alice);
-        erc721TokenA.approve(address(escrowObligation), aliceErc721Id);
+        erc721TokenA.approve(address(barterUtils), aliceErc721Id);
         bytes32 buyAttestation = barterUtils.buyErc1155WithErc721(
             address(erc721TokenA),
             aliceErc721Id,
@@ -476,14 +475,13 @@ contract ERC721BarterUtilsUnitTest is Test {
                 )
             }),
             expiration,
-            bob,
             bob
         );
         vm.stopPrank();
 
         // Alice fulfills the order
         vm.startPrank(alice);
-        erc721TokenA.approve(address(paymentObligation), aliceErc721Id);
+        erc721TokenA.approve(address(barterUtils), aliceErc721Id);
         bytes32 payAttestation = barterUtils.payErc721ForErc1155(bobSellOrder);
         vm.stopPrank();
 
@@ -551,7 +549,7 @@ contract ERC721BarterUtilsUnitTest is Test {
         bundleData.demand = abi.encode(demandData);
 
         vm.startPrank(alice);
-        erc721TokenA.approve(address(escrowObligation), aliceErc721Id);
+        erc721TokenA.approve(address(barterUtils), aliceErc721Id);
         bytes32 buyAttestation = barterUtils.buyBundleWithErc721(
             address(erc721TokenA),
             aliceErc721Id,
@@ -603,14 +601,13 @@ contract ERC721BarterUtilsUnitTest is Test {
         bytes32 bobBundleEscrow = bundleEscrow.doObligationFor(
             bundleData,
             expiration,
-            bob,
             bob
         );
         vm.stopPrank();
 
         // Alice fulfills with her ERC721
         vm.startPrank(alice);
-        erc721TokenA.approve(address(paymentObligation), aliceErc721Id);
+        erc721TokenA.approve(address(barterUtils), aliceErc721Id);
         bytes32 payAttestation = barterUtils.payErc721ForBundle(
             bobBundleEscrow
         );
@@ -674,7 +671,6 @@ contract ERC721BarterUtilsUnitTest is Test {
                 )
             }),
             expiration,
-            bob,
             bob
         );
         vm.stopPrank();
@@ -705,7 +701,6 @@ contract ERC721BarterUtilsUnitTest is Test {
                 )
             }),
             expiration,
-            bob,
             bob
         );
         vm.stopPrank();
@@ -721,7 +716,6 @@ contract ERC721BarterUtilsUnitTest is Test {
                 tokenId: aliceErc721Id,
                 payee: bob
             }),
-            alice,
             alice
         );
 
@@ -739,7 +733,7 @@ contract ERC721BarterUtilsUnitTest is Test {
 
         vm.startPrank(alice);
         uint256 erc721Id = erc721TokenA.mint(alice);
-        erc721TokenA.approve(address(escrowObligation), erc721Id);
+        erc721TokenA.approve(address(barterUtils), erc721Id);
 
         // Alice creates buy order: offering ERC721 for ETH
         bytes32 buyAttestation = barterUtils.buyEthWithErc721(
@@ -773,7 +767,7 @@ contract ERC721BarterUtilsUnitTest is Test {
         // Alice creates buy order: offering ERC721 for ETH
         vm.startPrank(alice);
         uint256 erc721Id = erc721TokenA.mint(alice);
-        erc721TokenA.approve(address(escrowObligation), erc721Id);
+        erc721TokenA.approve(address(barterUtils), erc721Id);
 
         bytes32 buyAttestation = barterUtils.buyEthWithErc721(
             address(erc721TokenA),
@@ -828,7 +822,6 @@ contract ERC721BarterUtilsUnitTest is Test {
                 amount: askAmount
             }),
             expiration,
-            bob,
             bob
         );
         vm.stopPrank();
@@ -853,13 +846,12 @@ contract ERC721BarterUtilsUnitTest is Test {
                 amount: askAmount
             }),
             expiration,
-            bob,
             bob
         );
         vm.stopPrank();
 
         vm.startPrank(alice);
-        erc721TokenA.approve(address(paymentObligation), erc721Id);
+        erc721TokenA.approve(address(barterUtils), erc721Id);
 
         uint256 aliceBalanceBefore = alice.balance;
 
@@ -884,7 +876,7 @@ contract ERC721BarterUtilsUnitTest is Test {
         // Alice creates buy order: offering ERC721 for ETH
         vm.startPrank(alice);
         uint256 erc721Id = erc721TokenA.mint(alice);
-        erc721TokenA.approve(address(escrowObligation), erc721Id);
+        erc721TokenA.approve(address(barterUtils), erc721Id);
 
         bytes32 buyAttestation = barterUtils.buyEthWithErc721(
             address(erc721TokenA),

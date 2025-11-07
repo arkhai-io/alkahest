@@ -14,6 +14,7 @@ import {TokenBundlePaymentObligation2} from "../obligations/TokenBundlePaymentOb
 import {NativeTokenEscrowObligation} from "../obligations/NativeTokenEscrowObligation.sol";
 import {NativeTokenPaymentObligation} from "../obligations/NativeTokenPaymentObligation.sol";
 import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract ERC20BarterUtils {
     IEAS internal eas;
@@ -74,13 +75,20 @@ contract ERC20BarterUtils {
         IERC20Permit tokenC = IERC20Permit(token);
         tokenC.permit(
             msg.sender,
-            address(erc20Escrow),
+            address(this),
             amount,
             deadline,
             v,
             r,
             s
         );
+
+        // Pull tokens from user to BarterUtils
+        IERC20(token).transferFrom(msg.sender, address(this), amount);
+
+        // Approve obligation contract to spend BarterUtils' tokens
+        IERC20(token).approve(address(erc20Escrow), amount);
+
         return
             erc20Escrow.doObligationFor(
                 ERC20EscrowObligation.ObligationData({
@@ -90,7 +98,6 @@ contract ERC20BarterUtils {
                     demand: demand
                 }),
                 expiration,
-                msg.sender,
                 msg.sender
             );
     }
@@ -107,13 +114,20 @@ contract ERC20BarterUtils {
         IERC20Permit tokenC = IERC20Permit(token);
         tokenC.permit(
             msg.sender,
-            address(erc20Payment),
+            address(this),
             amount,
             deadline,
             v,
             r,
             s
         );
+
+        // Pull tokens from user to BarterUtils
+        IERC20(token).transferFrom(msg.sender, address(this), amount);
+
+        // Approve obligation contract to spend BarterUtils' tokens
+        IERC20(token).approve(address(erc20Payment), amount);
+
         return
             erc20Payment.doObligationFor(
                 ERC20PaymentObligation.ObligationData({
@@ -121,7 +135,6 @@ contract ERC20BarterUtils {
                     amount: amount,
                     payee: payee
                 }),
-                msg.sender,
                 msg.sender
             );
     }
@@ -133,6 +146,12 @@ contract ERC20BarterUtils {
         uint256 askAmount,
         uint64 expiration
     ) internal returns (bytes32) {
+        // Pull tokens from user to BarterUtils
+        IERC20(bidToken).transferFrom(msg.sender, address(this), bidAmount);
+
+        // Approve obligation contract to spend BarterUtils' tokens
+        IERC20(bidToken).approve(address(erc20Escrow), bidAmount);
+
         return
             erc20Escrow.doObligationFor(
                 ERC20EscrowObligation.ObligationData({
@@ -148,7 +167,6 @@ contract ERC20BarterUtils {
                     )
                 }),
                 expiration,
-                msg.sender,
                 msg.sender
             );
     }
@@ -157,9 +175,14 @@ contract ERC20BarterUtils {
         bytes32 buyAttestation,
         ERC20PaymentObligation.ObligationData memory demand
     ) internal returns (bytes32) {
+        // Pull tokens from user to BarterUtils
+        IERC20(demand.token).transferFrom(msg.sender, address(this), demand.amount);
+
+        // Approve obligation contract to spend BarterUtils' tokens
+        IERC20(demand.token).approve(address(erc20Payment), demand.amount);
+
         bytes32 sellAttestation = erc20Payment.doObligationFor(
             demand,
-            msg.sender,
             msg.sender
         );
 
@@ -184,7 +207,7 @@ contract ERC20BarterUtils {
         IERC20Permit bidTokenC = IERC20Permit(bidToken);
         bidTokenC.permit(
             msg.sender,
-            address(erc20Escrow),
+            address(this),
             bidAmount,
             deadline,
             v,
@@ -221,7 +244,7 @@ contract ERC20BarterUtils {
         IERC20Permit askTokenC = IERC20Permit(demand.token);
         askTokenC.permit(
             msg.sender,
-            address(erc20Payment),
+            address(this),
             demand.amount,
             deadline,
             v,
@@ -280,7 +303,7 @@ contract ERC20BarterUtils {
         try
             askTokenC.permit(
                 msg.sender,
-                address(erc20Payment),
+                address(this),
                 demand.amount,
                 deadline,
                 v,
@@ -303,6 +326,12 @@ contract ERC20BarterUtils {
         uint256 askId,
         uint64 expiration
     ) internal returns (bytes32) {
+        // Pull tokens from user to BarterUtils
+        IERC20(bidToken).transferFrom(msg.sender, address(this), bidAmount);
+
+        // Approve obligation contract to spend BarterUtils' tokens
+        IERC20(bidToken).approve(address(erc20Escrow), bidAmount);
+
         return
             erc20Escrow.doObligationFor(
                 ERC20EscrowObligation.ObligationData({
@@ -318,7 +347,6 @@ contract ERC20BarterUtils {
                     )
                 }),
                 expiration,
-                msg.sender,
                 msg.sender
             );
     }
@@ -327,9 +355,14 @@ contract ERC20BarterUtils {
         bytes32 buyAttestation,
         ERC20PaymentObligation.ObligationData memory demand
     ) internal returns (bytes32) {
+        // Pull tokens from user to BarterUtils
+        IERC20(demand.token).transferFrom(msg.sender, address(this), demand.amount);
+
+        // Approve obligation contract to spend BarterUtils' tokens
+        IERC20(demand.token).approve(address(erc20Payment), demand.amount);
+
         bytes32 sellAttestation = erc20Payment.doObligationFor(
             demand,
-            msg.sender,
             msg.sender
         );
 
@@ -372,7 +405,7 @@ contract ERC20BarterUtils {
         try
             bidTokenC.permit(
                 msg.sender,
-                address(erc20Escrow),
+                address(this),
                 bidAmount,
                 deadline,
                 v,
@@ -446,6 +479,12 @@ contract ERC20BarterUtils {
         uint256 askAmount,
         uint64 expiration
     ) internal returns (bytes32) {
+        // Pull tokens from user to BarterUtils
+        IERC20(bidToken).transferFrom(msg.sender, address(this), bidAmount);
+
+        // Approve obligation contract to spend BarterUtils' tokens
+        IERC20(bidToken).approve(address(erc20Escrow), bidAmount);
+
         return
             erc20Escrow.doObligationFor(
                 ERC20EscrowObligation.ObligationData({
@@ -462,7 +501,6 @@ contract ERC20BarterUtils {
                     )
                 }),
                 expiration,
-                msg.sender,
                 msg.sender
             );
     }
@@ -471,9 +509,14 @@ contract ERC20BarterUtils {
         bytes32 buyAttestation,
         ERC20PaymentObligation.ObligationData memory demand
     ) internal returns (bytes32) {
+        // Pull tokens from user to BarterUtils
+        IERC20(demand.token).transferFrom(msg.sender, address(this), demand.amount);
+
+        // Approve obligation contract to spend BarterUtils' tokens
+        IERC20(demand.token).approve(address(erc20Payment), demand.amount);
+
         bytes32 sellAttestation = erc20Payment.doObligationFor(
             demand,
-            msg.sender,
             msg.sender
         );
 
@@ -519,7 +562,7 @@ contract ERC20BarterUtils {
         try
             bidTokenC.permit(
                 msg.sender,
-                address(erc20Escrow),
+                address(this),
                 bidAmount,
                 deadline,
                 v,
@@ -596,6 +639,12 @@ contract ERC20BarterUtils {
         TokenBundlePaymentObligation2.ObligationData memory askData,
         uint64 expiration
     ) internal returns (bytes32) {
+        // Pull tokens from user to BarterUtils
+        IERC20(bidToken).transferFrom(msg.sender, address(this), bidAmount);
+
+        // Approve obligation contract to spend BarterUtils' tokens
+        IERC20(bidToken).approve(address(erc20Escrow), bidAmount);
+
         return
             erc20Escrow.doObligationFor(
                 ERC20EscrowObligation.ObligationData({
@@ -605,7 +654,6 @@ contract ERC20BarterUtils {
                     demand: abi.encode(askData)
                 }),
                 expiration,
-                msg.sender,
                 msg.sender
             );
     }
@@ -614,9 +662,14 @@ contract ERC20BarterUtils {
         bytes32 buyAttestation,
         ERC20PaymentObligation.ObligationData memory demand
     ) internal returns (bytes32) {
+        // Pull tokens from user to BarterUtils
+        IERC20(demand.token).transferFrom(msg.sender, address(this), demand.amount);
+
+        // Approve obligation contract to spend BarterUtils' tokens
+        IERC20(demand.token).approve(address(erc20Payment), demand.amount);
+
         bytes32 sellAttestation = erc20Payment.doObligationFor(
             demand,
-            msg.sender,
             msg.sender
         );
 
@@ -650,7 +703,7 @@ contract ERC20BarterUtils {
         try
             bidTokenC.permit(
                 msg.sender,
-                address(erc20Escrow),
+                address(this),
                 bidAmount,
                 deadline,
                 v,
@@ -715,6 +768,12 @@ contract ERC20BarterUtils {
         uint256 askAmount,
         uint64 expiration
     ) internal returns (bytes32) {
+        // Pull tokens from user to BarterUtils
+        IERC20(bidToken).transferFrom(msg.sender, address(this), bidAmount);
+
+        // Approve obligation contract to spend BarterUtils' tokens
+        IERC20(bidToken).approve(address(erc20Escrow), bidAmount);
+
         return
             erc20Escrow.doObligationFor(
                 ERC20EscrowObligation.ObligationData({
@@ -729,7 +788,6 @@ contract ERC20BarterUtils {
                     )
                 }),
                 expiration,
-                msg.sender,
                 msg.sender
             );
     }
@@ -738,9 +796,14 @@ contract ERC20BarterUtils {
         bytes32 buyAttestation,
         ERC20PaymentObligation.ObligationData memory demand
     ) internal returns (bytes32) {
+        // Pull tokens from user to BarterUtils
+        IERC20(demand.token).transferFrom(msg.sender, address(this), demand.amount);
+
+        // Approve obligation contract to spend BarterUtils' tokens
+        IERC20(demand.token).approve(address(erc20Payment), demand.amount);
+
         bytes32 sellAttestation = erc20Payment.doObligationFor(
             demand,
-            msg.sender,
             msg.sender
         );
 
@@ -773,7 +836,7 @@ contract ERC20BarterUtils {
         IERC20Permit bidTokenC = IERC20Permit(bidToken);
         bidTokenC.permit(
             msg.sender,
-            address(erc20Escrow),
+            address(this),
             bidAmount,
             deadline,
             v,

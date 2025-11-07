@@ -92,7 +92,6 @@ contract NativeTokenEscrowObligationTest is Test {
         bytes32 uid = escrowObligation.doObligationFor{value: AMOUNT}(
             data,
             uint64(block.timestamp + EXPIRATION_TIME),
-            buyer,
             seller
         );
 
