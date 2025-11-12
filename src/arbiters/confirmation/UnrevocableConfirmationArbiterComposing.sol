@@ -6,7 +6,7 @@ import {IEAS} from "@eas/IEAS.sol";
 import {IArbiter} from "../../IArbiter.sol";
 import {ArbiterUtils} from "../../ArbiterUtils.sol";
 
-contract UnrevocableArbiterComposing is IArbiter {
+contract UnrevocableConfirmationArbiterComposing is IArbiter {
     using ArbiterUtils for Attestation;
 
     struct DemandData {
