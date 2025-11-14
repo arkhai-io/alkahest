@@ -126,12 +126,14 @@ contract ApiCallExample1 {
      * @notice Step 3: Request arbitration from the oracle
      * @param fulfillmentUid The fulfillment to be arbitrated
      * @param oracle The oracle address (must match the one in the demand)
+     * @param demand The demand data for context
      */
     function requestArbitration(
         bytes32 fulfillmentUid,
-        address oracle
+        address oracle,
+        bytes memory demand
     ) external {
-        trustedOracleArbiter.requestArbitration(fulfillmentUid, oracle);
+        trustedOracleArbiter.requestArbitration(fulfillmentUid, oracle, demand);
     }
 
     /**
@@ -166,7 +168,7 @@ contract ApiCallExample1 {
         );
 
         // Submit the arbitration decision
-        trustedOracleArbiter.arbitrate(fulfillmentUid, isValid);
+        trustedOracleArbiter.arbitrate(fulfillmentUid, demandData.data, isValid);
 
         emit ApiResultValidated(fulfillmentUid, isValid);
     }
@@ -281,7 +283,7 @@ contract ApiOracleValidator {
         }
 
         // Submit arbitration
-        arbiter.arbitrate(fulfillmentUid, isValid);
+        arbiter.arbitrate(fulfillmentUid, demandData.data, isValid);
 
         emit ValidationPerformed(fulfillmentUid, isValid);
     }

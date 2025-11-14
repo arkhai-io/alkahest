@@ -54,6 +54,8 @@ contract TrustedOracleArbiterTest is Test {
         // Test that arbitrate function updates the decision
         vm.startPrank(oracle);
 
+        bytes memory demandData = bytes("");
+
         // Initially the decision should be false (default value)
         assertFalse(
             arbiter.checkObligation(
@@ -72,7 +74,7 @@ contract TrustedOracleArbiterTest is Test {
                 abi.encode(
                     TrustedOracleArbiter.DemandData({
                         oracle: oracle,
-                        data: bytes("")
+                        data: demandData
                     })
                 ),
                 bytes32(0)
@@ -80,11 +82,12 @@ contract TrustedOracleArbiterTest is Test {
         );
 
         // Expect the ArbitrationMade event to be emitted
-        vm.expectEmit(true, true, false, true);
-        emit TrustedOracleArbiter.ArbitrationMade(obligationUid, oracle, true);
+        bytes32 expectedKey = keccak256(abi.encodePacked(obligationUid, demandData));
+        vm.expectEmit(true, true, true, true);
+        emit TrustedOracleArbiter.ArbitrationMade(expectedKey, obligationUid, oracle, true);
 
         // Make a positive arbitration decision
-        arbiter.arbitrate(obligationUid, true);
+        arbiter.arbitrate(obligationUid, demandData, true);
 
         // Now the decision should be true
         assertTrue(
@@ -104,7 +107,7 @@ contract TrustedOracleArbiterTest is Test {
                 abi.encode(
                     TrustedOracleArbiter.DemandData({
                         oracle: oracle,
-                        data: bytes("")
+                        data: demandData
                     })
                 ),
                 bytes32(0)
@@ -120,13 +123,15 @@ contract TrustedOracleArbiterTest is Test {
         address oracle2 = address(0x456);
         // Use the class-level obligationUid
 
+        bytes memory demandData = bytes("");
+
         // Oracle 1 makes a positive decision
         vm.prank(oracle1);
-        arbiter.arbitrate(obligationUid, true);
+        arbiter.arbitrate(obligationUid, demandData, true);
 
         // Oracle 2 makes a negative decision
         vm.prank(oracle2);
-        arbiter.arbitrate(obligationUid, false);
+        arbiter.arbitrate(obligationUid, demandData, false);
 
         // Create the attestation
         Attestation memory attestation = Attestation({
@@ -149,7 +154,7 @@ contract TrustedOracleArbiterTest is Test {
                 abi.encode(
                     TrustedOracleArbiter.DemandData({
                         oracle: oracle1,
-                        data: bytes("")
+                        data: demandData
                     })
                 ),
                 bytes32(0)
@@ -163,7 +168,7 @@ contract TrustedOracleArbiterTest is Test {
                 abi.encode(
                     TrustedOracleArbiter.DemandData({
                         oracle: oracle2,
-                        data: bytes("")
+                        data: demandData
                     })
                 ),
                 bytes32(0)
@@ -203,5 +208,62 @@ contract TrustedOracleArbiterTest is Test {
                 bytes32(0)
             )
         );
+    }
+
+    function testArbitrateWithDifferentDemands() public {
+        // Test that decisions are scoped by demand data
+        vm.startPrank(oracle);
+
+        bytes memory demandData1 = bytes("demand1");
+        bytes memory demandData2 = bytes("demand2");
+
+        // Make a positive decision for demand1
+        arbiter.arbitrate(obligationUid, demandData1, true);
+
+        // Make a negative decision for demand2
+        arbiter.arbitrate(obligationUid, demandData2, false);
+
+        Attestation memory attestation = Attestation({
+            uid: obligationUid,
+            schema: bytes32(0),
+            time: uint64(block.timestamp),
+            expirationTime: uint64(0),
+            revocationTime: uint64(0),
+            refUID: bytes32(0),
+            recipient: address(0),
+            attester: address(0),
+            revocable: true,
+            data: bytes("")
+        });
+
+        // Check with demand1 - should be true
+        assertTrue(
+            arbiter.checkObligation(
+                attestation,
+                abi.encode(
+                    TrustedOracleArbiter.DemandData({
+                        oracle: oracle,
+                        data: demandData1
+                    })
+                ),
+                bytes32(0)
+            )
+        );
+
+        // Check with demand2 - should be false
+        assertFalse(
+            arbiter.checkObligation(
+                attestation,
+                abi.encode(
+                    TrustedOracleArbiter.DemandData({
+                        oracle: oracle,
+                        data: demandData2
+                    })
+                ),
+                bytes32(0)
+            )
+        );
+
+        vm.stopPrank();
     }
 }

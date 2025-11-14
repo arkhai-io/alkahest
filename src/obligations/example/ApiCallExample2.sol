@@ -251,7 +251,7 @@ contract ApiCallExample2 {
             );
         }
 
-        trustedOracleArbiter.arbitrate(fulfillmentUid, isValid);
+        trustedOracleArbiter.arbitrate(fulfillmentUid, demandData.data, isValid);
     }
 
     /**
@@ -259,9 +259,10 @@ contract ApiCallExample2 {
      */
     function requestArbitration(
         bytes32 fulfillmentUid,
-        address oracle
+        address oracle,
+        bytes memory demand
     ) external {
-        trustedOracleArbiter.requestArbitration(fulfillmentUid, oracle);
+        trustedOracleArbiter.requestArbitration(fulfillmentUid, oracle, demand);
     }
 
     /**
@@ -347,7 +348,7 @@ contract ApiCallExample2 {
                 "Unauthorized for this escrow"
             );
 
-            trustedOracleArbiter.arbitrate(fulfillmentUids[i], decisions[i]);
+            trustedOracleArbiter.arbitrate(fulfillmentUids[i], demandData.data, decisions[i]);
         }
     }
 }

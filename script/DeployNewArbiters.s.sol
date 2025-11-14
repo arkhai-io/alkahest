@@ -7,7 +7,6 @@ import {IEAS} from "@eas/IEAS.sol";
 // Additional Arbiters
 import {AllArbiter} from "@src/arbiters/logical/AllArbiter.sol";
 import {AnyArbiter} from "@src/arbiters/logical/AnyArbiter.sol";
-import {NotArbiter} from "@src/arbiters/logical/NotArbiter.sol";
 import {IntrinsicsArbiter} from "@src/arbiters/IntrinsicsArbiter.sol";
 import {IntrinsicsArbiter2} from "@src/arbiters/IntrinsicsArbiter2.sol";
 import {TrustedOracleArbiter} from "@src/arbiters/TrustedOracleArbiter.sol";
@@ -51,7 +50,6 @@ contract DeployNewArbiters is Script {
         // Deploy Additional Arbiters
         AllArbiter allArbiter = new AllArbiter();
         AnyArbiter anyArbiter = new AnyArbiter();
-        NotArbiter notArbiter = new NotArbiter();
         IntrinsicsArbiter intrinsicsArbiter = new IntrinsicsArbiter();
         IntrinsicsArbiter2 intrinsicsArbiter2 = new IntrinsicsArbiter2();
         TrustedOracleArbiter trustedOracleArbiter = new TrustedOracleArbiter(
@@ -92,7 +90,6 @@ contract DeployNewArbiters is Script {
         console.log("\nAdditional Arbiters:");
         console.log("AllArbiter:", address(allArbiter));
         console.log("AnyArbiter:", address(anyArbiter));
-        console.log("NotArbiter:", address(notArbiter));
         console.log("IntrinsicsArbiter:", address(intrinsicsArbiter));
         console.log("IntrinsicsArbiter2:", address(intrinsicsArbiter2));
         console.log("TrustedOracleArbiter:", address(trustedOracleArbiter));
@@ -191,7 +188,6 @@ contract DeployNewArbiters is Script {
         // Add Additional Arbiters to JSON
         vm.serializeAddress(deploymentJson, "allArbiter", address(allArbiter));
         vm.serializeAddress(deploymentJson, "anyArbiter", address(anyArbiter));
-        vm.serializeAddress(deploymentJson, "notArbiter", address(notArbiter));
         vm.serializeAddress(
             deploymentJson,
             "intrinsicsArbiter",

@@ -1,6 +1,6 @@
 # Escrow Flow (pt 3 - Composing Demands)
 
-The logical arbiter contracts AnyArbiter, AllArbiter, and NotArbiter can be used to compose demands. For example, you could demand that
+The logical arbiter contracts AnyArbiter and AllArbiter can be used to compose demands. For example, you could demand that
 
 - a task can only be completed by a particular account, and is validated by a trusted third party
 - a task is completed before a particular deadline, and validated by any of a list of trusted third parties

@@ -142,7 +142,7 @@ contract ApiCallExample1Test is Test {
         );
 
         // Request arbitration from oracle
-        trustedOracleArbiter.requestArbitration(fulfillmentUid, charlie);
+        trustedOracleArbiter.requestArbitration(fulfillmentUid, charlie, innerDemand);
         vm.stopPrank();
 
         // Step 3: Charlie (oracle) validates the result
@@ -153,7 +153,7 @@ contract ApiCallExample1Test is Test {
         // 2. Check if the result satisfies the query
         // 3. Submit the validation decision
 
-        trustedOracleArbiter.arbitrate(fulfillmentUid, true);
+        trustedOracleArbiter.arbitrate(fulfillmentUid, innerDemand, true);
         vm.stopPrank();
 
         // Step 4: Bob claims the payment
@@ -210,7 +210,7 @@ contract ApiCallExample1Test is Test {
 
         // Bob (not the oracle) tries to validate - this should work but won't be recognized
         vm.prank(bob);
-        trustedOracleArbiter.arbitrate(fulfillmentUid, true);
+        trustedOracleArbiter.arbitrate(fulfillmentUid, innerDemand, true);
 
         // Bob's arbitration won't work because the demand specifies Charlie
         vm.prank(bob);
@@ -219,7 +219,7 @@ contract ApiCallExample1Test is Test {
 
         // Charlie's arbitration will work
         vm.prank(charlie);
-        trustedOracleArbiter.arbitrate(fulfillmentUid, true);
+        trustedOracleArbiter.arbitrate(fulfillmentUid, innerDemand, true);
 
         vm.prank(bob);
         erc20EscrowObligation.collectEscrow(escrowUid, fulfillmentUid);
@@ -266,7 +266,7 @@ contract ApiCallExample1Test is Test {
 
         // Charlie validates as false
         vm.prank(charlie);
-        trustedOracleArbiter.arbitrate(fulfillmentUid, false);
+        trustedOracleArbiter.arbitrate(fulfillmentUid, abi.encode(API_QUERY), false);
 
         // Bob cannot claim payment
         vm.prank(bob);

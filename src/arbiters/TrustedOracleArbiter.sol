@@ -15,13 +15,15 @@ contract TrustedOracleArbiter is IArbiter {
     }
 
     event ArbitrationMade(
+        bytes32 indexed decisionKey,
         bytes32 indexed obligation,
         address indexed oracle,
         bool decision
     );
     event ArbitrationRequested(
         bytes32 indexed obligation,
-        address indexed oracle
+        address indexed oracle,
+        bytes demand
     );
 
     error UnauthorizedArbitrationRequest();
@@ -33,19 +35,20 @@ contract TrustedOracleArbiter is IArbiter {
         eas = _eas;
     }
 
-    function arbitrate(bytes32 obligation, bool decision) public {
-        decisions[msg.sender][obligation] = decision;
-        emit ArbitrationMade(obligation, msg.sender, decision);
+    function arbitrate(bytes32 obligation, bytes memory demand, bool decision) public {
+        bytes32 decisionKey = keccak256(abi.encodePacked(obligation, demand));
+        decisions[msg.sender][decisionKey] = decision;
+        emit ArbitrationMade(decisionKey, obligation, msg.sender, decision);
     }
 
-    function requestArbitration(bytes32 _obligation, address oracle) public {
+    function requestArbitration(bytes32 _obligation, address oracle, bytes memory demand) public {
         Attestation memory obligation = eas.getAttestation(_obligation);
         if (
             obligation.attester != msg.sender &&
             obligation.recipient != msg.sender
         ) revert UnauthorizedArbitrationRequest();
 
-        emit ArbitrationRequested(_obligation, oracle);
+        emit ArbitrationRequested(_obligation, oracle, demand);
     }
 
     function checkObligation(
@@ -54,7 +57,8 @@ contract TrustedOracleArbiter is IArbiter {
         bytes32 /*counteroffer*/
     ) public view override returns (bool) {
         DemandData memory demand_ = abi.decode(demand, (DemandData));
-        return decisions[demand_.oracle][obligation.uid];
+        bytes32 decisionKey = keccak256(abi.encodePacked(obligation.uid, demand_.data));
+        return decisions[demand_.oracle][decisionKey];
     }
 
     function decodeDemandData(

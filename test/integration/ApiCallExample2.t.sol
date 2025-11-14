@@ -152,7 +152,7 @@ contract ApiCallExample2Test is Test {
         );
 
         // Request arbitration
-        trustedOracleArbiter.requestArbitration(fulfillmentUid, charlie);
+        trustedOracleArbiter.requestArbitration(fulfillmentUid, charlie, innerDemand);
         vm.stopPrank();
 
         // Verify structured data was stored correctly
@@ -172,7 +172,7 @@ contract ApiCallExample2Test is Test {
         // Step 3: Oracle validates with access to structured data
         vm.prank(charlie);
         // Oracle can make informed decision based on structured data
-        trustedOracleArbiter.arbitrate(fulfillmentUid, true);
+        trustedOracleArbiter.arbitrate(fulfillmentUid, innerDemand, true);
 
         // Step 4: Bob claims payment
         vm.prank(bob);
@@ -346,7 +346,7 @@ contract ApiCallExample2Test is Test {
 
         // Oracle rejects based on error status
         vm.prank(charlie);
-        trustedOracleArbiter.arbitrate(fulfillmentUid, false);
+        trustedOracleArbiter.arbitrate(fulfillmentUid, abi.encode(weatherQuery), false);
 
         // Bob cannot claim payment
         vm.prank(bob);
