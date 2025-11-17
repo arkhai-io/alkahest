@@ -3,7 +3,7 @@ pragma solidity ^0.8.26;
 
 import {Attestation} from "@eas/Common.sol";
 import {IEAS} from "@eas/IEAS.sol";
-import {TokenBundleEscrowObligation2} from "../obligations/TokenBundleEscrowObligation2.sol";
+import {TokenBundleEscrowObligation2} from "../obligations/escrow/non-tierable/TokenBundleEscrowObligation2.sol";
 import {TokenBundlePaymentObligation2} from "../obligations/TokenBundlePaymentObligation2.sol";
 import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";

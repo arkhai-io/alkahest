@@ -90,6 +90,9 @@ abstract contract BaseEscrowObligation is BaseObligation {
             escrow.data
         );
 
+        // Check that fulfillment references the escrow (non-tierable)
+        if (fulfillment.refUID != escrow.uid) revert InvalidFulfillment();
+
         // Check fulfillment via the specified arbiter
         if (!IArbiter(arbiter).checkObligation(fulfillment, demand, escrow.uid))
             revert InvalidFulfillment();

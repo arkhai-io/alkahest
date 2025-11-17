@@ -2,7 +2,7 @@
 pragma solidity ^0.8.26;
 
 import "forge-std/Test.sol";
-import {AttestationEscrowObligation} from "@src/obligations/AttestationEscrowObligation.sol";
+import {AttestationEscrowObligation} from "@src/obligations/escrow/non-tierable/AttestationEscrowObligation.sol";
 import {BaseEscrowObligation} from "@src/BaseEscrowObligation.sol";
 import {StringObligation} from "@src/obligations/StringObligation.sol";
 import {IArbiter} from "@src/IArbiter.sol";
@@ -148,33 +148,7 @@ contract AttestationEscrowObligationTest is Test {
     function createFulfillmentAndEscrow(
         address arbiterAddr
     ) internal returns (bytes32 fulfillmentUid, bytes32 escrowUid) {
-        // Create a fulfillment attestation data
-        AttestationRequest
-            memory fulfillmentRequest = createTestAttestationRequest();
-        fulfillmentRequest.data.data = abi.encode("fulfillment data");
-        fulfillmentRequest.data.recipient = attester;
-
-        AttestationEscrowObligation.ObligationData
-            memory fulfillmentData = AttestationEscrowObligation
-                .ObligationData({
-                    attestation: fulfillmentRequest,
-                    arbiter: arbiterAddr,
-                    demand: abi.encode("fulfillment demand")
-                });
-
-        uint64 fulfillmentExpiration = uint64(
-            block.timestamp + EXPIRATION_TIME
-        );
-
-        // Create the fulfillment attestation
-        vm.startPrank(attester);
-        fulfillmentUid = escrowObligation.doObligation(
-            fulfillmentData,
-            fulfillmentExpiration
-        );
-        vm.stopPrank();
-
-        // Create the escrow attestation
+        // Create the escrow attestation first
         vm.startPrank(requester);
 
         AttestationRequest
@@ -189,6 +163,19 @@ contract AttestationEscrowObligationTest is Test {
 
         uint64 expiration = uint64(block.timestamp + EXPIRATION_TIME);
         escrowUid = escrowObligation.doObligation(data, expiration);
+        vm.stopPrank();
+
+        // Create a fulfillment attestation using StringObligation that references the escrow
+        StringObligation stringObligation = new StringObligation(
+            eas,
+            schemaRegistry
+        );
+
+        vm.startPrank(attester);
+        fulfillmentUid = stringObligation.doObligation(
+            StringObligation.ObligationData({item: "fulfillment data"}),
+            escrowUid  // Reference the escrow for non-tierable pattern
+        );
         vm.stopPrank();
 
         return (fulfillmentUid, escrowUid);
@@ -257,7 +244,7 @@ contract AttestationEscrowObligationTest is Test {
         vm.startPrank(attester);
         bytes32 fulfillmentUid = stringObligation.doObligation(
             StringObligation.ObligationData({item: "fulfillment data"}),
-            bytes32(0)
+            escrowUid
         );
 
         // Try to collect payment, should revert with InvalidFulfillment

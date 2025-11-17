@@ -2,7 +2,7 @@
 pragma solidity ^0.8.26;
 
 import "forge-std/Test.sol";
-import {ERC1155EscrowObligation} from "@src/obligations/ERC1155EscrowObligation.sol";
+import {ERC1155EscrowObligation} from "@src/obligations/escrow/non-tierable/ERC1155EscrowObligation.sol";
 import {BaseEscrowObligation} from "@src/BaseEscrowObligation.sol";
 import {StringObligation} from "@src/obligations/StringObligation.sol";
 import {IArbiter} from "@src/IArbiter.sol";
@@ -202,7 +202,7 @@ contract ERC1155EscrowObligationTest is Test {
         vm.prank(seller);
         bytes32 fulfillmentUid = stringObligation.doObligation(
             StringObligation.ObligationData({item: "fulfillment data"}),
-            bytes32(0)
+            paymentUid  // Reference the escrow for non-tierable pattern
         );
 
         // Collect payment
@@ -255,10 +255,10 @@ contract ERC1155EscrowObligationTest is Test {
         vm.prank(seller);
         bytes32 fulfillmentUid = stringObligation.doObligation(
             StringObligation.ObligationData({item: "fulfillment data"}),
-            bytes32(0)
+            paymentUid  // Reference the escrow for non-tierable pattern
         );
 
-        // Try to collect payment, should revert with InvalidFulfillment
+        // Try to collect payment, should revert with InvalidFulfillment (arbiter rejects)
         vm.prank(seller);
         vm.expectRevert(BaseEscrowObligation.InvalidFulfillment.selector);
         escrowObligation.collectEscrow(paymentUid, fulfillmentUid);

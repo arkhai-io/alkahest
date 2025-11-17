@@ -6,7 +6,7 @@ import {IEAS} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {StringObligation} from "../StringObligation.sol";
 import {TrustedOracleArbiter} from "../../arbiters/TrustedOracleArbiter.sol";
-import {ERC20EscrowObligation} from "../ERC20EscrowObligation.sol";
+import {ERC20EscrowObligation} from "../escrow/non-tierable/ERC20EscrowObligation.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**

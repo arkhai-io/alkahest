@@ -2,7 +2,7 @@
 pragma solidity ^0.8.26;
 
 import "forge-std/Test.sol";
-import {TokenBundleEscrowObligation} from "@src/obligations/TokenBundleEscrowObligation.sol";
+import {TokenBundleEscrowObligation} from "@src/obligations/escrow/non-tierable/TokenBundleEscrowObligation.sol";
 import {BaseEscrowObligation} from "@src/BaseEscrowObligation.sol";
 import {StringObligation} from "@src/obligations/StringObligation.sol";
 import {IArbiter} from "@src/IArbiter.sol";
@@ -294,7 +294,7 @@ contract TokenBundleEscrowObligationTest is Test {
         vm.prank(seller);
         bytes32 fulfillmentUid = stringObligation.doObligation(
             StringObligation.ObligationData({item: "fulfillment data"}),
-            bytes32(0)
+            paymentUid
         );
 
         // Collect payment
@@ -405,7 +405,7 @@ contract TokenBundleEscrowObligationTest is Test {
         vm.prank(seller);
         bytes32 fulfillmentUid = stringObligation.doObligation(
             StringObligation.ObligationData({item: "fulfillment data"}),
-            bytes32(0)
+            paymentUid
         );
 
         // Try to collect payment, should revert with InvalidFulfillment

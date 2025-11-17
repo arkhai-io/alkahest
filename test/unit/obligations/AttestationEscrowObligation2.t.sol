@@ -2,7 +2,7 @@
 pragma solidity ^0.8.26;
 
 import "forge-std/Test.sol";
-import {AttestationEscrowObligation2} from "@src/obligations/AttestationEscrowObligation2.sol";
+import {AttestationEscrowObligation2} from "@src/obligations/escrow/non-tierable/AttestationEscrowObligation2.sol";
 import {BaseEscrowObligation} from "@src/BaseEscrowObligation.sol";
 import {StringObligation} from "@src/obligations/StringObligation.sol";
 import {IArbiter} from "@src/IArbiter.sol";
@@ -233,7 +233,7 @@ contract AttestationEscrowObligation2Test is Test {
 
         bytes32 fulfillmentUid = stringObligation.doObligation(
             stringData,
-            bytes32(0)
+            escrowUid
         );
 
         // Collect payment
@@ -300,7 +300,7 @@ contract AttestationEscrowObligation2Test is Test {
 
         bytes32 fulfillmentUid = stringObligation.doObligation(
             stringData,
-            bytes32(0)
+            escrowUid
         );
 
         // Try to collect payment, should revert with InvalidFulfillment
@@ -415,13 +415,14 @@ contract AttestationEscrowObligation2Test is Test {
         bytes32 nonExistentAttestationId = bytes32(uint256(0x123456789));
 
         // Create a fulfillment attestation using StringObligation
+        // Note: fulfillment doesn't reference anything since the escrow doesn't exist yet
         vm.prank(attester);
         StringObligation.ObligationData memory stringData = StringObligation
             .ObligationData({item: "fulfillment data"});
 
         bytes32 fulfillmentUid = stringObligation.doObligation(
             stringData,
-            bytes32(0)
+            bytes32(0)  // No reference since we're testing invalid escrow
         );
 
         // Try to collect payment with an invalid escrow attestation

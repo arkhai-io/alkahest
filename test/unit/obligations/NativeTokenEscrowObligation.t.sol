@@ -2,7 +2,7 @@
 pragma solidity ^0.8.26;
 
 import "forge-std/Test.sol";
-import {NativeTokenEscrowObligation} from "@src/obligations/NativeTokenEscrowObligation.sol";
+import {NativeTokenEscrowObligation} from "@src/obligations/escrow/non-tierable/NativeTokenEscrowObligation.sol";
 import {BaseEscrowObligation} from "@src/BaseEscrowObligation.sol";
 import {StringObligation} from "@src/obligations/StringObligation.sol";
 import {IArbiter} from "@src/IArbiter.sol";
@@ -148,7 +148,7 @@ contract NativeTokenEscrowObligationTest is Test {
         vm.prank(seller);
         bytes32 fulfillmentUid = stringObligation.doObligation(
             StringObligation.ObligationData({item: "hello"}),
-            bytes32(0)
+            escrowUid
         );
 
         uint256 sellerBalanceBefore = seller.balance;
@@ -193,7 +193,7 @@ contract NativeTokenEscrowObligationTest is Test {
         vm.prank(seller);
         bytes32 fulfillmentUid = stringObligation.doObligation(
             StringObligation.ObligationData({item: "goodbye"}),
-            bytes32(0)
+            escrowUid
         );
 
         // Try to collect escrow
@@ -453,7 +453,7 @@ contract NativeTokenEscrowObligationTest is Test {
         vm.prank(seller);
         bytes32 fulfillmentUid = stringObligation.doObligation(
             StringObligation.ObligationData({item: "hello"}),
-            bytes32(0)
+            wrongSchemaEscrowUid
         );
 
         // Try to collect escrow with wrong schema - should revert
@@ -508,7 +508,7 @@ contract NativeTokenEscrowObligationTest is Test {
         vm.prank(address(revertingReceiver));
         bytes32 fulfillmentUid = stringObligation.doObligation(
             StringObligation.ObligationData({item: "hello"}),
-            bytes32(0)
+            escrowUid
         );
 
         // Try to collect escrow - should fail when trying to send to reverting receiver

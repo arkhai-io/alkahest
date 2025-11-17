@@ -2,15 +2,15 @@
 pragma solidity ^0.8.26;
 
 import "forge-std/Test.sol";
-import {ERC721EscrowObligation} from "@src/obligations/ERC721EscrowObligation.sol";
+import {ERC721EscrowObligation} from "@src/obligations/escrow/non-tierable/ERC721EscrowObligation.sol";
 import {ERC721PaymentObligation} from "@src/obligations/ERC721PaymentObligation.sol";
-import {ERC20EscrowObligation} from "@src/obligations/ERC20EscrowObligation.sol";
+import {ERC20EscrowObligation} from "@src/obligations/escrow/non-tierable/ERC20EscrowObligation.sol";
 import {ERC20PaymentObligation} from "@src/obligations/ERC20PaymentObligation.sol";
-import {ERC1155EscrowObligation} from "@src/obligations/ERC1155EscrowObligation.sol";
+import {ERC1155EscrowObligation} from "@src/obligations/escrow/non-tierable/ERC1155EscrowObligation.sol";
 import {ERC1155PaymentObligation} from "@src/obligations/ERC1155PaymentObligation.sol";
-import {TokenBundleEscrowObligation2} from "@src/obligations/TokenBundleEscrowObligation2.sol";
+import {TokenBundleEscrowObligation2} from "@src/obligations/escrow/non-tierable/TokenBundleEscrowObligation2.sol";
 import {TokenBundlePaymentObligation2} from "@src/obligations/TokenBundlePaymentObligation2.sol";
-import {NativeTokenEscrowObligation} from "@src/obligations/NativeTokenEscrowObligation.sol";
+import {NativeTokenEscrowObligation} from "@src/obligations/escrow/non-tierable/NativeTokenEscrowObligation.sol";
 import {NativeTokenPaymentObligation} from "@src/obligations/NativeTokenPaymentObligation.sol";
 import {ERC721BarterUtils} from "@src/utils/ERC721BarterUtils.sol";
 import {IEAS} from "@eas/IEAS.sol";

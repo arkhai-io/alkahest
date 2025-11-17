@@ -8,7 +8,7 @@ import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {Attestation} from "@eas/Common.sol";
 import {StringObligation} from "@src/obligations/StringObligation.sol";
 import {TrustedOracleArbiter} from "@src/arbiters/TrustedOracleArbiter.sol";
-import {ERC20EscrowObligation} from "@src/obligations/ERC20EscrowObligation.sol";
+import {ERC20EscrowObligation} from "@src/obligations/escrow/non-tierable/ERC20EscrowObligation.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {EASDeployer} from "@test/utils/EASDeployer.sol";

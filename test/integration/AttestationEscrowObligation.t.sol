@@ -2,8 +2,9 @@
 pragma solidity ^0.8.26;
 
 import "forge-std/Test.sol";
-import {AttestationEscrowObligation} from "@src/obligations/AttestationEscrowObligation.sol";
+import {AttestationEscrowObligation} from "@src/obligations/escrow/non-tierable/AttestationEscrowObligation.sol";
 import {BaseEscrowObligation} from "@src/BaseEscrowObligation.sol";
+import {StringObligation} from "@src/obligations/StringObligation.sol";
 import {IArbiter} from "@src/IArbiter.sol";
 import {IEAS, AttestationRequest, AttestationRequestData} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
@@ -108,11 +109,16 @@ contract AttestationEscrowObligationTest is Test {
             uint64(block.timestamp + 1 days)
         );
 
-        // Create fulfillment attestation through the escrow contract
+        // Create fulfillment attestation using StringObligation that references the escrow
+        StringObligation stringObligation = new StringObligation(
+            eas,
+            schemaRegistry
+        );
+
         vm.prank(bob);
-        bytes32 fulfillmentId = escrowObligation.doObligation(
-            obligationData,
-            uint64(block.timestamp + 1 days)
+        bytes32 fulfillmentId = stringObligation.doObligation(
+            StringObligation.ObligationData({item: "Test demand"}),
+            escrowId  // Reference the escrow for non-tierable pattern
         );
 
         vm.prank(bob);

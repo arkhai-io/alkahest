@@ -2,7 +2,7 @@
 pragma solidity ^0.8.26;
 
 import "forge-std/Test.sol";
-import {ERC20EscrowObligation} from "@src/obligations/ERC20EscrowObligation.sol";
+import {ERC20EscrowObligation} from "@src/obligations/escrow/non-tierable/ERC20EscrowObligation.sol";
 import {BaseEscrowObligation} from "@src/BaseEscrowObligation.sol";
 import {StringObligation} from "@src/obligations/StringObligation.sol";
 import {IArbiter} from "@src/IArbiter.sol";
@@ -194,7 +194,7 @@ contract ERC20EscrowObligationTest is Test {
         vm.prank(seller);
         bytes32 fulfillmentUid = stringObligation.doObligation(
             StringObligation.ObligationData({item: "fulfillment data"}),
-            bytes32(0)
+            paymentUid
         );
 
         // Collect payment
@@ -246,7 +246,7 @@ contract ERC20EscrowObligationTest is Test {
         vm.prank(seller);
         bytes32 fulfillmentUid = stringObligation.doObligation(
             StringObligation.ObligationData({item: "fulfillment data"}),
-            bytes32(0)
+            paymentUid
         );
 
         // Try to collect payment, should revert with InvalidFulfillment
