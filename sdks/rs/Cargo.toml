@@ -1,0 +1,32 @@
+[package]
+name = "alkahest-rs"
+version = "0.6.0"
+edition = "2024"
+description = "Rust SDK to Alkahest contracts for decentralized escrow and exchange"
+license = "MIT"
+repository = "https://github.com/CoopHive/alkahest-rs"
+
+[dependencies]
+alloy = { version = "1.0.29", features = [
+    "full",
+    "node-bindings",
+    "signers",
+    "rlp",
+    "eip712",
+] }
+
+# async
+futures-util = "0.3"
+tokio = { version = "1.44", features = ["full"] }
+
+# misc
+eyre = "0.6"
+serde = "1.0"
+serde_json = "1.0"
+futures = "0.3.31"
+itertools = "0.14.0"
+tracing = "0.1.41"
+
+[dev-dependencies]
+serial_test = "2"
+tempfile = "3"
