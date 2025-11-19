@@ -1,26 +1,28 @@
-# Compiler files
-cache/
-out/
+# Compiler files (contracts)
+contracts/cache/
+contracts/out/
+contracts/target/
 
 # Ignores development broadcast logs
-!/broadcast
-/broadcast/*/31337/
-/broadcast/**/dry-run/
+!/contracts/broadcast
+/contracts/broadcast/*/31337/
+/contracts/broadcast/**/dry-run/
 
-# Dotenv file
+# Dotenv files
 .env
+contracts/.env
 
 # Dependencies
 node_modules/
 
-.DS_Store
+# Build artifacts
 *.rdb
-# alkahest-ts
-# alkahest-rs
-# alkahest-py
+.DS_Store
+
+# Development tools
 .aider.tags.cache.v3
 .aider.chat.history.md
 .aider.input.history
 summary.txt
 notes
-alkahest-docs-bak
+notes.md
