@@ -2,58 +2,62 @@
 pragma solidity ^0.8.26;
 
 import "forge-std/Test.sol";
-import {ERC721EscrowObligation} from "@src/obligations/escrow/non-tierable/ERC721EscrowObligation.sol";
+import {ERC1155EscrowObligation} from "@src/obligations/escrow/non-tierable/ERC1155EscrowObligation.sol";
 import {BaseEscrowObligation} from "@src/BaseEscrowObligation.sol";
 import {StringObligation} from "@src/obligations/StringObligation.sol";
 import {IArbiter} from "@src/IArbiter.sol";
-import {MockArbiter} from "./MockArbiter.sol";
+import {MockArbiter} from "../../fixtures/MockArbiter.sol";
 import {IEAS, Attestation, AttestationRequest, AttestationRequestData, RevocationRequest, RevocationRequestData} from "@eas/IEAS.sol";
 import {ISchemaRegistry, SchemaRecord} from "@eas/ISchemaRegistry.sol";
-import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+import {ERC1155} from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import {EASDeployer} from "@test/utils/EASDeployer.sol";
 
-// Mock ERC721 token for testing
-contract MockERC721 is ERC721 {
-    uint256 private _nextTokenId;
+// Mock ERC1155 token for testing
+contract MockERC1155 is ERC1155 {
+    constructor() ERC1155("https://example.com/token/{id}.json") {}
 
-    constructor() ERC721("Mock ERC721", "MERC721") {}
+    function mint(address to, uint256 id, uint256 amount) public {
+        _mint(to, id, amount, "");
+    }
 
-    function mint(address to) public returns (uint256) {
-        uint256 tokenId = _nextTokenId++;
-        _mint(to, tokenId);
-        return tokenId;
+    function mintBatch(
+        address to,
+        uint256[] memory ids,
+        uint256[] memory amounts
+    ) public {
+        _mintBatch(to, ids, amounts, "");
     }
 }
 
-contract ERC721EscrowObligationTest is Test {
-    ERC721EscrowObligation public escrowObligation;
+contract ERC1155EscrowObligationTest is Test {
+    ERC1155EscrowObligation public escrowObligation;
     IEAS public eas;
     ISchemaRegistry public schemaRegistry;
-    MockERC721 public token;
+    MockERC1155 public token;
     MockArbiter public mockArbiter;
     MockArbiter public rejectingArbiter;
 
     address internal buyer;
     address internal seller;
-    uint256 internal tokenId;
+    uint256 internal tokenId = 1;
+    uint256 internal erc1155TokenAmount = 100;
     uint64 constant EXPIRATION_TIME = 365 days;
 
     function setUp() public {
         EASDeployer easDeployer = new EASDeployer();
         (eas, schemaRegistry) = easDeployer.deployEAS();
 
-        escrowObligation = new ERC721EscrowObligation(eas, schemaRegistry);
-        token = new MockERC721();
+        escrowObligation = new ERC1155EscrowObligation(eas, schemaRegistry);
+        token = new MockERC1155();
         mockArbiter = new MockArbiter(true);
         rejectingArbiter = new MockArbiter(false);
 
         buyer = makeAddr("buyer");
         seller = makeAddr("seller");
 
-        // Mint a token for the buyer
-        vm.prank(address(this));
-        tokenId = token.mint(buyer);
+        // Mint tokens for the buyer
+        token.mint(buyer, tokenId, erc1155TokenAmount);
     }
 
     function testConstructor() public view {
@@ -66,21 +70,22 @@ contract ERC721EscrowObligationTest is Test {
         assertEq(schema.uid, schemaId, "Schema UID should match");
         assertEq(
             schema.schema,
-            "address arbiter, bytes demand, address token, uint256 tokenId",
+            "address arbiter, bytes demand, address token, uint256 tokenId, uint256 amount",
             "Schema string should match"
         );
     }
 
-    function testMakeStatement() public {
-        // Approve ERC721 transfer first
+    function testDoObligation() public {
+        // Approve tokens first
         vm.startPrank(buyer);
-        token.approve(address(escrowObligation), tokenId);
+        token.setApprovalForAll(address(escrowObligation), true);
 
         bytes memory demand = abi.encode("test demand");
-        ERC721EscrowObligation.ObligationData
-            memory data = ERC721EscrowObligation.ObligationData({
+        ERC1155EscrowObligation.ObligationData
+            memory data = ERC1155EscrowObligation.ObligationData({
                 token: address(token),
                 tokenId: tokenId,
+                amount: erc1155TokenAmount,
                 arbiter: address(mockArbiter),
                 demand: demand
             });
@@ -103,23 +108,29 @@ contract ERC721EscrowObligationTest is Test {
 
         // Verify token transfer to escrow
         assertEq(
-            token.ownerOf(tokenId),
-            address(escrowObligation),
-            "Escrow should hold the token"
+            token.balanceOf(address(escrowObligation), tokenId),
+            erc1155TokenAmount,
+            "Escrow should hold tokens"
+        );
+        assertEq(
+            token.balanceOf(buyer, tokenId),
+            0,
+            "Buyer should have sent tokens"
         );
     }
 
     function testDoObligationFor() public {
-        // Approve ERC721 transfer first
+        // Approve tokens first
         vm.startPrank(buyer);
-        token.approve(address(escrowObligation), tokenId);
+        token.setApprovalForAll(address(escrowObligation), true);
         vm.stopPrank();
 
         bytes memory demand = abi.encode("test demand");
-        ERC721EscrowObligation.ObligationData
-            memory data = ERC721EscrowObligation.ObligationData({
+        ERC1155EscrowObligation.ObligationData
+            memory data = ERC1155EscrowObligation.ObligationData({
                 token: address(token),
                 tokenId: tokenId,
+                amount: erc1155TokenAmount,
                 arbiter: address(mockArbiter),
                 demand: demand
             });
@@ -152,22 +163,28 @@ contract ERC721EscrowObligationTest is Test {
 
         // Verify token transfer to escrow
         assertEq(
-            token.ownerOf(tokenId),
-            address(escrowObligation),
-            "Escrow should hold the token"
+            token.balanceOf(address(escrowObligation), tokenId),
+            erc1155TokenAmount,
+            "Escrow should hold tokens"
+        );
+        assertEq(
+            token.balanceOf(buyer, tokenId),
+            0,
+            "Buyer should have sent tokens"
         );
     }
 
     function testCollectEscrow() public {
         // Setup: create an escrow
         vm.startPrank(buyer);
-        token.approve(address(escrowObligation), tokenId);
+        token.setApprovalForAll(address(escrowObligation), true);
 
         bytes memory demand = abi.encode("test demand");
-        ERC721EscrowObligation.ObligationData
-            memory data = ERC721EscrowObligation.ObligationData({
+        ERC1155EscrowObligation.ObligationData
+            memory data = ERC1155EscrowObligation.ObligationData({
                 token: address(token),
                 tokenId: tokenId,
+                amount: erc1155TokenAmount,
                 arbiter: address(mockArbiter),
                 demand: demand
             });
@@ -185,7 +202,7 @@ contract ERC721EscrowObligationTest is Test {
         vm.prank(seller);
         bytes32 fulfillmentUid = stringObligation.doObligation(
             StringObligation.ObligationData({item: "fulfillment data"}),
-            paymentUid
+            paymentUid  // Reference the escrow for non-tierable pattern
         );
 
         // Collect payment
@@ -199,22 +216,28 @@ contract ERC721EscrowObligationTest is Test {
 
         // Verify token transfer to seller
         assertEq(
-            token.ownerOf(tokenId),
-            seller,
-            "Seller should have received the token"
+            token.balanceOf(seller, tokenId),
+            erc1155TokenAmount,
+            "Seller should have received tokens"
+        );
+        assertEq(
+            token.balanceOf(address(escrowObligation), tokenId),
+            0,
+            "Escrow should have zero tokens left"
         );
     }
 
     function testCollectEscrowWithRejectedFulfillment() public {
         // Setup: create an escrow with rejecting arbiter
         vm.startPrank(buyer);
-        token.approve(address(escrowObligation), tokenId);
+        token.setApprovalForAll(address(escrowObligation), true);
 
         bytes memory demand = abi.encode("test demand");
-        ERC721EscrowObligation.ObligationData
-            memory data = ERC721EscrowObligation.ObligationData({
+        ERC1155EscrowObligation.ObligationData
+            memory data = ERC1155EscrowObligation.ObligationData({
                 token: address(token),
                 tokenId: tokenId,
+                amount: erc1155TokenAmount,
                 arbiter: address(rejectingArbiter),
                 demand: demand
             });
@@ -232,10 +255,10 @@ contract ERC721EscrowObligationTest is Test {
         vm.prank(seller);
         bytes32 fulfillmentUid = stringObligation.doObligation(
             StringObligation.ObligationData({item: "fulfillment data"}),
-            paymentUid
+            paymentUid  // Reference the escrow for non-tierable pattern
         );
 
-        // Try to collect payment, should revert with InvalidFulfillment
+        // Try to collect payment, should revert with InvalidFulfillment (arbiter rejects)
         vm.prank(seller);
         vm.expectRevert(BaseEscrowObligation.InvalidFulfillment.selector);
         escrowObligation.collectEscrow(paymentUid, fulfillmentUid);
@@ -244,13 +267,14 @@ contract ERC721EscrowObligationTest is Test {
     function testReclaimExpired() public {
         // Setup: create an escrow
         vm.startPrank(buyer);
-        token.approve(address(escrowObligation), tokenId);
+        token.setApprovalForAll(address(escrowObligation), true);
 
         bytes memory demand = abi.encode("test demand");
-        ERC721EscrowObligation.ObligationData
-            memory data = ERC721EscrowObligation.ObligationData({
+        ERC1155EscrowObligation.ObligationData
+            memory data = ERC1155EscrowObligation.ObligationData({
                 token: address(token),
                 tokenId: tokenId,
+                amount: erc1155TokenAmount,
                 arbiter: address(mockArbiter),
                 demand: demand
             });
@@ -275,25 +299,31 @@ contract ERC721EscrowObligationTest is Test {
 
         // Verify token transfer back to buyer
         assertEq(
-            token.ownerOf(tokenId),
-            buyer,
-            "Buyer should have received the token back"
+            token.balanceOf(buyer, tokenId),
+            erc1155TokenAmount,
+            "Buyer should have received tokens back"
+        );
+        assertEq(
+            token.balanceOf(address(escrowObligation), tokenId),
+            0,
+            "Escrow should have zero tokens left"
         );
     }
 
     function testCheckObligation() public {
         // Create obligation data
-        ERC721EscrowObligation.ObligationData
-            memory paymentData = ERC721EscrowObligation.ObligationData({
+        ERC1155EscrowObligation.ObligationData
+            memory paymentData = ERC1155EscrowObligation.ObligationData({
                 token: address(token),
                 tokenId: tokenId,
+                amount: erc1155TokenAmount,
                 arbiter: address(mockArbiter),
                 demand: abi.encode("specific demand")
             });
 
         // Use the obligation contract to create a valid attestation
         vm.startPrank(buyer);
-        token.approve(address(escrowObligation), tokenId);
+        token.setApprovalForAll(address(escrowObligation), true);
         bytes32 attestationId = escrowObligation.doObligation(
             paymentData,
             uint64(block.timestamp + EXPIRATION_TIME)
@@ -303,10 +333,11 @@ contract ERC721EscrowObligationTest is Test {
         Attestation memory attestation = eas.getAttestation(attestationId);
 
         // Test exact match
-        ERC721EscrowObligation.ObligationData
-            memory exactDemand = ERC721EscrowObligation.ObligationData({
+        ERC1155EscrowObligation.ObligationData
+            memory exactDemand = ERC1155EscrowObligation.ObligationData({
                 token: address(token),
                 tokenId: tokenId,
+                amount: erc1155TokenAmount,
                 arbiter: address(mockArbiter),
                 demand: abi.encode("specific demand")
             });
@@ -318,34 +349,68 @@ contract ERC721EscrowObligationTest is Test {
         );
         assertTrue(exactMatch, "Should match exact demand");
 
-        // Test different token ID (should fail)
-        uint256 differentTokenId = 999;
-        ERC721EscrowObligation.ObligationData
-            memory differentTokenIdDemand = ERC721EscrowObligation
-                .ObligationData({
-                    token: address(token),
-                    tokenId: differentTokenId,
-                    arbiter: address(mockArbiter),
-                    demand: abi.encode("specific demand")
-                });
+        // Test lower amount demand (should succeed)
+        ERC1155EscrowObligation.ObligationData
+            memory lowerDemand = ERC1155EscrowObligation.ObligationData({
+                token: address(token),
+                tokenId: tokenId,
+                amount: erc1155TokenAmount - 50,
+                arbiter: address(mockArbiter),
+                demand: abi.encode("specific demand")
+            });
 
-        bool differentTokenIdMatch = escrowObligation.checkObligation(
+        bool lowerMatch = escrowObligation.checkObligation(
             attestation,
-            abi.encode(differentTokenIdDemand),
+            abi.encode(lowerDemand),
+            bytes32(0)
+        );
+        assertTrue(lowerMatch, "Should match lower amount demand");
+
+        // Test higher amount demand (should fail)
+        ERC1155EscrowObligation.ObligationData
+            memory higherDemand = ERC1155EscrowObligation.ObligationData({
+                token: address(token),
+                tokenId: tokenId,
+                amount: erc1155TokenAmount + 50,
+                arbiter: address(mockArbiter),
+                demand: abi.encode("specific demand")
+            });
+
+        bool higherMatch = escrowObligation.checkObligation(
+            attestation,
+            abi.encode(higherDemand),
+            bytes32(0)
+        );
+        assertFalse(higherMatch, "Should not match higher amount demand");
+
+        // Test different token ID (should fail)
+        ERC1155EscrowObligation.ObligationData
+            memory differentIdDemand = ERC1155EscrowObligation.ObligationData({
+                token: address(token),
+                tokenId: tokenId + 1,
+                amount: erc1155TokenAmount,
+                arbiter: address(mockArbiter),
+                demand: abi.encode("specific demand")
+            });
+
+        bool differentIdMatch = escrowObligation.checkObligation(
+            attestation,
+            abi.encode(differentIdDemand),
             bytes32(0)
         );
         assertFalse(
-            differentTokenIdMatch,
+            differentIdMatch,
             "Should not match different token ID demand"
         );
 
         // Test different token (should fail)
-        MockERC721 differentToken = new MockERC721();
-        ERC721EscrowObligation.ObligationData
-            memory differentTokenDemand = ERC721EscrowObligation
+        MockERC1155 differentToken = new MockERC1155();
+        ERC1155EscrowObligation.ObligationData
+            memory differentTokenDemand = ERC1155EscrowObligation
                 .ObligationData({
                     token: address(differentToken),
                     tokenId: tokenId,
+                    amount: erc1155TokenAmount,
                     arbiter: address(mockArbiter),
                     demand: abi.encode("specific demand")
                 });
@@ -361,11 +426,12 @@ contract ERC721EscrowObligationTest is Test {
         );
 
         // Test different arbiter (should fail)
-        ERC721EscrowObligation.ObligationData
-            memory differentArbiterDemand = ERC721EscrowObligation
+        ERC1155EscrowObligation.ObligationData
+            memory differentArbiterDemand = ERC1155EscrowObligation
                 .ObligationData({
                     token: address(token),
                     tokenId: tokenId,
+                    amount: erc1155TokenAmount,
                     arbiter: address(rejectingArbiter),
                     demand: abi.encode("specific demand")
                 });
@@ -381,13 +447,15 @@ contract ERC721EscrowObligationTest is Test {
         );
 
         // Test different demand (should fail)
-        ERC721EscrowObligation.ObligationData
-            memory differentDemandData = ERC721EscrowObligation.ObligationData({
-                token: address(token),
-                tokenId: tokenId,
-                arbiter: address(mockArbiter),
-                demand: abi.encode("different demand")
-            });
+        ERC1155EscrowObligation.ObligationData
+            memory differentDemandData = ERC1155EscrowObligation
+                .ObligationData({
+                    token: address(token),
+                    tokenId: tokenId,
+                    amount: erc1155TokenAmount,
+                    arbiter: address(mockArbiter),
+                    demand: abi.encode("different demand")
+                });
 
         bool differentDemandMatch = escrowObligation.checkObligation(
             attestation,
@@ -397,38 +465,37 @@ contract ERC721EscrowObligationTest is Test {
         assertFalse(differentDemandMatch, "Should not match different demand");
     }
 
-    function testTransferFailureReverts() public {
-        // Mint a token for a different address that won't approve the transfer
-        address otherOwner = makeAddr("otherOwner");
-        uint256 otherTokenId = token.mint(otherOwner);
+    function testInvalidEscrowReverts() public {
+        // Attempt to create escrow with more tokens than the buyer has
+        uint256 excessAmount = erc1155TokenAmount + 100;
 
-        // Try to create escrow with a token that hasn't been approved for transfer
+        vm.startPrank(buyer);
+        token.setApprovalForAll(address(escrowObligation), true);
+
         bytes memory demand = abi.encode("test demand");
-        ERC721EscrowObligation.ObligationData
-            memory data = ERC721EscrowObligation.ObligationData({
+        ERC1155EscrowObligation.ObligationData
+            memory data = ERC1155EscrowObligation.ObligationData({
                 token: address(token),
-                tokenId: otherTokenId,
+                tokenId: tokenId,
+                amount: excessAmount,
                 arbiter: address(mockArbiter),
                 demand: demand
             });
 
         uint64 expiration = uint64(block.timestamp + EXPIRATION_TIME);
 
-        // Should revert with our custom ERC721TransferFailed error
+        // Should revert with our custom ERC1155TransferFailed error
         vm.expectRevert(
             abi.encodeWithSelector(
-                ERC721EscrowObligation.ERC721TransferFailed.selector,
+                ERC1155EscrowObligation.ERC1155TransferFailed.selector,
                 address(token),
-                otherOwner,
+                buyer,
                 address(escrowObligation),
-                otherTokenId
+                tokenId,
+                excessAmount
             )
         );
-        vm.prank(otherOwner);
-        escrowObligation.doObligationFor(
-            data,
-            expiration,
-            otherOwner
-        );
+        escrowObligation.doObligation(data, expiration);
+        vm.stopPrank();
     }
 }

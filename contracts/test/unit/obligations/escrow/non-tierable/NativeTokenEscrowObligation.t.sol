@@ -6,7 +6,7 @@ import {NativeTokenEscrowObligation} from "@src/obligations/escrow/non-tierable/
 import {BaseEscrowObligation} from "@src/BaseEscrowObligation.sol";
 import {StringObligation} from "@src/obligations/StringObligation.sol";
 import {IArbiter} from "@src/IArbiter.sol";
-import {MockArbiter} from "./MockArbiter.sol";
+import {MockArbiter} from "../../fixtures/MockArbiter.sol";
 import {IEAS, Attestation, AttestationRequestData, AttestationRequest} from "@eas/IEAS.sol";
 import {ISchemaRegistry, SchemaRecord} from "@eas/ISchemaRegistry.sol";
 
