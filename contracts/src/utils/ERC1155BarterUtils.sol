@@ -9,8 +9,8 @@ import {ERC721EscrowObligation} from "../obligations/escrow/non-tierable/ERC721E
 import {ERC721PaymentObligation} from "../obligations/ERC721PaymentObligation.sol";
 import {ERC1155EscrowObligation} from "../obligations/escrow/non-tierable/ERC1155EscrowObligation.sol";
 import {ERC1155PaymentObligation} from "../obligations/ERC1155PaymentObligation.sol";
-import {TokenBundleEscrowObligation2} from "../obligations/escrow/non-tierable/TokenBundleEscrowObligation2.sol";
-import {TokenBundlePaymentObligation2} from "../obligations/TokenBundlePaymentObligation2.sol";
+import {TokenBundleEscrowObligation} from "../obligations/escrow/non-tierable/TokenBundleEscrowObligation.sol";
+import {TokenBundlePaymentObligation} from "../obligations/TokenBundlePaymentObligation.sol";
 import {NativeTokenEscrowObligation} from "../obligations/escrow/non-tierable/NativeTokenEscrowObligation.sol";
 import {NativeTokenPaymentObligation} from "../obligations/NativeTokenPaymentObligation.sol";
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
@@ -24,8 +24,8 @@ contract ERC1155BarterUtils is IERC1155Receiver {
     ERC721PaymentObligation internal erc721Payment;
     ERC1155EscrowObligation internal erc1155Escrow;
     ERC1155PaymentObligation internal erc1155Payment;
-    TokenBundleEscrowObligation2 internal bundleEscrow;
-    TokenBundlePaymentObligation2 internal bundlePayment;
+    TokenBundleEscrowObligation internal bundleEscrow;
+    TokenBundlePaymentObligation internal bundlePayment;
     NativeTokenEscrowObligation internal nativeEscrow;
     NativeTokenPaymentObligation internal nativePayment;
 
@@ -40,8 +40,8 @@ contract ERC1155BarterUtils is IERC1155Receiver {
         ERC721PaymentObligation _erc721Payment,
         ERC1155EscrowObligation _erc1155Escrow,
         ERC1155PaymentObligation _erc1155Payment,
-        TokenBundleEscrowObligation2 _bundleEscrow,
-        TokenBundlePaymentObligation2 _bundlePayment,
+        TokenBundleEscrowObligation _bundleEscrow,
+        TokenBundlePaymentObligation _bundlePayment,
         NativeTokenEscrowObligation _nativeEscrow,
         NativeTokenPaymentObligation _nativePayment
     ) {
@@ -342,7 +342,7 @@ contract ERC1155BarterUtils is IERC1155Receiver {
         address bidToken,
         uint256 bidTokenId,
         uint256 bidAmount,
-        TokenBundlePaymentObligation2.ObligationData calldata askData,
+        TokenBundlePaymentObligation.ObligationData calldata askData,
         uint64 expiration
     ) external returns (bytes32) {
         // Pull ERC1155 tokens from user to BarterUtils
@@ -375,8 +375,8 @@ contract ERC1155BarterUtils is IERC1155Receiver {
         bytes32 buyAttestation
     ) external returns (bytes32) {
         Attestation memory bid = eas.getAttestation(buyAttestation);
-        TokenBundleEscrowObligation2.ObligationData memory escrowData = abi
-            .decode(bid.data, (TokenBundleEscrowObligation2.ObligationData));
+        TokenBundleEscrowObligation.ObligationData memory escrowData = abi
+            .decode(bid.data, (TokenBundleEscrowObligation.ObligationData));
         ERC1155PaymentObligation.ObligationData memory demand = abi.decode(
             escrowData.demand,
             (ERC1155PaymentObligation.ObligationData)

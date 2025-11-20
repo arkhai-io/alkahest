@@ -15,6 +15,8 @@ contract TokenBundlePaymentObligation is BaseObligation, IArbiter {
     using ArbiterUtils for Attestation;
 
     struct ObligationData {
+        // Native tokens
+        uint256 nativeAmount;
         // ERC20
         address[] erc20Tokens;
         uint256[] erc20Amounts;
@@ -35,6 +37,8 @@ contract TokenBundlePaymentObligation is BaseObligation, IArbiter {
     );
 
     error ArrayLengthMismatch();
+    error InsufficientPayment(uint256 expected, uint256 received);
+    error NativeTokenTransferFailed(address to, uint256 amount);
 
     constructor(
         IEAS _eas,
@@ -43,7 +47,7 @@ contract TokenBundlePaymentObligation is BaseObligation, IArbiter {
         BaseObligation(
             _eas,
             _schemaRegistry,
-            "address[] erc20Tokens, uint256[] erc20Amounts, address[] erc721Tokens, uint256[] erc721TokenIds, address[] erc1155Tokens, uint256[] erc1155TokenIds, uint256[] erc1155Amounts, address payee",
+            "uint256 nativeAmount, address[] erc20Tokens, uint256[] erc20Amounts, address[] erc721Tokens, uint256[] erc721TokenIds, address[] erc1155Tokens, uint256[] erc1155TokenIds, uint256[] erc1155Amounts, address payee",
             true
         )
     {}
@@ -51,7 +55,7 @@ contract TokenBundlePaymentObligation is BaseObligation, IArbiter {
     function doObligation(
         ObligationData calldata data,
         bytes32 refUID
-    ) public returns (bytes32 uid_) {
+    ) public payable returns (bytes32 uid_) {
         bytes memory encodedData = abi.encode(data);
         uid_ = _doObligationForRaw(
             encodedData,
@@ -65,7 +69,7 @@ contract TokenBundlePaymentObligation is BaseObligation, IArbiter {
         ObligationData calldata data,
         address recipient,
         bytes32 refUID
-    ) public returns (bytes32 uid_) {
+    ) public payable returns (bytes32 uid_) {
         bytes memory encodedData = abi.encode(data);
         uid_ = _doObligationForRaw(
             encodedData,
@@ -86,7 +90,41 @@ contract TokenBundlePaymentObligation is BaseObligation, IArbiter {
         );
 
         validateArrayLengths(obligationData);
+
+        // Handle native tokens
+        if (obligationData.nativeAmount > 0) {
+            // Verify sufficient payment was sent
+            if (msg.value < obligationData.nativeAmount) {
+                revert InsufficientPayment(
+                    obligationData.nativeAmount,
+                    msg.value
+                );
+            }
+
+            // Transfer native tokens to payee
+            (bool success, ) = payable(obligationData.payee).call{
+                value: obligationData.nativeAmount
+            }("");
+
+            if (!success) {
+                revert NativeTokenTransferFailed(
+                    obligationData.payee,
+                    obligationData.nativeAmount
+                );
+            }
+        }
+
+        // Handle token bundle
         transferBundle(obligationData, payer);
+
+        // Return excess native token payment if any
+        if (msg.value > obligationData.nativeAmount) {
+            uint256 excess = msg.value - obligationData.nativeAmount;
+            (bool refundSuccess, ) = payable(payer).call{value: excess}("");
+            if (!refundSuccess) {
+                revert NativeTokenTransferFailed(payer, excess);
+            }
+        }
     }
 
     function _afterAttest(
@@ -164,6 +202,7 @@ contract TokenBundlePaymentObligation is BaseObligation, IArbiter {
         ObligationData memory demandData = abi.decode(demand, (ObligationData));
 
         return
+            payment.nativeAmount >= demandData.nativeAmount &&
             _checkTokenArrays(payment, demandData) &&
             payment.payee == demandData.payee;
     }
@@ -218,4 +257,7 @@ contract TokenBundlePaymentObligation is BaseObligation, IArbiter {
     ) public pure returns (ObligationData memory) {
         return abi.decode(data, (ObligationData));
     }
+
+    // Allow contract to receive native tokens (for refunds)
+    receive() external payable override {}
 }

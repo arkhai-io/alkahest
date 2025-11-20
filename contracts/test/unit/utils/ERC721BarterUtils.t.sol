@@ -8,8 +8,8 @@ import {ERC20EscrowObligation} from "@src/obligations/escrow/non-tierable/ERC20E
 import {ERC20PaymentObligation} from "@src/obligations/ERC20PaymentObligation.sol";
 import {ERC1155EscrowObligation} from "@src/obligations/escrow/non-tierable/ERC1155EscrowObligation.sol";
 import {ERC1155PaymentObligation} from "@src/obligations/ERC1155PaymentObligation.sol";
-import {TokenBundleEscrowObligation2} from "@src/obligations/escrow/non-tierable/TokenBundleEscrowObligation2.sol";
-import {TokenBundlePaymentObligation2} from "@src/obligations/TokenBundlePaymentObligation2.sol";
+import {TokenBundleEscrowObligation} from "@src/obligations/escrow/non-tierable/TokenBundleEscrowObligation.sol";
+import {TokenBundlePaymentObligation} from "@src/obligations/TokenBundlePaymentObligation.sol";
 import {NativeTokenEscrowObligation} from "@src/obligations/escrow/non-tierable/NativeTokenEscrowObligation.sol";
 import {NativeTokenPaymentObligation} from "@src/obligations/NativeTokenPaymentObligation.sol";
 import {ERC721BarterUtils} from "@src/utils/ERC721BarterUtils.sol";
@@ -54,8 +54,8 @@ contract ERC721BarterUtilsUnitTest is Test {
     ERC20PaymentObligation public erc20Payment;
     ERC1155EscrowObligation public erc1155Escrow;
     ERC1155PaymentObligation public erc1155Payment;
-    TokenBundleEscrowObligation2 public bundleEscrow;
-    TokenBundlePaymentObligation2 public bundlePayment;
+    TokenBundleEscrowObligation public bundleEscrow;
+    TokenBundlePaymentObligation public bundlePayment;
     NativeTokenEscrowObligation public nativeEscrow;
     NativeTokenPaymentObligation public nativePayment;
     ERC721BarterUtils public barterUtils;
@@ -95,8 +95,8 @@ contract ERC721BarterUtilsUnitTest is Test {
         erc20Payment = new ERC20PaymentObligation(eas, schemaRegistry);
         erc1155Escrow = new ERC1155EscrowObligation(eas, schemaRegistry);
         erc1155Payment = new ERC1155PaymentObligation(eas, schemaRegistry);
-        bundleEscrow = new TokenBundleEscrowObligation2(eas, schemaRegistry);
-        bundlePayment = new TokenBundlePaymentObligation2(eas, schemaRegistry);
+        bundleEscrow = new TokenBundleEscrowObligation(eas, schemaRegistry);
+        bundlePayment = new TokenBundlePaymentObligation(eas, schemaRegistry);
         nativeEscrow = new NativeTokenEscrowObligation(eas, schemaRegistry);
         nativePayment = new NativeTokenPaymentObligation(eas, schemaRegistry);
 
@@ -508,7 +508,7 @@ contract ERC721BarterUtilsUnitTest is Test {
         uint64 expiration = uint64(block.timestamp + 1 days);
 
         // Create bundle data
-        TokenBundleEscrowObligation2.ObligationData memory bundleData;
+        TokenBundleEscrowObligation.ObligationData memory bundleData;
         bundleData.nativeAmount = 0;
         bundleData.erc20Tokens = new address[](1);
         bundleData.erc20Amounts = new uint256[](1);
@@ -525,7 +525,7 @@ contract ERC721BarterUtilsUnitTest is Test {
 
         bundleData.arbiter = address(bundlePayment);
         bundleData.demand = abi.encode(
-            TokenBundlePaymentObligation2.ObligationData({
+            TokenBundlePaymentObligation.ObligationData({
                 nativeAmount: 0,
                 erc20Tokens: new address[](0),
                 erc20Amounts: new uint256[](0),
@@ -539,10 +539,10 @@ contract ERC721BarterUtilsUnitTest is Test {
         );
 
         // Set up the demand data properly
-        TokenBundlePaymentObligation2.ObligationData memory demandData = abi
+        TokenBundlePaymentObligation.ObligationData memory demandData = abi
             .decode(
                 bundleData.demand,
-                (TokenBundlePaymentObligation2.ObligationData)
+                (TokenBundlePaymentObligation.ObligationData)
             );
         demandData.erc721Tokens[0] = address(erc721TokenA);
         demandData.erc721TokenIds[0] = aliceErc721Id;
@@ -569,7 +569,7 @@ contract ERC721BarterUtilsUnitTest is Test {
         uint64 expiration = uint64(block.timestamp + 1 days);
 
         // Create bundle data for Bob's escrow
-        TokenBundleEscrowObligation2.ObligationData memory bundleData;
+        TokenBundleEscrowObligation.ObligationData memory bundleData;
         bundleData.nativeAmount = 0;
         bundleData.erc20Tokens = new address[](1);
         bundleData.erc20Amounts = new uint256[](1);

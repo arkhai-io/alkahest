@@ -14,8 +14,8 @@ import {ERC721EscrowObligation} from "../../../src/obligations/escrow/non-tierab
 import {ERC721PaymentObligation} from "../../../src/obligations/ERC721PaymentObligation.sol";
 import {ERC1155EscrowObligation} from "../../../src/obligations/escrow/non-tierable/ERC1155EscrowObligation.sol";
 import {ERC1155PaymentObligation} from "../../../src/obligations/ERC1155PaymentObligation.sol";
-import {TokenBundleEscrowObligation2} from "../../../src/obligations/escrow/non-tierable/TokenBundleEscrowObligation2.sol";
-import {TokenBundlePaymentObligation2} from "../../../src/obligations/TokenBundlePaymentObligation2.sol";
+import {TokenBundleEscrowObligation} from "../../../src/obligations/escrow/non-tierable/TokenBundleEscrowObligation.sol";
+import {TokenBundlePaymentObligation} from "../../../src/obligations/TokenBundlePaymentObligation.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {ERC1155} from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
@@ -74,8 +74,8 @@ contract NativeTokenBarterUtilsTest is Test {
     ERC721PaymentObligation public erc721Payment;
     ERC1155EscrowObligation public erc1155Escrow;
     ERC1155PaymentObligation public erc1155Payment;
-    TokenBundleEscrowObligation2 public bundleEscrow;
-    TokenBundlePaymentObligation2 public bundlePayment;
+    TokenBundleEscrowObligation public bundleEscrow;
+    TokenBundlePaymentObligation public bundlePayment;
 
     MockERC20 public testERC20;
     MockERC721 public testERC721;
@@ -102,8 +102,8 @@ contract NativeTokenBarterUtilsTest is Test {
         erc721Payment = new ERC721PaymentObligation(eas, schemaRegistry);
         erc1155Escrow = new ERC1155EscrowObligation(eas, schemaRegistry);
         erc1155Payment = new ERC1155PaymentObligation(eas, schemaRegistry);
-        bundleEscrow = new TokenBundleEscrowObligation2(eas, schemaRegistry);
-        bundlePayment = new TokenBundlePaymentObligation2(eas, schemaRegistry);
+        bundleEscrow = new TokenBundleEscrowObligation(eas, schemaRegistry);
+        bundlePayment = new TokenBundlePaymentObligation(eas, schemaRegistry);
 
         // Deploy barter utils
         barterUtils = new NativeTokenBarterUtils(
@@ -373,8 +373,8 @@ contract NativeTokenBarterUtilsTest is Test {
         erc721Tokens[0] = address(testERC721);
         erc721TokenIds[0] = 2;
 
-        TokenBundlePaymentObligation2.ObligationData
-            memory bundleData = TokenBundlePaymentObligation2.ObligationData({
+        TokenBundlePaymentObligation.ObligationData
+            memory bundleData = TokenBundlePaymentObligation.ObligationData({
                 nativeAmount: 0,
                 erc20Tokens: erc20Tokens,
                 erc20Amounts: erc20Amounts,
@@ -415,8 +415,8 @@ contract NativeTokenBarterUtilsTest is Test {
         erc721Tokens[0] = address(testERC721);
         erc721TokenIds[0] = 2;
 
-        TokenBundleEscrowObligation2.ObligationData
-            memory bundleData = TokenBundleEscrowObligation2.ObligationData({
+        TokenBundleEscrowObligation.ObligationData
+            memory bundleData = TokenBundleEscrowObligation.ObligationData({
                 nativeAmount: 0,
                 erc20Tokens: erc20Tokens,
                 erc20Amounts: erc20Amounts,

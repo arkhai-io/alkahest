@@ -22,6 +22,8 @@ contract TokenBundleEscrowObligation is
     struct ObligationData {
         address arbiter;
         bytes demand;
+        // Native tokens
+        uint256 nativeAmount;
         // ERC20
         address[] erc20Tokens;
         uint256[] erc20Amounts;
@@ -35,6 +37,8 @@ contract TokenBundleEscrowObligation is
     }
 
     error ArrayLengthMismatch();
+    error InsufficientPayment(uint256 expected, uint256 received);
+    error NativeTokenTransferFailed(address to, uint256 amount);
     error ERC20TransferFailed(
         address token,
         address from,
@@ -62,7 +66,7 @@ contract TokenBundleEscrowObligation is
         BaseEscrowObligation(
             _eas,
             _schemaRegistry,
-            "address arbiter, bytes demand, address[] erc20Tokens, uint256[] erc20Amounts, address[] erc721Tokens, uint256[] erc721TokenIds, address[] erc1155Tokens, uint256[] erc1155TokenIds, uint256[] erc1155Amounts",
+            "address arbiter, bytes demand, uint256 nativeAmount, address[] erc20Tokens, uint256[] erc20Amounts, address[] erc721Tokens, uint256[] erc721TokenIds, address[] erc1155Tokens, uint256[] erc1155TokenIds, uint256[] erc1155Amounts",
             true
         )
     {}
@@ -90,6 +94,15 @@ contract TokenBundleEscrowObligation is
     function _lockEscrow(bytes memory data, address from) internal override {
         ObligationData memory decoded = abi.decode(data, (ObligationData));
         validateArrayLengths(decoded);
+
+        // Handle native tokens
+        if (decoded.nativeAmount > 0) {
+            if (msg.value < decoded.nativeAmount) {
+                revert InsufficientPayment(decoded.nativeAmount, msg.value);
+            }
+        }
+
+        // Handle token bundle
         transferInTokenBundle(decoded, from);
     }
 
@@ -103,6 +116,18 @@ contract TokenBundleEscrowObligation is
             escrowData,
             (ObligationData)
         );
+
+        // Transfer native tokens
+        if (decoded.nativeAmount > 0) {
+            (bool success, ) = payable(to).call{value: decoded.nativeAmount}(
+                ""
+            );
+            if (!success) {
+                revert NativeTokenTransferFailed(to, decoded.nativeAmount);
+            }
+        }
+
+        // Transfer token bundle
         transferOutTokenBundle(decoded, to);
         return ""; // Token escrows don't return anything
     }
@@ -269,6 +294,7 @@ contract TokenBundleEscrowObligation is
         ObligationData memory demandData = abi.decode(demand, (ObligationData));
 
         return
+            payment.nativeAmount >= demandData.nativeAmount &&
             _checkTokenArrays(payment, demandData) &&
             payment.arbiter == demandData.arbiter &&
             keccak256(payment.demand) == keccak256(demandData.demand);
@@ -316,7 +342,7 @@ contract TokenBundleEscrowObligation is
     function doObligation(
         ObligationData calldata data,
         uint64 expirationTime
-    ) external returns (bytes32) {
+    ) external payable returns (bytes32) {
         return
             _doObligationForRaw(
                 abi.encode(data),
@@ -331,7 +357,7 @@ contract TokenBundleEscrowObligation is
         ObligationData calldata data,
         uint64 expirationTime,
         address recipient
-    ) external returns (bytes32) {
+    ) external payable returns (bytes32) {
         return
             _doObligationForRaw(
                 abi.encode(data),
@@ -362,4 +388,7 @@ contract TokenBundleEscrowObligation is
     ) public pure returns (ObligationData memory) {
         return abi.decode(data, (ObligationData));
     }
+
+    // Allow contract to receive native tokens
+    receive() external payable override {}
 }

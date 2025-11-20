@@ -3,8 +3,8 @@ pragma solidity ^0.8.26;
 
 import {Attestation} from "@eas/Common.sol";
 import {IEAS} from "@eas/IEAS.sol";
-import {TokenBundleEscrowObligation2} from "../obligations/escrow/non-tierable/TokenBundleEscrowObligation2.sol";
-import {TokenBundlePaymentObligation2} from "../obligations/TokenBundlePaymentObligation2.sol";
+import {TokenBundleEscrowObligation} from "../obligations/escrow/non-tierable/TokenBundleEscrowObligation.sol";
+import {TokenBundlePaymentObligation} from "../obligations/TokenBundlePaymentObligation.sol";
 import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
@@ -13,8 +13,8 @@ import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Re
 
 contract TokenBundleBarterUtils is IERC1155Receiver {
     IEAS internal eas;
-    TokenBundleEscrowObligation2 internal bundleEscrow;
-    TokenBundlePaymentObligation2 internal bundlePayment;
+    TokenBundleEscrowObligation internal bundleEscrow;
+    TokenBundlePaymentObligation internal bundlePayment;
 
     error CouldntCollectEscrow();
     error InvalidSignatureLength();
@@ -28,8 +28,8 @@ contract TokenBundleBarterUtils is IERC1155Receiver {
 
     constructor(
         IEAS _eas,
-        TokenBundleEscrowObligation2 _bundleEscrow,
-        TokenBundlePaymentObligation2 _bundlePayment
+        TokenBundleEscrowObligation _bundleEscrow,
+        TokenBundlePaymentObligation _bundlePayment
     ) {
         eas = _eas;
         bundleEscrow = _bundleEscrow;
@@ -37,7 +37,7 @@ contract TokenBundleBarterUtils is IERC1155Receiver {
     }
 
     function permitAndEscrowBundle(
-        TokenBundleEscrowObligation2.ObligationData calldata data,
+        TokenBundleEscrowObligation.ObligationData calldata data,
         uint64 expiration,
         ERC20PermitSignature[] calldata permits
     ) external payable returns (bytes32) {
@@ -72,7 +72,7 @@ contract TokenBundleBarterUtils is IERC1155Receiver {
     }
 
     function permitAndPayBundle(
-        TokenBundlePaymentObligation2.ObligationData calldata data,
+        TokenBundlePaymentObligation.ObligationData calldata data,
         bytes32 refUID,
         ERC20PermitSignature[] calldata permits
     ) external payable returns (bytes32) {
@@ -106,8 +106,8 @@ contract TokenBundleBarterUtils is IERC1155Receiver {
     }
 
     function _buyBundleForBundle(
-        TokenBundleEscrowObligation2.ObligationData memory bidBundle,
-        TokenBundlePaymentObligation2.ObligationData memory askBundle,
+        TokenBundleEscrowObligation.ObligationData memory bidBundle,
+        TokenBundlePaymentObligation.ObligationData memory askBundle,
         uint64 expiration
     ) internal returns (bytes32) {
         // Pull all tokens from user to BarterUtils
@@ -118,7 +118,7 @@ contract TokenBundleBarterUtils is IERC1155Receiver {
 
         return
             bundleEscrow.doObligationFor{value: bidBundle.nativeAmount}(
-                TokenBundleEscrowObligation2.ObligationData({
+                TokenBundleEscrowObligation.ObligationData({
                     arbiter: address(bundlePayment),
                     demand: abi.encode(askBundle),
                     nativeAmount: bidBundle.nativeAmount,
@@ -137,7 +137,7 @@ contract TokenBundleBarterUtils is IERC1155Receiver {
 
     function _payBundleForBundle(
         bytes32 buyAttestation,
-        TokenBundlePaymentObligation2.ObligationData memory demand
+        TokenBundlePaymentObligation.ObligationData memory demand
     ) internal returns (bytes32) {
         // Pull all tokens from user to BarterUtils
         _pullPaymentBundleTokens(demand);
@@ -157,8 +157,8 @@ contract TokenBundleBarterUtils is IERC1155Receiver {
     }
 
     function permitAndEscrowBundleForBundle(
-        TokenBundleEscrowObligation2.ObligationData calldata bidBundle,
-        TokenBundlePaymentObligation2.ObligationData calldata askBundle,
+        TokenBundleEscrowObligation.ObligationData calldata bidBundle,
+        TokenBundlePaymentObligation.ObligationData calldata askBundle,
         uint64 expiration,
         ERC20PermitSignature[] calldata permits
     ) external payable returns (bytes32) {
@@ -186,11 +186,11 @@ contract TokenBundleBarterUtils is IERC1155Receiver {
         ERC20PermitSignature[] calldata permits
     ) external payable returns (bytes32) {
         Attestation memory bid = eas.getAttestation(buyAttestation);
-        TokenBundleEscrowObligation2.ObligationData memory escrowData = abi
-            .decode(bid.data, (TokenBundleEscrowObligation2.ObligationData));
-        TokenBundlePaymentObligation2.ObligationData memory demand = abi.decode(
+        TokenBundleEscrowObligation.ObligationData memory escrowData = abi
+            .decode(bid.data, (TokenBundleEscrowObligation.ObligationData));
+        TokenBundlePaymentObligation.ObligationData memory demand = abi.decode(
             escrowData.demand,
-            (TokenBundlePaymentObligation2.ObligationData)
+            (TokenBundlePaymentObligation.ObligationData)
         );
 
         if (permits.length != demand.erc20Tokens.length)
@@ -213,8 +213,8 @@ contract TokenBundleBarterUtils is IERC1155Receiver {
     }
 
     function buyBundleForBundle(
-        TokenBundleEscrowObligation2.ObligationData calldata bidBundle,
-        TokenBundlePaymentObligation2.ObligationData calldata askBundle,
+        TokenBundleEscrowObligation.ObligationData calldata bidBundle,
+        TokenBundlePaymentObligation.ObligationData calldata askBundle,
         uint64 expiration
     ) external payable returns (bytes32) {
         return _buyBundleForBundle(bidBundle, askBundle, expiration);
@@ -224,11 +224,11 @@ contract TokenBundleBarterUtils is IERC1155Receiver {
         bytes32 buyAttestation
     ) external payable returns (bytes32) {
         Attestation memory bid = eas.getAttestation(buyAttestation);
-        TokenBundleEscrowObligation2.ObligationData memory escrowData = abi
-            .decode(bid.data, (TokenBundleEscrowObligation2.ObligationData));
-        TokenBundlePaymentObligation2.ObligationData memory demand = abi.decode(
+        TokenBundleEscrowObligation.ObligationData memory escrowData = abi
+            .decode(bid.data, (TokenBundleEscrowObligation.ObligationData));
+        TokenBundlePaymentObligation.ObligationData memory demand = abi.decode(
             escrowData.demand,
-            (TokenBundlePaymentObligation2.ObligationData)
+            (TokenBundlePaymentObligation.ObligationData)
         );
 
         return _payBundleForBundle(buyAttestation, demand);
@@ -236,7 +236,7 @@ contract TokenBundleBarterUtils is IERC1155Receiver {
 
     // Helper function to pull all tokens in a bundle from user to BarterUtils
     function _pullBundleTokens(
-        TokenBundleEscrowObligation2.ObligationData memory data
+        TokenBundleEscrowObligation.ObligationData memory data
     ) internal {
         // Pull ERC20 tokens
         for (uint i = 0; i < data.erc20Tokens.length; i++) {
@@ -270,7 +270,7 @@ contract TokenBundleBarterUtils is IERC1155Receiver {
 
     // Helper function to pull all tokens in a payment bundle from user to BarterUtils
     function _pullPaymentBundleTokens(
-        TokenBundlePaymentObligation2.ObligationData memory data
+        TokenBundlePaymentObligation.ObligationData memory data
     ) internal {
         // Pull ERC20 tokens
         for (uint i = 0; i < data.erc20Tokens.length; i++) {
@@ -304,7 +304,7 @@ contract TokenBundleBarterUtils is IERC1155Receiver {
 
     // Helper function to approve obligation contract to spend all tokens in a bundle
     function _approveBundleTokens(
-        TokenBundleEscrowObligation2.ObligationData memory data,
+        TokenBundleEscrowObligation.ObligationData memory data,
         address spender
     ) internal {
         // Approve ERC20 tokens
@@ -331,7 +331,7 @@ contract TokenBundleBarterUtils is IERC1155Receiver {
 
     // Helper function to approve obligation contract to spend all tokens in a payment bundle
     function _approvePaymentBundleTokens(
-        TokenBundlePaymentObligation2.ObligationData memory data,
+        TokenBundlePaymentObligation.ObligationData memory data,
         address spender
     ) internal {
         // Approve ERC20 tokens

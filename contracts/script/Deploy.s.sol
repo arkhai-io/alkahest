@@ -22,13 +22,14 @@ import {ERC1155PaymentObligation} from "@src/obligations/ERC1155PaymentObligatio
 import {ERC1155BarterUtils} from "@src/utils/ERC1155BarterUtils.sol";
 
 // TokenBundle Contracts
-import {TokenBundleEscrowObligation2} from "@src/obligations/escrow/non-tierable/TokenBundleEscrowObligation2.sol";
-import {TokenBundlePaymentObligation2} from "@src/obligations/TokenBundlePaymentObligation2.sol";
+import {TokenBundleEscrowObligation} from "@src/obligations/escrow/non-tierable/TokenBundleEscrowObligation.sol";
+import {TokenBundlePaymentObligation} from "@src/obligations/TokenBundlePaymentObligation.sol";
 import {TokenBundleBarterUtils} from "@src/utils/TokenBundleBarterUtils.sol";
 
 // Native Token Contracts
 import {NativeTokenEscrowObligation} from "@src/obligations/escrow/non-tierable/NativeTokenEscrowObligation.sol";
 import {NativeTokenPaymentObligation} from "@src/obligations/NativeTokenPaymentObligation.sol";
+import {NativeTokenBarterUtils} from "@src/utils/NativeTokenBarterUtils.sol";
 
 // Attestation Contracts
 import {AttestationEscrowObligation} from "@src/obligations/escrow/non-tierable/AttestationEscrowObligation.sol";
@@ -46,6 +47,15 @@ import {AllArbiter} from "@src/arbiters/logical/AllArbiter.sol";
 import {AnyArbiter} from "@src/arbiters/logical/AnyArbiter.sol";
 import {IntrinsicsArbiter} from "@src/arbiters/IntrinsicsArbiter.sol";
 import {IntrinsicsArbiter2} from "@src/arbiters/IntrinsicsArbiter2.sol";
+import {ERC8004Arbiter} from "@src/arbiters/ERC8004Arbiter.sol";
+
+// Confirmation Arbiters
+import {ConfirmationArbiter} from "@src/arbiters/confirmation/ConfirmationArbiter.sol";
+import {ConfirmationArbiterComposing} from "@src/arbiters/confirmation/ConfirmationArbiterComposing.sol";
+import {RevocableConfirmationArbiter} from "@src/arbiters/confirmation/RevocableConfirmationArbiter.sol";
+import {RevocableConfirmationArbiterComposing} from "@src/arbiters/confirmation/RevocableConfirmationArbiterComposing.sol";
+import {UnrevocableConfirmationArbiter} from "@src/arbiters/confirmation/UnrevocableConfirmationArbiter.sol";
+import {UnrevocableConfirmationArbiterComposing} from "@src/arbiters/confirmation/UnrevocableConfirmationArbiterComposing.sol";
 
 // Composing Attestation Property Arbiters
 import {AttesterArbiter as ComposingAttesterArbiter} from "@src/arbiters/attestation-properties/composing/AttesterArbiter.sol";
@@ -108,6 +118,27 @@ contract Deploy is Script {
         AnyArbiter anyArbiter = new AnyArbiter();
         IntrinsicsArbiter intrinsicsArbiter = new IntrinsicsArbiter();
         IntrinsicsArbiter2 intrinsicsArbiter2 = new IntrinsicsArbiter2();
+        ERC8004Arbiter erc8004Arbiter = new ERC8004Arbiter();
+
+        // Deploy Confirmation Arbiters
+        ConfirmationArbiter confirmationArbiter = new ConfirmationArbiter(
+            IEAS(easAddress)
+        );
+        ConfirmationArbiterComposing confirmationArbiterComposing = new ConfirmationArbiterComposing(
+            IEAS(easAddress)
+        );
+        RevocableConfirmationArbiter revocableConfirmationArbiter = new RevocableConfirmationArbiter(
+            IEAS(easAddress)
+        );
+        RevocableConfirmationArbiterComposing revocableConfirmationArbiterComposing = new RevocableConfirmationArbiterComposing(
+            IEAS(easAddress)
+        );
+        UnrevocableConfirmationArbiter unrevocableConfirmationArbiter = new UnrevocableConfirmationArbiter(
+            IEAS(easAddress)
+        );
+        UnrevocableConfirmationArbiterComposing unrevocableConfirmationArbiterComposing = new UnrevocableConfirmationArbiterComposing(
+            IEAS(easAddress)
+        );
 
         // Deploy Composing Attestation Property Arbiters
         ComposingAttesterArbiter composingAttesterArbiter = new ComposingAttesterArbiter();
@@ -189,11 +220,11 @@ contract Deploy is Script {
         // );
 
         // Deploy TokenBundle contracts
-        TokenBundleEscrowObligation2 bundleEscrow = new TokenBundleEscrowObligation2(
+        TokenBundleEscrowObligation bundleEscrow = new TokenBundleEscrowObligation(
                 IEAS(easAddress),
                 ISchemaRegistry(schemaRegistryAddress)
             );
-        TokenBundlePaymentObligation2 bundlePayment = new TokenBundlePaymentObligation2(
+        TokenBundlePaymentObligation bundlePayment = new TokenBundlePaymentObligation(
                 IEAS(easAddress),
                 ISchemaRegistry(schemaRegistryAddress)
             );
@@ -256,6 +287,20 @@ contract Deploy is Script {
             nativePayment
         );
 
+        NativeTokenBarterUtils nativeBarterUtils = new NativeTokenBarterUtils(
+            IEAS(easAddress),
+            erc20Escrow,
+            erc20Payment,
+            erc721Escrow,
+            erc721Payment,
+            erc1155Escrow,
+            erc1155Payment,
+            bundleEscrow,
+            bundlePayment,
+            nativeEscrow,
+            nativePayment
+        );
+
         // Deploy attestation barter contracts
         AttestationEscrowObligation attestationEscrow = new AttestationEscrowObligation(
                 IEAS(easAddress),
@@ -289,6 +334,15 @@ contract Deploy is Script {
         console.log("AnyArbiter:", address(anyArbiter));
         console.log("IntrinsicsArbiter:", address(intrinsicsArbiter));
         console.log("IntrinsicsArbiter2:", address(intrinsicsArbiter2));
+        console.log("ERC8004Arbiter:", address(erc8004Arbiter));
+
+        console.log("\nConfirmation Arbiters:");
+        console.log("ConfirmationArbiter:", address(confirmationArbiter));
+        console.log("ConfirmationArbiterComposing:", address(confirmationArbiterComposing));
+        console.log("RevocableConfirmationArbiter:", address(revocableConfirmationArbiter));
+        console.log("RevocableConfirmationArbiterComposing:", address(revocableConfirmationArbiterComposing));
+        console.log("UnrevocableConfirmationArbiter:", address(unrevocableConfirmationArbiter));
+        console.log("UnrevocableConfirmationArbiterComposing:", address(unrevocableConfirmationArbiterComposing));
 
         console.log("\nComposing Attestation Property Arbiters:");
         console.log(
@@ -397,9 +451,14 @@ contract Deploy is Script {
         console.log("ERC1155BarterUtils:", address(erc1155BarterUtils));
 
         console.log("\nTokenBundle Contracts:");
-        console.log("TokenBundleEscrowObligation2:", address(bundleEscrow));
-        console.log("TokenBundlePaymentObligation2:", address(bundlePayment));
+        console.log("TokenBundleEscrowObligation:", address(bundleEscrow));
+        console.log("TokenBundlePaymentObligation:", address(bundlePayment));
         console.log("TokenBundleBarterUtils:", address(bundleBarterUtils));
+
+        console.log("\nNative Token Contracts:");
+        console.log("NativeTokenEscrowObligation:", address(nativeEscrow));
+        console.log("NativeTokenPaymentObligation:", address(nativePayment));
+        console.log("NativeTokenBarterUtils:", address(nativeBarterUtils));
 
         console.log("\nAttestation Barter Contracts:");
         console.log("AttestationEscrowObligation:", address(attestationEscrow));
@@ -454,6 +513,43 @@ contract Deploy is Script {
             deploymentJson,
             "intrinsicsArbiter2",
             address(intrinsicsArbiter2)
+        );
+        vm.serializeAddress(
+            deploymentJson,
+            "erc8004Arbiter",
+            address(erc8004Arbiter)
+        );
+
+        // Add Confirmation Arbiters
+        vm.serializeAddress(
+            deploymentJson,
+            "confirmationArbiter",
+            address(confirmationArbiter)
+        );
+        vm.serializeAddress(
+            deploymentJson,
+            "confirmationArbiterComposing",
+            address(confirmationArbiterComposing)
+        );
+        vm.serializeAddress(
+            deploymentJson,
+            "revocableConfirmationArbiter",
+            address(revocableConfirmationArbiter)
+        );
+        vm.serializeAddress(
+            deploymentJson,
+            "revocableConfirmationArbiterComposing",
+            address(revocableConfirmationArbiterComposing)
+        );
+        vm.serializeAddress(
+            deploymentJson,
+            "unrevocableConfirmationArbiter",
+            address(unrevocableConfirmationArbiter)
+        );
+        vm.serializeAddress(
+            deploymentJson,
+            "unrevocableConfirmationArbiterComposing",
+            address(unrevocableConfirmationArbiterComposing)
         );
 
         // Add Composing Attestation Property Arbiters
@@ -655,6 +751,23 @@ contract Deploy is Script {
             deploymentJson,
             "erc1155BarterUtils",
             address(erc1155BarterUtils)
+        );
+        vm.serializeAddress(
+            deploymentJson,
+            "nativeTokenBarterUtils",
+            address(nativeBarterUtils)
+        );
+
+        // Add Native Token addresses
+        vm.serializeAddress(
+            deploymentJson,
+            "nativeTokenEscrowObligation",
+            address(nativeEscrow)
+        );
+        vm.serializeAddress(
+            deploymentJson,
+            "nativeTokenPaymentObligation",
+            address(nativePayment)
         );
 
         // Add Attestation addresses

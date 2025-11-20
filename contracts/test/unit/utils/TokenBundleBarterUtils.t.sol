@@ -2,8 +2,8 @@
 pragma solidity ^0.8.26;
 
 import "forge-std/Test.sol";
-import {TokenBundleEscrowObligation2} from "@src/obligations/escrow/non-tierable/TokenBundleEscrowObligation2.sol";
-import {TokenBundlePaymentObligation2} from "@src/obligations/TokenBundlePaymentObligation2.sol";
+import {TokenBundleEscrowObligation} from "@src/obligations/escrow/non-tierable/TokenBundleEscrowObligation.sol";
+import {TokenBundlePaymentObligation} from "@src/obligations/TokenBundlePaymentObligation.sol";
 import {TokenBundleBarterUtils} from "@src/utils/TokenBundleBarterUtils.sol";
 import {IEAS} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
@@ -43,8 +43,8 @@ contract MockERC1155 is ERC1155 {
 }
 
 contract TokenBundleBarterUtilsUnitTest is Test {
-    TokenBundleEscrowObligation2 public bundleEscrow;
-    TokenBundlePaymentObligation2 public bundlePayment;
+    TokenBundleEscrowObligation public bundleEscrow;
+    TokenBundlePaymentObligation public bundlePayment;
     TokenBundleBarterUtils public barterUtils;
 
     MockERC20Permit public erc20TokenA;
@@ -89,8 +89,8 @@ contract TokenBundleBarterUtilsUnitTest is Test {
         erc1155TokenB = new MockERC1155();
 
         // Deploy obligations
-        bundleEscrow = new TokenBundleEscrowObligation2(eas, schemaRegistry);
-        bundlePayment = new TokenBundlePaymentObligation2(eas, schemaRegistry);
+        bundleEscrow = new TokenBundleEscrowObligation(eas, schemaRegistry);
+        bundlePayment = new TokenBundlePaymentObligation(eas, schemaRegistry);
 
         // Deploy barter utils contract
         barterUtils = new TokenBundleBarterUtils(
@@ -117,9 +117,9 @@ contract TokenBundleBarterUtilsUnitTest is Test {
     function createAliceBundle()
         internal
         view
-        returns (TokenBundleEscrowObligation2.ObligationData memory)
+        returns (TokenBundleEscrowObligation.ObligationData memory)
     {
-        TokenBundleEscrowObligation2.ObligationData memory bundle = TokenBundleEscrowObligation2
+        TokenBundleEscrowObligation.ObligationData memory bundle = TokenBundleEscrowObligation
             .ObligationData({
                 arbiter: address(0), // Will be set by the barter functions
                 demand: "", // Will be set by the barter functions
@@ -148,10 +148,10 @@ contract TokenBundleBarterUtilsUnitTest is Test {
     function createBobBundle()
         internal
         view
-        returns (TokenBundlePaymentObligation2.ObligationData memory)
+        returns (TokenBundlePaymentObligation.ObligationData memory)
     {
-        TokenBundlePaymentObligation2.ObligationData
-            memory bundle = TokenBundlePaymentObligation2.ObligationData({
+        TokenBundlePaymentObligation.ObligationData
+            memory bundle = TokenBundlePaymentObligation.ObligationData({
                 nativeAmount: 0,
                 erc20Tokens: new address[](1),
                 erc20Amounts: new uint256[](1),
@@ -208,9 +208,9 @@ contract TokenBundleBarterUtilsUnitTest is Test {
     function testBuyBundleForBundle() public {
         uint64 expiration = uint64(block.timestamp + 1 days);
 
-        TokenBundleEscrowObligation2.ObligationData
+        TokenBundleEscrowObligation.ObligationData
             memory aliceBundle = createAliceBundle();
-        TokenBundlePaymentObligation2.ObligationData
+        TokenBundlePaymentObligation.ObligationData
             memory bobBundle = createBobBundle();
 
         // Approve tokens
@@ -234,8 +234,8 @@ contract TokenBundleBarterUtilsUnitTest is Test {
 
         // Validate the attestation data
         Attestation memory bid = eas.getAttestation(buyAttestation);
-        TokenBundleEscrowObligation2.ObligationData memory escrowData = abi
-            .decode(bid.data, (TokenBundleEscrowObligation2.ObligationData));
+        TokenBundleEscrowObligation.ObligationData memory escrowData = abi
+            .decode(bid.data, (TokenBundleEscrowObligation.ObligationData));
 
         assertEq(
             escrowData.erc20Tokens[0],
@@ -269,10 +269,10 @@ contract TokenBundleBarterUtilsUnitTest is Test {
         );
 
         // Extract the demand data
-        TokenBundlePaymentObligation2.ObligationData memory demandData = abi
+        TokenBundlePaymentObligation.ObligationData memory demandData = abi
             .decode(
                 escrowData.demand,
-                (TokenBundlePaymentObligation2.ObligationData)
+                (TokenBundlePaymentObligation.ObligationData)
             );
 
         assertEq(
@@ -313,9 +313,9 @@ contract TokenBundleBarterUtilsUnitTest is Test {
     function testPayBundleForBundle() public {
         uint64 expiration = uint64(block.timestamp + 1 days);
 
-        TokenBundleEscrowObligation2.ObligationData
+        TokenBundleEscrowObligation.ObligationData
             memory aliceBundle = createAliceBundle();
-        TokenBundlePaymentObligation2.ObligationData
+        TokenBundlePaymentObligation.ObligationData
             memory bobBundle = createBobBundle();
 
         // Alice creates bid
@@ -413,7 +413,7 @@ contract TokenBundleBarterUtilsUnitTest is Test {
         uint64 expiration = uint64(block.timestamp + 1 days);
         uint256 deadline = block.timestamp + 1 days;
 
-        TokenBundleEscrowObligation2.ObligationData
+        TokenBundleEscrowObligation.ObligationData
             memory aliceBundle = createAliceBundle();
 
         // Create permit signature for Alice's ERC20 token
@@ -477,7 +477,7 @@ contract TokenBundleBarterUtilsUnitTest is Test {
         // No expiration needed for this test
         uint256 deadline = block.timestamp + 1 days;
 
-        TokenBundlePaymentObligation2.ObligationData
+        TokenBundlePaymentObligation.ObligationData
             memory bobBundle = createBobBundle();
 
         // Create permit signature for Bob's ERC20 token
@@ -520,10 +520,10 @@ contract TokenBundleBarterUtilsUnitTest is Test {
 
         // Verify the attestation
         Attestation memory payment = eas.getAttestation(payAttestation);
-        TokenBundlePaymentObligation2.ObligationData memory paymentData = abi
+        TokenBundlePaymentObligation.ObligationData memory paymentData = abi
             .decode(
                 payment.data,
-                (TokenBundlePaymentObligation2.ObligationData)
+                (TokenBundlePaymentObligation.ObligationData)
             );
 
         assertEq(
@@ -548,9 +548,9 @@ contract TokenBundleBarterUtilsUnitTest is Test {
         uint64 expiration = uint64(block.timestamp + 1 days);
         uint256 deadline = block.timestamp + 1 days;
 
-        TokenBundleEscrowObligation2.ObligationData
+        TokenBundleEscrowObligation.ObligationData
             memory aliceBundle = createAliceBundle();
-        TokenBundlePaymentObligation2.ObligationData
+        TokenBundlePaymentObligation.ObligationData
             memory bobBundle = createBobBundle();
 
         // Create permit signature for Alice's ERC20 token
@@ -615,9 +615,9 @@ contract TokenBundleBarterUtilsUnitTest is Test {
         uint64 expiration = uint64(block.timestamp + 1 days);
         uint256 deadline = block.timestamp + 1 days;
 
-        TokenBundleEscrowObligation2.ObligationData
+        TokenBundleEscrowObligation.ObligationData
             memory aliceBundle = createAliceBundle();
-        TokenBundlePaymentObligation2.ObligationData
+        TokenBundlePaymentObligation.ObligationData
             memory bobBundle = createBobBundle();
 
         // Alice creates bid
@@ -710,9 +710,9 @@ contract TokenBundleBarterUtilsUnitTest is Test {
     function test_RevertWhen_TokenNotApproved() public {
         uint64 expiration = uint64(block.timestamp + 1 days);
 
-        TokenBundleEscrowObligation2.ObligationData
+        TokenBundleEscrowObligation.ObligationData
             memory aliceBundle = createAliceBundle();
-        TokenBundlePaymentObligation2.ObligationData
+        TokenBundlePaymentObligation.ObligationData
             memory bobBundle = createBobBundle();
 
         // Alice tries to make bid without approving tokens
@@ -725,9 +725,9 @@ contract TokenBundleBarterUtilsUnitTest is Test {
     function test_RevertWhen_PaymentFails() public {
         uint64 expiration = uint64(block.timestamp + 1 days);
 
-        TokenBundleEscrowObligation2.ObligationData
+        TokenBundleEscrowObligation.ObligationData
             memory aliceBundle = createAliceBundle();
-        TokenBundlePaymentObligation2.ObligationData
+        TokenBundlePaymentObligation.ObligationData
             memory bobBundle = createBobBundle();
 
         // Alice creates bid
@@ -753,7 +753,7 @@ contract TokenBundleBarterUtilsUnitTest is Test {
         uint64 expiration = uint64(block.timestamp + 1 days);
         uint256 deadline = block.timestamp + 1 days;
 
-        TokenBundleEscrowObligation2.ObligationData
+        TokenBundleEscrowObligation.ObligationData
             memory aliceBundle = createAliceBundle();
 
         // We don't need the result of the permit signature for this test
@@ -783,9 +783,9 @@ contract TokenBundleBarterUtilsUnitTest is Test {
         // Create a bid with short expiration
         uint64 expiration = uint64(block.timestamp + 10 minutes);
 
-        TokenBundleEscrowObligation2.ObligationData
+        TokenBundleEscrowObligation.ObligationData
             memory aliceBundle = createAliceBundle();
-        TokenBundlePaymentObligation2.ObligationData
+        TokenBundlePaymentObligation.ObligationData
             memory bobBundle = createBobBundle();
 
         // Alice creates bid

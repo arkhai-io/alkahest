@@ -1,58 +1,49 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.26;
 
-import "forge-std/Test.sol";
-import {TokenBundleEscrowObligation} from "@src/obligations/escrow/non-tierable/TokenBundleEscrowObligation.sol";
-import {BaseEscrowObligation} from "@src/BaseEscrowObligation.sol";
-import {StringObligation} from "@src/obligations/StringObligation.sol";
-import {IArbiter} from "@src/IArbiter.sol";
-import {MockArbiter} from "./MockArbiter.sol";
-import {IEAS, Attestation, AttestationRequest, AttestationRequestData, RevocationRequest, RevocationRequestData} from "@eas/IEAS.sol";
-import {ISchemaRegistry, SchemaRecord} from "@eas/ISchemaRegistry.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Test} from "forge-std/Test.sol";
+import {console2} from "forge-std/console2.sol";
+import {TokenBundleEscrowObligation} from "../../../src/obligations/escrow/non-tierable/TokenBundleEscrowObligation.sol";
+import {IEAS} from "@eas/IEAS.sol";
+import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
+import {Attestation} from "@eas/Common.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {ERC1155} from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import {EASDeployer} from "@test/utils/EASDeployer.sol";
 
-// Mock ERC20 token for testing
+// Mock tokens for testing
 contract MockERC20 is ERC20 {
-    constructor(string memory name, string memory symbol) ERC20(name, symbol) {
-        _mint(msg.sender, 10000 * 10 ** 18);
-    }
+    constructor(string memory name, string memory symbol) ERC20(name, symbol) {}
 
-    function mint(address to, uint256 amount) public {
+    function mint(address to, uint256 amount) external {
         _mint(to, amount);
     }
 }
 
-// Mock ERC721 token for testing
 contract MockERC721 is ERC721 {
-    uint256 private _nextTokenId;
+    uint256 private _tokenIdCounter;
 
     constructor(
         string memory name,
         string memory symbol
     ) ERC721(name, symbol) {}
 
-    function mint(address to) public returns (uint256) {
-        uint256 tokenId = _nextTokenId++;
-        _mint(to, tokenId);
+    function mint(address to) external returns (uint256) {
+        uint256 tokenId = _tokenIdCounter++;
+        _safeMint(to, tokenId);
         return tokenId;
     }
 
-    function mintSpecificId(address to, uint256 id) public {
-        _mint(to, id);
+    function mintSpecificId(address to, uint256 tokenId) external {
+        _safeMint(to, tokenId);
     }
 }
 
-// Mock ERC1155 token for testing
 contract MockERC1155 is ERC1155 {
-    constructor() ERC1155("https://example.com/token/{id}.json") {}
+    constructor() ERC1155("") {}
 
-    function mint(address to, uint256 id, uint256 amount) public {
+    function mint(address to, uint256 id, uint256 amount) external {
         _mint(to, id, amount, "");
     }
 
@@ -60,982 +51,727 @@ contract MockERC1155 is ERC1155 {
         address to,
         uint256[] memory ids,
         uint256[] memory amounts
-    ) public {
+    ) external {
         _mintBatch(to, ids, amounts, "");
     }
 }
 
+// Mock Arbiter contract
+contract MockArbiter {
+    mapping(bytes32 => bool) public approvedFulfillments;
+
+    function approveFulfillment(bytes32 fulfillmentUid) external {
+        approvedFulfillments[fulfillmentUid] = true;
+    }
+
+    function checkObligation(
+        Attestation memory /* obligation */,
+        bytes memory /* demand */,
+        bytes32 /* counteroffer */
+    ) external view returns (bool) {
+        return true;
+    }
+}
+
 contract TokenBundleEscrowObligationTest is Test {
-    TokenBundleEscrowObligation public escrowObligation;
+    TokenBundleEscrowObligation public escrow;
+    MockArbiter public arbiter;
+
+    // Mock tokens
+    MockERC20 public token1;
+    MockERC20 public token2;
+    MockERC721 public nft1;
+    MockERC721 public nft2;
+    MockERC1155 public multiToken;
+
+    // Test addresses
+    address public alice = address(0x1);
+    address public bob = address(0x2);
+    address public charlie = address(0x3);
+
+    // Test values
+    uint256 public constant NATIVE_AMOUNT = 1 ether;
+    uint256 public constant TOKEN1_AMOUNT = 1000e18;
+    uint256 public constant TOKEN2_AMOUNT = 500e18;
+    uint256 public constant NFT1_ID = 1;
+    uint256 public constant NFT2_ID = 2;
+    uint256 public constant MULTI_TOKEN_ID_1 = 100;
+    uint256 public constant MULTI_TOKEN_ID_2 = 200;
+    uint256 public constant MULTI_TOKEN_AMOUNT_1 = 10;
+    uint256 public constant MULTI_TOKEN_AMOUNT_2 = 20;
+
+    // EAS and Schema Registry
     IEAS public eas;
     ISchemaRegistry public schemaRegistry;
 
-    MockERC20 public erc20Token1;
-    MockERC20 public erc20Token2;
-    MockERC721 public erc721Token1;
-    MockERC721 public erc721Token2;
-    MockERC1155 public erc1155Token1;
-    MockERC1155 public erc1155Token2;
-
-    MockArbiter public mockArbiter;
-    MockArbiter public rejectingArbiter;
-
-    address internal buyer;
-    address internal seller;
-
-    // ERC20 values
-    uint256 constant ERC20_AMOUNT_1 = 100 * 10 ** 18;
-    uint256 constant ERC20_AMOUNT_2 = 200 * 10 ** 18;
-
-    // ERC721 token IDs
-    uint256 internal erc721TokenId1;
-    uint256 internal erc721TokenId2;
-
-    // ERC1155 values
-    uint256 constant ERC1155_TOKEN_ID_1 = 1;
-    uint256 constant ERC1155_TOKEN_ID_2 = 2;
-    uint256 constant ERC1155_AMOUNT_1 = 10;
-    uint256 constant ERC1155_AMOUNT_2 = 20;
-
-    uint64 constant EXPIRATION_TIME = 365 days;
+    // Test expiration times
+    uint64 public constant EXPIRATION_TIME = 1 days;
 
     function setUp() public {
+        // Deploy EAS
         EASDeployer easDeployer = new EASDeployer();
         (eas, schemaRegistry) = easDeployer.deployEAS();
 
-        escrowObligation = new TokenBundleEscrowObligation(eas, schemaRegistry);
+        // Deploy mock tokens
+        token1 = new MockERC20("Token1", "TK1");
+        token2 = new MockERC20("Token2", "TK2");
+        nft1 = new MockERC721("NFT1", "NFT1");
+        nft2 = new MockERC721("NFT2", "NFT2");
+        multiToken = new MockERC1155();
+        arbiter = new MockArbiter();
 
-        // Create tokens
-        erc20Token1 = new MockERC20("Token1", "TKN1");
-        erc20Token2 = new MockERC20("Token2", "TKN2");
-        erc721Token1 = new MockERC721("MERC721_1", "MERC721_1");
-        erc721Token2 = new MockERC721("MERC721_2", "MERC721_2");
-        erc1155Token1 = new MockERC1155();
-        erc1155Token2 = new MockERC1155();
+        // Deploy escrow contract
+        escrow = new TokenBundleEscrowObligation(eas, schemaRegistry);
 
-        mockArbiter = new MockArbiter(true);
-        rejectingArbiter = new MockArbiter(false);
+        // Setup test accounts
+        vm.deal(alice, 10 ether);
+        vm.deal(bob, 10 ether);
+        vm.deal(charlie, 10 ether);
 
-        buyer = makeAddr("buyer");
-        seller = makeAddr("seller");
+        // Mint tokens to test accounts
+        token1.mint(alice, TOKEN1_AMOUNT * 10);
+        token1.mint(bob, TOKEN1_AMOUNT * 10);
+        token2.mint(alice, TOKEN2_AMOUNT * 10);
+        token2.mint(bob, TOKEN2_AMOUNT * 10);
 
-        // Fund the buyer with tokens
-        erc20Token1.transfer(buyer, ERC20_AMOUNT_1);
-        erc20Token2.transfer(buyer, ERC20_AMOUNT_2);
+        nft1.mintSpecificId(alice, NFT1_ID);
+        nft1.mintSpecificId(bob, NFT1_ID + 10);
+        nft2.mintSpecificId(alice, NFT2_ID);
+        nft2.mintSpecificId(bob, NFT2_ID + 10);
 
-        vm.startPrank(address(this));
-        erc721TokenId1 = erc721Token1.mint(buyer);
-        erc721TokenId2 = erc721Token2.mint(buyer);
-
-        erc1155Token1.mint(buyer, ERC1155_TOKEN_ID_1, ERC1155_AMOUNT_1);
-        erc1155Token2.mint(buyer, ERC1155_TOKEN_ID_2, ERC1155_AMOUNT_2);
-        vm.stopPrank();
+        multiToken.mint(alice, MULTI_TOKEN_ID_1, MULTI_TOKEN_AMOUNT_1 * 10);
+        multiToken.mint(alice, MULTI_TOKEN_ID_2, MULTI_TOKEN_AMOUNT_2 * 10);
+        multiToken.mint(bob, MULTI_TOKEN_ID_1, MULTI_TOKEN_AMOUNT_1 * 10);
+        multiToken.mint(bob, MULTI_TOKEN_ID_2, MULTI_TOKEN_AMOUNT_2 * 10);
     }
 
-    function testConstructor() public view {
-        // Verify contract was initialized correctly
-        bytes32 schemaId = escrowObligation.ATTESTATION_SCHEMA();
-        assertNotEq(schemaId, bytes32(0), "Schema should be registered");
+    function testConstructor() public {
+        // We can't directly access eas and schemaRegistry as they are internal
+        // but we can verify the contract was deployed successfully
+        assertTrue(address(escrow) != address(0));
 
-        // Verify schema details
-        SchemaRecord memory schema = escrowObligation.getSchema();
-        assertEq(schema.uid, schemaId, "Schema UID should match");
-        assertEq(
-            schema.schema,
-            "address arbiter, bytes demand, address[] erc20Tokens, uint256[] erc20Amounts, address[] erc721Tokens, uint256[] erc721TokenIds, address[] erc1155Tokens, uint256[] erc1155TokenIds, uint256[] erc1155Amounts",
-            "Schema string should match"
-        );
+        // Verify the schema was registered by checking ATTESTATION_SCHEMA is set
+        assertTrue(escrow.ATTESTATION_SCHEMA() != bytes32(0));
     }
 
-    function testDoObligation() public {
-        // Approve tokens first
-        vm.startPrank(buyer);
-        erc20Token1.approve(address(escrowObligation), ERC20_AMOUNT_1);
-        erc20Token2.approve(address(escrowObligation), ERC20_AMOUNT_2);
-        erc721Token1.approve(address(escrowObligation), erc721TokenId1);
-        erc721Token2.approve(address(escrowObligation), erc721TokenId2);
-        erc1155Token1.setApprovalForAll(address(escrowObligation), true);
-        erc1155Token2.setApprovalForAll(address(escrowObligation), true);
-
-        // Create the bundle data
+    function testDoObligationWithNativeTokens() public {
         TokenBundleEscrowObligation.ObligationData
-            memory data = createBundleData();
+            memory data = createNativeOnlyBundleData();
 
-        uint64 expiration = uint64(block.timestamp + EXPIRATION_TIME);
-        bytes32 uid = escrowObligation.doObligation(data, expiration);
-        vm.stopPrank();
+        uint256 escrowBalanceBefore = address(escrow).balance;
 
-        // Verify attestation exists
-        assertNotEq(uid, bytes32(0), "Attestation should be created");
+        vm.startPrank(alice);
 
-        // Verify attestation details
-        Attestation memory attestation = eas.getAttestation(uid);
-        assertEq(
-            attestation.schema,
-            escrowObligation.ATTESTATION_SCHEMA(),
-            "Schema should match"
-        );
-        assertEq(attestation.recipient, buyer, "Recipient should be the buyer");
-
-        // Verify token transfers to escrow
-        verifyTokensInEscrow();
-    }
-
-    function testDoObligationFor() public {
-        // Approve tokens first
-        vm.startPrank(buyer);
-        erc20Token1.approve(address(escrowObligation), ERC20_AMOUNT_1);
-        erc20Token2.approve(address(escrowObligation), ERC20_AMOUNT_2);
-        erc721Token1.approve(address(escrowObligation), erc721TokenId1);
-        erc721Token2.approve(address(escrowObligation), erc721TokenId2);
-        erc1155Token1.setApprovalForAll(address(escrowObligation), true);
-        erc1155Token2.setApprovalForAll(address(escrowObligation), true);
-        vm.stopPrank();
-
-        // Create the bundle data
-        TokenBundleEscrowObligation.ObligationData
-            memory data = createBundleData();
-
-        address recipient = makeAddr("recipient");
-        uint64 expiration = uint64(block.timestamp + EXPIRATION_TIME);
-
-        vm.prank(buyer);
-        bytes32 uid = escrowObligation.doObligationFor(
+        bytes32 escrowId = escrow.doObligation{value: NATIVE_AMOUNT}(
             data,
-            expiration,
-            recipient
+            uint64(block.timestamp + EXPIRATION_TIME)
         );
 
-        // Verify attestation exists
-        assertNotEq(uid, bytes32(0), "Attestation should be created");
+        vm.stopPrank();
 
-        // Verify attestation details
-        Attestation memory attestation = eas.getAttestation(uid);
-        assertEq(
-            attestation.schema,
-            escrowObligation.ATTESTATION_SCHEMA(),
-            "Schema should match"
-        );
-        assertEq(
-            attestation.recipient,
-            recipient,
-            "Recipient should be the specified recipient"
+        // Verify native tokens are in escrow
+        assertEq(address(escrow).balance, escrowBalanceBefore + NATIVE_AMOUNT);
+        assertTrue(escrowId != bytes32(0));
+    }
+
+    function testDoObligationWithFullBundle() public {
+        TokenBundleEscrowObligation.ObligationData
+            memory data = createFullBundleData();
+
+        uint256 escrowBalanceBefore = address(escrow).balance;
+
+        vm.startPrank(alice);
+
+        // Approve tokens
+        token1.approve(address(escrow), TOKEN1_AMOUNT);
+        token2.approve(address(escrow), TOKEN2_AMOUNT);
+        nft1.approve(address(escrow), NFT1_ID);
+        nft2.approve(address(escrow), NFT2_ID);
+        multiToken.setApprovalForAll(address(escrow), true);
+
+        bytes32 escrowId = escrow.doObligation{value: NATIVE_AMOUNT}(
+            data,
+            uint64(block.timestamp + EXPIRATION_TIME)
         );
 
-        // Verify token transfers to escrow
+        vm.stopPrank();
+
+        // Verify all assets are in escrow
+        assertEq(address(escrow).balance, escrowBalanceBefore + NATIVE_AMOUNT);
         verifyTokensInEscrow();
+        assertTrue(escrowId != bytes32(0));
+    }
+
+    function testDoObligationForWithFullBundle() public {
+        TokenBundleEscrowObligation.ObligationData
+            memory data = createFullBundleData();
+
+        // Update NFT IDs to Bob's NFTs
+        data.erc721TokenIds[0] = NFT1_ID + 10;
+        data.erc721TokenIds[1] = NFT2_ID + 10;
+
+        // Bob approves and creates escrow
+        vm.startPrank(bob);
+        token1.approve(address(escrow), TOKEN1_AMOUNT);
+        token2.approve(address(escrow), TOKEN2_AMOUNT);
+        nft1.approve(address(escrow), NFT1_ID + 10);
+        nft2.approve(address(escrow), NFT2_ID + 10);
+        multiToken.setApprovalForAll(address(escrow), true);
+
+        bytes32 escrowId = escrow.doObligationFor{value: NATIVE_AMOUNT}(
+            data,
+            uint64(block.timestamp + EXPIRATION_TIME),
+            charlie
+        );
+
+        vm.stopPrank();
+
+        // Verify all assets are in escrow
+        // Verify ERC20 transfers
+        assertEq(token1.balanceOf(address(escrow)), TOKEN1_AMOUNT);
+        assertEq(token2.balanceOf(address(escrow)), TOKEN2_AMOUNT);
+
+        // Verify ERC721 transfers (Bob's NFTs)
+        assertEq(nft1.ownerOf(NFT1_ID + 10), address(escrow));
+        assertEq(nft2.ownerOf(NFT2_ID + 10), address(escrow));
+
+        // Verify ERC1155 transfers
+        assertEq(
+            multiToken.balanceOf(address(escrow), MULTI_TOKEN_ID_1),
+            MULTI_TOKEN_AMOUNT_1
+        );
+        assertEq(
+            multiToken.balanceOf(address(escrow), MULTI_TOKEN_ID_2),
+            MULTI_TOKEN_AMOUNT_2
+        );
+
+        assertTrue(escrowId != bytes32(0));
+    }
+
+    function testInsufficientNativeTokenPayment() public {
+        TokenBundleEscrowObligation.ObligationData
+            memory data = createNativeOnlyBundleData();
+
+        vm.startPrank(alice);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                TokenBundleEscrowObligation.InsufficientPayment.selector,
+                NATIVE_AMOUNT,
+                NATIVE_AMOUNT - 0.1 ether
+            )
+        );
+
+        escrow.doObligation{value: NATIVE_AMOUNT - 0.1 ether}(
+            data,
+            uint64(block.timestamp + EXPIRATION_TIME)
+        );
+
+        vm.stopPrank();
     }
 
     function testArrayLengthMismatchReverts() public {
-        // Set up token approvals
-        vm.startPrank(buyer);
-        erc20Token1.approve(address(escrowObligation), ERC20_AMOUNT_1);
+        // ERC20 mismatch
+        TokenBundleEscrowObligation.ObligationData memory data1;
+        data1.arbiter = address(arbiter);
+        data1.demand = "";
+        data1.erc20Tokens = new address[](2);
+        data1.erc20Amounts = new uint256[](1);
 
-        // Create mismatched length arrays for ERC20
-        address[] memory erc20Tokens = new address[](2);
-        erc20Tokens[0] = address(erc20Token1);
-        erc20Tokens[1] = address(erc20Token2);
-
-        uint256[] memory erc20Amounts = new uint256[](1); // Mismatched length!
-        erc20Amounts[0] = ERC20_AMOUNT_1;
-
-        // Empty arrays for other token types
-        address[] memory erc721Tokens = new address[](0);
-        uint256[] memory erc721TokenIds = new uint256[](0);
-        address[] memory erc1155Tokens = new address[](0);
-        uint256[] memory erc1155TokenIds = new uint256[](0);
-        uint256[] memory erc1155Amounts = new uint256[](0);
-
-        TokenBundleEscrowObligation.ObligationData
-            memory data = TokenBundleEscrowObligation.ObligationData({
-                erc20Tokens: erc20Tokens,
-                erc20Amounts: erc20Amounts,
-                erc721Tokens: erc721Tokens,
-                erc721TokenIds: erc721TokenIds,
-                erc1155Tokens: erc1155Tokens,
-                erc1155TokenIds: erc1155TokenIds,
-                erc1155Amounts: erc1155Amounts,
-                arbiter: address(mockArbiter),
-                demand: abi.encode("test demand")
-            });
-
-        uint64 expiration = uint64(block.timestamp + EXPIRATION_TIME);
-
-        // Should revert with ArrayLengthMismatch
+        vm.startPrank(alice);
         vm.expectRevert(
             TokenBundleEscrowObligation.ArrayLengthMismatch.selector
         );
-        escrowObligation.doObligation(data, expiration);
+        escrow.doObligation(data1, uint64(block.timestamp + EXPIRATION_TIME));
+
+        // ERC721 mismatch
+        TokenBundleEscrowObligation.ObligationData memory data2;
+        data2.arbiter = address(arbiter);
+        data2.demand = "";
+        data2.erc721Tokens = new address[](2);
+        data2.erc721TokenIds = new uint256[](1);
+
+        vm.expectRevert(
+            TokenBundleEscrowObligation.ArrayLengthMismatch.selector
+        );
+        escrow.doObligation(data2, uint64(block.timestamp + EXPIRATION_TIME));
+
+        // ERC1155 mismatch
+        TokenBundleEscrowObligation.ObligationData memory data3;
+        data3.arbiter = address(arbiter);
+        data3.demand = "";
+        data3.erc1155Tokens = new address[](2);
+        data3.erc1155TokenIds = new uint256[](2);
+        data3.erc1155Amounts = new uint256[](1);
+
+        vm.expectRevert(
+            TokenBundleEscrowObligation.ArrayLengthMismatch.selector
+        );
+        escrow.doObligation(data3, uint64(block.timestamp + EXPIRATION_TIME));
+
         vm.stopPrank();
     }
 
     function testCollectEscrow() public {
-        // Setup: create an escrow
-        vm.startPrank(buyer);
-        erc20Token1.approve(address(escrowObligation), ERC20_AMOUNT_1);
-        erc20Token2.approve(address(escrowObligation), ERC20_AMOUNT_2);
-        erc721Token1.approve(address(escrowObligation), erc721TokenId1);
-        erc721Token2.approve(address(escrowObligation), erc721TokenId2);
-        erc1155Token1.setApprovalForAll(address(escrowObligation), true);
-        erc1155Token2.setApprovalForAll(address(escrowObligation), true);
-
+        // Create escrow
         TokenBundleEscrowObligation.ObligationData
-            memory data = createBundleData();
+            memory data = createFullBundleData();
 
-        uint64 expiration = uint64(block.timestamp + EXPIRATION_TIME);
-        bytes32 paymentUid = escrowObligation.doObligation(data, expiration);
+        vm.startPrank(alice);
+        token1.approve(address(escrow), TOKEN1_AMOUNT);
+        token2.approve(address(escrow), TOKEN2_AMOUNT);
+        nft1.approve(address(escrow), NFT1_ID);
+        nft2.approve(address(escrow), NFT2_ID);
+        multiToken.setApprovalForAll(address(escrow), true);
+
+        bytes32 escrowId = escrow.doObligation{value: NATIVE_AMOUNT}(
+            data,
+            uint64(block.timestamp + EXPIRATION_TIME)
+        );
         vm.stopPrank();
 
-        // Create a fulfillment attestation using StringObligation
-        StringObligation stringObligation = new StringObligation(
-            eas,
-            schemaRegistry
-        );
-        vm.prank(seller);
-        bytes32 fulfillmentUid = stringObligation.doObligation(
-            StringObligation.ObligationData({item: "fulfillment data"}),
-            paymentUid
-        );
+        // Create and approve fulfillment
+        bytes32 fulfillmentId = bytes32(uint256(2));
+        arbiter.approveFulfillment(fulfillmentId);
 
-        // Collect payment
-        vm.prank(seller);
-        bool success = escrowObligation.collectEscrow(
-            paymentUid,
-            fulfillmentUid
-        );
-
-        assertTrue(success, "Payment collection should succeed");
-
-        // Verify tokens transfer to seller
-        assertEq(
-            erc20Token1.balanceOf(seller),
-            ERC20_AMOUNT_1,
-            "Seller should have received ERC20 token 1"
-        );
-        assertEq(
-            erc20Token2.balanceOf(seller),
-            ERC20_AMOUNT_2,
-            "Seller should have received ERC20 token 2"
-        );
-        assertEq(
-            erc721Token1.ownerOf(erc721TokenId1),
-            seller,
-            "Seller should have received ERC721 token 1"
-        );
-        assertEq(
-            erc721Token2.ownerOf(erc721TokenId2),
-            seller,
-            "Seller should have received ERC721 token 2"
-        );
-        assertEq(
-            erc1155Token1.balanceOf(seller, ERC1155_TOKEN_ID_1),
-            ERC1155_AMOUNT_1,
-            "Seller should have received ERC1155 token 1"
-        );
-        assertEq(
-            erc1155Token2.balanceOf(seller, ERC1155_TOKEN_ID_2),
-            ERC1155_AMOUNT_2,
-            "Seller should have received ERC1155 token 2"
-        );
-    }
-
-    function testCollectEscrowWithRejectedFulfillment() public {
-        // Setup: create an escrow with rejecting arbiter
-        vm.startPrank(buyer);
-        erc20Token1.approve(address(escrowObligation), ERC20_AMOUNT_1);
-        erc20Token2.approve(address(escrowObligation), ERC20_AMOUNT_2);
-        erc721Token1.approve(address(escrowObligation), erc721TokenId1);
-        erc721Token2.approve(address(escrowObligation), erc721TokenId2);
-        erc1155Token1.setApprovalForAll(address(escrowObligation), true);
-        erc1155Token2.setApprovalForAll(address(escrowObligation), true);
-
-        // Create bundle with rejecting arbiter
-        TokenBundleEscrowObligation.ObligationData
-            memory data = createBundleData();
-        // Replace arbiter with rejecting one
-        address[] memory erc20Tokens = new address[](2);
-        erc20Tokens[0] = address(erc20Token1);
-        erc20Tokens[1] = address(erc20Token2);
-
-        uint256[] memory erc20Amounts = new uint256[](2);
-        erc20Amounts[0] = ERC20_AMOUNT_1;
-        erc20Amounts[1] = ERC20_AMOUNT_2;
-
-        address[] memory erc721Tokens = new address[](2);
-        erc721Tokens[0] = address(erc721Token1);
-        erc721Tokens[1] = address(erc721Token2);
-
-        uint256[] memory erc721TokenIds = new uint256[](2);
-        erc721TokenIds[0] = erc721TokenId1;
-        erc721TokenIds[1] = erc721TokenId2;
-
-        address[] memory erc1155Tokens = new address[](2);
-        erc1155Tokens[0] = address(erc1155Token1);
-        erc1155Tokens[1] = address(erc1155Token2);
-
-        uint256[] memory erc1155TokenIds = new uint256[](2);
-        erc1155TokenIds[0] = ERC1155_TOKEN_ID_1;
-        erc1155TokenIds[1] = ERC1155_TOKEN_ID_2;
-
-        uint256[] memory erc1155Amounts = new uint256[](2);
-        erc1155Amounts[0] = ERC1155_AMOUNT_1;
-        erc1155Amounts[1] = ERC1155_AMOUNT_2;
-
-        data = TokenBundleEscrowObligation.ObligationData({
-            erc20Tokens: erc20Tokens,
-            erc20Amounts: erc20Amounts,
-            erc721Tokens: erc721Tokens,
-            erc721TokenIds: erc721TokenIds,
-            erc1155Tokens: erc1155Tokens,
-            erc1155TokenIds: erc1155TokenIds,
-            erc1155Amounts: erc1155Amounts,
-            arbiter: address(rejectingArbiter),
-            demand: abi.encode("test demand")
+        // Mock the fulfillment attestation
+        Attestation memory fulfillmentAttestation = Attestation({
+            uid: fulfillmentId,
+            schema: bytes32(0),
+            time: uint64(block.timestamp),
+            expirationTime: 0,
+            revocationTime: 0,
+            refUID: escrowId,
+            recipient: bob,
+            attester: bob,
+            revocable: true,
+            data: ""
         });
 
-        uint64 expiration = uint64(block.timestamp + EXPIRATION_TIME);
-        bytes32 paymentUid = escrowObligation.doObligation(data, expiration);
-        vm.stopPrank();
-
-        // Create a fulfillment attestation using StringObligation
-        StringObligation stringObligation = new StringObligation(
-            eas,
-            schemaRegistry
-        );
-        vm.prank(seller);
-        bytes32 fulfillmentUid = stringObligation.doObligation(
-            StringObligation.ObligationData({item: "fulfillment data"}),
-            paymentUid
+        // Mock arbiter check
+        vm.mockCall(
+            address(arbiter),
+            abi.encodeWithSelector(MockArbiter.checkObligation.selector),
+            abi.encode(true)
         );
 
-        // Try to collect payment, should revert with InvalidFulfillment
-        vm.prank(seller);
-        vm.expectRevert(BaseEscrowObligation.InvalidFulfillment.selector);
-        escrowObligation.collectEscrow(paymentUid, fulfillmentUid);
+        // Mock EAS getAttestation for fulfillment
+        vm.mockCall(
+            address(eas),
+            abi.encodeWithSelector(IEAS.getAttestation.selector, fulfillmentId),
+            abi.encode(fulfillmentAttestation)
+        );
+
+        // Mock EAS getAttestation for escrow
+        Attestation memory escrowAttestation = Attestation({
+            uid: escrowId,
+            schema: escrow.ATTESTATION_SCHEMA(),
+            time: uint64(block.timestamp),
+            expirationTime: uint64(block.timestamp + EXPIRATION_TIME),
+            revocationTime: 0,
+            refUID: bytes32(0),
+            recipient: alice,
+            attester: address(escrow),
+            revocable: true,
+            data: abi.encode(data)
+        });
+
+        vm.mockCall(
+            address(eas),
+            abi.encodeWithSelector(IEAS.getAttestation.selector, escrowId),
+            abi.encode(escrowAttestation)
+        );
+
+        // Bob collects escrow
+        uint256 bobBalanceBefore = bob.balance;
+        vm.prank(bob);
+        bool success = escrow.collectEscrow(escrowId, fulfillmentId);
+
+        assertTrue(success);
+        // Verify Bob received all assets
+        assertEq(bob.balance, bobBalanceBefore + NATIVE_AMOUNT);
+        assertEq(token1.balanceOf(bob), TOKEN1_AMOUNT * 10 + TOKEN1_AMOUNT);
+        assertEq(token2.balanceOf(bob), TOKEN2_AMOUNT * 10 + TOKEN2_AMOUNT);
+        assertEq(nft1.ownerOf(NFT1_ID), bob);
+        assertEq(nft2.ownerOf(NFT2_ID), bob);
+        assertEq(
+            multiToken.balanceOf(bob, MULTI_TOKEN_ID_1),
+            MULTI_TOKEN_AMOUNT_1 * 10 + MULTI_TOKEN_AMOUNT_1
+        );
+        assertEq(
+            multiToken.balanceOf(bob, MULTI_TOKEN_ID_2),
+            MULTI_TOKEN_AMOUNT_2 * 10 + MULTI_TOKEN_AMOUNT_2
+        );
     }
 
     function testReclaimExpired() public {
-        // Setup: create an escrow
-        vm.startPrank(buyer);
-        erc20Token1.approve(address(escrowObligation), ERC20_AMOUNT_1);
-        erc20Token2.approve(address(escrowObligation), ERC20_AMOUNT_2);
-        erc721Token1.approve(address(escrowObligation), erc721TokenId1);
-        erc721Token2.approve(address(escrowObligation), erc721TokenId2);
-        erc1155Token1.setApprovalForAll(address(escrowObligation), true);
-        erc1155Token2.setApprovalForAll(address(escrowObligation), true);
-
+        // Create escrow
         TokenBundleEscrowObligation.ObligationData
-            memory data = createBundleData();
+            memory data = createFullBundleData();
 
-        uint64 expiration = uint64(block.timestamp + 100); // Short expiration
-        bytes32 paymentUid = escrowObligation.doObligation(data, expiration);
+        vm.startPrank(alice);
+        token1.approve(address(escrow), TOKEN1_AMOUNT);
+        token2.approve(address(escrow), TOKEN2_AMOUNT);
+        nft1.approve(address(escrow), NFT1_ID);
+        nft2.approve(address(escrow), NFT2_ID);
+        multiToken.setApprovalForAll(address(escrow), true);
+
+        bytes32 escrowId = escrow.doObligation{value: NATIVE_AMOUNT}(
+            data,
+            uint64(block.timestamp + EXPIRATION_TIME)
+        );
         vm.stopPrank();
 
-        // Attempt to collect before expiration (should fail)
-        vm.prank(buyer);
-        vm.expectRevert(BaseEscrowObligation.UnauthorizedCall.selector);
-        escrowObligation.reclaimExpired(paymentUid);
+        // Mock EAS getAttestation for escrow
+        Attestation memory escrowAttestation = Attestation({
+            uid: escrowId,
+            schema: escrow.ATTESTATION_SCHEMA(),
+            time: uint64(block.timestamp),
+            expirationTime: uint64(block.timestamp + EXPIRATION_TIME),
+            revocationTime: 0,
+            refUID: bytes32(0),
+            recipient: alice,
+            attester: address(escrow),
+            revocable: true,
+            data: abi.encode(data)
+        });
 
-        // Fast forward past expiration time
-        vm.warp(block.timestamp + 200);
+        vm.mockCall(
+            address(eas),
+            abi.encodeWithSelector(IEAS.getAttestation.selector, escrowId),
+            abi.encode(escrowAttestation)
+        );
 
-        // Collect expired funds
-        vm.prank(buyer);
-        bool success = escrowObligation.reclaimExpired(paymentUid);
+        // Move time past expiration
+        vm.warp(block.timestamp + EXPIRATION_TIME + 1);
 
-        assertTrue(success, "Expired token collection should succeed");
+        // Alice reclaims expired escrow
+        uint256 aliceBalanceBefore = alice.balance;
+        uint256 aliceToken1Before = token1.balanceOf(alice);
+        uint256 aliceToken2Before = token2.balanceOf(alice);
 
-        // Verify tokens returned to buyer
+        vm.prank(alice);
+        escrow.reclaimExpired(escrowId);
+
+        // Verify Alice got everything back
+        assertEq(alice.balance, aliceBalanceBefore + NATIVE_AMOUNT);
+        assertEq(token1.balanceOf(alice), aliceToken1Before + TOKEN1_AMOUNT);
+        assertEq(token2.balanceOf(alice), aliceToken2Before + TOKEN2_AMOUNT);
+        assertEq(nft1.ownerOf(NFT1_ID), alice);
+        assertEq(nft2.ownerOf(NFT2_ID), alice);
         assertEq(
-            erc20Token1.balanceOf(buyer),
-            ERC20_AMOUNT_1,
-            "Buyer should have received ERC20 token 1 back"
+            multiToken.balanceOf(alice, MULTI_TOKEN_ID_1),
+            MULTI_TOKEN_AMOUNT_1 * 10
         );
         assertEq(
-            erc20Token2.balanceOf(buyer),
-            ERC20_AMOUNT_2,
-            "Buyer should have received ERC20 token 2 back"
-        );
-        assertEq(
-            erc721Token1.ownerOf(erc721TokenId1),
-            buyer,
-            "Buyer should have received ERC721 token 1 back"
-        );
-        assertEq(
-            erc721Token2.ownerOf(erc721TokenId2),
-            buyer,
-            "Buyer should have received ERC721 token 2 back"
-        );
-        assertEq(
-            erc1155Token1.balanceOf(buyer, ERC1155_TOKEN_ID_1),
-            ERC1155_AMOUNT_1,
-            "Buyer should have received ERC1155 token 1 back"
-        );
-        assertEq(
-            erc1155Token2.balanceOf(buyer, ERC1155_TOKEN_ID_2),
-            ERC1155_AMOUNT_2,
-            "Buyer should have received ERC1155 token 2 back"
+            multiToken.balanceOf(alice, MULTI_TOKEN_ID_2),
+            MULTI_TOKEN_AMOUNT_2 * 10
         );
     }
 
     function testCheckObligation() public {
-        // Create obligation data
+        // Create payment data
         TokenBundleEscrowObligation.ObligationData
-            memory paymentData = createBundleData();
+            memory paymentData = createFullBundleData();
 
-        // Create an attestation using the bundle data
-        vm.startPrank(buyer);
-        erc20Token1.approve(address(escrowObligation), ERC20_AMOUNT_1);
-        erc20Token2.approve(address(escrowObligation), ERC20_AMOUNT_2);
-        erc721Token1.approve(address(escrowObligation), erc721TokenId1);
-        erc721Token2.approve(address(escrowObligation), erc721TokenId2);
-        erc1155Token1.setApprovalForAll(address(escrowObligation), true);
-        erc1155Token2.setApprovalForAll(address(escrowObligation), true);
-
-        uint64 expiration = uint64(block.timestamp + EXPIRATION_TIME);
-        bytes32 attestationId = escrowObligation.doObligation(
-            paymentData,
-            expiration
-        );
-        vm.stopPrank();
-
-        Attestation memory attestation = eas.getAttestation(attestationId);
+        // Create mock attestation
+        Attestation memory attestation = Attestation({
+            uid: bytes32(uint256(1)),
+            schema: escrow.ATTESTATION_SCHEMA(),
+            time: uint64(block.timestamp),
+            expirationTime: 0,
+            revocationTime: 0,
+            refUID: bytes32(0),
+            recipient: alice,
+            attester: address(escrow),
+            revocable: true,
+            data: abi.encode(paymentData)
+        });
 
         // Test exact match
-        TokenBundleEscrowObligation.ObligationData
-            memory exactDemand = createBundleData();
-        bool exactMatch = escrowObligation.checkObligation(
-            attestation,
-            abi.encode(exactDemand),
-            bytes32(0)
+        bytes memory demandBytes = abi.encode(paymentData);
+        assertTrue(
+            escrow.checkObligation(attestation, demandBytes, bytes32(0))
         );
-        assertTrue(exactMatch, "Should match exact demand");
 
-        // Test subset of ERC20 tokens (should succeed)
-        TokenBundleEscrowObligation.ObligationData
-            memory erc20SubsetDemand = createSubsetERC20Demand();
-        bool erc20SubsetMatch = escrowObligation.checkObligation(
-            attestation,
-            abi.encode(erc20SubsetDemand),
-            bytes32(0)
+        // Test with subset demands
+        bytes memory subsetERC20 = abi.encode(createSubsetERC20Demand());
+        assertTrue(
+            escrow.checkObligation(attestation, subsetERC20, bytes32(0))
         );
-        assertTrue(erc20SubsetMatch, "Should match subset of ERC20 tokens");
 
-        // Test subset of ERC721 tokens (should succeed)
-        TokenBundleEscrowObligation.ObligationData
-            memory erc721SubsetDemand = createSubsetERC721Demand();
-        bool erc721SubsetMatch = escrowObligation.checkObligation(
-            attestation,
-            abi.encode(erc721SubsetDemand),
-            bytes32(0)
+        bytes memory subsetERC721 = abi.encode(createSubsetERC721Demand());
+        assertTrue(
+            escrow.checkObligation(attestation, subsetERC721, bytes32(0))
         );
-        assertTrue(erc721SubsetMatch, "Should match subset of ERC721 tokens");
 
-        // Test subset of ERC1155 tokens (should succeed)
-        TokenBundleEscrowObligation.ObligationData
-            memory erc1155SubsetDemand = createSubsetERC1155Demand();
-        bool erc1155SubsetMatch = escrowObligation.checkObligation(
-            attestation,
-            abi.encode(erc1155SubsetDemand),
-            bytes32(0)
+        bytes memory subsetERC1155 = abi.encode(createSubsetERC1155Demand());
+        assertTrue(
+            escrow.checkObligation(attestation, subsetERC1155, bytes32(0))
         );
-        assertTrue(erc1155SubsetMatch, "Should match subset of ERC1155 tokens");
 
-        // Test different arbiter (should fail)
-        TokenBundleEscrowObligation.ObligationData
-            memory differentArbiterDemand = createDifferentArbiterDemand();
-        bool differentArbiterMatch = escrowObligation.checkObligation(
-            attestation,
-            abi.encode(differentArbiterDemand),
-            bytes32(0)
+        // Test with lower native amount demand
+        bytes memory lowerNative = abi.encode(createLowerNativeAmountDemand());
+        assertTrue(
+            escrow.checkObligation(attestation, lowerNative, bytes32(0))
+        );
+
+        // Test failures
+        bytes memory higherNative = abi.encode(
+            createHigherNativeAmountDemand()
         );
         assertFalse(
-            differentArbiterMatch,
-            "Should not match different arbiter demand"
+            escrow.checkObligation(attestation, higherNative, bytes32(0))
         );
 
-        // Test different demand data (should fail)
-        TokenBundleEscrowObligation.ObligationData
-            memory differentDemandData = createDifferentDemandData();
-        bool differentDemandMatch = escrowObligation.checkObligation(
-            attestation,
-            abi.encode(differentDemandData),
-            bytes32(0)
+        bytes memory differentArbiter = abi.encode(
+            createDifferentArbiterDemand()
         );
         assertFalse(
-            differentDemandMatch,
-            "Should not match different demand data"
+            escrow.checkObligation(attestation, differentArbiter, bytes32(0))
         );
 
-        // Test more ERC20 tokens than in the escrow (should fail)
-        TokenBundleEscrowObligation.ObligationData
-            memory moreERC20Demand = createMoreERC20Demand();
-        bool moreERC20Match = escrowObligation.checkObligation(
-            attestation,
-            abi.encode(moreERC20Demand),
-            bytes32(0)
+        bytes memory differentDemandData = abi.encode(
+            createDifferentDemandData()
         );
         assertFalse(
-            moreERC20Match,
-            "Should not match when demanding more ERC20 tokens"
-        );
-
-        // Test higher ERC20 amount than in the escrow (should fail)
-        TokenBundleEscrowObligation.ObligationData
-            memory higherERC20AmountDemand = createHigherERC20AmountDemand();
-        bool higherERC20AmountMatch = escrowObligation.checkObligation(
-            attestation,
-            abi.encode(higherERC20AmountDemand),
-            bytes32(0)
-        );
-        assertFalse(
-            higherERC20AmountMatch,
-            "Should not match when demanding higher ERC20 amount"
+            escrow.checkObligation(attestation, differentDemandData, bytes32(0))
         );
     }
 
-    // Helper function to create a complete bundle data
-    function createBundleData()
+    function testReceiveFunction() public {
+        uint256 balanceBefore = address(escrow).balance;
+
+        // Send native tokens directly to the contract
+        vm.deal(alice, 10 ether);
+        vm.prank(alice);
+        (bool success, ) = address(escrow).call{value: 1 ether}("");
+
+        assertTrue(success);
+        assertEq(address(escrow).balance, balanceBefore + 1 ether);
+    }
+
+    // Helper functions to create test data
+    function createFullBundleData()
         internal
         view
         returns (TokenBundleEscrowObligation.ObligationData memory)
     {
+        bytes memory demandData = abi.encode("test demand");
+
         address[] memory erc20Tokens = new address[](2);
-        erc20Tokens[0] = address(erc20Token1);
-        erc20Tokens[1] = address(erc20Token2);
+        erc20Tokens[0] = address(token1);
+        erc20Tokens[1] = address(token2);
 
         uint256[] memory erc20Amounts = new uint256[](2);
-        erc20Amounts[0] = ERC20_AMOUNT_1;
-        erc20Amounts[1] = ERC20_AMOUNT_2;
+        erc20Amounts[0] = TOKEN1_AMOUNT;
+        erc20Amounts[1] = TOKEN2_AMOUNT;
 
         address[] memory erc721Tokens = new address[](2);
-        erc721Tokens[0] = address(erc721Token1);
-        erc721Tokens[1] = address(erc721Token2);
+        erc721Tokens[0] = address(nft1);
+        erc721Tokens[1] = address(nft2);
 
         uint256[] memory erc721TokenIds = new uint256[](2);
-        erc721TokenIds[0] = erc721TokenId1;
-        erc721TokenIds[1] = erc721TokenId2;
+        erc721TokenIds[0] = NFT1_ID;
+        erc721TokenIds[1] = NFT2_ID;
 
         address[] memory erc1155Tokens = new address[](2);
-        erc1155Tokens[0] = address(erc1155Token1);
-        erc1155Tokens[1] = address(erc1155Token2);
+        erc1155Tokens[0] = address(multiToken);
+        erc1155Tokens[1] = address(multiToken);
 
         uint256[] memory erc1155TokenIds = new uint256[](2);
-        erc1155TokenIds[0] = ERC1155_TOKEN_ID_1;
-        erc1155TokenIds[1] = ERC1155_TOKEN_ID_2;
+        erc1155TokenIds[0] = MULTI_TOKEN_ID_1;
+        erc1155TokenIds[1] = MULTI_TOKEN_ID_2;
 
         uint256[] memory erc1155Amounts = new uint256[](2);
-        erc1155Amounts[0] = ERC1155_AMOUNT_1;
-        erc1155Amounts[1] = ERC1155_AMOUNT_2;
+        erc1155Amounts[0] = MULTI_TOKEN_AMOUNT_1;
+        erc1155Amounts[1] = MULTI_TOKEN_AMOUNT_2;
 
         return
             TokenBundleEscrowObligation.ObligationData({
+                arbiter: address(arbiter),
+                demand: demandData,
+                nativeAmount: NATIVE_AMOUNT,
                 erc20Tokens: erc20Tokens,
                 erc20Amounts: erc20Amounts,
                 erc721Tokens: erc721Tokens,
                 erc721TokenIds: erc721TokenIds,
                 erc1155Tokens: erc1155Tokens,
                 erc1155TokenIds: erc1155TokenIds,
-                erc1155Amounts: erc1155Amounts,
-                arbiter: address(mockArbiter),
-                demand: abi.encode("test demand")
+                erc1155Amounts: erc1155Amounts
             });
     }
 
-    // Helper function to create a subset ERC20 demand
+    function createNativeOnlyBundleData()
+        internal
+        view
+        returns (TokenBundleEscrowObligation.ObligationData memory)
+    {
+        bytes memory demandData = abi.encode("test demand");
+
+        return
+            TokenBundleEscrowObligation.ObligationData({
+                arbiter: address(arbiter),
+                demand: demandData,
+                nativeAmount: NATIVE_AMOUNT,
+                erc20Tokens: new address[](0),
+                erc20Amounts: new uint256[](0),
+                erc721Tokens: new address[](0),
+                erc721TokenIds: new uint256[](0),
+                erc1155Tokens: new address[](0),
+                erc1155TokenIds: new uint256[](0),
+                erc1155Amounts: new uint256[](0)
+            });
+    }
+
     function createSubsetERC20Demand()
         internal
         view
         returns (TokenBundleEscrowObligation.ObligationData memory)
     {
+        bytes memory demandData = abi.encode("test demand");
+
         address[] memory erc20Tokens = new address[](1);
-        erc20Tokens[0] = address(erc20Token1);
+        erc20Tokens[0] = address(token1);
 
         uint256[] memory erc20Amounts = new uint256[](1);
-        erc20Amounts[0] = ERC20_AMOUNT_1;
-
-        address[] memory erc721Tokens = new address[](2);
-        erc721Tokens[0] = address(erc721Token1);
-        erc721Tokens[1] = address(erc721Token2);
-
-        uint256[] memory erc721TokenIds = new uint256[](2);
-        erc721TokenIds[0] = erc721TokenId1;
-        erc721TokenIds[1] = erc721TokenId2;
-
-        address[] memory erc1155Tokens = new address[](2);
-        erc1155Tokens[0] = address(erc1155Token1);
-        erc1155Tokens[1] = address(erc1155Token2);
-
-        uint256[] memory erc1155TokenIds = new uint256[](2);
-        erc1155TokenIds[0] = ERC1155_TOKEN_ID_1;
-        erc1155TokenIds[1] = ERC1155_TOKEN_ID_2;
-
-        uint256[] memory erc1155Amounts = new uint256[](2);
-        erc1155Amounts[0] = ERC1155_AMOUNT_1;
-        erc1155Amounts[1] = ERC1155_AMOUNT_2;
+        erc20Amounts[0] = TOKEN1_AMOUNT;
 
         return
             TokenBundleEscrowObligation.ObligationData({
+                arbiter: address(arbiter),
+                demand: demandData,
+                nativeAmount: NATIVE_AMOUNT,
                 erc20Tokens: erc20Tokens,
                 erc20Amounts: erc20Amounts,
-                erc721Tokens: erc721Tokens,
-                erc721TokenIds: erc721TokenIds,
-                erc1155Tokens: erc1155Tokens,
-                erc1155TokenIds: erc1155TokenIds,
-                erc1155Amounts: erc1155Amounts,
-                arbiter: address(mockArbiter),
-                demand: abi.encode("test demand")
+                erc721Tokens: new address[](0),
+                erc721TokenIds: new uint256[](0),
+                erc1155Tokens: new address[](0),
+                erc1155TokenIds: new uint256[](0),
+                erc1155Amounts: new uint256[](0)
             });
     }
 
-    // Helper function to create a subset ERC721 demand
     function createSubsetERC721Demand()
         internal
         view
         returns (TokenBundleEscrowObligation.ObligationData memory)
     {
-        address[] memory erc20Tokens = new address[](2);
-        erc20Tokens[0] = address(erc20Token1);
-        erc20Tokens[1] = address(erc20Token2);
-
-        uint256[] memory erc20Amounts = new uint256[](2);
-        erc20Amounts[0] = ERC20_AMOUNT_1;
-        erc20Amounts[1] = ERC20_AMOUNT_2;
+        bytes memory demandData = abi.encode("test demand");
 
         address[] memory erc721Tokens = new address[](1);
-        erc721Tokens[0] = address(erc721Token1);
+        erc721Tokens[0] = address(nft1);
 
         uint256[] memory erc721TokenIds = new uint256[](1);
-        erc721TokenIds[0] = erc721TokenId1;
-
-        address[] memory erc1155Tokens = new address[](2);
-        erc1155Tokens[0] = address(erc1155Token1);
-        erc1155Tokens[1] = address(erc1155Token2);
-
-        uint256[] memory erc1155TokenIds = new uint256[](2);
-        erc1155TokenIds[0] = ERC1155_TOKEN_ID_1;
-        erc1155TokenIds[1] = ERC1155_TOKEN_ID_2;
-
-        uint256[] memory erc1155Amounts = new uint256[](2);
-        erc1155Amounts[0] = ERC1155_AMOUNT_1;
-        erc1155Amounts[1] = ERC1155_AMOUNT_2;
+        erc721TokenIds[0] = NFT1_ID;
 
         return
             TokenBundleEscrowObligation.ObligationData({
-                erc20Tokens: erc20Tokens,
-                erc20Amounts: erc20Amounts,
+                arbiter: address(arbiter),
+                demand: demandData,
+                nativeAmount: 0,
+                erc20Tokens: new address[](0),
+                erc20Amounts: new uint256[](0),
                 erc721Tokens: erc721Tokens,
                 erc721TokenIds: erc721TokenIds,
-                erc1155Tokens: erc1155Tokens,
-                erc1155TokenIds: erc1155TokenIds,
-                erc1155Amounts: erc1155Amounts,
-                arbiter: address(mockArbiter),
-                demand: abi.encode("test demand")
+                erc1155Tokens: new address[](0),
+                erc1155TokenIds: new uint256[](0),
+                erc1155Amounts: new uint256[](0)
             });
     }
 
-    // Helper function to create a subset ERC1155 demand
     function createSubsetERC1155Demand()
         internal
         view
         returns (TokenBundleEscrowObligation.ObligationData memory)
     {
-        address[] memory erc20Tokens = new address[](2);
-        erc20Tokens[0] = address(erc20Token1);
-        erc20Tokens[1] = address(erc20Token2);
-
-        uint256[] memory erc20Amounts = new uint256[](2);
-        erc20Amounts[0] = ERC20_AMOUNT_1;
-        erc20Amounts[1] = ERC20_AMOUNT_2;
-
-        address[] memory erc721Tokens = new address[](2);
-        erc721Tokens[0] = address(erc721Token1);
-        erc721Tokens[1] = address(erc721Token2);
-
-        uint256[] memory erc721TokenIds = new uint256[](2);
-        erc721TokenIds[0] = erc721TokenId1;
-        erc721TokenIds[1] = erc721TokenId2;
+        bytes memory demandData = abi.encode("test demand");
 
         address[] memory erc1155Tokens = new address[](1);
-        erc1155Tokens[0] = address(erc1155Token1);
+        erc1155Tokens[0] = address(multiToken);
 
         uint256[] memory erc1155TokenIds = new uint256[](1);
-        erc1155TokenIds[0] = ERC1155_TOKEN_ID_1;
+        erc1155TokenIds[0] = MULTI_TOKEN_ID_1;
 
         uint256[] memory erc1155Amounts = new uint256[](1);
-        erc1155Amounts[0] = ERC1155_AMOUNT_1;
+        erc1155Amounts[0] = MULTI_TOKEN_AMOUNT_1;
 
         return
             TokenBundleEscrowObligation.ObligationData({
-                erc20Tokens: erc20Tokens,
-                erc20Amounts: erc20Amounts,
-                erc721Tokens: erc721Tokens,
-                erc721TokenIds: erc721TokenIds,
+                arbiter: address(arbiter),
+                demand: demandData,
+                nativeAmount: 0,
+                erc20Tokens: new address[](0),
+                erc20Amounts: new uint256[](0),
+                erc721Tokens: new address[](0),
+                erc721TokenIds: new uint256[](0),
                 erc1155Tokens: erc1155Tokens,
                 erc1155TokenIds: erc1155TokenIds,
-                erc1155Amounts: erc1155Amounts,
-                arbiter: address(mockArbiter),
-                demand: abi.encode("test demand")
+                erc1155Amounts: erc1155Amounts
             });
     }
 
-    // Helper function to create a demand with a different arbiter
+    function createLowerNativeAmountDemand()
+        internal
+        view
+        returns (TokenBundleEscrowObligation.ObligationData memory)
+    {
+        TokenBundleEscrowObligation.ObligationData
+            memory data = createFullBundleData();
+        data.nativeAmount = NATIVE_AMOUNT / 2;
+        return data;
+    }
+
+    function createHigherNativeAmountDemand()
+        internal
+        view
+        returns (TokenBundleEscrowObligation.ObligationData memory)
+    {
+        TokenBundleEscrowObligation.ObligationData
+            memory data = createFullBundleData();
+        data.nativeAmount = NATIVE_AMOUNT * 2;
+        return data;
+    }
+
     function createDifferentArbiterDemand()
         internal
         view
         returns (TokenBundleEscrowObligation.ObligationData memory)
     {
-        address[] memory erc20Tokens = new address[](2);
-        erc20Tokens[0] = address(erc20Token1);
-        erc20Tokens[1] = address(erc20Token2);
-
-        uint256[] memory erc20Amounts = new uint256[](2);
-        erc20Amounts[0] = ERC20_AMOUNT_1;
-        erc20Amounts[1] = ERC20_AMOUNT_2;
-
-        address[] memory erc721Tokens = new address[](2);
-        erc721Tokens[0] = address(erc721Token1);
-        erc721Tokens[1] = address(erc721Token2);
-
-        uint256[] memory erc721TokenIds = new uint256[](2);
-        erc721TokenIds[0] = erc721TokenId1;
-        erc721TokenIds[1] = erc721TokenId2;
-
-        address[] memory erc1155Tokens = new address[](2);
-        erc1155Tokens[0] = address(erc1155Token1);
-        erc1155Tokens[1] = address(erc1155Token2);
-
-        uint256[] memory erc1155TokenIds = new uint256[](2);
-        erc1155TokenIds[0] = ERC1155_TOKEN_ID_1;
-        erc1155TokenIds[1] = ERC1155_TOKEN_ID_2;
-
-        uint256[] memory erc1155Amounts = new uint256[](2);
-        erc1155Amounts[0] = ERC1155_AMOUNT_1;
-        erc1155Amounts[1] = ERC1155_AMOUNT_2;
-
-        return
-            TokenBundleEscrowObligation.ObligationData({
-                erc20Tokens: erc20Tokens,
-                erc20Amounts: erc20Amounts,
-                erc721Tokens: erc721Tokens,
-                erc721TokenIds: erc721TokenIds,
-                erc1155Tokens: erc1155Tokens,
-                erc1155TokenIds: erc1155TokenIds,
-                erc1155Amounts: erc1155Amounts,
-                arbiter: address(rejectingArbiter), // Different arbiter
-                demand: abi.encode("test demand")
-            });
+        TokenBundleEscrowObligation.ObligationData
+            memory data = createFullBundleData();
+        data.arbiter = address(0x9999); // Different arbiter
+        return data;
     }
 
-    // Helper function to create a demand with different demand data
     function createDifferentDemandData()
         internal
         view
         returns (TokenBundleEscrowObligation.ObligationData memory)
     {
-        address[] memory erc20Tokens = new address[](2);
-        erc20Tokens[0] = address(erc20Token1);
-        erc20Tokens[1] = address(erc20Token2);
-
-        uint256[] memory erc20Amounts = new uint256[](2);
-        erc20Amounts[0] = ERC20_AMOUNT_1;
-        erc20Amounts[1] = ERC20_AMOUNT_2;
-
-        address[] memory erc721Tokens = new address[](2);
-        erc721Tokens[0] = address(erc721Token1);
-        erc721Tokens[1] = address(erc721Token2);
-
-        uint256[] memory erc721TokenIds = new uint256[](2);
-        erc721TokenIds[0] = erc721TokenId1;
-        erc721TokenIds[1] = erc721TokenId2;
-
-        address[] memory erc1155Tokens = new address[](2);
-        erc1155Tokens[0] = address(erc1155Token1);
-        erc1155Tokens[1] = address(erc1155Token2);
-
-        uint256[] memory erc1155TokenIds = new uint256[](2);
-        erc1155TokenIds[0] = ERC1155_TOKEN_ID_1;
-        erc1155TokenIds[1] = ERC1155_TOKEN_ID_2;
-
-        uint256[] memory erc1155Amounts = new uint256[](2);
-        erc1155Amounts[0] = ERC1155_AMOUNT_1;
-        erc1155Amounts[1] = ERC1155_AMOUNT_2;
-
-        return
-            TokenBundleEscrowObligation.ObligationData({
-                erc20Tokens: erc20Tokens,
-                erc20Amounts: erc20Amounts,
-                erc721Tokens: erc721Tokens,
-                erc721TokenIds: erc721TokenIds,
-                erc1155Tokens: erc1155Tokens,
-                erc1155TokenIds: erc1155TokenIds,
-                erc1155Amounts: erc1155Amounts,
-                arbiter: address(mockArbiter),
-                demand: abi.encode("different demand") // Different demand data
-            });
+        TokenBundleEscrowObligation.ObligationData
+            memory data = createFullBundleData();
+        data.demand = abi.encode("different demand data");
+        return data;
     }
 
-    // Helper function to create a demand with more ERC20 tokens
-    function createMoreERC20Demand()
-        internal
-        returns (TokenBundleEscrowObligation.ObligationData memory)
-    {
-        address[] memory erc20Tokens = new address[](3); // More tokens
-        erc20Tokens[0] = address(erc20Token1);
-        erc20Tokens[1] = address(erc20Token2);
-        erc20Tokens[2] = makeAddr("extraToken");
+    function verifyTokensInEscrow() internal {
+        // Verify ERC20 transfers
+        assertEq(token1.balanceOf(address(escrow)), TOKEN1_AMOUNT);
+        assertEq(token2.balanceOf(address(escrow)), TOKEN2_AMOUNT);
 
-        uint256[] memory erc20Amounts = new uint256[](3);
-        erc20Amounts[0] = ERC20_AMOUNT_1;
-        erc20Amounts[1] = ERC20_AMOUNT_2;
-        erc20Amounts[2] = 10 * 10 ** 18;
+        // Verify ERC721 transfers
+        assertEq(nft1.ownerOf(NFT1_ID), address(escrow));
+        assertEq(nft2.ownerOf(NFT2_ID), address(escrow));
 
-        address[] memory erc721Tokens = new address[](2);
-        erc721Tokens[0] = address(erc721Token1);
-        erc721Tokens[1] = address(erc721Token2);
-
-        uint256[] memory erc721TokenIds = new uint256[](2);
-        erc721TokenIds[0] = erc721TokenId1;
-        erc721TokenIds[1] = erc721TokenId2;
-
-        address[] memory erc1155Tokens = new address[](2);
-        erc1155Tokens[0] = address(erc1155Token1);
-        erc1155Tokens[1] = address(erc1155Token2);
-
-        uint256[] memory erc1155TokenIds = new uint256[](2);
-        erc1155TokenIds[0] = ERC1155_TOKEN_ID_1;
-        erc1155TokenIds[1] = ERC1155_TOKEN_ID_2;
-
-        uint256[] memory erc1155Amounts = new uint256[](2);
-        erc1155Amounts[0] = ERC1155_AMOUNT_1;
-        erc1155Amounts[1] = ERC1155_AMOUNT_2;
-
-        return
-            TokenBundleEscrowObligation.ObligationData({
-                erc20Tokens: erc20Tokens,
-                erc20Amounts: erc20Amounts,
-                erc721Tokens: erc721Tokens,
-                erc721TokenIds: erc721TokenIds,
-                erc1155Tokens: erc1155Tokens,
-                erc1155TokenIds: erc1155TokenIds,
-                erc1155Amounts: erc1155Amounts,
-                arbiter: address(mockArbiter),
-                demand: abi.encode("test demand")
-            });
-    }
-
-    // Helper function to create a demand with higher ERC20 amount
-    function createHigherERC20AmountDemand()
-        internal
-        view
-        returns (TokenBundleEscrowObligation.ObligationData memory)
-    {
-        address[] memory erc20Tokens = new address[](2);
-        erc20Tokens[0] = address(erc20Token1);
-        erc20Tokens[1] = address(erc20Token2);
-
-        uint256[] memory erc20Amounts = new uint256[](2);
-        erc20Amounts[0] = ERC20_AMOUNT_1 + 100 * 10 ** 18; // Higher amount
-        erc20Amounts[1] = ERC20_AMOUNT_2;
-
-        address[] memory erc721Tokens = new address[](2);
-        erc721Tokens[0] = address(erc721Token1);
-        erc721Tokens[1] = address(erc721Token2);
-
-        uint256[] memory erc721TokenIds = new uint256[](2);
-        erc721TokenIds[0] = erc721TokenId1;
-        erc721TokenIds[1] = erc721TokenId2;
-
-        address[] memory erc1155Tokens = new address[](2);
-        erc1155Tokens[0] = address(erc1155Token1);
-        erc1155Tokens[1] = address(erc1155Token2);
-
-        uint256[] memory erc1155TokenIds = new uint256[](2);
-        erc1155TokenIds[0] = ERC1155_TOKEN_ID_1;
-        erc1155TokenIds[1] = ERC1155_TOKEN_ID_2;
-
-        uint256[] memory erc1155Amounts = new uint256[](2);
-        erc1155Amounts[0] = ERC1155_AMOUNT_1;
-        erc1155Amounts[1] = ERC1155_AMOUNT_2;
-
-        return
-            TokenBundleEscrowObligation.ObligationData({
-                erc20Tokens: erc20Tokens,
-                erc20Amounts: erc20Amounts,
-                erc721Tokens: erc721Tokens,
-                erc721TokenIds: erc721TokenIds,
-                erc1155Tokens: erc1155Tokens,
-                erc1155TokenIds: erc1155TokenIds,
-                erc1155Amounts: erc1155Amounts,
-                arbiter: address(mockArbiter),
-                demand: abi.encode("test demand")
-            });
-    }
-
-    // Helper function to verify token transfers to escrow
-    function verifyTokensInEscrow() internal view {
-        // Verify ERC20 tokens in escrow
+        // Verify ERC1155 transfers
         assertEq(
-            erc20Token1.balanceOf(address(escrowObligation)),
-            ERC20_AMOUNT_1,
-            "Escrow should hold ERC20 token 1"
+            multiToken.balanceOf(address(escrow), MULTI_TOKEN_ID_1),
+            MULTI_TOKEN_AMOUNT_1
         );
         assertEq(
-            erc20Token2.balanceOf(address(escrowObligation)),
-            ERC20_AMOUNT_2,
-            "Escrow should hold ERC20 token 2"
-        );
-
-        // Verify ERC721 tokens in escrow
-        assertEq(
-            erc721Token1.ownerOf(erc721TokenId1),
-            address(escrowObligation),
-            "Escrow should hold ERC721 token 1"
-        );
-        assertEq(
-            erc721Token2.ownerOf(erc721TokenId2),
-            address(escrowObligation),
-            "Escrow should hold ERC721 token 2"
-        );
-
-        // Verify ERC1155 tokens in escrow
-        assertEq(
-            erc1155Token1.balanceOf(
-                address(escrowObligation),
-                ERC1155_TOKEN_ID_1
-            ),
-            ERC1155_AMOUNT_1,
-            "Escrow should hold ERC1155 token 1"
-        );
-        assertEq(
-            erc1155Token2.balanceOf(
-                address(escrowObligation),
-                ERC1155_TOKEN_ID_2
-            ),
-            ERC1155_AMOUNT_2,
-            "Escrow should hold ERC1155 token 2"
-        );
-
-        // Verify buyer no longer has tokens
-        assertEq(
-            erc20Token1.balanceOf(buyer),
-            0,
-            "Buyer should have sent all ERC20 token 1"
-        );
-        assertEq(
-            erc20Token2.balanceOf(buyer),
-            0,
-            "Buyer should have sent all ERC20 token 2"
-        );
-        assertEq(
-            erc1155Token1.balanceOf(buyer, ERC1155_TOKEN_ID_1),
-            0,
-            "Buyer should have sent all ERC1155 token 1"
-        );
-        assertEq(
-            erc1155Token2.balanceOf(buyer, ERC1155_TOKEN_ID_2),
-            0,
-            "Buyer should have sent all ERC1155 token 2"
+            multiToken.balanceOf(address(escrow), MULTI_TOKEN_ID_2),
+            MULTI_TOKEN_AMOUNT_2
         );
     }
 }

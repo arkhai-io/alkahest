@@ -14,8 +14,8 @@ import {ERC721EscrowObligation} from "@src/obligations/escrow/non-tierable/ERC72
 import {ERC721PaymentObligation} from "@src/obligations/ERC721PaymentObligation.sol";
 import {ERC1155EscrowObligation} from "@src/obligations/escrow/non-tierable/ERC1155EscrowObligation.sol";
 import {ERC1155PaymentObligation} from "@src/obligations/ERC1155PaymentObligation.sol";
-import {TokenBundleEscrowObligation2} from "@src/obligations/escrow/non-tierable/TokenBundleEscrowObligation2.sol";
-import {TokenBundlePaymentObligation2} from "@src/obligations/TokenBundlePaymentObligation2.sol";
+import {TokenBundleEscrowObligation} from "@src/obligations/escrow/non-tierable/TokenBundleEscrowObligation.sol";
+import {TokenBundlePaymentObligation} from "@src/obligations/TokenBundlePaymentObligation.sol";
 import {NativeTokenEscrowObligation} from "@src/obligations/escrow/non-tierable/NativeTokenEscrowObligation.sol";
 import {NativeTokenPaymentObligation} from "@src/obligations/NativeTokenPaymentObligation.sol";
 
@@ -44,10 +44,10 @@ contract DeployCrossTokenBarter is Script {
         ERC1155PaymentObligation erc1155Payment = ERC1155PaymentObligation(
             payable(0x1395A7b129503E23eDAa7823b5F5994D65a26BF0)
         );
-        TokenBundleEscrowObligation2 bundleEscrow = TokenBundleEscrowObligation2(
+        TokenBundleEscrowObligation bundleEscrow = TokenBundleEscrowObligation(
                 payable(0x7cCE97b9552dFf0105eC96A46f5721764a24D9AC)
             );
-        TokenBundlePaymentObligation2 bundlePayment = TokenBundlePaymentObligation2(
+        TokenBundlePaymentObligation bundlePayment = TokenBundlePaymentObligation(
                 payable(0x678f5601fe66485CEeD3d41D7385983881411c70)
             );
         NativeTokenEscrowObligation nativeEscrow = NativeTokenEscrowObligation(
