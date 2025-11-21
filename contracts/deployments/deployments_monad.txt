@@ -1,0 +1,164 @@
+No files changed, compilation skipped
+Script ran successfully.
+
+== Logs ==
+  SchemaRegistry deployed at: 0xF18506927973F4F8805F787EC702abF2Cc6A9654
+  EAS deployed at: 0x9dEC88F77f25E45F2Ee7009a3de6611aB71c2bF0
+
+EAS:
+  EAS: 0x9dEC88F77f25E45F2Ee7009a3de6611aB71c2bF0
+  Schema Registry: 0xF18506927973F4F8805F787EC702abF2Cc6A9654
+
+Arbiters:
+  TrivialArbiter: 0x6ab2079cd54A91895b6184118d58c106387EF653
+    Transaction: 0xec095fbb11893fd7f86e19ed20071d0e6b9c97a5eaafeaf29751ce2a78a58276
+  TrustedOracleArbiter: 0xe2dAe1C6627a88f34CD43aBa3A7c0972042A2afE
+    Transaction: 0x59424389421acd790db9af48c3d0763dd36793330a3e2bdd84215d8192b863d7
+
+Additional Arbiters:
+  AllArbiter: 0x0Fb4b2C566EFD1A264709Dfb363D6f022E5DDd8F
+    Transaction: 0x2fd6862bf4eb74d7cf4f0efe7d1f865e68d01f15934b5d2aa95ade2d2e23f5c5
+  AnyArbiter: 0x24afa9a8De66E4447717cd39440973878E8E45D3
+    Transaction: 0x5cce1dfa04c5e90f91b57e5e121410ff2eaf432006b63225a814ff747c10ff05
+  IntrinsicsArbiter: 0x08aF8e62a6508F357bd501d1e1223d38912bc708
+    Transaction: 0xfb64a5a105e6f326a6f66e78f275996b922624f89af8cf6c4f0625acf3115981
+  IntrinsicsArbiter2: 0xa6f47524148D2A5304779C5F9c536786Bc553e49
+    Transaction: 0x49a28511002f0303fc4c5ab654e8e815d19e21480447cb1c3d0e22a45cb85050
+  ERC8004Arbiter: 0xE923ca73F70a9eDfd36eA202C5964700B3f596b6
+    Transaction: 0x7d18ccaf9301a2a9822486dca8e65cae9d97046427c10ec4f3abfe15836b0476
+
+Confirmation Arbiters:
+  ConfirmationArbiter: 0xaaD33b541E4C55E58bcCe9cAbC242c939D134f41
+    Transaction: 0xf701f497001b8efcd565189003ce0b0a46a252a92c7bea0049a82f736a380b14
+  ConfirmationArbiterComposing: 0x71A1437A3D921CD0CF98e4B7a3569FbfA86b833B
+    Transaction: 0x9596b6051ebeff6e07fb7084acfc4d740387fb7fec74ad5aac6b28196b60a78e
+  RevocableConfirmationArbiter: 0x182EA2DA239590Ae10f9DEcCfb07ceD78591Aa12
+    Transaction: 0xf6e00630406568553a938acf47317ed9733c8d986691e79e01dbe4c0f7dd03b9
+  RevocableConfirmationArbiterComposing: 0xd31445b7CaC686C9917Fba62e76098b02C8d280c
+    Transaction: 0x19db8f6580daed8d54a84cb904fc60ba4ba59e744133a5a858ed143972885a2d
+  UnrevocableConfirmationArbiter: 0xE82EBB37FD7835798F8F7860683FEe29C8EBE796
+    Transaction: 0x9cc7d371200af39b753616fa9bcb0b8a3743c3ec89d1210feca86c8574944a8a
+  UnrevocableConfirmationArbiterComposing: 0x036922eBCB8cCf7c117015EE7C3fE85dB71EC81f
+    Transaction: 0x05eb2ba8c7b80a6d65cbf1f3c81a774d25ce7e0fe1a8fa29b42e752d62cfd7db
+
+Composing Attestation Property Arbiters:
+  ComposingAttesterArbiter: 0xd89D75E0C94027f57a15AfaD4B7f3Ef34f674d41
+    Transaction: 0xf41c459c20f550f9c0a7dae9d7748dcd09e8b78829c4341ec3c830e2e6b2a7ec
+  ComposingExpirationTimeAfterArbiter: 0x4DF3BA02dE10EF594Ab1BBc790d343D0C4A304eA
+    Transaction: 0x71499c67327c1e85fac705bb9661ebf90e423f76ff87d49d10622e5c6060028c
+  ComposingExpirationTimeBeforeArbiter: 0x2BB94a4E6eC0D81dE7f81007b572Ac09A5BE37b4
+    Transaction: 0x8051ea5aee5c6d6ed8a5c902b62c9ae2dedf82432c97f1cfd5890f964f8ebf6d
+  ComposingExpirationTimeEqualArbiter: 0x3c79a0225380fB6F3CB990FfC4E3D5aF4546b524
+    Transaction: 0x71fdd76c9028ccea1453afdf77e7382b22217be2a6da9336436b4114a8f176b4
+  ComposingRecipientArbiter: 0x10788ba2c4c65D1E97Bc6005436b61C2C2E51572
+    Transaction: 0x55e4f18add6a192ff8c11063e8d0f60ced95ac15e1ef9c8f5f3712145686ed9e
+  ComposingRefUidArbiter: 0xED550301B3258612509615bbDDD4B2383cF32df4
+    Transaction: 0x0544357a29f06c6888b25660e95031750c1aa315358191f20eb90e394277f58a
+  ComposingRevocableArbiter: 0x6E9Bc0d34FfF16140401fC51653347Be0A1F0Ec0
+    Transaction: 0xfde5c873451739d277bdef08ac844c2b0b6c4a4bf4080812a36f93f5c39c1e20
+  ComposingSchemaArbiter: 0x5f1dB54DBc5006894Ef6C43b2174C05ccaA250ec
+    Transaction: 0xc0685c98ed3a9940edd66766c05c53f60c08f8e5bc3781278917001956fdfeb1
+  ComposingTimeAfterArbiter: 0xbB022fc36D0cc97B6cAe5a2E15d45B7a9aD46F99
+    Transaction: 0x5fee8f359e9490bd18d21adbc752b8bfc3932e097212c66bfef97fb7e8fd81fa
+  ComposingTimeBeforeArbiter: 0x235792a6d077a04FB190a19F362AcEcAB7866Ab5
+    Transaction: 0xb5f84d55819f72249f338a1553be20d706c83ef3d3e892ae6cf42e03ac44ec17
+  ComposingTimeEqualArbiter: 0xD8b6199aa91992f5d3bAFDdC3372B391e46C92cE
+    Transaction: 0x79be7be9fafdc471fd2c19d7c4367588877722f237af8e8d10f6144498a81b44
+  ComposingUidArbiter: 0x336F2F91B093001edD90e49216422B33b8b4E03B
+    Transaction: 0x296a34f4776e2d4ce462193a41858737f00ad0c58651966764cec696ae8e89ec
+
+Non-Composing Attestation Property Arbiters:
+  NonComposingAttesterArbiter: 0x4b9B6ff4A7c2BC89EeE6F28355B9A94E6649bbF8
+    Transaction: 0x4b008cb19dd3a1bcd6353d7cfcc86f3814aac9b8fc01d00c75d192840dfd0e37
+  NonComposingExpirationTimeAfterArbiter: 0x96C14B182cD99a09dDdDc6B755ba0c4Ed3D6991c
+    Transaction: 0x42de5d232a51d699a9875ce02329861d6a1ab8510b9100e622d64eb982937335
+  NonComposingExpirationTimeBeforeArbiter: 0x903caa028b1848ab8Fdd15C4CCD20C4E7be2B1C0
+    Transaction: 0xc459ed861c0ccc0882cdb7bcf8b993219b249e5e25a8e45f6a2f360d3f800b06
+  NonComposingExpirationTimeEqualArbiter: 0xDcC1104325d9D99c6BD5faa0804A7d743f3D0c20
+    Transaction: 0xffba1304d8006498278e91fa482374ee1ee30e224dcb77e233abe1a91a35a28c
+  NonComposingRecipientArbiter: 0xab43CCE34a7b831Fa7Ab134bCDc21a6bA20882B6
+    Transaction: 0x387470a573252442be9e749849802ad4ad49dc3ab22f2abf647adcbcad87572a
+  NonComposingRefUidArbiter: 0xb63cF08C6623F69D2Ad34E37b8A68ccA6c125d49
+    Transaction: 0xf414dc9e584a76d9c5a930fa1009c34ee916c103eefda916311d0f84f8ccb917
+  NonComposingRevocableArbiter: 0xAeeddD0a2f24f7286EAE7e7fa5CEa746fcF064fc
+    Transaction: 0x728e061696080729625b338304091e0feb79d092626dbd9b80e4450b0e78357b
+  NonComposingSchemaArbiter: 0x2129F46737135FE4EBb3c49953487122088bC739
+    Transaction: 0x74067704ff7b612657a669d8239655397d09c607fd3d841512ea561a29340011
+  NonComposingTimeAfterArbiter: 0x66b7398B2bb322Bb4a480aE370142c02c52b886a
+    Transaction: 0xafd62643fa0beff610620b8277dc18fe7bc58d9680687a591ad4304a74da7f3e
+  NonComposingTimeBeforeArbiter: 0x553E4DE0916074201a9d32123eFcc8F734ee5675
+    Transaction: 0x4f56f89a8b4659a5a1e4fd3a23bf7ebb92efb13959546196fdecab47c769d385
+  NonComposingTimeEqualArbiter: 0x11C3931F2715d8fca8ea5ca79fAc4BbBCDBe9903
+    Transaction: 0x1a085fd0fe7bfc33bdb379fb6d9791ab644f387a544723c9cdb5b3e46ab3af04
+  NonComposingUidArbiter: 0x0c19138441E1bEe2964e65e0Edf1702d59a2E786
+    Transaction: 0x878f601c5be85a7aad2bbb04be3c73c2f8399590672165f5d0a1e21774f65fe7
+
+String Obligation:
+  StringObligation: 0x7F8E031C82216071b0B9e7d5116640BF34Af120e
+    Transaction: 0x388b2a1dbf56fd537e7c28cf42fc4f2d252cfe245b1210dbc6e48515a49af97f
+
+ERC20 Contracts:
+  ERC20EscrowObligation: 0x2963e27976E765105fAF613Bae049ff8a3939E35
+    Transaction: 0xa4bd4ea5fa55ce644d8bc2f42b057c0ccf015619965070b72b1b620f66a98110
+  ERC20PaymentObligation: 0x0965d908C552c2F7a13Cf41D42fcE4f4F2f512B5
+    Transaction: 0x890a31add4c9d524d3824945c4a23a165154c69f02736c97ace65aadd7a8e13c
+  ERC20BarterUtils: 0x831B40aE79D391C7d56209802b9745Fe0743DBF5
+    Transaction: 0xcd1720ced6d97854b6a3ae02a80e1631b2a247aa92c8a2aee1de4cf445c9a40e
+
+ERC721 Contracts:
+  ERC721EscrowObligation: 0x785aE79F247155Afe93E24119790667096281EAb
+    Transaction: 0xfb1c717cc853b2f4c714f6ff0b57b2e1f098470f43f8febba5a62761060b7c40
+  ERC721PaymentObligation: 0xD56bD862e7BEbD0BD7356603e9E52B32c241E2AE
+    Transaction: 0x93fad374c15af5a65f6fa5d7d24b88f039b027f7f27967cfac6e8c80b06d8a7e
+  ERC721BarterUtils: 0xB3D71c6f96cdD41e56dd9870b232225C379f2890
+    Transaction: 0xe8a9862a0b91eb722e657b6fcab4ddc811d3443b3a9e9baff1a63f2c837b744c
+
+ERC1155 Contracts:
+  ERC1155EscrowObligation: 0x61dC9c2D757A1C9D0d38A281288d9ef918e77Baa
+    Transaction: 0xa01a0a2e3deb2db84b409c8187f73664dcda775fec27c99d52a3bc5f627bc7ba
+  ERC1155PaymentObligation: 0x49026902790A8ECb427f335cA0d097c7C5795d13
+    Transaction: 0x3ce85dc4dd5cfec9591c80dba3d0bfd31b9025e6ef0628a2c347a60ccdc63d9a
+  ERC1155BarterUtils: 0xa740634E718c8727853D1E69963303D5cB8Ea44C
+    Transaction: 0x891e058305147f34b897c13caa6fdc65299154cb661a146e7cf28ac8c1399918
+
+TokenBundle Contracts:
+  TokenBundleEscrowObligation: 0xb6890A8Cb8CDeFcE11Edc0314125b750F48BFF1B
+    Transaction: 0x4a229e2f16ffc56a15a469e427cc522e6fbac7e80116e7579f08bcb4125ef6b3
+  TokenBundlePaymentObligation: 0x81dC8f2C5677b02aFcAFef34Fa7E75D55dfAEF20
+    Transaction: 0x507a40c89ceb343410680fb57c58fd8ff435443d08db67be9495182f5dc11a4d
+  TokenBundleBarterUtils: 0x7B20A4b25af2a2637C240622d6C3875DeA609A64
+    Transaction: 0x440105076926a8a5814aae24d029be5aa377d63b61f94038a9cd948ceeb512e4
+
+Native Token Contracts:
+  NativeTokenEscrowObligation: 0x194C3Da79a1De5f9141b1DbCdF98eC5d511B4E5a
+    Transaction: 0x5b7d1288bdbb7632f1184fb9b0200e49777d6808961d12c1385fcd08eb27d3c6
+  NativeTokenPaymentObligation: 0xFeaA2fa295d1453BA382b7eE0e3F66c489A6d9Bb
+    Transaction: 0x723a520a893acd4e835438d4daaedf9e0796f699eeefd204b9d9f095749f9014
+  NativeTokenBarterUtils: 0xE571D48D05962C57c95e48b8A7375466D1d02487
+    Transaction: 0x4bd7cff0b06495cb2c8f1851507fa3871d14a5d70f099b8b8a78071b2e25c94b
+
+Attestation Barter Contracts:
+  AttestationEscrowObligation: 0xbD90aF50Fb667724338EB8DA541f923F1822ac3C
+    Transaction: 0xc98c3b0a17f2ee2fb421b8c54aebc62f04dd5242d969417503a76e03d890620b
+  AttestationEscrowObligation2: 0xbCCE130337F2D8029982a14471d8686AFceF20fF
+    Transaction: 0xc8197b935bc0f4c6433ba62be7a8ff3f583519c4254293d2ed8558419a09e800
+  AttestationBarterUtils: 0x98D5bC7593143E55e9949da97603126CAe0BfD7F
+    Transaction: 0x880d05fa2e7f594f8670b9e4dc54ab97e23e4e2cec357d9df734225baf56a601
+
+Saving addresses to ./deployments/deployment_1763722099.json
+
+Deployment complete!
+
+## Setting up 1 EVM.
+
+==========================
+
+Chain 143
+
+Estimated gas price: 202 gwei
+
+Estimated total gas used for script: 73786759
+
+Estimated amount required: 14.904925318 ETH
+
+==========================

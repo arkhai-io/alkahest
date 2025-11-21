@@ -91,19 +91,30 @@ import {StringObligation} from "@src/obligations/StringObligation.sol";
 contract Deploy is Script {
     function run() external {
         // Load environment variables
-        address easAddress = vm.envAddress("EAS_ADDRESS");
-        address schemaRegistryAddress = vm.envAddress("EAS_SR_ADDRESS");
+        string memory easAddressStr = vm.envString("EAS_ADDRESS");
+        string memory easSrAddressStr = vm.envString("EAS_SR_ADDRESS");
         uint256 deployerPrivateKey = vm.envUint("DEPLOYMENT_KEY");
 
         vm.startBroadcast(deployerPrivateKey);
 
-        // Deploy EAS and schema registry
-        // IEAS eas;
-        // ISchemaRegistry schemaRegistry;
-        // EASDeployer easDeployer = new EASDeployer();
-        // (eas, schemaRegistry) = easDeployer.deployEAS();
-        // address easAddress = address(eas);
-        // address schemaRegistryAddress = address(schemaRegistry);
+        // Deploy EAS and schema registry if needed
+        address easAddress;
+        address schemaRegistryAddress;
+
+        bool shouldDeployEAS = keccak256(abi.encodePacked(easAddressStr)) == keccak256(abi.encodePacked("deploy"));
+        bool shouldDeploySR = keccak256(abi.encodePacked(easSrAddressStr)) == keccak256(abi.encodePacked("deploy"));
+
+        if (shouldDeployEAS || shouldDeploySR) {
+            require(shouldDeployEAS && shouldDeploySR, "Both EAS_ADDRESS and EAS_SR_ADDRESS must be 'deploy' or both must be addresses");
+
+            EASDeployer easDeployer = new EASDeployer();
+            (IEAS eas, ISchemaRegistry schemaRegistry) = easDeployer.deployEAS();
+            easAddress = address(eas);
+            schemaRegistryAddress = address(schemaRegistry);
+        } else {
+            easAddress = vm.parseAddress(easAddressStr);
+            schemaRegistryAddress = vm.parseAddress(easSrAddressStr);
+        }
 
         // Deploy arbiters
         // SpecificAttestationArbiter specificArbiter = new SpecificAttestationArbiter();
