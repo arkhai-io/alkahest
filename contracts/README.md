@@ -111,3 +111,13 @@ forge build
 ## Deployment
 
 Deployment scripts are located in [script/](script/). See [script/Deploy.s.sol](script/Deploy.s.sol) for the main deployment script.
+
+### Current Deployments
+
+**⚠️ Alpha Status Disclaimer**: Alkahest is currently in alpha and undergoing security audits. The contracts are subject to change and may be updated in backwards-incompatible ways. Use at your own risk.
+
+Deployed contract addresses and transaction hashes are available for the following networks:
+
+- [Monad Mainnet](deployments/deployments_monad.txt) ([JSON](deployments/deployment_monad.json))
+- [Base Sepolia Testnet](deployments/deployments_base_sepolia.txt) ([JSON](deployments/deployment_base_sepolia.json))
+- [Filecoin Calibration Testnet](deployments/deployments_filecoin_calibration.txt) ([JSON](deployments/deployment_filecoin_calibration.json))
