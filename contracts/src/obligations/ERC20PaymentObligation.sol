@@ -76,12 +76,6 @@ contract ERC20PaymentObligation is BaseObligation, IArbiter {
             (ObligationData)
         );
 
-        // Check balance before transfer
-        uint256 balanceBefore = IERC20(obligationData.token).balanceOf(
-            obligationData.payee
-        );
-
-        // Try token transfer with error handling
         bool success;
         try
             IERC20(obligationData.token).transferFrom(
@@ -95,13 +89,7 @@ contract ERC20PaymentObligation is BaseObligation, IArbiter {
             success = false;
         }
 
-        // Check balance after transfer
-        uint256 balanceAfter = IERC20(obligationData.token).balanceOf(
-            obligationData.payee
-        );
-
-        // Verify the actual amount transferred
-        if (!success || balanceAfter < balanceBefore + obligationData.amount) {
+        if (!success) {
             revert ERC20TransferFailed(
                 obligationData.token,
                 payer,
