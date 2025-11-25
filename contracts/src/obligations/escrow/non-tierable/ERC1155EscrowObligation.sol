@@ -57,6 +57,12 @@ contract ERC1155EscrowObligation is
     function _lockEscrow(bytes memory data, address from) internal override {
         ObligationData memory decoded = abi.decode(data, (ObligationData));
 
+        // Check balance before transfer
+        uint256 balanceBefore = IERC1155(decoded.token).balanceOf(
+            address(this),
+            decoded.tokenId
+        );
+
         try
             IERC1155(decoded.token).safeTransferFrom(
                 from,
@@ -68,6 +74,23 @@ contract ERC1155EscrowObligation is
         {
             // Transfer succeeded
         } catch {
+            revert ERC1155TransferFailed(
+                decoded.token,
+                from,
+                address(this),
+                decoded.tokenId,
+                decoded.amount
+            );
+        }
+
+        // Check balance after transfer
+        uint256 balanceAfter = IERC1155(decoded.token).balanceOf(
+            address(this),
+            decoded.tokenId
+        );
+
+        // Verify the actual amount transferred
+        if (balanceAfter < balanceBefore + decoded.amount) {
             revert ERC1155TransferFailed(
                 decoded.token,
                 from,
@@ -89,6 +112,12 @@ contract ERC1155EscrowObligation is
             (ObligationData)
         );
 
+        // Check balance before transfer
+        uint256 balanceBefore = IERC1155(decoded.token).balanceOf(
+            to,
+            decoded.tokenId
+        );
+
         try
             IERC1155(decoded.token).safeTransferFrom(
                 address(this),
@@ -100,6 +129,23 @@ contract ERC1155EscrowObligation is
         {
             // Transfer succeeded
         } catch {
+            revert ERC1155TransferFailed(
+                decoded.token,
+                address(this),
+                to,
+                decoded.tokenId,
+                decoded.amount
+            );
+        }
+
+        // Check balance after transfer
+        uint256 balanceAfter = IERC1155(decoded.token).balanceOf(
+            to,
+            decoded.tokenId
+        );
+
+        // Verify the actual amount transferred
+        if (balanceAfter < balanceBefore + decoded.amount) {
             revert ERC1155TransferFailed(
                 decoded.token,
                 address(this),
