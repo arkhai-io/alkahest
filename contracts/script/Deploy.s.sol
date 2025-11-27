@@ -50,9 +50,10 @@ import {IntrinsicsArbiter2} from "@src/arbiters/IntrinsicsArbiter2.sol";
 import {ERC8004Arbiter} from "@src/arbiters/ERC8004Arbiter.sol";
 
 // Confirmation Arbiters
-import {ConfirmationArbiter} from "@src/arbiters/confirmation/ConfirmationArbiter.sol";
-import {RevocableConfirmationArbiter} from "@src/arbiters/confirmation/RevocableConfirmationArbiter.sol";
-import {UnrevocableConfirmationArbiter} from "@src/arbiters/confirmation/UnrevocableConfirmationArbiter.sol";
+import {NonexclusiveUnrevocableConfirmationArbiter} from "@src/arbiters/confirmation/NonexclusiveUnrevocableConfirmationArbiter.sol";
+import {NonexclusiveRevocableConfirmationArbiter} from "@src/arbiters/confirmation/NonexclusiveRevocableConfirmationArbiter.sol";
+import {ExclusiveUnrevocableConfirmationArbiter} from "@src/arbiters/confirmation/ExclusiveUnrevocableConfirmationArbiter.sol";
+import {ExclusiveRevocableConfirmationArbiter} from "@src/arbiters/confirmation/ExclusiveRevocableConfirmationArbiter.sol";
 
 // Attestation Property Arbiters
 import {AttesterArbiter} from "@src/arbiters/attestation-properties/AttesterArbiter.sol";
@@ -115,13 +116,16 @@ contract Deploy is Script {
         ERC8004Arbiter erc8004Arbiter = new ERC8004Arbiter();
 
         // Deploy Confirmation Arbiters
-        ConfirmationArbiter confirmationArbiter = new ConfirmationArbiter(
+        NonexclusiveUnrevocableConfirmationArbiter nonexclusiveUnrevocableConfirmationArbiter = new NonexclusiveUnrevocableConfirmationArbiter(
             IEAS(easAddress)
         );
-        RevocableConfirmationArbiter revocableConfirmationArbiter = new RevocableConfirmationArbiter(
+        NonexclusiveRevocableConfirmationArbiter nonexclusiveRevocableConfirmationArbiter = new NonexclusiveRevocableConfirmationArbiter(
             IEAS(easAddress)
         );
-        UnrevocableConfirmationArbiter unrevocableConfirmationArbiter = new UnrevocableConfirmationArbiter(
+        ExclusiveUnrevocableConfirmationArbiter exclusiveUnrevocableConfirmationArbiter = new ExclusiveUnrevocableConfirmationArbiter(
+            IEAS(easAddress)
+        );
+        ExclusiveRevocableConfirmationArbiter exclusiveRevocableConfirmationArbiter = new ExclusiveRevocableConfirmationArbiter(
             IEAS(easAddress)
         );
 
@@ -308,9 +312,10 @@ contract Deploy is Script {
         console.log("ERC8004Arbiter:", address(erc8004Arbiter));
 
         console.log("\nConfirmation Arbiters:");
-        console.log("ConfirmationArbiter:", address(confirmationArbiter));
-        console.log("RevocableConfirmationArbiter:", address(revocableConfirmationArbiter));
-        console.log("UnrevocableConfirmationArbiter:", address(unrevocableConfirmationArbiter));
+        console.log("NonexclusiveUnrevocableConfirmationArbiter:", address(nonexclusiveUnrevocableConfirmationArbiter));
+        console.log("NonexclusiveRevocableConfirmationArbiter:", address(nonexclusiveRevocableConfirmationArbiter));
+        console.log("ExclusiveUnrevocableConfirmationArbiter:", address(exclusiveUnrevocableConfirmationArbiter));
+        console.log("ExclusiveRevocableConfirmationArbiter:", address(exclusiveRevocableConfirmationArbiter));
 
         console.log("\nAttestation Property Arbiters:");
         console.log("AttesterArbiter:", address(attesterArbiter));
@@ -417,18 +422,23 @@ contract Deploy is Script {
         // Add Confirmation Arbiters
         vm.serializeAddress(
             deploymentJson,
-            "confirmationArbiter",
-            address(confirmationArbiter)
+            "nonexclusiveUnrevocableConfirmationArbiter",
+            address(nonexclusiveUnrevocableConfirmationArbiter)
         );
         vm.serializeAddress(
             deploymentJson,
-            "revocableConfirmationArbiter",
-            address(revocableConfirmationArbiter)
+            "nonexclusiveRevocableConfirmationArbiter",
+            address(nonexclusiveRevocableConfirmationArbiter)
         );
         vm.serializeAddress(
             deploymentJson,
-            "unrevocableConfirmationArbiter",
-            address(unrevocableConfirmationArbiter)
+            "exclusiveUnrevocableConfirmationArbiter",
+            address(exclusiveUnrevocableConfirmationArbiter)
+        );
+        vm.serializeAddress(
+            deploymentJson,
+            "exclusiveRevocableConfirmationArbiter",
+            address(exclusiveRevocableConfirmationArbiter)
         );
 
         // Add Attestation Property Arbiters

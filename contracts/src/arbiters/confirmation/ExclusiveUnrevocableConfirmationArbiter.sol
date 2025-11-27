@@ -6,20 +6,26 @@ import {IEAS} from "@eas/IEAS.sol";
 import {IArbiter} from "../../IArbiter.sol";
 import {ArbiterUtils} from "../../ArbiterUtils.sol";
 
-contract ConfirmationArbiter is IArbiter {
+contract ExclusiveUnrevocableConfirmationArbiter is IArbiter {
     using ArbiterUtils for Attestation;
 
-    event ConfirmationMade(bytes32 indexed obligation);
+    event ConfirmationMade(
+        bytes32 indexed obligation,
+        bytes32 indexed counteroffer
+    );
     event ConfirmationRequested(
         bytes32 indexed obligation,
-        address indexed confirmer
+        address indexed confirmer,
+        bytes32 indexed counteroffer
     );
 
     error UnauthorizedConfirmationRequest();
     error UnauthorizedConfirmation();
+    error CounterOfferAlreadyConfirmed();
 
-    IEAS eas;
-    mapping(bytes32 => bool) confirmations;
+    IEAS public immutable eas;
+    mapping(bytes32 => bool) public confirmations;
+    mapping(bytes32 => bool) public counterofferConfirmed;
 
     constructor(IEAS _eas) {
         eas = _eas;
@@ -28,11 +34,19 @@ contract ConfirmationArbiter is IArbiter {
     function confirm(bytes32 _obligation) public {
         Attestation memory obligation = eas.getAttestation(_obligation);
         Attestation memory counteroffer = eas.getAttestation(obligation.refUID);
-        if (counteroffer.recipient != msg.sender)
+
+        if (counteroffer.recipient != msg.sender) {
             revert UnauthorizedConfirmation();
+        }
+
+        if (counterofferConfirmed[counteroffer.uid]) {
+            revert CounterOfferAlreadyConfirmed();
+        }
 
         confirmations[obligation.uid] = true;
-        emit ConfirmationMade(_obligation);
+        counterofferConfirmed[counteroffer.uid] = true;
+
+        emit ConfirmationMade(_obligation, counteroffer.uid);
     }
 
     function requestConfirmation(bytes32 _obligation) public {
@@ -44,7 +58,11 @@ contract ConfirmationArbiter is IArbiter {
 
         Attestation memory counteroffer = eas.getAttestation(obligation.refUID);
 
-        emit ConfirmationRequested(_obligation, counteroffer.recipient);
+        emit ConfirmationRequested(
+            _obligation,
+            counteroffer.recipient,
+            counteroffer.uid
+        );
     }
 
     function checkObligation(

@@ -6,7 +6,7 @@ import {IEAS} from "@eas/IEAS.sol";
 import {IArbiter} from "../../IArbiter.sol";
 import {ArbiterUtils} from "../../ArbiterUtils.sol";
 
-contract UnrevocableConfirmationArbiter is IArbiter {
+contract NonexclusiveUnrevocableConfirmationArbiter is IArbiter {
     using ArbiterUtils for Attestation;
 
     event ConfirmationMade(
@@ -21,11 +21,9 @@ contract UnrevocableConfirmationArbiter is IArbiter {
 
     error UnauthorizedConfirmationRequest();
     error UnauthorizedConfirmation();
-    error CounterOfferAlreadyConfirmed();
 
     IEAS public immutable eas;
     mapping(bytes32 => bool) public confirmations;
-    mapping(bytes32 => bool) public counterofferConfirmed;
 
     constructor(IEAS _eas) {
         eas = _eas;
@@ -39,12 +37,7 @@ contract UnrevocableConfirmationArbiter is IArbiter {
             revert UnauthorizedConfirmation();
         }
 
-        if (counterofferConfirmed[counteroffer.uid]) {
-            revert CounterOfferAlreadyConfirmed();
-        }
-
         confirmations[obligation.uid] = true;
-        counterofferConfirmed[counteroffer.uid] = true;
 
         emit ConfirmationMade(_obligation, counteroffer.uid);
     }
