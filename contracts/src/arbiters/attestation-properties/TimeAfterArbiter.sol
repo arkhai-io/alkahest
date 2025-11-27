@@ -20,7 +20,9 @@ contract TimeAfterArbiter is IArbiter {
         bytes32 /*counteroffer*/
     ) public pure override returns (bool) {
         DemandData memory demand_ = abi.decode(demand, (DemandData));
-        if (obligation.time < demand_.time) revert TimeNotAfter();
+        // 0 is a sentinel value meaning "after anything" (no constraint)
+        if (demand_.time != 0 && obligation.time < demand_.time)
+            revert TimeNotAfter();
 
         return true;
     }

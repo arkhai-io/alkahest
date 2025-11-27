@@ -20,7 +20,9 @@ contract TimeBeforeArbiter is IArbiter {
         bytes32 /*counteroffer*/
     ) public pure override returns (bool) {
         DemandData memory demand_ = abi.decode(demand, (DemandData));
-        if (obligation.time > demand_.time) revert TimeNotBefore();
+        // 0 is a sentinel value meaning "before nothing" (no constraint)
+        if (demand_.time != 0 && obligation.time > demand_.time)
+            revert TimeNotBefore();
 
         return true;
     }
