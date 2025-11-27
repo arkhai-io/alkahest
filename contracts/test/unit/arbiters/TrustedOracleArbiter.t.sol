@@ -2,9 +2,10 @@
 pragma solidity ^0.8.26;
 
 import {Test} from "forge-std/Test.sol";
-import {Attestation} from "@eas/Common.sol";
+import {Attestation, AttestationRequest, AttestationRequestData} from "@eas/IEAS.sol";
 import {IEAS} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
+import {ISchemaResolver} from "@eas/resolver/ISchemaResolver.sol";
 import {IArbiter} from "@src/IArbiter.sol";
 import {TrustedOracleArbiter} from "@src/arbiters/TrustedOracleArbiter.sol";
 import {EASDeployer} from "@test/utils/EASDeployer.sol";
@@ -13,13 +14,41 @@ contract TrustedOracleArbiterTest is Test {
     TrustedOracleArbiter arbiter;
     IEAS public eas;
     ISchemaRegistry public schemaRegistry;
+    bytes32 public testSchema;
+
     address oracle = address(0x123);
     bytes32 obligationUid = bytes32(uint256(1));
+
+    address attester = makeAddr("attester");
+    address recipient = makeAddr("recipient");
+    address otherUser = makeAddr("otherUser");
 
     function setUp() public {
         EASDeployer easDeployer = new EASDeployer();
         (eas, schemaRegistry) = easDeployer.deployEAS();
         arbiter = new TrustedOracleArbiter(eas);
+
+        // Register a test schema
+        testSchema = schemaRegistry.register(
+            "string item",
+            ISchemaResolver(address(0)),
+            true
+        );
+    }
+
+    function _createAttestation(address _attester, address _recipient, bytes32 refUID) internal returns (bytes32) {
+        vm.prank(_attester);
+        return eas.attest(AttestationRequest({
+            schema: testSchema,
+            data: AttestationRequestData({
+                recipient: _recipient,
+                expirationTime: 0,
+                revocable: true,
+                refUID: refUID,
+                data: abi.encode("test"),
+                value: 0
+            })
+        }));
     }
 
     function testConstructor() public {
@@ -265,5 +294,57 @@ contract TrustedOracleArbiterTest is Test {
         );
 
         vm.stopPrank();
+    }
+
+    function testRequestArbitrationAsAttester() public {
+        // Create a real attestation
+        bytes32 realObligationUid = _createAttestation(attester, recipient, bytes32(0));
+        bytes memory demand = bytes("some demand");
+
+        // Request arbitration as the attester
+        vm.prank(attester);
+        vm.expectEmit(true, true, false, true);
+        emit TrustedOracleArbiter.ArbitrationRequested(realObligationUid, oracle, demand);
+        arbiter.requestArbitration(realObligationUid, oracle, demand);
+    }
+
+    function testRequestArbitrationAsRecipient() public {
+        // Create a real attestation
+        bytes32 realObligationUid = _createAttestation(attester, recipient, bytes32(0));
+        bytes memory demand = bytes("some demand");
+
+        // Request arbitration as the recipient
+        vm.prank(recipient);
+        vm.expectEmit(true, true, false, true);
+        emit TrustedOracleArbiter.ArbitrationRequested(realObligationUid, oracle, demand);
+        arbiter.requestArbitration(realObligationUid, oracle, demand);
+    }
+
+    function testRequestArbitrationUnauthorized() public {
+        // Create a real attestation
+        bytes32 realObligationUid = _createAttestation(attester, recipient, bytes32(0));
+        bytes memory demand = bytes("some demand");
+
+        // Try to request arbitration as someone who is neither attester nor recipient
+        vm.prank(otherUser);
+        vm.expectRevert(TrustedOracleArbiter.UnauthorizedArbitrationRequest.selector);
+        arbiter.requestArbitration(realObligationUid, oracle, demand);
+    }
+
+    function testRequestArbitrationWithNoRecipient() public {
+        // Create an attestation with no recipient (address(0))
+        bytes32 realObligationUid = _createAttestation(attester, address(0), bytes32(0));
+        bytes memory demand = bytes("some demand");
+
+        // Request arbitration as the attester should work
+        vm.prank(attester);
+        vm.expectEmit(true, true, false, true);
+        emit TrustedOracleArbiter.ArbitrationRequested(realObligationUid, oracle, demand);
+        arbiter.requestArbitration(realObligationUid, oracle, demand);
+
+        // Request arbitration as otherUser should fail
+        vm.prank(otherUser);
+        vm.expectRevert(TrustedOracleArbiter.UnauthorizedArbitrationRequest.selector);
+        arbiter.requestArbitration(realObligationUid, oracle, demand);
     }
 }
