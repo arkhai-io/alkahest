@@ -13,7 +13,7 @@ library ArbiterUtils {
     ) internal view returns (bool) {
         return
             obligation.expirationTime != 0 &&
-            obligation.expirationTime < block.timestamp;
+            obligation.expirationTime <= block.timestamp;
     }
 
     function _checkRevoked(
