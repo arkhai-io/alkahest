@@ -38,7 +38,6 @@ contract TokenBundleEscrowObligation is
 
     error ArrayLengthMismatch();
     error InsufficientPayment(uint256 expected, uint256 received);
-    error NativeTokenTransferFailed(address to, uint256 amount);
     error ERC20TransferFailed(
         address token,
         address from,
@@ -55,6 +54,25 @@ contract TokenBundleEscrowObligation is
         address token,
         address from,
         address to,
+        uint256 tokenId,
+        uint256 amount
+    );
+
+    // Events emitted during release phase (collect/reclaim) on failure - continue on error
+    event NativeTokenTransferFailed(address indexed to, uint256 amount);
+    event ERC20TransferFailedOnRelease(
+        address indexed token,
+        address indexed to,
+        uint256 amount
+    );
+    event ERC721TransferFailedOnRelease(
+        address indexed token,
+        address indexed to,
+        uint256 tokenId
+    );
+    event ERC1155TransferFailedOnRelease(
+        address indexed token,
+        address indexed to,
         uint256 tokenId,
         uint256 amount
     );
@@ -117,17 +135,17 @@ contract TokenBundleEscrowObligation is
             (ObligationData)
         );
 
-        // Transfer native tokens
+        // Transfer native tokens - continue on failure
         if (decoded.nativeAmount > 0) {
             (bool success, ) = payable(to).call{value: decoded.nativeAmount}(
                 ""
             );
             if (!success) {
-                revert NativeTokenTransferFailed(to, decoded.nativeAmount);
+                emit NativeTokenTransferFailed(to, decoded.nativeAmount);
             }
         }
 
-        // Transfer token bundle
+        // Transfer token bundle - continues on individual failures
         transferOutTokenBundle(decoded, to);
         return ""; // Token escrows don't return anything
     }
@@ -237,7 +255,7 @@ contract TokenBundleEscrowObligation is
         ObligationData memory data,
         address to
     ) internal {
-        // Transfer ERC20s
+        // Transfer ERC20s - continue on failure
         for (uint i = 0; i < data.erc20Tokens.length; i++) {
             bool success;
             try
@@ -249,16 +267,15 @@ contract TokenBundleEscrowObligation is
             }
 
             if (!success) {
-                revert ERC20TransferFailed(
+                emit ERC20TransferFailedOnRelease(
                     data.erc20Tokens[i],
-                    address(this),
                     to,
                     data.erc20Amounts[i]
                 );
             }
         }
 
-        // Transfer ERC721s
+        // Transfer ERC721s - continue on failure
         for (uint i = 0; i < data.erc721Tokens.length; i++) {
             try
                 IERC721(data.erc721Tokens[i]).transferFrom(
@@ -269,23 +286,16 @@ contract TokenBundleEscrowObligation is
             {
                 // Transfer succeeded
             } catch {
-                revert ERC721TransferFailed(
+                emit ERC721TransferFailedOnRelease(
                     data.erc721Tokens[i],
-                    address(this),
                     to,
                     data.erc721TokenIds[i]
                 );
             }
         }
 
-        // Transfer ERC1155s
+        // Transfer ERC1155s - continue on failure
         for (uint i = 0; i < data.erc1155Tokens.length; i++) {
-            // Check balance before transfer
-            uint256 balanceBefore = IERC1155(data.erc1155Tokens[i]).balanceOf(
-                to,
-                data.erc1155TokenIds[i]
-            );
-
             try
                 IERC1155(data.erc1155Tokens[i]).safeTransferFrom(
                     address(this),
@@ -297,26 +307,8 @@ contract TokenBundleEscrowObligation is
             {
                 // Transfer succeeded
             } catch {
-                revert ERC1155TransferFailed(
+                emit ERC1155TransferFailedOnRelease(
                     data.erc1155Tokens[i],
-                    address(this),
-                    to,
-                    data.erc1155TokenIds[i],
-                    data.erc1155Amounts[i]
-                );
-            }
-
-            // Check balance after transfer
-            uint256 balanceAfter = IERC1155(data.erc1155Tokens[i]).balanceOf(
-                to,
-                data.erc1155TokenIds[i]
-            );
-
-            // Verify the actual amount transferred
-            if (balanceAfter < balanceBefore + data.erc1155Amounts[i]) {
-                revert ERC1155TransferFailed(
-                    data.erc1155Tokens[i],
-                    address(this),
                     to,
                     data.erc1155TokenIds[i],
                     data.erc1155Amounts[i]
