@@ -51,11 +51,8 @@ import {ERC8004Arbiter} from "@src/arbiters/ERC8004Arbiter.sol";
 
 // Confirmation Arbiters
 import {ConfirmationArbiter} from "@src/arbiters/confirmation/ConfirmationArbiter.sol";
-import {ConfirmationArbiterComposing} from "@src/arbiters/confirmation/ConfirmationArbiterComposing.sol";
 import {RevocableConfirmationArbiter} from "@src/arbiters/confirmation/RevocableConfirmationArbiter.sol";
-import {RevocableConfirmationArbiterComposing} from "@src/arbiters/confirmation/RevocableConfirmationArbiterComposing.sol";
 import {UnrevocableConfirmationArbiter} from "@src/arbiters/confirmation/UnrevocableConfirmationArbiter.sol";
-import {UnrevocableConfirmationArbiterComposing} from "@src/arbiters/confirmation/UnrevocableConfirmationArbiterComposing.sol";
 
 // Attestation Property Arbiters
 import {AttesterArbiter} from "@src/arbiters/attestation-properties/AttesterArbiter.sol";
@@ -121,19 +118,10 @@ contract Deploy is Script {
         ConfirmationArbiter confirmationArbiter = new ConfirmationArbiter(
             IEAS(easAddress)
         );
-        ConfirmationArbiterComposing confirmationArbiterComposing = new ConfirmationArbiterComposing(
-            IEAS(easAddress)
-        );
         RevocableConfirmationArbiter revocableConfirmationArbiter = new RevocableConfirmationArbiter(
             IEAS(easAddress)
         );
-        RevocableConfirmationArbiterComposing revocableConfirmationArbiterComposing = new RevocableConfirmationArbiterComposing(
-            IEAS(easAddress)
-        );
         UnrevocableConfirmationArbiter unrevocableConfirmationArbiter = new UnrevocableConfirmationArbiter(
-            IEAS(easAddress)
-        );
-        UnrevocableConfirmationArbiterComposing unrevocableConfirmationArbiterComposing = new UnrevocableConfirmationArbiterComposing(
             IEAS(easAddress)
         );
 
@@ -321,11 +309,8 @@ contract Deploy is Script {
 
         console.log("\nConfirmation Arbiters:");
         console.log("ConfirmationArbiter:", address(confirmationArbiter));
-        console.log("ConfirmationArbiterComposing:", address(confirmationArbiterComposing));
         console.log("RevocableConfirmationArbiter:", address(revocableConfirmationArbiter));
-        console.log("RevocableConfirmationArbiterComposing:", address(revocableConfirmationArbiterComposing));
         console.log("UnrevocableConfirmationArbiter:", address(unrevocableConfirmationArbiter));
-        console.log("UnrevocableConfirmationArbiterComposing:", address(unrevocableConfirmationArbiterComposing));
 
         console.log("\nAttestation Property Arbiters:");
         console.log("AttesterArbiter:", address(attesterArbiter));
@@ -437,28 +422,13 @@ contract Deploy is Script {
         );
         vm.serializeAddress(
             deploymentJson,
-            "confirmationArbiterComposing",
-            address(confirmationArbiterComposing)
-        );
-        vm.serializeAddress(
-            deploymentJson,
             "revocableConfirmationArbiter",
             address(revocableConfirmationArbiter)
         );
         vm.serializeAddress(
             deploymentJson,
-            "revocableConfirmationArbiterComposing",
-            address(revocableConfirmationArbiterComposing)
-        );
-        vm.serializeAddress(
-            deploymentJson,
             "unrevocableConfirmationArbiter",
             address(unrevocableConfirmationArbiter)
-        );
-        vm.serializeAddress(
-            deploymentJson,
-            "unrevocableConfirmationArbiterComposing",
-            address(unrevocableConfirmationArbiterComposing)
         );
 
         // Add Attestation Property Arbiters
