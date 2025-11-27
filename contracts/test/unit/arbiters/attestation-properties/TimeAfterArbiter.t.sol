@@ -69,6 +69,34 @@ contract TimeAfterArbiterTest is Test {
         arbiter.checkObligation(attestation, demand, bytes32(0));
     }
 
+    function testCheckObligationWithZeroSentinelValue() public view {
+        // Create a test attestation with any time value (even 0)
+        Attestation memory attestation = Attestation({
+            uid: bytes32(0),
+            schema: bytes32(0),
+            time: uint64(0), // Even time 0 should pass
+            expirationTime: uint64(0),
+            revocationTime: uint64(0),
+            refUID: bytes32(0),
+            recipient: address(0),
+            attester: address(0),
+            revocable: true,
+            data: bytes("")
+        });
+
+        // Create demand data with 0 (sentinel value meaning "no constraint")
+        TimeAfterArbiter.DemandData memory demandData = TimeAfterArbiter
+            .DemandData({time: 0});
+        bytes memory demand = abi.encode(demandData);
+
+        // Check obligation should return true (0 means "after anything" - no constraint)
+        bool result = arbiter.checkObligation(attestation, demand, bytes32(0));
+        assertTrue(
+            result,
+            "Should accept any attestation when demand time is 0 (sentinel)"
+        );
+    }
+
     function testDecodeDemandData() public {
         TimeAfterArbiter.DemandData memory expectedDemandData = TimeAfterArbiter
             .DemandData({time: timestampThreshold});
