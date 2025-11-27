@@ -468,4 +468,110 @@ contract NativeTokenBarterUtilsTest is Test {
         assertTrue(success);
         assertEq(address(barterUtils).balance, balanceBefore + 1 ether);
     }
+
+    // ============ Security Tests - msg.value Validation ============
+
+    /// @notice Verifies that the ETH drain attack is prevented by msg.value validation.
+    /// Without the fix, an attacker could steal ETH held by the contract by specifying
+    /// a bidAmount larger than msg.value.
+    function testAttackPrevented_DrainContractEthViaBuyEthForEth() public {
+        // Step 1: Contract accumulates some ETH (e.g., from accidental sends or receive())
+        vm.deal(address(barterUtils), 5 ether);
+        uint256 contractBalanceBefore = address(barterUtils).balance;
+        assertEq(contractBalanceBefore, 5 ether);
+
+        address attacker = address(0xBEEF);
+        vm.deal(attacker, 1 ether);
+
+        // Step 2: Attacker tries to call buyEthForEth with bidAmount=5 ether but only sends msg.value=0.1 ether
+        // This should now revert with MsgValueMismatch
+        vm.startPrank(attacker);
+        vm.expectRevert(NativeTokenBarterUtils.MsgValueMismatch.selector);
+        barterUtils.buyEthForEth{value: 0.1 ether}(
+            5 ether, // bidAmount - claiming to escrow 5 ETH
+            0.01 ether, // askAmount - asking for very little in return
+            EXPIRATION
+        );
+        vm.stopPrank();
+
+        // Contract balance should be unchanged - attack was prevented
+        assertEq(address(barterUtils).balance, contractBalanceBefore);
+    }
+
+    function testRevert_BuyErc20WithEthMismatchedValue() public {
+        vm.deal(address(barterUtils), 5 ether);
+
+        vm.startPrank(alice);
+        vm.expectRevert(NativeTokenBarterUtils.MsgValueMismatch.selector);
+        barterUtils.buyErc20WithEth{value: 0.1 ether}(
+            1 ether, // bidAmount doesn't match msg.value
+            address(testERC20),
+            100 * 10 ** 18,
+            EXPIRATION
+        );
+        vm.stopPrank();
+    }
+
+    function testRevert_BuyErc721WithEthMismatchedValue() public {
+        vm.deal(address(barterUtils), 5 ether);
+
+        vm.startPrank(alice);
+        vm.expectRevert(NativeTokenBarterUtils.MsgValueMismatch.selector);
+        barterUtils.buyErc721WithEth{value: 0.1 ether}(
+            1 ether, // bidAmount doesn't match msg.value
+            address(testERC721),
+            2,
+            EXPIRATION
+        );
+        vm.stopPrank();
+    }
+
+    function testRevert_BuyErc1155WithEthMismatchedValue() public {
+        vm.deal(address(barterUtils), 5 ether);
+
+        vm.startPrank(alice);
+        vm.expectRevert(NativeTokenBarterUtils.MsgValueMismatch.selector);
+        barterUtils.buyErc1155WithEth{value: 0.1 ether}(
+            1 ether, // bidAmount doesn't match msg.value
+            address(testERC1155),
+            1,
+            50,
+            EXPIRATION
+        );
+        vm.stopPrank();
+    }
+
+    function testRevert_BuyBundleWithEthMismatchedValue() public {
+        vm.deal(address(barterUtils), 5 ether);
+
+        address[] memory erc20Tokens = new address[](0);
+        uint256[] memory erc20Amounts = new uint256[](0);
+        address[] memory erc721Tokens = new address[](0);
+        uint256[] memory erc721TokenIds = new uint256[](0);
+        address[] memory erc1155Tokens = new address[](0);
+        uint256[] memory erc1155TokenIds = new uint256[](0);
+        uint256[] memory erc1155Amounts = new uint256[](0);
+
+        TokenBundlePaymentObligation.ObligationData
+            memory bundleData = TokenBundlePaymentObligation.ObligationData({
+                nativeAmount: 0,
+                erc20Tokens: erc20Tokens,
+                erc20Amounts: erc20Amounts,
+                erc721Tokens: erc721Tokens,
+                erc721TokenIds: erc721TokenIds,
+                erc1155Tokens: erc1155Tokens,
+                erc1155TokenIds: erc1155TokenIds,
+                erc1155Amounts: erc1155Amounts,
+                payee: alice
+            });
+
+        vm.startPrank(alice);
+        vm.expectRevert(NativeTokenBarterUtils.MsgValueMismatch.selector);
+        barterUtils.buyBundleWithEth{value: 0.1 ether}(
+            1 ether, // bidAmount doesn't match msg.value
+            bundleData,
+            EXPIRATION
+        );
+        vm.stopPrank();
+    }
 }

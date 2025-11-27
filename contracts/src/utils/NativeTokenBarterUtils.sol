@@ -29,6 +29,7 @@ contract NativeTokenBarterUtils {
 
     error CouldntCollectEscrow();
     error AttestationNotFound(bytes32 attestationId);
+    error MsgValueMismatch();
 
     constructor(
         IEAS _eas,
@@ -103,6 +104,7 @@ contract NativeTokenBarterUtils {
         uint256 askAmount,
         uint64 expiration
     ) external payable returns (bytes32) {
+        if (msg.value != bidAmount) revert MsgValueMismatch();
         return _buyEthForEth(bidAmount, askAmount, expiration);
     }
 
@@ -130,6 +132,7 @@ contract NativeTokenBarterUtils {
         uint256 askAmount,
         uint64 expiration
     ) external payable returns (bytes32) {
+        if (msg.value != bidAmount) revert MsgValueMismatch();
         return
             nativeEscrow.doObligationFor{value: bidAmount}(
                 NativeTokenEscrowObligation.ObligationData({
@@ -186,6 +189,7 @@ contract NativeTokenBarterUtils {
         uint256 askTokenId,
         uint64 expiration
     ) external payable returns (bytes32) {
+        if (msg.value != bidAmount) revert MsgValueMismatch();
         return
             nativeEscrow.doObligationFor{value: bidAmount}(
                 NativeTokenEscrowObligation.ObligationData({
@@ -243,6 +247,7 @@ contract NativeTokenBarterUtils {
         uint256 askAmount,
         uint64 expiration
     ) external payable returns (bytes32) {
+        if (msg.value != bidAmount) revert MsgValueMismatch();
         return
             nativeEscrow.doObligationFor{value: bidAmount}(
                 NativeTokenEscrowObligation.ObligationData({
@@ -299,6 +304,7 @@ contract NativeTokenBarterUtils {
         TokenBundlePaymentObligation.ObligationData calldata askData,
         uint64 expiration
     ) external payable returns (bytes32) {
+        if (msg.value != bidAmount) revert MsgValueMismatch();
         return
             nativeEscrow.doObligationFor{value: bidAmount}(
                 NativeTokenEscrowObligation.ObligationData({
