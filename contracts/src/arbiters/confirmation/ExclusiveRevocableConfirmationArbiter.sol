@@ -9,85 +9,94 @@ import {ArbiterUtils} from "../../ArbiterUtils.sol";
 contract ExclusiveRevocableConfirmationArbiter is IArbiter {
     using ArbiterUtils for Attestation;
 
-    event ConfirmationMade(bytes32 indexed obligation, bytes32 indexed counteroffer);
-    event ConfirmationRequested(
-        bytes32 indexed obligation,
-        address indexed confirmer,
-        bytes32 indexed counteroffer
+    event ConfirmationMade(
+        bytes32 indexed fulfillment,
+        bytes32 indexed escrow
     );
-    event ConfirmationRevoked(bytes32 indexed obligation, bytes32 indexed counteroffer);
+    event ConfirmationRequested(
+        bytes32 indexed fulfillment,
+        address indexed confirmer,
+        bytes32 indexed escrow
+    );
+    event ConfirmationRevoked(
+        bytes32 indexed fulfillment,
+        bytes32 indexed escrow
+    );
 
     error UnauthorizedConfirmationRequest();
     error UnauthorizedConfirmation();
     error UnauthorizedRevocation();
     error NoConfirmationToRevoke();
-    error AnotherObligationAlreadyConfirmed();
+    error AnotherFulfillmentAlreadyConfirmed();
 
     IEAS public immutable eas;
-    mapping(bytes32 => bool) public confirmations;
-    mapping(bytes32 => bytes32) public counterofferToObligation;
+    // fulfillment => escrow => confirmed
+    mapping(bytes32 => mapping(bytes32 => bool)) public confirmations;
+    // escrow => currently confirmed fulfillment (bytes32(0) if none)
+    mapping(bytes32 => bytes32) public escrowToFulfillment;
 
     constructor(IEAS _eas) {
         eas = _eas;
     }
 
-    function confirm(bytes32 _obligation) public {
-        Attestation memory obligation = eas.getAttestation(_obligation);
-        bytes32 counterofferId = obligation.refUID;
-        Attestation memory counteroffer = eas.getAttestation(counterofferId);
-        
-        if (counteroffer.recipient != msg.sender) {
+    function confirm(bytes32 _fulfillment, bytes32 _escrow) public {
+        Attestation memory escrow = eas.getAttestation(_escrow);
+
+        if (escrow.recipient != msg.sender) {
             revert UnauthorizedConfirmation();
         }
-        
-        // If another Obligation is already confirmed for this counteroffer, revert
-        if (counterofferToObligation[counterofferId] != bytes32(0) && 
-            counterofferToObligation[counterofferId] != _obligation) {
-            revert AnotherObligationAlreadyConfirmed();
+
+        // If another fulfillment is already confirmed for this escrow, revert
+        if (escrowToFulfillment[_escrow] != bytes32(0) &&
+            escrowToFulfillment[_escrow] != _fulfillment) {
+            revert AnotherFulfillmentAlreadyConfirmed();
         }
 
-        confirmations[obligation.uid] = true;
-        counterofferToObligation[counterofferId] = _obligation;
-        
-        emit ConfirmationMade(_obligation, counteroffer.uid);
+        confirmations[_fulfillment][_escrow] = true;
+        escrowToFulfillment[_escrow] = _fulfillment;
+
+        emit ConfirmationMade(_fulfillment, _escrow);
     }
 
-    function revoke(bytes32 _obligation) public {
-        Attestation memory obligation = eas.getAttestation(_obligation);
-        bytes32 counterofferId = obligation.refUID;
-        Attestation memory counteroffer = eas.getAttestation(counterofferId);
-        
-        if (counteroffer.recipient != msg.sender) {
+    function revoke(bytes32 _fulfillment, bytes32 _escrow) public {
+        Attestation memory escrow = eas.getAttestation(_escrow);
+
+        if (escrow.recipient != msg.sender) {
             revert UnauthorizedRevocation();
         }
-        
-        if (!confirmations[_obligation] || counterofferToObligation[counterofferId] != _obligation) {
+
+        if (!confirmations[_fulfillment][_escrow] ||
+            escrowToFulfillment[_escrow] != _fulfillment) {
             revert NoConfirmationToRevoke();
         }
 
-        confirmations[_obligation] = false;
-        counterofferToObligation[counterofferId] = bytes32(0);
-        
-        emit ConfirmationRevoked(_obligation, counteroffer.uid);
+        confirmations[_fulfillment][_escrow] = false;
+        escrowToFulfillment[_escrow] = bytes32(0);
+
+        emit ConfirmationRevoked(_fulfillment, _escrow);
     }
 
-    function requestConfirmation(bytes32 _obligation) public {
-        Attestation memory obligation = eas.getAttestation(_obligation);
+    function requestConfirmation(bytes32 _fulfillment, bytes32 _escrow) public {
+        Attestation memory fulfillment = eas.getAttestation(_fulfillment);
         if (
-            obligation.attester != msg.sender &&
-            obligation.recipient != msg.sender
+            fulfillment.attester != msg.sender &&
+            fulfillment.recipient != msg.sender
         ) revert UnauthorizedConfirmationRequest();
 
-        Attestation memory counteroffer = eas.getAttestation(obligation.refUID);
+        Attestation memory escrow = eas.getAttestation(_escrow);
 
-        emit ConfirmationRequested(_obligation, counteroffer.recipient, counteroffer.uid);
+        emit ConfirmationRequested(
+            _fulfillment,
+            escrow.recipient,
+            _escrow
+        );
     }
 
     function checkObligation(
-        Attestation memory obligation,
+        Attestation memory fulfillment,
         bytes memory /*demand*/,
-        bytes32 /*counteroffer*/
+        bytes32 escrow
     ) public view override returns (bool) {
-        return confirmations[obligation.uid];
+        return confirmations[fulfillment.uid][escrow];
     }
 }
