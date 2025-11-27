@@ -17,7 +17,7 @@ contract TimeAfterArbiter is IArbiter {
     function checkObligation(
         Attestation memory obligation,
         bytes memory demand,
-        bytes32 /*counteroffer*/
+        bytes32 /*fulfilling*/
     ) public pure override returns (bool) {
         DemandData memory demand_ = abi.decode(demand, (DemandData));
         // 0 is a sentinel value meaning "after anything" (no constraint)

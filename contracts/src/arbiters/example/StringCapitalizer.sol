@@ -27,19 +27,19 @@ contract StringCapitalizer is IArbiter {
      * @notice Checks if an obligation fulfills the capitalization requirement
      * @param obligation The attestation containing the capitalized string
      * @param demand The encoded demand data containing the original string
-     * @param counteroffer Optional reference UID for the specific demand being fulfilled
+     * @param fulfilling Optional reference UID for what this obligation is fulfilling
      * @return bool True if the obligation contains the properly capitalized version of the demand string
      */
     function checkObligation(
         Attestation memory obligation,
         bytes memory demand,
-        bytes32 counteroffer
+        bytes32 fulfilling
     ) external view override returns (bool) {
         // Check basic attestation validity
         if (!obligation._checkIntrinsic()) return false;
 
-        // Check if the obligation references the specific counteroffer (if provided)
-        if (counteroffer != bytes32(0) && obligation.refUID != counteroffer) {
+        // Check if the obligation references what it's fulfilling (if provided)
+        if (fulfilling != bytes32(0) && obligation.refUID != fulfilling) {
             return false;
         }
 

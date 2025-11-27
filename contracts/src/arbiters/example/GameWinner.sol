@@ -80,13 +80,13 @@ contract GameWinner is IArbiter {
      * @notice Checks if a game winner attestation satisfies the reward claim requirements
      * @param obligation The attestation proving game winner status
      * @param demand The encoded demand specifying claim requirements
-     * @param counteroffer Optional reference to a specific claim request
+     * @param fulfilling Optional reference to what this obligation is fulfilling
      * @return bool True if the attestation proves valid winner status for the claim
      */
     function checkObligation(
         Attestation memory obligation,
         bytes memory demand,
-        bytes32 counteroffer
+        bytes32 fulfilling
     ) external view override returns (bool) {
         // Check basic attestation validity
         if (!obligation._checkIntrinsic()) return false;
@@ -97,8 +97,8 @@ contract GameWinner is IArbiter {
         // Verify the attestation was made by the trusted game contract
         if (obligation.attester != trustedGameContract) return false;
 
-        // Check if the obligation references the specific counteroffer (if provided)
-        if (counteroffer != bytes32(0) && obligation.refUID != counteroffer) {
+        // Check if the obligation references what it's fulfilling (if provided)
+        if (fulfilling != bytes32(0) && obligation.refUID != fulfilling) {
             return false;
         }
 

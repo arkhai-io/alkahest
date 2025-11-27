@@ -17,7 +17,7 @@ contract AllArbiter is IArbiter {
     function checkObligation(
         Attestation memory obligation,
         bytes memory demand,
-        bytes32 counteroffer
+        bytes32 fulfilling
     ) public view override returns (bool) {
         DemandData memory demand_ = abi.decode(demand, (DemandData));
         if (demand_.arbiters.length != demand_.demands.length)
@@ -30,7 +30,7 @@ contract AllArbiter is IArbiter {
                 !IArbiter(demand_.arbiters[i]).checkObligation(
                     obligation,
                     demand_.demands[i],
-                    counteroffer
+                    fulfilling
                 )
             ) {
                 return false;

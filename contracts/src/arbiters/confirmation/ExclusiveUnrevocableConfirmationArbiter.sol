@@ -69,8 +69,8 @@ contract ExclusiveUnrevocableConfirmationArbiter is IArbiter {
     function checkObligation(
         Attestation memory fulfillment,
         bytes memory /*demand*/,
-        bytes32 escrow
+        bytes32 fulfilling
     ) public view override returns (bool) {
-        return confirmations[fulfillment.uid][escrow];
+        return confirmations[fulfillment.uid][fulfilling];
     }
 }

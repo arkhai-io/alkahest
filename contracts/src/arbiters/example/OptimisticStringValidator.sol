@@ -99,7 +99,7 @@ contract OptimisticStringValidator is BaseObligation, IArbiter {
     function checkObligation(
         Attestation memory obligation,
         bytes memory demand,
-        bytes32 counteroffer
+        bytes32 fulfilling
     ) public view override returns (bool) {
         if (!obligation._checkIntrinsic()) return false;
 
@@ -126,7 +126,7 @@ contract OptimisticStringValidator is BaseObligation, IArbiter {
                         query: obligationData.query
                     })
                 ),
-                counteroffer
+                fulfilling
             );
     }
 

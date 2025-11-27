@@ -17,7 +17,7 @@ contract TimeEqualArbiter is IArbiter {
     function checkObligation(
         Attestation memory obligation,
         bytes memory demand,
-        bytes32 /*counteroffer*/
+        bytes32 /*fulfilling*/
     ) public pure override returns (bool) {
         DemandData memory demand_ = abi.decode(demand, (DemandData));
         if (obligation.time != demand_.time) revert TimeNotEqual();

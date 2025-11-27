@@ -89,7 +89,7 @@ contract AttestationEscrowObligation2 is BaseEscrowObligation, IArbiter {
     function checkObligation(
         Attestation memory obligation,
         bytes memory demand,
-        bytes32 /* counteroffer */
+        bytes32 /* fulfilling */
     ) public view override returns (bool) {
         if (!obligation._checkIntrinsic(ATTESTATION_SCHEMA)) return false;
 

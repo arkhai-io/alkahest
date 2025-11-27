@@ -379,10 +379,10 @@ contract GameWinnerTest is Test {
         );
     }
 
-    function testCounterOfferValidation() public {
-        // First create a counteroffer attestation
+    function testFulfillingValidation() public {
+        // First create an escrow attestation
         vm.prank(bob);
-        AttestationRequest memory counterofferRequest = AttestationRequest({
+        AttestationRequest memory escrowRequest = AttestationRequest({
             schema: gameWinnerSchemaUID,
             data: AttestationRequestData({
                 recipient: bob,
@@ -400,7 +400,7 @@ contract GameWinnerTest is Test {
                 value: 0
             })
         });
-        bytes32 counterofferUID = eas.attest(counterofferRequest);
+        bytes32 escrowUID = eas.attest(escrowRequest);
 
         // Alice wins game
         GameWinner.GameWinnerData memory winnerData = GameWinner
@@ -411,14 +411,14 @@ contract GameWinnerTest is Test {
                 score: 1500
             });
 
-        // Create attestation with reference to counteroffer
+        // Create attestation with reference to escrow
         AttestationRequest memory request = AttestationRequest({
             schema: gameWinnerSchemaUID,
             data: AttestationRequestData({
                 recipient: alice,
                 expirationTime: 0,
                 revocable: true,
-                refUID: counterofferUID, // Reference specific counteroffer
+                refUID: escrowUID, // Reference specific escrow
                 data: abi.encode(winnerData),
                 value: 0
             })
@@ -436,25 +436,25 @@ contract GameWinnerTest is Test {
             validAfter: 0
         });
 
-        // Check with matching counteroffer
+        // Check with matching fulfilling
         bool resultMatching = gameWinnerArbiter.checkObligation(
             winnerAttestation,
             abi.encode(demand),
-            counterofferUID
+            escrowUID
         );
         assertTrue(
             resultMatching,
-            "Should validate with matching counteroffer"
+            "Should validate with matching fulfilling"
         );
 
-        // Check with different counteroffer
-        bytes32 wrongCounteroffer = bytes32(uint256(123));
+        // Check with different fulfilling
+        bytes32 wrongFulfilling = bytes32(uint256(123));
         bool resultWrong = gameWinnerArbiter.checkObligation(
             winnerAttestation,
             abi.encode(demand),
-            wrongCounteroffer
+            wrongFulfilling
         );
-        assertFalse(resultWrong, "Should reject with wrong counteroffer");
+        assertFalse(resultWrong, "Should reject with wrong fulfilling");
     }
 
     function testValidateWinnerAttestationHelper() public {

@@ -67,7 +67,7 @@ contract MockArbiter {
     function checkObligation(
         Attestation memory /* obligation */,
         bytes memory /* demand */,
-        bytes32 /* counteroffer */
+        bytes32 /* fulfilling */
     ) external view returns (bool) {
         return true;
     }

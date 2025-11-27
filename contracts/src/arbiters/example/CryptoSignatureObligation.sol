@@ -131,19 +131,19 @@ contract CryptoSignatureObligation is BaseObligation, IArbiter {
      * @notice Check if a fulfillment contains a valid signature for the demand
      * @param obligation The attestation containing the signature
      * @param demand The encoded demand specifying what should be signed
-     * @param counteroffer Optional reference UID for the specific demand
+     * @param fulfilling Optional reference UID for what this obligation is fulfilling
      * @return bool True if the signature is valid for the specified challenge
      */
     function checkObligation(
         Attestation memory obligation,
         bytes memory demand,
-        bytes32 counteroffer
+        bytes32 fulfilling
     ) external view override returns (bool) {
         // Check basic attestation validity
         if (!obligation._checkIntrinsic()) return false;
 
         // Check reference if specified
-        if (counteroffer != bytes32(0) && obligation.refUID != counteroffer) {
+        if (fulfilling != bytes32(0) && obligation.refUID != fulfilling) {
             return false;
         }
 

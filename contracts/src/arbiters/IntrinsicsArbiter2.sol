@@ -16,7 +16,7 @@ contract IntrinsicsArbiter2 is IArbiter {
     function checkObligation(
         Attestation memory obligation,
         bytes memory demand,
-        bytes32 /*counteroffer*/
+        bytes32 /*fulfilling*/
     ) public view override returns (bool) {
         DemandData memory demand_ = abi.decode(demand, (DemandData));
         return obligation._checkIntrinsic(demand_.schema);

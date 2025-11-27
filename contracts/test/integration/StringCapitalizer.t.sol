@@ -190,10 +190,10 @@ contract StringCapitalizerTest is Test {
         assertFalse(result, "Should reject different length strings");
     }
 
-    function testCheckObligationWithCounteroffer() public {
-        // First create a counteroffer attestation to reference
+    function testCheckObligationWithFulfilling() public {
+        // First create an escrow attestation to reference
         vm.prank(alice);
-        bytes32 counterofferUID = stringObligation.doObligation(
+        bytes32 escrowUID = stringObligation.doObligation(
             StringObligation.ObligationData({item: "request"}),
             bytes32(0)
         );
@@ -210,32 +210,32 @@ contract StringCapitalizerTest is Test {
         vm.prank(bob);
         bytes32 obligationUID = stringObligation.doObligation(
             obligationData,
-            counterofferUID
+            escrowUID
         );
 
         // Get the attestation
         Attestation memory obligation = eas.getAttestation(obligationUID);
 
-        // Check with matching counteroffer
+        // Check with matching fulfilling
         bool resultMatching = capitalizer.checkObligation(
             obligation,
             abi.encode(demand),
-            counterofferUID
+            escrowUID
         );
 
-        assertTrue(resultMatching, "Should validate when counteroffer matches");
+        assertTrue(resultMatching, "Should validate when fulfilling matches");
 
-        // Check with non-matching counteroffer
-        bytes32 wrongCounteroffer = bytes32(uint256(999999));
+        // Check with non-matching fulfilling
+        bytes32 wrongFulfilling = bytes32(uint256(999999));
         bool resultNonMatching = capitalizer.checkObligation(
             obligation,
             abi.encode(demand),
-            wrongCounteroffer
+            wrongFulfilling
         );
 
         assertFalse(
             resultNonMatching,
-            "Should reject when counteroffer doesn't match"
+            "Should reject when fulfilling doesn't match"
         );
     }
 
