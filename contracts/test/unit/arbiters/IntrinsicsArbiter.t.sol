@@ -137,11 +137,8 @@ contract IntrinsicsArbiterTest is Test {
 
         // Warp time to exactly at expiration
         vm.warp(currentTime + 1 days);
-        result = arbiter.checkObligation(attestation, bytes(""), bytes32(0));
-        assertTrue(
-            result,
-            "Attestation should still be valid right at expiration"
-        );
+        vm.expectRevert(ArbiterUtils.DeadlineExpired.selector);
+        arbiter.checkObligation(attestation, bytes(""), bytes32(0));
 
         // Warp time past expiration
         vm.warp(currentTime + 1 days + 1);
