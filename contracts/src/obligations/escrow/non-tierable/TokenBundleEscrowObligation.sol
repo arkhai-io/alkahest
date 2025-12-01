@@ -186,6 +186,19 @@ contract TokenBundleEscrowObligation is
 
         // Transfer ERC721s
         for (uint i = 0; i < data.erc721Tokens.length; i++) {
+            // Check ownership before transfer
+            address ownerBefore = IERC721(data.erc721Tokens[i]).ownerOf(
+                data.erc721TokenIds[i]
+            );
+            if (ownerBefore != from) {
+                revert ERC721TransferFailed(
+                    data.erc721Tokens[i],
+                    from,
+                    address(this),
+                    data.erc721TokenIds[i]
+                );
+            }
+
             try
                 IERC721(data.erc721Tokens[i]).transferFrom(
                     from,
@@ -195,6 +208,19 @@ contract TokenBundleEscrowObligation is
             {
                 // Transfer succeeded
             } catch {
+                revert ERC721TransferFailed(
+                    data.erc721Tokens[i],
+                    from,
+                    address(this),
+                    data.erc721TokenIds[i]
+                );
+            }
+
+            // Check ownership after transfer
+            address ownerAfter = IERC721(data.erc721Tokens[i]).ownerOf(
+                data.erc721TokenIds[i]
+            );
+            if (ownerAfter != address(this)) {
                 revert ERC721TransferFailed(
                     data.erc721Tokens[i],
                     from,
