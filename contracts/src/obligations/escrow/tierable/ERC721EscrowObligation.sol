@@ -50,13 +50,37 @@ contract ERC721EscrowObligation is BaseEscrowObligationTierable, IArbiter {
     function _lockEscrow(bytes memory data, address from) internal override {
         ObligationData memory decoded = abi.decode(data, (ObligationData));
 
+        // Check ownership before transfer
+        address ownerBefore = IERC721(decoded.token).ownerOf(decoded.tokenId);
+        if (ownerBefore != from) {
+            revert ERC721TransferFailed(
+                decoded.token,
+                from,
+                address(this),
+                decoded.tokenId
+            );
+        }
+
         try
             IERC721(decoded.token).transferFrom(
                 from,
                 address(this),
                 decoded.tokenId
             )
-        {} catch {
+        {
+            // Transfer succeeded
+        } catch {
+            revert ERC721TransferFailed(
+                decoded.token,
+                from,
+                address(this),
+                decoded.tokenId
+            );
+        }
+
+        // Check ownership after transfer
+        address ownerAfter = IERC721(decoded.token).ownerOf(decoded.tokenId);
+        if (ownerAfter != address(this)) {
             revert ERC721TransferFailed(
                 decoded.token,
                 from,
@@ -77,13 +101,37 @@ contract ERC721EscrowObligation is BaseEscrowObligationTierable, IArbiter {
             (ObligationData)
         );
 
+        // Check ownership before transfer
+        address ownerBefore = IERC721(decoded.token).ownerOf(decoded.tokenId);
+        if (ownerBefore != address(this)) {
+            revert ERC721TransferFailed(
+                decoded.token,
+                address(this),
+                to,
+                decoded.tokenId
+            );
+        }
+
         try
             IERC721(decoded.token).transferFrom(
                 address(this),
                 to,
                 decoded.tokenId
             )
-        {} catch {
+        {
+            // Transfer succeeded
+        } catch {
+            revert ERC721TransferFailed(
+                decoded.token,
+                address(this),
+                to,
+                decoded.tokenId
+            );
+        }
+
+        // Check ownership after transfer
+        address ownerAfter = IERC721(decoded.token).ownerOf(decoded.tokenId);
+        if (ownerAfter != to) {
             revert ERC721TransferFailed(
                 decoded.token,
                 address(this),
