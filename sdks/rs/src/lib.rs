@@ -303,16 +303,17 @@ impl<Extensions: AlkahestExtension> AlkahestClient<Extensions> {
     {
         match contract {
             ArbitersContract::Eas => self.arbiters().addresses.eas,
-            ArbitersContract::SpecificAttestationArbiter => {
-                self.arbiters().addresses.specific_attestation_arbiter
-            }
-            ArbitersContract::TrustedPartyArbiter => {
-                self.arbiters().addresses.trusted_party_arbiter
-            }
             ArbitersContract::TrivialArbiter => self.arbiters().addresses.trivial_arbiter,
             ArbitersContract::TrustedOracleArbiter => {
                 self.arbiters().addresses.trusted_oracle_arbiter
             }
+            ArbitersContract::IntrinsicsArbiter => self.arbiters().addresses.intrinsics_arbiter,
+            ArbitersContract::IntrinsicsArbiter2 => self.arbiters().addresses.intrinsics_arbiter_2,
+            ArbitersContract::ERC8004Arbiter => self.arbiters().addresses.erc8004_arbiter,
+            ArbitersContract::AnyArbiter => self.arbiters().addresses.any_arbiter,
+            ArbitersContract::AllArbiter => self.arbiters().addresses.all_arbiter,
+            ArbitersContract::RecipientArbiter => self.arbiters().addresses.recipient_arbiter,
+            ArbitersContract::UidArbiter => self.arbiters().addresses.uid_arbiter,
         }
     }
 

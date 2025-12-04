@@ -2,7 +2,7 @@ use alloy::primitives::Address;
 
 use crate::{
     clients::arbiters::{ArbitersModule, DecodedDemand},
-    contracts::logical::AnyArbiter::DemandData,
+    contracts::arbiters::logical::AnyArbiter::DemandData,
     impl_demand_data_conversions,
 };
 

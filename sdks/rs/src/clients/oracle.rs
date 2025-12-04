@@ -3,7 +3,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use alloy::{
     dyn_abi::SolType,
     eips::BlockNumberOrTag,
-    primitives::{Address, FixedBytes},
+    primitives::{Address, Bytes, FixedBytes},
     providers::Provider,
     pubsub::SubscriptionStream,
     rpc::types::{Filter, Log, TransactionReceipt},
@@ -18,10 +18,10 @@ use crate::{
     addresses::BASE_SEPOLIA_ADDRESSES,
     contracts::{
         IEAS::{self, Attestation},
-        TrustedOracleArbiter,
+        arbiters::TrustedOracleArbiter,
     },
     extensions::AlkahestExtension,
-    types::{ProviderContext, SharedPublicProvider, SharedWalletProvider},
+    types::{SharedPublicProvider, SharedWalletProvider},
 };
 
 #[derive(Debug, Clone)]
@@ -251,6 +251,7 @@ impl OracleModule {
         &self,
         obligation_uid: FixedBytes<32>,
         oracle: Address,
+        demand: Bytes,
     ) -> eyre::Result<TransactionReceipt> {
         let trusted_oracle_arbiter = TrustedOracleArbiter::new(
             self.addresses.trusted_oracle_arbiter,
@@ -258,7 +259,7 @@ impl OracleModule {
         );
 
         let tx = trusted_oracle_arbiter
-            .requestArbitration(obligation_uid, oracle)
+            .requestArbitration(obligation_uid, oracle, demand)
             .send()
             .await?;
 
@@ -363,15 +364,17 @@ impl OracleModule {
             .iter()
             .zip(decisions.iter())
             .enumerate()
-            .filter_map(|(i, (attestation, decision))| {
+            .filter_map(|(_i, (attestation, decision))| {
                 let trusted_oracle_arbiter = TrustedOracleArbiter::new(
                     self.addresses.trusted_oracle_arbiter,
                     &*self.wallet_provider,
                 );
                 if let Some(decision) = decision {
+                    // Extract demand bytes from attestation data
+                    let demand = attestation.data.clone();
                     Some(async move {
                         trusted_oracle_arbiter
-                            .arbitrate(attestation.uid, *decision)
+                            .arbitrate(attestation.uid, demand, *decision)
                             .send()
                             .await
                     })
@@ -518,8 +521,10 @@ impl OracleModule {
                     continue;
                 };
 
+                // Extract demand bytes from attestation data
+                let demand = attestation.data.clone();
                 match arbiter
-                    .arbitrate(attestation.uid, decision_value)
+                    .arbitrate(attestation.uid, demand, decision_value)
                     .nonce(nonce)
                     .send()
                     .await
@@ -658,8 +663,10 @@ impl OracleModule {
                 continue;
             };
 
+            // Extract demand bytes from attestation data
+            let demand = attestation.data.clone();
             match arbiter
-                .arbitrate(attestation.uid, decision_value)
+                .arbitrate(attestation.uid, demand, decision_value)
                 .nonce(nonce)
                 .send()
                 .await

@@ -2,9 +2,9 @@ use alloy::{
     network::EthereumWallet,
     primitives::{Address, Bytes, U256},
     providers::{
-        Identity, RootProvider,
+        RootProvider,
         fillers::{
-            BlobGasFiller, CachedNonceManager, ChainIdFiller, FillProvider, GasFiller, JoinFill,
+            BlobGasFiller, ChainIdFiller, FillProvider, GasFiller, JoinFill,
             NonceFiller, SimpleNonceManager, WalletFiller,
         },
     },
@@ -74,6 +74,7 @@ pub struct Erc1155Data {
 
 #[derive(Debug, Clone)]
 pub struct TokenBundleData {
+    pub native_amount: U256,
     pub erc20s: Vec<Erc20Data>,
     pub erc721s: Vec<Erc721Data>,
     pub erc1155s: Vec<Erc1155Data>,

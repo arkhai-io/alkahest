@@ -1,18 +1,16 @@
 //! Logical arbiters module
 //!
 //! This module contains logical arbiters that combine multiple arbiters
-//! using logical operations (ANY, ALL, NOT).
+//! using logical operations (ANY, ALL).
 //!
 //! These arbiters use trait-based encoding/decoding for convenient .into() conversions.
 
 pub mod all_arbiter;
 pub mod any_arbiter;
-pub mod not_arbiter;
 
 // Re-export key types for easier access
 pub use all_arbiter::{AllArbiter, DecodedAllArbiterDemandData};
 pub use any_arbiter::{AnyArbiter, DecodedAnyArbiterDemandData};
-pub use not_arbiter::{DecodedNotArbiterDemandData, NotArbiter};
 
 use crate::clients::arbiters::ArbitersModule;
 
@@ -44,15 +42,5 @@ impl<'a> Logical<'a> {
     /// ```
     pub fn any(&self) -> AnyArbiter<'_> {
         AnyArbiter::new(self.module)
-    }
-
-    /// Access NotArbiter-specific decode functionality
-    ///
-    /// # Example
-    /// ```rust,ignore
-    /// let decoded = arbiters_module.logical().not().decode(demand_data)?;
-    /// ```
-    pub fn not(&self) -> NotArbiter<'_> {
-        NotArbiter::new(self.module)
     }
 }

@@ -4,7 +4,7 @@ pragma solidity ^0.8.26;
 import "forge-std/Test.sol";
 import {ERC1155EscrowObligation} from "@src/obligations/escrow/tierable/ERC1155EscrowObligation.sol";
 import {BaseEscrowObligationTierable} from "@src/BaseEscrowObligationTierable.sol";
-import {StringObligation} from "@src/obligations/StringObligation.sol";
+import {StringObligation} from "@src/obligations/payment/StringObligation.sol";
 import {MockArbiter} from "../../fixtures/MockArbiter.sol";
 import {IEAS, Attestation} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";

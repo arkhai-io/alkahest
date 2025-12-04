@@ -4,7 +4,6 @@ use alloy::{
     primitives::{Address, Signature},
     providers::{
         ProviderBuilder, WsConnect,
-        fillers::{BlobGasFiller, ChainIdFiller, GasFiller, NonceFiller, WalletFiller},
     },
     signers::local::PrivateKeySigner,
 };
@@ -17,27 +16,32 @@ use crate::{
         string_obligation::StringObligationAddresses, token_bundle::TokenBundleAddresses,
     },
     contracts::{
-        AttestationBarterUtils, AttestationEscrowObligation, AttestationEscrowObligation2,
-        ERC20EscrowObligation, ERC20PaymentObligation, ERC721EscrowObligation,
-        ERC721PaymentObligation, ERC1155EscrowObligation, ERC1155PaymentObligation,
-        IntrinsicsArbiter, IntrinsicsArbiter2, RecipientArbiter, SpecificAttestationArbiter,
-        StringObligation, TokenBundleBarterUtils, TrivialArbiter, TrustedOracleArbiter,
-        TrustedPartyArbiter,
-        attestation_properties::{composing::*, non_composing::*},
-        confirmation_arbiters::{
-            ConfirmationArbiter, ConfirmationArbiterComposing, RevocableConfirmationArbiter,
-            RevocableConfirmationArbiterComposing, UnrevocableConfirmationArbiter,
-            UnrevocableConfirmationArbiterComposing,
+        arbiters::{
+            TrivialArbiter, TrustedOracleArbiter, IntrinsicsArbiter, IntrinsicsArbiter2,
+            logical::{AllArbiter, AnyArbiter},
+            attestation_properties::{
+                AttesterArbiter, ExpirationTimeAfterArbiter, ExpirationTimeBeforeArbiter,
+                ExpirationTimeEqualArbiter, RecipientArbiter, RefUidArbiter, RevocableArbiter,
+                SchemaArbiter, TimeAfterArbiter, TimeBeforeArbiter, TimeEqualArbiter, UidArbiter,
+            },
+            confirmation::{
+                ExclusiveRevocableConfirmationArbiter, ExclusiveUnrevocableConfirmationArbiter,
+                NonexclusiveRevocableConfirmationArbiter, NonexclusiveUnrevocableConfirmationArbiter,
+            },
         },
-        erc20_barter_cross_token::ERC20BarterCrossToken,
-        erc721_barter_cross_token::ERC721BarterCrossToken,
-        erc1155_barter_cross_token::ERC1155BarterCrossToken,
-        logical::*,
-        payment_fulfillment_arbiters::{
-            ERC20PaymentFulfillmentArbiter, ERC721PaymentFulfillmentArbiter,
-            ERC1155PaymentFulfillmentArbiter, TokenBundlePaymentFulfillmentArbiter,
+        obligations::{
+            escrow::non_tierable::{
+                AttestationEscrowObligation, ERC20EscrowObligation, ERC721EscrowObligation,
+                ERC1155EscrowObligation, NativeTokenEscrowObligation, TokenBundleEscrowObligation,
+            },
+            // Payment obligations are at root of obligations module
+            ERC20PaymentObligation, ERC721PaymentObligation, ERC1155PaymentObligation,
+            NativeTokenPaymentObligation, TokenBundlePaymentObligation, StringObligation,
         },
-        token_bundle::{TokenBundleEscrowObligation, TokenBundlePaymentObligation},
+        utils::{
+            AttestationBarterUtils, ERC20BarterUtils, ERC721BarterUtils, ERC1155BarterUtils,
+            NativeTokenBarterUtils, TokenBundleBarterUtils,
+        },
     },
     fixtures::{EAS, MockERC20Permit, MockERC721, MockERC1155, SchemaRegistry},
     types::{PublicProvider, WalletProvider},
@@ -86,73 +90,38 @@ pub async fn setup_test_environment() -> eyre::Result<TestContext> {
     let mock_erc1155_a = MockERC1155::deploy(&god_provider).await?;
     let mock_erc1155_b = MockERC1155::deploy(&god_provider).await?;
 
-    let uid_arbiter = UidArbiterComposing::deploy(&god_provider).await?;
-    let recipient_arbiter = RecipientArbiter::deploy(&god_provider).await?;
-    let specific_attestation_arbiter = SpecificAttestationArbiter::deploy(&god_provider).await?;
+    // Deploy core arbiters
     let trivial_arbiter = TrivialArbiter::deploy(&god_provider).await?;
     let trusted_oracle_arbiter =
         TrustedOracleArbiter::deploy(&god_provider, eas.address().clone()).await?;
-    let trusted_party_arbiter = TrustedPartyArbiter::deploy(&god_provider).await?;
     let intrinsics_arbiter = IntrinsicsArbiter::deploy(&god_provider).await?;
     let intrinsics_arbiter_2 = IntrinsicsArbiter2::deploy(&god_provider).await?;
     let any_arbiter = AnyArbiter::deploy(&god_provider).await?;
     let all_arbiter = AllArbiter::deploy(&god_provider).await?;
 
-    // Deploy new arbiters (except payment fulfillment arbiters which need obligations first)
-    let not_arbiter = NotArbiter::deploy(&god_provider).await?;
-    let attester_arbiter_composing = AttesterArbiterComposing::deploy(&god_provider).await?;
-    let attester_arbiter_non_composing = AttesterArbiterNonComposing::deploy(&god_provider).await?;
-    let expiration_time_after_arbiter_composing =
-        ExpirationTimeAfterArbiterComposing::deploy(&god_provider).await?;
-    let expiration_time_before_arbiter_composing =
-        ExpirationTimeBeforeArbiterComposing::deploy(&god_provider).await?;
-    let expiration_time_equal_arbiter_composing =
-        ExpirationTimeEqualArbiterComposing::deploy(&god_provider).await?;
-    let recipient_arbiter_composing = RecipientArbiterComposing::deploy(&god_provider).await?;
-    let ref_uid_arbiter_composing = RefUidArbiterComposing::deploy(&god_provider).await?;
-    let revocable_arbiter_composing = RevocableArbiterComposing::deploy(&god_provider).await?;
-    let schema_arbiter_composing = SchemaArbiterComposing::deploy(&god_provider).await?;
-    let time_after_arbiter_composing = TimeAfterArbiterComposing::deploy(&god_provider).await?;
-    let time_before_arbiter_composing = TimeBeforeArbiterComposing::deploy(&god_provider).await?;
-    let time_equal_arbiter_composing = TimeEqualArbiterComposing::deploy(&god_provider).await?;
-    let uid_arbiter_composing = UidArbiterComposing::deploy(&god_provider).await?;
+    // Deploy attestation property arbiters (non-composing only - composing arbiters removed)
+    let attester_arbiter = AttesterArbiter::deploy(&god_provider).await?;
+    let expiration_time_after_arbiter = ExpirationTimeAfterArbiter::deploy(&god_provider).await?;
+    let expiration_time_before_arbiter = ExpirationTimeBeforeArbiter::deploy(&god_provider).await?;
+    let expiration_time_equal_arbiter = ExpirationTimeEqualArbiter::deploy(&god_provider).await?;
+    let recipient_arbiter = RecipientArbiter::deploy(&god_provider).await?;
+    let ref_uid_arbiter = RefUidArbiter::deploy(&god_provider).await?;
+    let revocable_arbiter = RevocableArbiter::deploy(&god_provider).await?;
+    let schema_arbiter = SchemaArbiter::deploy(&god_provider).await?;
+    let time_after_arbiter = TimeAfterArbiter::deploy(&god_provider).await?;
+    let time_before_arbiter = TimeBeforeArbiter::deploy(&god_provider).await?;
+    let time_equal_arbiter = TimeEqualArbiter::deploy(&god_provider).await?;
+    let uid_arbiter = UidArbiter::deploy(&god_provider).await?;
 
-    // Deploy non-composing arbiters
-    let expiration_time_after_arbiter_non_composing =
-        ExpirationTimeAfterArbiterNonComposing::deploy(&god_provider).await?;
-    let expiration_time_before_arbiter_non_composing =
-        ExpirationTimeBeforeArbiterNonComposing::deploy(&god_provider).await?;
-    let expiration_time_equal_arbiter_non_composing =
-        ExpirationTimeEqualArbiterNonComposing::deploy(&god_provider).await?;
-    let recipient_arbiter_non_composing =
-        RecipientArbiterNonComposing::deploy(&god_provider).await?;
-    let ref_uid_arbiter_non_composing = RefUidArbiterNonComposing::deploy(&god_provider).await?;
-    let revocable_arbiter_non_composing =
-        RevocableArbiterNonComposing::deploy(&god_provider).await?;
-    let schema_arbiter_non_composing = SchemaArbiterNonComposing::deploy(&god_provider).await?;
-    let time_after_arbiter_non_composing =
-        TimeAfterArbiterNonComposing::deploy(&god_provider).await?;
-    let time_before_arbiter_non_composing =
-        TimeBeforeArbiterNonComposing::deploy(&god_provider).await?;
-    let time_equal_arbiter_non_composing =
-        TimeEqualArbiterNonComposing::deploy(&god_provider).await?;
-    let uid_arbiter_non_composing = UidArbiterNonComposing::deploy(&god_provider).await?;
-
-    // Deploy confirmation arbiters
-    let confirmation_arbiter =
-        ConfirmationArbiter::deploy(&god_provider, eas.address().clone()).await?;
-    let confirmation_arbiter_composing =
-        ConfirmationArbiterComposing::deploy(&god_provider, eas.address().clone()).await?;
-    let revocable_confirmation_arbiter =
-        RevocableConfirmationArbiter::deploy(&god_provider, eas.address().clone()).await?;
-    let revocable_confirmation_arbiter_composing =
-        RevocableConfirmationArbiterComposing::deploy(&god_provider, eas.address().clone()).await?;
-    let unrevocable_confirmation_arbiter =
-        UnrevocableConfirmationArbiter::deploy(&god_provider, eas.address().clone()).await?;
-
-    let unrevocable_confirmation_arbiter_composing =
-        UnrevocableConfirmationArbiterComposing::deploy(&god_provider, eas.address().clone())
-            .await?;
+    // Deploy confirmation arbiters (new naming convention)
+    let exclusive_revocable_confirmation_arbiter =
+        ExclusiveRevocableConfirmationArbiter::deploy(&god_provider, eas.address().clone()).await?;
+    let exclusive_unrevocable_confirmation_arbiter =
+        ExclusiveUnrevocableConfirmationArbiter::deploy(&god_provider, eas.address().clone()).await?;
+    let nonexclusive_revocable_confirmation_arbiter =
+        NonexclusiveRevocableConfirmationArbiter::deploy(&god_provider, eas.address().clone()).await?;
+    let nonexclusive_unrevocable_confirmation_arbiter =
+        NonexclusiveUnrevocableConfirmationArbiter::deploy(&god_provider, eas.address().clone()).await?;
 
     macro_rules! deploy_obligation {
         ($name:ident) => {
@@ -165,8 +134,8 @@ pub async fn setup_test_environment() -> eyre::Result<TestContext> {
         };
     }
 
+    // Deploy obligations
     let attestation_escrow_obligation = deploy_obligation!(AttestationEscrowObligation);
-    let attestation_escrow_obligation_2 = deploy_obligation!(AttestationEscrowObligation2);
     let bundle_escrow_obligation = deploy_obligation!(TokenBundleEscrowObligation);
     let bundle_payment_obligation = deploy_obligation!(TokenBundlePaymentObligation);
     let erc20_escrow_obligation = deploy_obligation!(ERC20EscrowObligation);
@@ -175,22 +144,78 @@ pub async fn setup_test_environment() -> eyre::Result<TestContext> {
     let erc721_payment_obligation = deploy_obligation!(ERC721PaymentObligation);
     let erc1155_escrow_obligation = deploy_obligation!(ERC1155EscrowObligation);
     let erc1155_payment_obligation = deploy_obligation!(ERC1155PaymentObligation);
-    let string_obligation = deploy_obligation!(StringObligation);
+    let native_token_escrow_obligation = deploy_obligation!(NativeTokenEscrowObligation);
+    let native_token_payment_obligation = deploy_obligation!(NativeTokenPaymentObligation);
 
-    // Deploy native token contracts
-    let native_token_escrow_obligation = crate::contracts::NativeTokenEscrowObligation::deploy(
+    // Note: StringObligation might need different constructor - using Address::ZERO for now
+    let string_obligation = StringObligation::deploy(
         &god_provider,
         eas.address().clone(),
         schema_registry.address().clone(),
     )
     .await?;
-    let native_token_payment_obligation = crate::contracts::NativeTokenPaymentObligation::deploy(
+
+    // Deploy barter utils
+    let attestation_barter_utils = AttestationBarterUtils::deploy(
         &god_provider,
         eas.address().clone(),
         schema_registry.address().clone(),
+        attestation_escrow_obligation.address().clone(),
     )
     .await?;
-    let native_token_barter_utils = crate::contracts::NativeTokenBarterUtils::deploy(
+    let bundle_barter_utils = TokenBundleBarterUtils::deploy(
+        &god_provider,
+        eas.address().clone(),
+        bundle_escrow_obligation.address().clone(),
+        bundle_payment_obligation.address().clone(),
+    )
+    .await?;
+    let erc20_barter_utils = ERC20BarterUtils::deploy(
+        &god_provider,
+        eas.address().clone(),
+        erc20_escrow_obligation.address().clone(),
+        erc20_payment_obligation.address().clone(),
+        erc721_escrow_obligation.address().clone(),
+        erc721_payment_obligation.address().clone(),
+        erc1155_escrow_obligation.address().clone(),
+        erc1155_payment_obligation.address().clone(),
+        bundle_escrow_obligation.address().clone(),
+        bundle_payment_obligation.address().clone(),
+        native_token_escrow_obligation.address().clone(),
+        native_token_payment_obligation.address().clone(),
+    )
+    .await?;
+    let erc721_barter_utils = ERC721BarterUtils::deploy(
+        &god_provider,
+        eas.address().clone(),
+        erc20_escrow_obligation.address().clone(),
+        erc20_payment_obligation.address().clone(),
+        erc721_escrow_obligation.address().clone(),
+        erc721_payment_obligation.address().clone(),
+        erc1155_escrow_obligation.address().clone(),
+        erc1155_payment_obligation.address().clone(),
+        bundle_escrow_obligation.address().clone(),
+        bundle_payment_obligation.address().clone(),
+        native_token_escrow_obligation.address().clone(),
+        native_token_payment_obligation.address().clone(),
+    )
+    .await?;
+    let erc1155_barter_utils = ERC1155BarterUtils::deploy(
+        &god_provider,
+        eas.address().clone(),
+        erc20_escrow_obligation.address().clone(),
+        erc20_payment_obligation.address().clone(),
+        erc721_escrow_obligation.address().clone(),
+        erc721_payment_obligation.address().clone(),
+        erc1155_escrow_obligation.address().clone(),
+        erc1155_payment_obligation.address().clone(),
+        bundle_escrow_obligation.address().clone(),
+        bundle_payment_obligation.address().clone(),
+        native_token_escrow_obligation.address().clone(),
+        native_token_payment_obligation.address().clone(),
+    )
+    .await?;
+    let native_token_barter_utils = NativeTokenBarterUtils::deploy(
         &god_provider,
         eas.address().clone(),
         erc20_escrow_obligation.address().clone(),
@@ -206,147 +231,37 @@ pub async fn setup_test_environment() -> eyre::Result<TestContext> {
     )
     .await?;
 
-    // Deploy payment fulfillment arbiters (after obligations are available)
-    let erc20_payment_fulfillment_arbiter = ERC20PaymentFulfillmentArbiter::deploy(
-        &god_provider,
-        erc20_payment_obligation.address().clone(),
-        specific_attestation_arbiter.address().clone(),
-    )
-    .await?;
-    let erc721_payment_fulfillment_arbiter = ERC721PaymentFulfillmentArbiter::deploy(
-        &god_provider,
-        erc721_payment_obligation.address().clone(),
-        specific_attestation_arbiter.address().clone(),
-    )
-    .await?;
-    let erc1155_payment_fulfillment_arbiter = ERC1155PaymentFulfillmentArbiter::deploy(
-        &god_provider,
-        erc1155_payment_obligation.address().clone(),
-        specific_attestation_arbiter.address().clone(),
-    )
-    .await?;
-    let token_bundle_payment_fulfillment_arbiter = TokenBundlePaymentFulfillmentArbiter::deploy(
-        &god_provider,
-        bundle_payment_obligation.address().clone(),
-        specific_attestation_arbiter.address().clone(),
-    )
-    .await?;
-
-    macro_rules! deploy_cross_token {
-        ($name:ident) => {
-            $name::deploy(
-                &god_provider,
-                eas.address().clone(),
-                erc20_escrow_obligation.address().clone(),
-                erc20_payment_obligation.address().clone(),
-                erc721_escrow_obligation.address().clone(),
-                erc721_payment_obligation.address().clone(),
-                erc1155_escrow_obligation.address().clone(),
-                erc1155_payment_obligation.address().clone(),
-                bundle_escrow_obligation.address().clone(),
-                bundle_payment_obligation.address().clone(),
-            )
-            .await?
-        };
-    }
-
-    let attestation_barter_utils = AttestationBarterUtils::deploy(
-        &god_provider,
-        eas.address().clone(),
-        schema_registry.address().clone(),
-        attestation_escrow_obligation_2.address().clone(),
-    )
-    .await?;
-    let bundle_barter_utils = TokenBundleBarterUtils::deploy(
-        &god_provider,
-        eas.address().clone(),
-        bundle_escrow_obligation.address().clone(),
-        bundle_payment_obligation.address().clone(),
-    )
-    .await?;
-    let erc20_barter_utils = deploy_cross_token!(ERC20BarterCrossToken);
-    let erc721_barter_utils = deploy_cross_token!(ERC721BarterCrossToken);
-    let erc1155_barter_utils = deploy_cross_token!(ERC1155BarterCrossToken);
-
     let alice: PrivateKeySigner = anvil.keys()[1].clone().into();
     let bob: PrivateKeySigner = anvil.keys()[2].clone().into();
 
     let addresses = DefaultExtensionConfig {
         arbiters_addresses: ArbitersAddresses {
             eas: eas.address().clone(),
-            specific_attestation_arbiter: specific_attestation_arbiter.address().clone(),
             trivial_arbiter: trivial_arbiter.address().clone(),
             trusted_oracle_arbiter: trusted_oracle_arbiter.address().clone(),
-            trusted_party_arbiter: trusted_party_arbiter.address().clone(),
             intrinsics_arbiter: intrinsics_arbiter.address().clone(),
             intrinsics_arbiter_2: intrinsics_arbiter_2.address().clone(),
+            erc8004_arbiter: Address::ZERO, // Not deployed in test environment
             any_arbiter: any_arbiter.address().clone(),
             all_arbiter: all_arbiter.address().clone(),
-            uid_arbiter: uid_arbiter.address().clone(),
+            // Attestation property arbiters
+            attester_arbiter: attester_arbiter.address().clone(),
+            expiration_time_after_arbiter: expiration_time_after_arbiter.address().clone(),
+            expiration_time_before_arbiter: expiration_time_before_arbiter.address().clone(),
+            expiration_time_equal_arbiter: expiration_time_equal_arbiter.address().clone(),
             recipient_arbiter: recipient_arbiter.address().clone(),
-            not_arbiter: not_arbiter.address().clone(),
-            attester_arbiter_composing: attester_arbiter_composing.address().clone(),
-            attester_arbiter_non_composing: attester_arbiter_non_composing.address().clone(),
-            expiration_time_after_arbiter_composing: expiration_time_after_arbiter_composing
-                .address()
-                .clone(),
-            expiration_time_before_arbiter_composing: expiration_time_before_arbiter_composing
-                .address()
-                .clone(),
-            expiration_time_equal_arbiter_composing: expiration_time_equal_arbiter_composing
-                .address()
-                .clone(),
-            recipient_arbiter_composing: recipient_arbiter_composing.address().clone(),
-            ref_uid_arbiter_composing: ref_uid_arbiter_composing.address().clone(),
-            revocable_arbiter_composing: revocable_arbiter_composing.address().clone(),
-            schema_arbiter_composing: schema_arbiter_composing.address().clone(),
-            time_after_arbiter_composing: time_after_arbiter_composing.address().clone(),
-            time_before_arbiter_composing: time_before_arbiter_composing.address().clone(),
-            time_equal_arbiter_composing: time_equal_arbiter_composing.address().clone(),
-            uid_arbiter_composing: uid_arbiter_composing.address().clone(),
-            // Payment fulfillment arbiters
-            erc20_payment_fulfillment_arbiter: erc20_payment_fulfillment_arbiter.address().clone(),
-            erc721_payment_fulfillment_arbiter: erc721_payment_fulfillment_arbiter
-                .address()
-                .clone(),
-            erc1155_payment_fulfillment_arbiter: erc1155_payment_fulfillment_arbiter
-                .address()
-                .clone(),
-            token_bundle_payment_fulfillment_arbiter: token_bundle_payment_fulfillment_arbiter
-                .address()
-                .clone(),
-            // Non-composing arbiters
-            expiration_time_after_arbiter_non_composing:
-                expiration_time_after_arbiter_non_composing
-                    .address()
-                    .clone(),
-            expiration_time_before_arbiter_non_composing:
-                expiration_time_before_arbiter_non_composing
-                    .address()
-                    .clone(),
-            expiration_time_equal_arbiter_non_composing:
-                expiration_time_equal_arbiter_non_composing
-                    .address()
-                    .clone(),
-            recipient_arbiter_non_composing: recipient_arbiter_non_composing.address().clone(),
-            ref_uid_arbiter_non_composing: ref_uid_arbiter_non_composing.address().clone(),
-            revocable_arbiter_non_composing: revocable_arbiter_non_composing.address().clone(),
-            schema_arbiter_non_composing: schema_arbiter_non_composing.address().clone(),
-            time_after_arbiter_non_composing: time_after_arbiter_non_composing.address().clone(),
-            time_before_arbiter_non_composing: time_before_arbiter_non_composing.address().clone(),
-            time_equal_arbiter_non_composing: time_equal_arbiter_non_composing.address().clone(),
-            uid_arbiter_non_composing: uid_arbiter_non_composing.address().clone(),
+            ref_uid_arbiter: ref_uid_arbiter.address().clone(),
+            revocable_arbiter: revocable_arbiter.address().clone(),
+            schema_arbiter: schema_arbiter.address().clone(),
+            time_after_arbiter: time_after_arbiter.address().clone(),
+            time_before_arbiter: time_before_arbiter.address().clone(),
+            time_equal_arbiter: time_equal_arbiter.address().clone(),
+            uid_arbiter: uid_arbiter.address().clone(),
             // Confirmation arbiters
-            confirmation_arbiter: confirmation_arbiter.address().clone(),
-            confirmation_arbiter_composing: confirmation_arbiter_composing.address().clone(),
-            revocable_confirmation_arbiter: revocable_confirmation_arbiter.address().clone(),
-            revocable_confirmation_arbiter_composing: revocable_confirmation_arbiter_composing
-                .address()
-                .clone(),
-            unrevocable_confirmation_arbiter: unrevocable_confirmation_arbiter.address().clone(),
-            unrevocable_confirmation_arbiter_composing: unrevocable_confirmation_arbiter_composing
-                .address()
-                .clone(),
+            exclusive_revocable_confirmation_arbiter: exclusive_revocable_confirmation_arbiter.address().clone(),
+            exclusive_unrevocable_confirmation_arbiter: exclusive_unrevocable_confirmation_arbiter.address().clone(),
+            nonexclusive_revocable_confirmation_arbiter: nonexclusive_revocable_confirmation_arbiter.address().clone(),
+            nonexclusive_unrevocable_confirmation_arbiter: nonexclusive_unrevocable_confirmation_arbiter.address().clone(),
         },
         string_obligation_addresses: StringObligationAddresses {
             eas: eas.address().clone(),
@@ -387,7 +302,7 @@ pub async fn setup_test_environment() -> eyre::Result<TestContext> {
             eas_schema_registry: schema_registry.address().clone(),
             barter_utils: attestation_barter_utils.address().clone(),
             escrow_obligation: attestation_escrow_obligation.address().clone(),
-            escrow_obligation_2: attestation_escrow_obligation_2.address().clone(),
+            escrow_obligation_2: Address::ZERO, // Using first escrow obligation for both
         },
     };
 

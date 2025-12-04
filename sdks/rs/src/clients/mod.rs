@@ -1,9 +1,13 @@
 pub mod arbiters;
-pub mod attestation;
-pub mod erc1155;
-pub mod erc20;
-pub mod erc721;
-pub mod native_token;
+pub mod obligations;
 pub mod oracle;
-pub mod string_obligation;
-pub mod token_bundle;
+
+// Re-export obligation modules for backwards compatibility
+pub use obligations::attestation;
+pub use obligations::erc1155;
+pub use obligations::erc20;
+pub use obligations::erc721;
+pub use obligations::native_token;
+pub use obligations::string;
+pub use obligations::string as string_obligation;
+pub use obligations::token_bundle;

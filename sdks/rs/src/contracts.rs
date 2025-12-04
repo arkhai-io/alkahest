@@ -1,6 +1,6 @@
 use alloy::sol;
 
-// Core
+// Core interfaces
 sol!(
     #[allow(missing_docs)]
     #[sol(rpc)]
@@ -49,576 +49,473 @@ sol!(
     "src/contracts/ERC20Permit.json"
 );
 
-sol!(
-    #[allow(missing_docs)]
-    #[sol(rpc)]
-    #[derive(Debug)]
-    ERC20BarterUtils,
-    "src/contracts/ERC20BarterUtils.json"
-);
-
-pub mod erc20_barter_cross_token {
+// Arbiters module - mirrors contracts/src/arbiters/
+pub mod arbiters {
     use alloy::sol;
 
+    // Root-level arbiters
     sol!(
         #[allow(missing_docs)]
         #[sol(rpc)]
         #[derive(Debug)]
-        ERC20BarterCrossToken,
-        "src/contracts/ERC20BarterCrossToken.json"
-    );
-}
-
-sol!(
-    #[allow(missing_docs)]
-    #[sol(rpc)]
-    #[derive(Debug)]
-    ERC20EscrowObligation,
-    "src/contracts/ERC20EscrowObligation.json"
-);
-
-sol!(
-    #[allow(missing_docs)]
-    #[sol(rpc)]
-    #[derive(Debug)]
-    ERC20PaymentObligation,
-    "src/contracts/ERC20PaymentObligation.json"
-);
-
-sol!(
-    #[allow(missing_docs)]
-    #[sol(rpc)]
-    #[derive(Debug)]
-    ERC721BarterUtils,
-    "src/contracts/ERC721BarterUtils.json"
-);
-
-pub mod erc721_barter_cross_token {
-    use alloy::sol;
-
-    sol!(
-        #[allow(missing_docs)]
-        #[sol(rpc)]
-        #[derive(Debug)]
-        ERC721BarterCrossToken,
-        "src/contracts/ERC721BarterCrossToken.json"
-    );
-}
-
-sol!(
-    #[allow(missing_docs)]
-    #[sol(rpc)]
-    #[derive(Debug)]
-    ERC721EscrowObligation,
-    "src/contracts/ERC721EscrowObligation.json"
-);
-
-sol!(
-    #[allow(missing_docs)]
-    #[sol(rpc)]
-    #[derive(Debug)]
-    ERC721PaymentObligation,
-    "src/contracts/ERC721PaymentObligation.json"
-);
-
-sol!(
-    #[allow(missing_docs)]
-    #[sol(rpc)]
-    #[derive(Debug)]
-    ERC1155BarterUtils,
-    "src/contracts/ERC1155BarterUtils.json"
-);
-
-pub mod erc1155_barter_cross_token {
-    use alloy::sol;
-
-    sol!(
-        #[allow(missing_docs)]
-        #[sol(rpc)]
-        #[derive(Debug)]
-        ERC1155BarterCrossToken,
-        "src/contracts/ERC1155BarterCrossToken.json"
-    );
-}
-
-sol!(
-    #[allow(missing_docs)]
-    #[sol(rpc)]
-    #[derive(Debug)]
-    ERC1155EscrowObligation,
-    "src/contracts/ERC1155EscrowObligation.json"
-);
-
-sol!(
-    #[allow(missing_docs)]
-    #[sol(rpc)]
-    #[derive(Debug)]
-    ERC1155PaymentObligation,
-    "src/contracts/ERC1155PaymentObligation.json"
-);
-
-sol!(
-    #[allow(missing_docs)]
-    #[sol(rpc)]
-    #[derive(Debug)]
-    TokenBundleBarterUtils,
-    "src/contracts/TokenBundleBarterUtils.json"
-);
-
-pub mod token_bundle {
-    use alloy::sol;
-
-    sol!(
-        #[allow(missing_docs)]
-        #[sol(rpc)]
-        #[derive(Debug)]
-        TokenBundleEscrowObligation,
-        "src/contracts/TokenBundleEscrowObligation.json"
+        TrivialArbiter,
+        "src/contracts/arbiters/TrivialArbiter.json"
     );
 
     sol!(
         #[allow(missing_docs)]
         #[sol(rpc)]
         #[derive(Debug)]
-        TokenBundlePaymentObligation,
-        "src/contracts/TokenBundlePaymentObligation.json"
-    );
-}
-
-// Native Token Contracts
-sol!(
-    #[allow(missing_docs)]
-    #[sol(rpc)]
-    #[derive(Debug)]
-    NativeTokenBarterUtils,
-    "src/contracts/NativeTokenBarterUtils.json"
-);
-
-sol!(
-    #[allow(missing_docs)]
-    #[sol(rpc)]
-    #[derive(Debug)]
-    NativeTokenEscrowObligation,
-    "src/contracts/NativeTokenEscrowObligation.json"
-);
-
-sol!(
-    #[allow(missing_docs)]
-    #[sol(rpc)]
-    #[derive(Debug)]
-    NativeTokenPaymentObligation,
-    "src/contracts/NativeTokenPaymentObligation.json"
-);
-
-sol!(
-    #[allow(missing_docs)]
-    #[sol(rpc)]
-    #[derive(Debug)]
-    AttestationBarterUtils,
-    "src/contracts/AttestationBarterUtils.json"
-);
-
-sol!(
-    #[allow(missing_docs)]
-    #[sol(rpc)]
-    #[derive(Debug)]
-    AttestationEscrowObligation,
-    "src/contracts/AttestationEscrowObligation.json"
-);
-
-sol!(
-    #[allow(missing_docs)]
-    #[sol(rpc)]
-    #[derive(Debug)]
-    AttestationEscrowObligation2,
-    "src/contracts/AttestationEscrowObligation2.json"
-);
-
-sol!(
-    #[allow(missing_docs)]
-    #[sol(rpc)]
-    #[derive(Debug)]
-    StringObligation,
-    "src/contracts/StringObligation.json"
-);
-
-// Arbiters
-sol!(
-    #[allow(missing_docs)]
-    #[sol(rpc)]
-    #[derive(Debug)]
-    TrivialArbiter,
-    "src/contracts/arbiters/TrivialArbiter.json"
-);
-
-sol!(
-    #[allow(missing_docs)]
-    #[sol(rpc)]
-    #[derive(Debug)]
-    TrustedPartyArbiter,
-    "src/contracts/arbiters/TrustedPartyArbiter.json"
-);
-
-sol!(
-    #[allow(missing_docs)]
-    #[sol(rpc)]
-    #[derive(Debug)]
-    RecipientArbiter,
-    "src/contracts/arbiters/RecipientArbiter.json"
-);
-
-sol!(
-    #[allow(missing_docs)]
-    #[sol(rpc)]
-    #[derive(Debug)]
-    SpecificAttestationArbiter,
-    "src/contracts/arbiters/SpecificAttestationArbiter.json"
-);
-
-sol!(
-    #[allow(missing_docs)]
-    #[sol(rpc)]
-    #[derive(Debug)]
-    TrustedOracleArbiter,
-    "src/contracts/arbiters/TrustedOracleArbiter.json"
-);
-
-sol!(
-    #[allow(missing_docs)]
-    #[sol(rpc)]
-    #[derive(Debug)]
-    IntrinsicsArbiter,
-    "src/contracts/arbiters/IntrinsicsArbiter.json"
-);
-
-sol!(
-    #[allow(missing_docs)]
-    #[sol(rpc)]
-    #[derive(Debug)]
-    IntrinsicsArbiter2,
-    "src/contracts/arbiters/IntrinsicsArbiter2.json"
-);
-
-pub mod confirmation_arbiters {
-    use alloy::sol;
-
-    sol!(
-        #[allow(missing_docs)]
-        #[sol(rpc)]
-        #[derive(Debug)]
-        ConfirmationArbiter,
-        "src/contracts/arbiters/ConfirmationArbiter.json"
+        TrustedOracleArbiter,
+        "src/contracts/arbiters/TrustedOracleArbiter.json"
     );
 
     sol!(
         #[allow(missing_docs)]
         #[sol(rpc)]
         #[derive(Debug)]
-        ConfirmationArbiterComposing,
-        "src/contracts/arbiters/ConfirmationArbiterComposing.json"
+        IntrinsicsArbiter,
+        "src/contracts/arbiters/IntrinsicsArbiter.json"
     );
 
     sol!(
         #[allow(missing_docs)]
         #[sol(rpc)]
         #[derive(Debug)]
-        RevocableConfirmationArbiter,
-        "src/contracts/arbiters/RevocableConfirmationArbiter.json"
+        IntrinsicsArbiter2,
+        "src/contracts/arbiters/IntrinsicsArbiter2.json"
     );
 
     sol!(
         #[allow(missing_docs)]
         #[sol(rpc)]
         #[derive(Debug)]
-        RevocableConfirmationArbiterComposing,
-        "src/contracts/arbiters/RevocableConfirmationArbiterComposing.json"
+        ERC8004Arbiter,
+        "src/contracts/arbiters/ERC8004Arbiter.json"
     );
 
-    sol!(
-        #[allow(missing_docs)]
-        #[sol(rpc)]
-        #[derive(Debug)]
-        UnrevocableConfirmationArbiter,
-        "src/contracts/arbiters/UnrevocableConfirmationArbiter.json"
-    );
-    sol!(
-        #[allow(missing_docs)]
-        #[sol(rpc)]
-        #[derive(Debug)]
-        UnrevocableConfirmationArbiterComposing,
-        "src/contracts/arbiters/UnrevocableConfirmationArbiterComposing.json"
-    );
-}
-
-pub mod payment_fulfillment_arbiters {
-    use alloy::sol;
-
-    sol!(
-        #[allow(missing_docs)]
-        #[sol(rpc)]
-        #[derive(Debug)]
-        ERC1155PaymentFulfillmentArbiter,
-        "src/contracts/arbiters/ERC1155PaymentFulfillmentArbiter.json"
-    );
-
-    sol!(
-        #[allow(missing_docs)]
-        #[sol(rpc)]
-        #[derive(Debug)]
-        ERC20PaymentFulfillmentArbiter,
-        "src/contracts/arbiters/ERC20PaymentFulfillmentArbiter.json"
-    );
-
-    sol!(
-        #[allow(missing_docs)]
-        #[sol(rpc)]
-        #[derive(Debug)]
-        ERC721PaymentFulfillmentArbiter,
-        "src/contracts/arbiters/ERC721PaymentFulfillmentArbiter.json"
-    );
-
-    sol!(
-        #[allow(missing_docs)]
-        #[sol(rpc)]
-        #[derive(Debug)]
-        TokenBundlePaymentFulfillmentArbiter,
-        "src/contracts/TokenBundlePaymentFulfillmentArbiter.json"
-    );
-}
-pub mod attestation_properties {
-    pub mod composing {
+    // attestation-properties submodule
+    pub mod attestation_properties {
         use alloy::sol;
 
         sol!(
             #[allow(missing_docs)]
             #[sol(rpc)]
             #[derive(Debug)]
-            AttesterArbiterComposing,
-            "src/contracts/arbiters/attestation-properties/composing/AttesterArbiter.json"
+            AttesterArbiter,
+            "src/contracts/arbiters/attestation-properties/AttesterArbiter.json"
         );
 
         sol!(
             #[allow(missing_docs)]
             #[sol(rpc)]
             #[derive(Debug)]
-            ExpirationTimeAfterArbiterComposing,
-            "src/contracts/arbiters/attestation-properties/composing/ExpirationTimeAfterArbiter.json"
+            ExpirationTimeAfterArbiter,
+            "src/contracts/arbiters/attestation-properties/ExpirationTimeAfterArbiter.json"
         );
 
         sol!(
             #[allow(missing_docs)]
             #[sol(rpc)]
             #[derive(Debug)]
-            ExpirationTimeBeforeArbiterComposing,
-            "src/contracts/arbiters/attestation-properties/composing/ExpirationTimeBeforeArbiter.json"
+            ExpirationTimeBeforeArbiter,
+            "src/contracts/arbiters/attestation-properties/ExpirationTimeBeforeArbiter.json"
         );
 
         sol!(
             #[allow(missing_docs)]
             #[sol(rpc)]
             #[derive(Debug)]
-            ExpirationTimeEqualArbiterComposing,
-            "src/contracts/arbiters/attestation-properties/composing/ExpirationTimeEqualArbiter.json"
+            ExpirationTimeEqualArbiter,
+            "src/contracts/arbiters/attestation-properties/ExpirationTimeEqualArbiter.json"
         );
 
         sol!(
             #[allow(missing_docs)]
             #[sol(rpc)]
             #[derive(Debug)]
-            RecipientArbiterComposing,
-            "src/contracts/arbiters/attestation-properties/composing/RecipientArbiter.json"
+            RecipientArbiter,
+            "src/contracts/arbiters/attestation-properties/RecipientArbiter.json"
         );
 
         sol!(
             #[allow(missing_docs)]
             #[sol(rpc)]
             #[derive(Debug)]
-            RefUidArbiterComposing,
-            "src/contracts/arbiters/attestation-properties/composing/RefUidArbiter.json"
+            RefUidArbiter,
+            "src/contracts/arbiters/attestation-properties/RefUidArbiter.json"
         );
 
         sol!(
             #[allow(missing_docs)]
             #[sol(rpc)]
             #[derive(Debug)]
-            RevocableArbiterComposing,
-            "src/contracts/arbiters/attestation-properties/composing/RevocableArbiter.json"
+            RevocableArbiter,
+            "src/contracts/arbiters/attestation-properties/RevocableArbiter.json"
         );
 
         sol!(
             #[allow(missing_docs)]
             #[sol(rpc)]
             #[derive(Debug)]
-            SchemaArbiterComposing,
-            "src/contracts/arbiters/attestation-properties/composing/SchemaArbiter.json"
+            SchemaArbiter,
+            "src/contracts/arbiters/attestation-properties/SchemaArbiter.json"
         );
 
         sol!(
             #[allow(missing_docs)]
             #[sol(rpc)]
             #[derive(Debug)]
-            TimeAfterArbiterComposing,
-            "src/contracts/arbiters/attestation-properties/composing/TimeAfterArbiter.json"
+            TimeAfterArbiter,
+            "src/contracts/arbiters/attestation-properties/TimeAfterArbiter.json"
         );
 
         sol!(
             #[allow(missing_docs)]
             #[sol(rpc)]
             #[derive(Debug)]
-            TimeBeforeArbiterComposing,
-            "src/contracts/arbiters/attestation-properties/composing/TimeBeforeArbiter.json"
+            TimeBeforeArbiter,
+            "src/contracts/arbiters/attestation-properties/TimeBeforeArbiter.json"
         );
 
         sol!(
             #[allow(missing_docs)]
             #[sol(rpc)]
             #[derive(Debug)]
-            TimeEqualArbiterComposing,
-            "src/contracts/arbiters/attestation-properties/composing/TimeEqualArbiter.json"
+            TimeEqualArbiter,
+            "src/contracts/arbiters/attestation-properties/TimeEqualArbiter.json"
         );
 
         sol!(
             #[allow(missing_docs)]
             #[sol(rpc)]
             #[derive(Debug)]
-            UidArbiterComposing,
-            "src/contracts/arbiters/attestation-properties/composing/UidArbiter.json"
+            UidArbiter,
+            "src/contracts/arbiters/attestation-properties/UidArbiter.json"
         );
     }
 
-    pub mod non_composing {
+    // confirmation submodule
+    pub mod confirmation {
         use alloy::sol;
 
         sol!(
             #[allow(missing_docs)]
             #[sol(rpc)]
             #[derive(Debug)]
-            AttesterArbiterNonComposing,
-            "src/contracts/arbiters/attestation-properties/non-composing/AttesterArbiter.json"
+            ExclusiveRevocableConfirmationArbiter,
+            "src/contracts/arbiters/confirmation/ExclusiveRevocableConfirmationArbiter.json"
         );
 
         sol!(
             #[allow(missing_docs)]
             #[sol(rpc)]
             #[derive(Debug)]
-            ExpirationTimeAfterArbiterNonComposing,
-            "src/contracts/arbiters/attestation-properties/non-composing/ExpirationTimeAfterArbiter.json"
+            ExclusiveUnrevocableConfirmationArbiter,
+            "src/contracts/arbiters/confirmation/ExclusiveUnrevocableConfirmationArbiter.json"
         );
 
         sol!(
             #[allow(missing_docs)]
             #[sol(rpc)]
             #[derive(Debug)]
-            ExpirationTimeBeforeArbiterNonComposing,
-            "src/contracts/arbiters/attestation-properties/non-composing/ExpirationTimeBeforeArbiter.json"
+            NonexclusiveRevocableConfirmationArbiter,
+            "src/contracts/arbiters/confirmation/NonexclusiveRevocableConfirmationArbiter.json"
         );
 
         sol!(
             #[allow(missing_docs)]
             #[sol(rpc)]
             #[derive(Debug)]
-            ExpirationTimeEqualArbiterNonComposing,
-            "src/contracts/arbiters/attestation-properties/non-composing/ExpirationTimeEqualArbiter.json"
+            NonexclusiveUnrevocableConfirmationArbiter,
+            "src/contracts/arbiters/confirmation/NonexclusiveUnrevocableConfirmationArbiter.json"
+        );
+    }
+
+    // logical submodule
+    pub mod logical {
+        use alloy::sol;
+
+        sol!(
+            #[allow(missing_docs)]
+            #[sol(rpc)]
+            #[derive(Debug)]
+            AllArbiter,
+            "src/contracts/arbiters/logical/AllArbiter.json"
         );
 
         sol!(
             #[allow(missing_docs)]
             #[sol(rpc)]
             #[derive(Debug)]
-            RecipientArbiterNonComposing,
-            "src/contracts/arbiters/attestation-properties/non-composing/RecipientArbiter.json"
-        );
-
-        sol!(
-            #[allow(missing_docs)]
-            #[sol(rpc)]
-            #[derive(Debug)]
-            RefUidArbiterNonComposing,
-            "src/contracts/arbiters/attestation-properties/non-composing/RefUidArbiter.json"
-        );
-
-        sol!(
-            #[allow(missing_docs)]
-            #[sol(rpc)]
-            #[derive(Debug)]
-            RevocableArbiterNonComposing,
-            "src/contracts/arbiters/attestation-properties/non-composing/RevocableArbiter.json"
-        );
-
-        sol!(
-            #[allow(missing_docs)]
-            #[sol(rpc)]
-            #[derive(Debug)]
-            SchemaArbiterNonComposing,
-            "src/contracts/arbiters/attestation-properties/non-composing/SchemaArbiter.json"
-        );
-
-        sol!(
-            #[allow(missing_docs)]
-            #[sol(rpc)]
-            #[derive(Debug)]
-            TimeAfterArbiterNonComposing,
-            "src/contracts/arbiters/attestation-properties/non-composing/TimeAfterArbiter.json"
-        );
-
-        sol!(
-            #[allow(missing_docs)]
-            #[sol(rpc)]
-            #[derive(Debug)]
-            TimeBeforeArbiterNonComposing,
-            "src/contracts/arbiters/attestation-properties/non-composing/TimeBeforeArbiter.json"
-        );
-
-        sol!(
-            #[allow(missing_docs)]
-            #[sol(rpc)]
-            #[derive(Debug)]
-            TimeEqualArbiterNonComposing,
-            "src/contracts/arbiters/attestation-properties/non-composing/TimeEqualArbiter.json"
-        );
-
-        sol!(
-            #[allow(missing_docs)]
-            #[sol(rpc)]
-            #[derive(Debug)]
-            UidArbiterNonComposing,
-            "src/contracts/arbiters/attestation-properties/non-composing/UidArbiter.json"
+            AnyArbiter,
+            "src/contracts/arbiters/logical/AnyArbiter.json"
         );
     }
 }
 
-pub mod logical {
-    use alloy::sol;
-    sol!(
-        #[allow(missing_docs)]
-        #[sol(rpc)]
-        #[derive(Debug)]
-        AnyArbiter,
-        "src/contracts/arbiters/AnyArbiter.json"
-    );
-    // Simple arbiters without naming conflicts
-    sol!(
-        #[allow(missing_docs)]
-        #[sol(rpc)]
-        #[derive(Debug)]
-        NotArbiter,
-        "src/contracts/arbiters/NotArbiter.json"
-    );
+// Obligations module - mirrors contracts/src/obligations/
+pub mod obligations {
+    // Payment obligations submodule
+    pub mod payment {
+        use alloy::sol;
 
-    sol!(
-        #[allow(missing_docs)]
-        #[sol(rpc)]
-        #[derive(Debug)]
-        AllArbiter,
-        "src/contracts/arbiters/AllArbiter.json"
-    );
+        sol!(
+            #[allow(missing_docs)]
+            #[sol(rpc)]
+            #[derive(Debug)]
+            ERC20PaymentObligation,
+            "src/contracts/obligations/payment/ERC20PaymentObligation.json"
+        );
+
+        sol!(
+            #[allow(missing_docs)]
+            #[sol(rpc)]
+            #[derive(Debug)]
+            ERC721PaymentObligation,
+            "src/contracts/obligations/payment/ERC721PaymentObligation.json"
+        );
+
+        sol!(
+            #[allow(missing_docs)]
+            #[sol(rpc)]
+            #[derive(Debug)]
+            ERC1155PaymentObligation,
+            "src/contracts/obligations/payment/ERC1155PaymentObligation.json"
+        );
+
+        sol!(
+            #[allow(missing_docs)]
+            #[sol(rpc)]
+            #[derive(Debug)]
+            TokenBundlePaymentObligation,
+            "src/contracts/obligations/payment/TokenBundlePaymentObligation.json"
+        );
+
+        sol!(
+            #[allow(missing_docs)]
+            #[sol(rpc)]
+            #[derive(Debug)]
+            NativeTokenPaymentObligation,
+            "src/contracts/obligations/payment/NativeTokenPaymentObligation.json"
+        );
+
+        sol!(
+            #[allow(missing_docs)]
+            #[sol(rpc)]
+            #[derive(Debug)]
+            StringObligation,
+            "src/contracts/obligations/payment/StringObligation.json"
+        );
+    }
+
+    // Re-export payment obligations for convenience
+    pub use payment::ERC20PaymentObligation;
+    pub use payment::ERC721PaymentObligation;
+    pub use payment::ERC1155PaymentObligation;
+    pub use payment::TokenBundlePaymentObligation;
+    pub use payment::NativeTokenPaymentObligation;
+    pub use payment::StringObligation;
+
+    // Escrow obligations submodule
+    pub mod escrow {
+        pub mod non_tierable {
+            use alloy::sol;
+
+            sol!(
+                #[allow(missing_docs)]
+                #[sol(rpc)]
+                #[derive(Debug)]
+                ERC20EscrowObligation,
+                "src/contracts/obligations/escrow/non-tierable/ERC20EscrowObligation.json"
+            );
+
+            sol!(
+                #[allow(missing_docs)]
+                #[sol(rpc)]
+                #[derive(Debug)]
+                ERC721EscrowObligation,
+                "src/contracts/obligations/escrow/non-tierable/ERC721EscrowObligation.json"
+            );
+
+            sol!(
+                #[allow(missing_docs)]
+                #[sol(rpc)]
+                #[derive(Debug)]
+                ERC1155EscrowObligation,
+                "src/contracts/obligations/escrow/non-tierable/ERC1155EscrowObligation.json"
+            );
+
+            sol!(
+                #[allow(missing_docs)]
+                #[sol(rpc)]
+                #[derive(Debug)]
+                TokenBundleEscrowObligation,
+                "src/contracts/obligations/escrow/non-tierable/TokenBundleEscrowObligation.json"
+            );
+
+            sol!(
+                #[allow(missing_docs)]
+                #[sol(rpc)]
+                #[derive(Debug)]
+                NativeTokenEscrowObligation,
+                "src/contracts/obligations/escrow/non-tierable/NativeTokenEscrowObligation.json"
+            );
+
+            sol!(
+                #[allow(missing_docs)]
+                #[sol(rpc)]
+                #[derive(Debug)]
+                AttestationEscrowObligation,
+                "src/contracts/obligations/escrow/non-tierable/AttestationEscrowObligation.json"
+            );
+
+            sol!(
+                #[allow(missing_docs)]
+                #[sol(rpc)]
+                #[derive(Debug)]
+                AttestationEscrowObligation2,
+                "src/contracts/obligations/escrow/non-tierable/AttestationEscrowObligation2.json"
+            );
+        }
+
+        pub mod tierable {
+            use alloy::sol;
+
+            sol!(
+                #[allow(missing_docs)]
+                #[sol(rpc)]
+                #[derive(Debug)]
+                ERC20EscrowObligation,
+                "src/contracts/obligations/escrow/tierable/ERC20EscrowObligation.json"
+            );
+
+            sol!(
+                #[allow(missing_docs)]
+                #[sol(rpc)]
+                #[derive(Debug)]
+                ERC721EscrowObligation,
+                "src/contracts/obligations/escrow/tierable/ERC721EscrowObligation.json"
+            );
+
+            sol!(
+                #[allow(missing_docs)]
+                #[sol(rpc)]
+                #[derive(Debug)]
+                ERC1155EscrowObligation,
+                "src/contracts/obligations/escrow/tierable/ERC1155EscrowObligation.json"
+            );
+
+            sol!(
+                #[allow(missing_docs)]
+                #[sol(rpc)]
+                #[derive(Debug)]
+                TokenBundleEscrowObligation,
+                "src/contracts/obligations/escrow/tierable/TokenBundleEscrowObligation.json"
+            );
+
+            sol!(
+                #[allow(missing_docs)]
+                #[sol(rpc)]
+                #[derive(Debug)]
+                NativeTokenEscrowObligation,
+                "src/contracts/obligations/escrow/tierable/NativeTokenEscrowObligation.json"
+            );
+
+            sol!(
+                #[allow(missing_docs)]
+                #[sol(rpc)]
+                #[derive(Debug)]
+                AttestationEscrowObligation,
+                "src/contracts/obligations/escrow/tierable/AttestationEscrowObligation.json"
+            );
+
+            sol!(
+                #[allow(missing_docs)]
+                #[sol(rpc)]
+                #[derive(Debug)]
+                AttestationEscrowObligation2,
+                "src/contracts/obligations/escrow/tierable/AttestationEscrowObligation2.json"
+            );
+        }
+    }
 }
 
-// Additional contracts
-sol!(
-    #[allow(missing_docs)]
-    #[sol(rpc)]
-    #[derive(Debug)]
-    JobResultObligation,
-    "src/contracts/JobResultObligation.json"
-);
+// Utils module - mirrors contracts/src/utils/
+// Each barter utils is in its own submodule to avoid naming conflicts
+// from internal types like ObligationData that share names across contracts
+pub mod utils {
+    pub mod erc20 {
+        use alloy::sol;
+        sol!(
+            #[allow(missing_docs)]
+            #[sol(rpc)]
+            #[derive(Debug)]
+            ERC20BarterUtils,
+            "src/contracts/utils/ERC20BarterUtils.json"
+        );
+    }
+
+    pub mod erc721 {
+        use alloy::sol;
+        sol!(
+            #[allow(missing_docs)]
+            #[sol(rpc)]
+            #[derive(Debug)]
+            ERC721BarterUtils,
+            "src/contracts/utils/ERC721BarterUtils.json"
+        );
+    }
+
+    pub mod erc1155 {
+        use alloy::sol;
+        sol!(
+            #[allow(missing_docs)]
+            #[sol(rpc)]
+            #[derive(Debug)]
+            ERC1155BarterUtils,
+            "src/contracts/utils/ERC1155BarterUtils.json"
+        );
+    }
+
+    pub mod token_bundle {
+        use alloy::sol;
+        sol!(
+            #[allow(missing_docs)]
+            #[sol(rpc)]
+            #[derive(Debug)]
+            TokenBundleBarterUtils,
+            "src/contracts/utils/TokenBundleBarterUtils.json"
+        );
+    }
+
+    pub mod native_token {
+        use alloy::sol;
+        sol!(
+            #[allow(missing_docs)]
+            #[sol(rpc)]
+            #[derive(Debug)]
+            NativeTokenBarterUtils,
+            "src/contracts/utils/NativeTokenBarterUtils.json"
+        );
+    }
+
+    pub mod attestation {
+        use alloy::sol;
+        sol!(
+            #[allow(missing_docs)]
+            #[sol(rpc)]
+            #[derive(Debug)]
+            AttestationBarterUtils,
+            "src/contracts/utils/AttestationBarterUtils.json"
+        );
+    }
+
+    // Re-export the main contract types for convenience
+    pub use erc20::ERC20BarterUtils;
+    pub use erc721::ERC721BarterUtils;
+    pub use erc1155::ERC1155BarterUtils;
+    pub use token_bundle::TokenBundleBarterUtils;
+    pub use native_token::NativeTokenBarterUtils;
+    pub use attestation::AttestationBarterUtils;
+}

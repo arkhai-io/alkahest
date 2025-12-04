@@ -4,7 +4,7 @@ pragma solidity ^0.8.26;
 import {Attestation} from "@eas/Common.sol";
 import {IArbiter} from "../../IArbiter.sol";
 import {ArbiterUtils} from "../../ArbiterUtils.sol";
-import {StringObligation} from "../../obligations/StringObligation.sol";
+import {StringObligation} from "../../obligations/payment/StringObligation.sol";
 
 /**
  * @title StringCapitalizer
