@@ -2,6 +2,7 @@ use crate::{
     addresses::BASE_SEPOLIA_ADDRESSES,
     contracts,
     extensions::{AlkahestExtension, ContractModule},
+    impl_demand_data_conversions,
     types::{SharedPublicProvider, SharedWalletProvider},
 };
 use alloy::{
@@ -14,19 +15,22 @@ use alloy::{
 use futures_util::StreamExt as _;
 use serde::{Deserialize, Serialize};
 
-pub mod attestation_properties;
-pub mod confirmation;
-pub mod intrinsics_arbiter2;
-pub mod logical;
-pub mod trusted_oracle_arbiter;
+mod attestation_properties;
+mod confirmation;
+mod logical;
 
-// Re-export confirmation APIs
-
-// Re-export attestation properties APIs
-pub use attestation_properties::*;
+// Re-export confirmation types
+pub use confirmation::ConfirmationArbiterType;
 
 // Re-export logical APIs
-pub use logical::*;
+pub use logical::{
+    AllArbiter, AnyArbiter, DecodedAllArbiterDemandData, DecodedAnyArbiterDemandData, Logical,
+};
+
+// Implement demand data conversions for root-level arbiters with DemandData
+impl_demand_data_conversions!(contracts::arbiters::TrustedOracleArbiter::DemandData);
+impl_demand_data_conversions!(contracts::arbiters::IntrinsicsArbiter2::DemandData);
+impl_demand_data_conversions!(contracts::arbiters::ERC8004Arbiter::DemandData);
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ArbitersAddresses {
@@ -250,10 +254,12 @@ macro_rules! impl_demand_data_conversions {
 pub enum DecodedDemand {
     // Core arbiters (no demand data)
     TrivialArbiter,
+    IntrinsicsArbiter,
 
     // Core arbiters (with demand data)
     TrustedOracle(contracts::arbiters::TrustedOracleArbiter::DemandData),
     IntrinsicsArbiter2(contracts::arbiters::IntrinsicsArbiter2::DemandData),
+    ERC8004Arbiter(contracts::arbiters::ERC8004Arbiter::DemandData),
 
     // Logical arbiters
     AnyArbiter(DecodedAnyArbiterDemandData),
@@ -291,8 +297,10 @@ impl ArbitersModule {
 
         let decoded = if arbiter_addr == addresses.trivial_arbiter {
             DecodedDemand::TrivialArbiter
+        } else if arbiter_addr == addresses.intrinsics_arbiter {
+            DecodedDemand::IntrinsicsArbiter
 
-        // Core arbiters
+        // Core arbiters with demand data
         } else if arbiter_addr == addresses.trusted_oracle_arbiter {
             let demand: contracts::arbiters::TrustedOracleArbiter::DemandData =
                 demand_bytes.try_into()?;
@@ -301,6 +309,10 @@ impl ArbitersModule {
             let demand: contracts::arbiters::IntrinsicsArbiter2::DemandData =
                 demand_bytes.try_into()?;
             DecodedDemand::IntrinsicsArbiter2(demand)
+        } else if arbiter_addr == addresses.erc8004_arbiter {
+            let demand: contracts::arbiters::ERC8004Arbiter::DemandData =
+                demand_bytes.try_into()?;
+            DecodedDemand::ERC8004Arbiter(demand)
 
         // Logical arbiters
         } else if arbiter_addr == addresses.any_arbiter {
