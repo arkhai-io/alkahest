@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { createWalletClient, http, nonceManager, parseAbiParameters, parseEther, webSocket } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { baseSepolia } from "viem/chains";
@@ -18,7 +18,7 @@ describe("WebSocket Transport Support", () => {
     let httpClient: ReturnType<typeof makeClient>;
     let wsClient: ReturnType<typeof makeClient>;
 
-    beforeAll(() => {
+    beforeEach(() => {
       // Create HTTP client
       httpClient = makeClient(
         createWalletClient({
@@ -94,27 +94,27 @@ describe("WebSocket Transport Support", () => {
     let testContext: TestContext;
     let alice: `0x${string}`;
     let bob: `0x${string}`;
-    let aliceClient: TestContext["aliceClient"];
-    let bobClient: TestContext["bobClient"];
-    let aliceClientWs: TestContext["aliceClientWs"];
-    let bobClientWs: TestContext["bobClientWs"];
+    let aliceClient: TestContext["alice"]["client"];
+    let bobClient: TestContext["bob"]["client"];
+    let aliceClientWs: TestContext["alice"]["clientWs"];
+    let bobClientWs: TestContext["bob"]["clientWs"];
     let testClient: TestContext["testClient"];
 
     // Token addresses
     let erc20TokenA: `0x${string}`;
     let erc20TokenB: `0x${string}`;
 
-    beforeAll(async () => {
+    beforeEach(async () => {
       // Setup test environment with both HTTP and WebSocket clients
       testContext = await setupTestEnvironment();
 
       // Extract values for tests
-      alice = testContext.alice;
-      bob = testContext.bob;
-      aliceClient = testContext.aliceClient;
-      bobClient = testContext.bobClient;
-      aliceClientWs = testContext.aliceClientWs;
-      bobClientWs = testContext.bobClientWs;
+      alice = testContext.alice.address;
+      bob = testContext.bob.address;
+      aliceClient = testContext.alice.client;
+      bobClient = testContext.bob.client;
+      aliceClientWs = testContext.alice.clientWs;
+      bobClientWs = testContext.bob.clientWs;
       testClient = testContext.testClient;
 
       // Use mock tokens
@@ -131,7 +131,7 @@ describe("WebSocket Transport Support", () => {
       }
     });
 
-    afterAll(async () => {
+    afterEach(async () => {
       // Clean up test environment
       await teardownTestEnvironment(testContext);
     });
@@ -323,7 +323,7 @@ describe("WebSocket Transport Support", () => {
         },
       );
 
-      // Clean up
+      // Clean up after each test
       setTimeout(() => unwatch(), 1000);
     });
   });

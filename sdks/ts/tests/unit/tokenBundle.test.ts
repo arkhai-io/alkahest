@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, test } from "bun:test";
+import { afterAll, afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { parseEther } from "viem";
 import { setupTestEnvironment, type TestContext, teardownTestEnvironment } from "../utils/setup";
 import { compareAddresses } from "../utils/tokenTestUtils";
@@ -8,8 +8,8 @@ describe("TokenBundle Tests", () => {
   let testContext: TestContext;
   let alice: `0x${string}`;
   let bob: `0x${string}`;
-  let aliceClient: TestContext["aliceClient"];
-  let bobClient: TestContext["bobClient"];
+  let aliceClient: TestContext["alice"]["client"];
+  let bobClient: TestContext["bob"]["client"];
   let testClient: TestContext["testClient"];
 
   // Token addresses
@@ -29,43 +29,50 @@ describe("TokenBundle Tests", () => {
   const erc1155TokenAmountB: bigint = 100n;
   const erc20AmountA = parseEther("1000");
   const erc20AmountB = parseEther("1000");
-
-  beforeAll(async () => {
-    // Setup test environment
-    testContext = await setupTestEnvironment();
-
-    // Extract the values we need for tests
-    alice = testContext.alice;
-    bob = testContext.bob;
-    aliceClient = testContext.aliceClient;
-    bobClient = testContext.bobClient;
-    testClient = testContext.testClient;
-
-    // Set token addresses from mock addresses
-    aliceErc20Token = testContext.mockAddresses.erc20A;
-    bobErc20Token = testContext.mockAddresses.erc20B;
-    aliceErc721Token = testContext.mockAddresses.erc721A;
-    bobErc721Token = testContext.mockAddresses.erc721B;
-    aliceErc1155Token = testContext.mockAddresses.erc1155A;
-    bobErc1155Token = testContext.mockAddresses.erc1155B;
-
-    // First token minted is ID 1
-    aliceErc721Id = 1n;
-    bobErc721Id = 1n;
-  });
+  let isFirstTest = true;
 
   beforeEach(async () => {
-    // Reset to initial state before each test
-    if (testContext.anvilInitState) {
+    // Setup fresh test environment only on first run, then reuse with state restoration
+    if (!testContext) {
+      testContext = await setupTestEnvironment();
+
+      // Extract the values we need for tests
+      alice = testContext.alice.address;
+      bob = testContext.bob.address;
+      aliceClient = testContext.alice.client;
+      bobClient = testContext.bob.client;
+      testClient = testContext.testClient;
+
+      // Set token addresses from mock addresses
+      aliceErc20Token = testContext.mockAddresses.erc20A;
+      bobErc20Token = testContext.mockAddresses.erc20B;
+      aliceErc721Token = testContext.mockAddresses.erc721A;
+      bobErc721Token = testContext.mockAddresses.erc721B;
+      aliceErc1155Token = testContext.mockAddresses.erc1155A;
+      bobErc1155Token = testContext.mockAddresses.erc1155B;
+
+      // First token minted is ID 1
+      aliceErc721Id = 1n;
+      bobErc721Id = 1n;
+    } else if (!isFirstTest && testContext.anvilInitState) {
+      // Reset to initial state for subsequent tests (skip first test as state is already fresh)
       await testContext.testClient.loadState({
         state: testContext.anvilInitState,
       });
     }
+    isFirstTest = false;
+  });
+
+  afterEach(async () => {
+    // No cleanup between tests - we reuse the environment
+    // Final cleanup happens in after() hook
   });
 
   afterAll(async () => {
-    // Clean up
-    await teardownTestEnvironment(testContext);
+    // Clean up the shared test environment after all tests
+    if (testContext) {
+      await teardownTestEnvironment(testContext);
+    }
   });
 
   describe("TokenBundleBarterUtils", () => {
@@ -152,9 +159,12 @@ describe("TokenBundle Tests", () => {
       );
 
       // Verify tokens were escrowed
-      expect(finalErc20ABalanceEscrow - initialErc20ABalanceEscrow).toBe(aliceBundle.erc20s[0].value);
+      const firstErc20 = aliceBundle.erc20s[0];
+      const firstErc1155 = aliceBundle.erc1155s[0];
+      if (!firstErc20 || !firstErc1155) throw new Error("Missing bundle tokens");
+      expect(finalErc20ABalanceEscrow - initialErc20ABalanceEscrow).toBe(firstErc20.value);
       expect(compareAddresses(finalErc721AOwner, testContext.addresses.tokenBundleEscrowObligation)).toBe(true);
-      expect(finalErc1155ABalanceEscrow - initialErc1155ABalanceEscrow).toBe(aliceBundle.erc1155s[0].value);
+      expect(finalErc1155ABalanceEscrow - initialErc1155ABalanceEscrow).toBe(firstErc1155.value);
     });
 
     test("testPayBundleForBundle", async () => {
@@ -230,15 +240,22 @@ describe("TokenBundle Tests", () => {
       });
 
       // Verify token transfers
+      const bobFirstErc20 = bobBundle.erc20s[0];
+      const bobFirstErc1155 = bobBundle.erc1155s[0];
+      const aliceFirstErc20 = aliceBundle.erc20s[0];
+      const aliceFirstErc1155 = aliceBundle.erc1155s[0];
+      if (!bobFirstErc20 || !bobFirstErc1155 || !aliceFirstErc20 || !aliceFirstErc1155) {
+        throw new Error("Missing bundle tokens");
+      }
       // Alice receives Bob's tokens
-      expect(aliceFinalErc20BBalance - aliceInitialErc20BBalance).toBe(bobBundle.erc20s[0].value);
+      expect(aliceFinalErc20BBalance - aliceInitialErc20BBalance).toBe(bobFirstErc20.value);
       expect(compareAddresses(aliceErc721BOwner, alice)).toBe(true);
-      expect(aliceFinalErc1155BBalance - aliceInitialErc1155BBalance).toBe(bobBundle.erc1155s[0].value);
+      expect(aliceFinalErc1155BBalance - aliceInitialErc1155BBalance).toBe(bobFirstErc1155.value);
 
       // Bob receives Alice's tokens
-      expect(bobFinalErc20ABalance - bobInitialErc20ABalance).toBe(aliceBundle.erc20s[0].value);
+      expect(bobFinalErc20ABalance - bobInitialErc20ABalance).toBe(aliceFirstErc20.value);
       expect(compareAddresses(bobErc721AOwner, bob)).toBe(true);
-      expect(bobFinalErc1155ABalance - bobInitialErc1155ABalance).toBe(aliceBundle.erc1155s[0].value);
+      expect(bobFinalErc1155ABalance - bobInitialErc1155ABalance).toBe(aliceFirstErc1155.value);
     });
 
     test("testReclaimExpired", async () => {
@@ -291,9 +308,12 @@ describe("TokenBundle Tests", () => {
         alice,
       );
 
+      const firstErc20Reclaim = aliceBundle.erc20s[0];
+      const firstErc1155Reclaim = aliceBundle.erc1155s[0];
+      if (!firstErc20Reclaim || !firstErc1155Reclaim) throw new Error("Missing bundle tokens");
       expect(compareAddresses(finalErc721Owner, alice)).toBe(true);
-      expect(finalErc1155Balance - initialErc1155Balance).toBe(aliceBundle.erc1155s[0].value);
-      expect(finalErc20Balance - initialErc20Balance).toBe(aliceBundle.erc20s[0].value);
+      expect(finalErc1155Balance - initialErc1155Balance).toBe(firstErc1155Reclaim.value);
+      expect(finalErc20Balance - initialErc20Balance).toBe(firstErc20Reclaim.value);
     });
   });
 });

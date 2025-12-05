@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { $ } from "bun";
 import { decodeAbiParameters, parseAbi, parseAbiParameters, parseEventLogs } from "viem";
 import { setupTestEnvironment, type TestContext, teardownTestEnvironment } from "../utils/setup";
@@ -8,19 +8,19 @@ describe("Attestation Tests", () => {
   let testContext: TestContext;
   let alice: `0x${string}`;
   let bob: `0x${string}`;
-  let aliceClient: TestContext["aliceClient"];
-  let bobClient: TestContext["bobClient"];
+  let aliceClient: TestContext["alice"]["client"];
+  let bobClient: TestContext["bob"]["client"];
   let testClient: TestContext["testClient"];
 
-  beforeAll(async () => {
-    // Setup test environment
+  beforeEach(async () => {
+    // Setup fresh test environment for each test
     testContext = await setupTestEnvironment();
 
     // Extract the values we need for tests
-    alice = testContext.alice;
-    bob = testContext.bob;
-    aliceClient = testContext.aliceClient;
-    bobClient = testContext.bobClient;
+    alice = testContext.alice.address;
+    bob = testContext.bob.address;
+    aliceClient = testContext.alice.client;
+    bobClient = testContext.bob.client;
     testClient = testContext.testClient;
   });
 
@@ -33,8 +33,8 @@ describe("Attestation Tests", () => {
     }
   });
 
-  afterAll(async () => {
-    // Clean up
+  afterEach(async () => {
+    // Clean up after each test
     await teardownTestEnvironment(testContext);
   });
 
@@ -54,6 +54,7 @@ describe("Attestation Tests", () => {
 
     // Get the schema ID from the event
     const log = receipt.logs[0];
+    if (!log) throw new Error("No log found in receipt");
     return log.topics[1] as `0x${string}`; // Force type to be 0x-prefixed string
   }
 
@@ -186,7 +187,9 @@ describe("Attestation Tests", () => {
         throw new Error("No schema registration event found");
       }
 
-      const testSchemaId = schemaEventLogs[0].args.uid;
+      const schemaEvent = schemaEventLogs[0];
+      if (!schemaEvent) throw new Error("No schema event found");
+      const testSchemaId = schemaEvent.args.uid;
 
       // Create a pre-existing attestation exactly like in Solidity test (lines 52-65)
 
@@ -361,7 +364,9 @@ describe("Attestation Tests", () => {
       const registerReceipt = await testClient.waitForTransactionReceipt({
         hash: registerHash,
       });
-      const schemaId = registerReceipt.logs[0].topics[1] as `0x${string}`;
+      const log = registerReceipt.logs[0];
+      if (!log) throw new Error("No log found in receipt");
+      const schemaId = log.topics[1] as `0x${string}`;
 
       // Create an attestation using the SDK function
       const { hash: attestationHash } = await aliceClient.attestation.createAttestation(
@@ -391,7 +396,9 @@ describe("Attestation Tests", () => {
       const registerReceipt = await testClient.waitForTransactionReceipt({
         hash: registerHash,
       });
-      const schemaId = registerReceipt.logs[0].topics[1] as `0x${string}`;
+      const log2 = registerReceipt.logs[0];
+      if (!log2) throw new Error("No log found in receipt");
+      const schemaId = log2.topics[1] as `0x${string}`;
 
       // First create an attestation using the SDK function
       const { hash: attestationHash } = await aliceClient.attestation.createAttestation(

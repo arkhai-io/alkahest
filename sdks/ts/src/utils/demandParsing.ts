@@ -90,41 +90,7 @@ export interface ParsedDemand {
   nested?: ParsedDemand[];
 }
 
-/**
- * Create a default registry with known arbiters
- */
-export function createDefaultArbiterRegistry(addresses: ChainAddresses): ArbiterRegistry {
-  const registry = new ArbiterRegistry();
-  
-  // Register logical arbiters (composing)
-  registry.register(addresses.anyArbiter, {
-    parse: AnyArbiterCodec.decode,
-    isComposing: true,
-  });
-  
-  registry.register(addresses.allArbiter, {
-    parse: AllArbiterCodec.decode,
-    isComposing: true,
-  });
-  
-  // Register simple arbiters (non-composing)
-  registry.register(addresses.trivialArbiter, {
-    parse: (demandData: `0x${string}`) => {
-      // TrivialArbiter has no demand data
-      return {};
-    },
-    isComposing: false,
-  });
-  
-  registry.register(addresses.trustedOracleArbiter, {
-    parse: TrustedOracleArbiterCodec.decode,
-    isComposing: false,
-  });
-  
-  // Add more arbiters as needed...
-  
-  return registry;
-}
+
 
 /**
  * Utility functions for working with composed demands

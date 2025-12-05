@@ -8,7 +8,7 @@
  * - TrustedOracleArbiter: Oracle-based decision making with arbitration requests
  */
 
-import { afterAll, beforeAll, beforeEach, describe, expect, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { createWalletClient, encodeAbiParameters, http, parseAbiParameters, publicActions } from "viem";
 import { generatePrivateKey, privateKeyToAccount, privateKeyToAddress } from "viem/accounts";
 import { foundry } from "viem/chains";
@@ -26,21 +26,21 @@ describe("General Arbiters Tests", () => {
   let alice: `0x${string}`;
   let bob: `0x${string}`;
   let charlie: `0x${string}`;
-  let aliceClient: TestContext["aliceClient"];
-  let bobClient: TestContext["bobClient"];
+  let aliceClient: TestContext["alice"]["client"];
+  let bobClient: TestContext["bob"]["client"];
   let testClient: TestContext["testClient"];
 
-  beforeAll(async () => {
-    // Setup test environment
+  beforeEach(async () => {
+    // Setup fresh test environment for each test
     testContext = await setupTestEnvironment();
 
     // Extract the values we need for tests
-    alice = testContext.alice;
-    bob = testContext.bob;
+    alice = testContext.alice.address;
+    bob = testContext.bob.address;
     // Generate a third address for testing
     charlie = privateKeyToAddress(generatePrivateKey());
-    aliceClient = testContext.aliceClient;
-    bobClient = testContext.bobClient;
+    aliceClient = testContext.alice.client;
+    bobClient = testContext.bob.client;
     testClient = testContext.testClient;
   });
 
@@ -53,8 +53,8 @@ describe("General Arbiters Tests", () => {
     }
   });
 
-  afterAll(async () => {
-    // Clean up
+  afterEach(async () => {
+    // Clean up after each test
     await teardownTestEnvironment(testContext);
   });
 
@@ -79,15 +79,15 @@ describe("General Arbiters Tests", () => {
     test("should encode and decode IntrinsicsArbiter2 demand data correctly", () => {
       const originalDemand = { schema: targetSchema };
 
-      const encoded = aliceClient.arbiters.encodeIntrinsics2Demand(originalDemand);
-      const decoded = aliceClient.arbiters.decodeIntrinsics2Demand(encoded);
+      const encoded = aliceClient.arbiters.general.intrinsics2.encode(originalDemand);
+      const decoded = aliceClient.arbiters.general.intrinsics2.decode(encoded);
 
       expect(decoded.schema).toBe(originalDemand.schema);
     });
 
     test("should validate attestation with matching schema", async () => {
       const attestation = createTestAttestation({ schema: targetSchema });
-      const demand = aliceClient.arbiters.encodeIntrinsics2Demand({ schema: targetSchema });
+      const demand = aliceClient.arbiters.general.intrinsics2.encode({ schema: targetSchema });
       const counteroffer = "0x0000000000000000000000000000000000000000000000000000000000000000" as const;
 
       const result = await testClient.readContract({
@@ -103,7 +103,7 @@ describe("General Arbiters Tests", () => {
     test("should reject attestation with non-matching schema", async () => {
       const wrongSchema = "0x9999999999999999999999999999999999999999999999999999999999999999" as const;
       const attestation = createTestAttestation({ schema: wrongSchema });
-      const demand = aliceClient.arbiters.encodeIntrinsics2Demand({ schema: targetSchema });
+      const demand = aliceClient.arbiters.general.intrinsics2.encode({ schema: targetSchema });
       const counteroffer = "0x0000000000000000000000000000000000000000000000000000000000000000" as const;
 
       try {
@@ -126,7 +126,7 @@ describe("General Arbiters Tests", () => {
       const manualEncoded = encodeAbiParameters(parseAbiParameters("(bytes32 schema)"), [demand]);
 
       // SDK encoding
-      const sdkEncoded = aliceClient.arbiters.encodeIntrinsics2Demand(demand);
+      const sdkEncoded = aliceClient.arbiters.general.intrinsics2.encode(demand);
 
       expect(sdkEncoded).toBe(manualEncoded);
     });
@@ -140,8 +140,8 @@ describe("General Arbiters Tests", () => {
         creator: bob,
       };
 
-      const encoded = aliceClient.arbiters.encodeTrustedPartyDemand(originalDemand);
-      const decoded = aliceClient.arbiters.decodeTrustedPartyDemand(encoded);
+      const encoded = aliceClient.arbiters.general.trustedParty.encode(originalDemand);
+      const decoded = aliceClient.arbiters.general.trustedParty.decode(encoded);
 
       expect(decoded.baseArbiter).toBe(originalDemand.baseArbiter);
       expect(decoded.baseDemand).toBe(originalDemand.baseDemand);
@@ -152,7 +152,7 @@ describe("General Arbiters Tests", () => {
       const trustedCreator = bob;
       // The TrustedPartyArbiter checks if the recipient matches the creator
       const attestation = createTestAttestation({ recipient: trustedCreator });
-      const demand = aliceClient.arbiters.encodeTrustedPartyDemand({
+      const demand = aliceClient.arbiters.general.trustedParty.encode({
         baseArbiter: testContext.addresses.trivialArbiter, // Use trivial arbiter as base
         baseDemand: "0x" as `0x${string}`,
         creator: trustedCreator,
@@ -173,7 +173,7 @@ describe("General Arbiters Tests", () => {
       const trustedCreator = bob;
       const nonTrustedRecipient = charlie;
       const attestation = createTestAttestation({ recipient: nonTrustedRecipient });
-      const demand = aliceClient.arbiters.encodeTrustedPartyDemand({
+      const demand = aliceClient.arbiters.general.trustedParty.encode({
         baseArbiter: testContext.addresses.trivialArbiter,
         baseDemand: "0x" as `0x${string}`,
         creator: trustedCreator,
@@ -207,7 +207,7 @@ describe("General Arbiters Tests", () => {
       );
 
       // SDK encoding
-      const sdkEncoded = aliceClient.arbiters.encodeTrustedPartyDemand(demand);
+      const sdkEncoded = aliceClient.arbiters.general.trustedParty.encode(demand);
 
       expect(sdkEncoded).toBe(manualEncoded);
     });
@@ -219,15 +219,15 @@ describe("General Arbiters Tests", () => {
     test("should encode and decode SpecificAttestationArbiter demand data correctly", () => {
       const originalDemand = { uid: targetUid };
 
-      const encoded = aliceClient.arbiters.encodeSpecificAttestationDemand(originalDemand);
-      const decoded = aliceClient.arbiters.decodeSpecificAttestationDemand(encoded);
+      const encoded = aliceClient.arbiters.general.specificAttestation.encode(originalDemand);
+      const decoded = aliceClient.arbiters.general.specificAttestation.decode(encoded);
 
       expect(decoded.uid).toBe(originalDemand.uid);
     });
 
     test("should validate attestation with matching UID", async () => {
       const attestation = createTestAttestation({ uid: targetUid });
-      const demand = aliceClient.arbiters.encodeSpecificAttestationDemand({ uid: targetUid });
+      const demand = aliceClient.arbiters.general.specificAttestation.encode({ uid: targetUid });
       const counteroffer = "0x0000000000000000000000000000000000000000000000000000000000000000" as const;
 
       const result = await testClient.readContract({
@@ -243,7 +243,7 @@ describe("General Arbiters Tests", () => {
     test("should reject attestation with non-matching UID", async () => {
       const wrongUid = "0x2222222222222222222222222222222222222222222222222222222222222222" as const;
       const attestation = createTestAttestation({ uid: wrongUid });
-      const demand = aliceClient.arbiters.encodeSpecificAttestationDemand({ uid: targetUid });
+      const demand = aliceClient.arbiters.general.specificAttestation.encode({ uid: targetUid });
       const counteroffer = "0x0000000000000000000000000000000000000000000000000000000000000000" as const;
 
       try {
@@ -266,7 +266,7 @@ describe("General Arbiters Tests", () => {
       const manualEncoded = encodeAbiParameters(parseAbiParameters("(bytes32 uid)"), [demand]);
 
       // SDK encoding
-      const sdkEncoded = aliceClient.arbiters.encodeSpecificAttestationDemand(demand);
+      const sdkEncoded = aliceClient.arbiters.general.specificAttestation.encode(demand);
 
       expect(sdkEncoded).toBe(manualEncoded);
     });
@@ -279,8 +279,8 @@ describe("General Arbiters Tests", () => {
         data: "0xdeadbeef" as `0x${string}`,
       };
 
-      const encoded = aliceClient.arbiters.encodeTrustedOracleDemand(originalDemand);
-      const decoded = aliceClient.arbiters.decodeTrustedOracleDemand(encoded);
+      const encoded = aliceClient.arbiters.general.trustedOracle.encode(originalDemand);
+      const decoded = aliceClient.arbiters.general.trustedOracle.decode(encoded);
 
       expect(decoded.oracle).toBe(originalDemand.oracle);
       expect(decoded.data).toBe(originalDemand.data);
@@ -295,7 +295,7 @@ describe("General Arbiters Tests", () => {
       const oracle = charlie; // Use charlie as oracle
 
       // Request arbitration and verify the transaction
-      const hash = await aliceClient.arbiters.requestArbitrationFromTrustedOracle(obligation, oracle);
+      const hash = await aliceClient.arbiters.general.trustedOracle.requestArbitration(obligation, oracle);
 
       // Verify the hash format
       expect(hash).toMatch(/^0x[0-9a-f]{64}$/i);
@@ -321,8 +321,10 @@ describe("General Arbiters Tests", () => {
 
       // Verify event was emitted with correct data
       expect(logs).toHaveLength(1);
-      expect(logs[0].args?.obligation).toBe(obligation);
-      expect(logs[0].args?.oracle?.toLowerCase()).toBe(oracle.toLowerCase());
+      const log = logs[0];
+      if (!log) throw new Error("No log found");
+      expect(log.args?.obligation).toBe(obligation);
+      expect(log.args?.oracle?.toLowerCase()).toBe(oracle.toLowerCase());
     });
 
     test("should check for existing arbitration", async () => {
@@ -334,11 +336,11 @@ describe("General Arbiters Tests", () => {
       const oracle = charlie;
 
       // First check - should be undefined since no arbitration made yet
-      const existingBefore = await aliceClient.arbiters.checkExistingArbitration(obligation, oracle);
+      const existingBefore = await aliceClient.arbiters.general.trustedOracle.checkExistingArbitration(obligation, oracle);
       expect(existingBefore).toBeUndefined();
 
       // Request arbitration first (as this creates the initial arbitration request)
-      const requestHash = await aliceClient.arbiters.requestArbitrationFromTrustedOracle(obligation, oracle);
+      const requestHash = await aliceClient.arbiters.general.trustedOracle.requestArbitration(obligation, oracle);
       await testClient.waitForTransactionReceipt({ hash: requestHash });
 
       // For this test, we'll verify that the arbitration request was created
@@ -371,7 +373,7 @@ describe("General Arbiters Tests", () => {
       const oracle = bob;
 
       // Test that the event listener can be set up and torn down properly
-      const waitPromise = aliceClient.arbiters.waitForTrustedOracleArbitrationRequest(
+      const waitPromise = aliceClient.arbiters.general.trustedOracle.waitForArbitrationRequest(
         obligation,
         oracle,
         100, // short polling interval for testing
@@ -395,7 +397,7 @@ describe("General Arbiters Tests", () => {
       const oracle = bob;
       const arbitrationData = "0xdeadbeef" as `0x${string}`;
       const attestation = createTestAttestation();
-      const demand = aliceClient.arbiters.encodeTrustedOracleDemand({
+      const demand = aliceClient.arbiters.general.trustedOracle.encode({
         oracle,
         data: arbitrationData,
       });
@@ -429,7 +431,7 @@ describe("General Arbiters Tests", () => {
       const manualEncoded = encodeAbiParameters(parseAbiParameters("(address oracle, bytes data)"), [demand]);
 
       // SDK encoding
-      const sdkEncoded = aliceClient.arbiters.encodeTrustedOracleDemand(demand);
+      const sdkEncoded = aliceClient.arbiters.general.trustedOracle.encode(demand);
 
       expect(sdkEncoded).toBe(manualEncoded);
     });
@@ -438,20 +440,20 @@ describe("General Arbiters Tests", () => {
   describe("Error handling", () => {
     test("should throw error for invalid hex data", () => {
       expect(() => {
-        aliceClient.arbiters.decodeIntrinsics2Demand("0x123" as `0x${string}`);
+        aliceClient.arbiters.general.intrinsics2.decode("0x123" as `0x${string}`);
       }).toThrow();
     });
 
     test("should handle empty demand data gracefully", () => {
       // Some arbiters may accept empty data
-      const emptyDemand = aliceClient.arbiters.encodeTrustedOracleDemand({
+      const emptyDemand = aliceClient.arbiters.general.trustedOracle.encode({
         oracle: alice,
         data: "0x" as `0x${string}`,
       });
 
       expect(emptyDemand).toMatch(/^0x[0-9a-f]+$/i);
 
-      const decoded = aliceClient.arbiters.decodeTrustedOracleDemand(emptyDemand);
+      const decoded = aliceClient.arbiters.general.trustedOracle.decode(emptyDemand);
       expect(decoded.oracle).toBe(alice);
       expect(decoded.data).toBe("0x");
     });
@@ -461,9 +463,9 @@ describe("General Arbiters Tests", () => {
     test("should handle complex TrustedPartyArbiter with nested arbiters", async () => {
       // Create a nested scenario where TrustedPartyArbiter wraps IntrinsicsArbiter2
       const targetSchema = "0x1234567890123456789012345678901234567890123456789012345678901234" as const;
-      const intrinsicsData = aliceClient.arbiters.encodeIntrinsics2Demand({ schema: targetSchema });
+      const intrinsicsData = aliceClient.arbiters.general.intrinsics2.encode({ schema: targetSchema });
 
-      const trustedPartyDemand = aliceClient.arbiters.encodeTrustedPartyDemand({
+      const trustedPartyDemand = aliceClient.arbiters.general.trustedParty.encode({
         baseArbiter: testContext.addresses.intrinsicsArbiter2,
         baseDemand: intrinsicsData,
         creator: bob,
@@ -493,10 +495,10 @@ describe("General Arbiters Tests", () => {
       };
 
       // Encode -> decode -> encode -> decode
-      const encoded1 = aliceClient.arbiters.encodeTrustedPartyDemand(originalDemand);
-      const decoded1 = aliceClient.arbiters.decodeTrustedPartyDemand(encoded1);
-      const encoded2 = aliceClient.arbiters.encodeTrustedPartyDemand(decoded1);
-      const decoded2 = aliceClient.arbiters.decodeTrustedPartyDemand(encoded2);
+      const encoded1 = aliceClient.arbiters.general.trustedParty.encode(originalDemand);
+      const decoded1 = aliceClient.arbiters.general.trustedParty.decode(encoded1);
+      const encoded2 = aliceClient.arbiters.general.trustedParty.encode(decoded1);
+      const decoded2 = aliceClient.arbiters.general.trustedParty.decode(encoded2);
 
       expect(encoded1).toBe(encoded2);
       expect(decoded1).toEqual(decoded2);

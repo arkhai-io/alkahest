@@ -25,27 +25,6 @@ export const makeGeneralArbitersClient = (viemClient: ViemClient, addresses: Cha
     trustedParty,
     specificAttestation,
     trustedOracle,
-
-    // Backward compatibility - flat methods
-    encodeIntrinsics2Demand: intrinsics2.encode,
-    decodeIntrinsics2Demand: intrinsics2.decode,
-    encodeTrustedPartyDemand: trustedParty.encode,
-    decodeTrustedPartyDemand: trustedParty.decode,
-    encodeSpecificAttestationDemand: specificAttestation.encode,
-    decodeSpecificAttestationDemand: specificAttestation.decode,
-    encodeTrustedOracleDemand: trustedOracle.encode,
-    decodeTrustedOracleDemand: trustedOracle.decode,
-    arbitrateAsTrustedOracle: trustedOracle.arbitrate,
-    requestArbitrationFromTrustedOracle: trustedOracle.requestArbitration,
-    checkExistingArbitration: trustedOracle.checkExistingArbitration,
-    waitForTrustedOracleArbitration: trustedOracle.waitForArbitration,
-    waitForTrustedOracleArbitrationRequest: trustedOracle.waitForArbitrationRequest,
-    listenForArbitrationRequestsOnly: trustedOracle.listenForArbitrationRequestsOnly,
-    
-    // Oracle functionality for backward compatibility with oracle.ts
-    getArbitrationRequests: trustedOracle.getArbitrationRequests,
-    arbitratePast: trustedOracle.arbitratePast,
-    listenAndArbitrate: trustedOracle.listenAndArbitrate,
   };
 };
 

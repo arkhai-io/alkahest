@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, test } from "bun:test";
+import { afterAll, afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { parseEther } from "viem";
 import { setupTestEnvironment, type TestContext, teardownTestEnvironment } from "../utils/setup";
 import { compareAddresses } from "../utils/tokenTestUtils";
@@ -8,8 +8,8 @@ describe("ERC1155 Tests", () => {
   let testContext: TestContext;
   let alice: `0x${string}`;
   let bob: `0x${string}`;
-  let aliceClient: TestContext["aliceClient"];
-  let bobClient: TestContext["bobClient"];
+  let aliceClient: TestContext["alice"]["client"];
+  let bobClient: TestContext["bob"]["client"];
   let testClient: TestContext["testClient"];
 
   // Token addresses
@@ -26,42 +26,49 @@ describe("ERC1155 Tests", () => {
   const bobErc1155TokenId: bigint = 1n;
   const bobErc1155Amount: bigint = 100n;
   let bobErc721TokenId: bigint;
-
-  beforeAll(async () => {
-    // Setup test environment
-    testContext = await setupTestEnvironment();
-
-    // Extract the values we need for tests
-    alice = testContext.alice;
-    bob = testContext.bob;
-    aliceClient = testContext.aliceClient;
-    bobClient = testContext.bobClient;
-    testClient = testContext.testClient;
-
-    // Set token addresses from mock addresses
-    aliceErc20Token = testContext.mockAddresses.erc20A;
-    bobErc20Token = testContext.mockAddresses.erc20B;
-    aliceErc721Token = testContext.mockAddresses.erc721A;
-    bobErc721Token = testContext.mockAddresses.erc721B;
-    aliceErc1155Token = testContext.mockAddresses.erc1155A;
-    bobErc1155Token = testContext.mockAddresses.erc1155B;
-
-    // First token minted for Bob is ID 1
-    bobErc721TokenId = 1n;
-  });
+  let isFirstTest = true;
 
   beforeEach(async () => {
-    // Reset to initial state before each test
-    if (testContext.anvilInitState) {
+    // Setup fresh test environment only on first run, then reuse with state restoration
+    if (!testContext) {
+      testContext = await setupTestEnvironment();
+
+      // Extract the values we need for tests
+      alice = testContext.alice.address;
+      bob = testContext.bob.address;
+      aliceClient = testContext.alice.client;
+      bobClient = testContext.bob.client;
+      testClient = testContext.testClient;
+
+      // Set token addresses from mock addresses
+      aliceErc20Token = testContext.mockAddresses.erc20A;
+      bobErc20Token = testContext.mockAddresses.erc20B;
+      aliceErc721Token = testContext.mockAddresses.erc721A;
+      bobErc721Token = testContext.mockAddresses.erc721B;
+      aliceErc1155Token = testContext.mockAddresses.erc1155A;
+      bobErc1155Token = testContext.mockAddresses.erc1155B;
+
+      // First token minted for Bob is ID 1
+      bobErc721TokenId = 1n;
+    } else if (!isFirstTest && testContext.anvilInitState) {
+      // Reset to initial state for subsequent tests (skip first test as state is already fresh)
       await testContext.testClient.loadState({
         state: testContext.anvilInitState,
       });
     }
+    isFirstTest = false;
+  });
+
+  afterEach(async () => {
+    // No cleanup between tests - we reuse the environment
+    // Final cleanup happens in afterAll() hook
   });
 
   afterAll(async () => {
-    // Clean up
-    await teardownTestEnvironment(testContext);
+    // Clean up the shared test environment after all tests
+    if (testContext) {
+      await teardownTestEnvironment(testContext);
+    }
   });
 
   describe("ERC1155BarterUtils", () => {

@@ -87,9 +87,17 @@ function createNetworkClients() {
   };
 }
 
+const baseSepoliaAddresses = contractAddresses["Base Sepolia"];
+const shouldSkip =
+  !process.env.PRIVKEY_ALICE ||
+  !process.env.PRIVKEY_BOB ||
+  !process.env.RPC_URL ||
+  !baseSepoliaAddresses ||
+  baseSepoliaAddresses.trustedPartyArbiter === "0x";
+
 beforeAll(() => {
   // Skip tests if required environment variables are not set
-  if (!process.env.PRIVKEY_ALICE || !process.env.PRIVKEY_BOB || !process.env.RPC_URL) {
+  if (shouldSkip) {
     console.log("Skipping external network tests - missing environment variables");
     return;
   }
@@ -102,11 +110,7 @@ beforeAll(() => {
 });
 
 test("tradeErc20ForErc20", async () => {
-  // Skip test if environment variables are not set
-  if (!process.env.PRIVKEY_ALICE || !process.env.PRIVKEY_BOB || !process.env.RPC_URL) {
-    console.log("Skipping test - missing environment variables for external network");
-    return;
-  }
+  if (shouldSkip) return;
 
   // approve escrow contract to spend tokens
   const escrowApproval = await clientBuyer.erc20.approve({ address: usdc, value: 10n }, "escrow");
@@ -130,11 +134,7 @@ test("tradeErc20ForErc20", async () => {
 });
 
 test("tradeErc20ForCustom", async () => {
-  // Skip test if environment variables are not set
-  if (!process.env.PRIVKEY_ALICE || !process.env.PRIVKEY_BOB || !process.env.RPC_URL) {
-    console.log("Skipping test - missing environment variables for external network");
-    return;
-  }
+  if (shouldSkip) return;
 
   // the example will use JobResultObligation to demand a string to be capitalized
   // but JobResultObligation is generic enough to represent much more (a db query, a Dockerfile...)
@@ -171,9 +171,11 @@ test("tradeErc20ForCustom", async () => {
   // }
   // if using a custom Arbiter not supported by the SDK, you can use encodeAbiParameters directly,
   // like we did for the baseDemand
-  const demand = clientBuyer.arbiters.encodeTrustedPartyDemand({
+  if (!baseSepoliaAddresses) throw new Error("Base Sepolia addresses not found");
+
+  const demand = clientBuyer.arbiters.general.trustedParty.encode({
     creator: clientSeller.address,
-    baseArbiter: contractAddresses["Base Sepolia"].trivialArbiter,
+    baseArbiter: baseSepoliaAddresses.trivialArbiter,
     baseDemand,
   });
 
@@ -187,7 +189,7 @@ test("tradeErc20ForCustom", async () => {
   // and no expiration (would be a future unix timstamp in seconds if used)
   const escrow = await clientBuyer.erc20.buyWithErc20(
     { address: usdc, value: 10n },
-    { arbiter: contractAddresses["Base Sepolia"].trustedPartyArbiter, demand },
+    { arbiter: baseSepoliaAddresses.trustedPartyArbiter, demand },
     0n,
   );
   console.log("escrow: ", escrow);
@@ -206,7 +208,7 @@ test("tradeErc20ForCustom", async () => {
   const decodedObligation = clientSeller.erc20.decodeEscrowObligation(buyObligation.data);
   // TrustedPartyArbiter.DemandData
   // if using a custom arbiter, you can instead use decodeAbiParameters directly like below
-  const decodedDemand = clientSeller.arbiters.decodeTrustedPartyDemand(decodedObligation.demand);
+  const decodedDemand = clientSeller.arbiters.general.trustedParty.decode(decodedObligation.demand);
   // custom base demand described above
   const decodedBaseDemand = decodeAbiParameters(parseAbiParameters("(string query)"), decodedDemand.baseDemand)[0];
 
@@ -253,7 +255,7 @@ test("tradeErc20ForCustom", async () => {
   // return the fulfilling obligation immediately
   // Use WebSocket client for faster event watching if available. This should auto fallback to HTTP if WS is not configured.
   const fulfillment = await clientBuyerWs.waitForFulfillment(
-    contractAddresses["Base Sepolia"].erc20EscrowObligation,
+    baseSepoliaAddresses.erc20EscrowObligation,
     escrow.attested.uid,
   );
   console.log("fulfillment: ", fulfillment);

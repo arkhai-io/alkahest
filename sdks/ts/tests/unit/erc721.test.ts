@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { parseEther } from "viem";
 import { setupTestEnvironment, type TestContext, teardownTestEnvironment } from "../utils/setup";
 import { compareAddresses } from "../utils/tokenTestUtils";
@@ -8,8 +8,8 @@ describe("ERC721 Tests", () => {
   let testContext: TestContext;
   let alice: `0x${string}`;
   let bob: `0x${string}`;
-  let aliceClient: TestContext["aliceClient"];
-  let bobClient: TestContext["bobClient"];
+  let aliceClient: TestContext["alice"]["client"];
+  let bobClient: TestContext["bob"]["client"];
   let testClient: TestContext["testClient"];
 
   // Token addresses
@@ -24,15 +24,15 @@ describe("ERC721 Tests", () => {
   let aliceTokenId: bigint;
   let bobTokenId: bigint;
 
-  beforeAll(async () => {
-    // Setup test environment
+  beforeEach(async () => {
+    // Setup fresh test environment for each test
     testContext = await setupTestEnvironment();
 
     // Extract the values we need for tests
-    alice = testContext.alice;
-    bob = testContext.bob;
-    aliceClient = testContext.aliceClient;
-    bobClient = testContext.bobClient;
+    alice = testContext.alice.address;
+    bob = testContext.bob.address;
+    aliceClient = testContext.alice.client;
+    bobClient = testContext.bob.client;
     testClient = testContext.testClient;
 
     // Set token addresses from mock addresses
@@ -57,8 +57,8 @@ describe("ERC721 Tests", () => {
     }
   });
 
-  afterAll(async () => {
-    // Clean up
+  afterEach(async () => {
+    // Clean up after each test
     await teardownTestEnvironment(testContext);
   });
 
@@ -298,6 +298,39 @@ describe("ERC721 Tests", () => {
       expect(compareAddresses(newOwner, testContext.addresses.erc721EscrowObligation)).toBe(true);
     });
 
+    test("testReclaimExpired", async () => {
+      const currentTime = Math.floor(Date.now() / 1000);
+      const shortExpiration = BigInt(currentTime + 60); // 60 seconds from now
+
+      // Alice approves and creates an escrow
+      await aliceClient.erc721.approve({ address: aliceErc721Token, id: aliceTokenId }, "escrow");
+
+      const { attested: buyAttestation } = await aliceClient.erc721.buyErc721ForErc721(
+        { address: aliceErc721Token, id: aliceTokenId },
+        { address: bobErc721Token, id: bobTokenId },
+        shortExpiration,
+      );
+
+      // Advance blockchain time to after expiration
+      await testClient.increaseTime({ seconds: 120 }); // Advance 120 seconds
+
+      // Alice collects her expired escrow
+      const reclaimTxHash = await aliceClient.erc721.reclaimExpired(buyAttestation.uid);
+      
+      // increase block timestamp to index tx
+      // await testClient.increaseTime({ seconds: 25 });
+      // Wait for transaction to be mined before checking ownership
+      await testClient.waitForTransactionReceipt({ hash: reclaimTxHash });
+      
+
+      // Verify Alice got her token back
+      const tokenOwner = await testClient.getErc721Owner({
+        address: aliceErc721Token,
+        id: aliceTokenId,
+      });
+
+      expect(compareAddresses(tokenOwner, alice)).toBe(true);
+    });
     test("testPayErc721ForBundle", async () => {
       const expiration = BigInt(Math.floor(Date.now() / 1000) + 86400); // 1 day from now
       const erc20Amount = parseEther("5");
@@ -376,34 +409,6 @@ describe("ERC721 Tests", () => {
       expect(compareAddresses(aliceOwnsToken, alice)).toBe(true);
       expect(aliceFinalBalanceErc20 - aliceInitialBalanceErc20).toBe(erc20Amount / 2n);
       expect(aliceFinalBalanceErc1155 - aliceInitialBalanceErc1155).toBe(erc1155Amount / 2n);
-    });
-
-    test("testReclaimExpired", async () => {
-      const currentTime = Math.floor(Date.now() / 1000);
-      const shortExpiration = BigInt(currentTime + 60); // 60 seconds from now
-
-      // Alice approves and creates an escrow
-      await aliceClient.erc721.approve({ address: aliceErc721Token, id: aliceTokenId }, "escrow");
-
-      const { attested: buyAttestation } = await aliceClient.erc721.buyErc721ForErc721(
-        { address: aliceErc721Token, id: aliceTokenId },
-        { address: bobErc721Token, id: bobTokenId },
-        shortExpiration,
-      );
-
-      // Advance blockchain time to after expiration
-      await testClient.increaseTime({ seconds: 120 }); // Advance 120 seconds
-
-      // Alice collects her expired escrow
-      await aliceClient.erc721.reclaimExpired(buyAttestation.uid);
-
-      // Verify Alice got her token back
-      const tokenOwner = await testClient.getErc721Owner({
-        address: aliceErc721Token,
-        id: aliceTokenId,
-      });
-
-      expect(compareAddresses(tokenOwner, alice)).toBe(true);
     });
   });
 });

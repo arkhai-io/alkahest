@@ -2,6 +2,8 @@ import { decodeAbiParameters, encodeAbiParameters, getAbiItem } from "viem";
 import { abi as erc721BarterUtilsAbi } from "../contracts/ERC721BarterCrossToken";
 import { abi as erc721EscrowAbi } from "../contracts/ERC721EscrowObligation";
 import { abi as erc721PaymentAbi } from "../contracts/ERC721PaymentObligation";
+import { abi as nativeTokenBarterUtilsAbi } from "../contracts/NativeTokenBarterUtils";
+import { abi as easAbi } from "../contracts/IEAS";
 import { abi as erc721Abi } from "../contracts/IERC721";
 import type { ApprovalPurpose, ChainAddresses, Demand, Erc20, Erc721, Erc1155, TokenBundle } from "../types";
 import { flattenTokenBundle, getAttestedEventFromTxHash, type ViemClient } from "../utils";
@@ -20,7 +22,10 @@ const erc721PaymentDecodeFunction = getAbiItem({
 const erc721EscrowObligationDataType = erc721EscrowDecodeFunction.outputs[0];
 const erc721PaymentObligationDataType = erc721PaymentDecodeFunction.outputs[0];
 
-export const makeErc721Client = (viemClient: ViemClient, addresses: ChainAddresses) => {
+export const makeErc721Client = (
+  viemClient: ViemClient,
+  addresses: Pick<ChainAddresses, "erc721EscrowObligation" | "erc721PaymentObligation" | "erc721BarterUtils" | "nativeTokenBarterUtils" | "eas">,
+) => {
   /**
    * Encodes ERC721EscrowObligation.ObligationData to bytes using raw parameters.
    * @param data - ObligationData object to encode

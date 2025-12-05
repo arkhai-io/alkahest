@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, beforeEach, expect, test } from "bun:test";
+import { afterEach, beforeEach, expect, test } from "bun:test";
 import { exec as execCallback } from "node:child_process";
 import { promisify } from "node:util";
 import { encodeAbiParameters, hexToBytes, parseAbiParameters, parseEther, stringToHex } from "viem";
@@ -21,21 +21,11 @@ type ShellOracleDemand = {
 const stringObligationAbi = parseAbiParameters("(string item)");
 const shellDemandAbi = parseAbiParameters("(bytes payload)");
 
-beforeAll(async () => {
+beforeEach(async () => {
   testContext = await setupTestEnvironment();
 });
 
-beforeEach(async () => {
-  if (testContext.anvilInitState) {
-    await testContext.testClient.loadState({
-      state: testContext.anvilInitState,
-    });
-    // Force a block mine to ensure state is properly reset
-    await testContext.testClient.mine({ blocks: 1 });
-  }
-});
-
-afterAll(async () => {
+afterEach(async () => {
   await teardownTestEnvironment(testContext);
 });
 
@@ -50,12 +40,12 @@ test("synchronous offchain oracle capitalization flow", async () => {
 
   const demandBytes = encodeAbiParameters(shellDemandAbi, [{ payload: stringToHex(JSON.stringify(demandPayload)) }]);
 
-  const demand = testContext.aliceClient.arbiters.encodeTrustedOracleDemand({
-    oracle: testContext.charlie,
+  const demand = testContext.alice.client.arbiters.general.trustedOracle.encode({
+    oracle: testContext.charlie.address,
     data: demandBytes,
   });
 
-  const { attested: escrow } = await testContext.aliceClient.erc20.permitAndBuyWithErc20(
+  const { attested: escrow } = await testContext.alice.client.erc20.permitAndBuyWithErc20(
     {
       address: testContext.mockAddresses.erc20A,
       value: parseEther("100"),
@@ -67,27 +57,25 @@ test("synchronous offchain oracle capitalization flow", async () => {
     BigInt(Math.floor(Date.now() / 1000) + 3600),
   );
 
-  const { attested: fulfillment } = await testContext.bobClient.stringObligation.doObligation(
+  const { attested: fulfillment } = await testContext.bob.client.stringObligation.doObligation(
     "tr '[:lower:]' '[:upper:]'",
     escrow.uid,
   );
 
-  // Request arbitration
-  await testContext.bobClient.oracle.requestArbitration(fulfillment.uid, testContext.charlie);
+  // Request arbitration and wait for it to be mined before setting up listener
+  const requestHash = await testContext.bob.client.oracle.requestArbitration(fulfillment.uid, testContext.charlie.address);
+  await testContext.bob.client.viemClient.waitForTransactionReceipt({ hash: requestHash });
 
-  // Give a moment for the arbitration request to be processed
-  await new Promise(resolve => setTimeout(resolve, 100));
-
-  const { decisions, unwatch } = await testContext.charlieClient.oracle.listenAndArbitrate(
+  const { decisions, unwatch } = await testContext.charlie.client.oracle.listenAndArbitrate(
     async (attestation) => {
       // Extract obligation data
-      const obligation = testContext.charlieClient.extractObligationData(stringObligationAbi, attestation);
+      const obligation = testContext.charlie.client.extractObligationData(stringObligationAbi, attestation);
 
       const statement = obligation[0]?.item;
       if (!statement) return false;
 
       // Get escrow and extract demand data
-      const [, demandData] = await testContext.charlieClient.getEscrowAndDemand(shellDemandAbi, attestation);
+      const [, demandData] = await testContext.charlie.client.getEscrowAndDemand(shellDemandAbi, attestation);
 
       const payloadHex = demandData[0]?.payload;
       if (!payloadHex) return false;
@@ -125,13 +113,20 @@ test("synchronous offchain oracle capitalization flow", async () => {
     { skipAlreadyArbitrated: true },
   );
 
+  // Wait for all arbitration transactions to be mined
+  await Promise.all(
+    decisions.map((decision) =>
+      testContext.charlie.client.viemClient.waitForTransactionReceipt({ hash: decision.hash }),
+    ),
+  );
+
   unwatch();
 
   decisions.forEach((decision) => {
     expect(decision?.decision).toBe(true);
   });
 
-  const collectionHash = await testContext.bobClient.erc20.collectEscrow(escrow.uid, fulfillment.uid);
+  const collectionHash = await testContext.bob.client.erc20.collectEscrow(escrow.uid, fulfillment.uid);
 
   expect(collectionHash).toBeTruthy();
 });

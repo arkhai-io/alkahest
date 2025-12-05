@@ -5,6 +5,8 @@ import { abi as erc1155Abi } from "../contracts/IERC1155";
 import { abi as tokenBundleBarterUtilsAbi } from "../contracts/TokenBundleBarterUtils";
 import { abi as tokenBundleEscrowAbi } from "../contracts/TokenBundleEscrowObligation";
 import { abi as tokenBundlePaymentAbi } from "../contracts/TokenBundlePaymentObligation";
+import { abi as nativeTokenBarterUtilsAbi } from "../contracts/NativeTokenBarterUtils";
+import { abi as easAbi } from "../contracts/IEAS";
 import type { ApprovalPurpose, ChainAddresses, Demand, TokenBundle } from "../types";
 import { flattenTokenBundle, getAttestedEventFromTxHash, type ViemClient } from "../utils";
 
@@ -203,34 +205,38 @@ export const makeTokenBundleClient = (viemClient: ViemClient, addresses: ChainAd
       return { hash, attested };
     },
 
-    /**
-     * Creates an escrow for trading one bundle of tokens for another
-     * @param bid - Bundle of tokens offered
-     * @param ask - Bundle of tokens requested
-     * @param expiration - Escrow expiration time (0 for no expiration)
-     * @returns Transaction hash and attestation
-     *
-     * @example
-     * ```ts
-     * const escrow = await client.tokenBundle.buyBundleForBundle(
-     *   myTokenBundle,
-     *   theirTokenBundle,
-     *   0n,
-     * );
-     * ```
-     */
+      /**
+       * Creates an escrow for trading one bundle of tokens for another
+       * @param bid - Bundle of tokens offered
+       * @param ask - Bundle of tokens requested
+       * @param expiration - Escrow expiration time (0 for no expiration)
+       * @returns Transaction hash and attestation
+       *
+       * @example
+       * ```ts
+       * const escrow = await client.tokenBundle.buyBundleForBundle(
+       *   myTokenBundle,
+       *   theirTokenBundle,
+       *   0n,
+       * );
+       * ```
+       */
     buyBundleForBundle: async (bid: TokenBundle, ask: TokenBundle, expiration: bigint) => {
       const hash = await viemClient.writeContract({
         address: addresses.tokenBundleBarterUtils,
         abi: tokenBundleBarterUtilsAbi.abi,
         functionName: "buyBundleForBundle",
         args: [
-          {
-            ...flattenTokenBundle(bid),
-            arbiter: "0x0000000000000000000000000000000000000000",
-            demand: "0x",
-          },
-          { ...flattenTokenBundle(ask), payee: viemClient.account.address },
+      {
+        ...flattenTokenBundle(bid),
+        arbiter: addresses.tokenBundlePaymentObligation,
+        demand: encodePaymentObligationRaw({
+          ...flattenTokenBundle(ask),
+          payee: viemClient.account.address,
+        }),
+        nativeAmount: 0n,
+      },
+          { ...flattenTokenBundle(ask), payee: viemClient.account.address, nativeAmount: 0n, },
           expiration,
         ],
       });
@@ -280,55 +286,48 @@ export const makeTokenBundleClient = (viemClient: ViemClient, addresses: ChainAd
       const target =
         purpose === "escrow" ? addresses.tokenBundleEscrowObligation : addresses.tokenBundlePaymentObligation;
 
-      // Prepare approval transactions for all token types
-      const approvalPromises: Promise<`0x${string}`>[] = [];
+      // Execute approval transactions sequentially to avoid nonce conflicts
+      const results: `0x${string}`[] = [];
 
-      // Process ERC20 tokens in parallel
-      bundle.erc20s.forEach((token) => {
-        approvalPromises.push(
-          viemClient.writeContract({
-            address: token.address,
-            abi: erc20Abi.abi,
-            functionName: "approve",
-            args: [target, token.value],
-          }),
-        );
-      });
+      // Process ERC20 tokens sequentially
+      for (const token of bundle.erc20s) {
+        const hash = await viemClient.writeContract({
+          address: token.address,
+          abi: erc20Abi.abi,
+          functionName: "approve",
+          args: [target, token.value],
+        });
+        results.push(hash);
+      }
 
-      // Process ERC721 tokens
+      // Process ERC721 tokens sequentially
       // Group by token contract to use setApprovalForAll when possible
       const erc721AddressesSet = new Set(bundle.erc721s.map((token) => token.address));
 
-      // For contracts with multiple tokens, use setApprovalForAll in parallel
-      erc721AddressesSet.forEach((address) => {
-        approvalPromises.push(
-          viemClient.writeContract({
-            address: address,
-            abi: erc721Abi.abi,
-            functionName: "setApprovalForAll",
-            args: [target, true],
-          }),
-        );
-      });
+      for (const address of erc721AddressesSet) {
+        const hash = await viemClient.writeContract({
+          address: address,
+          abi: erc721Abi.abi,
+          functionName: "setApprovalForAll",
+          args: [target, true],
+        });
+        results.push(hash);
+      }
 
-      // Process ERC1155 tokens
+      // Process ERC1155 tokens sequentially
       // Group by token contract to use setApprovalForAll
       const erc1155AddressesSet = new Set(bundle.erc1155s.map((token) => token.address));
 
-      // For ERC1155, always use setApprovalForAll in parallel
-      erc1155AddressesSet.forEach((address) => {
-        approvalPromises.push(
-          viemClient.writeContract({
-            address: address,
-            abi: erc1155Abi.abi,
-            functionName: "setApprovalForAll",
-            args: [target, true],
-          }),
-        );
-      });
+      for (const address of erc1155AddressesSet) {
+        const hash = await viemClient.writeContract({
+          address: address,
+          abi: erc1155Abi.abi,
+          functionName: "setApprovalForAll",
+          args: [target, true],
+        });
+        results.push(hash);
+      }
 
-      // Execute all approval transactions in parallel
-      const results = await Promise.all(approvalPromises);
       return results;
     },
 

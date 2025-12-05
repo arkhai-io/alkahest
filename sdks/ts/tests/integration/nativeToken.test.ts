@@ -16,9 +16,9 @@ describe('Native Token Integration Tests', () => {
 
   beforeAll(async () => {
     testContext = await setupTestEnvironment();
-    client = testContext.aliceClient;
-    aliceClient = testContext.aliceClient;
-    bobClient = testContext.bobClient;
+    client = testContext.alice.client;
+    aliceClient = testContext.alice.client;
+    bobClient = testContext.bob.client;
   });
 
   afterAll(async () => {
@@ -30,7 +30,7 @@ describe('Native Token Integration Tests', () => {
       // Create Native Token payment obligation data
       const nativeTokenObligationData = {
         amount: parseEther('1.5'),
-        payee: testContext.bob,
+        payee: testContext.bob.address,
       };
 
       // Create Native Token payment demand
@@ -49,7 +49,7 @@ describe('Native Token Integration Tests', () => {
 
       // Create oracle arbitration demand using encoded native token demand
       const oracleData = {
-        oracle: testContext.alice,
+        oracle: testContext.alice.address,
         data: nativeTokenDemand.demand, // Use Native Token demand as the oracle data
       };
 
@@ -63,14 +63,14 @@ describe('Native Token Integration Tests', () => {
 
       // Verify the oracle data was correctly encoded by decoding it
       const decodedOracleData = client.arbiters.general.trustedOracle.decode(encodedOracleData);
-      expect(decodedOracleData.oracle.toLowerCase()).toBe(testContext.alice.toLowerCase());  
+      expect(decodedOracleData.oracle.toLowerCase()).toBe(testContext.alice.address.toLowerCase());  
       expect(decodedOracleData.data).toBe(nativeTokenDemand.demand);
     });
 
     it('should encode and decode native token obligation data consistently with edge cases', () => {
       const originalData = {
         amount: parseEther('0.123456789'),
-        payee: testContext.alice,
+        payee: testContext.alice.address,
       };
 
       // Encode the data
@@ -87,8 +87,8 @@ describe('Native Token Integration Tests', () => {
       // Test with edge cases
       const edgeCases = [
         { amount: 0n, payee: zeroAddress },
-        { amount: parseEther('999999'), payee: testContext.bob },
-        { amount: 1n, payee: testContext.charlie },
+        { amount: parseEther('999999'), payee: testContext.bob.address },
+        { amount: 1n, payee: testContext.charlie.address },
       ];
 
       for (const testCase of edgeCases) {
@@ -103,9 +103,9 @@ describe('Native Token Integration Tests', () => {
     it('should create multiple payment demands with varying amounts and recipients', () => {
       // Create Native Token payment demands with different amounts
       const demands = [
-        { amount: parseEther('1.0'), payee: testContext.alice },
-        { amount: parseEther('2.5'), payee: testContext.bob },
-        { amount: parseEther('0.001'), payee: testContext.charlie },
+        { amount: parseEther('1.0'), payee: testContext.alice.address },
+        { amount: parseEther('2.5'), payee: testContext.bob.address },
+        { amount: parseEther('0.001'), payee: testContext.charlie.address },
       ];
 
       for (const demandData of demands) {
@@ -130,12 +130,12 @@ describe('Native Token Integration Tests', () => {
       // 1. Create Native Token payment obligation data
       const paymentData = {
         amount: parseEther('1.0'),
-        payee: testContext.bob,
+        payee: testContext.bob.address,
       };
 
       // 2. Check initial balances
       const initialBobBalance = await testContext.testClient.getBalance({
-        address: testContext.bob,
+        address: testContext.bob.address,
       });
 
       // 3. Execute the payment
@@ -147,7 +147,7 @@ describe('Native Token Integration Tests', () => {
 
       // 5. Verify balance change
       const finalBobBalance = await testContext.testClient.getBalance({
-        address: testContext.bob,
+        address: testContext.bob.address,
       });
       expect(finalBobBalance).toBe(initialBobBalance + paymentData.amount);
 
@@ -162,7 +162,7 @@ describe('Native Token Integration Tests', () => {
     });
 
     it('should process sequential payments to different recipients with balance tracking', async () => {
-      const recipients = [testContext.bob, testContext.charlie];
+      const recipients = [testContext.bob.address, testContext.charlie.address];
       const amounts = [parseEther('0.5'), parseEther('0.3')];
       
       for (let i = 0; i < recipients.length; i++) {
@@ -207,7 +207,7 @@ describe('Native Token Integration Tests', () => {
       // Verify validation works for the payment data structure
       const validation = client.nativeToken.validatePaymentObligationData({
         amount: escrowData.amount,
-        payee: testContext.bob, // Use bob as the payee for validation
+        payee: testContext.bob.address, // Use bob as the payee for validation
       });
       expect(validation.valid).toBe(true);
       expect(validation.errors).toHaveLength(0);
@@ -220,9 +220,9 @@ describe('Native Token Integration Tests', () => {
     it('should execute batch operations with demand creation and payment execution', async () => {
       // Test multiple operations in sequence
       const operations = [
-        { amount: parseEther('0.5'), payee: testContext.bob },
-        { amount: parseEther('0.3'), payee: testContext.charlie },
-        { amount: parseEther('0.1'), payee: testContext.alice },
+        { amount: parseEther('0.5'), payee: testContext.bob.address },
+        { amount: parseEther('0.3'), payee: testContext.charlie.address },
+        { amount: parseEther('0.1'), payee: testContext.alice.address },
       ];
 
       const results = [];
@@ -291,11 +291,11 @@ describe('Native Token Integration Tests', () => {
       it('should execute payment obligations with transaction confirmation and balance updates', async () => {
         const obligationData = {
           amount: parseEther('0.5'),
-          payee: testContext.bob,
+          payee: testContext.bob.address,
         };
 
         const initialBalance = await testContext.testClient.getBalance({
-          address: testContext.bob,
+          address: testContext.bob.address,
         });
 
         const { hash } = await aliceClient.nativeToken.doNativeTokenPaymentObligation(obligationData);
@@ -305,7 +305,7 @@ describe('Native Token Integration Tests', () => {
         expect(receipt.status).toBe('success');
 
         const finalBalance = await testContext.testClient.getBalance({
-          address: testContext.bob,
+          address: testContext.bob.address,
         });
         expect(finalBalance).toBe(initialBalance + obligationData.amount);
       });
@@ -313,7 +313,7 @@ describe('Native Token Integration Tests', () => {
       it('should create payment demands with proper encoding and decoding validation', async () => {
         const obligationData = {
           amount: parseEther('1.5'),
-          payee: testContext.charlie,
+          payee: testContext.charlie.address,
         };
 
         const demand = aliceClient.nativeToken.createNativeTokenPaymentDemand(obligationData);
@@ -330,7 +330,7 @@ describe('Native Token Integration Tests', () => {
       it('should validate payment obligation data structure and return success status', () => {
         const validData = {
           amount: parseEther('1.0'),
-          payee: testContext.alice,
+          payee: testContext.alice.address,
         };
 
         const validation = aliceClient.nativeToken.validatePaymentObligationData(validData);
@@ -344,7 +344,7 @@ describe('Native Token Integration Tests', () => {
         // Try to send more ETH than Alice has (she has 10 ETH from setup)  
         const obligationData = {
           amount: parseEther('15.0'), // More than Alice's balance
-          payee: testContext.bob,
+          payee: testContext.bob.address,
         };
 
         // This should fail due to insufficient balance
@@ -358,7 +358,7 @@ describe('Native Token Integration Tests', () => {
       it('should integrate native token demands with trusted oracle arbiter system', () => {
         const obligationData = {
           amount: parseEther('2.0'),
-          payee: testContext.bob,
+          payee: testContext.bob.address,
         };
 
         const demand = aliceClient.nativeToken.createNativeTokenPaymentDemand(obligationData);
@@ -366,7 +366,7 @@ describe('Native Token Integration Tests', () => {
 
         // Test oracle integration by creating oracle demand
         const oracleData = {
-          oracle: testContext.charlie,
+          oracle: testContext.charlie.address,
           data: demand.demand,
         };
 
@@ -376,7 +376,7 @@ describe('Native Token Integration Tests', () => {
 
         // Verify oracle demand can be decoded
         const decodedOracle = aliceClient.arbiters.general.trustedOracle.decode(oracleDemand);
-        expect(decodedOracle.oracle.toLowerCase()).toBe(testContext.charlie.toLowerCase());
+        expect(decodedOracle.oracle.toLowerCase()).toBe(testContext.charlie.address.toLowerCase());
         expect(decodedOracle.data).toBe(demand.demand);
       });
     });
@@ -392,11 +392,11 @@ describe('Native Token Integration Tests', () => {
         for (const amount of testAmounts) {
           const obligationData = {
             amount,
-            payee: testContext.bob,
+            payee: testContext.bob.address,
           };
 
           const initialBalance = await testContext.testClient.getBalance({
-            address: testContext.bob,
+            address: testContext.bob.address,
           });
 
           const { hash } = await aliceClient.nativeToken.doNativeTokenPaymentObligation(obligationData);
@@ -405,7 +405,7 @@ describe('Native Token Integration Tests', () => {
           expect(receipt.status).toBe('success');
 
           const finalBalance = await testContext.testClient.getBalance({
-            address: testContext.bob,
+            address: testContext.bob.address,
           });
           expect(finalBalance).toBe(initialBalance + amount);
         }

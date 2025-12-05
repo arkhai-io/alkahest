@@ -10,27 +10,27 @@ import type { ViemClient } from "../../../utils";
 
 // Extract DemandData struct ABIs from contract ABIs at module initialization
 const expirationTimeAfterArbiterComposingDecodeDemandFunction = getAbiItem({
-  abi: ExpirationTimeAfterArbiterComposingAbi,
+  abi: ExpirationTimeAfterArbiterComposingAbi.abi,
   name: "decodeDemandData",
 });
 const expirationTimeAfterArbiterNonComposingDecodeDemandFunction = getAbiItem({
-  abi: ExpirationTimeAfterArbiterNonComposingAbi,
+  abi: ExpirationTimeAfterArbiterNonComposingAbi.abi,
   name: "decodeDemandData",
 });
 const expirationTimeBeforeArbiterComposingDecodeDemandFunction = getAbiItem({
-  abi: ExpirationTimeBeforeArbiterComposingAbi,
+  abi: ExpirationTimeBeforeArbiterComposingAbi.abi,
   name: "decodeDemandData",
 });
 const expirationTimeBeforeArbiterNonComposingDecodeDemandFunction = getAbiItem({
-  abi: ExpirationTimeBeforeArbiterNonComposingAbi,
+  abi: ExpirationTimeBeforeArbiterNonComposingAbi.abi,
   name: "decodeDemandData",
 });
 const expirationTimeEqualArbiterComposingDecodeDemandFunction = getAbiItem({
-  abi: ExpirationTimeEqualArbiterComposingAbi,
+  abi: ExpirationTimeEqualArbiterComposingAbi.abi,
   name: "decodeDemandData",
 });
 const expirationTimeEqualArbiterNonComposingDecodeDemandFunction = getAbiItem({
-  abi: ExpirationTimeEqualArbiterNonComposingAbi,
+  abi: ExpirationTimeEqualArbiterNonComposingAbi.abi,
   name: "decodeDemandData",
 });
 
