@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { afterAll, afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { parseEther } from "viem";
 import { setupTestEnvironment, type TestContext, teardownTestEnvironment } from "../utils/setup";
 import { compareAddresses } from "../utils/tokenTestUtils";
@@ -29,43 +29,50 @@ describe("TokenBundle Tests", () => {
   const erc1155TokenAmountB: bigint = 100n;
   const erc20AmountA = parseEther("1000");
   const erc20AmountB = parseEther("1000");
+  let isFirstTest = true;
 
   beforeEach(async () => {
-    // Setup fresh test environment for each test
-    testContext = await setupTestEnvironment();
+    // Setup fresh test environment only on first run, then reuse with state restoration
+    if (!testContext) {
+      testContext = await setupTestEnvironment();
 
-    // Extract the values we need for tests
-    alice = testContext.alice.address;
-    bob = testContext.bob.address;
-    aliceClient = testContext.alice.client;
-    bobClient = testContext.bob.client;
-    testClient = testContext.testClient;
+      // Extract the values we need for tests
+      alice = testContext.alice.address;
+      bob = testContext.bob.address;
+      aliceClient = testContext.alice.client;
+      bobClient = testContext.bob.client;
+      testClient = testContext.testClient;
 
-    // Set token addresses from mock addresses
-    aliceErc20Token = testContext.mockAddresses.erc20A;
-    bobErc20Token = testContext.mockAddresses.erc20B;
-    aliceErc721Token = testContext.mockAddresses.erc721A;
-    bobErc721Token = testContext.mockAddresses.erc721B;
-    aliceErc1155Token = testContext.mockAddresses.erc1155A;
-    bobErc1155Token = testContext.mockAddresses.erc1155B;
+      // Set token addresses from mock addresses
+      aliceErc20Token = testContext.mockAddresses.erc20A;
+      bobErc20Token = testContext.mockAddresses.erc20B;
+      aliceErc721Token = testContext.mockAddresses.erc721A;
+      bobErc721Token = testContext.mockAddresses.erc721B;
+      aliceErc1155Token = testContext.mockAddresses.erc1155A;
+      bobErc1155Token = testContext.mockAddresses.erc1155B;
 
-    // First token minted is ID 1
-    aliceErc721Id = 1n;
-    bobErc721Id = 1n;
-  });
-
-  beforeEach(async () => {
-    // Reset to initial state before each test
-    if (testContext.anvilInitState) {
+      // First token minted is ID 1
+      aliceErc721Id = 1n;
+      bobErc721Id = 1n;
+    } else if (!isFirstTest && testContext.anvilInitState) {
+      // Reset to initial state for subsequent tests (skip first test as state is already fresh)
       await testContext.testClient.loadState({
         state: testContext.anvilInitState,
       });
     }
+    isFirstTest = false;
   });
 
   afterEach(async () => {
-    // Clean up after each test
-    await teardownTestEnvironment(testContext);
+    // No cleanup between tests - we reuse the environment
+    // Final cleanup happens in after() hook
+  });
+
+  afterAll(async () => {
+    // Clean up the shared test environment after all tests
+    if (testContext) {
+      await teardownTestEnvironment(testContext);
+    }
   });
 
   describe("TokenBundleBarterUtils", () => {
@@ -303,7 +310,6 @@ describe("TokenBundle Tests", () => {
 
       const firstErc20Reclaim = aliceBundle.erc20s[0];
       const firstErc1155Reclaim = aliceBundle.erc1155s[0];
-      console.log({ firstErc1155Reclaim, firstErc20Reclaim });
       if (!firstErc20Reclaim || !firstErc1155Reclaim) throw new Error("Missing bundle tokens");
       expect(compareAddresses(finalErc721Owner, alice)).toBe(true);
       expect(finalErc1155Balance - initialErc1155Balance).toBe(firstErc1155Reclaim.value);
