@@ -82,6 +82,7 @@ export type TestContext = {
   anvil: ReturnType<typeof createAnvil>;
   testClient: TestClient & WalletActions & PublicActions & AlkahestTestActions;
   anvilInitState?: `0x${string}`;
+  wsTransports?: any[];
 
   // User addresses and clients
   alice: {
@@ -200,6 +201,34 @@ export type TestContext = {
   deployObligation: <T extends { abi: any; bytecode: { object: string } }>(contract: T) => Promise<`0x${string}`>;
 };
 
+// Global flag to track if we've set up WebSocket error suppression
+let wsErrorSuppressionInstalled = false;
+let originalConsoleError: typeof console.error;
+
+/**
+ * Install global WebSocket error suppression for tests
+ * This prevents noisy WebSocket connection errors during test lifecycle
+ */
+function installWebSocketErrorSuppression() {
+  if (wsErrorSuppressionInstalled) return;
+
+  originalConsoleError = console.error;
+  console.error = (...args: any[]) => {
+    const message = args.join(" ");
+    // Suppress WebSocket and ErrorEvent logs that occur during test lifecycle
+    if (
+      message.includes("WebSocket connection to") ||
+      message.includes("ErrorEvent") ||
+      (message.includes("error") && message.includes("ws://localhost"))
+    ) {
+      return;
+    }
+    originalConsoleError(...args);
+  };
+
+  wsErrorSuppressionInstalled = true;
+}
+
 /**
  * Sets up a complete test environment for Alkahest tests
  *
@@ -218,6 +247,8 @@ export interface SetupTestEnvironmentOptions {
 }
 
 export async function setupTestEnvironment(options?: SetupTestEnvironmentOptions): Promise<TestContext> {
+  // Install WebSocket error suppression once globally
+  installWebSocketErrorSuppression();
   // Use a dynamic port to avoid conflicts when running multiple tests
   const port = Math.floor(Math.random() * 10000) + 50000; // Random port between 50000-60000
 
@@ -614,24 +645,38 @@ export async function setupTestEnvironment(options?: SetupTestEnvironmentOptions
   const charlieClient = makeClient(charlieWalletClient, addresses);
 
   // Create WebSocket clients for real-time event watching
+  // Configure with retryCount: 0 to prevent reconnection attempts during teardown
+  const wsTransportAlice = webSocket(`ws://localhost:${anvil.port}`, {
+    retryCount: 0,
+    timeout: 1000,
+  });
+  const wsTransportBob = webSocket(`ws://localhost:${anvil.port}`, {
+    retryCount: 0,
+    timeout: 1000,
+  });
+  const wsTransportCharlie = webSocket(`ws://localhost:${anvil.port}`, {
+    retryCount: 0,
+    timeout: 1000,
+  });
+
   const aliceWalletClientWs = createWalletClient({
     account: aliceAccount,
     chain,
-    transport: webSocket(`ws://localhost:${anvil.port}`),
+    transport: wsTransportAlice,
     pollingInterval: 1000,
   }).extend(publicActions);
 
   const bobWalletClientWs = createWalletClient({
     account: bobAccount,
     chain,
-    transport: webSocket(`ws://localhost:${anvil.port}`),
+    transport: wsTransportBob,
     pollingInterval: 1000,
   }).extend(publicActions);
 
   const charlieWalletClientWs = createWalletClient({
     account: charlieAccount,
     chain,
-    transport: webSocket(`ws://localhost:${anvil.port}`),
+    transport: wsTransportCharlie,
     pollingInterval: 1000,
   }).extend(publicActions);
 
@@ -646,6 +691,7 @@ export async function setupTestEnvironment(options?: SetupTestEnvironmentOptions
     anvil,
     testClient,
     anvilInitState,
+    wsTransports: [wsTransportAlice, wsTransportBob, wsTransportCharlie],
 
     deployContract,
     deployObligation,
@@ -679,13 +725,43 @@ export async function setupTestEnvironment(options?: SetupTestEnvironmentOptions
  * @param context The test context to tear down
  */
 export async function teardownTestEnvironment(context: TestContext) {
-  /*
-  try {
-    await context.anvil.stop();
-  } catch (e) {
-    // Ensure anvil is killed even if graceful stop fails
-    await $`pkill anvil`;
+  // WebSocket error suppression is already installed globally, so we just clean up
+
+  // Close WebSocket connections gracefully before killing Anvil
+  if (context.wsTransports) {
+    for (const transport of context.wsTransports) {
+      try {
+        // Access the internal socket state from viem's WebSocket transport
+        const transportAny = transport as any;
+
+        // Try to get the socket from various possible locations
+        const socket =
+          transportAny?.socket ||
+          transportAny?.value?.socket ||
+          transportAny?.getSocket?.() ||
+          transportAny?.config?.socket;
+
+        if (socket) {
+          // Disable error event listeners before closing
+          if (socket.onerror) socket.onerror = null;
+          if (socket.onclose) socket.onclose = null;
+
+          // Close the socket
+          if (typeof socket.close === "function") {
+            socket.close(1000, "Test teardown"); // Normal closure
+          }
+        }
+      } catch (e) {
+        // Ignore errors during WebSocket cleanup
+      }
+    }
+    // Give WebSockets time to close gracefully
+    await new Promise((resolve) => setTimeout(resolve, 100));
   }
-  */
-  await $`pkill anvil`;
+
+  // Kill Anvil process
+  await $`pkill anvil 2>/dev/null || true`;
+
+  // Small delay to ensure cleanup
+  await new Promise((resolve) => setTimeout(resolve, 50));
 }
