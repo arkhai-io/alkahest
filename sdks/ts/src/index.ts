@@ -217,6 +217,23 @@ export const makeMinimalClient = (
     intrinsicsArbiter2: contractAddresses?.intrinsicsArbiter2 || baseAddresses?.intrinsicsArbiter2 || zeroAddress,
     anyArbiter: contractAddresses?.anyArbiter || baseAddresses?.anyArbiter || zeroAddress,
     allArbiter: contractAddresses?.allArbiter || baseAddresses?.allArbiter || zeroAddress,
+    notArbiter: contractAddresses?.notArbiter || baseAddresses?.notArbiter || zeroAddress,
+    erc8004Arbiter: contractAddresses?.erc8004Arbiter || baseAddresses?.erc8004Arbiter || zeroAddress,
+    confirmationArbiter: contractAddresses?.confirmationArbiter || baseAddresses?.confirmationArbiter || zeroAddress,
+    confirmationArbiterComposing:
+      contractAddresses?.confirmationArbiterComposing || baseAddresses?.confirmationArbiterComposing || zeroAddress,
+    revocableConfirmationArbiter:
+      contractAddresses?.revocableConfirmationArbiter || baseAddresses?.revocableConfirmationArbiter || zeroAddress,
+    revocableConfirmationArbiterComposing:
+      contractAddresses?.revocableConfirmationArbiterComposing ||
+      baseAddresses?.revocableConfirmationArbiterComposing ||
+      zeroAddress,
+    unrevocableConfirmationArbiter:
+      contractAddresses?.unrevocableConfirmationArbiter || baseAddresses?.unrevocableConfirmationArbiter || zeroAddress,
+    unrevocableArbiterComposing:
+      contractAddresses?.unrevocableArbiterComposing || baseAddresses?.unrevocableArbiterComposing || zeroAddress,
+    nativeTokenBarterUtils:
+      contractAddresses?.nativeTokenBarterUtils || baseAddresses?.nativeTokenBarterUtils || zeroAddress,
 
     // Attestation Properties Arbiters - Composing
     attesterArbiterComposing:
@@ -294,11 +311,13 @@ export const makeMinimalClient = (
      */
     getAttestedEventFromTxHash: async (hash: `0x${string}`) => {
       const tx = await viemClient.waitForTransactionReceipt({ hash });
-      return parseEventLogs({
+      const events = parseEventLogs({
         abi: easAbi.abi,
         eventName: "Attested",
         logs: tx.logs,
-      })[0].args;
+      });
+      if (!events[0]) throw new Error("No Attested event found in transaction");
+      return events[0].args;
     },
 
     /**
@@ -336,7 +355,7 @@ export const makeMinimalClient = (
         toBlock: "latest",
       });
 
-      if (logs.length)
+      if (logs.length && logs[0])
         return {
           payment: logs[0].args.escrow,
           fulfillment: logs[0].args.fulfillment,
@@ -352,6 +371,7 @@ export const makeMinimalClient = (
           event: fulfillmentEvent,
           args: { escrow: buyAttestation },
           onLogs: (logs) => {
+            if (!logs[0]) return;
             resolve({
               payment: logs[0].args.escrow,
               fulfillment: logs[0].args.fulfillment,

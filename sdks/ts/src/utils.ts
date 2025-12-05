@@ -36,14 +36,23 @@ export const getOptimalPollingInterval = (
   return isWebSocketTransport(viemClient) ? undefined : defaultInterval;
 };
 
-export const getAttestation = async (viemClient: ViemClient, uid: `0x${string}`, addresses?: ChainAddresses) => {
-  const easAddress = addresses?.eas ?? contractAddresses[viemClient.chain.name].eas;
+export const getAttestation = async (
+  viemClient: ViemClient,
+  uid: `0x${string}`,
+  addresses?: Pick<ChainAddresses, "eas">,
+) => {
+  // Try to use provided addresses first, then fall back to chain name lookup
+  const easAddress = addresses?.eas ?? contractAddresses[viemClient.chain.name]?.eas;
+  if (!easAddress) {
+    throw new Error(`No EAS address found for chain ${viemClient.chain.name}`);
+  }
 
   const attestation = await viemClient.readContract({
     address: easAddress,
     abi: easAbi.abi,
     functionName: "getAttestation",
     args: [uid],
+    authorizationList: undefined,
   });
   return attestation;
 };
@@ -61,7 +70,7 @@ export const getAttestedEventFromTxHash = async (client: ViemClient, hash: `0x${
     logs: tx.logs,
   });
 
-  if (events.length === 0) {
+  if (events.length === 0 || !events[0]) {
     throw new Error(`No Attested event found in transaction ${hash}`);
   }
 
@@ -80,3 +89,36 @@ export const flattenTokenBundle = (bundle: TokenBundle): TokenBundleFlat => ({
 
 // Export demand parsing utilities
 export * from "./utils/demandParsing";
+
+/**
+ * Wrapper for viemClient.writeContract that adds required chain parameter
+ */
+export const writeContract = async (
+  viemClient: ViemClient,
+  params: Parameters<ViemClient["writeContract"]>[0]
+) => {
+  return viemClient.writeContract({
+    ...params,
+    chain: viemClient.chain,
+  });
+};
+
+/**
+ * Wrapper for viemClient.readContract that adds required authorizationList parameter
+ */
+export const readContract = async <T>(
+  viemClient: ViemClient,
+  params: Parameters<ViemClient["readContract"]>[0]
+): Promise<T> => {
+  return viemClient.readContract({
+    ...params,
+    authorizationList: undefined,
+  }) as Promise<T>;
+};
+
+// Re-export demand parsing utilities
+export { ArbiterRegistry, type ArbiterDemandParser, type ParsedDemand, DemandParsingUtils } from "./utils/demandParsing";
+
+// Re-export improved arbiter registry utilities
+export { createFullArbiterRegistry, DemandParsingRegistry } from "./utils/arbiterRegistry";
+export { createComposingArbiterCodec, createNonComposingArbiterCodec } from "./utils/codecFactory";

@@ -29,7 +29,10 @@ type ZodParseReturnType<
     ? Promise<z.infer<TSchema>>
     : z.infer<TSchema>;
 
-export const makeStringObligationClient = (viemClient: ViemClient, addresses: ChainAddresses) => {
+export const makeStringObligationClient = (
+  viemClient: ViemClient,
+  addresses: Pick<ChainAddresses, "stringObligation" | "eas">,
+) => {
   const decode = (obligationData: `0x${string}`) => {
     return decodeAbiParameters([stringObligationDataType], obligationData)[0];
   };

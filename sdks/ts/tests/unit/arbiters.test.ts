@@ -10,7 +10,7 @@
  * These tests mirror the solidity tests in test/unit/arbiters
  */
 
-import { afterAll, beforeAll, beforeEach, describe, expect, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { encodeAbiParameters, parseAbiParameters } from "viem";
 import { generatePrivateKey, privateKeyToAddress } from "viem/accounts";
 import { abi as allArbiterAbi } from "../../src/contracts/AllArbiter";
@@ -28,23 +28,23 @@ describe("Arbiters Tests", () => {
   let testContext: TestContext;
   let alice: `0x${string}`;
   let bob: `0x${string}`;
-  let aliceClient: TestContext["aliceClient"];
-  let bobClient: TestContext["bobClient"];
+  let aliceClient: TestContext["alice"]["client"];
+  let bobClient: TestContext["bob"]["client"];
   let testClient: TestContext["testClient"];
 
   // Additional oracle account
   let oracle: `0x${string}`;
-  let oracleClient: (typeof testContext)["aliceClient"];
+  let oracleClient: (typeof testContext)["alice"]["client"];
 
-  beforeAll(async () => {
-    // Setup test environment
+  beforeEach(async () => {
+    // Setup fresh test environment for each test
     testContext = await setupTestEnvironment();
 
     // Extract the values we need for tests
-    alice = testContext.alice;
-    bob = testContext.bob;
-    aliceClient = testContext.aliceClient;
-    bobClient = testContext.bobClient;
+    alice = testContext.alice.address;
+    bob = testContext.bob.address;
+    aliceClient = testContext.alice.client;
+    bobClient = testContext.bob.client;
     testClient = testContext.testClient;
 
     // We'll use Bob as the oracle for simplicity
@@ -61,8 +61,8 @@ describe("Arbiters Tests", () => {
     }
   });
 
-  afterAll(async () => {
-    // Clean up
+  afterEach(async () => {
+    // Clean up after each test
     await teardownTestEnvironment(testContext);
   });
 
@@ -81,8 +81,8 @@ describe("Arbiters Tests", () => {
         expirationTime: 0n,
         revocationTime: 0n,
         refUID: "0x0000000000000000000000000000000000000000000000000000000000000000" as `0x${string}`,
-        recipient: testContext.alice,
-        attester: testContext.bob,
+        recipient: testContext.alice.address,
+        attester: testContext.bob.address,
         revocable: true,
         data: "0x1234" as `0x${string}`,
       };
@@ -110,8 +110,8 @@ describe("Arbiters Tests", () => {
         expirationTime: 0n,
         revocationTime: 0n,
         refUID: "0x0000000000000000000000000000000000000000000000000000000000000000" as `0x${string}`,
-        recipient: testContext.alice,
-        attester: testContext.bob,
+        recipient: testContext.alice.address,
+        attester: testContext.bob.address,
         revocable: true,
         data: "0x1234" as `0x${string}`,
       };
@@ -252,7 +252,7 @@ describe("Arbiters Tests", () => {
       };
 
       // Encode demand data
-      const demand = oracleClient.arbiters.encodeTrustedOracleDemand(demandData);
+      const demand = oracleClient.arbiters.general.trustedOracle.encode(demandData);
       const counteroffer = "0x0000000000000000000000000000000000000000000000000000000000000000" as const;
 
       // Check statement - should be false initially since no decision has been made
@@ -289,7 +289,7 @@ describe("Arbiters Tests", () => {
       };
 
       // Encode demand data
-      const demand = oracleClient.arbiters.encodeTrustedOracleDemand(demandData);
+      const demand = oracleClient.arbiters.general.trustedOracle.encode(demandData);
       const counteroffer = "0x0000000000000000000000000000000000000000000000000000000000000000" as const;
 
       // Initially the decision should be false (default value)
@@ -303,7 +303,7 @@ describe("Arbiters Tests", () => {
       expect(initialResult).toBe(false);
 
       // Make a positive arbitration decision
-      const arbitrateHash = await oracleClient.arbiters.arbitrateAsTrustedOracle(statementUid, true);
+      const arbitrateHash = await oracleClient.arbiters.general.trustedOracle.arbitrate(statementUid, true);
 
       // Wait for transaction receipt
       await testClient.waitForTransactionReceipt({
@@ -327,7 +327,7 @@ describe("Arbiters Tests", () => {
       const oracle2 = alice;
 
       // Oracle 1 makes a positive decision
-      const arbitrateHash1 = await oracleClient.arbiters.arbitrateAsTrustedOracle(statementUid, true);
+      const arbitrateHash1 = await oracleClient.arbiters.general.trustedOracle.arbitrate(statementUid, true);
 
       // Wait for transaction receipt
       await testClient.waitForTransactionReceipt({
@@ -335,7 +335,7 @@ describe("Arbiters Tests", () => {
       });
 
       // Oracle 2 makes a negative decision
-      const arbitrateHash2 = await aliceClient.arbiters.arbitrateAsTrustedOracle(statementUid, false);
+      const arbitrateHash2 = await aliceClient.arbiters.general.trustedOracle.arbitrate(statementUid, false);
 
       // Wait for transaction receipt
       await testClient.waitForTransactionReceipt({
@@ -361,7 +361,7 @@ describe("Arbiters Tests", () => {
         oracle: oracle1,
         data: "0x" as const,
       };
-      const demand1 = oracleClient.arbiters.encodeTrustedOracleDemand(demandData1);
+      const demand1 = oracleClient.arbiters.general.trustedOracle.encode(demandData1);
       const counteroffer = "0x0000000000000000000000000000000000000000000000000000000000000000" as const;
 
       const result1 = await testClient.readContract({
@@ -378,7 +378,7 @@ describe("Arbiters Tests", () => {
         oracle: oracle2,
         data: "0x" as const,
       };
-      const demand2 = aliceClient.arbiters.encodeTrustedOracleDemand(demandData2);
+      const demand2 = aliceClient.arbiters.general.trustedOracle.encode(demandData2);
 
       const result2 = await testClient.readContract({
         address: testContext.addresses.trustedOracleArbiter,
@@ -415,7 +415,7 @@ describe("Arbiters Tests", () => {
       };
 
       // Encode demand data
-      const demand = aliceClient.arbiters.encodeTrustedOracleDemand(demandData);
+      const demand = aliceClient.arbiters.general.trustedOracle.encode(demandData);
       const counteroffer = "0x0000000000000000000000000000000000000000000000000000000000000000" as const;
 
       // Check with the new oracle - should be false (default value)
@@ -454,7 +454,7 @@ describe("Arbiters Tests", () => {
       };
 
       // Encode demand data
-      const demand = aliceClient.arbiters.encodeSpecificAttestationDemand(demandData);
+      const demand = aliceClient.arbiters.general.specificAttestation.encode(demandData);
       const counteroffer = "0x0000000000000000000000000000000000000000000000000000000000000000" as const;
 
       // Check statement - should return true
@@ -490,7 +490,7 @@ describe("Arbiters Tests", () => {
       };
 
       // Encode demand data
-      const demand = aliceClient.arbiters.encodeSpecificAttestationDemand(demandData);
+      const demand = aliceClient.arbiters.general.specificAttestation.encode(demandData);
       const counteroffer = "0x0000000000000000000000000000000000000000000000000000000000000000" as const;
 
       // Check statement should revert with NotDemandedAttestation
@@ -519,10 +519,10 @@ describe("Arbiters Tests", () => {
       const demandData = { schema };
 
       // Encode the demand data
-      const encodedDemand = aliceClient.arbiters.encodeIntrinsics2Demand(demandData);
+      const encodedDemand = aliceClient.arbiters.general.intrinsics2.encode(demandData);
 
       // Decode the encoded demand data
-      const decodedDemand = aliceClient.arbiters.decodeIntrinsics2Demand(encodedDemand);
+      const decodedDemand = aliceClient.arbiters.general.intrinsics2.decode(encodedDemand);
 
       // Verify the decoded data matches the original
       expect(decodedDemand.schema).toBe(schema);
@@ -545,7 +545,7 @@ describe("Arbiters Tests", () => {
 
       // Create demand data with matching schema
       const demandData = { schema };
-      const demand = aliceClient.arbiters.encodeIntrinsics2Demand(demandData);
+      const demand = aliceClient.arbiters.general.intrinsics2.encode(demandData);
       const counteroffer = "0x0000000000000000000000000000000000000000000000000000000000000000" as const;
 
       // Check statement should return true for matching schema
@@ -577,7 +577,7 @@ describe("Arbiters Tests", () => {
 
       // Demand data with original schema
       const demandData = { schema };
-      const demand = aliceClient.arbiters.encodeIntrinsics2Demand(demandData);
+      const demand = aliceClient.arbiters.general.intrinsics2.encode(demandData);
       const counteroffer = "0x0000000000000000000000000000000000000000000000000000000000000000" as const;
 
       // Should fail with "SchemaMismatch" error
@@ -604,10 +604,10 @@ describe("Arbiters Tests", () => {
       };
 
       // Encode the demand data
-      const encodedDemand = aliceClient.arbiters.encodeMultiArbiterDemand(demandData);
+      const encodedDemand = aliceClient.arbiters.logical.any.encode(demandData);
 
       // Decode the encoded demand data
-      const decodedDemand = aliceClient.arbiters.decodeMultiArbiterDemand(encodedDemand);
+      const decodedDemand = aliceClient.arbiters.logical.any.decode(encodedDemand);
 
       // Verify decoded data matches original
       expect(decodedDemand.arbiters.map(($) => $.toLowerCase())).toEqual(
@@ -640,7 +640,7 @@ describe("Arbiters Tests", () => {
         ],
       };
 
-      const demand = aliceClient.arbiters.encodeMultiArbiterDemand(demandData);
+      const demand = aliceClient.arbiters.logical.any.encode(demandData);
       const counteroffer = "0x0000000000000000000000000000000000000000000000000000000000000000" as const;
 
       // Should return true because at least one arbiter (TrivialArbiter) returns true
@@ -671,13 +671,13 @@ describe("Arbiters Tests", () => {
       };
 
       // Set up TrustedOracleArbiter with no decision (returns false)
-      const oracleDemand = aliceClient.arbiters.encodeTrustedOracleDemand({
+      const oracleDemand = aliceClient.arbiters.general.trustedOracle.encode({
         oracle: alice,
         data: "0x" as const,
       });
 
       // Set up SpecificAttestationArbiter with wrong UID (will fail)
-      const specificDemand = aliceClient.arbiters.encodeSpecificAttestationDemand({
+      const specificDemand = aliceClient.arbiters.general.specificAttestation.encode({
         uid: "0x0000000000000000000000000000000000000000000000000000000000000002" as const,
       });
 
@@ -687,7 +687,7 @@ describe("Arbiters Tests", () => {
         demands: [oracleDemand, specificDemand],
       };
 
-      const demand = aliceClient.arbiters.encodeMultiArbiterDemand(demandData);
+      const demand = aliceClient.arbiters.logical.any.encode(demandData);
       const counteroffer = "0x0000000000000000000000000000000000000000000000000000000000000000" as const;
 
       // Should return false because all arbiters return false
@@ -710,8 +710,8 @@ describe("Arbiters Tests", () => {
         demands: ["0x1234" as const, "0x5678" as const],
       };
 
-      const encodedDemand = aliceClient.arbiters.encodeMultiArbiterDemand(demandData);
-      const decodedDemand = aliceClient.arbiters.decodeMultiArbiterDemand(encodedDemand);
+      const encodedDemand = aliceClient.arbiters.logical.any.encode(demandData);
+      const decodedDemand = aliceClient.arbiters.logical.any.decode(encodedDemand);
 
       expect(decodedDemand.arbiters.map(($) => $.toLowerCase())).toEqual(
         demandData.arbiters.map(($) => $.toLowerCase()),
@@ -737,7 +737,7 @@ describe("Arbiters Tests", () => {
       };
 
       // Create demand with TrivialArbiter and SpecificAttestationArbiter that both return true
-      const specificDemand = aliceClient.arbiters.encodeSpecificAttestationDemand({
+      const specificDemand = aliceClient.arbiters.general.specificAttestation.encode({
         uid,
       });
 
@@ -749,7 +749,7 @@ describe("Arbiters Tests", () => {
         ],
       };
 
-      const demand = aliceClient.arbiters.encodeMultiArbiterDemand(demandData);
+      const demand = aliceClient.arbiters.logical.any.encode(demandData);
       const counteroffer = "0x0000000000000000000000000000000000000000000000000000000000000000" as const;
 
       // Should return true because all arbiters return true
@@ -779,7 +779,7 @@ describe("Arbiters Tests", () => {
       };
 
       // Set up specific attestation demand with wrong UID (will fail)
-      const specificDemand = aliceClient.arbiters.encodeSpecificAttestationDemand({
+      const specificDemand = aliceClient.arbiters.general.specificAttestation.encode({
         uid: "0x0000000000000000000000000000000000000000000000000000000000000002" as const,
       });
 
@@ -792,7 +792,7 @@ describe("Arbiters Tests", () => {
         demands: ["0x" as const, specificDemand],
       };
 
-      const demand = aliceClient.arbiters.encodeMultiArbiterDemand(demandData);
+      const demand = aliceClient.arbiters.logical.any.encode(demandData);
       const counteroffer = "0x0000000000000000000000000000000000000000000000000000000000000000" as const;
 
       // Should revert when any arbiter returns false

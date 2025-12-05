@@ -1,15 +1,19 @@
-import { beforeAll, describe, expect, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { makeClient, makeMinimalClient } from "../../src";
 import { makeErc20Client } from "../../src/clients/erc20";
 import { setupTestEnvironment, type TestContext, teardownTestEnvironment } from "../utils/setup";
 
 describe("Client Extension Tests", () => {
   let testContext: TestContext;
-  let walletClient: TestContext["aliceClient"]["viemClient"];
+  let walletClient: TestContext["alice"]["client"]["viemClient"];
 
-  beforeAll(async () => {
+  beforeEach(async () => {
     testContext = await setupTestEnvironment();
-    walletClient = testContext.aliceClient.viemClient;
+    walletClient = testContext.alice.client.viemClient;
+  });
+
+  afterEach(async () => {
+    await teardownTestEnvironment(testContext);
   });
 
   test("makeClient should return a client with all default extensions", () => {
@@ -89,12 +93,12 @@ describe("Client Extension Tests", () => {
     const minimalClient = makeMinimalClient(walletClient, testContext.addresses);
 
     const firstExtension = minimalClient.extend((client) => ({
-      erc20: testContext.aliceClient.erc20,
+      erc20: testContext.alice.client.erc20,
       customProp1: "first",
     }));
 
     const secondExtension = firstExtension.extend((client) => ({
-      erc721: testContext.aliceClient.erc721,
+      erc721: testContext.alice.client.erc721,
       customProp2: "second",
       // Fix: access the extended client properties correctly
       combined: () => `${firstExtension.customProp1}-second`,

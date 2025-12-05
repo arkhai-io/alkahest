@@ -10,32 +10,35 @@
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
-    "./tests/utils/setup": {
+    "./test-utils": {
       "import": "./tests/utils/setup.ts",
       "types": "./tests/utils/setup.ts"
     }
   },
   "files": [
     "dist",
-    "tests"
+    "src",
+    "tests/utils",
+    "tests/fixtures"
   ],
   "scripts": {
-    "build": "tsup src/index.ts --dts --format esm,cjs",
+    "build": "bunx tsc && tsup src/index.ts --dts --format esm,cjs",
     "test": "bun test",
     "test:unit": "bun test tests/unit"
   },
   "devDependencies": {
     "@types/bun": "1.3.0",
     "bun-plugin-dts": "^0.3.0",
-    "tsup": "^8.3.6"
+    "tsup": "^8.3.6",
+    "viem": "^2.38.3"
   },
   "peerDependencies": {
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "viem": "^2.38.3"
   },
   "dependencies": {
     "@viem/anvil": "^0.0.10",
     "arktype": "^2.1.23",
-    "viem": "^2.38.3",
     "zod": "^3.25.76"
   }
 }

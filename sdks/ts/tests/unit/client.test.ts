@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { parseEther } from "viem";
 import { setupTestEnvironment, type TestContext, teardownTestEnvironment } from "../utils/setup";
 import { compareAddresses } from "../utils/tokenTestUtils";
@@ -8,22 +8,22 @@ describe("Client Tests", () => {
   let testContext: TestContext;
   let alice: `0x${string}`;
   let bob: `0x${string}`;
-  let aliceClient: TestContext["aliceClient"];
-  let bobClient: TestContext["bobClient"];
+  let aliceClient: TestContext["alice"]["client"];
+  let bobClient: TestContext["bob"]["client"];
   let testClient: TestContext["testClient"];
 
   // Additional test token
   let erc20Token: `0x${string}`;
 
-  beforeAll(async () => {
-    // Setup test environment
+  beforeEach(async () => {
+    // Setup fresh test environment for each test
     testContext = await setupTestEnvironment();
 
     // Extract the values we need for tests
-    alice = testContext.alice;
-    bob = testContext.bob;
-    aliceClient = testContext.aliceClient;
-    bobClient = testContext.bobClient;
+    alice = testContext.alice.address;
+    bob = testContext.bob.address;
+    aliceClient = testContext.alice.client;
+    bobClient = testContext.bob.client;
     testClient = testContext.testClient;
 
     // Use one of the mock tokens
@@ -39,8 +39,8 @@ describe("Client Tests", () => {
     }
   });
 
-  afterAll(async () => {
-    // Clean up
+  afterEach(async () => {
+    // Clean up after each test
     await teardownTestEnvironment(testContext);
   });
 
@@ -60,6 +60,7 @@ describe("Client Tests", () => {
 
     // Get the schema ID from the event
     const log = receipt.logs[0];
+    if (!log) throw new Error("No log found in receipt");
     return log.topics[1] as `0x${string}`; // Force type to be 0x-prefixed string
   }
 

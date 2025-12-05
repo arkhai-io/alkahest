@@ -20,12 +20,6 @@ export const makeLogicalArbitersClient = (viemClient: ViemClient, addresses: Cha
   return {
     any,
     all,
-
-    // Backward compatibility - flat methods
-    encodeAnyArbiterDemand: any.encode,
-    decodeAnyArbiterDemand: any.decode,
-    encodeAllArbiterDemand: all.encode,
-    decodeAllArbiterDemand: all.decode,
   };
 };
 

@@ -8,10 +8,6 @@ export type ChainAddresses = {
   erc20PaymentObligation: `0x${string}`;
   erc20BarterUtils: `0x${string}`;
 
-  nativeTokenPaymentObligation: `0x${string}`;
-  nativeTokenEscrowObligation: `0x${string}`;
-  nativeTokenBarterUtils: `0x${string}`;
-
   erc721EscrowObligation: `0x${string}`;
   erc721PaymentObligation: `0x${string}`;
   erc721BarterUtils: `0x${string}`;
@@ -36,8 +32,19 @@ export type ChainAddresses = {
   trustedOracleArbiter: `0x${string}`;
   anyArbiter: `0x${string}`;
   allArbiter: `0x${string}`;
+  notArbiter: `0x${string}`;
   intrinsicsArbiter: `0x${string}`;
   intrinsicsArbiter2: `0x${string}`;
+  erc8004Arbiter: `0x${string}`;
+  confirmationArbiter: `0x${string}`;
+  confirmationArbiterComposing: `0x${string}`;
+  revocableConfirmationArbiter: `0x${string}`;
+  revocableConfirmationArbiterComposing: `0x${string}`;
+  unrevocableConfirmationArbiter: `0x${string}`;
+  unrevocableArbiterComposing: `0x${string}`;
+  nativeTokenEscrowObligation: `0x${string}`;
+  nativeTokenPaymentObligation: `0x${string}`;
+  nativeTokenBarterUtils: `0x${string}`;
 
   // Attestation Properties Arbiters - Composing
   attesterArbiterComposing?: `0x${string}`;

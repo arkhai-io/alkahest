@@ -305,10 +305,10 @@ export const makeTrustedOracleArbiterClient = (viemClient: ViemClient, addresses
       oracle: `0x${string}`,
     ): Promise<
       | {
-          obligation: `0x${string}`;
-          oracle: `0x${string}`;
-          decision: boolean;
-        }
+        obligation: `0x${string}`;
+        oracle: `0x${string}`;
+        decision: boolean;
+      }
       | undefined
     > => {
       const logs = await viemClient.getLogs({

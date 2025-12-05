@@ -1,5 +1,5 @@
 import { describe, test, expect } from "bun:test";
-import { createDefaultArbiterRegistry, DemandParsingUtils, AnyArbiterCodec, AllArbiterCodec, TrustedOracleArbiterCodec } from "../../src";
+import { createFullArbiterRegistry, DemandParsingUtils, AnyArbiterCodec, AllArbiterCodec, TrustedOracleArbiterCodec } from "../../src";
 import type { ChainAddresses, Demand } from "../../src/types";
 
 describe("Demand Parsing and Static Codecs", () => {
@@ -63,7 +63,7 @@ describe("Demand Parsing and Static Codecs", () => {
   });
 
   test("should create default arbiter registry", () => {
-    const registry = createDefaultArbiterRegistry(mockAddresses);
+    const registry = createFullArbiterRegistry(mockAddresses);
 
     // Test that registry recognizes known arbiters
     expect(registry.getParser(mockAddresses.anyArbiter)).toBeDefined();
@@ -79,7 +79,7 @@ describe("Demand Parsing and Static Codecs", () => {
   });
 
   test("should parse simple demand", () => {
-    const registry = createDefaultArbiterRegistry(mockAddresses);
+    const registry = createFullArbiterRegistry(mockAddresses);
     
     const simpleDemand: Demand = {
       arbiter: mockAddresses.trivialArbiter,
@@ -94,7 +94,7 @@ describe("Demand Parsing and Static Codecs", () => {
   });
 
   test("should parse composed demand with nested arbiters", () => {
-    const registry = createDefaultArbiterRegistry(mockAddresses);
+    const registry = createFullArbiterRegistry(mockAddresses);
     
     // Create actual encoded demands for nested arbiters
     const trustedOracledemand = TrustedOracleArbiterCodec.encode({
@@ -123,7 +123,7 @@ describe("Demand Parsing and Static Codecs", () => {
   });
 
   test("should get all arbiters from composed demand", () => {
-    const registry = createDefaultArbiterRegistry(mockAddresses);
+    const registry = createFullArbiterRegistry(mockAddresses);
     
     // Create actual encoded demands instead of empty "0x"
     const trustedOracleDemand = TrustedOracleArbiterCodec.encode({
@@ -151,7 +151,7 @@ describe("Demand Parsing and Static Codecs", () => {
   });
 
   test("should check if demand is fully parseable", () => {
-    const registry = createDefaultArbiterRegistry(mockAddresses);
+    const registry = createFullArbiterRegistry(mockAddresses);
     
     // Parseable demand
     const parseableDemand: Demand = {
@@ -173,7 +173,7 @@ describe("Demand Parsing and Static Codecs", () => {
   });
 
   test("should generate structure description", () => {
-    const registry = createDefaultArbiterRegistry(mockAddresses);
+    const registry = createFullArbiterRegistry(mockAddresses);
     
     // Create actual encoded demands instead of empty "0x"
     const trustedOracleDemand = TrustedOracleArbiterCodec.encode({

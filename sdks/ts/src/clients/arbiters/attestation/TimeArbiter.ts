@@ -10,27 +10,27 @@ import type { ViemClient } from "../../../utils";
 
 // Extract DemandData struct ABIs from contract ABIs at module initialization
 const timeAfterArbiterComposingDecodeDemandFunction = getAbiItem({
-  abi: TimeAfterArbiterComposingAbi,
+  abi: TimeAfterArbiterComposingAbi.abi,
   name: "decodeDemandData",
 });
 const timeAfterArbiterNonComposingDecodeDemandFunction = getAbiItem({
-  abi: TimeAfterArbiterNonComposingAbi,
+  abi: TimeAfterArbiterNonComposingAbi.abi,
   name: "decodeDemandData",
 });
 const timeBeforeArbiterComposingDecodeDemandFunction = getAbiItem({
-  abi: TimeBeforeArbiterComposingAbi,
+  abi: TimeBeforeArbiterComposingAbi.abi,
   name: "decodeDemandData",
 });
 const timeBeforeArbiterNonComposingDecodeDemandFunction = getAbiItem({
-  abi: TimeBeforeArbiterNonComposingAbi,
+  abi: TimeBeforeArbiterNonComposingAbi.abi,
   name: "decodeDemandData",
 });
 const timeEqualArbiterComposingDecodeDemandFunction = getAbiItem({
-  abi: TimeEqualArbiterComposingAbi,
+  abi: TimeEqualArbiterComposingAbi.abi,
   name: "decodeDemandData",
 });
 const timeEqualArbiterNonComposingDecodeDemandFunction = getAbiItem({
-  abi: TimeEqualArbiterNonComposingAbi,
+  abi: TimeEqualArbiterNonComposingAbi.abi,
   name: "decodeDemandData",
 });
 

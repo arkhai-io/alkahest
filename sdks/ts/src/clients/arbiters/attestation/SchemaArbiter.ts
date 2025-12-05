@@ -6,11 +6,11 @@ import type { ViemClient } from "../../../utils";
 
 // Extract DemandData struct ABIs from contract ABIs at module initialization
 const schemaArbiterComposingDecodeDemandFunction = getAbiItem({
-  abi: SchemaArbiterComposingAbi,
+  abi: SchemaArbiterComposingAbi.abi,
   name: "decodeDemandData",
 });
 const schemaArbiterNonComposingDecodeDemandFunction = getAbiItem({
-  abi: SchemaArbiterNonComposingAbi,
+  abi: SchemaArbiterNonComposingAbi.abi,
   name: "decodeDemandData",
 });
 

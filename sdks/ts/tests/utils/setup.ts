@@ -1,33 +1,32 @@
-import AttestationBarterUtils from "@contracts/AttestationBarterUtils.json";
-import AttestationEscrowObligation from "@contracts/AttestationEscrowObligation.json";
-import AttestationEscrowObligation2 from "@contracts/AttestationEscrowObligation2.json";
-import ERC20BarterCrossToken from "@contracts/ERC20BarterCrossToken.json";
-// Import contract artifacts
-import ERC20EscrowObligation from "@contracts/ERC20EscrowObligation.json";
-import ERC20PaymentObligation from "@contracts/ERC20PaymentObligation.json";
-import ERC721BarterCrossToken from "@contracts/ERC721BarterCrossToken.json";
-import ERC721EscrowObligation from "@contracts/ERC721EscrowObligation.json";
-import ERC721PaymentObligation from "@contracts/ERC721PaymentObligation.json";
-import ERC1155BarterCrossToken from "@contracts/ERC1155BarterCrossToken.json";
-import ERC1155EscrowObligation from "@contracts/ERC1155EscrowObligation.json";
-import ERC1155PaymentObligation from "@contracts/ERC1155PaymentObligation.json";
-import SpecificAttestationArbiter from "@contracts/SpecificAttestationArbiter.json";
-import StringObligation from "@contracts/StringObligation.json";
-import TokenBundleBarterUtils from "@contracts/TokenBundleBarterUtils.json";
-import TokenBundleEscrowObligation from "@contracts/TokenBundleEscrowObligation.json";
-import TokenBundlePaymentObligation from "@contracts/TokenBundlePaymentObligation.json";
-import NativeTokenPaymentObligation from "@contracts/NativeTokenPaymentObligation.json";
-import NativeTokenEscrowObligation from "@contracts/NativeTokenEscrowObligation.json";
-import TrivialArbiter from "@contracts/TrivialArbiter.json";
-import TrustedOracleArbiter from "@contracts/TrustedOracleArbiter.json";
-import TrustedPartyArbiter from "@contracts/TrustedPartyArbiter.json";
+// Import contract artifacts using relative paths (not path aliases)
+import AttestationBarterUtils from "../../src/contracts/AttestationBarterUtils.json";
+import AttestationEscrowObligation from "../../src/contracts/AttestationEscrowObligation.json";
+import AttestationEscrowObligation2 from "../../src/contracts/AttestationEscrowObligation2.json";
+import ERC20BarterCrossToken from "../../src/contracts/ERC20BarterCrossToken.json";
+import ERC20EscrowObligation from "../../src/contracts/ERC20EscrowObligation.json";
+import ERC20PaymentObligation from "../../src/contracts/ERC20PaymentObligation.json";
+import ERC721BarterCrossToken from "../../src/contracts/ERC721BarterCrossToken.json";
+import ERC721EscrowObligation from "../../src/contracts/ERC721EscrowObligation.json";
+import ERC721PaymentObligation from "../../src/contracts/ERC721PaymentObligation.json";
+import ERC1155BarterCrossToken from "../../src/contracts/ERC1155BarterCrossToken.json";
+import ERC1155EscrowObligation from "../../src/contracts/ERC1155EscrowObligation.json";
+import ERC1155PaymentObligation from "../../src/contracts/ERC1155PaymentObligation.json";
+import SpecificAttestationArbiter from "../../src/contracts/SpecificAttestationArbiter.json";
+import StringObligation from "../../src/contracts/StringObligation.json";
+import TokenBundleBarterUtils from "../../src/contracts/TokenBundleBarterUtils.json";
+import TokenBundleEscrowObligation from "../../src/contracts/TokenBundleEscrowObligation.json";
+import TokenBundlePaymentObligation from "../../src/contracts/TokenBundlePaymentObligation.json";
+import TrivialArbiter from "../../src/contracts/TrivialArbiter.json";
+import TrustedOracleArbiter from "../../src/contracts/TrustedOracleArbiter.json";
+import TrustedPartyArbiter from "../../src/contracts/TrustedPartyArbiter.json";
+import NativeTokenPaymentObligation from "../../src/contracts/NativeTokenPaymentObligation.json";
+import NativeTokenEscrowObligation from "../../src/contracts/NativeTokenEscrowObligation.json";
 import { createAnvil } from "@viem/anvil";
 import { $ } from "bun";
 import {
   createTestClient,
   createWalletClient,
   http,
-  nonceManager,
   type PublicActions,
   parseEther,
   publicActions,
@@ -38,11 +37,38 @@ import {
 } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { foundry } from "viem/chains";
+import { nonceManager } from "viem";
 import { makeClient } from "../../src";
 import AllArbiter from "../../src/contracts/AllArbiter.json";
 import AnyArbiter from "../../src/contracts/AnyArbiter.json";
 import IntrinsicsArbiter from "../../src/contracts/IntrinsicsArbiter2.json";
 import IntrinsicsArbiter2 from "../../src/contracts/IntrinsicsArbiter2.json";
+// Attestation Properties Arbiters - Non-Composing
+import AttesterArbiterNonComposing from "../../src/contracts/AttesterArbiterNonComposing.json";
+import RecipientArbiterNonComposing from "../../src/contracts/RecipientArbiterNonComposing.json";
+import RefUidArbiterNonComposing from "../../src/contracts/RefUidArbiterNonComposing.json";
+import RevocableArbiterNonComposing from "../../src/contracts/RevocableArbiterNonComposing.json";
+import SchemaArbiterNonComposing from "../../src/contracts/SchemaArbiterNonComposing.json";
+import TimeAfterArbiterNonComposing from "../../src/contracts/TimeAfterArbiterNonComposing.json";
+import TimeBeforeArbiterNonComposing from "../../src/contracts/TimeBeforeArbiterNonComposing.json";
+import TimeEqualArbiterNonComposing from "../../src/contracts/TimeEqualArbiterNonComposing.json";
+import UidArbiterNonComposing from "../../src/contracts/UidArbiterNonComposing.json";
+import ExpirationTimeAfterArbiterNonComposing from "../../src/contracts/ExpirationTimeAfterArbiterNonComposing.json";
+import ExpirationTimeBeforeArbiterNonComposing from "../../src/contracts/ExpirationTimeBeforeArbiterNonComposing.json";
+import ExpirationTimeEqualArbiterNonComposing from "../../src/contracts/ExpirationTimeEqualArbiterNonComposing.json";
+// Attestation Properties Arbiters - Composing
+import AttesterArbiterComposing from "../../src/contracts/AttesterArbiterComposing.json";
+import RecipientArbiterComposing from "../../src/contracts/RecipientArbiterComposing.json";
+import RefUidArbiterComposing from "../../src/contracts/RefUidArbiterComposing.json";
+import RevocableArbiterComposing from "../../src/contracts/RevocableArbiterComposing.json";
+import SchemaArbiterComposing from "../../src/contracts/SchemaArbiterComposing.json";
+import TimeAfterArbiterComposing from "../../src/contracts/TimeAfterArbiterComposing.json";
+import TimeBeforeArbiterComposing from "../../src/contracts/TimeBeforeArbiterComposing.json";
+import TimeEqualArbiterComposing from "../../src/contracts/TimeEqualArbiterComposing.json";
+import UidArbiterComposing from "../../src/contracts/UidArbiterComposing.json";
+import ExpirationTimeAfterArbiterComposing from "../../src/contracts/ExpirationTimeAfterArbiterComposing.json";
+import ExpirationTimeBeforeArbiterComposing from "../../src/contracts/ExpirationTimeBeforeArbiterComposing.json";
+import ExpirationTimeEqualArbiterComposing from "../../src/contracts/ExpirationTimeEqualArbiterComposing.json";
 // Import implementation contracts from fixtures
 import EAS from "../fixtures/EAS.json";
 import MockERC20Permit from "../fixtures/MockERC20Permit.json";
@@ -58,22 +84,31 @@ export type TestContext = {
   anvilInitState?: `0x${string}`;
 
   // User addresses and clients
-  alice: `0x${string}`;
-  bob: `0x${string}`;
-  charlie: `0x${string}`;
-  aliceClient: ReturnType<typeof makeClient>;
-  bobClient: ReturnType<typeof makeClient>;
-  charlieClient: ReturnType<typeof makeClient>;
-  aliceClientWs: ReturnType<typeof makeClient>;
-  bobClientWs: ReturnType<typeof makeClient>;
-  charlieClientWs: ReturnType<typeof makeClient>;
+  alice: {
+    address: `0x${string}`;
+    privateKey: `0x${string}`;
+    client: ReturnType<typeof makeClient>;
+    clientWs: ReturnType<typeof makeClient>;
+  };
+  bob: {
+    address: `0x${string}`;
+    privateKey: `0x${string}`;
+    client: ReturnType<typeof makeClient>;
+    clientWs: ReturnType<typeof makeClient>;
+  };
+  charlie: {
+    address: `0x${string}`;
+    privateKey: `0x${string}`;
+    client: ReturnType<typeof makeClient>;
+    clientWs: ReturnType<typeof makeClient>;
+  };
 
   // Contract addresses
   addresses: {
     eas: `0x${string}`;
     easSchemaRegistry: `0x${string}`;
 
-    // Arbiters
+    // Arbiters - General
     trivialArbiter: `0x${string}`;
     trustedPartyArbiter: `0x${string}`;
     trustedOracleArbiter: `0x${string}`;
@@ -82,6 +117,34 @@ export type TestContext = {
     intrinsicsArbiter2: `0x${string}`;
     anyArbiter: `0x${string}`;
     allArbiter: `0x${string}`;
+
+    // Attestation Properties Arbiters - Non-Composing
+    attesterArbiterNonComposing: `0x${string}`;
+    recipientArbiterNonComposing: `0x${string}`;
+    refUidArbiterNonComposing: `0x${string}`;
+    revocableArbiterNonComposing: `0x${string}`;
+    schemaArbiterNonComposing: `0x${string}`;
+    timeAfterArbiterNonComposing: `0x${string}`;
+    timeBeforeArbiterNonComposing: `0x${string}`;
+    timeEqualArbiterNonComposing: `0x${string}`;
+    uidArbiterNonComposing: `0x${string}`;
+    expirationTimeAfterArbiterNonComposing: `0x${string}`;
+    expirationTimeBeforeArbiterNonComposing: `0x${string}`;
+    expirationTimeEqualArbiterNonComposing: `0x${string}`;
+
+    // Attestation Properties Arbiters - Composing
+    attesterArbiterComposing: `0x${string}`;
+    recipientArbiterComposing: `0x${string}`;
+    refUidArbiterComposing: `0x${string}`;
+    revocableArbiterComposing: `0x${string}`;
+    schemaArbiterComposing: `0x${string}`;
+    timeAfterArbiterComposing: `0x${string}`;
+    timeBeforeArbiterComposing: `0x${string}`;
+    timeEqualArbiterComposing: `0x${string}`;
+    uidArbiterComposing: `0x${string}`;
+    expirationTimeAfterArbiterComposing: `0x${string}`;
+    expirationTimeBeforeArbiterComposing: `0x${string}`;
+    expirationTimeEqualArbiterComposing: `0x${string}`;
 
     // ERC20
     erc20EscrowObligation: `0x${string}`;
@@ -150,40 +213,58 @@ export type TestContext = {
  *
  * @returns TestContext object with all necessary test resources
  */
-export async function setupTestEnvironment(): Promise<TestContext> {
+export interface SetupTestEnvironmentOptions {
+  anvilOptions?: Partial<Parameters<typeof createAnvil>[0]>;
+}
+
+export async function setupTestEnvironment(options?: SetupTestEnvironmentOptions): Promise<TestContext> {
   // Use a dynamic port to avoid conflicts when running multiple tests
   const port = Math.floor(Math.random() * 10000) + 50000; // Random port between 50000-60000
-  const anvil = createAnvil({
+
+  const defaultAnvilConfig = {
     port,
     host: "127.0.0.1",
-  });
+    chainId: 31337, // Default Anvil/Foundry chain ID
+  };
+
+  const anvilConfig = { ...defaultAnvilConfig, ...options?.anvilOptions };
+  const anvil = createAnvil(anvilConfig);
   await anvil.start();
 
-  const chain = foundry;
+  // Override foundry chain to match anvil's actual configuration
+  const chain = {
+    ...foundry,
+    id: anvilConfig.chainId,
+    rpcUrls: {
+      default: {
+        http: [`http://${anvilConfig.host}:${anvilConfig.port}`],
+        webSocket: [`ws://${anvilConfig.host}:${anvilConfig.port}`],
+      },
+    },
+  } as const;
+
   const transport = http(`http://${anvil.host}:${anvil.port}`, {
     timeout: 60_000,
   });
 
   // Create test accounts
-  const aliceAccount = privateKeyToAccount(generatePrivateKey(), {
-    nonceManager,
-  });
-  const bobAccount = privateKeyToAccount(generatePrivateKey(), {
-    nonceManager,
-  });
-  const charlieAccount = privateKeyToAccount(generatePrivateKey(), {
-    nonceManager,
-  });
-  const alice = aliceAccount.address;
-  const bob = bobAccount.address;
-  const charlie = charlieAccount.address;
+  const alicePrivateKey = generatePrivateKey();
+  const bobPrivateKey = generatePrivateKey();
+  const charliePrivateKey = generatePrivateKey();
+
+  // Use viem's default singleton nonce manager
+  // This is shared across all tests and accounts, keyed by ${address}.${chainId}
+  const aliceAccount = privateKeyToAccount(alicePrivateKey, { nonceManager });
+  const bobAccount = privateKeyToAccount(bobPrivateKey, { nonceManager });
+  const charlieAccount = privateKeyToAccount(charliePrivateKey, { nonceManager });
+  const aliceAddress = aliceAccount.address;
+  const bobAddress = bobAccount.address;
+  const charlieAddress = charlieAccount.address;
 
   // Create test client for deployment
   const testClient = createTestClient({
     mode: "anvil",
-    account: privateKeyToAccount(generatePrivateKey(), {
-      nonceManager,
-    }),
+    account: privateKeyToAccount(generatePrivateKey(), { nonceManager }),
     chain,
     transport,
   })
@@ -197,15 +278,15 @@ export async function setupTestEnvironment(): Promise<TestContext> {
     value: parseEther("10"),
   });
   await testClient.setBalance({
-    address: alice,
+    address: aliceAddress,
     value: parseEther("10"),
   });
   await testClient.setBalance({
-    address: bob,
+    address: bobAddress,
     value: parseEther("10"),
   });
   await testClient.setBalance({
-    address: charlie,
+    address: charlieAddress,
     value: parseEther("10"),
   });
 
@@ -244,6 +325,34 @@ export async function setupTestEnvironment(): Promise<TestContext> {
     intrinsicsArbiter2: "" as `0x${string}`,
     anyArbiter: "" as `0x${string}`,
     allArbiter: "" as `0x${string}`,
+
+    // Attestation Properties Arbiters - Non-Composing
+    attesterArbiterNonComposing: "" as `0x${string}`,
+    recipientArbiterNonComposing: "" as `0x${string}`,
+    refUidArbiterNonComposing: "" as `0x${string}`,
+    revocableArbiterNonComposing: "" as `0x${string}`,
+    schemaArbiterNonComposing: "" as `0x${string}`,
+    timeAfterArbiterNonComposing: "" as `0x${string}`,
+    timeBeforeArbiterNonComposing: "" as `0x${string}`,
+    timeEqualArbiterNonComposing: "" as `0x${string}`,
+    uidArbiterNonComposing: "" as `0x${string}`,
+    expirationTimeAfterArbiterNonComposing: "" as `0x${string}`,
+    expirationTimeBeforeArbiterNonComposing: "" as `0x${string}`,
+    expirationTimeEqualArbiterNonComposing: "" as `0x${string}`,
+
+    // Attestation Properties Arbiters - Composing
+    attesterArbiterComposing: "" as `0x${string}`,
+    recipientArbiterComposing: "" as `0x${string}`,
+    refUidArbiterComposing: "" as `0x${string}`,
+    revocableArbiterComposing: "" as `0x${string}`,
+    schemaArbiterComposing: "" as `0x${string}`,
+    timeAfterArbiterComposing: "" as `0x${string}`,
+    timeBeforeArbiterComposing: "" as `0x${string}`,
+    timeEqualArbiterComposing: "" as `0x${string}`,
+    uidArbiterComposing: "" as `0x${string}`,
+    expirationTimeAfterArbiterComposing: "" as `0x${string}`,
+    expirationTimeBeforeArbiterComposing: "" as `0x${string}`,
+    expirationTimeEqualArbiterComposing: "" as `0x${string}`,
 
     erc20EscrowObligation: "" as `0x${string}`,
     erc20PaymentObligation: "" as `0x${string}`,
@@ -311,6 +420,34 @@ export async function setupTestEnvironment(): Promise<TestContext> {
   addresses.intrinsicsArbiter2 = await deployContract(IntrinsicsArbiter2);
   addresses.anyArbiter = await deployContract(AnyArbiter);
   addresses.allArbiter = await deployContract(AllArbiter);
+
+  // Deploy Attestation Properties Arbiters - Non-Composing
+  addresses.attesterArbiterNonComposing = await deployContract(AttesterArbiterNonComposing);
+  addresses.recipientArbiterNonComposing = await deployContract(RecipientArbiterNonComposing);
+  addresses.refUidArbiterNonComposing = await deployContract(RefUidArbiterNonComposing);
+  addresses.revocableArbiterNonComposing = await deployContract(RevocableArbiterNonComposing);
+  addresses.schemaArbiterNonComposing = await deployContract(SchemaArbiterNonComposing);
+  addresses.timeAfterArbiterNonComposing = await deployContract(TimeAfterArbiterNonComposing);
+  addresses.timeBeforeArbiterNonComposing = await deployContract(TimeBeforeArbiterNonComposing);
+  addresses.timeEqualArbiterNonComposing = await deployContract(TimeEqualArbiterNonComposing);
+  addresses.uidArbiterNonComposing = await deployContract(UidArbiterNonComposing);
+  addresses.expirationTimeAfterArbiterNonComposing = await deployContract(ExpirationTimeAfterArbiterNonComposing);
+  addresses.expirationTimeBeforeArbiterNonComposing = await deployContract(ExpirationTimeBeforeArbiterNonComposing);
+  addresses.expirationTimeEqualArbiterNonComposing = await deployContract(ExpirationTimeEqualArbiterNonComposing);
+
+  // Deploy Attestation Properties Arbiters - Composing
+  addresses.attesterArbiterComposing = await deployContract(AttesterArbiterComposing);
+  addresses.recipientArbiterComposing = await deployContract(RecipientArbiterComposing);
+  addresses.refUidArbiterComposing = await deployContract(RefUidArbiterComposing);
+  addresses.revocableArbiterComposing = await deployContract(RevocableArbiterComposing);
+  addresses.schemaArbiterComposing = await deployContract(SchemaArbiterComposing);
+  addresses.timeAfterArbiterComposing = await deployContract(TimeAfterArbiterComposing);
+  addresses.timeBeforeArbiterComposing = await deployContract(TimeBeforeArbiterComposing);
+  addresses.timeEqualArbiterComposing = await deployContract(TimeEqualArbiterComposing);
+  addresses.uidArbiterComposing = await deployContract(UidArbiterComposing);
+  addresses.expirationTimeAfterArbiterComposing = await deployContract(ExpirationTimeAfterArbiterComposing);
+  addresses.expirationTimeBeforeArbiterComposing = await deployContract(ExpirationTimeBeforeArbiterComposing);
+  addresses.expirationTimeEqualArbiterComposing = await deployContract(ExpirationTimeEqualArbiterComposing);
 
   // Deploy obligation contracts (all following same pattern with EAS and schema registry)
 
@@ -409,14 +546,14 @@ export async function setupTestEnvironment(): Promise<TestContext> {
     address: mockAddresses.erc20A,
     abi: MockERC20Permit.abi,
     functionName: "transfer",
-    args: [alice, parseEther("1000")],
+    args: [aliceAddress, parseEther("1000")],
   });
 
   await testClient.writeContract({
     address: mockAddresses.erc20B,
     abi: MockERC20Permit.abi,
     functionName: "transfer",
-    args: [bob, parseEther("1000")],
+    args: [bobAddress, parseEther("1000")],
   });
 
   // Mint NFTs to test accounts
@@ -424,14 +561,14 @@ export async function setupTestEnvironment(): Promise<TestContext> {
     address: mockAddresses.erc721A,
     abi: MockERC721.abi,
     functionName: "mint",
-    args: [alice],
+    args: [aliceAddress],
   });
 
   await testClient.writeContract({
     address: mockAddresses.erc721B,
     abi: MockERC721.abi,
     functionName: "mint",
-    args: [bob],
+    args: [bobAddress],
   });
 
   // Mint ERC1155 tokens
@@ -439,14 +576,14 @@ export async function setupTestEnvironment(): Promise<TestContext> {
     address: mockAddresses.erc1155A,
     abi: MockERC1155.abi,
     functionName: "mint",
-    args: [alice, 1n, 100n],
+    args: [aliceAddress, 1n, 100n],
   });
 
   await testClient.writeContract({
     address: mockAddresses.erc1155B,
     abi: MockERC1155.abi,
     functionName: "mint",
-    args: [bob, 1n, 100n],
+    args: [bobAddress, 1n, 100n],
   });
 
   // Mint ERC1155 tokens for Charlie
@@ -454,21 +591,21 @@ export async function setupTestEnvironment(): Promise<TestContext> {
     address: mockAddresses.erc20C,
     abi: MockERC20Permit.abi,
     functionName: "transfer",
-    args: [charlie, parseEther("1000")],
+    args: [charlieAddress, parseEther("1000")],
   });
 
   await testClient.writeContract({
     address: mockAddresses.erc721C,
     abi: MockERC721.abi,
     functionName: "mint",
-    args: [charlie],
+    args: [charlieAddress],
   });
 
   await testClient.writeContract({
     address: mockAddresses.erc1155C,
     abi: MockERC1155.abi,
     functionName: "mint",
-    args: [charlie, 1n, 100n],
+    args: [charlieAddress, 1n, 100n],
   });
 
   // Create Alkahest clients
@@ -513,15 +650,24 @@ export async function setupTestEnvironment(): Promise<TestContext> {
     deployContract,
     deployObligation,
 
-    alice,
-    bob,
-    charlie,
-    aliceClient,
-    bobClient,
-    charlieClient,
-    aliceClientWs,
-    bobClientWs,
-    charlieClientWs,
+    alice: {
+      address: aliceAddress,
+      privateKey: alicePrivateKey,
+      client: aliceClient,
+      clientWs: aliceClientWs,
+    },
+    bob: {
+      address: bobAddress,
+      privateKey: bobPrivateKey,
+      client: bobClient,
+      clientWs: bobClientWs,
+    },
+    charlie: {
+      address: charlieAddress,
+      privateKey: charliePrivateKey,
+      client: charlieClient,
+      clientWs: charlieClientWs,
+    },
 
     addresses,
     mockAddresses,

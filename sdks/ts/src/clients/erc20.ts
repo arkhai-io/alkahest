@@ -5,6 +5,7 @@ import { abi as erc20PaymentAbi } from "../contracts/ERC20PaymentObligation";
 import { abi as erc20Abi } from "../contracts/ERC20Permit";
 import { abi as erc721EscrowAbi } from "../contracts/ERC721EscrowObligation";
 import { abi as easAbi } from "../contracts/IEAS";
+import { abi as nativeTokenBarterUtilsAbi } from "../contracts/NativeTokenBarterUtils";
 import { abi as tokenBundleEscrowAbi } from "../contracts/TokenBundleEscrowObligation";
 import { abi as tokenBundlePaymentAbi } from "../contracts/TokenBundlePaymentObligation";
 import type {
@@ -17,7 +18,7 @@ import type {
   Erc1155,
   TokenBundle,
 } from "../types";
-import { flattenTokenBundle, getAttestation, getAttestedEventFromTxHash, type ViemClient } from "../utils";
+import { flattenTokenBundle, getAttestation, getAttestedEventFromTxHash, readContract, writeContract, type ViemClient } from "../utils";
 
 // Extract ObligationData struct ABIs from contract ABIs at module initialization
 const erc20EscrowDoObligationFunction = getAbiItem({
@@ -48,16 +49,28 @@ const erc721EscrowObligationDataType = erc721EscrowDoObligationFunction.inputs[0
 const tokenBundleEscrowObligationDataType = tokenBundleEscrowDecodeFunction.outputs[0];
 const tokenBundlePaymentObligationDataType = tokenBundlePaymentDecodeFunction.outputs[0];
 
-export const makeErc20Client = (viemClient: ViemClient, addresses: ChainAddresses) => {
+export const makeErc20Client = (
+  viemClient: ViemClient,
+  addresses: Pick<
+    ChainAddresses,
+    | "erc20EscrowObligation"
+    | "erc20PaymentObligation"
+    | "erc20BarterUtils"
+    | "erc721EscrowObligation"
+    | "erc721PaymentObligation"
+    | "eas"
+    | "nativeTokenBarterUtils"
+  >,
+) => {
   const getEscrowSchema = async () =>
-    await viemClient.readContract({
+    await readContract(viemClient, {
       address: addresses.erc20EscrowObligation,
       abi: erc20EscrowAbi.abi,
       functionName: "ATTESTATION_SCHEMA",
     });
 
   const getPaymentSchema = async () =>
-    await viemClient.readContract({
+    await readContract(viemClient, {
       address: addresses.erc20PaymentObligation,
       abi: erc20PaymentAbi.abi,
       functionName: "ATTESTATION_SCHEMA",
@@ -214,7 +227,7 @@ export const makeErc20Client = (viemClient: ViemClient, addresses: ChainAddresse
     approve: async (token: Erc20, purpose: ApprovalPurpose) => {
       const to = purpose === "escrow" ? addresses.erc20EscrowObligation : addresses.erc20PaymentObligation;
 
-      const hash = await viemClient.writeContract({
+      const hash = await writeContract(viemClient, {
         address: token.address,
         abi: erc20Abi.abi,
         functionName: "approve",

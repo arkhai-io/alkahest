@@ -24,37 +24,12 @@ export const makeArbitersClient = (viemClient: ViemClient, addresses: ChainAddre
   const logicalArbiters = makeLogicalArbitersClient(viemClient, addresses);
   const attestationArbiters = makeAttestationPropertiesArbitersClient(viemClient, addresses);
 
-  // Create a client that exposes both hierarchical and flat APIs
-  const client = {
-    // Hierarchical API - these take precedence
+  // Create a client that exposes only the hierarchical API
+  return {
     general: generalArbiters,
     logical: logicalArbiters,
     attestation: attestationArbiters,
   };
-
-  // Add backward compatibility - all existing flat methods from general arbiters
-  Object.assign(client, generalArbiters);
-
-  // Add backward compatibility - all existing flat methods from logical arbiters  
-  Object.assign(client, logicalArbiters);
-
-  // Add backward compatibility - all existing flat methods from attestation arbiters
-  Object.assign(client, attestationArbiters);
-
-  // Add backward compatibility aliases
-  Object.assign(client, {
-    /**
-     * @deprecated Use logical.any.encode instead
-     */
-    encodeMultiArbiterDemand: logicalArbiters.any.encode,
-
-    /**
-     * @deprecated Use logical.any.decode instead
-     */
-    decodeMultiArbiterDemand: logicalArbiters.any.decode,
-  });
-
-  return client;
 };
 
 // Export static codecs for use without client instantiation

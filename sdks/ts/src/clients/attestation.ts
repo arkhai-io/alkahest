@@ -5,7 +5,13 @@ import { abi as attestationEscrow2Abi } from "../contracts/AttestationEscrowObli
 import type { ChainAddresses } from "../types";
 import { getAttestation, getAttestedEventFromTxHash, type ViemClient } from "../utils";
 
-export const makeAttestationClient = (viemClient: ViemClient, addresses: ChainAddresses) => {
+export const makeAttestationClient = (
+  viemClient: ViemClient,
+  addresses: Pick<
+    ChainAddresses,
+    "attestationEscrowObligation" | "attestationEscrowObligation2" | "attestationBarterUtils"
+  >,
+) => {
   // Extract ABI types for encoding/decoding from contract ABIs
   const escrowObligationDataType = getAbiItem({
     abi: attestationEscrowAbi.abi,
