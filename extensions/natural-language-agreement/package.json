@@ -1,0 +1,22 @@
+{
+  "name": "natural-language-agreement-extension",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "scripts": {
+    "dev": "bun run index.ts",
+    "start": "bun run index.ts",
+    "test": "bun test ./tests --exclude alkahest-ts/** "
+  },
+  "peerDependencies": {
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@ai-sdk/openai": "^2.0.50",
+    "ai": "^5.0.68",
+    "alkahest-ts": "file:../../sdks/ts"
+  }
+}
