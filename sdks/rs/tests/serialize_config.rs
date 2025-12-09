@@ -130,8 +130,8 @@ fn test_round_trip_serialization() -> Result<(), Box<dyn std::error::Error>> {
         custom_config.arbiters_addresses.eas
     );
     assert_eq!(
-        round_trip_config.arbiters_addresses.trusted_party_arbiter,
-        custom_config.arbiters_addresses.trusted_party_arbiter
+        round_trip_config.arbiters_addresses.trusted_oracle_arbiter,
+        custom_config.arbiters_addresses.trusted_oracle_arbiter
     );
     assert_eq!(
         round_trip_config.erc20_addresses.eas,

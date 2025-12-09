@@ -117,7 +117,7 @@ impl<'a> Payment<'a> {
         let permit = util::get_permit_signature(
             &self.module.signer,
             &self.module.wallet_provider,
-            self.module.addresses.payment_obligation,
+            self.module.addresses.barter_utils,
             price,
             U256::from(deadline),
         )

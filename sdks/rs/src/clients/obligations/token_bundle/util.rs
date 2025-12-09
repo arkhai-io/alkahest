@@ -32,6 +32,7 @@ pub async fn approve(
     let target = match purpose {
         ApprovalPurpose::Escrow => addresses.escrow_obligation,
         ApprovalPurpose::Payment => addresses.payment_obligation,
+        ApprovalPurpose::BarterUtils => addresses.barter_utils,
     };
 
     let mut results = Vec::new();

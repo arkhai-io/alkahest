@@ -494,10 +494,10 @@ mod tests {
             id: U256::from(2),
         };
 
-        // alice approves token for escrow
+        // alice approves token for barter
         test.alice_client
             .erc721()
-            .approve(&bid, ApprovalPurpose::Escrow)
+            .approve(&bid, ApprovalPurpose::BarterUtils)
             .await?;
 
         // alice makes escrow
@@ -555,10 +555,10 @@ mod tests {
             id: U256::from(1),
         };
 
-        // alice approves token for escrow and creates buy attestation
+        // alice approves token for barter and creates buy attestation
         test.alice_client
             .erc721()
-            .approve(&bid, ApprovalPurpose::Escrow)
+            .approve(&bid, ApprovalPurpose::BarterUtils)
             .await?;
 
         let buy_receipt = test
@@ -570,10 +570,10 @@ mod tests {
 
         let buy_attestation = DefaultAlkahestClient::get_attested_event(buy_receipt)?.uid;
 
-        // bob approves token for payment
+        // bob approves token for barter
         test.bob_client
             .erc721()
-            .approve(&ask, ApprovalPurpose::Payment)
+            .approve(&ask, ApprovalPurpose::BarterUtils)
             .await?;
 
         // bob fulfills the buy attestation
@@ -627,10 +627,10 @@ mod tests {
             id: U256::from(2),
         };
 
-        // alice approves token for escrow
+        // alice approves token for barter
         test.alice_client
             .erc721()
-            .approve(&bid, ApprovalPurpose::Escrow)
+            .approve(&bid, ApprovalPurpose::BarterUtils)
             .await?;
 
         // alice makes escrow with a short expiration
@@ -692,10 +692,10 @@ mod tests {
             value: U256::from(100),
         };
 
-        // alice approves token for escrow
+        // alice approves token for barter
         test.alice_client
             .erc721()
-            .approve(&bid, ApprovalPurpose::Escrow)
+            .approve(&bid, ApprovalPurpose::BarterUtils)
             .await?;
 
         // alice creates purchase offer
@@ -746,10 +746,10 @@ mod tests {
             value: U256::from(10),
         };
 
-        // alice approves token for escrow
+        // alice approves token for barter
         test.alice_client
             .erc721()
-            .approve(&bid, ApprovalPurpose::Escrow)
+            .approve(&bid, ApprovalPurpose::BarterUtils)
             .await?;
 
         // alice creates purchase offer
@@ -813,10 +813,10 @@ mod tests {
             }],
         };
 
-        // alice approves token for escrow
+        // alice approves token for barter
         test.alice_client
             .erc721()
-            .approve(&bid, ApprovalPurpose::Escrow)
+            .approve(&bid, ApprovalPurpose::BarterUtils)
             .await?;
 
         // alice creates purchase offer
@@ -877,10 +877,10 @@ mod tests {
             id: U256::from(1),
         };
 
-        // bob approves tokens for escrow and creates buy attestation
+        // bob approves tokens for barter and creates buy attestation
         test.bob_client
             .erc20()
-            .approve(&bid, ApprovalPurpose::Escrow)
+            .approve(&bid, ApprovalPurpose::BarterUtils)
             .await?;
 
         let buy_receipt = test
@@ -892,10 +892,10 @@ mod tests {
 
         let buy_attestation = DefaultAlkahestClient::get_attested_event(buy_receipt)?.uid;
 
-        // alice approves her ERC721 token for payment
+        // alice approves her ERC721 token for barter
         test.alice_client
             .erc721()
-            .approve(&ask, ApprovalPurpose::Payment)
+            .approve(&ask, ApprovalPurpose::BarterUtils)
             .await?;
 
         // alice fulfills bob's buy attestation with her ERC721
@@ -962,10 +962,10 @@ mod tests {
             id: U256::from(1),
         };
 
-        // bob approves tokens for escrow and creates buy attestation
+        // bob approves tokens for barter and creates buy attestation
         test.bob_client
             .erc1155()
-            .approve_all(test.mock_addresses.erc1155_a, ApprovalPurpose::Escrow)
+            .approve_all(test.mock_addresses.erc1155_a, ApprovalPurpose::BarterUtils)
             .await?;
 
         let buy_receipt = test
@@ -977,10 +977,10 @@ mod tests {
 
         let buy_attestation = DefaultAlkahestClient::get_attested_event(buy_receipt)?.uid;
 
-        // alice approves her token for payment
+        // alice approves her token for barter
         test.alice_client
             .erc721()
-            .approve(&ask, ApprovalPurpose::Payment)
+            .approve(&ask, ApprovalPurpose::BarterUtils)
             .await?;
 
         // alice fulfills the buy attestation
@@ -1114,7 +1114,7 @@ mod tests {
 
         let buy_attestation = DefaultAlkahestClient::get_attested_event(buy_receipt)?.uid;
 
-        // alice approves her ERC721 for payment
+        // alice approves her ERC721 for barter
         test.alice_client
             .erc721()
             .approve(
@@ -1122,7 +1122,7 @@ mod tests {
                     address: test.mock_addresses.erc721_a,
                     id: U256::from(1),
                 },
-                ApprovalPurpose::Payment,
+                ApprovalPurpose::BarterUtils,
             )
             .await?;
 

@@ -77,7 +77,7 @@ impl<'a> BarterUtils<'a> {
         let permit = util::get_permit_signature(
             &self.module.signer,
             &self.module.wallet_provider,
-            self.module.addresses.escrow_obligation,
+            self.module.addresses.barter_utils,
             bid,
             U256::from(deadline),
         )
@@ -166,7 +166,7 @@ impl<'a> BarterUtils<'a> {
         let permit = util::get_permit_signature(
             &self.module.signer,
             &self.module.wallet_provider,
-            self.module.addresses.payment_obligation,
+            self.module.addresses.barter_utils,
             &Erc20Data {
                 address: demand_data.token,
                 value: demand_data.amount,
@@ -244,7 +244,7 @@ impl<'a> BarterUtils<'a> {
         let permit = util::get_permit_signature(
             &self.module.signer,
             &self.module.wallet_provider,
-            self.module.addresses.escrow_obligation,
+            self.module.addresses.barter_utils,
             bid,
             U256::from(deadline),
         )
@@ -333,7 +333,7 @@ impl<'a> BarterUtils<'a> {
         let permit = util::get_permit_signature(
             &self.module.signer,
             &self.module.wallet_provider,
-            self.module.addresses.payment_obligation,
+            self.module.addresses.barter_utils,
             &Erc20Data {
                 address: demand_data.token,
                 value: demand_data.amount,
@@ -418,7 +418,7 @@ impl<'a> BarterUtils<'a> {
         let permit = util::get_permit_signature(
             &self.module.signer,
             &self.module.wallet_provider,
-            self.module.addresses.escrow_obligation,
+            self.module.addresses.barter_utils,
             bid,
             U256::from(deadline),
         )
@@ -508,7 +508,7 @@ impl<'a> BarterUtils<'a> {
         let permit = util::get_permit_signature(
             &self.module.signer,
             &self.module.wallet_provider,
-            self.module.addresses.payment_obligation,
+            self.module.addresses.barter_utils,
             &Erc20Data {
                 address: demand_data.token,
                 value: demand_data.amount,
@@ -591,7 +591,7 @@ impl<'a> BarterUtils<'a> {
         let permit = util::get_permit_signature(
             &self.module.signer,
             &self.module.wallet_provider,
-            self.module.addresses.escrow_obligation,
+            self.module.addresses.barter_utils,
             bid,
             U256::from(deadline),
         )
@@ -679,7 +679,7 @@ impl<'a> BarterUtils<'a> {
         let permit = util::get_permit_signature(
             &self.module.signer,
             &self.module.wallet_provider,
-            self.module.addresses.payment_obligation,
+            self.module.addresses.barter_utils,
             &Erc20Data {
                 address: demand_data.token,
                 value: demand_data.amount,

@@ -187,12 +187,14 @@ impl ArbitersModule {
         obligation: FixedBytes<32>,
         from_block: Option<u64>,
     ) -> eyre::Result<Log<contracts::arbiters::TrustedOracleArbiter::ArbitrationMade>> {
+        // ArbitrationMade event: (bytes32 indexed decisionKey, bytes32 indexed obligation, address indexed oracle, bool decision)
+        // topic1 = decisionKey, topic2 = obligation, topic3 = oracle
         let filter = Filter::new()
             .from_block(from_block.unwrap_or(0))
             .address(self.addresses.trusted_oracle_arbiter)
             .event_signature(contracts::arbiters::TrustedOracleArbiter::ArbitrationMade::SIGNATURE_HASH)
-            .topic1(obligation)
-            .topic2(oracle.into_word());
+            .topic2(obligation)
+            .topic3(oracle.into_word());
 
         let logs = self.public_provider.get_logs(&filter).await?;
         if let Some(log) = logs

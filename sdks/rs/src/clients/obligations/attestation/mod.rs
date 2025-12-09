@@ -680,11 +680,11 @@ mod tests {
         let escrow_event = DefaultAlkahestClient::get_attested_event(escrow_receipt)?;
         let escrow_uid = escrow_event.uid;
 
-        // Bob creates a fulfillment using StringObligation
+        // Bob creates a fulfillment using StringObligation (must reference the escrow)
         let fulfillment_receipt = test
             .bob_client
             .string_obligation()
-            .do_obligation("fulfillment data".to_string(), None)
+            .do_obligation("fulfillment data".to_string(), Some(escrow_uid))
             .await?;
 
         let fulfillment_event = DefaultAlkahestClient::get_attested_event(fulfillment_receipt)?;
@@ -786,7 +786,7 @@ mod tests {
         let escrow_event = DefaultAlkahestClient::get_attested_event(escrow_receipt)?;
         let escrow_uid = escrow_event.uid;
 
-        // Bob creates a fulfillment using StringObligation
+        // Bob creates a fulfillment using StringObligation (must reference the escrow)
         let string_obligation = StringObligation::new(
             test.addresses.string_obligation_addresses.obligation,
             &test.bob_client.wallet_provider,
@@ -797,7 +797,7 @@ mod tests {
                 contracts::obligations::StringObligation::ObligationData {
                     item: "fulfillment data".to_string(),
                 },
-                FixedBytes::<32>::default(),
+                escrow_uid, // Reference the escrow for non-tierable pattern
             )
             .send()
             .await?

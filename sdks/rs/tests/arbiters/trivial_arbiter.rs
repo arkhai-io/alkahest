@@ -1,5 +1,8 @@
 use crate::arbiters::common::create_test_attestation;
-use alkahest_rs::{contracts, utils::setup_test_environment};
+use alkahest_rs::{
+    contracts::{self, arbiters::TrivialArbiter},
+    utils::setup_test_environment,
+};
 use alloy::{
     primitives::{Bytes, FixedBytes},
     sol,
@@ -19,7 +22,7 @@ async fn test_trivial_arbiter_always_returns_true() -> eyre::Result<()> {
     let counteroffer = FixedBytes::<32>::default();
 
     // Check that the arbiter returns true
-    let trivial_arbiter = contracts::TrivialArbiter::new(
+    let trivial_arbiter = TrivialArbiter::new(
         test.addresses.arbiters_addresses.trivial_arbiter,
         &test.alice_client.wallet_provider,
     );

@@ -96,8 +96,7 @@ async fn test_custom_configuration() -> Result<()> {
     let custom_config = DefaultExtensionConfig {
         arbiters_addresses: ArbitersAddresses {
             eas: address!("0x4200000000000000000000000000000000000021"),
-            specific_attestation_arbiter: address!("0xdE5eCFC92E3da87865CD29C196aA5cebFdC4D9C6"),
-            trusted_party_arbiter: address!("0x3895398C46da88b75eE3ca3092F7714BEbE795a5"),
+            trusted_oracle_arbiter: address!("0xdE5eCFC92E3da87865CD29C196aA5cebFdC4D9C6"),
             trivial_arbiter: address!("0x7D4bCD84901cEC903105564f63BE70432448B222"),
             // Use defaults for other arbiter addresses
             ..BASE_SEPOLIA_ADDRESSES.arbiters_addresses
@@ -137,8 +136,8 @@ async fn test_custom_configuration() -> Result<()> {
         client_with_custom
             .arbiters()
             .addresses
-            .trusted_party_arbiter,
-        custom_config.arbiters_addresses.trusted_party_arbiter
+            .trusted_oracle_arbiter,
+        custom_config.arbiters_addresses.trusted_oracle_arbiter
     );
 
     // Verify that non-customized parts still use base addresses

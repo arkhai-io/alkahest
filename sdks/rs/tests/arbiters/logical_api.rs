@@ -1,5 +1,5 @@
 use alkahest_rs::{
-    contracts::logical::{AllArbiter, AnyArbiter, NotArbiter},
+    contracts::arbiters::logical::{AllArbiter, AnyArbiter},
     extensions::HasArbiters,
     utils::setup_test_environment,
 };
@@ -46,23 +46,6 @@ async fn test_structured_logical_api() -> eyre::Result<()> {
     assert_eq!(decoded_any.arbiters.len(), 1);
     assert_eq!(decoded_any.demands.len(), 1);
     println!("✅ AnyArbiter structured API: arbiters_module.logical().any().decode() works!");
-
-    // Test NotArbiter via structured API
-    let not_demand = NotArbiter::DemandData {
-        baseArbiter: addresses.trivial_arbiter,
-        baseDemand: Bytes::new(),
-    };
-
-    // Use the new structured API: arbiters_module.logical().not().decode()
-    let decoded_not = test
-        .alice_client
-        .arbiters()
-        .logical()
-        .not()
-        .decode(not_demand.clone())?;
-
-    assert_eq!(decoded_not.base_arbiter, addresses.trivial_arbiter);
-    println!("✅ NotArbiter structured API: arbiters_module.logical().not().decode() works!");
 
     println!("✅ All structured logical APIs working correctly!");
     Ok(())

@@ -301,10 +301,10 @@ mod tests {
             .call()
             .await?;
 
-        // Alice approves her tokens for escrow
+        // Alice approves her tokens for barter
         test.alice_client
             .token_bundle()
-            .approve(&alice_bundle, ApprovalPurpose::Escrow)
+            .approve(&alice_bundle, ApprovalPurpose::BarterUtils)
             .await?;
 
         // Set expiration time to 1 day from now
@@ -479,10 +479,10 @@ mod tests {
             .call()
             .await?;
 
-        // Alice approves her tokens for payment
+        // Alice approves her tokens for barter
         test.alice_client
             .token_bundle()
-            .approve(&alice_bundle, ApprovalPurpose::Payment)
+            .approve(&alice_bundle, ApprovalPurpose::BarterUtils)
             .await?;
 
         // Alice fulfills Bob's order
@@ -603,10 +603,10 @@ mod tests {
         // Set a short expiration (60 seconds from now)
         let short_expiration = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() + 60;
 
-        // Alice approves her tokens for escrow
+        // Alice approves her tokens for barter
         test.alice_client
             .token_bundle()
-            .approve(&alice_bundle, ApprovalPurpose::Escrow)
+            .approve(&alice_bundle, ApprovalPurpose::BarterUtils)
             .await?;
 
         // Alice creates a buy order with a short expiration

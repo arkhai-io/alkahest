@@ -56,6 +56,13 @@ pub struct ArbitrateOptions {
     pub only_new: bool,
 }
 
+/// An attestation paired with its associated demand data from ArbitrationRequested event
+#[derive(Debug, Clone)]
+pub struct AttestationWithDemand {
+    pub attestation: Attestation,
+    pub demand: Bytes,
+}
+
 impl Default for ArbitrateOptions {
     fn default() -> Self {
         ArbitrateOptions {
@@ -165,11 +172,13 @@ impl OracleModule {
         obligation: FixedBytes<32>,
         from_block: Option<u64>,
     ) -> eyre::Result<Log<TrustedOracleArbiter::ArbitrationMade>> {
+        // ArbitrationMade event: (bytes32 indexed decisionKey, bytes32 indexed obligation, address indexed oracle, bool decision)
+        // topic1 = decisionKey, topic2 = obligation, topic3 = oracle
         let filter = Filter::new()
             .from_block(from_block.unwrap_or(0))
             .address(self.addresses.trusted_oracle_arbiter)
             .event_signature(TrustedOracleArbiter::ArbitrationMade::SIGNATURE_HASH)
-            .topic1(obligation);
+            .topic2(obligation);
 
         let logs = self.public_provider.get_logs(&filter).await?;
         if let Some(log) = logs.first() {
@@ -277,43 +286,45 @@ impl OracleModule {
     }
 
     fn make_arbitration_made_filter(&self, obligation: Option<FixedBytes<32>>) -> Filter {
+        // ArbitrationMade event: (bytes32 indexed decisionKey, bytes32 indexed obligation, address indexed oracle, bool decision)
+        // topic1 = decisionKey, topic2 = obligation, topic3 = oracle
         let mut filter = Filter::new()
             .address(self.addresses.trusted_oracle_arbiter)
             .event_signature(TrustedOracleArbiter::ArbitrationMade::SIGNATURE_HASH)
-            .topic2(self.signer_address)
+            .topic3(self.signer_address)
             .from_block(BlockNumberOrTag::Earliest)
             .to_block(BlockNumberOrTag::Latest);
 
         if let Some(obligation) = obligation {
-            filter = filter.topic1(obligation);
+            filter = filter.topic2(obligation);
         }
 
         filter
     }
 
-    async fn filter_unarbitrated_attestations(
+    async fn filter_unarbitrated_attestations_with_demand(
         &self,
-        attestations: Vec<Attestation>,
-    ) -> eyre::Result<Vec<Attestation>> {
-        let futs = attestations.into_iter().map(|a| {
-            let filter = self.make_arbitration_made_filter(Some(a.uid));
+        attestations: Vec<AttestationWithDemand>,
+    ) -> eyre::Result<Vec<AttestationWithDemand>> {
+        let futs = attestations.into_iter().map(|awd| {
+            let filter = self.make_arbitration_made_filter(Some(awd.attestation.uid));
             async move {
                 let logs = self.public_provider.get_logs(&filter).await?;
-                Ok::<_, eyre::Error>((a, !logs.is_empty()))
+                Ok::<_, eyre::Error>((awd, !logs.is_empty()))
             }
         });
 
         let results = try_join_all(futs).await?;
         Ok(results
             .into_iter()
-            .filter_map(|(a, is_arbitrated)| if is_arbitrated { None } else { Some(a) })
+            .filter_map(|(awd, is_arbitrated)| if is_arbitrated { None } else { Some(awd) })
             .collect())
     }
 
     async fn get_arbitration_requested_attestations(
         &self,
         options: &ArbitrateOptions,
-    ) -> eyre::Result<Vec<Attestation>> {
+    ) -> eyre::Result<Vec<AttestationWithDemand>> {
         let filter = self.make_arbitration_requested_filter();
 
         let logs = self
@@ -324,17 +335,23 @@ impl OracleModule {
             .map(|log| log.log_decode::<TrustedOracleArbiter::ArbitrationRequested>())
             .collect::<Result<Vec<_>, _>>()?;
 
+        // Fetch attestations and pair with their demand data
         let attestation_futures = logs.into_iter().map(|log| {
             let eas = IEAS::new(self.addresses.eas, &*self.wallet_provider);
-            async move { eas.getAttestation(log.inner.obligation).call().await }
+            let demand = log.inner.demand.clone();
+            async move {
+                let attestation = eas.getAttestation(log.inner.obligation).call().await?;
+                Ok::<_, alloy::contract::Error>(AttestationWithDemand { attestation, demand })
+            }
         });
 
         let now = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
 
-        let attestations: Vec<Attestation> = try_join_all(attestation_futures)
+        let attestations_with_demand: Vec<AttestationWithDemand> = try_join_all(attestation_futures)
             .await?
             .into_iter()
-            .filter(|a| {
+            .filter(|awd| {
+                let a = &awd.attestation;
                 if (a.expirationTime != 0 && a.expirationTime < now)
                     || (a.revocationTime != 0 && a.revocationTime < now)
                 {
@@ -344,37 +361,39 @@ impl OracleModule {
             })
             .collect();
 
-        let attestations = if options.skip_arbitrated {
-            self.filter_unarbitrated_attestations(attestations).await?
+        let attestations_with_demand = if options.skip_arbitrated {
+            self.filter_unarbitrated_attestations_with_demand(attestations_with_demand)
+                .await?
         } else {
-            attestations
+            attestations_with_demand
         };
 
-        Ok(attestations)
+        Ok(attestations_with_demand)
     }
 
     async fn arbitrate_internal(
         &self,
         decisions: Vec<Option<bool>>,
-        attestations: Vec<Attestation>,
+        attestations_with_demand: Vec<AttestationWithDemand>,
     ) -> eyre::Result<Vec<Decision>> {
         use itertools::izip;
 
-        let arbitration_futs = attestations
+        let arbitration_futs = attestations_with_demand
             .iter()
             .zip(decisions.iter())
             .enumerate()
-            .filter_map(|(_i, (attestation, decision))| {
+            .filter_map(|(_i, (awd, decision))| {
                 let trusted_oracle_arbiter = TrustedOracleArbiter::new(
                     self.addresses.trusted_oracle_arbiter,
                     &*self.wallet_provider,
                 );
                 if let Some(decision) = decision {
-                    // Extract demand bytes from attestation data
-                    let demand = attestation.data.clone();
+                    // Use demand from ArbitrationRequested event
+                    let demand = awd.demand.clone();
+                    let uid = awd.attestation.uid;
                     Some(async move {
                         trusted_oracle_arbiter
-                            .arbitrate(attestation.uid, demand, *decision)
+                            .arbitrate(uid, demand, *decision)
                             .send()
                             .await
                     })
@@ -395,10 +414,10 @@ impl OracleModule {
 
         let receipts = try_join_all(receipt_futs).await?;
 
-        let result = izip!(attestations, decisions, receipts)
+        let result = izip!(attestations_with_demand, decisions, receipts)
             .filter(|(_, d, _)| d.is_some())
-            .map(|(attestation, decision, receipt)| Decision {
-                attestation,
+            .map(|(awd, decision, receipt)| Decision {
+                attestation: awd.attestation,
                 decision: decision.unwrap(),
                 receipt,
             })
@@ -417,12 +436,16 @@ impl OracleModule {
     {
         use futures::future::join_all;
 
-        let attestations = self.get_arbitration_requested_attestations(options).await?;
+        let attestations_with_demand = self.get_arbitration_requested_attestations(options).await?;
 
-        let decision_futs = attestations.iter().map(|a| strategy.arbitrate(a));
+        // Strategy only sees attestations, not demand data
+        let decision_futs = attestations_with_demand
+            .iter()
+            .map(|awd| strategy.arbitrate(&awd.attestation));
         let decisions = join_all(decision_futs).await;
 
-        self.arbitrate_internal(decisions, attestations).await
+        self.arbitrate_internal(decisions, attestations_with_demand)
+            .await
     }
 
     pub async fn arbitrate_past_sync<Arbitrate: Fn(&Attestation) -> Option<bool>>(
@@ -487,11 +510,13 @@ impl OracleModule {
                 };
 
                 if options.skip_arbitrated {
+                    // ArbitrationMade event: (bytes32 indexed decisionKey, bytes32 indexed obligation, address indexed oracle, bool decision)
+                    // topic1 = decisionKey, topic2 = obligation, topic3 = oracle
                     let filter = Filter::new()
                         .address(arbiter_address)
                         .event_signature(TrustedOracleArbiter::ArbitrationMade::SIGNATURE_HASH)
-                        .topic1(attestation.uid)
-                        .topic2(signer_address)
+                        .topic2(attestation.uid)
+                        .topic3(signer_address)
                         .from_block(BlockNumberOrTag::Earliest)
                         .to_block(BlockNumberOrTag::Latest);
                     let logs_result = public_provider.get_logs(&filter).await;
@@ -521,8 +546,8 @@ impl OracleModule {
                     continue;
                 };
 
-                // Extract demand bytes from attestation data
-                let demand = attestation.data.clone();
+                // Use demand from ArbitrationRequested event (not attestation data)
+                let demand = arbitration_log.inner.demand.clone();
                 match arbiter
                     .arbitrate(attestation.uid, demand, decision_value)
                     .nonce(nonce)
@@ -663,8 +688,8 @@ impl OracleModule {
                 continue;
             };
 
-            // Extract demand bytes from attestation data
-            let demand = attestation.data.clone();
+            // Use demand from ArbitrationRequested event (not attestation data)
+            let demand = arbitration_log.inner.demand.clone();
             match arbiter
                 .arbitrate(attestation.uid, demand, decision_value)
                 .nonce(nonce)
@@ -702,9 +727,14 @@ impl OracleModule {
             Vec::new()
         } else {
             // Need to capture arbitrate for past arbitration
-            let attestations = self.get_arbitration_requested_attestations(options).await?;
-            let decisions: Vec<Option<bool>> = attestations.iter().map(|a| arbitrate(a)).collect();
-            self.arbitrate_internal(decisions, attestations).await?
+            let attestations_with_demand =
+                self.get_arbitration_requested_attestations(options).await?;
+            let decisions: Vec<Option<bool>> = attestations_with_demand
+                .iter()
+                .map(|awd| arbitrate(&awd.attestation))
+                .collect();
+            self.arbitrate_internal(decisions, attestations_with_demand)
+                .await?
         };
 
         let filter = self.make_arbitration_requested_filter();
@@ -737,10 +767,14 @@ impl OracleModule {
         } else {
             // Need to capture arbitrate for past arbitration
             use futures::future::join_all;
-            let attestations = self.get_arbitration_requested_attestations(options).await?;
-            let decision_futs = attestations.iter().map(|a| arbitrate(a));
+            let attestations_with_demand =
+                self.get_arbitration_requested_attestations(options).await?;
+            let decision_futs = attestations_with_demand
+                .iter()
+                .map(|awd| arbitrate(&awd.attestation));
             let decisions = join_all(decision_futs).await;
-            self.arbitrate_internal(decisions, attestations).await?
+            self.arbitrate_internal(decisions, attestations_with_demand)
+                .await?
         };
 
         let filter = self.make_arbitration_requested_filter();

@@ -5,13 +5,13 @@ use std::{
 use alkahest_rs::{
     AlkahestClient, DefaultAlkahestClient,
     clients::oracle::ArbitrateOptions,
-    contracts::StringObligation,
+    contracts::obligations::StringObligation,
     extensions::{HasArbiters, HasOracle, HasStringObligation},
     utils::{TestContext, setup_test_environment},
 };
 use alloy::{
     dyn_abi::SolType,
-    primitives::{Address, Signature, keccak256},
+    primitives::{Address, Bytes, Signature, keccak256},
     signers::{Signer, local::PrivateKeySigner},
 };
 use eyre::{Result, WrapErr};
@@ -146,7 +146,7 @@ async fn run_contextless_identity_example(test: &TestContext) -> eyre::Result<()
 
     test.bob_client
         .oracle()
-        .request_arbitration(good_uid, charlie_client.address)
+        .request_arbitration(good_uid, charlie_client.address, Bytes::default())
         .await?;
 
     let first_log = tokio::time::timeout(
@@ -180,7 +180,7 @@ async fn run_contextless_identity_example(test: &TestContext) -> eyre::Result<()
 
     test.bob_client
         .oracle()
-        .request_arbitration(bad_uid, charlie_client.address)
+        .request_arbitration(bad_uid, charlie_client.address, Bytes::default())
         .await?;
 
     let second_log = tokio::time::timeout(

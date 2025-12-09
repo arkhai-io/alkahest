@@ -29,6 +29,7 @@ pub async fn approve_all(
     let to = match purpose {
         ApprovalPurpose::Escrow => addresses.escrow_obligation,
         ApprovalPurpose::Payment => addresses.payment_obligation,
+        ApprovalPurpose::BarterUtils => addresses.barter_utils,
     };
 
     let receipt = erc1155_contract
@@ -62,6 +63,7 @@ pub async fn revoke_all(
     let to = match purpose {
         ApprovalPurpose::Escrow => addresses.escrow_obligation,
         ApprovalPurpose::Payment => addresses.payment_obligation,
+        ApprovalPurpose::BarterUtils => addresses.barter_utils,
     };
 
     let receipt = erc1155_contract

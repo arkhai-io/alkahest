@@ -3,13 +3,13 @@ mod tests {
     use alkahest_rs::{
         DefaultAlkahestClient,
         clients::oracle::ArbitrateOptions,
-        contracts::{self, StringObligation},
+        contracts::{self, obligations::StringObligation},
         extensions::{HasErc20, HasOracle, HasStringObligation},
         fixtures::MockERC20Permit,
         types::{ArbiterData, Erc20Data},
         utils::TestContext,
     };
-    use alloy::primitives::{FixedBytes, bytes};
+    use alloy::primitives::{Bytes, FixedBytes, bytes};
     use std::{
         sync::Arc,
         time::{Duration, SystemTime, UNIX_EPOCH},
@@ -35,7 +35,7 @@ mod tests {
 
         let arbiter = test.addresses.arbiters_addresses.trusted_oracle_arbiter;
 
-        let demand_data = contracts::TrustedOracleArbiter::DemandData {
+        let demand_data = contracts::arbiters::TrustedOracleArbiter::DemandData {
             oracle: test.bob.address(),
             data: bytes!(""),
         };
@@ -47,7 +47,9 @@ mod tests {
         let escrow_receipt = test
             .alice_client
             .erc20()
-            .permit_and_buy_with_erc20(&price, &item, expiration)
+            .escrow()
+            .non_tierable()
+            .permit_and_create(&price, &item, expiration)
             .await?;
 
         let escrow_event = DefaultAlkahestClient::get_attested_event(escrow_receipt)?;
@@ -78,7 +80,7 @@ mod tests {
         // Request arbitration
         test.bob_client
             .oracle()
-            .request_arbitration(fulfillment_uid, test.bob.address())
+            .request_arbitration(fulfillment_uid, test.bob.address(), Bytes::default())
             .await?;
 
         let bob_client = test.bob_client.clone();
@@ -105,7 +107,7 @@ mod tests {
         let collection = test
             .bob_client
             .erc20()
-            .collect_escrow(escrow_uid, fulfillment_uid)
+            .escrow().non_tierable().collect(escrow_uid, fulfillment_uid)
             .await?;
 
         println!("✅ Arbitrate decision passed. Tx: {:?}", collection);
@@ -124,11 +126,11 @@ mod tests {
         // Request arbitration for both
         test.bob_client
             .oracle()
-            .request_arbitration(good_fulfillment, test.bob.address())
+            .request_arbitration(good_fulfillment, test.bob.address(), Bytes::default())
             .await?;
         test.bob_client
             .oracle()
-            .request_arbitration(bad_fulfillment, test.bob.address())
+            .request_arbitration(bad_fulfillment, test.bob.address(), Bytes::default())
             .await?;
 
         let bob_client = test.bob_client.clone();
@@ -169,7 +171,7 @@ mod tests {
         // Request arbitration
         test.bob_client
             .oracle()
-            .request_arbitration(fulfillment_uid, test.bob.address())
+            .request_arbitration(fulfillment_uid, test.bob.address(), Bytes::default())
             .await?;
 
         // First arbitration
@@ -227,7 +229,7 @@ mod tests {
         // Request arbitration
         test.bob_client
             .oracle()
-            .request_arbitration(fulfillment_uid, test.bob.address())
+            .request_arbitration(fulfillment_uid, test.bob.address(), Bytes::default())
             .await?;
 
         let bob_client = Arc::new(test.bob_client.clone());
@@ -270,7 +272,7 @@ mod tests {
         // Request arbitration
         test.bob_client
             .oracle()
-            .request_arbitration(fulfillment_uid, test.bob.address())
+            .request_arbitration(fulfillment_uid, test.bob.address(), Bytes::default())
             .await?;
 
         let oracle_client = Arc::new(test.bob_client.oracle().clone());
@@ -335,7 +337,7 @@ mod tests {
         // Request arbitration
         test.bob_client
             .oracle()
-            .request_arbitration(fulfillment_uid, test.bob.address())
+            .request_arbitration(fulfillment_uid, test.bob.address(), Bytes::default())
             .await?;
 
         test.bob_client
@@ -346,7 +348,7 @@ mod tests {
         let collection = test
             .bob_client
             .erc20()
-            .collect_escrow(escrow_uid, fulfillment_uid)
+            .escrow().non_tierable().collect(escrow_uid, fulfillment_uid)
             .await?;
 
         println!("✅ Arbitrate decision passed. Tx: {:?}", collection);
@@ -368,7 +370,7 @@ mod tests {
         // Request arbitration
         test.bob_client
             .oracle()
-            .request_arbitration(fulfillment_uid, test.bob.address())
+            .request_arbitration(fulfillment_uid, test.bob.address(), Bytes::default())
             .await?;
 
         let bob_client = Arc::new(test.bob_client.clone());
@@ -407,7 +409,7 @@ mod tests {
         let collection = test
             .bob_client
             .erc20()
-            .collect_escrow(escrow_uid, fulfillment_uid)
+            .escrow().non_tierable().collect(escrow_uid, fulfillment_uid)
             .await?;
 
         println!("✅ Arbitrate decision passed. Tx: {:?}", collection);
@@ -430,7 +432,7 @@ mod tests {
         // Request arbitration
         test.bob_client
             .oracle()
-            .request_arbitration(fulfillment_uid, test.bob.address())
+            .request_arbitration(fulfillment_uid, test.bob.address(), Bytes::default())
             .await?;
 
         let oracle_client = test.bob_client.oracle().clone();
@@ -464,7 +466,7 @@ mod tests {
         let collection = test
             .bob_client
             .erc20()
-            .collect_escrow(escrow_uid, fulfillment_uid)
+            .escrow().non_tierable().collect(escrow_uid, fulfillment_uid)
             .await?;
 
         println!("✅ Arbitrate decision passed. Tx: {:?}", collection);
@@ -483,11 +485,11 @@ mod tests {
         // Request arbitration for both
         test.bob_client
             .oracle()
-            .request_arbitration(good_fulfillment, test.bob.address())
+            .request_arbitration(good_fulfillment, test.bob.address(), Bytes::default())
             .await?;
         test.bob_client
             .oracle()
-            .request_arbitration(bad_fulfillment, test.bob.address())
+            .request_arbitration(bad_fulfillment, test.bob.address(), Bytes::default())
             .await?;
 
         let oracle_client = Arc::new(test.bob_client.oracle().clone());
@@ -524,7 +526,7 @@ mod tests {
         let collection = test
             .bob_client
             .erc20()
-            .collect_escrow(escrow_uid, good_fulfillment)
+            .escrow().non_tierable().collect(escrow_uid, good_fulfillment)
             .await?;
 
         println!("✅ Arbitrate decision passed. Tx: {:?}", collection);

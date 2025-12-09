@@ -10,7 +10,7 @@ use std::{
 use alkahest_rs::{
     AlkahestClient, DefaultAlkahestClient,
     clients::oracle::ArbitrateOptions,
-    contracts::{self, StringObligation},
+    contracts::{self, obligations::StringObligation},
     extensions::{HasArbiters, HasErc20, HasOracle, HasStringObligation},
     fixtures::MockERC20Permit,
     types::{ArbiterData, Erc20Data},
@@ -43,6 +43,7 @@ struct PingEvent {
 struct UptimeJob {
     min_uptime: f64,
     schedule: Vec<PingEvent>,
+    demand: Bytes,
 }
 
 type JobDb = Arc<Mutex<HashMap<FixedBytes<32>, UptimeJob>>>;
@@ -54,6 +55,7 @@ struct SchedulerContext {
     notify: Arc<Notify>,
     url_index: UrlIndex,
     client: Arc<alkahest_rs::AlkahestClient<alkahest_rs::extensions::BaseExtensions>>,
+    inner_demand_data: Bytes,
 }
 
 static SCHEDULER_STATE: OnceLock<Mutex<Option<SchedulerContext>>> = OnceLock::new();
@@ -89,7 +91,7 @@ fn schedule_pings(
         // Get escrow and extract demand
         let Ok((_, demand)) = ctx
             .client
-            .get_escrow_and_demand::<contracts::TrustedOracleArbiter::DemandData>(&attestation)
+            .get_escrow_and_demand::<contracts::arbiters::TrustedOracleArbiter::DemandData>(&attestation)
             .await
         else {
             return None;
@@ -116,6 +118,7 @@ fn schedule_pings(
         ctx.job_db.lock().await.entry(uid).or_insert(UptimeJob {
             min_uptime: parsed_demand.min_uptime,
             schedule,
+            demand: ctx.inner_demand_data.clone(),
         });
         ctx.notify.notify_one();
         None
@@ -126,7 +129,7 @@ async fn setup_escrow_with_uptime_demand(
     test: &TestContext,
     demand: &UptimeDemand,
     oracle: alloy::primitives::Address,
-) -> eyre::Result<(FixedBytes<32>, FixedBytes<32>, String)> {
+) -> eyre::Result<(FixedBytes<32>, FixedBytes<32>, String, Bytes)> {
     let mock_erc20 = MockERC20Permit::new(test.mock_addresses.erc20_a, &test.god_provider);
     mock_erc20
         .transfer(test.alice.address(), 100u64.try_into()?)
@@ -135,9 +138,13 @@ async fn setup_escrow_with_uptime_demand(
         .get_receipt()
         .await?;
 
-    let encoded_demand = contracts::TrustedOracleArbiter::DemandData {
+    // The inner data field (JSON payload) - this is what gets used for arbitration
+    let inner_demand_data: Bytes = Bytes::from(serde_json::to_vec(demand)?);
+
+    // The full encoded DemandData - this is what gets stored in the escrow
+    let encoded_demand: Bytes = contracts::arbiters::TrustedOracleArbiter::DemandData {
         oracle,
-        data: Bytes::from(serde_json::to_vec(demand)?),
+        data: inner_demand_data.clone(),
     }
     .into();
 
@@ -160,7 +167,9 @@ async fn setup_escrow_with_uptime_demand(
     let escrow_receipt = test
         .alice_client
         .erc20()
-        .permit_and_buy_with_erc20(&price, &arbiter_item, expiration)
+        .escrow()
+        .non_tierable()
+        .permit_and_create(&price, &arbiter_item, expiration)
         .await?;
     let escrow_uid = DefaultAlkahestClient::get_attested_event(escrow_receipt)?.uid;
 
@@ -172,7 +181,8 @@ async fn setup_escrow_with_uptime_demand(
         .await?;
     let fulfillment_uid = DefaultAlkahestClient::get_attested_event(fulfillment_receipt)?.uid;
 
-    Ok((escrow_uid, fulfillment_uid, service_url))
+    // Return inner_demand_data (not encoded_demand) for use with arbitration
+    Ok((escrow_uid, fulfillment_uid, service_url, inner_demand_data))
 }
 
 async fn run_async_uptime_oracle_example(test: &TestContext) -> eyre::Result<()> {
@@ -197,7 +207,7 @@ async fn run_async_uptime_oracle_example(test: &TestContext) -> eyre::Result<()>
         check_interval_secs: 2,
     };
 
-    let (escrow_uid, fulfillment_uid, service_url) =
+    let (escrow_uid, fulfillment_uid, service_url, inner_demand_data) =
         setup_escrow_with_uptime_demand(test, &demand, charlie_client.address).await?;
 
     let url_index: UrlIndex = Arc::new(Mutex::new(HashMap::new()));
@@ -238,7 +248,7 @@ async fn run_async_uptime_oracle_example(test: &TestContext) -> eyre::Result<()>
                 let uptime = successes as f64 / total_checks as f64;
                 let decision = uptime >= job.min_uptime;
                 worker_arbiters
-                    .arbitrate_as_trusted_oracle(uid, decision)
+                    .arbitrate_as_trusted_oracle(uid, job.demand.clone(), decision)
                     .await
                     .expect("oracle arbitration tx should succeed");
             } else {
@@ -264,13 +274,14 @@ async fn run_async_uptime_oracle_example(test: &TestContext) -> eyre::Result<()>
             notify: Arc::clone(&scheduler_notify),
             url_index: Arc::clone(&url_index),
             client: Arc::new(charlie_client.clone()),
+            inner_demand_data: inner_demand_data.clone(),
         });
     }
 
-    // Request arbitration first
+    // Request arbitration first (using the inner demand data, not the full encoded DemandData)
     test.bob_client
         .oracle()
-        .request_arbitration(fulfillment_uid, charlie_client.address)
+        .request_arbitration(fulfillment_uid, charlie_client.address, inner_demand_data)
         .await?;
 
     // Listen for arbitration requests
@@ -302,7 +313,7 @@ async fn run_async_uptime_oracle_example(test: &TestContext) -> eyre::Result<()>
             match test
                 .bob_client
                 .erc20()
-                .collect_escrow(escrow_uid, fulfillment_uid)
+                .escrow().non_tierable().collect(escrow_uid, fulfillment_uid)
                 .await
             {
                 Ok(receipt) => break receipt,

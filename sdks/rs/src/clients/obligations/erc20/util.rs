@@ -99,6 +99,7 @@ pub async fn approve(
     let to = match purpose {
         ApprovalPurpose::Payment => addresses.payment_obligation,
         ApprovalPurpose::Escrow => addresses.escrow_obligation,
+        ApprovalPurpose::BarterUtils => addresses.barter_utils,
     };
 
     let token_contract = ERC20Permit::new(token.address, wallet_provider);
@@ -132,6 +133,7 @@ pub async fn approve_if_less(
     let to = match purpose {
         ApprovalPurpose::Payment => addresses.payment_obligation,
         ApprovalPurpose::Escrow => addresses.escrow_obligation,
+        ApprovalPurpose::BarterUtils => addresses.barter_utils,
     };
 
     let token_contract = ERC20Permit::new(token.address, wallet_provider);

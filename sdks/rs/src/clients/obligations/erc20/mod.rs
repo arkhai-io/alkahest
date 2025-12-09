@@ -626,10 +626,10 @@ mod tests {
             value: U256::from(200),
         };
 
-        // alice approves tokens for escrow
+        // alice approves tokens for barter
         test.alice_client
             .erc20()
-            .approve(&bid, ApprovalPurpose::Escrow)
+            .approve(&bid, ApprovalPurpose::BarterUtils)
             .await?;
 
         // alice makes escrow
@@ -739,10 +739,10 @@ mod tests {
             value: U256::from(200),
         };
 
-        // alice approves tokens for escrow and creates buy attestation
+        // alice approves tokens for barter and creates buy attestation
         test.alice_client
             .erc20()
-            .approve(&bid, ApprovalPurpose::Escrow)
+            .approve(&bid, ApprovalPurpose::BarterUtils)
             .await?;
 
         let buy_receipt = test
@@ -754,10 +754,10 @@ mod tests {
 
         let buy_attestation = DefaultAlkahestClient::get_attested_event(buy_receipt)?.uid;
 
-        // bob approves tokens for payment
+        // bob approves tokens for barter
         test.bob_client
             .erc20()
-            .approve(&ask, ApprovalPurpose::Payment)
+            .approve(&ask, ApprovalPurpose::BarterUtils)
             .await?;
 
         // bob fulfills the buy attestation
@@ -821,10 +821,10 @@ mod tests {
             value: U256::from(200),
         };
 
-        // alice approves tokens for escrow and creates buy attestation
+        // alice approves tokens for barter and creates buy attestation
         test.alice_client
             .erc20()
-            .approve(&bid, ApprovalPurpose::Escrow)
+            .approve(&bid, ApprovalPurpose::BarterUtils)
             .await?;
 
         let buy_receipt = test
@@ -888,10 +888,10 @@ mod tests {
             value: U256::from(200),
         };
 
-        // alice approves tokens for escrow
+        // alice approves tokens for barter
         test.alice_client
             .erc20()
-            .approve(&bid, ApprovalPurpose::Escrow)
+            .approve(&bid, ApprovalPurpose::BarterUtils)
             .await?;
 
         // alice makes escrow with a short expiration
@@ -955,10 +955,10 @@ mod tests {
             id: U256::from(1),
         };
 
-        // alice approves tokens for escrow
+        // alice approves tokens for barter
         test.alice_client
             .erc20()
-            .approve(&bid, ApprovalPurpose::Escrow)
+            .approve(&bid, ApprovalPurpose::BarterUtils)
             .await?;
 
         // alice creates purchase offer
@@ -1014,10 +1014,10 @@ mod tests {
             value: U256::from(10),
         };
 
-        // alice approves tokens for escrow
+        // alice approves tokens for barter
         test.alice_client
             .erc20()
-            .approve(&bid, ApprovalPurpose::Escrow)
+            .approve(&bid, ApprovalPurpose::BarterUtils)
             .await?;
 
         // alice creates purchase offer
@@ -1084,10 +1084,10 @@ mod tests {
             }],
             native_amount: U256::ZERO,
         };
-        // alice approves tokens for escrow
+        // alice approves tokens for barter
         test.alice_client
             .erc20()
-            .approve(&bid, ApprovalPurpose::Escrow)
+            .approve(&bid, ApprovalPurpose::BarterUtils)
             .await?;
 
         // alice creates purchase offer
@@ -1318,7 +1318,7 @@ mod tests {
         let expiration = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() + 3600; // 1 hour
 
         // First create a buy attestation with Bob escrowing ERC721
-        // Bob approves his ERC721 for escrow
+        // Bob approves his ERC721 for barter
         test.bob_client
             .erc721()
             .approve(
@@ -1326,7 +1326,7 @@ mod tests {
                     address: test.mock_addresses.erc721_a,
                     id: erc721_token_id,
                 },
-                ApprovalPurpose::Escrow,
+                ApprovalPurpose::BarterUtils,
             )
             .await?;
 
@@ -1368,7 +1368,7 @@ mod tests {
                     address: test.mock_addresses.erc20_a,
                     value: erc20_amount,
                 },
-                ApprovalPurpose::Payment,
+                ApprovalPurpose::BarterUtils,
             )
             .await?;
 
@@ -1442,7 +1442,7 @@ mod tests {
         let expiration = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() + 3600; // 1 hour
 
         // First create a buy attestation with Bob escrowing ERC721
-        // Bob approves his ERC721 for escrow
+        // Bob approves his ERC721 for barter
 
         test.bob_client
             .erc721()
@@ -1451,7 +1451,7 @@ mod tests {
                     address: test.mock_addresses.erc721_a,
                     id: erc721_token_id,
                 },
-                ApprovalPurpose::Escrow,
+                ApprovalPurpose::BarterUtils,
             )
             .await?;
 
@@ -1556,10 +1556,10 @@ mod tests {
         let expiration = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() + 3600; // 1 hour
 
         // First create a buy attestation with Bob escrowing ERC1155
-        // Bob approves his ERC1155 for escrow
+        // Bob approves his ERC1155 for barter
         test.bob_client
             .erc1155()
-            .approve_all(test.mock_addresses.erc1155_a, ApprovalPurpose::Escrow)
+            .approve_all(test.mock_addresses.erc1155_a, ApprovalPurpose::BarterUtils)
             .await?;
 
         // Bob creates ERC1155 escrow requesting ERC20
@@ -1597,7 +1597,7 @@ mod tests {
         let initial_alice_erc20_balance =
             mock_erc20_a.balanceOf(test.alice.address()).call().await?;
 
-        // Alice approves her ERC20 tokens for payment
+        // Alice approves her ERC20 tokens for barter
         test.alice_client
             .erc20()
             .approve(
@@ -1605,7 +1605,7 @@ mod tests {
                     address: test.mock_addresses.erc20_a,
                     value: erc20_amount,
                 },
-                ApprovalPurpose::Payment,
+                ApprovalPurpose::BarterUtils,
             )
             .await?;
 
@@ -1682,10 +1682,10 @@ mod tests {
         let expiration = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() + 3600; // 1 hour
 
         // First create a buy attestation with Bob escrowing ERC1155
-        // Bob approves his ERC1155 for escrow
+        // Bob approves his ERC1155 for barter
         test.bob_client
             .erc1155()
-            .approve_all(test.mock_addresses.erc1155_a, ApprovalPurpose::Escrow)
+            .approve_all(test.mock_addresses.erc1155_a, ApprovalPurpose::BarterUtils)
             .await?;
 
         // Bob creates ERC1155 escrow requesting ERC20
@@ -1874,7 +1874,7 @@ mod tests {
             .call()
             .await?;
 
-        // Alice approves her ERC20 tokens for payment
+        // Alice approves her ERC20 tokens for barter
         test.alice_client
             .erc20()
             .approve(
@@ -1882,7 +1882,7 @@ mod tests {
                     address: test.mock_addresses.erc20_a,
                     value: erc20_amount,
                 },
-                ApprovalPurpose::Payment,
+                ApprovalPurpose::BarterUtils,
             )
             .await?;
 

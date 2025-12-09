@@ -31,7 +31,7 @@ use crate::{
         },
         obligations::{
             escrow::non_tierable::{
-                AttestationEscrowObligation, ERC20EscrowObligation, ERC721EscrowObligation,
+                AttestationEscrowObligation, AttestationEscrowObligation2, ERC20EscrowObligation, ERC721EscrowObligation,
                 ERC1155EscrowObligation, NativeTokenEscrowObligation, TokenBundleEscrowObligation,
             },
             // Payment obligations are at root of obligations module
@@ -136,6 +136,7 @@ pub async fn setup_test_environment() -> eyre::Result<TestContext> {
 
     // Deploy obligations
     let attestation_escrow_obligation = deploy_obligation!(AttestationEscrowObligation);
+    let attestation_escrow_obligation_2 = deploy_obligation!(AttestationEscrowObligation2);
     let bundle_escrow_obligation = deploy_obligation!(TokenBundleEscrowObligation);
     let bundle_payment_obligation = deploy_obligation!(TokenBundlePaymentObligation);
     let erc20_escrow_obligation = deploy_obligation!(ERC20EscrowObligation);
@@ -156,11 +157,12 @@ pub async fn setup_test_environment() -> eyre::Result<TestContext> {
     .await?;
 
     // Deploy barter utils
+    // Note: AttestationBarterUtils uses AttestationEscrowObligation2 (V2)
     let attestation_barter_utils = AttestationBarterUtils::deploy(
         &god_provider,
         eas.address().clone(),
         schema_registry.address().clone(),
-        attestation_escrow_obligation.address().clone(),
+        attestation_escrow_obligation_2.address().clone(),
     )
     .await?;
     let bundle_barter_utils = TokenBundleBarterUtils::deploy(
@@ -302,7 +304,7 @@ pub async fn setup_test_environment() -> eyre::Result<TestContext> {
             eas_schema_registry: schema_registry.address().clone(),
             barter_utils: attestation_barter_utils.address().clone(),
             escrow_obligation: attestation_escrow_obligation.address().clone(),
-            escrow_obligation_2: Address::ZERO, // Using first escrow obligation for both
+            escrow_obligation_2: attestation_escrow_obligation_2.address().clone(),
         },
     };
 
