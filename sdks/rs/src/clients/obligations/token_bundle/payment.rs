@@ -1,0 +1,98 @@
+//! Token Bundle payment obligation client
+//!
+//! Provides functionality for making direct token bundle payments.
+
+use alloy::primitives::{Address, Bytes, FixedBytes};
+use alloy::rpc::types::TransactionReceipt;
+use alloy::sol_types::SolValue;
+
+use crate::contracts;
+use crate::types::{DecodedAttestation, TokenBundleData};
+
+use super::TokenBundleModule;
+
+/// Payment API for token bundles
+pub struct Payment<'a> {
+    module: &'a TokenBundleModule,
+}
+
+impl<'a> Payment<'a> {
+    pub fn new(module: &'a TokenBundleModule) -> Self {
+        Self { module }
+    }
+
+    /// Get the contract address
+    pub fn address(&self) -> Address {
+        self.module.addresses.payment_obligation
+    }
+
+    /// Decodes TokenBundlePaymentObligation.ObligationData from bytes.
+    ///
+    /// # Arguments
+    /// * `obligation_data` - The obligation data
+    ///
+    /// # Returns
+    /// * `Result<contracts::obligations::TokenBundlePaymentObligation::ObligationData>` - The decoded obligation data
+    pub fn decode_obligation(
+        obligation_data: &Bytes,
+    ) -> eyre::Result<contracts::obligations::TokenBundlePaymentObligation::ObligationData> {
+        let obligation_data =
+            contracts::obligations::TokenBundlePaymentObligation::ObligationData::abi_decode(
+                obligation_data,
+            )?;
+        Ok(obligation_data)
+    }
+
+    /// Gets a payment obligation by its attestation UID.
+    pub async fn get_obligation(
+        &self,
+        uid: FixedBytes<32>,
+    ) -> eyre::Result<DecodedAttestation<contracts::obligations::TokenBundlePaymentObligation::ObligationData>>
+    {
+        let eas_contract =
+            contracts::IEAS::new(self.module.addresses.eas, &self.module.wallet_provider);
+
+        let attestation = eas_contract.getAttestation(uid).call().await?;
+        let obligation_data =
+            contracts::obligations::TokenBundlePaymentObligation::ObligationData::abi_decode(
+                &attestation.data,
+            )?;
+
+        Ok(DecodedAttestation {
+            attestation,
+            data: obligation_data,
+        })
+    }
+
+    /// Makes a direct payment with token bundles.
+    ///
+    /// # Arguments
+    /// * `price` - The token bundle data for payment
+    /// * `payee` - The address of the payment recipient
+    ///
+    /// # Returns
+    /// * `Result<TransactionReceipt>` - The transaction receipt
+    pub async fn pay(
+        &self,
+        price: &TokenBundleData,
+        payee: Address,
+    ) -> eyre::Result<TransactionReceipt> {
+        let payment_obligation_contract =
+            contracts::obligations::TokenBundlePaymentObligation::new(
+                self.module.addresses.payment_obligation,
+                &self.module.wallet_provider,
+            );
+
+        let receipt = payment_obligation_contract
+            .doObligation(
+                (price, payee).into(),
+                FixedBytes::<32>::ZERO, // refUID - no reference for standalone payments
+            )
+            .send()
+            .await?
+            .get_receipt()
+            .await?;
+
+        Ok(receipt)
+    }
+}

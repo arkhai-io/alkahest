@@ -12,6 +12,7 @@ use crate::{
             attestation_properties::UidArbiter,
         },
         obligations::escrow::non_tierable::AttestationEscrowObligation,
+        obligations::escrow::tierable::AttestationEscrowObligation as TierableAttestationEscrowObligation,
         utils::AttestationBarterUtils,
     },
     types::{ArbiterData, TokenBundleData},
@@ -117,6 +118,7 @@ impl_payment_obligation!(contracts::utils::native_token::TokenBundlePaymentOblig
 impl_payment_obligation!(contracts::utils::token_bundle::TokenBundlePaymentObligation::ObligationData);
 
 impl_escrow_obligation!(contracts::obligations::escrow::non_tierable::TokenBundleEscrowObligation::ObligationData);
+impl_escrow_obligation!(contracts::obligations::escrow::tierable::TokenBundleEscrowObligation::ObligationData);
 impl_escrow_obligation!(contracts::utils::token_bundle::TokenBundleEscrowObligation::ObligationData);
 
 macro_rules! impl_attestation_request {
@@ -146,6 +148,7 @@ macro_rules! impl_attestation_request {
 }
 
 impl_attestation_request!(AttestationEscrowObligation);
+impl_attestation_request!(TierableAttestationEscrowObligation);
 impl_attestation_request!(AttestationBarterUtils);
 
 macro_rules! impl_from_attestation {

@@ -555,8 +555,8 @@ mod tests {
             deserialized_config.arbiters_addresses.eas
         );
         assert_eq!(
-            original_config.arbiters_addresses.trusted_party_arbiter,
-            deserialized_config.arbiters_addresses.trusted_party_arbiter
+            original_config.arbiters_addresses.recipient_arbiter,
+            deserialized_config.arbiters_addresses.recipient_arbiter
         );
         assert_eq!(
             original_config.erc20_addresses.eas,
@@ -639,8 +639,8 @@ mod tests {
             roundtrip_config.arbiters_addresses.eas
         );
         assert_eq!(
-            config.arbiters_addresses.trusted_party_arbiter,
-            roundtrip_config.arbiters_addresses.trusted_party_arbiter
+            config.arbiters_addresses.recipient_arbiter,
+            roundtrip_config.arbiters_addresses.recipient_arbiter
         );
         assert_eq!(
             config.arbiters_addresses.trivial_arbiter,

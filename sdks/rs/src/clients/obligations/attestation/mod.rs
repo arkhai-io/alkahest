@@ -1,15 +1,20 @@
+//! Attestation obligation module
+//!
+//! Provides escrow and utility operations for attestation-based obligations.
+
+pub mod escrow;
+pub mod util;
+
+pub use escrow::Escrow;
+pub use util::Util;
+
 use alloy::primitives::Address;
-use alloy::primitives::{Bytes, FixedBytes};
-use alloy::rpc::types::TransactionReceipt;
 use alloy::signers::local::PrivateKeySigner;
-use alloy::sol_types::SolValue as _;
 use serde::{Deserialize, Serialize};
 
 use crate::addresses::BASE_SEPOLIA_ADDRESSES;
-use crate::contracts::IEAS::Attestation;
-use crate::contracts::{self, IEAS};
 use crate::extensions::{AlkahestExtension, ContractModule};
-use crate::types::{ArbiterData, DecodedAttestation, SharedWalletProvider};
+use crate::types::SharedWalletProvider;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AttestationAddresses {
@@ -23,8 +28,7 @@ pub struct AttestationAddresses {
 #[derive(Clone)]
 pub struct AttestationModule {
     _signer: PrivateKeySigner,
-    wallet_provider: SharedWalletProvider,
-
+    pub(crate) wallet_provider: SharedWalletProvider,
     pub addresses: AttestationAddresses,
 }
 
@@ -43,9 +47,9 @@ pub enum AttestationContract {
     EasSchemaRegistry,
     /// Barter utilities contract for attestations
     BarterUtils,
-    /// Escrow obligation contract for attestations
+    /// Escrow obligation contract for attestations (V1)
     EscrowObligation,
-    /// Alternative escrow obligation contract for attestations
+    /// Escrow obligation contract for attestations (V2)
     EscrowObligation2,
 }
 
@@ -65,11 +69,6 @@ impl ContractModule for AttestationModule {
 
 impl AttestationModule {
     /// Creates a new AttestationModule instance.
-    ///
-    /// # Arguments
-    /// * `private_key` - The private key for signing transactions
-    /// * `rpc_url` - The RPC endpoint URL
-    /// * `addresses` - Optional custom contract addresses
     pub fn new(
         signer: PrivateKeySigner,
         wallet_provider: SharedWalletProvider,
@@ -82,287 +81,14 @@ impl AttestationModule {
         })
     }
 
-    /// Decodes AttestationEscrowObligation.ObligationData from bytes.
-    ///
-    /// # Arguments
-    /// * `obligation_data` - The obligation data
-    ///
-    /// # Returns
-    /// * `Result<contracts::obligations::escrow::non_tierable::AttestationEscrowObligation::ObligationData>` - The decoded obligation data
-    pub fn decode_escrow_obligation(
-        obligation_data: &Bytes,
-    ) -> eyre::Result<contracts::obligations::escrow::non_tierable::AttestationEscrowObligation::ObligationData> {
-        let obligation_data =
-            contracts::obligations::escrow::non_tierable::AttestationEscrowObligation::ObligationData::abi_decode(obligation_data)?;
-        return Ok(obligation_data);
+    /// Access escrow operations (V1 and V2)
+    pub fn escrow(&self) -> Escrow<'_> {
+        Escrow::new(self)
     }
 
-    /// Decodes AttestationEscrowObligation2.ObligationData from bytes.
-    ///
-    /// # Arguments
-    /// * `obligation_data` - The obligation data
-    ///
-    /// # Returns
-    /// * `Result<contracts::obligations::escrow::non_tierable::AttestationEscrowObligation2::ObligationData>` - The decoded obligation data
-    pub fn decode_escrow_obligation_2(
-        obligation_data: &Bytes,
-    ) -> eyre::Result<contracts::obligations::escrow::non_tierable::AttestationEscrowObligation2::ObligationData> {
-        let obligation_data =
-            contracts::obligations::escrow::non_tierable::AttestationEscrowObligation2::ObligationData::abi_decode(obligation_data)?;
-        return Ok(obligation_data);
-    }
-
-    pub async fn get_escrow_obligation(
-        &self,
-        uid: FixedBytes<32>,
-    ) -> eyre::Result<DecodedAttestation<contracts::obligations::escrow::non_tierable::AttestationEscrowObligation::ObligationData>>
-    {
-        let eas_contract = contracts::IEAS::new(self.addresses.eas, &*self.wallet_provider);
-
-        let attestation = eas_contract.getAttestation(uid).call().await?;
-        let obligation_data =
-            contracts::obligations::escrow::non_tierable::AttestationEscrowObligation::ObligationData::abi_decode(&attestation.data)?;
-
-        Ok(DecodedAttestation {
-            attestation,
-            data: obligation_data,
-        })
-    }
-
-    pub async fn get_escrow_obligation_2(
-        &self,
-        uid: FixedBytes<32>,
-    ) -> eyre::Result<DecodedAttestation<contracts::obligations::escrow::non_tierable::AttestationEscrowObligation2::ObligationData>>
-    {
-        let eas_contract = contracts::IEAS::new(self.addresses.eas, &*self.wallet_provider);
-
-        let attestation = eas_contract.getAttestation(uid).call().await?;
-        let obligation_data =
-            contracts::obligations::escrow::non_tierable::AttestationEscrowObligation2::ObligationData::abi_decode(&attestation.data)?;
-
-        Ok(DecodedAttestation {
-            attestation,
-            data: obligation_data,
-        })
-    }
-
-    /// Retrieves an attestation by its UID.
-    ///
-    /// # Arguments
-    /// * `uid` - The unique identifier of the attestation
-    pub async fn get_attestation(&self, uid: FixedBytes<32>) -> eyre::Result<Attestation> {
-        let eas_contract = contracts::IEAS::new(self.addresses.eas, &*self.wallet_provider);
-
-        let attestation = eas_contract.getAttestation(uid).call().await?;
-        Ok(attestation)
-    }
-
-    /// Registers a new schema in the EAS Schema Registry.
-    ///
-    /// # Arguments
-    /// * `schema` - The schema string defining the attestation structure
-    /// * `resolver` - The address of the resolver contract
-    /// * `revocable` - Whether attestations using this schema can be revoked
-    pub async fn register_schema(
-        &self,
-        schema: String,
-        resolver: Address,
-        revocable: bool,
-    ) -> eyre::Result<TransactionReceipt> {
-        let schema_registry_contract = contracts::ISchemaRegistry::new(
-            self.addresses.eas_schema_registry,
-            &*self.wallet_provider,
-        );
-
-        let receipt = schema_registry_contract
-            .register(schema, resolver, revocable)
-            .send()
-            .await?
-            .get_receipt()
-            .await?;
-
-        Ok(receipt)
-    }
-
-    /// Creates a new attestation using the EAS contract.
-    ///
-    /// # Arguments
-    /// * `attestation` - The attestation request data
-    pub async fn attest(
-        &self,
-        attestation: IEAS::AttestationRequest,
-    ) -> eyre::Result<TransactionReceipt> {
-        let eas_contract = contracts::IEAS::new(self.addresses.eas, &*self.wallet_provider);
-
-        let receipt = eas_contract
-            .attest(attestation)
-            .send()
-            .await?
-            .get_receipt()
-            .await?;
-
-        Ok(receipt)
-    }
-
-    /// Collects payment from an attestation escrow by providing a fulfillment attestation.
-    /// This function is used with the original AttestationEscrowObligation contract.
-    ///
-    /// # Arguments
-    /// * `buy_attestation` - The UID of the escrow attestation
-    /// * `fulfillment` - The UID of the fulfillment attestation
-    pub async fn collect_escrow(
-        &self,
-        buy_attestation: FixedBytes<32>,
-        fulfillment: FixedBytes<32>,
-    ) -> eyre::Result<TransactionReceipt> {
-        let escrow_contract = contracts::obligations::escrow::non_tierable::AttestationEscrowObligation::new(
-            self.addresses.escrow_obligation,
-            &*self.wallet_provider,
-        );
-
-        let receipt = escrow_contract
-            .collectEscrow(buy_attestation, fulfillment)
-            .send()
-            .await?
-            .get_receipt()
-            .await?;
-
-        Ok(receipt)
-    }
-
-    /// Collects payment from an attestation escrow by providing a fulfillment attestation.
-    /// This function is used with AttestationEscrowObligation2 and creates a validation
-    /// attestation referencing the original attestation.
-    ///
-    /// # Arguments
-    /// * `buy_attestation` - The UID of the escrow attestation
-    /// * `fulfillment` - The UID of the fulfillment attestation
-    pub async fn collect_escrow_2(
-        &self,
-        buy_attestation: FixedBytes<32>,
-        fulfillment: FixedBytes<32>,
-    ) -> eyre::Result<TransactionReceipt> {
-        let escrow_contract = contracts::obligations::escrow::non_tierable::AttestationEscrowObligation2::new(
-            self.addresses.escrow_obligation_2,
-            &*self.wallet_provider,
-        );
-
-        let receipt = escrow_contract
-            .collectEscrow(buy_attestation, fulfillment)
-            .send()
-            .await?
-            .get_receipt()
-            .await?;
-
-        Ok(receipt)
-    }
-
-    /// Creates an escrow using an attestation as the escrowed item.
-    /// This function uses the original AttestationEscrowObligation contract where the full attestation
-    /// data is stored in the escrow obligation. When collecting payment, this contract creates a new
-    /// attestation as the collection event, requiring the contract to have attestation rights.
-    ///
-    /// # Arguments
-    /// * `attestation` - The attestation data to be escrowed
-    /// * `demand` - The arbiter and demand data for the escrow
-    /// * `expiration` - Optional expiration time for the escrow (default: 0 = no expiration)
-    pub async fn create_escrow(
-        &self,
-        attestation: IEAS::AttestationRequest,
-        demand: ArbiterData,
-        expiration: u64,
-    ) -> eyre::Result<TransactionReceipt> {
-        let attestation_escrow_obligation_contract = contracts::obligations::escrow::non_tierable::AttestationEscrowObligation::new(
-            self.addresses.escrow_obligation,
-            &*self.wallet_provider,
-        );
-
-        let receipt = attestation_escrow_obligation_contract
-            .doObligation(
-                contracts::obligations::escrow::non_tierable::AttestationEscrowObligation::ObligationData {
-                    attestation: attestation.into(),
-                    arbiter: demand.arbiter,
-                    demand: demand.demand,
-                },
-                expiration,
-            )
-            .send()
-            .await?
-            .get_receipt()
-            .await?;
-
-        Ok(receipt)
-    }
-
-    /// Creates an escrow using an attestation UID as reference.
-    /// This function uses AttestationEscrowObligation2 which references the attestation by UID
-    /// instead of storing the full attestation data, making it more gas efficient. When collecting
-    /// payment, this contract creates a validation attestation that references the original attestation,
-    /// allowing it to work with any schema implementation without requiring attestation rights.
-    ///
-    /// # Arguments
-    /// * `attestation` - The UID of the attestation to be escrowed
-    /// * `demand` - The arbiter and demand data for the escrow
-    /// * `expiration` - Optional expiration time for the escrow (default: 0 = no expiration)
-    pub async fn create_escrow_2(
-        &self,
-        attestation: FixedBytes<32>,
-        demand: ArbiterData,
-        expiration: u64,
-    ) -> eyre::Result<TransactionReceipt> {
-        let attestation_escrow_obligation_2_contract = contracts::obligations::escrow::non_tierable::AttestationEscrowObligation2::new(
-            self.addresses.escrow_obligation_2,
-            &*self.wallet_provider,
-        );
-
-        let receipt = attestation_escrow_obligation_2_contract
-            .doObligation(
-                contracts::obligations::escrow::non_tierable::AttestationEscrowObligation2::ObligationData {
-                    attestationUid: attestation,
-                    arbiter: demand.arbiter,
-                    demand: demand.demand,
-                },
-                expiration,
-            )
-            .send()
-            .await?
-            .get_receipt()
-            .await?;
-
-        Ok(receipt)
-    }
-
-    /// Creates an attestation and immediately escrows it in a single transaction.
-    /// This is a convenience function that combines createAttestation and createEscrow.
-    ///
-    /// # Arguments
-    /// * `attestation` - The attestation data to create and escrow
-    /// * `demand` - The escrow parameters including arbiter and demand
-    /// * `expiration` - Optional expiration time for the escrow
-    pub async fn attest_and_create_escrow(
-        &self,
-        attestation: IEAS::AttestationRequest,
-        demand: ArbiterData,
-        expiration: u64,
-    ) -> eyre::Result<TransactionReceipt> {
-        let barter_utils_contract = contracts::utils::AttestationBarterUtils::new(
-            self.addresses.barter_utils,
-            &*self.wallet_provider,
-        );
-
-        let receipt = barter_utils_contract
-            .attestAndCreateEscrow(
-                attestation.into(),
-                demand.arbiter,
-                demand.demand,
-                expiration,
-            )
-            .send()
-            .await?
-            .get_receipt()
-            .await?;
-
-        Ok(receipt)
+    /// Access utility operations (get_attestation, register_schema, attest)
+    pub fn util(&self) -> Util<'_> {
+        Util::new(self)
     }
 }
 
@@ -387,7 +113,6 @@ mod tests {
     };
     use std::time::{SystemTime, UNIX_EPOCH};
 
-    use super::AttestationModule;
     use crate::{DefaultAlkahestClient, contracts::obligations::StringObligation};
     use crate::{
         contracts::{self, IEAS},
@@ -476,7 +201,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_decode_escrow_obligation() -> eyre::Result<()> {
+    async fn test_decode_escrow_obligation_v1() -> eyre::Result<()> {
         // Test setup
         let test = setup_test_environment().await?;
 
@@ -505,8 +230,8 @@ mod tests {
         // Encode the data
         let encoded = escrow_data.abi_encode();
 
-        // Decode the data
-        let decoded = AttestationModule::decode_escrow_obligation(&encoded.into())?;
+        // Decode the data using new API
+        let decoded = super::escrow::v1::non_tierable::NonTierable::decode_obligation(&encoded.into())?;
 
         // Verify decoded data
         assert_eq!(decoded.arbiter, arbiter, "Arbiter should match");
@@ -524,7 +249,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_decode_escrow_obligation_2() -> eyre::Result<()> {
+    async fn test_decode_escrow_obligation_v2() -> eyre::Result<()> {
         // Test setup
         let test = setup_test_environment().await?;
 
@@ -542,8 +267,8 @@ mod tests {
         // Encode the data
         let encoded = escrow_data.abi_encode();
 
-        // Decode the data
-        let decoded = AttestationModule::decode_escrow_obligation_2(&encoded.into())?;
+        // Decode the data using new API
+        let decoded = super::escrow::v2::non_tierable::NonTierable::decode_obligation(&encoded.into())?;
 
         // Verify decoded data
         assert_eq!(
@@ -580,10 +305,11 @@ mod tests {
         )
         .await?;
 
-        // Get attestation using the client method
+        // Get attestation using the new API
         let attestation = test
             .alice_client
             .attestation()
+            .util()
             .get_attestation(attestation_uid)
             .await?;
 
@@ -610,10 +336,11 @@ mod tests {
             SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs()
         );
 
-        // Register schema using the client
+        // Register schema using the new API
         let receipt = test
             .alice_client
             .attestation()
+            .util()
             .register_schema(
                 schema.clone(),
                 test.addresses.attestation_addresses.barter_utils,
@@ -676,10 +403,11 @@ mod tests {
             },
         };
 
-        // Attest using the client
+        // Attest using the new API
         let receipt = test
             .alice_client
             .attestation()
+            .util()
             .attest(attestation_request)
             .await?;
 
@@ -697,7 +425,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_create_escrow() -> eyre::Result<()> {
+    async fn test_create_escrow_v1() -> eyre::Result<()> {
         // Setup test environment
         let test = setup_test_environment().await?;
 
@@ -749,11 +477,14 @@ mod tests {
         // Create escrow expiration
         let escrow_expiration = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() + 2 * 86400; // 2 days
 
-        // Create escrow using the client
+        // Create escrow using the new API
         let receipt = test
             .alice_client
             .attestation()
-            .create_escrow(attestation_request, demand_data, escrow_expiration)
+            .escrow()
+            .v1()
+            .non_tierable()
+            .create(attestation_request, &demand_data, escrow_expiration)
             .await?;
 
         // Extract escrow attestation UID
@@ -770,6 +501,7 @@ mod tests {
         let escrow_attestation = test
             .alice_client
             .attestation()
+            .util()
             .get_attestation(escrow_event.uid)
             .await?;
 
@@ -784,7 +516,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_create_escrow_2() -> eyre::Result<()> {
+    async fn test_create_escrow_v2() -> eyre::Result<()> {
         // Setup test environment
         let test = setup_test_environment().await?;
 
@@ -831,11 +563,14 @@ mod tests {
         // Create escrow expiration
         let escrow_expiration = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() + 86400; // 1 day
 
-        // Create escrow using the client (version 2 - references attestation by UID)
+        // Create escrow using the new API (V2 - references attestation by UID)
         let receipt = test
             .alice_client
             .attestation()
-            .create_escrow_2(attestation_uid, demand_data, escrow_expiration)
+            .escrow()
+            .v2()
+            .non_tierable()
+            .create(attestation_uid, &demand_data, escrow_expiration)
             .await?;
 
         // Extract escrow attestation UID
@@ -852,6 +587,7 @@ mod tests {
         let escrow_attestation = test
             .alice_client
             .attestation()
+            .util()
             .get_attestation(escrow_event.uid)
             .await?;
 
@@ -874,14 +610,11 @@ mod tests {
             "Escrow recipient should be Alice (the creator)"
         );
 
-        // While we can't easily decode the attestation data in this test to verify the attestationUid field,
-        // we've confirmed the escrow was created with the correct structure
-
         Ok(())
     }
 
     #[tokio::test]
-    async fn test_collect_payment() -> eyre::Result<()> {
+    async fn test_collect_payment_v1() -> eyre::Result<()> {
         // Setup test environment
         let test = setup_test_environment().await?;
 
@@ -929,13 +662,16 @@ mod tests {
 
         let demand_data = ArbiterData { arbiter, demand };
 
-        // Create escrow using the client
+        // Create escrow using the new API
         let escrow_receipt = test
             .alice_client
             .attestation()
-            .create_escrow(
+            .escrow()
+            .v1()
+            .non_tierable()
+            .create(
                 attestation_request,
-                demand_data,
+                &demand_data,
                 0, // no expiration
             )
             .await?;
@@ -954,11 +690,14 @@ mod tests {
         let fulfillment_event = DefaultAlkahestClient::get_attested_event(fulfillment_receipt)?;
         let fulfillment_uid = fulfillment_event.uid;
 
-        // Bob collects payment using the fulfillment
+        // Bob collects payment using the new API
         let collection_receipt = test
             .bob_client
             .attestation()
-            .collect_escrow(escrow_uid, fulfillment_uid)
+            .escrow()
+            .v1()
+            .non_tierable()
+            .collect(escrow_uid, fulfillment_uid)
             .await?;
 
         // Extract payment attestation UID
@@ -976,6 +715,7 @@ mod tests {
         let escrow_attestation = test
             .bob_client
             .attestation()
+            .util()
             .get_attestation(escrow_uid)
             .await?;
         assert_ne!(
@@ -987,7 +727,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_collect_payment_2() -> eyre::Result<()> {
+    async fn test_collect_payment_v2() -> eyre::Result<()> {
         // Setup test environment
         let test = setup_test_environment().await?;
 
@@ -1032,11 +772,14 @@ mod tests {
         // Create escrow expiration
         let escrow_expiration = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() + 86400; // 1 day
 
-        // Create escrow using the client (version 2 - references attestation by UID)
+        // Create escrow using the new API (V2)
         let escrow_receipt = test
             .alice_client
             .attestation()
-            .create_escrow_2(attestation_uid, demand_data, escrow_expiration)
+            .escrow()
+            .v2()
+            .non_tierable()
+            .create(attestation_uid, &demand_data, escrow_expiration)
             .await?;
 
         // Extract escrow attestation UID
@@ -1064,11 +807,14 @@ mod tests {
         let fulfillment_event = DefaultAlkahestClient::get_attested_event(fulfillment_receipt)?;
         let fulfillment_uid = fulfillment_event.uid;
 
-        // Bob collects payment using the fulfillment
+        // Bob collects payment using the new API
         let collection_receipt = test
             .bob_client
             .attestation()
-            .collect_escrow_2(escrow_uid, fulfillment_uid)
+            .escrow()
+            .v2()
+            .non_tierable()
+            .collect(escrow_uid, fulfillment_uid)
             .await?;
 
         // Extract validation attestation UID
@@ -1086,6 +832,7 @@ mod tests {
         let validation_attestation = test
             .bob_client
             .attestation()
+            .util()
             .get_attestation(validation_uid)
             .await?;
 
@@ -1116,6 +863,7 @@ mod tests {
         let escrow_attestation = test
             .bob_client
             .attestation()
+            .util()
             .get_attestation(escrow_uid)
             .await?;
         assert!(
@@ -1177,11 +925,12 @@ mod tests {
         // Create escrow expiration
         let escrow_expiration = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() + 2 * 86400; // 2 days
 
-        // Attest and create escrow in one step
+        // Attest and create escrow in one step using new API
         let receipt = test
             .alice_client
             .attestation()
-            .attest_and_create_escrow(attestation_request, demand_data, escrow_expiration)
+            .util()
+            .attest_and_create_escrow(attestation_request, &demand_data, escrow_expiration)
             .await?;
 
         // This function creates two attestations - one for the attestation and one for the escrow

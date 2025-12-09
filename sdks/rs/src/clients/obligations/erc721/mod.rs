@@ -1,18 +1,17 @@
-use alloy::primitives::{Address, Bytes, FixedBytes};
-use alloy::rpc::types::TransactionReceipt;
+//! ERC721 obligations module
+
+pub mod barter_utils;
+pub mod escrow;
+pub mod payment;
+pub mod util;
+
+use alloy::primitives::Address;
 use alloy::signers::local::PrivateKeySigner;
-use alloy::sol_types::SolValue as _;
+use serde::{Deserialize, Serialize};
 
 use crate::addresses::BASE_SEPOLIA_ADDRESSES;
-use crate::contracts::{self};
-use crate::extensions::AlkahestExtension;
-use crate::extensions::ContractModule;
-use crate::types::{
-    ApprovalPurpose, ArbiterData, DecodedAttestation, Erc20Data, Erc721Data, Erc1155Data,
-    TokenBundleData,
-};
-use crate::types::{ProviderContext, SharedWalletProvider};
-use serde::{Deserialize, Serialize};
+use crate::extensions::{AlkahestExtension, ContractModule};
+use crate::types::{ApprovalPurpose, Erc721Data, ProviderContext, SharedWalletProvider};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Erc721Addresses {
@@ -20,21 +19,6 @@ pub struct Erc721Addresses {
     pub barter_utils: Address,
     pub escrow_obligation: Address,
     pub payment_obligation: Address,
-}
-
-/// Client for interacting with ERC721 token trading and escrow functionality.
-///
-/// This client provides methods for:
-/// - Trading ERC721 tokens for other ERC721, ERC20, and ERC1155 tokens
-/// - Creating escrow arrangements with custom demands
-/// - Managing token approvals
-/// - Collecting payments from fulfilled trades
-#[derive(Clone)]
-pub struct Erc721Module {
-    signer: PrivateKeySigner,
-    wallet_provider: SharedWalletProvider,
-
-    pub addresses: Erc721Addresses,
 }
 
 impl Default for Erc721Addresses {
@@ -46,14 +30,17 @@ impl Default for Erc721Addresses {
 /// Available contracts in the ERC721 module
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Erc721Contract {
-    /// EAS (Ethereum Attestation Service) contract
     Eas,
-    /// Barter utilities contract for ERC721 tokens
     BarterUtils,
-    /// Escrow obligation contract for ERC721 tokens
     EscrowObligation,
-    /// Payment obligation contract for ERC721 tokens
     PaymentObligation,
+}
+
+#[derive(Clone)]
+pub struct Erc721Module {
+    pub(crate) signer: PrivateKeySigner,
+    pub(crate) wallet_provider: SharedWalletProvider,
+    pub addresses: Erc721Addresses,
 }
 
 impl ContractModule for Erc721Module {
@@ -70,15 +57,6 @@ impl ContractModule for Erc721Module {
 }
 
 impl Erc721Module {
-    /// Creates a new Erc721Module instance.
-    ///
-    /// # Arguments
-    /// * `private_key` - The private key for signing transactions
-    /// * `rpc_url` - The RPC endpoint URL
-    /// * `addresses` - Optional custom contract addresses, uses defaults if None
-    ///
-    /// # Returns
-    /// * `Result<Self>` - The initialized client instance
     pub fn new(
         signer: PrivateKeySigner,
         wallet_provider: SharedWalletProvider,
@@ -87,535 +65,56 @@ impl Erc721Module {
         Ok(Erc721Module {
             signer,
             wallet_provider,
-
             addresses: addresses.unwrap_or_default(),
         })
     }
 
-    /// Decodes ERC721EscrowObligation.ObligationData from bytes.
-    ///
-    /// # Arguments
-    /// * `obligation_data` - The obligation data
-    ///
-    /// # Returns
-    /// * `Result<contracts::obligations::escrow::non_tierable::ERC721EscrowObligation::ObligationData>` - The decoded obligation data
-    pub fn decode_escrow_obligation(
-        obligation_data: &Bytes,
-    ) -> eyre::Result<contracts::obligations::escrow::non_tierable::ERC721EscrowObligation::ObligationData> {
-        let obligation_data = contracts::obligations::escrow::non_tierable::ERC721EscrowObligation::ObligationData::abi_decode(
-            obligation_data.as_ref(),
-        )?;
-        return Ok(obligation_data);
+    /// Access escrow API
+    pub fn escrow(&self) -> escrow::Escrow<'_> {
+        escrow::Escrow::new(self)
     }
 
-    /// Decodes ERC721PaymentObligation.ObligationData from bytes.
-    ///
-    /// # Arguments
-    ///
-    /// * `obligation_data` - The obligation data
-    ///
-    /// # Returns
-    ///
-    /// * `eyre::Result<contracts::obligations::ERC721PaymentObligation::ObligationData>` - The decoded obligation data
-    pub fn decode_payment_obligation(
-        obligation_data: &Bytes,
-    ) -> eyre::Result<contracts::obligations::ERC721PaymentObligation::ObligationData> {
-        let obligation_data = contracts::obligations::ERC721PaymentObligation::ObligationData::abi_decode(
-            obligation_data.as_ref(),
-        )?;
-        return Ok(obligation_data);
+    /// Access payment API
+    pub fn payment(&self) -> payment::Payment<'_> {
+        payment::Payment::new(self)
     }
 
-    pub async fn get_escrow_obligation(
-        &self,
-        uid: FixedBytes<32>,
-    ) -> eyre::Result<DecodedAttestation<contracts::obligations::escrow::non_tierable::ERC721EscrowObligation::ObligationData>> {
-        let eas_contract = contracts::IEAS::new(self.addresses.eas, &*self.wallet_provider);
-
-        let attestation = eas_contract.getAttestation(uid).call().await?;
-        let obligation_data =
-            contracts::obligations::escrow::non_tierable::ERC721EscrowObligation::ObligationData::abi_decode(&attestation.data)?;
-
-        Ok(DecodedAttestation {
-            attestation,
-            data: obligation_data,
-        })
-    }
-
-    pub async fn get_payment_obligation(
-        &self,
-        uid: FixedBytes<32>,
-    ) -> eyre::Result<DecodedAttestation<contracts::obligations::ERC721PaymentObligation::ObligationData>> {
-        let eas_contract = contracts::IEAS::new(self.addresses.eas, &*self.wallet_provider);
-
-        let attestation = eas_contract.getAttestation(uid).call().await?;
-        let obligation_data =
-            contracts::obligations::ERC721PaymentObligation::ObligationData::abi_decode(&attestation.data)?;
-
-        Ok(DecodedAttestation {
-            attestation,
-            data: obligation_data,
-        })
+    /// Access barter utilities API
+    pub fn barter(&self) -> barter_utils::BarterUtils<'_> {
+        barter_utils::BarterUtils::new(self)
     }
 
     /// Approves a specific token for trading.
-    ///
-    /// # Arguments
-    /// * `token` - The ERC721 token data including address and token ID
-    /// * `purpose` - Whether the approval is for payment or escrow
-    ///
-    /// # Returns
-    /// * `Result<TransactionReceipt>` - The transaction receipt
     pub async fn approve(
         &self,
         token: &Erc721Data,
         purpose: ApprovalPurpose,
-    ) -> eyre::Result<TransactionReceipt> {
-        let erc721_contract = contracts::IERC721::new(token.address, &*self.wallet_provider);
-
-        let to = match purpose {
-            ApprovalPurpose::Escrow => self.addresses.escrow_obligation,
-            ApprovalPurpose::Payment => self.addresses.payment_obligation,
-        };
-
-        let receipt = erc721_contract
-            .approve(to, token.id)
-            .send()
-            .await?
-            .get_receipt()
-            .await?;
-
-        Ok(receipt)
+    ) -> eyre::Result<alloy::rpc::types::TransactionReceipt> {
+        util::approve(&self.wallet_provider, &self.addresses, token, purpose).await
     }
 
     /// Approves all tokens from a contract for trading.
-    ///
-    /// # Arguments
-    /// * `token_contract` - The ERC721 contract address
-    /// * `purpose` - Whether the approval is for payment or escrow
-    ///
-    /// # Returns
-    /// * `Result<TransactionReceipt>` - The transaction receipt
     pub async fn approve_all(
         &self,
         token_contract: Address,
         purpose: ApprovalPurpose,
-    ) -> eyre::Result<TransactionReceipt> {
-        let erc721_contract = contracts::IERC721::new(token_contract, &*self.wallet_provider);
-
-        let to = match purpose {
-            ApprovalPurpose::Escrow => self.addresses.escrow_obligation,
-            ApprovalPurpose::Payment => self.addresses.payment_obligation,
-        };
-
-        let receipt = erc721_contract
-            .setApprovalForAll(to, true)
-            .send()
-            .await?
-            .get_receipt()
-            .await?;
-
-        Ok(receipt)
+    ) -> eyre::Result<alloy::rpc::types::TransactionReceipt> {
+        util::approve_all(&self.wallet_provider, &self.addresses, token_contract, purpose).await
     }
 
     /// Revokes approval for all tokens from a contract.
-    ///
-    /// # Arguments
-    /// * `token_contract` - The ERC721 contract address
-    /// * `purpose` - Whether to revoke payment or escrow approval
-    ///
-    /// # Returns
-    /// * `Result<TransactionReceipt>` - The transaction receipt
     pub async fn revoke_all(
         &self,
         token_contract: Address,
         purpose: ApprovalPurpose,
-    ) -> eyre::Result<TransactionReceipt> {
-        let erc721_contract = contracts::IERC721::new(token_contract, &*self.wallet_provider);
-
-        let to = match purpose {
-            ApprovalPurpose::Escrow => self.addresses.escrow_obligation,
-            ApprovalPurpose::Payment => self.addresses.payment_obligation,
-        };
-
-        let receipt = erc721_contract
-            .setApprovalForAll(to, false)
-            .send()
-            .await?
-            .get_receipt()
-            .await?;
-
-        Ok(receipt)
-    }
-
-    /// Collects payment from a fulfilled trade.
-    ///
-    /// # Arguments
-    /// * `buy_attestation` - The attestation UID of the buy order
-    /// * `fulfillment` - The attestation UID of the fulfillment
-    ///
-    /// # Returns
-    /// * `Result<TransactionReceipt>` - The transaction receipt
-    pub async fn collect_escrow(
-        &self,
-        buy_attestation: FixedBytes<32>,
-        fulfillment: FixedBytes<32>,
-    ) -> eyre::Result<TransactionReceipt> {
-        let escrow_contract = contracts::obligations::escrow::non_tierable::ERC721EscrowObligation::new(
-            self.addresses.escrow_obligation,
-            &*self.wallet_provider,
-        );
-
-        let receipt = escrow_contract
-            .collectEscrow(buy_attestation, fulfillment)
-            .send()
-            .await?
-            .get_receipt()
-            .await?;
-
-        Ok(receipt)
-    }
-
-    /// Collects expired escrow funds after expiration time has passed.
-    ///
-    /// # Arguments
-    /// * `buy_attestation` - The attestation UID of the expired escrow
-    ///
-    /// # Returns
-    /// * `Result<TransactionReceipt>` - The transaction receipt
-    pub async fn reclaim_expired(
-        &self,
-        buy_attestation: FixedBytes<32>,
-    ) -> eyre::Result<TransactionReceipt> {
-        let escrow_contract = contracts::obligations::escrow::non_tierable::ERC721EscrowObligation::new(
-            self.addresses.escrow_obligation,
-            &*self.wallet_provider,
-        );
-
-        let receipt = escrow_contract
-            .reclaimExpired(buy_attestation)
-            .send()
-            .await?
-            .get_receipt()
-            .await?;
-
-        Ok(receipt)
-    }
-
-    /// Creates an escrow arrangement with ERC721 tokens for a custom demand.
-    ///
-    /// # Arguments
-    /// * `price` - The ERC721 token data for payment
-    /// * `item` - The arbiter and demand data
-    /// * `expiration` - The expiration timestamp
-    ///
-    /// # Returns
-    /// * `Result<TransactionReceipt>` - The transaction receipt
-    pub async fn buy_with_erc721(
-        &self,
-        price: &Erc721Data,
-        item: &ArbiterData,
-        expiration: u64,
-    ) -> eyre::Result<TransactionReceipt> {
-        let escrow_obligation_contract = contracts::obligations::escrow::non_tierable::ERC721EscrowObligation::new(
-            self.addresses.escrow_obligation,
-            &*self.wallet_provider,
-        );
-
-        let receipt = escrow_obligation_contract
-            .doObligation(
-                contracts::obligations::escrow::non_tierable::ERC721EscrowObligation::ObligationData {
-                    token: price.address,
-                    tokenId: price.id,
-                    arbiter: item.arbiter,
-                    demand: item.demand.clone(),
-                },
-                expiration,
-            )
-            .send()
-            .await?
-            .get_receipt()
-            .await?;
-
-        Ok(receipt)
-    }
-
-    /// Makes a direct payment with ERC721 tokens.
-    ///
-    /// # Arguments
-    /// * `price` - The ERC721 token data for payment
-    /// * `payee` - The address of the payment recipient
-    ///
-    /// # Returns
-    /// * `Result<TransactionReceipt>` - The transaction receipt
-    pub async fn pay_with_erc721(
-        &self,
-        price: &Erc721Data,
-        payee: Address,
-    ) -> eyre::Result<TransactionReceipt> {
-        let payment_obligation_contract = contracts::obligations::ERC721PaymentObligation::new(
-            self.addresses.payment_obligation,
-            &*self.wallet_provider,
-        );
-
-        let receipt = payment_obligation_contract
-            .doObligation(
-                contracts::obligations::ERC721PaymentObligation::ObligationData {
-                    token: price.address,
-                    tokenId: price.id,
-                    payee,
-                },
-                FixedBytes::<32>::ZERO, // refUID - no reference for standalone payments
-            )
-            .send()
-            .await?
-            .get_receipt()
-            .await?;
-
-        Ok(receipt)
-    }
-
-    /// Creates an escrow to trade ERC721 tokens for other ERC721 tokens.
-    ///
-    /// # Arguments
-    /// * `bid` - The ERC721 token data being offered
-    /// * `ask` - The ERC721 token data being requested
-    /// * `expiration` - The expiration timestamp
-    ///
-    /// # Returns
-    /// * `Result<TransactionReceipt>` - The transaction receipt
-    pub async fn buy_erc721_for_erc721(
-        &self,
-        bid: &Erc721Data,
-        ask: &Erc721Data,
-        expiration: u64,
-    ) -> eyre::Result<TransactionReceipt> {
-        let barter_utils_contract =
-            contracts::utils::ERC721BarterUtils::new(self.addresses.barter_utils, &*self.wallet_provider);
-
-        let receipt = barter_utils_contract
-            .buyErc721ForErc721(bid.address, bid.id, ask.address, ask.id, expiration)
-            .send()
-            .await?
-            .get_receipt()
-            .await?;
-
-        Ok(receipt)
-    }
-
-    /// Fulfills an existing ERC721-for-ERC721 trade escrow.
-    ///
-    /// # Arguments
-    /// * `buy_attestation` - The attestation UID of the buy order
-    ///
-    /// # Returns
-    /// * `Result<TransactionReceipt>` - The transaction receipt
-    pub async fn pay_erc721_for_erc721(
-        &self,
-        buy_attestation: FixedBytes<32>,
-    ) -> eyre::Result<TransactionReceipt> {
-        let barter_utils_contract =
-            contracts::utils::ERC721BarterUtils::new(self.addresses.barter_utils, &*self.wallet_provider);
-
-        let receipt = barter_utils_contract
-            .payErc721ForErc721(buy_attestation)
-            .send()
-            .await?
-            .get_receipt()
-            .await?;
-
-        Ok(receipt)
-    }
-
-    /// Creates an escrow to trade ERC721 tokens for ERC20 tokens.
-    ///
-    /// # Arguments
-    /// * `bid` - The ERC721 token data being offered
-    /// * `ask` - The ERC20 token data being requested
-    /// * `expiration` - The expiration timestamp
-    ///
-    /// # Returns
-    /// * `Result<TransactionReceipt>` - The transaction receipt
-    pub async fn buy_erc20_with_erc721(
-        &self,
-        bid: &Erc721Data,
-        ask: &Erc20Data,
-        expiration: u64,
-    ) -> eyre::Result<TransactionReceipt> {
-        let barter_utils_contract =
-            contracts::utils::ERC721BarterUtils::new(
-                self.addresses.barter_utils,
-                &*self.wallet_provider,
-            );
-
-        let receipt = barter_utils_contract
-            .buyErc20WithErc721(bid.address, bid.id, ask.address, ask.value, expiration)
-            .send()
-            .await?
-            .get_receipt()
-            .await?;
-
-        Ok(receipt)
-    }
-
-    /// Fulfills an existing ERC721-for-ERC20 trade escrow.
-    ///
-    /// # Arguments
-    /// * `buy_attestation` - The attestation UID of the buy order
-    ///
-    /// # Returns
-    /// * `Result<TransactionReceipt>` - The transaction receipt
-    pub async fn pay_erc721_for_erc20(
-        &self,
-        buy_attestation: FixedBytes<32>,
-    ) -> eyre::Result<TransactionReceipt> {
-        let barter_utils_contract =
-            contracts::utils::ERC721BarterUtils::new(
-                self.addresses.barter_utils,
-                &*self.wallet_provider,
-            );
-
-        let receipt = barter_utils_contract
-            .payErc721ForErc20(buy_attestation)
-            .send()
-            .await?
-            .get_receipt()
-            .await?;
-
-        Ok(receipt)
-    }
-
-    /// Creates an escrow to trade ERC721 tokens for ERC1155 tokens.
-    ///
-    /// # Arguments
-    /// * `bid` - The ERC721 token data being offered
-    /// * `ask` - The ERC1155 token data being requested
-    /// * `expiration` - The expiration timestamp
-    ///
-    /// # Returns
-    /// * `Result<TransactionReceipt>` - The transaction receipt
-    pub async fn buy_erc1155_with_erc721(
-        &self,
-        bid: &Erc721Data,
-        ask: &Erc1155Data,
-        expiration: u64,
-    ) -> eyre::Result<TransactionReceipt> {
-        let barter_utils_contract =
-            contracts::utils::ERC721BarterUtils::new(
-                self.addresses.barter_utils,
-                &*self.wallet_provider,
-            );
-
-        let receipt = barter_utils_contract
-            .buyErc1155WithErc721(
-                bid.address,
-                bid.id,
-                ask.address,
-                ask.id,
-                ask.value,
-                expiration,
-            )
-            .send()
-            .await?
-            .get_receipt()
-            .await?;
-
-        Ok(receipt)
-    }
-
-    /// Fulfills an existing ERC721-for-ERC1155 trade escrow.
-    ///
-    /// # Arguments
-    /// * `buy_attestation` - The attestation UID of the buy order
-    ///
-    /// # Returns
-    /// * `Result<TransactionReceipt>` - The transaction receipt
-    pub async fn pay_erc721_for_erc1155(
-        &self,
-        buy_attestation: FixedBytes<32>,
-    ) -> eyre::Result<TransactionReceipt> {
-        let barter_utils_contract =
-            contracts::utils::ERC721BarterUtils::new(
-                self.addresses.barter_utils,
-                &*self.wallet_provider,
-            );
-
-        let receipt = barter_utils_contract
-            .payErc721ForErc1155(buy_attestation)
-            .send()
-            .await?
-            .get_receipt()
-            .await?;
-
-        Ok(receipt)
-    }
-
-    /// Creates an escrow to trade ERC721 tokens for a bundle of tokens.
-    ///
-    /// # Arguments
-    /// * `bid` - The ERC721 token data being offered
-    /// * `ask` - The token bundle data being requested
-    /// * `expiration` - The expiration timestamp
-    ///
-    /// # Returns
-    /// * `Result<TransactionReceipt>` - The transaction receipt
-    pub async fn buy_bundle_with_erc721(
-        &self,
-        bid: &Erc721Data,
-        ask: TokenBundleData,
-        expiration: u64,
-    ) -> eyre::Result<TransactionReceipt> {
-        let barter_utils_contract =
-            contracts::utils::ERC721BarterUtils::new(
-                self.addresses.barter_utils,
-                &*self.wallet_provider,
-            );
-
-        let receipt = barter_utils_contract
-            .buyBundleWithErc721(
-                bid.address,
-                bid.id,
-                (ask, self.signer.address()).into(),
-                expiration,
-            )
-            .send()
-            .await?
-            .get_receipt()
-            .await?;
-
-        Ok(receipt)
-    }
-
-    /// Fulfills an existing ERC721-for-bundle trade escrow.
-    ///
-    /// # Arguments
-    /// * `buy_attestation` - The attestation UID of the buy order
-    ///
-    /// # Returns
-    /// * `Result<TransactionReceipt>` - The transaction receipt
-    pub async fn pay_erc721_for_bundle(
-        &self,
-        buy_attestation: FixedBytes<32>,
-    ) -> eyre::Result<TransactionReceipt> {
-        let barter_utils_contract =
-            contracts::utils::ERC721BarterUtils::new(
-                self.addresses.barter_utils,
-                &*self.wallet_provider,
-            );
-
-        let receipt = barter_utils_contract
-            .payErc721ForBundle(buy_attestation)
-            .send()
-            .await?
-            .get_receipt()
-            .await?;
-
-        Ok(receipt)
+    ) -> eyre::Result<alloy::rpc::types::TransactionReceipt> {
+        util::revoke_all(&self.wallet_provider, &self.addresses, token_contract, purpose).await
     }
 }
 
 impl AlkahestExtension for Erc721Module {
     type Config = Erc721Addresses;
+
     async fn init(
         signer: PrivateKeySigner,
         providers: ProviderContext,
@@ -635,7 +134,8 @@ mod tests {
         sol_types::SolValue as _,
     };
 
-    use super::Erc721Module;
+    use super::escrow::non_tierable::NonTierable;
+    use super::payment::Payment;
     use crate::{
         DefaultAlkahestClient,
         extensions::{HasErc20, HasErc721, HasErc1155, HasTokenBundle},
@@ -668,7 +168,7 @@ mod tests {
         let encoded = escrow_data.abi_encode();
 
         // Decode the data
-        let decoded = Erc721Module::decode_escrow_obligation(&encoded.into())?;
+        let decoded = NonTierable::decode_obligation(&encoded.into())?;
 
         // Verify decoded data
         assert_eq!(decoded.token, token_address, "Token address should match");
@@ -699,7 +199,7 @@ mod tests {
         let encoded = payment_data.abi_encode();
 
         // Decode the data
-        let decoded = Erc721Module::decode_payment_obligation(&encoded.into())?;
+        let decoded = Payment::decode_obligation(&encoded.into())?;
 
         // Verify decoded data
         assert_eq!(decoded.token, token_address, "Token address should match");
@@ -870,7 +370,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_buy_with_erc721() -> eyre::Result<()> {
+    async fn test_escrow_create() -> eyre::Result<()> {
         // test setup
         let test = setup_test_environment().await?;
 
@@ -903,7 +403,9 @@ mod tests {
         let receipt = test
             .alice_client
             .erc721()
-            .buy_with_erc721(&price, &item, 0)
+            .escrow()
+            .non_tierable()
+            .create(&price, &item, 0)
             .await?;
 
         // Verify escrow happened
@@ -923,7 +425,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_pay_with_erc721() -> eyre::Result<()> {
+    async fn test_payment_pay() -> eyre::Result<()> {
         // test setup
         let test = setup_test_environment().await?;
 
@@ -951,7 +453,8 @@ mod tests {
         let receipt = test
             .alice_client
             .erc721()
-            .pay_with_erc721(&price, test.bob.address())
+            .payment()
+            .pay(&price, test.bob.address())
             .await?;
 
         // Verify payment happened
@@ -968,7 +471,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_buy_erc721_for_erc721() -> eyre::Result<()> {
+    async fn test_barter_buy_erc721_for_erc721() -> eyre::Result<()> {
         // test setup
         let test = setup_test_environment().await?;
 
@@ -1001,6 +504,7 @@ mod tests {
         let receipt = test
             .alice_client
             .erc721()
+            .barter()
             .buy_erc721_for_erc721(&bid, &ask, 0)
             .await?;
 
@@ -1020,7 +524,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_pay_erc721_for_erc721() -> eyre::Result<()> {
+    async fn test_barter_pay_erc721_for_erc721() -> eyre::Result<()> {
         // test setup
         let test = setup_test_environment().await?;
 
@@ -1060,6 +564,7 @@ mod tests {
         let buy_receipt = test
             .alice_client
             .erc721()
+            .barter()
             .buy_erc721_for_erc721(&bid, &ask, 0)
             .await?;
 
@@ -1075,6 +580,7 @@ mod tests {
         let _sell_receipt = test
             .bob_client
             .erc721()
+            .barter()
             .pay_erc721_for_erc721(buy_attestation)
             .await?;
 
@@ -1098,7 +604,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_collect_expired() -> eyre::Result<()> {
+    async fn test_escrow_reclaim_expired() -> eyre::Result<()> {
         // test setup
         let test = setup_test_environment().await?;
 
@@ -1132,6 +638,7 @@ mod tests {
         let receipt = test
             .alice_client
             .erc721()
+            .barter()
             .buy_erc721_for_erc721(&bid, &ask, expiration as u64 + 1)
             .await?;
 
@@ -1144,6 +651,8 @@ mod tests {
         let _collect_receipt = test
             .alice_client
             .erc721()
+            .escrow()
+            .non_tierable()
             .reclaim_expired(buy_attestation)
             .await?;
 
@@ -1160,7 +669,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_buy_erc20_with_erc721() -> eyre::Result<()> {
+    async fn test_barter_buy_erc20_with_erc721() -> eyre::Result<()> {
         // test setup
         let test = setup_test_environment().await?;
 
@@ -1193,6 +702,7 @@ mod tests {
         let receipt = test
             .alice_client
             .erc721()
+            .barter()
             .buy_erc20_with_erc721(&bid, &ask, 0)
             .await?;
 
@@ -1212,7 +722,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_buy_erc1155_with_erc721() -> eyre::Result<()> {
+    async fn test_barter_buy_erc1155_with_erc721() -> eyre::Result<()> {
         // test setup
         let test = setup_test_environment().await?;
 
@@ -1246,6 +756,7 @@ mod tests {
         let receipt = test
             .alice_client
             .erc721()
+            .barter()
             .buy_erc1155_with_erc721(&bid, &ask, 0)
             .await?;
 
@@ -1265,7 +776,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_buy_bundle_with_erc721() -> eyre::Result<()> {
+    async fn test_barter_buy_bundle_with_erc721() -> eyre::Result<()> {
         // test setup
         let test = setup_test_environment().await?;
 
@@ -1286,6 +797,7 @@ mod tests {
 
         // Create bundle data
         let bundle = TokenBundleData {
+            native_amount: U256::ZERO,
             erc20s: vec![Erc20Data {
                 address: test.mock_addresses.erc20_b,
                 value: U256::from(20),
@@ -1311,7 +823,8 @@ mod tests {
         let receipt = test
             .alice_client
             .erc721()
-            .buy_bundle_with_erc721(&bid, bundle, 0)
+            .barter()
+            .buy_bundle_with_erc721(&bid, &bundle, 0)
             .await?;
 
         // Verify escrow happened
@@ -1330,7 +843,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_pay_erc721_for_erc20() -> eyre::Result<()> {
+    async fn test_barter_pay_erc721_for_erc20() -> eyre::Result<()> {
         // test setup
         let test = setup_test_environment().await?;
 
@@ -1373,6 +886,7 @@ mod tests {
         let buy_receipt = test
             .bob_client
             .erc20()
+            .barter()
             .buy_erc721_for_erc20(&bid, &ask, 0)
             .await?;
 
@@ -1388,6 +902,7 @@ mod tests {
         let _sell_receipt = test
             .alice_client
             .erc721()
+            .barter()
             .pay_erc721_for_erc20(buy_attestation)
             .await?;
 
@@ -1412,7 +927,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_pay_erc721_for_erc1155() -> eyre::Result<()> {
+    async fn test_barter_pay_erc721_for_erc1155() -> eyre::Result<()> {
         // test setup
         let test = setup_test_environment().await?;
 
@@ -1456,6 +971,7 @@ mod tests {
         let buy_receipt = test
             .bob_client
             .erc1155()
+            .barter()
             .buy_erc721_with_erc1155(&bid, &ask, 0)
             .await?;
 
@@ -1471,6 +987,7 @@ mod tests {
         let _sell_receipt = test
             .alice_client
             .erc721()
+            .barter()
             .pay_erc721_for_erc1155(buy_attestation)
             .await?;
 
@@ -1498,7 +1015,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_pay_erc721_for_bundle() -> eyre::Result<()> {
+    async fn test_barter_pay_erc721_for_bundle() -> eyre::Result<()> {
         // test setup
         let test = setup_test_environment().await?;
 
@@ -1550,6 +1067,7 @@ mod tests {
 
         // Bob's bundle that he'll escrow
         let bundle = TokenBundleData {
+            native_amount: U256::ZERO,
             erc20s: vec![Erc20Data {
                 address: test.mock_addresses.erc20_b,
                 value: U256::from(20),
@@ -1582,7 +1100,9 @@ mod tests {
         let buy_receipt = test
             .bob_client
             .token_bundle()
-            .buy_with_bundle(
+            .escrow()
+            .non_tierable()
+            .create(
                 &bundle,
                 &ArbiterData {
                     arbiter: test.addresses.erc721_addresses.payment_obligation,
@@ -1610,6 +1130,7 @@ mod tests {
         let pay_receipt = test
             .alice_client
             .erc721()
+            .barter()
             .pay_erc721_for_bundle(buy_attestation)
             .await?;
 
