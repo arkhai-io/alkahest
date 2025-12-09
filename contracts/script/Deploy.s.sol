@@ -70,7 +70,7 @@ import {TimeEqualArbiter} from "@src/arbiters/attestation-properties/TimeEqualAr
 import {UidArbiter} from "@src/arbiters/attestation-properties/UidArbiter.sol";
 
 // String Obligation
-import {StringObligation} from "@src/obligations/payment/StringObligation.sol";
+import {StringObligation} from "@src/obligations/StringObligation.sol";
 
 contract Deploy is Script {
     function run() external {

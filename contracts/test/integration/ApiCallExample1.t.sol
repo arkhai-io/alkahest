@@ -6,7 +6,7 @@ import "forge-std/console.sol";
 import {IEAS} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {Attestation} from "@eas/Common.sol";
-import {StringObligation} from "@src/obligations/payment/StringObligation.sol";
+import {StringObligation} from "@src/obligations/StringObligation.sol";
 import {TrustedOracleArbiter} from "@src/arbiters/TrustedOracleArbiter.sol";
 import {ERC20EscrowObligation} from "@src/obligations/escrow/non-tierable/ERC20EscrowObligation.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";

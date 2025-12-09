@@ -300,13 +300,6 @@ pub mod obligations {
             "src/contracts/obligations/payment/NativeTokenPaymentObligation.json"
         );
 
-        sol!(
-            #[allow(missing_docs)]
-            #[sol(rpc)]
-            #[derive(Debug)]
-            StringObligation,
-            "src/contracts/obligations/payment/StringObligation.json"
-        );
     }
 
     // Re-export payment obligations for convenience
@@ -315,7 +308,15 @@ pub mod obligations {
     pub use payment::ERC1155PaymentObligation;
     pub use payment::TokenBundlePaymentObligation;
     pub use payment::NativeTokenPaymentObligation;
-    pub use payment::StringObligation;
+
+    use alloy::sol;
+    sol!(
+        #[allow(missing_docs)]
+        #[sol(rpc)]
+        #[derive(Debug)]
+        StringObligation,
+        "src/contracts/obligations/StringObligation.json"
+    );
 
     // Escrow obligations submodule
     pub mod escrow {
