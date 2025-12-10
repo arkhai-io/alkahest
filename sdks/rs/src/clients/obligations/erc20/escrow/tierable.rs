@@ -9,7 +9,6 @@ use alloy::sol_types::SolValue;
 use crate::contracts;
 use crate::types::{ArbiterData, DecodedAttestation, Erc20Data};
 
-use super::super::util;
 use super::super::Erc20Module;
 
 /// Tierable escrow API for ERC20 tokens
@@ -102,16 +101,16 @@ impl<'a> Tierable<'a> {
         item: &ArbiterData,
         expiration: u64,
     ) -> eyre::Result<TransactionReceipt> {
-        let deadline = util::get_permit_deadline()?;
+        let util = self.module.util();
+        let deadline = super::super::util::Util::get_permit_deadline()?;
 
-        let permit = util::get_permit_signature(
-            &self.module.signer,
-            &self.module.wallet_provider,
-            self.module.addresses.escrow_obligation, // TODO: use tierable address
-            price,
-            U256::from(deadline),
-        )
-        .await?;
+        let permit = util
+            .get_permit_signature(
+                self.module.addresses.escrow_obligation, // TODO: use tierable address
+                price,
+                U256::from(deadline),
+            )
+            .await?;
 
         let barter_utils_contract = contracts::utils::ERC20BarterUtils::new(
             self.module.addresses.barter_utils,

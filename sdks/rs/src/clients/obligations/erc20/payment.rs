@@ -9,7 +9,6 @@ use alloy::sol_types::SolValue;
 use crate::contracts;
 use crate::types::{DecodedAttestation, Erc20Data};
 
-use super::util;
 use super::Erc20Module;
 
 /// Payment API for ERC20 tokens
@@ -113,15 +112,15 @@ impl<'a> Payment<'a> {
         price: &Erc20Data,
         payee: Address,
     ) -> eyre::Result<TransactionReceipt> {
-        let deadline = util::get_permit_deadline()?;
-        let permit = util::get_permit_signature(
-            &self.module.signer,
-            &self.module.wallet_provider,
-            self.module.addresses.barter_utils,
-            price,
-            U256::from(deadline),
-        )
-        .await?;
+        let util = self.module.util();
+        let deadline = super::util::Util::get_permit_deadline()?;
+        let permit = util
+            .get_permit_signature(
+                self.module.addresses.barter_utils,
+                price,
+                U256::from(deadline),
+            )
+            .await?;
 
         let barter_utils_contract = contracts::utils::ERC20BarterUtils::new(
             self.module.addresses.barter_utils,

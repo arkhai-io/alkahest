@@ -122,13 +122,24 @@ impl Erc1155Module {
         barter_utils::BarterUtils::new(self)
     }
 
+    /// Access utility API (approvals)
+    ///
+    /// # Example
+    /// ```rust,ignore
+    /// client.erc1155().util().approve_all(token_contract, ApprovalPurpose::Payment).await?;
+    /// client.erc1155().util().revoke_all(token_contract, ApprovalPurpose::Escrow).await?;
+    /// ```
+    pub fn util(&self) -> util::Util<'_> {
+        util::Util::new(self)
+    }
+
     /// Approves all tokens from a contract for trading.
     pub async fn approve_all(
         &self,
         token_contract: Address,
         purpose: ApprovalPurpose,
     ) -> eyre::Result<alloy::rpc::types::TransactionReceipt> {
-        util::approve_all(&self.wallet_provider, &self.addresses, token_contract, purpose).await
+        self.util().approve_all(token_contract, purpose).await
     }
 
     /// Revokes approval for all tokens from a contract.
@@ -137,7 +148,7 @@ impl Erc1155Module {
         token_contract: Address,
         purpose: ApprovalPurpose,
     ) -> eyre::Result<alloy::rpc::types::TransactionReceipt> {
-        util::revoke_all(&self.wallet_provider, &self.addresses, token_contract, purpose).await
+        self.util().revoke_all(token_contract, purpose).await
     }
 }
 

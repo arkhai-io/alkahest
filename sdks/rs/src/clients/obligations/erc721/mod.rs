@@ -84,13 +84,24 @@ impl Erc721Module {
         barter_utils::BarterUtils::new(self)
     }
 
+    /// Access utility API (approvals)
+    ///
+    /// # Example
+    /// ```rust,ignore
+    /// client.erc721().util().approve(&token, ApprovalPurpose::Payment).await?;
+    /// client.erc721().util().approve_all(token_contract, ApprovalPurpose::Escrow).await?;
+    /// ```
+    pub fn util(&self) -> util::Util<'_> {
+        util::Util::new(self)
+    }
+
     /// Approves a specific token for trading.
     pub async fn approve(
         &self,
         token: &Erc721Data,
         purpose: ApprovalPurpose,
     ) -> eyre::Result<alloy::rpc::types::TransactionReceipt> {
-        util::approve(&self.wallet_provider, &self.addresses, token, purpose).await
+        self.util().approve(token, purpose).await
     }
 
     /// Approves all tokens from a contract for trading.
@@ -99,7 +110,7 @@ impl Erc721Module {
         token_contract: Address,
         purpose: ApprovalPurpose,
     ) -> eyre::Result<alloy::rpc::types::TransactionReceipt> {
-        util::approve_all(&self.wallet_provider, &self.addresses, token_contract, purpose).await
+        self.util().approve_all(token_contract, purpose).await
     }
 
     /// Revokes approval for all tokens from a contract.
@@ -108,7 +119,7 @@ impl Erc721Module {
         token_contract: Address,
         purpose: ApprovalPurpose,
     ) -> eyre::Result<alloy::rpc::types::TransactionReceipt> {
-        util::revoke_all(&self.wallet_provider, &self.addresses, token_contract, purpose).await
+        self.util().revoke_all(token_contract, purpose).await
     }
 }
 

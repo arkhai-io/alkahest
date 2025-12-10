@@ -123,13 +123,24 @@ impl Erc20Module {
         barter_utils::BarterUtils::new(self)
     }
 
+    /// Access utility API (permits and approvals)
+    ///
+    /// # Example
+    /// ```rust,ignore
+    /// client.erc20().util().approve(&token, ApprovalPurpose::Payment).await?;
+    /// client.erc20().util().get_permit_signature(spender, &token, deadline).await?;
+    /// ```
+    pub fn util(&self) -> util::Util<'_> {
+        util::Util::new(self)
+    }
+
     /// Approves token spending for payment or escrow purposes.
     pub async fn approve(
         &self,
         token: &Erc20Data,
         purpose: ApprovalPurpose,
     ) -> eyre::Result<alloy::rpc::types::TransactionReceipt> {
-        util::approve(&self.signer, &self.wallet_provider, &self.addresses, token, purpose).await
+        self.util().approve(token, purpose).await
     }
 
     /// Approves token spending if current allowance is less than required amount.
@@ -138,7 +149,7 @@ impl Erc20Module {
         token: &Erc20Data,
         purpose: ApprovalPurpose,
     ) -> eyre::Result<Option<alloy::rpc::types::TransactionReceipt>> {
-        util::approve_if_less(&self.signer, &self.wallet_provider, &self.addresses, token, purpose).await
+        self.util().approve_if_less(token, purpose).await
     }
 }
 

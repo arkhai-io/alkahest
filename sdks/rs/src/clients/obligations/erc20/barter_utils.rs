@@ -10,7 +10,6 @@ use alloy::sol_types::SolValue;
 use crate::contracts;
 use crate::types::{Erc20Data, Erc721Data, Erc1155Data, TokenBundleData};
 
-use super::util;
 use super::Erc20Module;
 
 /// Barter utilities API for ERC20 tokens
@@ -72,16 +71,16 @@ impl<'a> BarterUtils<'a> {
         ask: &Erc20Data,
         expiration: u64,
     ) -> eyre::Result<TransactionReceipt> {
-        let deadline = util::get_permit_deadline()?;
+        let util = self.module.util();
+        let deadline = super::util::Util::get_permit_deadline()?;
 
-        let permit = util::get_permit_signature(
-            &self.module.signer,
-            &self.module.wallet_provider,
-            self.module.addresses.barter_utils,
-            bid,
-            U256::from(deadline),
-        )
-        .await?;
+        let permit = util
+            .get_permit_signature(
+                self.module.addresses.barter_utils,
+                bid,
+                U256::from(deadline),
+            )
+            .await?;
 
         let barter_utils_contract = contracts::utils::ERC20BarterUtils::new(
             self.module.addresses.barter_utils,
@@ -162,18 +161,18 @@ impl<'a> BarterUtils<'a> {
                 buy_attestation_data.demand.as_ref(),
             )?;
 
-        let deadline = util::get_permit_deadline()?;
-        let permit = util::get_permit_signature(
-            &self.module.signer,
-            &self.module.wallet_provider,
-            self.module.addresses.barter_utils,
-            &Erc20Data {
-                address: demand_data.token,
-                value: demand_data.amount,
-            },
-            U256::from(deadline),
-        )
-        .await?;
+        let util = self.module.util();
+        let deadline = super::util::Util::get_permit_deadline()?;
+        let permit = util
+            .get_permit_signature(
+                self.module.addresses.barter_utils,
+                &Erc20Data {
+                    address: demand_data.token,
+                    value: demand_data.amount,
+                },
+                U256::from(deadline),
+            )
+            .await?;
 
         let receipt = barter_utils_contract
             .permitAndPayErc20ForErc20(
@@ -240,15 +239,15 @@ impl<'a> BarterUtils<'a> {
         ask: &Erc721Data,
         expiration: u64,
     ) -> eyre::Result<TransactionReceipt> {
-        let deadline = util::get_permit_deadline()?;
-        let permit = util::get_permit_signature(
-            &self.module.signer,
-            &self.module.wallet_provider,
-            self.module.addresses.barter_utils,
-            bid,
-            U256::from(deadline),
-        )
-        .await?;
+        let util = self.module.util();
+        let deadline = super::util::Util::get_permit_deadline()?;
+        let permit = util
+            .get_permit_signature(
+                self.module.addresses.barter_utils,
+                bid,
+                U256::from(deadline),
+            )
+            .await?;
 
         let barter_utils_contract = contracts::utils::ERC20BarterUtils::new(
             self.module.addresses.barter_utils,
@@ -329,18 +328,18 @@ impl<'a> BarterUtils<'a> {
                 buy_attestation_data.demand.as_ref(),
             )?;
 
-        let deadline = util::get_permit_deadline()?;
-        let permit = util::get_permit_signature(
-            &self.module.signer,
-            &self.module.wallet_provider,
-            self.module.addresses.barter_utils,
-            &Erc20Data {
-                address: demand_data.token,
-                value: demand_data.amount,
-            },
-            U256::from(deadline),
-        )
-        .await?;
+        let util = self.module.util();
+        let deadline = super::util::Util::get_permit_deadline()?;
+        let permit = util
+            .get_permit_signature(
+                self.module.addresses.barter_utils,
+                &Erc20Data {
+                    address: demand_data.token,
+                    value: demand_data.amount,
+                },
+                U256::from(deadline),
+            )
+            .await?;
 
         let receipt = barter_utils_contract
             .permitAndPayErc20ForErc721(
@@ -414,15 +413,15 @@ impl<'a> BarterUtils<'a> {
         ask: &Erc1155Data,
         expiration: u64,
     ) -> eyre::Result<TransactionReceipt> {
-        let deadline = util::get_permit_deadline()?;
-        let permit = util::get_permit_signature(
-            &self.module.signer,
-            &self.module.wallet_provider,
-            self.module.addresses.barter_utils,
-            bid,
-            U256::from(deadline),
-        )
-        .await?;
+        let util = self.module.util();
+        let deadline = super::util::Util::get_permit_deadline()?;
+        let permit = util
+            .get_permit_signature(
+                self.module.addresses.barter_utils,
+                bid,
+                U256::from(deadline),
+            )
+            .await?;
 
         let barter_utils_contract = contracts::utils::ERC20BarterUtils::new(
             self.module.addresses.barter_utils,
@@ -504,18 +503,18 @@ impl<'a> BarterUtils<'a> {
                 buy_attestation_data.demand.as_ref(),
             )?;
 
-        let deadline = util::get_permit_deadline()?;
-        let permit = util::get_permit_signature(
-            &self.module.signer,
-            &self.module.wallet_provider,
-            self.module.addresses.barter_utils,
-            &Erc20Data {
-                address: demand_data.token,
-                value: demand_data.amount,
-            },
-            U256::from(deadline),
-        )
-        .await?;
+        let util = self.module.util();
+        let deadline = super::util::Util::get_permit_deadline()?;
+        let permit = util
+            .get_permit_signature(
+                self.module.addresses.barter_utils,
+                &Erc20Data {
+                    address: demand_data.token,
+                    value: demand_data.amount,
+                },
+                U256::from(deadline),
+            )
+            .await?;
 
         let receipt = barter_utils_contract
             .permitAndPayErc20ForErc1155(
@@ -587,15 +586,15 @@ impl<'a> BarterUtils<'a> {
         ask: &TokenBundleData,
         expiration: u64,
     ) -> eyre::Result<TransactionReceipt> {
-        let deadline = util::get_permit_deadline()?;
-        let permit = util::get_permit_signature(
-            &self.module.signer,
-            &self.module.wallet_provider,
-            self.module.addresses.barter_utils,
-            bid,
-            U256::from(deadline),
-        )
-        .await?;
+        let util = self.module.util();
+        let deadline = super::util::Util::get_permit_deadline()?;
+        let permit = util
+            .get_permit_signature(
+                self.module.addresses.barter_utils,
+                bid,
+                U256::from(deadline),
+            )
+            .await?;
 
         let barter_utils_contract = contracts::utils::ERC20BarterUtils::new(
             self.module.addresses.barter_utils,
@@ -675,18 +674,18 @@ impl<'a> BarterUtils<'a> {
                 buy_attestation_data.demand.as_ref(),
             )?;
 
-        let deadline = util::get_permit_deadline()?;
-        let permit = util::get_permit_signature(
-            &self.module.signer,
-            &self.module.wallet_provider,
-            self.module.addresses.barter_utils,
-            &Erc20Data {
-                address: demand_data.token,
-                value: demand_data.amount,
-            },
-            U256::from(deadline),
-        )
-        .await?;
+        let util = self.module.util();
+        let deadline = super::util::Util::get_permit_deadline()?;
+        let permit = util
+            .get_permit_signature(
+                self.module.addresses.barter_utils,
+                &Erc20Data {
+                    address: demand_data.token,
+                    value: demand_data.amount,
+                },
+                U256::from(deadline),
+            )
+            .await?;
 
         let receipt = barter_utils_contract
             .permitAndPayErc20ForBundle(

@@ -122,13 +122,23 @@ impl TokenBundleModule {
         barter_utils::BarterUtils::new(self)
     }
 
+    /// Access utility API (approvals)
+    ///
+    /// # Example
+    /// ```rust,ignore
+    /// client.token_bundle().util().approve(&bundle, ApprovalPurpose::Payment).await?;
+    /// ```
+    pub fn util(&self) -> util::Util<'_> {
+        util::Util::new(self)
+    }
+
     /// Approves all tokens in a bundle for trading.
     pub async fn approve(
         &self,
         bundle: &TokenBundleData,
         purpose: ApprovalPurpose,
     ) -> eyre::Result<Vec<alloy::rpc::types::TransactionReceipt>> {
-        util::approve(&self.wallet_provider, &self.addresses, bundle, purpose).await
+        self.util().approve(bundle, purpose).await
     }
 }
 
