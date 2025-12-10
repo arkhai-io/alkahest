@@ -2,7 +2,7 @@
 //!
 //! Tierable escrows support multiple fulfillments per escrow (1:many relationship).
 
-use alloy::primitives::{Address, Bytes, FixedBytes};
+use alloy::primitives::{Address, FixedBytes};
 use alloy::rpc::types::TransactionReceipt;
 use alloy::sol_types::SolValue;
 
@@ -25,18 +25,6 @@ impl<'a> Tierable<'a> {
     pub fn address(&self) -> Address {
         // TODO: Add tierable escrow address to TokenBundleAddresses when deployed
         self.module.addresses.escrow_obligation
-    }
-
-    /// Decodes TokenBundleEscrowObligation.ObligationData from bytes.
-    pub fn decode_obligation(
-        obligation_data: &Bytes,
-    ) -> eyre::Result<contracts::obligations::escrow::tierable::TokenBundleEscrowObligation::ObligationData>
-    {
-        let obligation_data =
-            contracts::obligations::escrow::tierable::TokenBundleEscrowObligation::ObligationData::abi_decode(
-                obligation_data,
-            )?;
-        Ok(obligation_data)
     }
 
     /// Gets an escrow obligation by its attestation UID.

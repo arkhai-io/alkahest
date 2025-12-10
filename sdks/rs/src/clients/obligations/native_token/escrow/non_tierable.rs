@@ -2,7 +2,7 @@
 //!
 //! Non-tierable escrows have a 1:1 relationship between escrow and fulfillment.
 
-use alloy::primitives::{Address, Bytes, FixedBytes};
+use alloy::primitives::{Address, FixedBytes};
 use alloy::rpc::types::TransactionReceipt;
 use alloy::sol_types::SolValue as _;
 
@@ -24,18 +24,6 @@ impl<'a> NonTierable<'a> {
     /// Get the contract address
     pub fn address(&self) -> Address {
         self.module.addresses.escrow_obligation
-    }
-
-    /// Decodes NativeTokenEscrowObligation.ObligationData from bytes.
-    pub fn decode_obligation(
-        obligation_data: &Bytes,
-    ) -> eyre::Result<contracts::obligations::escrow::non_tierable::NativeTokenEscrowObligation::ObligationData>
-    {
-        let obligation_data =
-            contracts::obligations::escrow::non_tierable::NativeTokenEscrowObligation::ObligationData::abi_decode(
-                obligation_data,
-            )?;
-        Ok(obligation_data)
     }
 
     /// Gets an escrow obligation by its attestation UID.

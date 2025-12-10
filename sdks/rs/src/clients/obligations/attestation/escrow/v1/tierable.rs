@@ -3,7 +3,7 @@
 //! Tierable escrows support multiple fulfillments per escrow (1:many relationship).
 //! V1 stores the full attestation data in the escrow obligation.
 
-use alloy::primitives::{Address, Bytes, FixedBytes};
+use alloy::primitives::{Address, FixedBytes};
 use alloy::rpc::types::TransactionReceipt;
 use alloy::sol_types::SolValue;
 
@@ -27,18 +27,6 @@ impl<'a> Tierable<'a> {
     pub fn address(&self) -> Address {
         // TODO: Add tierable escrow address when deployed
         self.module.addresses.escrow_obligation
-    }
-
-    /// Decodes AttestationEscrowObligation.ObligationData from bytes (tierable version).
-    pub fn decode_obligation(
-        obligation_data: &Bytes,
-    ) -> eyre::Result<contracts::obligations::escrow::tierable::AttestationEscrowObligation::ObligationData>
-    {
-        let obligation_data =
-            contracts::obligations::escrow::tierable::AttestationEscrowObligation::ObligationData::abi_decode(
-                obligation_data,
-            )?;
-        Ok(obligation_data)
     }
 
     /// Gets an escrow obligation by its attestation UID.

@@ -230,8 +230,9 @@ mod tests {
         // Encode the data
         let encoded = escrow_data.abi_encode();
 
-        // Decode the data using new API
-        let decoded = super::escrow::v1::non_tierable::NonTierable::decode_obligation(&encoded.into())?;
+        // Decode the data using TryFrom<Bytes>
+        let decoded: contracts::obligations::escrow::non_tierable::AttestationEscrowObligation::ObligationData =
+            alloy::primitives::Bytes::from(encoded).try_into()?;
 
         // Verify decoded data
         assert_eq!(decoded.arbiter, arbiter, "Arbiter should match");
@@ -267,8 +268,9 @@ mod tests {
         // Encode the data
         let encoded = escrow_data.abi_encode();
 
-        // Decode the data using new API
-        let decoded = super::escrow::v2::non_tierable::NonTierable::decode_obligation(&encoded.into())?;
+        // Decode the data using TryFrom<Bytes>
+        let decoded: contracts::obligations::escrow::non_tierable::AttestationEscrowObligation2::ObligationData =
+            alloy::primitives::Bytes::from(encoded).try_into()?;
 
         // Verify decoded data
         assert_eq!(

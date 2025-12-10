@@ -442,6 +442,37 @@ pub mod obligations {
     }
 }
 
+// --- ObligationData ABI conversion implementations ---
+// These provide TryFrom<Bytes> for decoding and From<T> for encoding
+
+// Payment obligations
+crate::impl_abi_conversions!(obligations::ERC20PaymentObligation::ObligationData);
+crate::impl_abi_conversions!(obligations::ERC721PaymentObligation::ObligationData);
+crate::impl_abi_conversions!(obligations::ERC1155PaymentObligation::ObligationData);
+crate::impl_abi_conversions!(obligations::TokenBundlePaymentObligation::ObligationData);
+crate::impl_abi_conversions!(obligations::NativeTokenPaymentObligation::ObligationData);
+
+// Non-tierable escrow obligations
+crate::impl_abi_conversions!(obligations::escrow::non_tierable::ERC20EscrowObligation::ObligationData);
+crate::impl_abi_conversions!(obligations::escrow::non_tierable::ERC721EscrowObligation::ObligationData);
+crate::impl_abi_conversions!(obligations::escrow::non_tierable::ERC1155EscrowObligation::ObligationData);
+crate::impl_abi_conversions!(obligations::escrow::non_tierable::TokenBundleEscrowObligation::ObligationData);
+crate::impl_abi_conversions!(obligations::escrow::non_tierable::NativeTokenEscrowObligation::ObligationData);
+crate::impl_abi_conversions!(obligations::escrow::non_tierable::AttestationEscrowObligation::ObligationData);
+crate::impl_abi_conversions!(obligations::escrow::non_tierable::AttestationEscrowObligation2::ObligationData);
+
+// Tierable escrow obligations
+crate::impl_abi_conversions!(obligations::escrow::tierable::ERC20EscrowObligation::ObligationData);
+crate::impl_abi_conversions!(obligations::escrow::tierable::ERC721EscrowObligation::ObligationData);
+crate::impl_abi_conversions!(obligations::escrow::tierable::ERC1155EscrowObligation::ObligationData);
+crate::impl_abi_conversions!(obligations::escrow::tierable::TokenBundleEscrowObligation::ObligationData);
+crate::impl_abi_conversions!(obligations::escrow::tierable::NativeTokenEscrowObligation::ObligationData);
+crate::impl_abi_conversions!(obligations::escrow::tierable::AttestationEscrowObligation::ObligationData);
+crate::impl_abi_conversions!(obligations::escrow::tierable::AttestationEscrowObligation2::ObligationData);
+
+// String obligation
+crate::impl_abi_conversions!(obligations::StringObligation::ObligationData);
+
 // Utils module - mirrors contracts/src/utils/
 // Each barter utils is in its own submodule to avoid naming conflicts
 // from internal types like ObligationData that share names across contracts

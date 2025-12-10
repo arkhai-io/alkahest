@@ -2,7 +2,7 @@
 //!
 //! Provides functionality for making direct ERC20 token payments.
 
-use alloy::primitives::{Address, Bytes, FixedBytes, U256};
+use alloy::primitives::{Address, FixedBytes, U256};
 use alloy::rpc::types::TransactionReceipt;
 use alloy::sol_types::SolValue;
 
@@ -24,23 +24,6 @@ impl<'a> Payment<'a> {
     /// Get the contract address
     pub fn address(&self) -> Address {
         self.module.addresses.payment_obligation
-    }
-
-    /// Decodes ERC20PaymentObligation.ObligationData from bytes.
-    ///
-    /// # Arguments
-    /// * `obligation_data` - The obligation data
-    ///
-    /// # Returns
-    /// * `Result<contracts::obligations::ERC20PaymentObligation::ObligationData>` - The decoded obligation data
-    pub fn decode_obligation(
-        obligation_data: &Bytes,
-    ) -> eyre::Result<contracts::obligations::ERC20PaymentObligation::ObligationData> {
-        let obligation_data =
-            contracts::obligations::ERC20PaymentObligation::ObligationData::abi_decode(
-                obligation_data,
-            )?;
-        Ok(obligation_data)
     }
 
     /// Gets a payment obligation by its attestation UID.

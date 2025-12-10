@@ -1,6 +1,6 @@
 //! ERC721 payment obligation client
 
-use alloy::primitives::{Address, Bytes, FixedBytes};
+use alloy::primitives::{Address, FixedBytes};
 use alloy::rpc::types::TransactionReceipt;
 use alloy::sol_types::SolValue;
 
@@ -22,17 +22,6 @@ impl<'a> Payment<'a> {
     /// Get the contract address
     pub fn address(&self) -> Address {
         self.module.addresses.payment_obligation
-    }
-
-    /// Decodes ERC721PaymentObligation.ObligationData from bytes.
-    pub fn decode_obligation(
-        obligation_data: &Bytes,
-    ) -> eyre::Result<contracts::obligations::ERC721PaymentObligation::ObligationData> {
-        let obligation_data =
-            contracts::obligations::ERC721PaymentObligation::ObligationData::abi_decode(
-                obligation_data,
-            )?;
-        Ok(obligation_data)
     }
 
     /// Gets a payment obligation by its attestation UID.

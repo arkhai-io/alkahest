@@ -2,7 +2,7 @@
 //!
 //! Provides functionality for making direct token bundle payments.
 
-use alloy::primitives::{Address, Bytes, FixedBytes};
+use alloy::primitives::{Address, FixedBytes};
 use alloy::rpc::types::TransactionReceipt;
 use alloy::sol_types::SolValue;
 
@@ -24,23 +24,6 @@ impl<'a> Payment<'a> {
     /// Get the contract address
     pub fn address(&self) -> Address {
         self.module.addresses.payment_obligation
-    }
-
-    /// Decodes TokenBundlePaymentObligation.ObligationData from bytes.
-    ///
-    /// # Arguments
-    /// * `obligation_data` - The obligation data
-    ///
-    /// # Returns
-    /// * `Result<contracts::obligations::TokenBundlePaymentObligation::ObligationData>` - The decoded obligation data
-    pub fn decode_obligation(
-        obligation_data: &Bytes,
-    ) -> eyre::Result<contracts::obligations::TokenBundlePaymentObligation::ObligationData> {
-        let obligation_data =
-            contracts::obligations::TokenBundlePaymentObligation::ObligationData::abi_decode(
-                obligation_data,
-            )?;
-        Ok(obligation_data)
     }
 
     /// Gets a payment obligation by its attestation UID.

@@ -208,8 +208,9 @@ mod tests {
         // Encode the data
         let encoded = escrow_data.abi_encode();
 
-        // Decode the data
-        let decoded = super::escrow::non_tierable::NonTierable::decode_obligation(&encoded.into())?;
+        // Decode the data using TryFrom<Bytes>
+        let decoded: ERC20EscrowObligation::ObligationData =
+            alloy::primitives::Bytes::from(encoded).try_into()?;
 
         // Verify decoded data
         assert_eq!(decoded.token, token_address, "Token address should match");
@@ -239,8 +240,9 @@ mod tests {
         // Encode the data
         let encoded = payment_data.abi_encode();
 
-        // Decode the data
-        let decoded = super::payment::Payment::decode_obligation(&encoded.into())?;
+        // Decode the data using TryFrom<Bytes>
+        let decoded: ERC20PaymentObligation::ObligationData =
+            alloy::primitives::Bytes::from(encoded).try_into()?;
 
         // Verify decoded data
         assert_eq!(decoded.token, token_address, "Token address should match");

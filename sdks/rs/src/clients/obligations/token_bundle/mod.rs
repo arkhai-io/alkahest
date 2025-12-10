@@ -712,8 +712,9 @@ mod tests {
         // Encode the data
         let encoded = escrow_data.abi_encode();
 
-        // Decode the data
-        let decoded = super::escrow::non_tierable::NonTierable::decode_obligation(&encoded.into())?;
+        // Decode the data using TryFrom<Bytes>
+        let decoded: TokenBundleEscrowObligation::ObligationData =
+            alloy::primitives::Bytes::from(encoded).try_into()?;
 
         // Verify decoded data - note that the bundle verification would need more complex comparison
         assert_eq!(decoded.arbiter, arbiter, "Arbiter should match");
@@ -738,8 +739,9 @@ mod tests {
         // Encode the data
         let encoded = payment_data.abi_encode();
 
-        // Decode the data
-        let decoded = super::payment::Payment::decode_obligation(&encoded.into())?;
+        // Decode the data using TryFrom<Bytes>
+        let decoded: TokenBundlePaymentObligation::ObligationData =
+            alloy::primitives::Bytes::from(encoded).try_into()?;
 
         // Verify decoded data - note that the bundle verification would need more complex comparison
         assert_eq!(decoded.payee, payee, "Payee should match");
