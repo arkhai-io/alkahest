@@ -15,8 +15,19 @@ use alloy::signers::local::PrivateKeySigner;
 use serde::{Deserialize, Serialize};
 
 use crate::addresses::BASE_SEPOLIA_ADDRESSES;
+use crate::contracts;
 use crate::extensions::{AlkahestExtension, ContractModule};
+use crate::impl_abi_conversions;
+use crate::impl_token_bundle_payment_obligation;
 use crate::types::{ProviderContext, SharedWalletProvider};
+
+// --- ABI conversions for NativeToken obligation types ---
+impl_abi_conversions!(contracts::obligations::NativeTokenPaymentObligation::ObligationData);
+impl_abi_conversions!(contracts::obligations::escrow::non_tierable::NativeTokenEscrowObligation::ObligationData);
+impl_abi_conversions!(contracts::obligations::escrow::tierable::NativeTokenEscrowObligation::ObligationData);
+
+// --- TokenBundle conversions for NativeToken barter utils ---
+impl_token_bundle_payment_obligation!(contracts::utils::native_token::TokenBundlePaymentObligation::ObligationData);
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NativeTokenAddresses {

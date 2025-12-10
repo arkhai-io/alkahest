@@ -2,8 +2,12 @@ use crate::{
     addresses::BASE_SEPOLIA_ADDRESSES,
     contracts,
     extensions::{AlkahestExtension, ContractModule},
+    impl_abi_conversions,
     types::{DecodedAttestation, ProviderContext, SharedWalletProvider},
 };
+
+// --- ABI conversions for String obligation types ---
+impl_abi_conversions!(contracts::obligations::StringObligation::ObligationData);
 use alloy::{
     primitives::{Address, Bytes, FixedBytes},
     rpc::types::TransactionReceipt,

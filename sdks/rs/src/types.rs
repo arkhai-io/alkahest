@@ -8,12 +8,60 @@ use alloy::{
             NonceFiller, SimpleNonceManager, WalletFiller,
         },
     },
+    sol,
 };
 
 use alloy::signers::local::PrivateKeySigner;
 use std::sync::Arc;
 
 use crate::contracts::IEAS::Attestation;
+
+// Event emitted when escrow is claimed
+sol! (
+    event EscrowClaimed(
+        bytes32 indexed payment,
+        bytes32 indexed fulfillment,
+        address indexed fulfiller
+    );
+);
+
+/// Macro to generate From/TryFrom implementations for ABI-encoded types.
+///
+/// This provides:
+/// - `From<T>` for `Bytes` (encoding)
+/// - `TryFrom<&Bytes>` for `T` (decoding)
+/// - `TryFrom<Bytes>` for `T` (decoding)
+///
+/// Works with any type that implements `SolValue` (DemandData, ObligationData, etc.)
+#[macro_export]
+macro_rules! impl_abi_conversions {
+    ($type:ty) => {
+        impl From<$type> for alloy::primitives::Bytes {
+            fn from(value: $type) -> Self {
+                use alloy::sol_types::SolValue as _;
+                value.abi_encode().into()
+            }
+        }
+
+        impl TryFrom<&alloy::primitives::Bytes> for $type {
+            type Error = eyre::Error;
+
+            fn try_from(data: &alloy::primitives::Bytes) -> Result<Self, Self::Error> {
+                use alloy::sol_types::SolValue as _;
+                Ok(Self::abi_decode(data)?)
+            }
+        }
+
+        impl TryFrom<alloy::primitives::Bytes> for $type {
+            type Error = eyre::Error;
+
+            fn try_from(data: alloy::primitives::Bytes) -> Result<Self, Self::Error> {
+                use alloy::sol_types::SolValue as _;
+                Ok(Self::abi_decode(&data)?)
+            }
+        }
+    };
+}
 
 pub type WalletProvider = FillProvider<
     JoinFill<

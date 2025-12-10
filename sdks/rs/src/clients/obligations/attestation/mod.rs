@@ -13,8 +13,79 @@ use alloy::signers::local::PrivateKeySigner;
 use serde::{Deserialize, Serialize};
 
 use crate::addresses::BASE_SEPOLIA_ADDRESSES;
+use crate::contracts::{
+    self, IEAS,
+    obligations::escrow::non_tierable::AttestationEscrowObligation,
+    obligations::escrow::tierable::AttestationEscrowObligation as TierableAttestationEscrowObligation,
+    utils::AttestationBarterUtils,
+};
 use crate::extensions::{AlkahestExtension, ContractModule};
+use crate::impl_abi_conversions;
 use crate::types::SharedWalletProvider;
+
+// --- Attestation request conversion implementations ---
+
+macro_rules! impl_attestation_request {
+    ($target:ident) => {
+        impl From<IEAS::AttestationRequestData> for $target::AttestationRequestData {
+            fn from(data: IEAS::AttestationRequestData) -> Self {
+                Self {
+                    recipient: data.recipient,
+                    expirationTime: data.expirationTime,
+                    revocable: data.revocable,
+                    refUID: data.refUID,
+                    data: data.data,
+                    value: data.value,
+                }
+            }
+        }
+
+        impl From<IEAS::AttestationRequest> for $target::AttestationRequest {
+            fn from(request: IEAS::AttestationRequest) -> Self {
+                Self {
+                    schema: request.schema,
+                    data: request.data.into(),
+                }
+            }
+        }
+    };
+}
+
+impl_attestation_request!(AttestationEscrowObligation);
+impl_attestation_request!(TierableAttestationEscrowObligation);
+impl_attestation_request!(AttestationBarterUtils);
+
+// --- ABI conversions for Attestation obligation types ---
+impl_abi_conversions!(contracts::obligations::escrow::non_tierable::AttestationEscrowObligation::ObligationData);
+impl_abi_conversions!(contracts::obligations::escrow::non_tierable::AttestationEscrowObligation2::ObligationData);
+impl_abi_conversions!(contracts::obligations::escrow::tierable::AttestationEscrowObligation::ObligationData);
+impl_abi_conversions!(contracts::obligations::escrow::tierable::AttestationEscrowObligation2::ObligationData);
+
+/// Macro to implement From<IEAS::Attestation> for arbiter-specific Attestation types.
+/// These types have the same structure but are defined separately in each arbiter contract.
+/// Use this in arbiter modules that have an Attestation type.
+/// Pass the Attestation type directly, e.g., `impl_from_attestation!(TrivialArbiter::Attestation);`
+#[macro_export]
+macro_rules! impl_from_attestation {
+    ($target:ty) => {
+        impl From<$crate::contracts::IEAS::Attestation> for $target {
+            fn from(attestation: $crate::contracts::IEAS::Attestation) -> Self {
+                Self {
+                    uid: attestation.uid,
+                    schema: attestation.schema,
+                    time: attestation.time,
+                    expirationTime: attestation.expirationTime,
+                    revocationTime: attestation.revocationTime,
+                    refUID: attestation.refUID,
+                    recipient: attestation.recipient,
+                    attester: attestation.attester,
+                    revocable: attestation.revocable,
+                    data: attestation.data,
+                }
+            }
+        }
+    };
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AttestationAddresses {

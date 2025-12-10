@@ -2,9 +2,21 @@ use crate::{
     addresses::BASE_SEPOLIA_ADDRESSES,
     contracts,
     extensions::{AlkahestExtension, ContractModule},
-    impl_demand_data_conversions,
+    impl_abi_conversions,
+    impl_from_attestation,
     types::{SharedPublicProvider, SharedWalletProvider},
 };
+
+// Implement ABI conversions for core arbiter DemandData types
+impl_abi_conversions!(contracts::arbiters::TrustedOracleArbiter::DemandData);
+impl_abi_conversions!(contracts::arbiters::IntrinsicsArbiter2::DemandData);
+impl_abi_conversions!(contracts::arbiters::ERC8004Arbiter::DemandData);
+
+// Implement From<IEAS::Attestation> for core arbiter Attestation types
+impl_from_attestation!(contracts::arbiters::TrivialArbiter::Attestation);
+impl_from_attestation!(contracts::arbiters::TrustedOracleArbiter::Attestation);
+impl_from_attestation!(contracts::arbiters::IntrinsicsArbiter::Attestation);
+impl_from_attestation!(contracts::arbiters::IntrinsicsArbiter2::Attestation);
 use alloy::{
     primitives::{Address, Bytes, FixedBytes, Log},
     providers::Provider as _,
@@ -26,11 +38,6 @@ pub use confirmation::ConfirmationArbiterType;
 pub use logical::{
     AllArbiter, AnyArbiter, DecodedAllArbiterDemandData, DecodedAnyArbiterDemandData, Logical,
 };
-
-// Implement demand data conversions for root-level arbiters with DemandData
-impl_demand_data_conversions!(contracts::arbiters::TrustedOracleArbiter::DemandData);
-impl_demand_data_conversions!(contracts::arbiters::IntrinsicsArbiter2::DemandData);
-impl_demand_data_conversions!(contracts::arbiters::ERC8004Arbiter::DemandData);
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ArbitersAddresses {
@@ -216,54 +223,6 @@ impl ArbitersModule {
 
         Err(eyre::eyre!("No ArbitrationMade event found"))
     }
-}
-
-// --- Simple API macros -------------------------------------------------
-
-/// Macro to generate From/TryFrom implementations for ABI-encoded types.
-///
-/// This provides:
-/// - `From<T>` for `Bytes` (encoding)
-/// - `TryFrom<&Bytes>` for `T` (decoding)
-/// - `TryFrom<Bytes>` for `T` (decoding)
-///
-/// Works with any type that implements `SolValue` (DemandData, ObligationData, etc.)
-#[macro_export]
-macro_rules! impl_abi_conversions {
-    ($type:ty) => {
-        impl From<$type> for alloy::primitives::Bytes {
-            fn from(value: $type) -> Self {
-                use alloy::sol_types::SolValue as _;
-                value.abi_encode().into()
-            }
-        }
-
-        impl TryFrom<&alloy::primitives::Bytes> for $type {
-            type Error = eyre::Error;
-
-            fn try_from(data: &alloy::primitives::Bytes) -> Result<Self, Self::Error> {
-                use alloy::sol_types::SolValue as _;
-                Ok(Self::abi_decode(data)?)
-            }
-        }
-
-        impl TryFrom<alloy::primitives::Bytes> for $type {
-            type Error = eyre::Error;
-
-            fn try_from(data: alloy::primitives::Bytes) -> Result<Self, Self::Error> {
-                use alloy::sol_types::SolValue as _;
-                Ok(Self::abi_decode(&data)?)
-            }
-        }
-    };
-}
-
-/// Alias for backward compatibility
-#[macro_export]
-macro_rules! impl_demand_data_conversions {
-    ($type:ty) => {
-        $crate::impl_abi_conversions!($type);
-    };
 }
 
 /// Decoded demand data from AllArbiter sub-demands

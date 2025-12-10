@@ -10,12 +10,17 @@ use alloy::primitives::Address;
 use crate::{
     clients::arbiters::{ArbitersModule, DecodedDemand},
     contracts::arbiters::logical::{AllArbiter as AllArbiterContract, AnyArbiter as AnyArbiterContract},
-    impl_demand_data_conversions,
+    impl_abi_conversions,
+    impl_from_attestation,
 };
 
-// Implement demand data conversions
-impl_demand_data_conversions!(AllArbiterContract::DemandData);
-impl_demand_data_conversions!(AnyArbiterContract::DemandData);
+// Implement ABI conversions for logical arbiters
+impl_abi_conversions!(AllArbiterContract::DemandData);
+impl_abi_conversions!(AnyArbiterContract::DemandData);
+
+// Implement From<IEAS::Attestation> for logical arbiter Attestation types
+impl_from_attestation!(AllArbiterContract::Attestation);
+impl_from_attestation!(AnyArbiterContract::Attestation);
 
 /// Decoded version of AllArbiter::DemandData with actual demand structures instead of raw bytes
 #[derive(Debug, Clone)]

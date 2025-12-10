@@ -12,7 +12,7 @@ use extensions::{
 };
 use futures_util::StreamExt;
 use serde::{Deserialize, Serialize};
-use sol_types::EscrowClaimed;
+use types::EscrowClaimed;
 use std::sync::Arc;
 use types::{SharedPublicProvider, SharedWalletProvider};
 
@@ -31,7 +31,6 @@ pub mod contracts;
 pub mod extensions;
 pub mod fixtures;
 
-pub mod sol_types;
 pub mod types;
 pub mod utils;
 

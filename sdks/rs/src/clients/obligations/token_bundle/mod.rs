@@ -11,13 +11,121 @@ pub mod escrow;
 pub mod payment;
 pub mod util;
 
-use alloy::primitives::Address;
+use alloy::primitives::{Address, U256};
 use alloy::signers::local::PrivateKeySigner;
 use serde::{Deserialize, Serialize};
 
+use crate::contracts;
+use crate::impl_abi_conversions;
+use crate::types::TokenBundleData;
+
+// --- TokenBundleData conversion implementations ---
+
+impl TokenBundleData {
+    /// Helper function to convert to the common token bundle format used by contracts
+    pub(crate) fn into_bundle_components(
+        self,
+    ) -> (
+        Vec<Address>, // erc20Tokens
+        Vec<U256>,    // erc20Amounts
+        Vec<Address>, // erc721Tokens
+        Vec<U256>,    // erc721TokenIds
+        Vec<Address>, // erc1155Tokens
+        Vec<U256>,    // erc1155TokenIds
+        Vec<U256>,    // erc1155Amounts
+    ) {
+        (
+            self.erc20s.iter().map(|erc20| erc20.address).collect(),
+            self.erc20s.iter().map(|erc20| erc20.value).collect(),
+            self.erc721s.iter().map(|erc721| erc721.address).collect(),
+            self.erc721s.iter().map(|erc721| erc721.id).collect(),
+            self.erc1155s
+                .iter()
+                .map(|erc1155| erc1155.address)
+                .collect(),
+            self.erc1155s.iter().map(|erc1155| erc1155.id).collect(),
+            self.erc1155s.iter().map(|erc1155| erc1155.value).collect(),
+        )
+    }
+}
+
+/// Macro to implement From<(TokenBundleData, Address)> for TokenBundlePaymentObligation::ObligationData types.
+/// Use this in obligation modules that have a TokenBundlePaymentObligation type in their barter utils.
+#[macro_export]
+macro_rules! impl_token_bundle_payment_obligation {
+    ($target:path) => {
+        impl From<($crate::types::TokenBundleData, alloy::primitives::Address)> for $target {
+            fn from((bundle, payee): ($crate::types::TokenBundleData, alloy::primitives::Address)) -> Self {
+                let native_amount = bundle.native_amount;
+                let components = bundle.into_bundle_components();
+                Self {
+                    nativeAmount: native_amount,
+                    erc20Tokens: components.0,
+                    erc20Amounts: components.1,
+                    erc721Tokens: components.2,
+                    erc721TokenIds: components.3,
+                    erc1155Tokens: components.4,
+                    erc1155TokenIds: components.5,
+                    erc1155Amounts: components.6,
+                    payee,
+                }
+            }
+        }
+        impl From<(&$crate::types::TokenBundleData, alloy::primitives::Address)> for $target {
+            fn from((bundle, payee): (&$crate::types::TokenBundleData, alloy::primitives::Address)) -> Self {
+                (bundle.clone(), payee).into()
+            }
+        }
+    };
+}
+
+/// Macro to implement From<(TokenBundleData, ArbiterData)> for TokenBundleEscrowObligation::ObligationData types.
+/// Use this in obligation modules that have a TokenBundleEscrowObligation type in their barter utils.
+#[macro_export]
+macro_rules! impl_token_bundle_escrow_obligation {
+    ($target:path) => {
+        impl From<($crate::types::TokenBundleData, $crate::types::ArbiterData)> for $target {
+            fn from((bundle, arbiter_data): ($crate::types::TokenBundleData, $crate::types::ArbiterData)) -> Self {
+                let native_amount = bundle.native_amount;
+                let components = bundle.into_bundle_components();
+
+                Self {
+                    nativeAmount: native_amount,
+                    erc20Tokens: components.0,
+                    erc20Amounts: components.1,
+                    erc721Tokens: components.2,
+                    erc721TokenIds: components.3,
+                    erc1155Tokens: components.4,
+                    erc1155TokenIds: components.5,
+                    erc1155Amounts: components.6,
+                    arbiter: arbiter_data.arbiter,
+                    demand: arbiter_data.demand,
+                }
+            }
+        }
+        impl From<(&$crate::types::TokenBundleData, &$crate::types::ArbiterData)> for $target {
+            fn from((bundle, arbiter_data): (&$crate::types::TokenBundleData, &$crate::types::ArbiterData)) -> Self {
+                (bundle.clone(), arbiter_data.clone()).into()
+            }
+        }
+    };
+}
+
+// TokenBundle-specific conversions (for contracts::obligations and contracts::utils::token_bundle)
+impl_token_bundle_payment_obligation!(contracts::obligations::TokenBundlePaymentObligation::ObligationData);
+impl_token_bundle_payment_obligation!(contracts::utils::token_bundle::TokenBundlePaymentObligation::ObligationData);
+impl_token_bundle_escrow_obligation!(contracts::obligations::escrow::non_tierable::TokenBundleEscrowObligation::ObligationData);
+impl_token_bundle_escrow_obligation!(contracts::obligations::escrow::tierable::TokenBundleEscrowObligation::ObligationData);
+impl_token_bundle_escrow_obligation!(contracts::utils::token_bundle::TokenBundleEscrowObligation::ObligationData);
+
+// --- ABI conversions for TokenBundle obligation types ---
+impl_abi_conversions!(contracts::obligations::TokenBundlePaymentObligation::ObligationData);
+impl_abi_conversions!(contracts::obligations::escrow::non_tierable::TokenBundleEscrowObligation::ObligationData);
+impl_abi_conversions!(contracts::obligations::escrow::tierable::TokenBundleEscrowObligation::ObligationData);
+
 use crate::addresses::BASE_SEPOLIA_ADDRESSES;
 use crate::extensions::{AlkahestExtension, ContractModule};
-use crate::types::{ApprovalPurpose, ProviderContext, SharedWalletProvider, TokenBundleData};
+use crate::types::{ApprovalPurpose, ProviderContext, SharedWalletProvider};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TokenBundleAddresses {

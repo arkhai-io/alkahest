@@ -10,8 +10,19 @@ use alloy::signers::local::PrivateKeySigner;
 use serde::{Deserialize, Serialize};
 
 use crate::addresses::BASE_SEPOLIA_ADDRESSES;
+use crate::contracts;
 use crate::extensions::{AlkahestExtension, ContractModule};
+use crate::impl_abi_conversions;
+use crate::impl_token_bundle_payment_obligation;
 use crate::types::{ApprovalPurpose, Erc721Data, ProviderContext, SharedWalletProvider};
+
+// --- ABI conversions for ERC721 obligation types ---
+impl_abi_conversions!(contracts::obligations::ERC721PaymentObligation::ObligationData);
+impl_abi_conversions!(contracts::obligations::escrow::non_tierable::ERC721EscrowObligation::ObligationData);
+impl_abi_conversions!(contracts::obligations::escrow::tierable::ERC721EscrowObligation::ObligationData);
+
+// --- TokenBundle conversions for ERC721 barter utils ---
+impl_token_bundle_payment_obligation!(contracts::utils::erc721::TokenBundlePaymentObligation::ObligationData);
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Erc721Addresses {
