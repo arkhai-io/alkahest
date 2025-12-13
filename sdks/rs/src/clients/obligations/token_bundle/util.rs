@@ -105,4 +105,46 @@ impl<'a> Util<'a> {
 
         Ok(results)
     }
+
+    /// Revokes approval for all ERC1155 tokens in a bundle.
+    ///
+    /// # Arguments
+    /// * `bundle` - The token bundle data containing ERC1155 tokens to revoke
+    /// * `purpose` - Purpose of revocation (escrow, payment, or barter utils)
+    ///
+    /// # Returns
+    /// * `Result<Vec<TransactionReceipt>>` - A vector of transaction receipts for all revoke transactions
+    pub async fn revoke_erc1155s(
+        &self,
+        bundle: &TokenBundleData,
+        purpose: ApprovalPurpose,
+    ) -> eyre::Result<Vec<TransactionReceipt>> {
+        let target = match purpose {
+            ApprovalPurpose::Escrow => self.module.addresses.escrow_obligation,
+            ApprovalPurpose::Payment => self.module.addresses.payment_obligation,
+            ApprovalPurpose::BarterUtils => self.module.addresses.barter_utils,
+        };
+
+        let mut results = Vec::new();
+
+        let erc1155_addresses: HashSet<Address> =
+            bundle.erc1155s.iter().map(|token| token.address).collect();
+
+        for address in erc1155_addresses {
+            let erc1155_contract = IERC1155::new(address, &self.module.wallet_provider);
+
+            let receipt = erc1155_contract
+                .setApprovalForAll(target, false)
+                .send()
+                .await
+                .map_err(|e| eyre::eyre!("Failed to send ERC1155 revoke: {}", e))?
+                .get_receipt()
+                .await
+                .map_err(|e| eyre::eyre!("Failed to get ERC1155 revoke receipt: {}", e))?;
+
+            results.push(receipt);
+        }
+
+        Ok(results)
+    }
 }

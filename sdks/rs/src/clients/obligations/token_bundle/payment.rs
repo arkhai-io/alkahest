@@ -79,22 +79,24 @@ impl<'a> Payment<'a> {
         Ok(receipt)
     }
 
-    /// Makes a direct payment with token bundles after approving all tokens in the bundle.
+    /// Makes a direct payment with token bundles after approving all tokens in the bundle,
+    /// then revokes ERC1155 approvals.
     ///
     /// # Arguments
     /// * `price` - The token bundle data for payment
     /// * `payee` - The address of the payment recipient
     ///
     /// # Returns
-    /// * `Result<(Vec<TransactionReceipt>, TransactionReceipt)>` - The approval receipts and payment receipt
+    /// * `Result<(Vec<TransactionReceipt>, TransactionReceipt, Vec<TransactionReceipt>)>` - The approval, payment, and revoke receipts
     pub async fn approve_and_pay(
         &self,
         price: &TokenBundleData,
         payee: Address,
-    ) -> eyre::Result<(Vec<TransactionReceipt>, TransactionReceipt)> {
+    ) -> eyre::Result<(Vec<TransactionReceipt>, TransactionReceipt, Vec<TransactionReceipt>)> {
         let util = self.module.util();
         let approval_receipts = util.approve(price, ApprovalPurpose::Payment).await?;
         let payment_receipt = self.pay(price, payee).await?;
-        Ok((approval_receipts, payment_receipt))
+        let revoke_receipts = util.revoke_erc1155s(price, ApprovalPurpose::Payment).await?;
+        Ok((approval_receipts, payment_receipt, revoke_receipts))
     }
 }

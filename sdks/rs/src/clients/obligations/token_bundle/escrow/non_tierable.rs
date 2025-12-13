@@ -73,17 +73,19 @@ impl<'a> NonTierable<'a> {
         Ok(receipt)
     }
 
-    /// Creates an escrow arrangement with token bundles after approving all tokens in the bundle.
+    /// Creates an escrow arrangement with token bundles after approving all tokens in the bundle,
+    /// then revokes ERC1155 approvals.
     pub async fn approve_and_create(
         &self,
         price: &TokenBundleData,
         item: &ArbiterData,
         expiration: u64,
-    ) -> eyre::Result<(Vec<TransactionReceipt>, TransactionReceipt)> {
+    ) -> eyre::Result<(Vec<TransactionReceipt>, TransactionReceipt, Vec<TransactionReceipt>)> {
         let util = self.module.util();
         let approval_receipts = util.approve(price, ApprovalPurpose::Escrow).await?;
         let escrow_receipt = self.create(price, item, expiration).await?;
-        Ok((approval_receipts, escrow_receipt))
+        let revoke_receipts = util.revoke_erc1155s(price, ApprovalPurpose::Escrow).await?;
+        Ok((approval_receipts, escrow_receipt, revoke_receipts))
     }
 
     /// Collects payment from a fulfilled trade.
