@@ -170,15 +170,32 @@ impl TrustedOracleModule {
     pub async fn wait_for_arbitration(
         &self,
         obligation: FixedBytes<32>,
+        demand: Option<Bytes>,
+        oracle: Option<Address>,
         from_block: Option<u64>,
     ) -> eyre::Result<Log<TrustedOracleArbiter::ArbitrationMade>> {
         // ArbitrationMade event: (bytes32 indexed decisionKey, bytes32 indexed obligation, address indexed oracle, bool decision)
         // topic1 = decisionKey, topic2 = obligation, topic3 = oracle
-        let filter = Filter::new()
+        let mut filter = Filter::new()
             .from_block(from_block.unwrap_or(0))
             .address(self.addresses.trusted_oracle_arbiter)
             .event_signature(TrustedOracleArbiter::ArbitrationMade::SIGNATURE_HASH)
             .topic2(obligation);
+
+        // If demand is provided, compute decisionKey and filter by it
+        if let Some(demand) = demand {
+            // decisionKey = keccak256(abi.encodePacked(obligation, demand))
+            let mut packed = Vec::with_capacity(32 + demand.len());
+            packed.extend_from_slice(obligation.as_slice());
+            packed.extend_from_slice(&demand);
+            let decision_key = alloy::primitives::keccak256(&packed);
+            filter = filter.topic1(decision_key);
+        }
+
+        // If oracle is provided, filter by it
+        if let Some(oracle) = oracle {
+            filter = filter.topic3(oracle);
+        }
 
         let logs = self.public_provider.get_logs(&filter).await?;
         if let Some(log) = logs.first() {

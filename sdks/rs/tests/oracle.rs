@@ -342,7 +342,7 @@ mod tests {
 
         test.bob_client
             .oracle()
-            .wait_for_arbitration(fulfillment_uid, None)
+            .wait_for_arbitration(fulfillment_uid, None, None, None)
             .await?;
 
         let collection = test
@@ -403,7 +403,7 @@ mod tests {
 
         test.bob_client
             .oracle()
-            .wait_for_arbitration(fulfillment_uid, None)
+            .wait_for_arbitration(fulfillment_uid, None, None, None)
             .await?;
 
         let collection = test
@@ -460,7 +460,7 @@ mod tests {
 
         test.bob_client
             .oracle()
-            .wait_for_arbitration(fulfillment_uid, None)
+            .wait_for_arbitration(fulfillment_uid, None, None, None)
             .await?;
 
         let collection = test
@@ -520,7 +520,7 @@ mod tests {
 
         test.bob_client
             .oracle()
-            .wait_for_arbitration(good_fulfillment, None)
+            .wait_for_arbitration(good_fulfillment, None, None, None)
             .await?;
 
         let collection = test
