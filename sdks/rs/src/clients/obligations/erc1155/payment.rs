@@ -7,7 +7,7 @@ use alloy::rpc::types::TransactionReceipt;
 use alloy::sol_types::SolValue;
 
 use crate::contracts;
-use crate::types::{DecodedAttestation, Erc1155Data};
+use crate::types::{ApprovalPurpose, DecodedAttestation, Erc1155Data};
 
 use super::Erc1155Module;
 
@@ -81,5 +81,29 @@ impl<'a> Payment<'a> {
             .await?;
 
         Ok(receipt)
+    }
+
+    /// Makes a direct payment with ERC1155 tokens after approving, then revokes approval.
+    ///
+    /// # Arguments
+    /// * `price` - The ERC1155 token data for payment
+    /// * `payee` - The address of the payment recipient
+    ///
+    /// # Returns
+    /// * `Result<(TransactionReceipt, TransactionReceipt, TransactionReceipt)>` - The approval, payment, and revoke receipts
+    pub async fn approve_and_pay(
+        &self,
+        price: &Erc1155Data,
+        payee: Address,
+    ) -> eyre::Result<(TransactionReceipt, TransactionReceipt, TransactionReceipt)> {
+        let util = self.module.util();
+        let approval_receipt = util
+            .approve_all(price.address, ApprovalPurpose::Payment)
+            .await?;
+        let payment_receipt = self.pay(price, payee).await?;
+        let revoke_receipt = util
+            .revoke_all(price.address, ApprovalPurpose::Payment)
+            .await?;
+        Ok((approval_receipt, payment_receipt, revoke_receipt))
     }
 }

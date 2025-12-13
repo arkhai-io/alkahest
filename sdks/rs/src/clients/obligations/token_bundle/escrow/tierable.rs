@@ -7,7 +7,7 @@ use alloy::rpc::types::TransactionReceipt;
 use alloy::sol_types::SolValue;
 
 use crate::contracts;
-use crate::types::{ArbiterData, DecodedAttestation, TokenBundleData};
+use crate::types::{ApprovalPurpose, ArbiterData, DecodedAttestation, TokenBundleData};
 
 use super::super::TokenBundleModule;
 
@@ -72,6 +72,19 @@ impl<'a> Tierable<'a> {
             .await?;
 
         Ok(receipt)
+    }
+
+    /// Creates an escrow arrangement with token bundles after approving all tokens in the bundle.
+    pub async fn approve_and_create(
+        &self,
+        price: &TokenBundleData,
+        item: &ArbiterData,
+        expiration: u64,
+    ) -> eyre::Result<(Vec<TransactionReceipt>, TransactionReceipt)> {
+        let util = self.module.util();
+        let approval_receipts = util.approve(price, ApprovalPurpose::Escrow).await?;
+        let escrow_receipt = self.create(price, item, expiration).await?;
+        Ok((approval_receipts, escrow_receipt))
     }
 
     /// Collects payment from a fulfilled trade.

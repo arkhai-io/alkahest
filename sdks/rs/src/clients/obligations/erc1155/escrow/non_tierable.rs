@@ -7,7 +7,7 @@ use alloy::rpc::types::TransactionReceipt;
 use alloy::sol_types::SolValue;
 
 use crate::contracts;
-use crate::types::{ArbiterData, DecodedAttestation, Erc1155Data};
+use crate::types::{ApprovalPurpose, ArbiterData, DecodedAttestation, Erc1155Data};
 
 use super::super::Erc1155Module;
 
@@ -80,6 +80,24 @@ impl<'a> NonTierable<'a> {
             .await?;
 
         Ok(receipt)
+    }
+
+    /// Creates an escrow arrangement with ERC1155 tokens after approving, then revokes approval.
+    pub async fn approve_and_create(
+        &self,
+        price: &Erc1155Data,
+        item: &ArbiterData,
+        expiration: u64,
+    ) -> eyre::Result<(TransactionReceipt, TransactionReceipt, TransactionReceipt)> {
+        let util = self.module.util();
+        let approval_receipt = util
+            .approve_all(price.address, ApprovalPurpose::Escrow)
+            .await?;
+        let escrow_receipt = self.create(price, item, expiration).await?;
+        let revoke_receipt = util
+            .revoke_all(price.address, ApprovalPurpose::Escrow)
+            .await?;
+        Ok((approval_receipt, escrow_receipt, revoke_receipt))
     }
 
     /// Collects payment from a fulfilled trade.

@@ -160,7 +160,7 @@ async fn run_contextless_identity_example(test: &TestContext) -> eyre::Result<()
     .await
     .wrap_err("timeout waiting for approval arbitration")??;
 
-    let first_decision = first_log.data.decision;
+    let first_decision = first_log.decision;
     assert!(first_decision);
 
     let current_nonce = *identity_registry()
@@ -190,7 +190,7 @@ async fn run_contextless_identity_example(test: &TestContext) -> eyre::Result<()
     .await
     .wrap_err("timeout waiting for rejection arbitration")??;
 
-    assert!(!second_log.data.decision);
+    assert!(!second_log.decision);
 
     charlie_oracle
         .unsubscribe(listen_result.subscription_id)

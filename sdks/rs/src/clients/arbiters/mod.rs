@@ -18,7 +18,7 @@ impl_from_attestation!(contracts::arbiters::TrustedOracleArbiter::Attestation);
 impl_from_attestation!(contracts::arbiters::IntrinsicsArbiter::Attestation);
 impl_from_attestation!(contracts::arbiters::IntrinsicsArbiter2::Attestation);
 use alloy::{
-    primitives::{Address, Bytes, FixedBytes, Log},
+    primitives::{Address, Bytes, FixedBytes},
     providers::Provider as _,
     rpc::types::{Filter, TransactionReceipt},
     signers::local::PrivateKeySigner,
@@ -30,6 +30,7 @@ use serde::{Deserialize, Serialize};
 mod attestation_properties;
 mod confirmation;
 mod logical;
+mod trusted_oracle;
 
 // Re-export confirmation types
 pub use confirmation::ConfirmationArbiterType;
@@ -37,6 +38,12 @@ pub use confirmation::ConfirmationArbiterType;
 // Re-export logical APIs
 pub use logical::{
     AllArbiter, AnyArbiter, DecodedAllArbiterDemandData, DecodedAnyArbiterDemandData, Logical,
+};
+
+// Re-export trusted oracle module (with backwards-compatible aliases)
+pub use trusted_oracle::{
+    ArbitrateOptions, AttestationWithDemand, Decision, ListenAndArbitrateResult,
+    OracleAddresses, OracleModule, TrustedOracleAddresses, TrustedOracleModule,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -193,13 +200,15 @@ impl ArbitersModule {
         oracle: Address,
         obligation: FixedBytes<32>,
         from_block: Option<u64>,
-    ) -> eyre::Result<Log<contracts::arbiters::TrustedOracleArbiter::ArbitrationMade>> {
+    ) -> eyre::Result<contracts::arbiters::TrustedOracleArbiter::ArbitrationMade> {
         // ArbitrationMade event: (bytes32 indexed decisionKey, bytes32 indexed obligation, address indexed oracle, bool decision)
         // topic1 = decisionKey, topic2 = obligation, topic3 = oracle
         let filter = Filter::new()
             .from_block(from_block.unwrap_or(0))
             .address(self.addresses.trusted_oracle_arbiter)
-            .event_signature(contracts::arbiters::TrustedOracleArbiter::ArbitrationMade::SIGNATURE_HASH)
+            .event_signature(
+                contracts::arbiters::TrustedOracleArbiter::ArbitrationMade::SIGNATURE_HASH,
+            )
             .topic2(obligation)
             .topic3(oracle.into_word());
 
@@ -208,17 +217,20 @@ impl ArbitersModule {
             .iter()
             .collect::<Vec<_>>()
             .first()
-            .map(|log| log.log_decode::<contracts::arbiters::TrustedOracleArbiter::ArbitrationMade>())
+            .map(|log| {
+                log.log_decode::<contracts::arbiters::TrustedOracleArbiter::ArbitrationMade>()
+            })
         {
-            return Ok(log?.inner);
+            return Ok(log?.inner.data);
         }
 
         let sub = self.public_provider.subscribe_logs(&filter).await?;
         let mut stream = sub.into_stream();
 
         if let Some(log) = stream.next().await {
-            let log = log.log_decode::<contracts::arbiters::TrustedOracleArbiter::ArbitrationMade>()?;
-            return Ok(log.inner);
+            let log =
+                log.log_decode::<contracts::arbiters::TrustedOracleArbiter::ArbitrationMade>()?;
+            return Ok(log.inner.data);
         }
 
         Err(eyre::eyre!("No ArbitrationMade event found"))

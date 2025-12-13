@@ -10,38 +10,38 @@ use alloy::{
     sol,
     sol_types::SolEvent,
 };
-use futures::{StreamExt as _, future::try_join_all};
+use futures::{future::try_join_all, StreamExt as _};
 use tokio::time::Duration;
 use tracing;
 
 use crate::{
     addresses::BASE_SEPOLIA_ADDRESSES,
     contracts::{
-        IEAS::{self, Attestation},
         arbiters::TrustedOracleArbiter,
+        IEAS::{self, Attestation},
     },
     extensions::AlkahestExtension,
     types::{SharedPublicProvider, SharedWalletProvider},
 };
 
 #[derive(Debug, Clone)]
-pub struct OracleAddresses {
+pub struct TrustedOracleAddresses {
     pub eas: Address,
     pub trusted_oracle_arbiter: Address,
 }
 
 #[derive(Clone)]
-pub struct OracleModule {
+pub struct TrustedOracleModule {
     public_provider: SharedPublicProvider,
     wallet_provider: SharedWalletProvider,
     signer_address: Address,
 
-    pub addresses: OracleAddresses,
+    pub addresses: TrustedOracleAddresses,
 }
 
-impl Default for OracleAddresses {
+impl Default for TrustedOracleAddresses {
     fn default() -> Self {
-        OracleAddresses {
+        TrustedOracleAddresses {
             eas: BASE_SEPOLIA_ADDRESSES.arbiters_addresses.eas,
             trusted_oracle_arbiter: BASE_SEPOLIA_ADDRESSES
                 .arbiters_addresses
@@ -124,8 +124,8 @@ where
     }
 }
 
-impl AlkahestExtension for OracleModule {
-    type Config = OracleAddresses;
+impl AlkahestExtension for TrustedOracleModule {
+    type Config = TrustedOracleAddresses;
 
     async fn init(
         signer: alloy::signers::local::PrivateKeySigner,
@@ -152,14 +152,14 @@ pub struct ListenAndArbitrateResult {
     pub subscription_id: FixedBytes<32>,
 }
 
-impl OracleModule {
+impl TrustedOracleModule {
     pub fn new(
         public_provider: SharedPublicProvider,
         wallet_provider: SharedWalletProvider,
         signer_address: Address,
-        addresses: Option<OracleAddresses>,
+        addresses: Option<TrustedOracleAddresses>,
     ) -> eyre::Result<Self> {
-        Ok(OracleModule {
+        Ok(TrustedOracleModule {
             public_provider,
             wallet_provider,
             signer_address,
@@ -273,6 +273,33 @@ impl OracleModule {
             .await?;
 
         let receipt = tx.get_receipt().await?;
+        Ok(receipt)
+    }
+
+    /// Arbitrate as a trusted oracle with the new 3-argument API
+    ///
+    /// # Arguments
+    /// * `obligation` - The obligation attestation UID
+    /// * `demand` - The demand data bytes
+    /// * `decision` - The oracle's decision (true/false)
+    pub async fn arbitrate(
+        &self,
+        obligation: FixedBytes<32>,
+        demand: Bytes,
+        decision: bool,
+    ) -> eyre::Result<TransactionReceipt> {
+        let trusted_oracle_arbiter = TrustedOracleArbiter::new(
+            self.addresses.trusted_oracle_arbiter,
+            &*self.wallet_provider,
+        );
+
+        let receipt = trusted_oracle_arbiter
+            .arbitrate(obligation, demand, decision)
+            .send()
+            .await?
+            .get_receipt()
+            .await?;
+
         Ok(receipt)
     }
 
@@ -475,7 +502,7 @@ impl OracleModule {
         OnAfterArbitrate: Fn(&Decision) -> OnAfterArbitrateFut + Send + Sync + 'static,
     >(
         &self,
-        stream: SubscriptionStream<Log>,
+        stream: SubscriptionStream<alloy::rpc::types::Log>,
         strategy: Strategy,
         on_after_arbitrate: OnAfterArbitrate,
         options: &ArbitrateOptions,
@@ -578,7 +605,7 @@ impl OracleModule {
         OnAfterArbitrate: Fn(&Decision) -> OnAfterArbitrateFut + Send + Sync + 'static,
     >(
         &self,
-        stream: SubscriptionStream<Log>,
+        stream: SubscriptionStream<alloy::rpc::types::Log>,
         arbitrate: Arbitrate,
         on_after_arbitrate: OnAfterArbitrate,
         options: &ArbitrateOptions,
@@ -595,7 +622,7 @@ impl OracleModule {
         OnAfterArbitrate: Fn(&Decision) -> OnAfterArbitrateFut + Send + Sync + 'static,
     >(
         &self,
-        stream: SubscriptionStream<Log>,
+        stream: SubscriptionStream<alloy::rpc::types::Log>,
         arbitrate: Arbitrate,
         on_after_arbitrate: OnAfterArbitrate,
         options: &ArbitrateOptions,
@@ -611,7 +638,7 @@ impl OracleModule {
         OnAfterArbitrate: Fn(&Decision) -> OnAfterArbitrateFut,
     >(
         &self,
-        mut stream: SubscriptionStream<Log>,
+        mut stream: SubscriptionStream<alloy::rpc::types::Log>,
         arbitrate: Arbitrate,
         on_after_arbitrate: OnAfterArbitrate,
         options: &ArbitrateOptions,
@@ -740,7 +767,7 @@ impl OracleModule {
         let filter = self.make_arbitration_requested_filter();
         let sub = self.public_provider.subscribe_logs(&filter).await?;
         let local_id = *sub.local_id();
-        let stream: SubscriptionStream<Log> = sub.into_stream();
+        let stream: SubscriptionStream<alloy::rpc::types::Log> = sub.into_stream();
 
         self.spawn_arbitration_listener_sync(stream, arbitrate, on_after_arbitrate, options)
             .await;
@@ -780,7 +807,7 @@ impl OracleModule {
         let filter = self.make_arbitration_requested_filter();
         let sub = self.public_provider.subscribe_logs(&filter).await?;
         let local_id = *sub.local_id();
-        let stream: SubscriptionStream<Log> = sub.into_stream();
+        let stream: SubscriptionStream<alloy::rpc::types::Log> = sub.into_stream();
 
         self.spawn_arbitration_listener_async(stream, arbitrate, on_after_arbitrate, options)
             .await;
@@ -811,7 +838,7 @@ impl OracleModule {
         let filter = self.make_arbitration_requested_filter();
         let sub = self.public_provider.subscribe_logs(&filter).await?;
         let local_id = *sub.local_id();
-        let stream: SubscriptionStream<Log> = sub.into_stream();
+        let stream: SubscriptionStream<alloy::rpc::types::Log> = sub.into_stream();
 
         self.handle_arbitration_stream_no_spawn(
             stream,
@@ -828,3 +855,7 @@ impl OracleModule {
         })
     }
 }
+
+// Type aliases for backwards compatibility
+pub type OracleModule = TrustedOracleModule;
+pub type OracleAddresses = TrustedOracleAddresses;

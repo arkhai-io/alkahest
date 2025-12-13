@@ -7,7 +7,7 @@ use alloy::rpc::types::TransactionReceipt;
 use alloy::sol_types::SolValue;
 
 use crate::contracts;
-use crate::types::{DecodedAttestation, Erc20Data};
+use crate::types::{ApprovalPurpose, DecodedAttestation, Erc20Data};
 
 use super::Erc20Module;
 
@@ -80,6 +80,25 @@ impl<'a> Payment<'a> {
             .await?;
 
         Ok(receipt)
+    }
+
+    /// Makes a direct payment with ERC20 tokens after approving the token transfer.
+    ///
+    /// # Arguments
+    /// * `price` - The ERC20 token data for payment
+    /// * `payee` - The address of the payment recipient
+    ///
+    /// # Returns
+    /// * `Result<(TransactionReceipt, TransactionReceipt)>` - The approval and payment receipts
+    pub async fn approve_and_pay(
+        &self,
+        price: &Erc20Data,
+        payee: Address,
+    ) -> eyre::Result<(TransactionReceipt, TransactionReceipt)> {
+        let util = self.module.util();
+        let approval_receipt = util.approve(price, ApprovalPurpose::Payment).await?;
+        let payment_receipt = self.pay(price, payee).await?;
+        Ok((approval_receipt, payment_receipt))
     }
 
     /// Makes a direct payment with ERC20 tokens using permit signature.

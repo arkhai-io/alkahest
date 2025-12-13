@@ -7,7 +7,7 @@ use alloy::rpc::types::TransactionReceipt;
 use alloy::sol_types::SolValue;
 
 use crate::contracts;
-use crate::types::{DecodedAttestation, TokenBundleData};
+use crate::types::{ApprovalPurpose, DecodedAttestation, TokenBundleData};
 
 use super::TokenBundleModule;
 
@@ -77,5 +77,24 @@ impl<'a> Payment<'a> {
             .await?;
 
         Ok(receipt)
+    }
+
+    /// Makes a direct payment with token bundles after approving all tokens in the bundle.
+    ///
+    /// # Arguments
+    /// * `price` - The token bundle data for payment
+    /// * `payee` - The address of the payment recipient
+    ///
+    /// # Returns
+    /// * `Result<(Vec<TransactionReceipt>, TransactionReceipt)>` - The approval receipts and payment receipt
+    pub async fn approve_and_pay(
+        &self,
+        price: &TokenBundleData,
+        payee: Address,
+    ) -> eyre::Result<(Vec<TransactionReceipt>, TransactionReceipt)> {
+        let util = self.module.util();
+        let approval_receipts = util.approve(price, ApprovalPurpose::Payment).await?;
+        let payment_receipt = self.pay(price, payee).await?;
+        Ok((approval_receipts, payment_receipt))
     }
 }

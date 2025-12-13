@@ -5,7 +5,7 @@ use alloy::rpc::types::TransactionReceipt;
 use alloy::sol_types::SolValue;
 
 use crate::contracts;
-use crate::types::{DecodedAttestation, Erc721Data};
+use crate::types::{ApprovalPurpose, DecodedAttestation, Erc721Data};
 
 use super::Erc721Module;
 
@@ -71,5 +71,17 @@ impl<'a> Payment<'a> {
             .await?;
 
         Ok(receipt)
+    }
+
+    /// Makes a direct payment with ERC721 tokens after approving the token transfer.
+    pub async fn approve_and_pay(
+        &self,
+        price: &Erc721Data,
+        payee: Address,
+    ) -> eyre::Result<(TransactionReceipt, TransactionReceipt)> {
+        let util = self.module.util();
+        let approval_receipt = util.approve(price, ApprovalPurpose::Payment).await?;
+        let payment_receipt = self.pay(price, payee).await?;
+        Ok((approval_receipt, payment_receipt))
     }
 }

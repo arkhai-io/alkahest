@@ -7,7 +7,7 @@ use alloy::rpc::types::TransactionReceipt;
 use alloy::sol_types::SolValue;
 
 use crate::contracts;
-use crate::types::{ArbiterData, DecodedAttestation, Erc721Data};
+use crate::types::{ApprovalPurpose, ArbiterData, DecodedAttestation, Erc721Data};
 
 use super::super::Erc721Module;
 
@@ -80,6 +80,19 @@ impl<'a> Tierable<'a> {
             .await?;
 
         Ok(receipt)
+    }
+
+    /// Creates an escrow arrangement with ERC721 tokens after approving the token transfer.
+    pub async fn approve_and_create(
+        &self,
+        price: &Erc721Data,
+        item: &ArbiterData,
+        expiration: u64,
+    ) -> eyre::Result<(TransactionReceipt, TransactionReceipt)> {
+        let util = self.module.util();
+        let approval_receipt = util.approve(price, ApprovalPurpose::Escrow).await?;
+        let escrow_receipt = self.create(price, item, expiration).await?;
+        Ok((approval_receipt, escrow_receipt))
     }
 
     /// Collects payment from a fulfilled trade.

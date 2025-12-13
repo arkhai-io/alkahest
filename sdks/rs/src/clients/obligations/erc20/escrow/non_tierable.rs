@@ -7,7 +7,7 @@ use alloy::rpc::types::TransactionReceipt;
 use alloy::sol_types::SolValue;
 
 use crate::contracts;
-use crate::types::{ArbiterData, DecodedAttestation, Erc20Data};
+use crate::types::{ApprovalPurpose, ArbiterData, DecodedAttestation, Erc20Data};
 
 use super::super::Erc20Module;
 
@@ -79,6 +79,19 @@ impl<'a> NonTierable<'a> {
             .await?;
 
         Ok(receipt)
+    }
+
+    /// Creates an escrow arrangement with ERC20 tokens after approving the token transfer.
+    pub async fn approve_and_create(
+        &self,
+        price: &Erc20Data,
+        item: &ArbiterData,
+        expiration: u64,
+    ) -> eyre::Result<(TransactionReceipt, TransactionReceipt)> {
+        let util = self.module.util();
+        let approval_receipt = util.approve(price, ApprovalPurpose::Escrow).await?;
+        let escrow_receipt = self.create(price, item, expiration).await?;
+        Ok((approval_receipt, escrow_receipt))
     }
 
     /// Creates an escrow arrangement with ERC20 tokens using permit signature.
