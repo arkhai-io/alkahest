@@ -2137,4 +2137,105 @@ mod tests {
 
         Ok(())
     }
+
+    #[tokio::test]
+    async fn test_approve_and_pay_with_erc20() -> eyre::Result<()> {
+        // test setup
+        let test = setup_test_environment().await?;
+
+        // give alice some erc20 tokens
+        let mock_erc20_a = MockERC20Permit::new(test.mock_addresses.erc20_a, &test.god_provider);
+        mock_erc20_a
+            .transfer(test.alice.address(), U256::from(100))
+            .send()
+            .await?
+            .get_receipt()
+            .await?;
+
+        let price = Erc20Data {
+            address: test.mock_addresses.erc20_a,
+            value: U256::from(100),
+        };
+
+        // alice makes direct payment to bob using approve_and_pay (no pre-approval needed)
+        let (approval_receipt, payment_receipt) = test
+            .alice_client
+            .erc20()
+            .payment()
+            .approve_and_pay(&price, test.bob.address())
+            .await?;
+
+        // Verify both receipts are valid
+        assert!(approval_receipt.status(), "Approval should succeed");
+        assert!(payment_receipt.status(), "Payment should succeed");
+
+        // Verify payment happened
+        let alice_balance = mock_erc20_a.balanceOf(test.alice.address()).call().await?;
+        let bob_balance = mock_erc20_a.balanceOf(test.bob.address()).call().await?;
+
+        // all tokens paid to bob
+        assert_eq!(alice_balance, U256::from(0));
+        assert_eq!(bob_balance, U256::from(100));
+
+        // payment obligation made
+        let attested_event = DefaultAlkahestClient::get_attested_event(payment_receipt)?;
+        assert_ne!(attested_event.uid, FixedBytes::<32>::default());
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_approve_and_create_escrow_with_erc20() -> eyre::Result<()> {
+        // test setup
+        let test = setup_test_environment().await?;
+
+        // give alice some erc20 tokens
+        let mock_erc20_a = MockERC20Permit::new(test.mock_addresses.erc20_a, &test.god_provider);
+        mock_erc20_a
+            .transfer(test.alice.address(), U256::from(100))
+            .send()
+            .await?
+            .get_receipt()
+            .await?;
+
+        let price = Erc20Data {
+            address: test.mock_addresses.erc20_a,
+            value: U256::from(100),
+        };
+
+        // Create custom arbiter data
+        let arbiter = test.addresses.erc20_addresses.clone().payment_obligation;
+        let demand = Bytes::from(b"custom demand data");
+        let item = ArbiterData { arbiter, demand };
+
+        // alice creates escrow using approve_and_create (no pre-approval needed)
+        let (approval_receipt, escrow_receipt) = test
+            .alice_client
+            .erc20()
+            .escrow()
+            .non_tierable()
+            .approve_and_create(&price, &item, 0)
+            .await?;
+
+        // Verify both receipts are valid
+        assert!(approval_receipt.status(), "Approval should succeed");
+        assert!(escrow_receipt.status(), "Escrow creation should succeed");
+
+        // Verify escrow happened
+        let alice_balance = mock_erc20_a.balanceOf(test.alice.address()).call().await?;
+        let escrow_balance = mock_erc20_a
+            .balanceOf(test.addresses.erc20_addresses.escrow_obligation)
+            .call()
+            .await?;
+
+        // all tokens in escrow
+        assert_eq!(alice_balance, U256::from(0));
+        assert_eq!(escrow_balance, U256::from(100));
+
+        // escrow obligation made
+        let attested_event = DefaultAlkahestClient::get_attested_event(escrow_receipt)?;
+        assert_ne!(attested_event.uid, FixedBytes::<32>::default());
+
+        Ok(())
+    }
 }

@@ -1211,4 +1211,359 @@ mod tests {
 
         Ok(())
     }
+
+    #[tokio::test]
+    async fn test_approve_and_pay_with_bundle() -> eyre::Result<()> {
+        // Test setup
+        let test = setup_test_environment().await?;
+
+        // Mint tokens to Alice
+        // ERC20
+        let mock_erc20_a = MockERC20Permit::new(test.mock_addresses.erc20_a, &test.god_provider);
+        mock_erc20_a
+            .transfer(test.alice.address(), U256::from(1000))
+            .send()
+            .await?
+            .get_receipt()
+            .await?;
+
+        // ERC721
+        let mock_erc721_a = MockERC721::new(test.mock_addresses.erc721_a, &test.god_provider);
+        mock_erc721_a
+            .mint(test.alice.address())
+            .send()
+            .await?
+            .get_receipt()
+            .await?;
+
+        // ERC1155
+        let mock_erc1155_a = MockERC1155::new(test.mock_addresses.erc1155_a, &test.god_provider);
+        mock_erc1155_a
+            .mint(test.alice.address(), U256::from(1), U256::from(100))
+            .send()
+            .await?
+            .get_receipt()
+            .await?;
+
+        // Create Alice's bundle
+        let alice_bundle = create_alice_bundle(&test)?;
+
+        // Check initial balances
+        let initial_bob_erc20_balance = mock_erc20_a.balanceOf(test.bob.address()).call().await?;
+
+        let initial_bob_erc1155_balance = mock_erc1155_a
+            .balanceOf(test.bob.address(), U256::from(1))
+            .call()
+            .await?;
+
+        // Check initial ERC1155 approval state
+        let initial_approval = mock_erc1155_a
+            .isApprovedForAll(
+                test.alice.address(),
+                test.addresses
+                    .clone()
+                    .token_bundle_addresses
+                    .payment_obligation,
+            )
+            .call()
+            .await?;
+
+        assert!(!initial_approval, "Should not be approved initially");
+
+        // Alice makes direct payment to Bob using approve_and_pay (no pre-approval needed)
+        let (approval_receipts, payment_receipt, revoke_receipts) = test
+            .alice_client
+            .token_bundle()
+            .payment()
+            .approve_and_pay(&alice_bundle, test.bob.address())
+            .await?;
+
+        // Verify all receipts are valid
+        assert!(
+            !approval_receipts.is_empty(),
+            "Should have approval receipts"
+        );
+        for receipt in &approval_receipts {
+            assert!(receipt.status(), "Approval should succeed");
+        }
+        assert!(payment_receipt.status(), "Payment should succeed");
+        // ERC1155 revoke receipts may be present
+        for receipt in &revoke_receipts {
+            assert!(receipt.status(), "Revoke should succeed");
+        }
+
+        // Verify payment happened
+        // Check token ownerships and balances
+        let erc721_owner = mock_erc721_a.ownerOf(U256::from(1)).call().await?;
+
+        let final_bob_erc20_balance = mock_erc20_a.balanceOf(test.bob.address()).call().await?;
+
+        let final_bob_erc1155_balance = mock_erc1155_a
+            .balanceOf(test.bob.address(), U256::from(1))
+            .call()
+            .await?;
+
+        // Verify tokens were transferred to Bob
+        assert_eq!(
+            erc721_owner,
+            test.bob.address(),
+            "ERC721 token should be owned by Bob"
+        );
+
+        assert_eq!(
+            final_bob_erc20_balance - initial_bob_erc20_balance,
+            alice_bundle.erc20s[0].value,
+            "ERC20 tokens should be transferred to Bob"
+        );
+
+        assert_eq!(
+            final_bob_erc1155_balance - initial_bob_erc1155_balance,
+            alice_bundle.erc1155s[0].value,
+            "ERC1155 tokens should be transferred to Bob"
+        );
+
+        // Verify ERC1155 approval was revoked after payment
+        let final_approval = mock_erc1155_a
+            .isApprovedForAll(
+                test.alice.address(),
+                test.addresses.token_bundle_addresses.payment_obligation,
+            )
+            .call()
+            .await?;
+
+        assert!(
+            !final_approval,
+            "ERC1155 approval should be revoked after payment"
+        );
+
+        // Payment obligation made
+        let attested_event = DefaultAlkahestClient::get_attested_event(payment_receipt)?;
+        assert_ne!(attested_event.uid, FixedBytes::<32>::default());
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_approve_and_create_escrow_with_bundle() -> eyre::Result<()> {
+        // Test setup
+        let test = setup_test_environment().await?;
+
+        // Mint tokens to Alice
+        // ERC20
+        let mock_erc20_a = MockERC20Permit::new(test.mock_addresses.erc20_a, &test.god_provider);
+        mock_erc20_a
+            .transfer(test.alice.address(), U256::from(1000))
+            .send()
+            .await?
+            .get_receipt()
+            .await?;
+
+        // ERC721
+        let mock_erc721_a = MockERC721::new(test.mock_addresses.erc721_a, &test.god_provider);
+        mock_erc721_a
+            .mint(test.alice.address())
+            .send()
+            .await?
+            .get_receipt()
+            .await?;
+
+        // ERC1155
+        let mock_erc1155_a = MockERC1155::new(test.mock_addresses.erc1155_a, &test.god_provider);
+        mock_erc1155_a
+            .mint(test.alice.address(), U256::from(1), U256::from(100))
+            .send()
+            .await?
+            .get_receipt()
+            .await?;
+
+        // Create Alice's bundle
+        let alice_bundle = create_alice_bundle(&test)?;
+
+        // Create custom arbiter data
+        let arbiter = test
+            .addresses
+            .clone()
+            .token_bundle_addresses
+            .payment_obligation;
+        let demand = alloy::primitives::Bytes::from(b"custom demand data");
+        let item = ArbiterData { arbiter, demand };
+
+        // Check initial ERC1155 approval state
+        let initial_approval = mock_erc1155_a
+            .isApprovedForAll(
+                test.alice.address(),
+                test.addresses
+                    .clone()
+                    .token_bundle_addresses
+                    .escrow_obligation,
+            )
+            .call()
+            .await?;
+
+        assert!(!initial_approval, "Should not be approved initially");
+
+        // Alice creates escrow using approve_and_create (no pre-approval needed)
+        let (approval_receipts, escrow_receipt, revoke_receipts) = test
+            .alice_client
+            .token_bundle()
+            .escrow()
+            .non_tierable()
+            .approve_and_create(&alice_bundle, &item, 0)
+            .await?;
+
+        // Verify all receipts are valid
+        assert!(
+            !approval_receipts.is_empty(),
+            "Should have approval receipts"
+        );
+        for receipt in &approval_receipts {
+            assert!(receipt.status(), "Approval should succeed");
+        }
+        assert!(escrow_receipt.status(), "Escrow creation should succeed");
+        // ERC1155 revoke receipts may be present
+        for receipt in &revoke_receipts {
+            assert!(receipt.status(), "Revoke should succeed");
+        }
+
+        // Verify escrow happened
+        // Check token ownerships and balances
+        let erc721_owner = mock_erc721_a.ownerOf(U256::from(1)).call().await?;
+
+        let erc20_escrow_balance = mock_erc20_a
+            .balanceOf(
+                test.addresses
+                    .clone()
+                    .token_bundle_addresses
+                    .escrow_obligation,
+            )
+            .call()
+            .await?;
+
+        let erc1155_escrow_balance = mock_erc1155_a
+            .balanceOf(
+                test.addresses
+                    .clone()
+                    .token_bundle_addresses
+                    .escrow_obligation,
+                U256::from(1),
+            )
+            .call()
+            .await?;
+
+        // Verify tokens are in escrow
+        assert_eq!(
+            erc721_owner, test.addresses.token_bundle_addresses.escrow_obligation,
+            "ERC721 token should be owned by escrow contract"
+        );
+
+        assert!(
+            erc20_escrow_balance >= alice_bundle.erc20s[0].value,
+            "ERC20 tokens should be in escrow"
+        );
+
+        assert!(
+            erc1155_escrow_balance >= alice_bundle.erc1155s[0].value,
+            "ERC1155 tokens should be in escrow"
+        );
+
+        // Verify ERC1155 approval was revoked after escrow creation
+        let final_approval = mock_erc1155_a
+            .isApprovedForAll(
+                test.alice.address(),
+                test.addresses.token_bundle_addresses.escrow_obligation,
+            )
+            .call()
+            .await?;
+
+        assert!(
+            !final_approval,
+            "ERC1155 approval should be revoked after escrow creation"
+        );
+
+        // Escrow obligation made
+        let attested_event = DefaultAlkahestClient::get_attested_event(escrow_receipt)?;
+        assert_ne!(attested_event.uid, FixedBytes::<32>::default());
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_revoke_erc1155s() -> eyre::Result<()> {
+        // Test setup
+        let test = setup_test_environment().await?;
+
+        // ERC1155 contract
+        let mock_erc1155_a = MockERC1155::new(test.mock_addresses.erc1155_a, &test.god_provider);
+        mock_erc1155_a
+            .mint(test.alice.address(), U256::from(1), U256::from(100))
+            .send()
+            .await?
+            .get_receipt()
+            .await?;
+
+        // Create Alice's bundle with only ERC1155 tokens
+        let bundle = TokenBundleData {
+            erc20s: vec![],
+            erc721s: vec![],
+            erc1155s: vec![Erc1155Data {
+                address: test.mock_addresses.erc1155_a,
+                id: U256::from(1),
+                value: U256::from(50),
+            }],
+            native_amount: U256::ZERO,
+        };
+
+        // First approve the bundle
+        test.alice_client
+            .token_bundle()
+            .approve(&bundle, ApprovalPurpose::Payment)
+            .await?;
+
+        // Verify approval is set
+        let approval_after_approve = mock_erc1155_a
+            .isApprovedForAll(
+                test.alice.address(),
+                test.addresses
+                    .clone()
+                    .token_bundle_addresses
+                    .payment_obligation,
+            )
+            .call()
+            .await?;
+
+        assert!(
+            approval_after_approve,
+            "ERC1155 approval should be set after approve"
+        );
+
+        // Now revoke the ERC1155 approvals
+        let revoke_receipts = test
+            .alice_client
+            .token_bundle()
+            .util()
+            .revoke_erc1155s(&bundle, ApprovalPurpose::Payment)
+            .await?;
+
+        // Verify revoke succeeded
+        assert!(!revoke_receipts.is_empty(), "Should have revoke receipts");
+        for receipt in &revoke_receipts {
+            assert!(receipt.status(), "Revoke should succeed");
+        }
+
+        // Verify approval is revoked
+        let approval_after_revoke = mock_erc1155_a
+            .isApprovedForAll(
+                test.alice.address(),
+                test.addresses.token_bundle_addresses.payment_obligation,
+            )
+            .call()
+            .await?;
+
+        assert!(
+            !approval_after_revoke,
+            "ERC1155 approval should be revoked"
+        );
+
+        Ok(())
+    }
 }

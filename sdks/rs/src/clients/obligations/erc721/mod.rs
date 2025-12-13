@@ -1200,4 +1200,101 @@ mod tests {
 
         Ok(())
     }
+
+    #[tokio::test]
+    async fn test_approve_and_pay_with_erc721() -> eyre::Result<()> {
+        // test setup
+        let test = setup_test_environment().await?;
+
+        // mint ERC721 to alice
+        let mock_erc721_a = MockERC721::new(test.mock_addresses.erc721_a, &test.god_provider);
+        mock_erc721_a
+            .mint(test.alice.address())
+            .send()
+            .await?
+            .get_receipt()
+            .await?;
+
+        let price = Erc721Data {
+            address: test.mock_addresses.erc721_a,
+            id: U256::from(1),
+        };
+
+        // alice makes direct payment to bob using approve_and_pay (no pre-approval needed)
+        let (approval_receipt, payment_receipt) = test
+            .alice_client
+            .erc721()
+            .payment()
+            .approve_and_pay(&price, test.bob.address())
+            .await?;
+
+        // Verify both receipts are valid
+        assert!(approval_receipt.status(), "Approval should succeed");
+        assert!(payment_receipt.status(), "Payment should succeed");
+
+        // Verify payment happened - bob now owns the NFT
+        let final_owner = mock_erc721_a.ownerOf(U256::from(1)).call().await?;
+        assert_eq!(
+            final_owner,
+            test.bob.address(),
+            "Bob should now own the NFT"
+        );
+
+        // payment obligation made
+        let attested_event = DefaultAlkahestClient::get_attested_event(payment_receipt)?;
+        assert_ne!(attested_event.uid, FixedBytes::<32>::default());
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_approve_and_create_escrow_with_erc721() -> eyre::Result<()> {
+        // test setup
+        let test = setup_test_environment().await?;
+
+        // mint ERC721 to alice
+        let mock_erc721_a = MockERC721::new(test.mock_addresses.erc721_a, &test.god_provider);
+        mock_erc721_a
+            .mint(test.alice.address())
+            .send()
+            .await?
+            .get_receipt()
+            .await?;
+
+        let price = Erc721Data {
+            address: test.mock_addresses.erc721_a,
+            id: U256::from(1),
+        };
+
+        // Create custom arbiter data
+        let arbiter = test.addresses.erc721_addresses.clone().payment_obligation;
+        let demand = Bytes::from(b"custom demand data");
+        let item = ArbiterData { arbiter, demand };
+
+        // alice creates escrow using approve_and_create (no pre-approval needed)
+        let (approval_receipt, escrow_receipt) = test
+            .alice_client
+            .erc721()
+            .escrow()
+            .non_tierable()
+            .approve_and_create(&price, &item, 0)
+            .await?;
+
+        // Verify both receipts are valid
+        assert!(approval_receipt.status(), "Approval should succeed");
+        assert!(escrow_receipt.status(), "Escrow creation should succeed");
+
+        // Verify escrow happened - escrow contract now owns the NFT
+        let final_owner = mock_erc721_a.ownerOf(U256::from(1)).call().await?;
+        assert_eq!(
+            final_owner, test.addresses.erc721_addresses.escrow_obligation,
+            "Escrow contract should now own the NFT"
+        );
+
+        // escrow obligation made
+        let attested_event = DefaultAlkahestClient::get_attested_event(escrow_receipt)?;
+        assert_ne!(attested_event.uid, FixedBytes::<32>::default());
+
+        Ok(())
+    }
 }

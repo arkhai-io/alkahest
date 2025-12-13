@@ -1284,4 +1284,180 @@ mod tests {
 
         Ok(())
     }
+
+    #[tokio::test]
+    async fn test_approve_and_pay_with_erc1155() -> eyre::Result<()> {
+        // test setup
+        let test = setup_test_environment().await?;
+
+        // mint ERC1155 tokens to alice
+        let mock_erc1155_a = MockERC1155::new(test.mock_addresses.erc1155_a, &test.god_provider);
+        mock_erc1155_a
+            .mint(test.alice.address(), U256::from(1), U256::from(10))
+            .send()
+            .await?
+            .get_receipt()
+            .await?;
+
+        let price = Erc1155Data {
+            address: test.mock_addresses.erc1155_a,
+            id: U256::from(1),
+            value: U256::from(5),
+        };
+
+        // Check initial approval state
+        let initial_approval = mock_erc1155_a
+            .isApprovedForAll(
+                test.alice.address(),
+                test.addresses.erc1155_addresses.clone().payment_obligation,
+            )
+            .call()
+            .await?;
+
+        assert!(!initial_approval, "Should not be approved initially");
+
+        // Check initial balances
+        let initial_bob_balance = mock_erc1155_a
+            .balanceOf(test.bob.address(), U256::from(1))
+            .call()
+            .await?;
+
+        // alice makes direct payment to bob using approve_and_pay (no pre-approval needed)
+        let (approval_receipt, payment_receipt, revoke_receipt) = test
+            .alice_client
+            .erc1155()
+            .payment()
+            .approve_and_pay(&price, test.bob.address())
+            .await?;
+
+        // Verify all receipts are valid
+        assert!(approval_receipt.status(), "Approval should succeed");
+        assert!(payment_receipt.status(), "Payment should succeed");
+        assert!(revoke_receipt.status(), "Revoke should succeed");
+
+        // Verify payment happened
+        let final_bob_balance = mock_erc1155_a
+            .balanceOf(test.bob.address(), U256::from(1))
+            .call()
+            .await?;
+
+        assert_eq!(
+            final_bob_balance - initial_bob_balance,
+            U256::from(5),
+            "Bob should have received 5 tokens"
+        );
+
+        // Verify approval was revoked after payment
+        let final_approval = mock_erc1155_a
+            .isApprovedForAll(
+                test.alice.address(),
+                test.addresses.erc1155_addresses.clone().payment_obligation,
+            )
+            .call()
+            .await?;
+
+        assert!(
+            !final_approval,
+            "Approval should be revoked after payment"
+        );
+
+        // payment obligation made
+        let attested_event = DefaultAlkahestClient::get_attested_event(payment_receipt)?;
+        assert_ne!(attested_event.uid, FixedBytes::<32>::default());
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_approve_and_create_escrow_with_erc1155() -> eyre::Result<()> {
+        // test setup
+        let test = setup_test_environment().await?;
+
+        // mint ERC1155 tokens to alice
+        let mock_erc1155_a = MockERC1155::new(test.mock_addresses.erc1155_a, &test.god_provider);
+        mock_erc1155_a
+            .mint(test.alice.address(), U256::from(1), U256::from(10))
+            .send()
+            .await?
+            .get_receipt()
+            .await?;
+
+        let price = Erc1155Data {
+            address: test.mock_addresses.erc1155_a,
+            id: U256::from(1),
+            value: U256::from(5),
+        };
+
+        // Create custom arbiter data
+        let arbiter = test.addresses.erc1155_addresses.clone().payment_obligation;
+        let demand = Bytes::from(b"custom demand data");
+        let item = ArbiterData { arbiter, demand };
+
+        // Check initial approval state
+        let initial_approval = mock_erc1155_a
+            .isApprovedForAll(
+                test.alice.address(),
+                test.addresses.erc1155_addresses.clone().escrow_obligation,
+            )
+            .call()
+            .await?;
+
+        assert!(!initial_approval, "Should not be approved initially");
+
+        // alice creates escrow using approve_and_create (no pre-approval needed)
+        let (approval_receipt, escrow_receipt, revoke_receipt) = test
+            .alice_client
+            .erc1155()
+            .escrow()
+            .non_tierable()
+            .approve_and_create(&price, &item, 0)
+            .await?;
+
+        // Verify all receipts are valid
+        assert!(approval_receipt.status(), "Approval should succeed");
+        assert!(escrow_receipt.status(), "Escrow creation should succeed");
+        assert!(revoke_receipt.status(), "Revoke should succeed");
+
+        // Verify escrow happened - check alice's balance decreased
+        let alice_balance = mock_erc1155_a
+            .balanceOf(test.alice.address(), U256::from(1))
+            .call()
+            .await?;
+
+        // Check escrow contract's balance increased
+        let escrow_balance = mock_erc1155_a
+            .balanceOf(
+                test.addresses.erc1155_addresses.escrow_obligation,
+                U256::from(1),
+            )
+            .call()
+            .await?;
+
+        assert_eq!(
+            alice_balance,
+            U256::from(5),
+            "Alice should have 5 tokens remaining"
+        );
+        assert_eq!(escrow_balance, U256::from(5), "Escrow should have 5 tokens");
+
+        // Verify approval was revoked after escrow creation
+        let final_approval = mock_erc1155_a
+            .isApprovedForAll(
+                test.alice.address(),
+                test.addresses.erc1155_addresses.escrow_obligation,
+            )
+            .call()
+            .await?;
+
+        assert!(
+            !final_approval,
+            "Approval should be revoked after escrow creation"
+        );
+
+        // escrow obligation made
+        let attested_event = DefaultAlkahestClient::get_attested_event(escrow_receipt)?;
+        assert_ne!(attested_event.uid, FixedBytes::<32>::default());
+
+        Ok(())
+    }
 }
