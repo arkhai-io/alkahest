@@ -99,7 +99,7 @@ impl<'a> Util<'a> {
     ) -> eyre::Result<TransactionReceipt> {
         let to = match purpose {
             ApprovalPurpose::Payment => self.module.addresses.payment_obligation,
-            ApprovalPurpose::Escrow => self.module.addresses.escrow_obligation,
+            ApprovalPurpose::Escrow => self.module.addresses.escrow_obligation_nontierable,
             ApprovalPurpose::BarterUtils => self.module.addresses.barter_utils,
         };
 
@@ -128,7 +128,7 @@ impl<'a> Util<'a> {
     ) -> eyre::Result<Option<TransactionReceipt>> {
         let to = match purpose {
             ApprovalPurpose::Payment => self.module.addresses.payment_obligation,
-            ApprovalPurpose::Escrow => self.module.addresses.escrow_obligation,
+            ApprovalPurpose::Escrow => self.module.addresses.escrow_obligation_nontierable,
             ApprovalPurpose::BarterUtils => self.module.addresses.barter_utils,
         };
 

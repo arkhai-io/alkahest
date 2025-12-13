@@ -28,7 +28,8 @@ impl_token_bundle_payment_obligation!(contracts::utils::erc721::TokenBundlePayme
 pub struct Erc721Addresses {
     pub eas: Address,
     pub barter_utils: Address,
-    pub escrow_obligation: Address,
+    pub escrow_obligation_nontierable: Address,
+    pub escrow_obligation_tierable: Address,
     pub payment_obligation: Address,
 }
 
@@ -61,7 +62,7 @@ impl ContractModule for Erc721Module {
         match contract {
             Erc721Contract::Eas => self.addresses.eas,
             Erc721Contract::BarterUtils => self.addresses.barter_utils,
-            Erc721Contract::EscrowObligation => self.addresses.escrow_obligation,
+            Erc721Contract::EscrowObligation => self.addresses.escrow_obligation_nontierable,
             Erc721Contract::PaymentObligation => self.addresses.payment_obligation,
         }
     }
@@ -277,7 +278,7 @@ mod tests {
         let escrow_approved = mock_erc721_a.getApproved(U256::from(1)).call().await?;
 
         assert_eq!(
-            escrow_approved, test.addresses.erc721_addresses.escrow_obligation,
+            escrow_approved, test.addresses.erc721_addresses.escrow_obligation_nontierable,
             "Escrow approval should be set correctly"
         );
 
@@ -337,7 +338,7 @@ mod tests {
         let escrow_approved = mock_erc721_a
             .isApprovedForAll(
                 test.alice.address(),
-                test.addresses.erc721_addresses.escrow_obligation,
+                test.addresses.erc721_addresses.escrow_obligation_nontierable,
             )
             .call()
             .await?;
@@ -435,7 +436,7 @@ mod tests {
 
         // token in escrow
         assert_eq!(
-            owner, test.addresses.erc721_addresses.escrow_obligation,
+            owner, test.addresses.erc721_addresses.escrow_obligation_nontierable,
             "Token should be owned by escrow contract"
         );
 
@@ -534,7 +535,7 @@ mod tests {
         let owner = mock_erc721_a.ownerOf(U256::from(1)).call().await?;
 
         assert_eq!(
-            owner, test.addresses.erc721_addresses.escrow_obligation,
+            owner, test.addresses.erc721_addresses.escrow_obligation_nontierable,
             "Token should be in escrow"
         );
 
@@ -732,7 +733,7 @@ mod tests {
         let owner = mock_erc721_a.ownerOf(U256::from(1)).call().await?;
 
         assert_eq!(
-            owner, test.addresses.erc721_addresses.escrow_obligation,
+            owner, test.addresses.erc721_addresses.escrow_obligation_nontierable,
             "Token should be in escrow"
         );
 
@@ -786,7 +787,7 @@ mod tests {
         let owner = mock_erc721_a.ownerOf(U256::from(1)).call().await?;
 
         assert_eq!(
-            owner, test.addresses.erc721_addresses.escrow_obligation,
+            owner, test.addresses.erc721_addresses.escrow_obligation_nontierable,
             "Token should be in escrow"
         );
 
@@ -853,7 +854,7 @@ mod tests {
         let owner = mock_erc721_a.ownerOf(U256::from(1)).call().await?;
 
         assert_eq!(
-            owner, test.addresses.erc721_addresses.escrow_obligation,
+            owner, test.addresses.erc721_addresses.escrow_obligation_nontierable,
             "Token should be in escrow"
         );
 
@@ -1287,7 +1288,7 @@ mod tests {
         // Verify escrow happened - escrow contract now owns the NFT
         let final_owner = mock_erc721_a.ownerOf(U256::from(1)).call().await?;
         assert_eq!(
-            final_owner, test.addresses.erc721_addresses.escrow_obligation,
+            final_owner, test.addresses.erc721_addresses.escrow_obligation_nontierable,
             "Escrow contract should now own the NFT"
         );
 

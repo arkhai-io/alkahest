@@ -33,18 +33,14 @@ impl_token_bundle_payment_obligation!(contracts::utils::native_token::TokenBundl
 pub struct NativeTokenAddresses {
     pub eas: Address,
     pub barter_utils: Address,
-    pub escrow_obligation: Address,
+    pub escrow_obligation_nontierable: Address,
+    pub escrow_obligation_tierable: Address,
     pub payment_obligation: Address,
 }
 
 impl Default for NativeTokenAddresses {
     fn default() -> Self {
-        NativeTokenAddresses {
-            eas: BASE_SEPOLIA_ADDRESSES.erc20_addresses.eas,
-            barter_utils: Address::ZERO, // TODO: Add actual address when deployed
-            escrow_obligation: Address::ZERO, // TODO: Add actual address when deployed
-            payment_obligation: Address::ZERO, // TODO: Add actual address when deployed
-        }
+        BASE_SEPOLIA_ADDRESSES.native_token_addresses
     }
 }
 
@@ -82,7 +78,7 @@ impl ContractModule for NativeTokenModule {
         match contract {
             NativeTokenContract::Eas => self.addresses.eas,
             NativeTokenContract::BarterUtils => self.addresses.barter_utils,
-            NativeTokenContract::EscrowObligation => self.addresses.escrow_obligation,
+            NativeTokenContract::EscrowObligation => self.addresses.escrow_obligation_nontierable,
             NativeTokenContract::PaymentObligation => self.addresses.payment_obligation,
         }
     }

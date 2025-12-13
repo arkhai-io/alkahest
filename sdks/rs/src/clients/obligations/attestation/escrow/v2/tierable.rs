@@ -25,7 +25,7 @@ impl<'a> Tierable<'a> {
     /// Get the contract address
     pub fn address(&self) -> Address {
         // TODO: Add tierable V2 escrow address when deployed
-        self.module.addresses.escrow_obligation_2
+        self.module.addresses.escrow_obligation_2_nontierable
     }
 
     /// Gets an escrow obligation by its attestation UID.
@@ -61,7 +61,7 @@ impl<'a> Tierable<'a> {
     ) -> eyre::Result<TransactionReceipt> {
         let escrow_contract =
             contracts::obligations::escrow::tierable::AttestationEscrowObligation2::new(
-                self.module.addresses.escrow_obligation_2, // TODO: use tierable V2 address
+                self.module.addresses.escrow_obligation_2_tierable,
                 &self.module.wallet_provider,
             );
 
@@ -90,7 +90,7 @@ impl<'a> Tierable<'a> {
     ) -> eyre::Result<TransactionReceipt> {
         let escrow_contract =
             contracts::obligations::escrow::tierable::AttestationEscrowObligation2::new(
-                self.module.addresses.escrow_obligation_2, // TODO: use tierable V2 address
+                self.module.addresses.escrow_obligation_2_tierable,
                 &self.module.wallet_provider,
             );
 

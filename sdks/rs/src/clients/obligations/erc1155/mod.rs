@@ -34,7 +34,8 @@ impl_token_bundle_payment_obligation!(contracts::utils::erc1155::TokenBundlePaym
 pub struct Erc1155Addresses {
     pub eas: Address,
     pub barter_utils: Address,
-    pub escrow_obligation: Address,
+    pub escrow_obligation_nontierable: Address,
+    pub escrow_obligation_tierable: Address,
     pub payment_obligation: Address,
 }
 
@@ -78,7 +79,7 @@ impl ContractModule for Erc1155Module {
         match contract {
             Erc1155Contract::Eas => self.addresses.eas,
             Erc1155Contract::BarterUtils => self.addresses.barter_utils,
-            Erc1155Contract::EscrowObligation => self.addresses.escrow_obligation,
+            Erc1155Contract::EscrowObligation => self.addresses.escrow_obligation_nontierable,
             Erc1155Contract::PaymentObligation => self.addresses.payment_obligation,
         }
     }
@@ -312,7 +313,7 @@ mod tests {
         let escrow_approved = mock_erc1155_a
             .isApprovedForAll(
                 test.alice.address(),
-                test.addresses.erc1155_addresses.escrow_obligation,
+                test.addresses.erc1155_addresses.escrow_obligation_nontierable,
             )
             .call()
             .await?;
@@ -415,7 +416,7 @@ mod tests {
         // Check escrow contract's balance increased
         let escrow_balance = mock_erc1155_a
             .balanceOf(
-                test.addresses.erc1155_addresses.escrow_obligation,
+                test.addresses.erc1155_addresses.escrow_obligation_nontierable,
                 U256::from(1),
             )
             .call()
@@ -539,7 +540,7 @@ mod tests {
         // verify escrow
         let escrow_balance = mock_erc1155_a
             .balanceOf(
-                test.addresses.erc1155_addresses.escrow_obligation,
+                test.addresses.erc1155_addresses.escrow_obligation_nontierable,
                 U256::from(1),
             )
             .call()
@@ -773,7 +774,7 @@ mod tests {
         // Verify escrow happened
         let escrow_balance = mock_erc1155_a
             .balanceOf(
-                test.addresses.erc1155_addresses.escrow_obligation,
+                test.addresses.erc1155_addresses.escrow_obligation_nontierable,
                 U256::from(1),
             )
             .call()
@@ -834,7 +835,7 @@ mod tests {
         // Verify escrow happened
         let escrow_balance = mock_erc1155_a
             .balanceOf(
-                test.addresses.erc1155_addresses.escrow_obligation,
+                test.addresses.erc1155_addresses.escrow_obligation_nontierable,
                 U256::from(1),
             )
             .call()
@@ -909,7 +910,7 @@ mod tests {
         // Verify escrow happened
         let escrow_balance = mock_erc1155_a
             .balanceOf(
-                test.addresses.erc1155_addresses.escrow_obligation,
+                test.addresses.erc1155_addresses.escrow_obligation_nontierable,
                 U256::from(1),
             )
             .call()
@@ -1397,7 +1398,7 @@ mod tests {
         let initial_approval = mock_erc1155_a
             .isApprovedForAll(
                 test.alice.address(),
-                test.addresses.erc1155_addresses.clone().escrow_obligation,
+                test.addresses.erc1155_addresses.clone().escrow_obligation_nontierable,
             )
             .call()
             .await?;
@@ -1427,7 +1428,7 @@ mod tests {
         // Check escrow contract's balance increased
         let escrow_balance = mock_erc1155_a
             .balanceOf(
-                test.addresses.erc1155_addresses.escrow_obligation,
+                test.addresses.erc1155_addresses.escrow_obligation_nontierable,
                 U256::from(1),
             )
             .call()
@@ -1444,7 +1445,7 @@ mod tests {
         let final_approval = mock_erc1155_a
             .isApprovedForAll(
                 test.alice.address(),
-                test.addresses.erc1155_addresses.escrow_obligation,
+                test.addresses.erc1155_addresses.escrow_obligation_nontierable,
             )
             .call()
             .await?;

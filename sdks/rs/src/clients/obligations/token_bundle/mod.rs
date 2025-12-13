@@ -131,7 +131,8 @@ use crate::types::{ApprovalPurpose, ProviderContext, SharedWalletProvider};
 pub struct TokenBundleAddresses {
     pub eas: Address,
     pub barter_utils: Address,
-    pub escrow_obligation: Address,
+    pub escrow_obligation_nontierable: Address,
+    pub escrow_obligation_tierable: Address,
     pub payment_obligation: Address,
 }
 
@@ -175,7 +176,7 @@ impl ContractModule for TokenBundleModule {
         match contract {
             TokenBundleContract::Eas => self.addresses.eas,
             TokenBundleContract::BarterUtils => self.addresses.barter_utils,
-            TokenBundleContract::EscrowObligation => self.addresses.escrow_obligation,
+            TokenBundleContract::EscrowObligation => self.addresses.escrow_obligation_nontierable,
             TokenBundleContract::PaymentObligation => self.addresses.payment_obligation,
         }
     }
@@ -401,7 +402,7 @@ mod tests {
                 test.addresses
                     .clone()
                     .token_bundle_addresses
-                    .escrow_obligation,
+                    .escrow_obligation_nontierable,
             )
             .call()
             .await?;
@@ -413,7 +414,7 @@ mod tests {
                 test.addresses
                     .clone()
                     .token_bundle_addresses
-                    .escrow_obligation,
+                    .escrow_obligation_nontierable,
                 U256::from(1),
             )
             .call()
@@ -450,7 +451,7 @@ mod tests {
                 test.addresses
                     .clone()
                     .token_bundle_addresses
-                    .escrow_obligation,
+                    .escrow_obligation_nontierable,
             )
             .call()
             .await?;
@@ -462,7 +463,7 @@ mod tests {
                 test.addresses
                     .clone()
                     .token_bundle_addresses
-                    .escrow_obligation,
+                    .escrow_obligation_nontierable,
                 U256::from(1),
             )
             .call()
@@ -476,7 +477,7 @@ mod tests {
         );
 
         assert_eq!(
-            final_erc721_a_owner, test.addresses.token_bundle_addresses.escrow_obligation,
+            final_erc721_a_owner, test.addresses.token_bundle_addresses.escrow_obligation_nontierable,
             "ERC721 token should be in escrow"
         );
 
@@ -752,7 +753,7 @@ mod tests {
 
         // Verify tokens are in escrow
         assert_eq!(
-            escrow_erc721_owner, test.addresses.token_bundle_addresses.escrow_obligation,
+            escrow_erc721_owner, test.addresses.token_bundle_addresses.escrow_obligation_nontierable,
             "ERC721 token should be in escrow before collection"
         );
 
@@ -965,7 +966,7 @@ mod tests {
                 test.addresses
                     .clone()
                     .token_bundle_addresses
-                    .escrow_obligation,
+                    .escrow_obligation_nontierable,
             )
             .call()
             .await?;
@@ -982,7 +983,7 @@ mod tests {
                 test.addresses
                     .clone()
                     .token_bundle_addresses
-                    .escrow_obligation,
+                    .escrow_obligation_nontierable,
             )
             .call()
             .await?;
@@ -996,7 +997,7 @@ mod tests {
         let erc1155_escrow_approved = mock_erc1155_a
             .isApprovedForAll(
                 test.alice.address(),
-                test.addresses.token_bundle_addresses.escrow_obligation,
+                test.addresses.token_bundle_addresses.escrow_obligation_nontierable,
             )
             .call()
             .await?;
@@ -1078,7 +1079,7 @@ mod tests {
                 test.addresses
                     .clone()
                     .token_bundle_addresses
-                    .escrow_obligation,
+                    .escrow_obligation_nontierable,
             )
             .call()
             .await?;
@@ -1088,7 +1089,7 @@ mod tests {
                 test.addresses
                     .clone()
                     .token_bundle_addresses
-                    .escrow_obligation,
+                    .escrow_obligation_nontierable,
                 U256::from(1),
             )
             .call()
@@ -1096,7 +1097,7 @@ mod tests {
 
         // Verify tokens are in escrow
         assert_eq!(
-            erc721_owner, test.addresses.token_bundle_addresses.escrow_obligation,
+            erc721_owner, test.addresses.token_bundle_addresses.escrow_obligation_nontierable,
             "ERC721 token should be owned by escrow contract"
         );
 
@@ -1395,7 +1396,7 @@ mod tests {
                 test.addresses
                     .clone()
                     .token_bundle_addresses
-                    .escrow_obligation,
+                    .escrow_obligation_nontierable,
             )
             .call()
             .await?;
@@ -1434,7 +1435,7 @@ mod tests {
                 test.addresses
                     .clone()
                     .token_bundle_addresses
-                    .escrow_obligation,
+                    .escrow_obligation_nontierable,
             )
             .call()
             .await?;
@@ -1444,7 +1445,7 @@ mod tests {
                 test.addresses
                     .clone()
                     .token_bundle_addresses
-                    .escrow_obligation,
+                    .escrow_obligation_nontierable,
                 U256::from(1),
             )
             .call()
@@ -1452,7 +1453,7 @@ mod tests {
 
         // Verify tokens are in escrow
         assert_eq!(
-            erc721_owner, test.addresses.token_bundle_addresses.escrow_obligation,
+            erc721_owner, test.addresses.token_bundle_addresses.escrow_obligation_nontierable,
             "ERC721 token should be owned by escrow contract"
         );
 
@@ -1470,7 +1471,7 @@ mod tests {
         let final_approval = mock_erc1155_a
             .isApprovedForAll(
                 test.alice.address(),
-                test.addresses.token_bundle_addresses.escrow_obligation,
+                test.addresses.token_bundle_addresses.escrow_obligation_nontierable,
             )
             .call()
             .await?;

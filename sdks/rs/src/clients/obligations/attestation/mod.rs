@@ -92,8 +92,10 @@ pub struct AttestationAddresses {
     pub eas: Address,
     pub eas_schema_registry: Address,
     pub barter_utils: Address,
-    pub escrow_obligation: Address,
-    pub escrow_obligation_2: Address,
+    pub escrow_obligation_nontierable: Address,
+    pub escrow_obligation_tierable: Address,
+    pub escrow_obligation_2_nontierable: Address,
+    pub escrow_obligation_2_tierable: Address,
 }
 
 #[derive(Clone)]
@@ -132,8 +134,8 @@ impl ContractModule for AttestationModule {
             AttestationContract::Eas => self.addresses.eas,
             AttestationContract::EasSchemaRegistry => self.addresses.eas_schema_registry,
             AttestationContract::BarterUtils => self.addresses.barter_utils,
-            AttestationContract::EscrowObligation => self.addresses.escrow_obligation,
-            AttestationContract::EscrowObligation2 => self.addresses.escrow_obligation_2,
+            AttestationContract::EscrowObligation => self.addresses.escrow_obligation_nontierable,
+            AttestationContract::EscrowObligation2 => self.addresses.escrow_obligation_2_nontierable,
         }
     }
 }
@@ -666,7 +668,7 @@ mod tests {
 
         // Get the expected schema ID from the contract
         let escrow_contract = contracts::obligations::escrow::non_tierable::AttestationEscrowObligation2::new(
-            test.addresses.attestation_addresses.escrow_obligation_2,
+            test.addresses.attestation_addresses.escrow_obligation_2_nontierable,
             &test.god_provider,
         );
 
@@ -911,7 +913,7 @@ mod tests {
 
         // Get the expected validation schema ID from the contract
         let escrow_contract = contracts::obligations::escrow::non_tierable::AttestationEscrowObligation2::new(
-            test.addresses.attestation_addresses.escrow_obligation_2,
+            test.addresses.attestation_addresses.escrow_obligation_2_nontierable,
             &test.god_provider,
         );
 

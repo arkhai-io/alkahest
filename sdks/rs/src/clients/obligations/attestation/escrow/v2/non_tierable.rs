@@ -24,7 +24,7 @@ impl<'a> NonTierable<'a> {
 
     /// Get the contract address
     pub fn address(&self) -> Address {
-        self.module.addresses.escrow_obligation_2
+        self.module.addresses.escrow_obligation_2_nontierable
     }
 
     /// Gets an escrow obligation by its attestation UID.
@@ -62,7 +62,7 @@ impl<'a> NonTierable<'a> {
     ) -> eyre::Result<TransactionReceipt> {
         let escrow_contract =
             contracts::obligations::escrow::non_tierable::AttestationEscrowObligation2::new(
-                self.module.addresses.escrow_obligation_2,
+                self.module.addresses.escrow_obligation_2_nontierable,
                 &self.module.wallet_provider,
             );
 
@@ -92,7 +92,7 @@ impl<'a> NonTierable<'a> {
     ) -> eyre::Result<TransactionReceipt> {
         let escrow_contract =
             contracts::obligations::escrow::non_tierable::AttestationEscrowObligation2::new(
-                self.module.addresses.escrow_obligation_2,
+                self.module.addresses.escrow_obligation_2_nontierable,
                 &self.module.wallet_provider,
             );
 

@@ -34,7 +34,7 @@ impl<'a> Util<'a> {
         let erc721_contract = contracts::IERC721::new(token.address, &self.module.wallet_provider);
 
         let to = match purpose {
-            ApprovalPurpose::Escrow => self.module.addresses.escrow_obligation,
+            ApprovalPurpose::Escrow => self.module.addresses.escrow_obligation_nontierable,
             ApprovalPurpose::Payment => self.module.addresses.payment_obligation,
             ApprovalPurpose::BarterUtils => self.module.addresses.barter_utils,
         };
@@ -66,7 +66,7 @@ impl<'a> Util<'a> {
             contracts::IERC721::new(token_contract, &self.module.wallet_provider);
 
         let to = match purpose {
-            ApprovalPurpose::Escrow => self.module.addresses.escrow_obligation,
+            ApprovalPurpose::Escrow => self.module.addresses.escrow_obligation_nontierable,
             ApprovalPurpose::Payment => self.module.addresses.payment_obligation,
             ApprovalPurpose::BarterUtils => self.module.addresses.barter_utils,
         };
@@ -98,7 +98,7 @@ impl<'a> Util<'a> {
             contracts::IERC721::new(token_contract, &self.module.wallet_provider);
 
         let to = match purpose {
-            ApprovalPurpose::Escrow => self.module.addresses.escrow_obligation,
+            ApprovalPurpose::Escrow => self.module.addresses.escrow_obligation_nontierable,
             ApprovalPurpose::Payment => self.module.addresses.payment_obligation,
             ApprovalPurpose::BarterUtils => self.module.addresses.barter_utils,
         };
