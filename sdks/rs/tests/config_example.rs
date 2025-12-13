@@ -5,7 +5,7 @@ use alkahest_rs::{
     extensions::{HasArbiters as _, HasErc20 as _, HasErc721 as _},
     utils::setup_test_environment,
 };
-use alloy::primitives::address;
+use alloy::primitives::{address, Address};
 use eyre::Result;
 
 #[tokio::test]
@@ -104,7 +104,8 @@ async fn test_custom_configuration() -> Result<()> {
         erc20_addresses: Erc20Addresses {
             eas: address!("0x4200000000000000000000000000000000000021"),
             barter_utils: address!("0x5C624f8FbbB377378cDfE8B627384A917FE839db"),
-            escrow_obligation: address!("0xFa76421cEe6aee41adc7f6a475b9Ef3776d500F0"),
+            escrow_obligation_nontierable: address!("0xFa76421cEe6aee41adc7f6a475b9Ef3776d500F0"),
+            escrow_obligation_tierable: Address::ZERO,
             payment_obligation: address!("0xE95d3931E15E4d96cE1d2Dd336DcEad35A708bdB"),
         },
         // Using defaults for other address types

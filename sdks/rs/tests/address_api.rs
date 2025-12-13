@@ -65,7 +65,7 @@ async fn test_address_api_with_base_extensions() -> Result<()> {
 
     // Alternative: You can also access the module directly and get addresses from there
     let erc20_module = client.erc20();
-    let direct_escrow = erc20_module.addresses.escrow_obligation;
+    let direct_escrow = erc20_module.addresses.escrow_obligation_nontierable;
 
     // This should be the same as using the address method
     assert_eq!(erc20_escrow, direct_escrow);

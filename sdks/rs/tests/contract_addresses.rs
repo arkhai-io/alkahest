@@ -102,7 +102,7 @@ async fn test_direct_access_compatibility() -> Result<()> {
 
     // Direct access (old way, still supported)
     let erc20_client = client.erc20();
-    let erc20_escrow_direct = erc20_client.addresses.escrow_obligation;
+    let erc20_escrow_direct = erc20_client.addresses.escrow_obligation_nontierable;
 
     // Both methods should give the same address
     assert_eq!(erc20_escrow_via_method, erc20_escrow_direct);
@@ -180,13 +180,13 @@ async fn test_custom_network_configuration() -> Result<()> {
     // Verify each client uses its respective network addresses
     assert_eq!(
         base_escrow,
-        BASE_SEPOLIA_ADDRESSES.erc20_addresses.escrow_obligation
+        BASE_SEPOLIA_ADDRESSES.erc20_addresses.escrow_obligation_nontierable
     );
     assert_eq!(
         filecoin_escrow,
         FILECOIN_CALIBRATION_ADDRESSES
             .erc20_addresses
-            .escrow_obligation
+            .escrow_obligation_nontierable
     );
 
     Ok(())
