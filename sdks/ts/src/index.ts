@@ -491,5 +491,9 @@ export * from "./utils";
 // Export contract ABIs
 export * as contracts from "./contracts";
 
+// Export test fixtures
+export * as fixtures from "../tests/fixtures";
+
 // Export test utilities
 export { setupTestEnvironment, type TestContext } from "../tests/utils/setup";
+
