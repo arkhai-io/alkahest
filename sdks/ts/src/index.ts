@@ -490,6 +490,7 @@ export * from "./utils";
 
 // Export contract ABIs
 export * as contracts from "./contracts";
+export * from "viem"
 
 // Export test utilities
 export { setupTestEnvironment, type TestContext } from "../tests/utils/setup";
