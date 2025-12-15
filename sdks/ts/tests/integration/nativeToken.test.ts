@@ -54,7 +54,7 @@ describe('Native Token Integration Tests', () => {
       };
 
       const encodedOracleData = client.arbiters.general.trustedOracle.encode(oracleData);
-      
+
       // Verify oracle demand includes Native Token payment request
       expect(testContext.addresses.trustedOracleArbiter).toBeDefined();
       expect(encodedOracleData).toBeDefined();
@@ -63,7 +63,7 @@ describe('Native Token Integration Tests', () => {
 
       // Verify the oracle data was correctly encoded by decoding it
       const decodedOracleData = client.arbiters.general.trustedOracle.decode(encodedOracleData);
-      expect(decodedOracleData.oracle.toLowerCase()).toBe(testContext.alice.address.toLowerCase());  
+      expect(decodedOracleData.oracle.toLowerCase()).toBe(testContext.alice.address.toLowerCase());
       expect(decodedOracleData.data).toBe(nativeTokenDemand.demand);
     });
 
@@ -79,7 +79,7 @@ describe('Native Token Integration Tests', () => {
 
       // Decode the data
       const decoded = client.nativeToken.decodeNativeTokenObligationData(encoded);
-      
+
       // Verify round-trip consistency
       expect(decoded.amount).toBe(originalData.amount);
       expect(decoded.payee.toLowerCase()).toBe(originalData.payee.toLowerCase());
@@ -94,7 +94,7 @@ describe('Native Token Integration Tests', () => {
       for (const testCase of edgeCases) {
         const encoded = client.nativeToken.encodeNativeTokenObligationData(testCase);
         const decoded = client.nativeToken.decodeNativeTokenObligationData(encoded);
-        
+
         expect(decoded.amount).toBe(testCase.amount);
         expect(decoded.payee.toLowerCase()).toBe(testCase.payee.toLowerCase());
       }
@@ -111,12 +111,12 @@ describe('Native Token Integration Tests', () => {
       for (const demandData of demands) {
         // Create Native Token demand
         const nativeTokenDemand = client.nativeToken.createNativeTokenPaymentDemand(demandData);
-        
+
         // Verify demand structure
         expect(nativeTokenDemand.arbiter).toBe(testContext.addresses.nativeTokenPaymentObligation);
         expect(typeof nativeTokenDemand.demand).toBe('string');
         expect(nativeTokenDemand.demand.startsWith('0x')).toBe(true);
-        
+
         // Verify we can decode back to original data
         const decoded = client.nativeToken.decodeNativeTokenObligationData(nativeTokenDemand.demand);
         expect(decoded.amount).toBe(demandData.amount);
@@ -140,7 +140,7 @@ describe('Native Token Integration Tests', () => {
 
       // 3. Execute the payment
       const { hash } = await client.nativeToken.doNativeTokenPaymentObligation(paymentData);
-      
+
       // 4. Wait for transaction confirmation
       const receipt = await testContext.testClient.waitForTransactionReceipt({ hash });
       expect(receipt.status).toBe('success');
@@ -154,7 +154,7 @@ describe('Native Token Integration Tests', () => {
       // 6. Create and verify demand for this payment
       const paymentDemand = client.nativeToken.createNativeTokenPaymentDemand(paymentData);
       expect(paymentDemand.arbiter).toBe(testContext.addresses.nativeTokenPaymentObligation);
-      
+
       // 7. Verify demand encoding/decoding consistency
       const decodedDemand = client.nativeToken.decodeNativeTokenObligationData(paymentDemand.demand);
       expect(decodedDemand.amount).toBe(paymentData.amount);
@@ -164,24 +164,29 @@ describe('Native Token Integration Tests', () => {
     it('should process sequential payments to different recipients with balance tracking', async () => {
       const recipients = [testContext.bob.address, testContext.charlie.address];
       const amounts = [parseEther('0.5'), parseEther('0.3')];
-      
+
       for (let i = 0; i < recipients.length; i++) {
+        const recipient = recipients[i];
+        const amount = amounts[i];
+
+        if (!recipient || !amount) continue;
+
         const paymentData = {
-          amount: amounts[i],
-          payee: recipients[i],
+          amount,
+          payee: recipient,
         };
 
         const initialBalance = await testContext.testClient.getBalance({
-          address: recipients[i],
+          address: recipient,
         });
 
         const { hash } = await client.nativeToken.doNativeTokenPaymentObligation(paymentData);
         await testContext.testClient.waitForTransactionReceipt({ hash });
 
         const finalBalance = await testContext.testClient.getBalance({
-          address: recipients[i],
+          address: recipient,
         });
-        expect(finalBalance).toBe(initialBalance + amounts[i]);
+        expect(finalBalance).toBe(initialBalance + amount);
       }
     });
 
@@ -229,14 +234,14 @@ describe('Native Token Integration Tests', () => {
       for (const operation of operations) {
         // Create demand
         const demand = client.nativeToken.createNativeTokenPaymentDemand(operation);
-        
+
         // Verify demand structure
         expect(demand.arbiter).toBe(testContext.addresses.nativeTokenPaymentObligation);
-        
+
         // Execute payment
         const { hash } = await client.nativeToken.doNativeTokenPaymentObligation(operation);
         const receipt = await testContext.testClient.waitForTransactionReceipt({ hash });
-        
+
         results.push({
           operation,
           demand,
@@ -263,14 +268,14 @@ describe('Native Token Integration Tests', () => {
         // Test that the contract is deployed and has the expected ABI
         expect(aliceClient.nativeToken.paymentAbi).toBeDefined();
         expect(Array.isArray(aliceClient.nativeToken.paymentAbi)).toBe(true);
-        
+
         // Test basic contract interaction - verify contract is deployed with bytecode
         const code = await testContext.testClient.getBytecode({
           address: testContext.addresses.nativeTokenPaymentObligation,
         });
         expect(code).toBeDefined();
         expect(code).not.toBe('0x');
-        
+
         // Try to read EAS contract address if the function exists
         try {
           const easContract = await testContext.testClient.readContract({
@@ -401,7 +406,7 @@ describe('Native Token Integration Tests', () => {
 
           const { hash } = await aliceClient.nativeToken.doNativeTokenPaymentObligation(obligationData);
           const receipt = await testContext.testClient.waitForTransactionReceipt({ hash });
-          
+
           expect(receipt.status).toBe('success');
 
           const finalBalance = await testContext.testClient.getBalance({
