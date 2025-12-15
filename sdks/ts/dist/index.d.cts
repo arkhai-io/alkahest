@@ -1,8 +1,9 @@
 import * as viem from 'viem';
-import { Hex, BlockNumber, BlockTag, Address, Abi, WalletClient, Transport, Chain, Account, PublicActions, AbiParameter, DecodeAbiParametersReturnType } from 'viem';
+import { Hex, BlockNumber, BlockTag, Address, Abi, WalletClient, Transport, Chain, Account, PublicActions, Client, TestClient, WalletActions, AbiParameter, DecodeAbiParametersReturnType } from 'viem';
 import * as arktype from 'arktype';
 import * as zod from 'zod';
 import * as abitype from 'abitype';
+import { createAnvil } from '@viem/anvil';
 
 type ChainAddresses = {
     eas: `0x${string}`;
@@ -50133,6 +50134,132 @@ declare namespace index {
   export { abi$$ as AllArbiter, abi$_ as AnyArbiter, abi$Z as AttestationBarterUtils, abi$Y as AttestationEscrowObligation, abi$X as AttestationEscrowObligation2, abi$W as AttesterArbiter, abi$V as AttesterArbiterComposing, abi$U as AttesterArbiterNonComposing, abi$T as ERC1155BarterCrossToken, abi$S as ERC1155BarterUtils, abi$R as ERC1155EscrowObligation, abi$Q as ERC1155PaymentObligation, abi$P as ERC20BarterCrossToken, abi$O as ERC20BarterUtils, abi$N as ERC20EscrowObligation, abi$M as ERC20PaymentFulfillmentArbiter, abi$L as ERC20PaymentObligation, abi$K as ERC20Permit, abi$J as ERC721BarterCrossToken, abi$I as ERC721BarterUtils, abi$H as ERC721EscrowObligation, abi$G as ERC721PaymentObligation, abi$F as ExpirationTimeAfterArbiterComposing, abi$E as ExpirationTimeAfterArbiterNonComposing, abi$D as ExpirationTimeBeforeArbiterComposing, abi$C as ExpirationTimeBeforeArbiterNonComposing, abi$B as ExpirationTimeEqualArbiterComposing, abi$A as ExpirationTimeEqualArbiterNonComposing, abi$z as IEAS, abi$y as IERC1155, abi$x as IERC20, abi$w as IERC721, abi$v as ISchemaRegistry, abi$u as IntrinsicsArbiter, abi$t as IntrinsicsArbiter2, abi$s as JobResultObligation, abi$r as NativeTokenBarterUtils, abi$q as NativeTokenEscrowObligation, abi$p as NativeTokenPaymentObligation, abi$o as RecipientArbiterComposing, abi$n as RecipientArbiterNonComposing, abi$m as RefUidArbiterComposing, abi$l as RefUidArbiterNonComposing, abi$k as RevocableArbiterComposing, abi$j as RevocableArbiterNonComposing, abi$i as SchemaArbiterComposing, abi$h as SchemaArbiterNonComposing, abi$g as SpecificAttestationArbiter, abi$f as StringObligation, abi$e as TimeAfterArbiter, abi$d as TimeAfterArbiterComposing, abi$c as TimeAfterArbiterNonComposing, abi$b as TimeBeforeArbiterComposing, abi$a as TimeBeforeArbiterNonComposing, abi$9 as TimeEqualArbiterComposing, abi$8 as TimeEqualArbiterNonComposing, abi$7 as TokenBundleBarterUtils, abi$6 as TokenBundleEscrowObligation, abi$5 as TokenBundlePaymentObligation, abi$4 as TrivialArbiter, abi$3 as TrustedOracleArbiter, abi$2 as TrustedPartyArbiter, abi$1 as UidArbiterComposing, abi as UidArbiterNonComposing };
 }
 
+type AlkahestTestActions = ReturnType<ReturnType<typeof createTokenTestExtension>>;
+declare function createTokenTestExtension<C extends Client & PublicActions>(): (client: C) => {
+    getErc20Balance(token: Omit<Erc20, "value">, owner: `0x${string}`): Promise<bigint>;
+    getErc721Owner(token: Erc721): Promise<`0x${string}`>;
+    getErc1155Balance(token: Omit<Erc1155, "value">, owner: `0x${string}`): Promise<bigint>;
+};
+
+type TestContext = {
+    anvil: ReturnType<typeof createAnvil>;
+    testClient: TestClient & WalletActions & PublicActions & AlkahestTestActions;
+    anvilInitState?: `0x${string}`;
+    wsTransports?: any[];
+    alice: {
+        address: `0x${string}`;
+        privateKey: `0x${string}`;
+        client: ReturnType<typeof makeClient>;
+        clientWs: ReturnType<typeof makeClient>;
+    };
+    bob: {
+        address: `0x${string}`;
+        privateKey: `0x${string}`;
+        client: ReturnType<typeof makeClient>;
+        clientWs: ReturnType<typeof makeClient>;
+    };
+    charlie: {
+        address: `0x${string}`;
+        privateKey: `0x${string}`;
+        client: ReturnType<typeof makeClient>;
+        clientWs: ReturnType<typeof makeClient>;
+    };
+    addresses: {
+        eas: `0x${string}`;
+        easSchemaRegistry: `0x${string}`;
+        trivialArbiter: `0x${string}`;
+        trustedPartyArbiter: `0x${string}`;
+        trustedOracleArbiter: `0x${string}`;
+        specificAttestationArbiter: `0x${string}`;
+        intrinsicsArbiter: `0x${string}`;
+        intrinsicsArbiter2: `0x${string}`;
+        anyArbiter: `0x${string}`;
+        allArbiter: `0x${string}`;
+        attesterArbiterNonComposing: `0x${string}`;
+        recipientArbiterNonComposing: `0x${string}`;
+        refUidArbiterNonComposing: `0x${string}`;
+        revocableArbiterNonComposing: `0x${string}`;
+        schemaArbiterNonComposing: `0x${string}`;
+        timeAfterArbiterNonComposing: `0x${string}`;
+        timeBeforeArbiterNonComposing: `0x${string}`;
+        timeEqualArbiterNonComposing: `0x${string}`;
+        uidArbiterNonComposing: `0x${string}`;
+        expirationTimeAfterArbiterNonComposing: `0x${string}`;
+        expirationTimeBeforeArbiterNonComposing: `0x${string}`;
+        expirationTimeEqualArbiterNonComposing: `0x${string}`;
+        attesterArbiterComposing: `0x${string}`;
+        recipientArbiterComposing: `0x${string}`;
+        refUidArbiterComposing: `0x${string}`;
+        revocableArbiterComposing: `0x${string}`;
+        schemaArbiterComposing: `0x${string}`;
+        timeAfterArbiterComposing: `0x${string}`;
+        timeBeforeArbiterComposing: `0x${string}`;
+        timeEqualArbiterComposing: `0x${string}`;
+        uidArbiterComposing: `0x${string}`;
+        expirationTimeAfterArbiterComposing: `0x${string}`;
+        expirationTimeBeforeArbiterComposing: `0x${string}`;
+        expirationTimeEqualArbiterComposing: `0x${string}`;
+        erc20EscrowObligation: `0x${string}`;
+        erc20PaymentObligation: `0x${string}`;
+        erc20BarterUtils: `0x${string}`;
+        erc721EscrowObligation: `0x${string}`;
+        erc721PaymentObligation: `0x${string}`;
+        erc721BarterUtils: `0x${string}`;
+        erc1155EscrowObligation: `0x${string}`;
+        erc1155PaymentObligation: `0x${string}`;
+        erc1155BarterUtils: `0x${string}`;
+        tokenBundleEscrowObligation: `0x${string}`;
+        tokenBundlePaymentObligation: `0x${string}`;
+        tokenBundleBarterUtils: `0x${string}`;
+        attestationEscrowObligation: `0x${string}`;
+        attestationEscrowObligation2: `0x${string}`;
+        attestationBarterUtils: `0x${string}`;
+        stringObligation: `0x${string}`;
+        nativeTokenPaymentObligation: `0x${string}`;
+        nativeTokenEscrowObligation: `0x${string}`;
+    };
+    mockAddresses: {
+        erc20A: `0x${string}`;
+        erc20B: `0x${string}`;
+        erc20C: `0x${string}`;
+        erc721A: `0x${string}`;
+        erc721B: `0x${string}`;
+        erc721C: `0x${string}`;
+        erc1155A: `0x${string}`;
+        erc1155B: `0x${string}`;
+        erc1155C: `0x${string}`;
+    };
+    deployContract: <T extends {
+        abi: any;
+        bytecode: {
+            object: string;
+        };
+    }>(contract: T, args?: any[]) => Promise<`0x${string}`>;
+    deployObligation: <T extends {
+        abi: any;
+        bytecode: {
+            object: string;
+        };
+    }>(contract: T) => Promise<`0x${string}`>;
+};
+/**
+ * Sets up a complete test environment for Alkahest tests
+ *
+ * This function:
+ * 1. Launches an Anvil instance
+ * 2. Sets up test accounts with ETH
+ * 3. Deploys all core contracts (EAS, obligations, arbiters, etc.)
+ * 4. Deploys mock tokens for testing
+ * 5. Distributes mock tokens to test accounts
+ * 6. Creates Alkahest clients for each test account
+ *
+ * @returns TestContext object with all necessary test resources
+ */
+interface SetupTestEnvironmentOptions {
+    anvilOptions?: Partial<Parameters<typeof createAnvil>[0]>;
+}
+declare function setupTestEnvironment(options?: SetupTestEnvironmentOptions): Promise<TestContext>;
+
 type Extended = {
     [key: string]: unknown;
 };
@@ -50212,4 +50339,4 @@ declare const makeClient: (walletClient: WalletClient<Transport, Chain, Account>
  */
 declare const makeMinimalClient: (walletClient: WalletClient<Transport, Chain, Account>, contractAddresses?: Partial<ChainAddresses>) => MinimalClient;
 
-export { type AlkahestClient, AllArbiterCodec, AnyArbiterCodec, type ApprovalPurpose, type ArbiterDemandParser, ArbiterRegistry, type Attestation, type AttestationFilters, type BatchFilters, type BlockFilters, type ChainAddresses, type Demand, DemandParsingRegistry, DemandParsingUtils, type Eip2612Props, type EnhancedArbitrateFilters, type Erc1155, type Erc20, type Erc721, type EthArbitrationContext, type EthArbitrationRequest, type EthArbitrationResult, type EthBalanceArbitrationRequest, type EthTransferArbitrationRequest, type MinimalClient, type NativeTokenArbitrationContext, type NativeTokenArbitrationRequest, type NativeTokenArbitrationResult, type NativeTokenBalanceArbitrationRequest, type NativeTokenEscrowArbitrationRequest, type NativeTokenPaymentArbitrationRequest, type NativeTokenTransferArbitrationRequest, type ParsedDemand, type PerformanceFilters, type PermitSignature, type SignPermitProps, type TimeFilters, type TokenBundle, type TokenBundleFlat, TrustedOracleArbiterCodec, type ViemClient, contractAddresses, index as contracts, createComposingArbiterCodec, createFullArbiterRegistry, createNonComposingArbiterCodec, flattenTokenBundle, getAttestation, getAttestedEventFromTxHash, getOptimalPollingInterval, isWebSocketTransport, makeArbitersClient, makeClient, makeDefaultExtension, makeMinimalClient, readContract, supportedChains, writeContract };
+export { type AlkahestClient, AllArbiterCodec, AnyArbiterCodec, type ApprovalPurpose, type ArbiterDemandParser, ArbiterRegistry, type Attestation, type AttestationFilters, type BatchFilters, type BlockFilters, type ChainAddresses, type Demand, DemandParsingRegistry, DemandParsingUtils, type Eip2612Props, type EnhancedArbitrateFilters, type Erc1155, type Erc20, type Erc721, type EthArbitrationContext, type EthArbitrationRequest, type EthArbitrationResult, type EthBalanceArbitrationRequest, type EthTransferArbitrationRequest, type MinimalClient, type NativeTokenArbitrationContext, type NativeTokenArbitrationRequest, type NativeTokenArbitrationResult, type NativeTokenBalanceArbitrationRequest, type NativeTokenEscrowArbitrationRequest, type NativeTokenPaymentArbitrationRequest, type NativeTokenTransferArbitrationRequest, type ParsedDemand, type PerformanceFilters, type PermitSignature, type SignPermitProps, type TestContext, type TimeFilters, type TokenBundle, type TokenBundleFlat, TrustedOracleArbiterCodec, type ViemClient, contractAddresses, index as contracts, createComposingArbiterCodec, createFullArbiterRegistry, createNonComposingArbiterCodec, flattenTokenBundle, getAttestation, getAttestedEventFromTxHash, getOptimalPollingInterval, isWebSocketTransport, makeArbitersClient, makeClient, makeDefaultExtension, makeMinimalClient, readContract, setupTestEnvironment, supportedChains, writeContract };

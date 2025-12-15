@@ -4,9 +4,9 @@ import { makeClient } from '../../src/index.js';
 import { type NativeTokenEscrowObligationData } from '../../src/clients/nativeToken.js';
 import {
   setupTestEnvironment,
-  teardownTestEnvironment,
   type TestContext,
 } from '../utils/setup.js';
+import { teardownTestEnvironment } from '../utils/teardownTestEnvironment.js';
 
 describe('Native Token Integration Tests', () => {
   let testContext: TestContext;
