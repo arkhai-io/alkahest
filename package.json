@@ -1,0 +1,10 @@
+{
+  "name": "alkahest-ts",
+  "private": false,
+  "type": "module",
+  "main": "./sdks/ts/dist/index.js",
+  "types": "./sdks/ts/dist/index.d.ts",
+  "files": [
+    "sdks/ts/dist"
+  ]
+}
