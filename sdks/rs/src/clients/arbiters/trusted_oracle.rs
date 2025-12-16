@@ -50,10 +50,16 @@ impl Default for TrustedOracleAddresses {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct ArbitrateOptions {
-    pub skip_arbitrated: bool,
-    pub only_new: bool,
+/// Controls which arbitration requests to process
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum ArbitrationMode {
+    /// Process all past requests and listen for new ones
+    #[default]
+    All,
+    /// Process only unarbitrated past requests and listen for new ones
+    Unarbitrated,
+    /// Only listen for new requests, skip past ones
+    OnlyNew,
 }
 
 /// An attestation paired with its associated demand data from ArbitrationRequested event
@@ -63,14 +69,6 @@ pub struct AttestationWithDemand {
     pub demand: Bytes,
 }
 
-impl Default for ArbitrateOptions {
-    fn default() -> Self {
-        ArbitrateOptions {
-            skip_arbitrated: false,
-            only_new: false,
-        }
-    }
-}
 
 // Trait for abstracting over sync and async arbitration strategies
 trait ArbitrationStrategy {
@@ -367,7 +365,7 @@ impl TrustedOracleModule {
 
     async fn get_arbitration_requested_attestations(
         &self,
-        options: &ArbitrateOptions,
+        mode: ArbitrationMode,
     ) -> eyre::Result<Vec<AttestationWithDemand>> {
         let filter = self.make_arbitration_requested_filter();
 
@@ -405,7 +403,7 @@ impl TrustedOracleModule {
             })
             .collect();
 
-        let attestations_with_demand = if options.skip_arbitrated {
+        let attestations_with_demand = if mode == ArbitrationMode::Unarbitrated {
             self.filter_unarbitrated_attestations_with_demand(attestations_with_demand)
                 .await?
         } else {
@@ -473,14 +471,14 @@ impl TrustedOracleModule {
     async fn arbitrate_past<Strategy: ArbitrationStrategy>(
         &self,
         strategy: Strategy,
-        options: &ArbitrateOptions,
+        mode: ArbitrationMode,
     ) -> eyre::Result<Vec<Decision>>
     where
         Strategy::Future: Send,
     {
         use futures::future::join_all;
 
-        let attestations_with_demand = self.get_arbitration_requested_attestations(options).await?;
+        let attestations_with_demand = self.get_arbitration_requested_attestations(mode).await?;
 
         // Strategy only sees attestations, not demand data
         let decision_futs = attestations_with_demand
@@ -495,10 +493,10 @@ impl TrustedOracleModule {
     pub async fn arbitrate_past_sync<Arbitrate: Fn(&Attestation) -> Option<bool>>(
         &self,
         arbitrate: Arbitrate,
-        options: &ArbitrateOptions,
+        mode: ArbitrationMode,
     ) -> eyre::Result<Vec<Decision>> {
         let strategy = SyncArbitration::new(arbitrate);
-        self.arbitrate_past(strategy, options).await
+        self.arbitrate_past(strategy, mode).await
     }
 
     pub async fn arbitrate_past_async<
@@ -507,10 +505,10 @@ impl TrustedOracleModule {
     >(
         &self,
         arbitrate: Arbitrate,
-        options: &ArbitrateOptions,
+        mode: ArbitrationMode,
     ) -> eyre::Result<Vec<Decision>> {
         let strategy = AsyncArbitration::new(arbitrate);
-        self.arbitrate_past(strategy, options).await
+        self.arbitrate_past(strategy, mode).await
     }
 
     async fn spawn_arbitration_listener<
@@ -522,7 +520,7 @@ impl TrustedOracleModule {
         stream: SubscriptionStream<alloy::rpc::types::Log>,
         strategy: Strategy,
         on_after_arbitrate: OnAfterArbitrate,
-        options: &ArbitrateOptions,
+        skip_arbitrated: bool,
     ) where
         Strategy::Future: Send,
     {
@@ -531,7 +529,6 @@ impl TrustedOracleModule {
         let arbiter_address = self.addresses.trusted_oracle_arbiter;
         let signer_address = self.signer_address;
         let public_provider = self.public_provider.clone();
-        let options = options.clone();
 
         tokio::spawn(async move {
             let eas = IEAS::new(eas_address, &wallet_provider);
@@ -553,7 +550,7 @@ impl TrustedOracleModule {
                     continue;
                 };
 
-                if options.skip_arbitrated {
+                if skip_arbitrated {
                     // ArbitrationMade event: (bytes32 indexed decisionKey, bytes32 indexed obligation, address indexed oracle, bool decision)
                     // topic1 = decisionKey, topic2 = obligation, topic3 = oracle
                     let filter = Filter::new()
@@ -625,10 +622,10 @@ impl TrustedOracleModule {
         stream: SubscriptionStream<alloy::rpc::types::Log>,
         arbitrate: Arbitrate,
         on_after_arbitrate: OnAfterArbitrate,
-        options: &ArbitrateOptions,
+        skip_arbitrated: bool,
     ) {
         let strategy = SyncArbitration::new(arbitrate);
-        self.spawn_arbitration_listener(stream, strategy, on_after_arbitrate, options)
+        self.spawn_arbitration_listener(stream, strategy, on_after_arbitrate, skip_arbitrated)
             .await;
     }
 
@@ -642,10 +639,10 @@ impl TrustedOracleModule {
         stream: SubscriptionStream<alloy::rpc::types::Log>,
         arbitrate: Arbitrate,
         on_after_arbitrate: OnAfterArbitrate,
-        options: &ArbitrateOptions,
+        skip_arbitrated: bool,
     ) {
         let strategy = AsyncArbitration::new(arbitrate);
-        self.spawn_arbitration_listener(stream, strategy, on_after_arbitrate, options)
+        self.spawn_arbitration_listener(stream, strategy, on_after_arbitrate, skip_arbitrated)
             .await;
     }
 
@@ -658,7 +655,7 @@ impl TrustedOracleModule {
         mut stream: SubscriptionStream<alloy::rpc::types::Log>,
         arbitrate: Arbitrate,
         on_after_arbitrate: OnAfterArbitrate,
-        options: &ArbitrateOptions,
+        skip_arbitrated: bool,
         timeout: Option<Duration>,
     ) {
         let eas = IEAS::new(self.addresses.eas, &*self.wallet_provider);
@@ -699,7 +696,7 @@ impl TrustedOracleModule {
                 continue;
             };
 
-            if options.skip_arbitrated {
+            if skip_arbitrated {
                 let filter = self.make_arbitration_made_filter(Some(attestation.uid));
                 let logs_result = self.public_provider.get_logs(&filter).await;
 
@@ -765,14 +762,14 @@ impl TrustedOracleModule {
         &self,
         arbitrate: Arbitrate,
         on_after_arbitrate: OnAfterArbitrate,
-        options: &ArbitrateOptions,
+        mode: ArbitrationMode,
     ) -> eyre::Result<ListenAndArbitrateResult> {
-        let decisions = if options.only_new {
+        let decisions = if mode == ArbitrationMode::OnlyNew {
             Vec::new()
         } else {
             // Need to capture arbitrate for past arbitration
             let attestations_with_demand =
-                self.get_arbitration_requested_attestations(options).await?;
+                self.get_arbitration_requested_attestations(mode).await?;
             let decisions: Vec<Option<bool>> = attestations_with_demand
                 .iter()
                 .map(|awd| arbitrate(&awd.attestation))
@@ -786,7 +783,8 @@ impl TrustedOracleModule {
         let local_id = *sub.local_id();
         let stream: SubscriptionStream<alloy::rpc::types::Log> = sub.into_stream();
 
-        self.spawn_arbitration_listener_sync(stream, arbitrate, on_after_arbitrate, options)
+        let skip_arbitrated = mode == ArbitrationMode::Unarbitrated;
+        self.spawn_arbitration_listener_sync(stream, arbitrate, on_after_arbitrate, skip_arbitrated)
             .await;
 
         Ok(ListenAndArbitrateResult {
@@ -804,15 +802,15 @@ impl TrustedOracleModule {
         &self,
         arbitrate: Arbitrate,
         on_after_arbitrate: OnAfterArbitrate,
-        options: &ArbitrateOptions,
+        mode: ArbitrationMode,
     ) -> eyre::Result<ListenAndArbitrateResult> {
-        let decisions = if options.only_new {
+        let decisions = if mode == ArbitrationMode::OnlyNew {
             Vec::new()
         } else {
             // Need to capture arbitrate for past arbitration
             use futures::future::join_all;
             let attestations_with_demand =
-                self.get_arbitration_requested_attestations(options).await?;
+                self.get_arbitration_requested_attestations(mode).await?;
             let decision_futs = attestations_with_demand
                 .iter()
                 .map(|awd| arbitrate(&awd.attestation));
@@ -826,7 +824,8 @@ impl TrustedOracleModule {
         let local_id = *sub.local_id();
         let stream: SubscriptionStream<alloy::rpc::types::Log> = sub.into_stream();
 
-        self.spawn_arbitration_listener_async(stream, arbitrate, on_after_arbitrate, options)
+        let skip_arbitrated = mode == ArbitrationMode::Unarbitrated;
+        self.spawn_arbitration_listener_async(stream, arbitrate, on_after_arbitrate, skip_arbitrated)
             .await;
 
         Ok(ListenAndArbitrateResult {
@@ -843,13 +842,13 @@ impl TrustedOracleModule {
         &self,
         arbitrate: Arbitrate,
         on_after_arbitrate: OnAfterArbitrate,
-        options: &ArbitrateOptions,
+        mode: ArbitrationMode,
         timeout: Option<Duration>,
     ) -> eyre::Result<ListenAndArbitrateResult> {
-        let decisions = if options.only_new {
+        let decisions = if mode == ArbitrationMode::OnlyNew {
             Vec::new()
         } else {
-            self.arbitrate_past_sync(arbitrate.clone(), options).await?
+            self.arbitrate_past_sync(arbitrate.clone(), mode).await?
         };
 
         let filter = self.make_arbitration_requested_filter();
@@ -857,11 +856,12 @@ impl TrustedOracleModule {
         let local_id = *sub.local_id();
         let stream: SubscriptionStream<alloy::rpc::types::Log> = sub.into_stream();
 
+        let skip_arbitrated = mode == ArbitrationMode::Unarbitrated;
         self.handle_arbitration_stream_no_spawn(
             stream,
             arbitrate,
             on_after_arbitrate,
-            options,
+            skip_arbitrated,
             timeout,
         )
         .await;

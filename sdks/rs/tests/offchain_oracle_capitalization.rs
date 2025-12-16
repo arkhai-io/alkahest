@@ -4,7 +4,7 @@ use std::{
 
 use alkahest_rs::{
     AlkahestClient, DefaultAlkahestClient,
-    clients::oracle::ArbitrateOptions,
+    clients::oracle::ArbitrationMode,
     contracts::{self, obligations::StringObligation},
     extensions::{HasErc20, HasOracle, HasStringObligation},
     fixtures::MockERC20Permit,
@@ -176,10 +176,7 @@ async fn run_synchronous_oracle_capitalization_example(test: &TestContext) -> ey
                 }
             },
             |_| async {},
-            &ArbitrateOptions {
-                skip_arbitrated: true,
-                only_new: false,
-            },
+            ArbitrationMode::Unarbitrated,
         )
         .await?;
 

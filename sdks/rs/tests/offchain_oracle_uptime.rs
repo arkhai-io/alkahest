@@ -9,7 +9,7 @@ use std::{
 
 use alkahest_rs::{
     AlkahestClient, DefaultAlkahestClient,
-    clients::oracle::ArbitrateOptions,
+    clients::oracle::ArbitrationMode,
     contracts::{self, obligations::StringObligation},
     extensions::{HasArbiters, HasErc20, HasOracle, HasStringObligation},
     fixtures::MockERC20Permit,
@@ -289,10 +289,7 @@ async fn run_async_uptime_oracle_example(test: &TestContext) -> eyre::Result<()>
         .listen_and_arbitrate_async(
             schedule_pings,
             |_| async {},
-            &ArbitrateOptions {
-                skip_arbitrated: true,
-                only_new: false,
-            },
+            ArbitrationMode::Unarbitrated,
         )
         .await?;
 

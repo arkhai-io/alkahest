@@ -4,7 +4,7 @@ use std::{
 
 use alkahest_rs::{
     AlkahestClient, DefaultAlkahestClient,
-    clients::oracle::ArbitrateOptions,
+    clients::oracle::ArbitrationMode,
     contracts::obligations::StringObligation,
     extensions::{HasArbiters, HasOracle, HasStringObligation},
     utils::{TestContext, setup_test_environment},
@@ -112,10 +112,7 @@ async fn run_contextless_identity_example(test: &TestContext) -> eyre::Result<()
         .listen_and_arbitrate_async(
             verify_identity,
             |_| async {},
-            &ArbitrateOptions {
-                skip_arbitrated: true,
-                only_new: true,
-            },
+            ArbitrationMode::OnlyNew,
         )
         .await?;
 

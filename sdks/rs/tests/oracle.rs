@@ -2,7 +2,7 @@
 mod tests {
     use alkahest_rs::{
         DefaultAlkahestClient,
-        clients::oracle::ArbitrateOptions,
+        clients::oracle::ArbitrationMode,
         contracts::{self, obligations::StringObligation},
         extensions::{HasErc20, HasOracle, HasStringObligation},
         fixtures::MockERC20Permit,
@@ -94,10 +94,7 @@ mod tests {
                         .ok()?;
                     Some(obligation.item == "good")
                 },
-                &ArbitrateOptions {
-                    skip_arbitrated: false,
-                    only_new: false,
-                },
+                ArbitrationMode::All,
             )
             .await?;
 
@@ -144,10 +141,7 @@ mod tests {
                         .ok()?;
                     Some(obligation.item == "good")
                 },
-                &ArbitrateOptions {
-                    skip_arbitrated: false,
-                    only_new: false,
-                },
+                ArbitrationMode::All,
             )
             .await?;
 
@@ -186,10 +180,7 @@ mod tests {
                         .ok()?;
                     Some(obligation.item == "good")
                 },
-                &ArbitrateOptions {
-                    skip_arbitrated: false,
-                    only_new: false,
-                },
+                ArbitrationMode::All,
             )
             .await?;
 
@@ -207,10 +198,7 @@ mod tests {
                         .ok()?;
                     Some(obligation.item == "good")
                 },
-                &ArbitrateOptions {
-                    skip_arbitrated: true,
-                    only_new: false,
-                },
+                ArbitrationMode::Unarbitrated,
             )
             .await?;
 
@@ -249,10 +237,7 @@ mod tests {
                         Some(obligation.item == "good")
                     }
                 },
-                &ArbitrateOptions {
-                    skip_arbitrated: false,
-                    only_new: false,
-                },
+                ArbitrationMode::All,
             )
             .await?;
 
@@ -287,10 +272,7 @@ mod tests {
                     Some(obligation.item == "good")
                 },
                 |_decision| async {},
-                &ArbitrateOptions {
-                    skip_arbitrated: false,
-                    only_new: false,
-                },
+                ArbitrationMode::All,
             )
             .await?;
 
@@ -322,10 +304,7 @@ mod tests {
                     Some(obligation.item == "good")
                 },
                 |_decision| async {},
-                &ArbitrateOptions {
-                    skip_arbitrated: false,
-                    only_new: true,
-                },
+                ArbitrationMode::OnlyNew,
             )
             .await?;
 
@@ -391,10 +370,7 @@ mod tests {
                     }
                 },
                 |_decision| async {},
-                &ArbitrateOptions {
-                    skip_arbitrated: false,
-                    only_new: false,
-                },
+                ArbitrationMode::All,
             )
             .await?;
 
@@ -447,10 +423,7 @@ mod tests {
                     Some(obligation.item == "good")
                 },
                 |_decision| async {},
-                &ArbitrateOptions {
-                    skip_arbitrated: false,
-                    only_new: false,
-                },
+                ArbitrationMode::All,
                 Some(Duration::from_secs(5)),
             )
             .await?;
@@ -504,10 +477,7 @@ mod tests {
                     Some(obligation.item == "good")
                 },
                 |_decision| async {},
-                &ArbitrateOptions {
-                    skip_arbitrated: false,
-                    only_new: false,
-                },
+                ArbitrationMode::All,
             )
             .await?;
 

@@ -4,7 +4,7 @@ pub mod obligations;
 // Re-export oracle module from arbiters for backwards compatibility
 pub mod oracle {
     pub use super::arbiters::{
-        ArbitrateOptions, AttestationWithDemand, Decision, ListenAndArbitrateResult,
+        ArbitrationMode, AttestationWithDemand, Decision, ListenAndArbitrateResult,
         OracleAddresses, OracleModule, TrustedOracleAddresses, TrustedOracleModule,
     };
 }
