@@ -4,7 +4,8 @@ import { privateKeyToAccount } from "viem/accounts";
 import { baseSepolia } from "viem/chains";
 import { contractAddresses, makeClient } from "../../src";
 import { getOptimalPollingInterval, isWebSocketTransport } from "../../src/utils";
-import { setupTestEnvironment, type TestContext, teardownTestEnvironment } from "../utils/setup";
+import { setupTestEnvironment, type TestContext } from "../utils/setup";
+import { teardownTestEnvironment } from "../utils/teardownTestEnvironment";
 
 // Mock environment for unit testing
 const mockEnv = {

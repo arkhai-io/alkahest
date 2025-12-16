@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, expect, test } from "bun:test";
 import { encodeAbiParameters, hexToBytes, parseAbiParameters, parseEther, stringToHex } from "viem";
-import { setupTestEnvironment, type TestContext, teardownTestEnvironment } from "../utils/setup";
+import { setupTestEnvironment, type TestContext } from "../utils/setup";
+import { teardownTestEnvironment } from "../utils/teardownTestEnvironment";
 
 const stringObligationAbi = parseAbiParameters("(string item)");
 const uptimeDemandAbi = parseAbiParameters("(bytes payload)");

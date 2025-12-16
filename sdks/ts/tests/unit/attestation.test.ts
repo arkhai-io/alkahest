@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { $ } from "bun";
 import { decodeAbiParameters, parseAbi, parseAbiParameters, parseEventLogs } from "viem";
-import { setupTestEnvironment, type TestContext, teardownTestEnvironment } from "../utils/setup";
+import { setupTestEnvironment, type TestContext } from "../utils/setup";
+import { teardownTestEnvironment } from "../utils/teardownTestEnvironment";
 
 describe("Attestation Tests", () => {
   // Test context and variables

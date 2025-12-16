@@ -18,7 +18,8 @@ import { abi as intrinsicsArbiter2Abi } from "../../src/contracts/IntrinsicsArbi
 import { abi as specificAttestationArbiterAbi } from "../../src/contracts/SpecificAttestationArbiter";
 import { abi as trustedOracleArbiterAbi } from "../../src/contracts/TrustedOracleArbiter";
 import { abi as trustedPartyArbiterAbi } from "../../src/contracts/TrustedPartyArbiter";
-import { setupTestEnvironment, type TestContext, teardownTestEnvironment } from "../utils/setup";
+import { setupTestEnvironment, type TestContext } from "../utils/setup";
+import { teardownTestEnvironment } from "../utils/teardownTestEnvironment";
 
 describe("General Arbiters Tests", () => {
   // Test context and variables

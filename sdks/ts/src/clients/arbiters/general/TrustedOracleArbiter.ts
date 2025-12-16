@@ -319,7 +319,7 @@ export const makeTrustedOracleArbiterClient = (viemClient: ViemClient, addresses
         toBlock: "latest",
       });
 
-      if (logs.length > 0) {
+      if (logs.length > 0 && logs[0]) {
         return logs[0].args as {
           obligation: `0x${string}`;
           oracle: `0x${string}`;
@@ -354,7 +354,7 @@ export const makeTrustedOracleArbiterClient = (viemClient: ViemClient, addresses
         toBlock: "latest",
       });
 
-      if (logs.length) return logs[0].args;
+      if (logs.length && logs[0]) return logs[0].args;
 
       // Use optimal polling interval based on transport type
       const optimalInterval = getOptimalPollingInterval(viemClient, pollingInterval ?? 1000);
@@ -366,8 +366,10 @@ export const makeTrustedOracleArbiterClient = (viemClient: ViemClient, addresses
           args: { obligation, oracle },
           pollingInterval: optimalInterval,
           onLogs: (logs) => {
-            resolve(logs[0].args);
-            unwatch();
+            if (logs[0]) {
+              resolve(logs[0].args);
+              unwatch();
+            }
           },
           fromBlock: 1n,
         });
@@ -397,7 +399,7 @@ export const makeTrustedOracleArbiterClient = (viemClient: ViemClient, addresses
         toBlock: "latest",
       });
 
-      if (logs.length) return logs[0].args;
+      if (logs.length && logs[0]) return logs[0].args;
 
       // Use optimal polling interval based on transport type
       const optimalInterval = getOptimalPollingInterval(viemClient, pollingInterval ?? 1000);
@@ -409,8 +411,10 @@ export const makeTrustedOracleArbiterClient = (viemClient: ViemClient, addresses
           args: { obligation, oracle },
           pollingInterval: optimalInterval,
           onLogs: (logs) => {
-            resolve(logs[0].args);
-            unwatch();
+            if (logs[0]) {
+              resolve(logs[0].args);
+              unwatch();
+            }
           },
           fromBlock: 1n,
         });

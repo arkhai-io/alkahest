@@ -2,7 +2,8 @@ import { afterEach, beforeEach, expect, test } from "bun:test";
 import { exec as execCallback } from "node:child_process";
 import { promisify } from "node:util";
 import { encodeAbiParameters, hexToBytes, parseAbiParameters, parseEther, stringToHex } from "viem";
-import { setupTestEnvironment, type TestContext, teardownTestEnvironment } from "../utils/setup";
+import { setupTestEnvironment, type TestContext } from "../utils/setup";
+import { teardownTestEnvironment } from "../utils/teardownTestEnvironment";
 
 const execAsync = promisify(execCallback);
 

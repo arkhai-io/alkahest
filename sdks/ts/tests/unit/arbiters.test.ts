@@ -21,7 +21,8 @@ import { abi as specificAttestationArbiterAbi } from "../../src/contracts/Specif
 import { abi as trivialArbiterAbi } from "../../src/contracts/TrivialArbiter";
 import { abi as trustedOracleArbiterAbi } from "../../src/contracts/TrustedOracleArbiter";
 import { abi as trustedPartyArbiterAbi } from "../../src/contracts/TrustedPartyArbiter";
-import { setupTestEnvironment, type TestContext, teardownTestEnvironment } from "../utils/setup";
+import { setupTestEnvironment, type TestContext } from "../utils/setup";
+import { teardownTestEnvironment } from "../utils/teardownTestEnvironment";
 
 describe("Arbiters Tests", () => {
   // Test context and variables

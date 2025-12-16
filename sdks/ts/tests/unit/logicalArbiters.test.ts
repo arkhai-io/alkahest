@@ -9,7 +9,8 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { encodeAbiParameters, parseAbiParameters } from "viem";
 import { generatePrivateKey, privateKeyToAddress } from "viem/accounts";
-import { setupTestEnvironment, type TestContext, teardownTestEnvironment } from "../utils/setup";
+import { setupTestEnvironment, type TestContext } from "../utils/setup";
+import { teardownTestEnvironment } from "../utils/teardownTestEnvironment";
 
 describe("Logical Arbiters Tests", () => {
   let testContext: TestContext;

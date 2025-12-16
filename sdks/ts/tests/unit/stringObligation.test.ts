@@ -2,7 +2,8 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { type } from "arktype";
 import { encodeAbiParameters, parseAbiParameters } from "viem";
 import { z } from "zod";
-import { setupTestEnvironment, type TestContext, teardownTestEnvironment } from "../utils/setup";
+import { setupTestEnvironment, type TestContext } from "../utils/setup";
+import { teardownTestEnvironment } from "../utils/teardownTestEnvironment";
 
 describe("StringObligation Tests", () => {
   // Test context and variables

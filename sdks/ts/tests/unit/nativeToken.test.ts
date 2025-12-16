@@ -9,10 +9,9 @@ import {
 import { parseEther } from "viem";
 import {
   setupTestEnvironment,
-  teardownTestEnvironment,
   type TestContext,
 } from "../utils/setup";
-
+import { teardownTestEnvironment } from "../utils/teardownTestEnvironment";
 describe("Native Token Tests", () => {
   // Test context and variables
   let testContext: TestContext;
@@ -280,7 +279,7 @@ describe("Native Token Tests", () => {
 
       // Test that the payment contract can be called successfully
       const { hash } = await aliceClient.nativeToken.doNativeTokenPaymentObligation(paymentData);
-      
+
       expect(hash).toBeDefined();
       expect(hash.startsWith("0x")).toBe(true);
       expect(hash.length).toBe(66); // 0x + 64 hex characters
@@ -376,7 +375,7 @@ describe("Native Token Tests", () => {
       const finalBalance = await testClient.getBalance({
         address: alice,
       });
-      
+
       // Since Alice pays gas but receives the payment, the net should be roughly the same
       // but slightly less due to gas costs. We just verify the transaction succeeded.
       expect(finalBalance).toBeLessThan(initialBalance + paymentAmount);

@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { makeClient, makeMinimalClient } from "../../src";
 import { makeErc20Client } from "../../src/clients/erc20";
-import { setupTestEnvironment, type TestContext, teardownTestEnvironment } from "../utils/setup";
+import { setupTestEnvironment, type TestContext } from "../utils/setup";
+import { teardownTestEnvironment } from "../utils/teardownTestEnvironment";
 
 describe("Client Extension Tests", () => {
   let testContext: TestContext;

@@ -15,7 +15,8 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { encodeAbiParameters, parseAbiParameters } from "viem";
 import { generatePrivateKey, privateKeyToAddress } from "viem/accounts";
-import { setupTestEnvironment, type TestContext, teardownTestEnvironment } from "../utils/setup";
+import { setupTestEnvironment, type TestContext } from "../utils/setup";
+import { teardownTestEnvironment } from "../utils/teardownTestEnvironment";
 
 describe("Attestation Properties Arbiters Tests", () => {
   let testContext: TestContext;
@@ -510,7 +511,7 @@ describe("Attestation Properties Arbiters Tests", () => {
   describe("Hierarchical API Structure", () => {
     test("should support hierarchical API for AttesterArbiter", () => {
       const client = testContext.alice.client;
-      
+
       const demand = {
         baseArbiter: alice,
         baseDemand: "0x1234" as `0x${string}`,
@@ -520,7 +521,7 @@ describe("Attestation Properties Arbiters Tests", () => {
       // Test backward compatibility with flat API since hierarchical API may not be typed yet
       const encoded = client.arbiters.attestation.attester.composing.encode(demand);
       const decoded = client.arbiters.attestation.attester.composing.decode(encoded);
-      
+
       expect(decoded.attester).toBe(demand.attester);
       expect(decoded.baseArbiter).toBe(demand.baseArbiter);
       expect(decoded.baseDemand).toBe(demand.baseDemand);
@@ -528,7 +529,7 @@ describe("Attestation Properties Arbiters Tests", () => {
 
     test("should support hierarchical API for TimeArbiter variants", () => {
       const client = testContext.alice.client;
-      
+
       const demandAfter = { time: 1700000000n };
       const demandBefore = { time: 1800000000n };
       const demandEqual = { time: 1750000000n };
@@ -551,7 +552,7 @@ describe("Attestation Properties Arbiters Tests", () => {
 
     test("should support hierarchical API for ExpirationTimeArbiter variants", () => {
       const client = testContext.alice.client;
-      
+
       const demandAfter = { expirationTime: 2000000000n };
       const demandBefore = { expirationTime: 2100000000n };
       const demandEqual = { expirationTime: 2050000000n };
@@ -574,7 +575,7 @@ describe("Attestation Properties Arbiters Tests", () => {
 
     test("should support hierarchical API for UidArbiter", () => {
       const client = testContext.alice.client;
-      
+
       const demand = {
         uid: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef" as `0x${string}`,
       };
@@ -582,13 +583,13 @@ describe("Attestation Properties Arbiters Tests", () => {
       // Test using flat API for now
       const encoded = client.arbiters.attestation.uid.nonComposing.encode(demand);
       const decoded = client.arbiters.attestation.uid.nonComposing.decode(encoded);
-      
+
       expect(decoded.uid).toBe(demand.uid);
     });
 
     test("should support hierarchical API for RefUidArbiter", () => {
       const client = testContext.alice.client;
-      
+
       const demand = {
         refUID: "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890" as `0x${string}`,
       };
@@ -596,25 +597,25 @@ describe("Attestation Properties Arbiters Tests", () => {
       // Test using flat API for now
       const encoded = client.arbiters.attestation.refUid.nonComposing.encode(demand);
       const decoded = client.arbiters.attestation.refUid.nonComposing.decode(encoded);
-      
+
       expect(decoded.refUID).toBe(demand.refUID);
     });
 
     test("should support hierarchical API for RevocableArbiter", () => {
       const client = testContext.alice.client;
-      
+
       const demand = { revocable: true };
 
       // Test using flat API for now
       const encoded = client.arbiters.attestation.revocable.nonComposing.encode(demand);
       const decoded = client.arbiters.attestation.revocable.nonComposing.decode(encoded);
-      
+
       expect(decoded.revocable).toBe(demand.revocable);
     });
 
     test("should support hierarchical API for SchemaArbiter", () => {
       const client = testContext.alice.client;
-      
+
       const demand = {
         schema: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef" as `0x${string}`,
       };
@@ -622,19 +623,19 @@ describe("Attestation Properties Arbiters Tests", () => {
       // Test using flat API for now
       const encoded = client.arbiters.attestation.schema.nonComposing.encode(demand);
       const decoded = client.arbiters.attestation.schema.nonComposing.decode(encoded);
-      
+
       expect(decoded.schema).toBe(demand.schema);
     });
 
     test("should support hierarchical API for RecipientArbiter", () => {
       const client = testContext.alice.client;
-      
+
       const demand = { recipient: alice };
 
       // Test using flat API for now
       const encoded = client.arbiters.attestation.recipient.nonComposing.encode(demand);
       const decoded = client.arbiters.attestation.recipient.nonComposing.decode(encoded);
-      
+
       expect(decoded.recipient).toBe(demand.recipient);
     });
   });

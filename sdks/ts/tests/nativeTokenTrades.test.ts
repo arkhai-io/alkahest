@@ -9,9 +9,9 @@ import {
 import { parseEther } from "viem";
 import {
   setupTestEnvironment,
-  teardownTestEnvironment,
   type TestContext,
 } from "./utils/setup";
+import { teardownTestEnvironment } from "./utils/teardownTestEnvironment";
 
 /**
  * Test suite for native token trading functions added to ERC20, ERC721, ERC1155, and TokenBundle clients.
@@ -133,7 +133,7 @@ describe("Native Token Trading Functions", () => {
           ask,
           expiration
         );
-        
+
         expect(result.hash).toBeDefined();
         expect(result.attested).toBeDefined();
         expect(result.attested.uid).toBeDefined();
@@ -171,7 +171,7 @@ describe("Native Token Trading Functions", () => {
           ask,
           expiration
         );
-        
+
         expect(result.hash).toBeDefined();
         expect(result.attested).toBeDefined();
         console.log(`ERC721 Native Buy Order created: ${result.hash}`);
@@ -208,7 +208,7 @@ describe("Native Token Trading Functions", () => {
           ask,
           expiration
         );
-        
+
         expect(result.hash).toBeDefined();
         expect(result.attested).toBeDefined();
         console.log(`ERC1155 Native Buy Order created: ${result.hash}`);
@@ -247,7 +247,7 @@ describe("Native Token Trading Functions", () => {
           payee,
           expiration
         );
-        
+
         expect(result.hash).toBeDefined();
         expect(result.attested).toBeDefined();
         console.log(`TokenBundle Native Buy Order created: ${result.hash}`);

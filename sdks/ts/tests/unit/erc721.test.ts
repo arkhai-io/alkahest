@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { parseEther } from "viem";
-import { setupTestEnvironment, type TestContext, teardownTestEnvironment } from "../utils/setup";
+import { setupTestEnvironment, type TestContext } from "../utils/setup";
+import { teardownTestEnvironment } from "../utils/teardownTestEnvironment";
 import { compareAddresses } from "../utils/tokenTestUtils";
 
 describe("ERC721 Tests", () => {
@@ -316,12 +317,12 @@ describe("ERC721 Tests", () => {
 
       // Alice collects her expired escrow
       const reclaimTxHash = await aliceClient.erc721.reclaimExpired(buyAttestation.uid);
-      
+
       // increase block timestamp to index tx
       // await testClient.increaseTime({ seconds: 25 });
       // Wait for transaction to be mined before checking ownership
       await testClient.waitForTransactionReceipt({ hash: reclaimTxHash });
-      
+
 
       // Verify Alice got her token back
       const tokenOwner = await testClient.getErc721Owner({
