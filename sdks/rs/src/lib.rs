@@ -12,7 +12,7 @@ use extensions::{
 };
 use futures_util::StreamExt;
 use serde::{Deserialize, Serialize};
-use sol_types::EscrowClaimed;
+use types::EscrowClaimed;
 use std::sync::Arc;
 use types::{SharedPublicProvider, SharedWalletProvider};
 
@@ -31,7 +31,6 @@ pub mod contracts;
 pub mod extensions;
 pub mod fixtures;
 
-pub mod sol_types;
 pub mod types;
 pub mod utils;
 
@@ -219,7 +218,7 @@ impl<Extensions: AlkahestExtension> AlkahestClient<Extensions> {
         match contract {
             Erc20Contract::Eas => self.erc20().addresses.eas,
             Erc20Contract::BarterUtils => self.erc20().addresses.barter_utils,
-            Erc20Contract::EscrowObligation => self.erc20().addresses.escrow_obligation,
+            Erc20Contract::EscrowObligation => self.erc20().addresses.escrow_obligation_nontierable,
             Erc20Contract::PaymentObligation => self.erc20().addresses.payment_obligation,
         }
     }
@@ -232,7 +231,7 @@ impl<Extensions: AlkahestExtension> AlkahestClient<Extensions> {
         match contract {
             Erc721Contract::Eas => self.erc721().addresses.eas,
             Erc721Contract::BarterUtils => self.erc721().addresses.barter_utils,
-            Erc721Contract::EscrowObligation => self.erc721().addresses.escrow_obligation,
+            Erc721Contract::EscrowObligation => self.erc721().addresses.escrow_obligation_nontierable,
             Erc721Contract::PaymentObligation => self.erc721().addresses.payment_obligation,
         }
     }
@@ -245,7 +244,7 @@ impl<Extensions: AlkahestExtension> AlkahestClient<Extensions> {
         match contract {
             Erc1155Contract::Eas => self.erc1155().addresses.eas,
             Erc1155Contract::BarterUtils => self.erc1155().addresses.barter_utils,
-            Erc1155Contract::EscrowObligation => self.erc1155().addresses.escrow_obligation,
+            Erc1155Contract::EscrowObligation => self.erc1155().addresses.escrow_obligation_nontierable,
             Erc1155Contract::PaymentObligation => self.erc1155().addresses.payment_obligation,
         }
     }
@@ -259,7 +258,7 @@ impl<Extensions: AlkahestExtension> AlkahestClient<Extensions> {
             TokenBundleContract::Eas => self.token_bundle().addresses.eas,
             TokenBundleContract::BarterUtils => self.token_bundle().addresses.barter_utils,
             TokenBundleContract::EscrowObligation => {
-                self.token_bundle().addresses.escrow_obligation
+                self.token_bundle().addresses.escrow_obligation_nontierable
             }
             TokenBundleContract::PaymentObligation => {
                 self.token_bundle().addresses.payment_obligation
@@ -278,9 +277,9 @@ impl<Extensions: AlkahestExtension> AlkahestClient<Extensions> {
                 self.attestation().addresses.eas_schema_registry
             }
             AttestationContract::BarterUtils => self.attestation().addresses.barter_utils,
-            AttestationContract::EscrowObligation => self.attestation().addresses.escrow_obligation,
+            AttestationContract::EscrowObligation => self.attestation().addresses.escrow_obligation_nontierable,
             AttestationContract::EscrowObligation2 => {
-                self.attestation().addresses.escrow_obligation_2
+                self.attestation().addresses.escrow_obligation_2_nontierable
             }
         }
     }
@@ -303,16 +302,17 @@ impl<Extensions: AlkahestExtension> AlkahestClient<Extensions> {
     {
         match contract {
             ArbitersContract::Eas => self.arbiters().addresses.eas,
-            ArbitersContract::SpecificAttestationArbiter => {
-                self.arbiters().addresses.specific_attestation_arbiter
-            }
-            ArbitersContract::TrustedPartyArbiter => {
-                self.arbiters().addresses.trusted_party_arbiter
-            }
             ArbitersContract::TrivialArbiter => self.arbiters().addresses.trivial_arbiter,
             ArbitersContract::TrustedOracleArbiter => {
                 self.arbiters().addresses.trusted_oracle_arbiter
             }
+            ArbitersContract::IntrinsicsArbiter => self.arbiters().addresses.intrinsics_arbiter,
+            ArbitersContract::IntrinsicsArbiter2 => self.arbiters().addresses.intrinsics_arbiter_2,
+            ArbitersContract::ERC8004Arbiter => self.arbiters().addresses.erc8004_arbiter,
+            ArbitersContract::AnyArbiter => self.arbiters().addresses.any_arbiter,
+            ArbitersContract::AllArbiter => self.arbiters().addresses.all_arbiter,
+            ArbitersContract::RecipientArbiter => self.arbiters().addresses.recipient_arbiter,
+            ArbitersContract::UidArbiter => self.arbiters().addresses.uid_arbiter,
         }
     }
 
@@ -533,7 +533,7 @@ mod tests {
 
         // Test specific contract addresses
         assert_ne!(config.erc20_addresses.barter_utils, Address::ZERO);
-        assert_ne!(config.erc20_addresses.escrow_obligation, Address::ZERO);
+        assert_ne!(config.erc20_addresses.escrow_obligation_nontierable, Address::ZERO);
         assert_ne!(config.erc20_addresses.payment_obligation, Address::ZERO);
     }
 
@@ -554,8 +554,8 @@ mod tests {
             deserialized_config.arbiters_addresses.eas
         );
         assert_eq!(
-            original_config.arbiters_addresses.trusted_party_arbiter,
-            deserialized_config.arbiters_addresses.trusted_party_arbiter
+            original_config.arbiters_addresses.recipient_arbiter,
+            deserialized_config.arbiters_addresses.recipient_arbiter
         );
         assert_eq!(
             original_config.erc20_addresses.eas,
@@ -638,8 +638,8 @@ mod tests {
             roundtrip_config.arbiters_addresses.eas
         );
         assert_eq!(
-            config.arbiters_addresses.trusted_party_arbiter,
-            roundtrip_config.arbiters_addresses.trusted_party_arbiter
+            config.arbiters_addresses.recipient_arbiter,
+            roundtrip_config.arbiters_addresses.recipient_arbiter
         );
         assert_eq!(
             config.arbiters_addresses.trivial_arbiter,
@@ -656,8 +656,8 @@ mod tests {
             roundtrip_config.erc20_addresses.barter_utils
         );
         assert_eq!(
-            config.erc20_addresses.escrow_obligation,
-            roundtrip_config.erc20_addresses.escrow_obligation
+            config.erc20_addresses.escrow_obligation_nontierable,
+            roundtrip_config.erc20_addresses.escrow_obligation_nontierable
         );
         assert_eq!(
             config.erc20_addresses.payment_obligation,

@@ -5,7 +5,7 @@ use std::{
 use alkahest_rs::{
     AlkahestClient, DefaultAlkahestClient,
     clients::oracle::ArbitrateOptions,
-    contracts::{self, StringObligation},
+    contracts::{self, obligations::StringObligation},
     extensions::{HasErc20, HasOracle, HasStringObligation},
     fixtures::MockERC20Permit,
     types::{ArbiterData, Erc20Data},
@@ -61,12 +61,16 @@ async fn run_synchronous_oracle_capitalization_example(test: &TestContext) -> ey
         ],
     };
 
-    let encoded_demand = contracts::TrustedOracleArbiter::DemandData {
+    // The inner data field (JSON payload) - this is what gets passed to arbitrate()
+    let inner_demand_data: Bytes = Bytes::from(
+        serde_json::to_vec(&demand_payload)
+            .wrap_err("failed to encode oracle demand payload")?,
+    );
+
+    // The full encoded DemandData - this is what gets stored in the escrow
+    let encoded_demand: Bytes = contracts::arbiters::TrustedOracleArbiter::DemandData {
         oracle: charlie_client.address,
-        data: Bytes::from(
-            serde_json::to_vec(&demand_payload)
-                .wrap_err("failed to encode oracle demand payload")?,
-        ),
+        data: inner_demand_data.clone(),
     }
     .into();
 
@@ -89,7 +93,9 @@ async fn run_synchronous_oracle_capitalization_example(test: &TestContext) -> ey
     let escrow_receipt = test
         .alice_client
         .erc20()
-        .permit_and_buy_with_erc20(&price, &arbiter_item, expiration)
+        .escrow()
+        .non_tierable()
+        .permit_and_create(&price, &arbiter_item, expiration)
         .await?;
     let escrow_uid = DefaultAlkahestClient::get_attested_event(escrow_receipt)?.uid;
 
@@ -104,9 +110,11 @@ async fn run_synchronous_oracle_capitalization_example(test: &TestContext) -> ey
 
     println!("step3: bob fulfilled with uid {}", fulfillment_uid);
     // Step 3. Bob asks Charlie to arbitrate his fulfillment.
+    // Pass the inner data field (not the full encoded DemandData) because
+    // TrustedOracleArbiter.checkObligation() uses only demand_.data for the decisionKey
     test.bob_client
         .oracle()
-        .request_arbitration(fulfillment_uid, charlie_client.address)
+        .request_arbitration(fulfillment_uid, charlie_client.address, inner_demand_data)
         .await?;
 
     println!("step4: bob requested arbitration from charlie");
@@ -127,7 +135,7 @@ async fn run_synchronous_oracle_capitalization_example(test: &TestContext) -> ey
 
                     // Get the escrow attestation and extract the demand
                     let Ok((_, demand)) = charlie_client_for_closure
-                        .get_escrow_and_demand::<contracts::TrustedOracleArbiter::DemandData>(
+                        .get_escrow_and_demand::<contracts::arbiters::TrustedOracleArbiter::DemandData>(
                             &attestation,
                         )
                         .await
@@ -191,7 +199,7 @@ async fn run_synchronous_oracle_capitalization_example(test: &TestContext) -> ey
     // Step 5. The successful arbitration lets Bob claim the escrowed payment.
     test.bob_client
         .erc20()
-        .collect_escrow(escrow_uid, fulfillment_uid)
+        .escrow().non_tierable().collect(escrow_uid, fulfillment_uid)
         .await?;
 
     Ok(())

@@ -1,4 +1,7 @@
-use alkahest_rs::{contracts, utils::setup_test_environment};
+use alkahest_rs::{
+    contracts::{self, arbiters::{IntrinsicsArbiter, IntrinsicsArbiter2}},
+    utils::setup_test_environment,
+};
 use alloy::primitives::{Address, Bytes, FixedBytes};
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -40,7 +43,7 @@ async fn test_intrinsics_arbiter() -> eyre::Result<()> {
     };
 
     // Test with IntrinsicsArbiter
-    let intrinsics_arbiter = contracts::IntrinsicsArbiter::new(
+    let intrinsics_arbiter = IntrinsicsArbiter::new(
         test.addresses.arbiters_addresses.intrinsics_arbiter,
         &test.alice_client.wallet_provider,
     );
@@ -121,17 +124,17 @@ async fn test_intrinsics_arbiter_2() -> eyre::Result<()> {
     };
 
     // Test with IntrinsicsArbiter2
-    let intrinsics_arbiter2 = contracts::IntrinsicsArbiter2::new(
+    let intrinsics_arbiter2 = IntrinsicsArbiter2::new(
         test.addresses.arbiters_addresses.intrinsics_arbiter_2,
         &test.alice_client.wallet_provider,
     );
 
     // Create demand with matching schema
-    let matching_demand = contracts::IntrinsicsArbiter2::DemandData { schema: schema1 };
+    let matching_demand = IntrinsicsArbiter2::DemandData { schema: schema1 };
     let encoded_matching_demand = matching_demand.into();
 
     // Create demand with non-matching schema
-    let non_matching_demand = contracts::IntrinsicsArbiter2::DemandData { schema: schema2 };
+    let non_matching_demand = IntrinsicsArbiter2::DemandData { schema: schema2 };
     let encoded_non_matching_demand = non_matching_demand.into();
 
     // Test with matching schema - should pass
@@ -168,7 +171,7 @@ async fn test_intrinsics_arbiter_2() -> eyre::Result<()> {
 
 #[tokio::test]
 async fn test_intrinsics_arbiter2_trait_based_encoding() -> eyre::Result<()> {
-    let test_data = contracts::IntrinsicsArbiter2::DemandData {
+    let test_data = IntrinsicsArbiter2::DemandData {
         schema: FixedBytes::<32>::from_slice(&[1u8; 32]),
     };
 
@@ -176,11 +179,11 @@ async fn test_intrinsics_arbiter2_trait_based_encoding() -> eyre::Result<()> {
     let encoded_bytes: alloy::primitives::Bytes = test_data.clone().into();
 
     // Test TryFrom trait: &Bytes -> DemandData
-    let decoded_from_ref: contracts::IntrinsicsArbiter2::DemandData =
+    let decoded_from_ref: IntrinsicsArbiter2::DemandData =
         (&encoded_bytes).try_into()?;
 
     // Test TryFrom trait: Bytes -> DemandData
-    let decoded_from_owned: contracts::IntrinsicsArbiter2::DemandData =
+    let decoded_from_owned: IntrinsicsArbiter2::DemandData =
         encoded_bytes.clone().try_into()?;
 
     // Verify both decoded versions match original

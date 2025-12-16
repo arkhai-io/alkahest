@@ -39,11 +39,11 @@ async fn test_type_safe_address_getters() -> Result<()> {
     assert_ne!(erc721_escrow, alloy::primitives::Address::ZERO);
 
     // Get Arbiter contract addresses
-    let trusted_party = client.arbiters_address(ArbitersContract::TrustedPartyArbiter);
     let trivial = client.arbiters_address(ArbitersContract::TrivialArbiter);
+    let trusted_oracle = client.arbiters_address(ArbitersContract::TrustedOracleArbiter);
 
-    assert_ne!(trusted_party, alloy::primitives::Address::ZERO);
     assert_ne!(trivial, alloy::primitives::Address::ZERO);
+    assert_ne!(trusted_oracle, alloy::primitives::Address::ZERO);
 
     Ok(())
 }
@@ -102,7 +102,7 @@ async fn test_direct_access_compatibility() -> Result<()> {
 
     // Direct access (old way, still supported)
     let erc20_client = client.erc20();
-    let erc20_escrow_direct = erc20_client.addresses.escrow_obligation;
+    let erc20_escrow_direct = erc20_client.addresses.escrow_obligation_nontierable;
 
     // Both methods should give the same address
     assert_eq!(erc20_escrow_via_method, erc20_escrow_direct);
@@ -132,7 +132,7 @@ async fn test_contract_instance_creation() -> Result<()> {
 
     // Create a contract instance for direct interaction
     let escrow_contract =
-        contracts::ERC20EscrowObligation::new(escrow_addr, client.wallet_provider.clone());
+        contracts::obligations::escrow::non_tierable::ERC20EscrowObligation::new(escrow_addr, client.wallet_provider.clone());
 
     // Verify the contract instance has the correct address
     assert_eq!(*escrow_contract.address(), escrow_addr);
@@ -140,7 +140,7 @@ async fn test_contract_instance_creation() -> Result<()> {
     // Similarly for other contract types
     let barter_addr = client.erc721_address(Erc721Contract::BarterUtils);
     let barter_contract =
-        contracts::ERC721BarterUtils::new(barter_addr, client.wallet_provider.clone());
+        contracts::utils::ERC721BarterUtils::new(barter_addr, client.wallet_provider.clone());
 
     assert_eq!(*barter_contract.address(), barter_addr);
 
@@ -180,13 +180,13 @@ async fn test_custom_network_configuration() -> Result<()> {
     // Verify each client uses its respective network addresses
     assert_eq!(
         base_escrow,
-        BASE_SEPOLIA_ADDRESSES.erc20_addresses.escrow_obligation
+        BASE_SEPOLIA_ADDRESSES.erc20_addresses.escrow_obligation_nontierable
     );
     assert_eq!(
         filecoin_escrow,
         FILECOIN_CALIBRATION_ADDRESSES
             .erc20_addresses
-            .escrow_obligation
+            .escrow_obligation_nontierable
     );
 
     Ok(())

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.26;
 
 import "forge-std/Test.sol";
-import {ERC1155PaymentObligation} from "@src/obligations/ERC1155PaymentObligation.sol";
+import {ERC1155PaymentObligation} from "@src/obligations/payment/ERC1155PaymentObligation.sol";
 import {StringObligation} from "@src/obligations/StringObligation.sol";
 import {IEAS, Attestation, AttestationRequest, AttestationRequestData} from "@eas/IEAS.sol";
 import {ISchemaRegistry, SchemaRecord} from "@eas/ISchemaRegistry.sol";

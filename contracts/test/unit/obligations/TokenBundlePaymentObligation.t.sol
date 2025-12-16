@@ -3,7 +3,7 @@ pragma solidity ^0.8.26;
 
 import {Test} from "forge-std/Test.sol";
 import {console2} from "forge-std/console2.sol";
-import {TokenBundlePaymentObligation} from "../../../src/obligations/TokenBundlePaymentObligation.sol";
+import {TokenBundlePaymentObligation} from "../../../src/obligations/payment/TokenBundlePaymentObligation.sol";
 import {IEAS} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {Attestation} from "@eas/Common.sol";

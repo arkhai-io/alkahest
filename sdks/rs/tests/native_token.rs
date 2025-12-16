@@ -1,5 +1,8 @@
 use alkahest_rs::{
-    clients::native_token::NativeTokenModule, contracts::NativeTokenPaymentObligation,
+    contracts::obligations::{
+        NativeTokenPaymentObligation,
+        escrow::non_tierable::NativeTokenEscrowObligation,
+    },
     utils::setup_test_environment,
 };
 use alloy::{
@@ -18,7 +21,7 @@ async fn test_decode_escrow_obligation() -> Result<()> {
     let demand = Bytes::from(vec![1, 2, 3, 4]); // sample demand data
     let amount: U256 = 100.try_into()?;
 
-    let escrow_data = alkahest_rs::contracts::NativeTokenEscrowObligation::ObligationData {
+    let escrow_data = NativeTokenEscrowObligation::ObligationData {
         arbiter,
         demand: demand.clone(),
         amount,
@@ -28,7 +31,7 @@ async fn test_decode_escrow_obligation() -> Result<()> {
     let encoded = escrow_data.abi_encode();
 
     // Decode the data
-    let decoded = NativeTokenModule::decode_escrow_obligation(&encoded.into())?;
+    let decoded = NativeTokenEscrowObligation::ObligationData::abi_decode(&encoded)?;
 
     // Verify decoded data
     assert_eq!(decoded.arbiter, arbiter, "Arbiter should match");
@@ -53,7 +56,7 @@ async fn test_decode_payment_obligation() -> Result<()> {
     let encoded = payment_data.abi_encode();
 
     // Decode the data
-    let decoded = NativeTokenModule::decode_payment_obligation(&encoded.into())?;
+    let decoded = NativeTokenPaymentObligation::ObligationData::abi_decode(&encoded)?;
 
     // Verify decoded data
     assert_eq!(decoded.amount, amount, "Amount should match");

@@ -1,9 +1,20 @@
 pub mod arbiters;
-pub mod attestation;
-pub mod erc1155;
-pub mod erc20;
-pub mod erc721;
-pub mod native_token;
-pub mod oracle;
-pub mod string_obligation;
-pub mod token_bundle;
+pub mod obligations;
+
+// Re-export oracle module from arbiters for backwards compatibility
+pub mod oracle {
+    pub use super::arbiters::{
+        ArbitrateOptions, AttestationWithDemand, Decision, ListenAndArbitrateResult,
+        OracleAddresses, OracleModule, TrustedOracleAddresses, TrustedOracleModule,
+    };
+}
+
+// Re-export obligation modules for backwards compatibility
+pub use obligations::attestation;
+pub use obligations::erc1155;
+pub use obligations::erc20;
+pub use obligations::erc721;
+pub use obligations::native_token;
+pub use obligations::string;
+pub use obligations::string as string_obligation;
+pub use obligations::token_bundle;

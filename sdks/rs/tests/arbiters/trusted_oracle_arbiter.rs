@@ -1,5 +1,5 @@
 use crate::arbiters::common::create_test_attestation;
-use alkahest_rs::{contracts, extensions::HasArbiters, utils::setup_test_environment};
+use alkahest_rs::{contracts::arbiters::TrustedOracleArbiter, extensions::HasArbiters, utils::setup_test_environment};
 use alloy::{
     primitives::{Address, Bytes, FixedBytes, bytes},
     providers::Provider as _,
@@ -16,7 +16,7 @@ async fn test_trusted_oracle_arbiter_constructor() -> eyre::Result<()> {
     let attestation = create_test_attestation(Some(obligation_uid), None);
 
     // Create demand data with oracle as bob
-    let demand_data = contracts::TrustedOracleArbiter::DemandData {
+    let demand_data = TrustedOracleArbiter::DemandData {
         oracle: test.bob.address(),
         data: bytes!(""),
     };
@@ -26,7 +26,7 @@ async fn test_trusted_oracle_arbiter_constructor() -> eyre::Result<()> {
     let counteroffer = FixedBytes::<32>::default();
 
     // Check obligation - should be false initially since no decision has been made
-    let trusted_oracle_arbiter = contracts::TrustedOracleArbiter::new(
+    let trusted_oracle_arbiter = TrustedOracleArbiter::new(
         test.addresses.arbiters_addresses.trusted_oracle_arbiter,
         &test.alice_client.wallet_provider,
     );
@@ -56,7 +56,7 @@ async fn test_trusted_oracle_arbiter_arbitrate() -> eyre::Result<()> {
     let attestation = create_test_attestation(Some(obligation_uid), None);
 
     // Create demand data with oracle as bob
-    let demand_data = contracts::TrustedOracleArbiter::DemandData {
+    let demand_data = TrustedOracleArbiter::DemandData {
         oracle: test.bob.address(),
         data: Bytes::default(),
     };
@@ -66,7 +66,7 @@ async fn test_trusted_oracle_arbiter_arbitrate() -> eyre::Result<()> {
     let counteroffer = FixedBytes::<32>::default();
 
     // Check contract interface
-    let trusted_oracle_arbiter = contracts::TrustedOracleArbiter::new(
+    let trusted_oracle_arbiter = TrustedOracleArbiter::new(
         test.addresses.arbiters_addresses.trusted_oracle_arbiter,
         &test.alice_client.wallet_provider,
     );
@@ -83,7 +83,7 @@ async fn test_trusted_oracle_arbiter_arbitrate() -> eyre::Result<()> {
     let arbitrate_hash = test
         .bob_client
         .arbiters()
-        .arbitrate_as_trusted_oracle(obligation_uid, true)
+        .arbitrate_as_trusted_oracle(obligation_uid, Bytes::default(), true)
         .await?
         .transaction_hash;
 
@@ -123,7 +123,7 @@ async fn test_trusted_oracle_arbiter_with_different_oracles() -> eyre::Result<()
     let arbitrate_hash1 = test
         .bob_client
         .arbiters()
-        .arbitrate_as_trusted_oracle(obligation_uid, true)
+        .arbitrate_as_trusted_oracle(obligation_uid, Bytes::default(), true)
         .await?
         .transaction_hash;
 
@@ -138,7 +138,7 @@ async fn test_trusted_oracle_arbiter_with_different_oracles() -> eyre::Result<()
     let arbitrate_hash2 = test
         .alice_client
         .arbiters()
-        .arbitrate_as_trusted_oracle(obligation_uid, false)
+        .arbitrate_as_trusted_oracle(obligation_uid, Bytes::default(), false)
         .await?
         .transaction_hash;
 
@@ -151,13 +151,13 @@ async fn test_trusted_oracle_arbiter_with_different_oracles() -> eyre::Result<()
 
     // Create the attestation
     let attestation = create_test_attestation(Some(obligation_uid), None);
-    let trusted_oracle_arbiter = contracts::TrustedOracleArbiter::new(
+    let trusted_oracle_arbiter = TrustedOracleArbiter::new(
         test.addresses.arbiters_addresses.trusted_oracle_arbiter,
         &test.alice_client.wallet_provider,
     );
 
     // Check with oracle1 (Bob) - should be true
-    let demand_data1 = contracts::TrustedOracleArbiter::DemandData {
+    let demand_data1 = TrustedOracleArbiter::DemandData {
         oracle: oracle1,
         data: Bytes::default(),
     };
@@ -172,7 +172,7 @@ async fn test_trusted_oracle_arbiter_with_different_oracles() -> eyre::Result<()
     assert!(result1, "Decision for Oracle 1 (Bob) should be true");
 
     // Check with oracle2 (Alice) - should be false
-    let demand_data2 = contracts::TrustedOracleArbiter::DemandData {
+    let demand_data2 = TrustedOracleArbiter::DemandData {
         oracle: oracle2,
         data: bytes!(""),
     };
@@ -201,7 +201,7 @@ async fn test_trusted_oracle_arbiter_with_no_decision() -> eyre::Result<()> {
     let attestation = create_test_attestation(Some(obligation_uid), None);
 
     // Create demand data with the new oracle
-    let demand_data = contracts::TrustedOracleArbiter::DemandData {
+    let demand_data = TrustedOracleArbiter::DemandData {
         oracle: new_oracle,
         data: bytes!(""),
     };
@@ -211,7 +211,7 @@ async fn test_trusted_oracle_arbiter_with_no_decision() -> eyre::Result<()> {
     let counteroffer = FixedBytes::<32>::default();
 
     // Check with the new oracle - should be false (default value)
-    let trusted_oracle_arbiter = contracts::TrustedOracleArbiter::new(
+    let trusted_oracle_arbiter = TrustedOracleArbiter::new(
         test.addresses.arbiters_addresses.trusted_oracle_arbiter,
         &test.alice_client.wallet_provider,
     );
@@ -244,7 +244,6 @@ async fn test_wait_for_trusted_oracle_arbitration() -> eyre::Result<()> {
         let obligation_uid = obligation_uid.clone();
         async move {
             alice_client
-                .extensions
                 .arbiters()
                 .wait_for_trusted_oracle_arbitration(oracle, obligation_uid, None)
                 .await
@@ -257,9 +256,8 @@ async fn test_wait_for_trusted_oracle_arbitration() -> eyre::Result<()> {
     // Make an arbitration decision
     let arbitrate_hash = test
         .bob_client
-        .extensions
         .arbiters()
-        .arbitrate_as_trusted_oracle(obligation_uid, true)
+        .arbitrate_as_trusted_oracle(obligation_uid, Bytes::default(), true)
         .await?
         .transaction_hash;
 
@@ -290,7 +288,7 @@ async fn test_trusted_oracle_arbiter_trait_based_encoding() -> eyre::Result<()> 
     // Set up test environment
     let test = setup_test_environment().await?;
 
-    let test_data = contracts::TrustedOracleArbiter::DemandData {
+    let test_data = TrustedOracleArbiter::DemandData {
         oracle: test.alice.address(),
         data: bytes!(""),
     };
@@ -299,11 +297,11 @@ async fn test_trusted_oracle_arbiter_trait_based_encoding() -> eyre::Result<()> 
     let encoded_bytes: alloy::primitives::Bytes = test_data.clone().into();
 
     // Test TryFrom trait: &Bytes -> DemandData
-    let decoded_from_ref: contracts::TrustedOracleArbiter::DemandData =
+    let decoded_from_ref: TrustedOracleArbiter::DemandData =
         (&encoded_bytes).try_into()?;
 
     // Test TryFrom trait: Bytes -> DemandData
-    let decoded_from_owned: contracts::TrustedOracleArbiter::DemandData =
+    let decoded_from_owned: TrustedOracleArbiter::DemandData =
         encoded_bytes.clone().try_into()?;
 
     // Verify both decoded versions match original

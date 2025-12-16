@@ -39,7 +39,9 @@ mod tests {
         let erc20_receipt1 = test
             .alice_client
             .erc20()
-            .permit_and_buy_with_erc20(&price, &item, 0)
+            .escrow()
+            .non_tierable()
+            .permit_and_create(&price, &item, 0)
             .await?;
 
         // Call StringObligation module (different module)
@@ -59,7 +61,9 @@ mod tests {
         let erc20_receipt2 = test
             .alice_client
             .erc20()
-            .permit_and_buy_with_erc20(&price2, &item, 0)
+            .escrow()
+            .non_tierable()
+            .permit_and_create(&price2, &item, 0)
             .await?;
 
         let final_nonce = test
@@ -132,9 +136,11 @@ mod tests {
             Some(test.addresses.string_obligation_addresses.clone()),
         )?;
 
-        // First call: permit_and_buy_with_erc20 with NEW ERC20 module instance
+        // First call: escrow creation with NEW ERC20 module instance
         let receipt1 = new_erc20_module
-            .permit_and_buy_with_erc20(&price, &item, 0)
+            .escrow()
+            .non_tierable()
+            .permit_and_create(&price, &item, 0)
             .await?;
 
         println!("First ERC20 transaction completed with new ERC20 module");
@@ -153,9 +159,11 @@ mod tests {
 
         println!("About to make second ERC20 call with NEW ERC20 module instance...");
 
-        // Third call: permit_and_buy_with_erc20 again with NEW ERC20 module instance
+        // Third call: escrow creation again with NEW ERC20 module instance
         let receipt2 = new_erc20_module
-            .permit_and_buy_with_erc20(&price2, &item, 0)
+            .escrow()
+            .non_tierable()
+            .permit_and_create(&price2, &item, 0)
             .await?;
 
         println!("Second ERC20 transaction completed with new ERC20 module");

@@ -5,7 +5,7 @@ use alkahest_rs::{
     extensions::{HasArbiters as _, HasErc20 as _, HasErc721 as _},
     utils::setup_test_environment,
 };
-use alloy::primitives::address;
+use alloy::primitives::{address, Address};
 use eyre::Result;
 
 #[tokio::test]
@@ -96,8 +96,7 @@ async fn test_custom_configuration() -> Result<()> {
     let custom_config = DefaultExtensionConfig {
         arbiters_addresses: ArbitersAddresses {
             eas: address!("0x4200000000000000000000000000000000000021"),
-            specific_attestation_arbiter: address!("0xdE5eCFC92E3da87865CD29C196aA5cebFdC4D9C6"),
-            trusted_party_arbiter: address!("0x3895398C46da88b75eE3ca3092F7714BEbE795a5"),
+            trusted_oracle_arbiter: address!("0xdE5eCFC92E3da87865CD29C196aA5cebFdC4D9C6"),
             trivial_arbiter: address!("0x7D4bCD84901cEC903105564f63BE70432448B222"),
             // Use defaults for other arbiter addresses
             ..BASE_SEPOLIA_ADDRESSES.arbiters_addresses
@@ -105,7 +104,8 @@ async fn test_custom_configuration() -> Result<()> {
         erc20_addresses: Erc20Addresses {
             eas: address!("0x4200000000000000000000000000000000000021"),
             barter_utils: address!("0x5C624f8FbbB377378cDfE8B627384A917FE839db"),
-            escrow_obligation: address!("0xFa76421cEe6aee41adc7f6a475b9Ef3776d500F0"),
+            escrow_obligation_nontierable: address!("0xFa76421cEe6aee41adc7f6a475b9Ef3776d500F0"),
+            escrow_obligation_tierable: Address::ZERO,
             payment_obligation: address!("0xE95d3931E15E4d96cE1d2Dd336DcEad35A708bdB"),
         },
         // Using defaults for other address types
@@ -137,8 +137,8 @@ async fn test_custom_configuration() -> Result<()> {
         client_with_custom
             .arbiters()
             .addresses
-            .trusted_party_arbiter,
-        custom_config.arbiters_addresses.trusted_party_arbiter
+            .trusted_oracle_arbiter,
+        custom_config.arbiters_addresses.trusted_oracle_arbiter
     );
 
     // Verify that non-customized parts still use base addresses

@@ -55,17 +55,17 @@ async fn test_address_api_with_base_extensions() -> Result<()> {
     assert_ne!(attestation_registry, alloy::primitives::Address::ZERO);
 
     // Access Arbiter contract addresses
-    let trusted_party = client
+    let trusted_oracle = client
         .arbiters()
-        .address(ArbitersContract::TrustedPartyArbiter);
+        .address(ArbitersContract::TrustedOracleArbiter);
     let trivial = client.arbiters().address(ArbitersContract::TrivialArbiter);
 
-    assert_ne!(trusted_party, alloy::primitives::Address::ZERO);
+    assert_ne!(trusted_oracle, alloy::primitives::Address::ZERO);
     assert_ne!(trivial, alloy::primitives::Address::ZERO);
 
     // Alternative: You can also access the module directly and get addresses from there
     let erc20_module = client.erc20();
-    let direct_escrow = erc20_module.addresses.escrow_obligation;
+    let direct_escrow = erc20_module.addresses.escrow_obligation_nontierable;
 
     // This should be the same as using the address method
     assert_eq!(erc20_escrow, direct_escrow);
@@ -133,10 +133,10 @@ async fn test_address_api_consistency() -> Result<()> {
     assert_eq!(
         client1
             .arbiters()
-            .address(ArbitersContract::TrustedPartyArbiter),
+            .address(ArbitersContract::TrustedOracleArbiter),
         client2
             .arbiters()
-            .address(ArbitersContract::TrustedPartyArbiter)
+            .address(ArbitersContract::TrustedOracleArbiter)
     );
 
     Ok(())

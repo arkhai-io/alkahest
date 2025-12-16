@@ -5,13 +5,13 @@ use std::{
 use alkahest_rs::{
     AlkahestClient, DefaultAlkahestClient,
     clients::oracle::ArbitrateOptions,
-    contracts::StringObligation,
+    contracts::obligations::StringObligation,
     extensions::{HasArbiters, HasOracle, HasStringObligation},
     utils::{TestContext, setup_test_environment},
 };
 use alloy::{
     dyn_abi::SolType,
-    primitives::{Address, Signature, keccak256},
+    primitives::{Address, Bytes, Signature, keccak256},
     signers::{Signer, local::PrivateKeySigner},
 };
 use eyre::{Result, WrapErr};
@@ -146,7 +146,7 @@ async fn run_contextless_identity_example(test: &TestContext) -> eyre::Result<()
 
     test.bob_client
         .oracle()
-        .request_arbitration(good_uid, charlie_client.address)
+        .request_arbitration(good_uid, charlie_client.address, Bytes::default())
         .await?;
 
     let first_log = tokio::time::timeout(
@@ -160,7 +160,7 @@ async fn run_contextless_identity_example(test: &TestContext) -> eyre::Result<()
     .await
     .wrap_err("timeout waiting for approval arbitration")??;
 
-    let first_decision = first_log.data.decision;
+    let first_decision = first_log.decision;
     assert!(first_decision);
 
     let current_nonce = *identity_registry()
@@ -180,7 +180,7 @@ async fn run_contextless_identity_example(test: &TestContext) -> eyre::Result<()
 
     test.bob_client
         .oracle()
-        .request_arbitration(bad_uid, charlie_client.address)
+        .request_arbitration(bad_uid, charlie_client.address, Bytes::default())
         .await?;
 
     let second_log = tokio::time::timeout(
@@ -190,7 +190,7 @@ async fn run_contextless_identity_example(test: &TestContext) -> eyre::Result<()
     .await
     .wrap_err("timeout waiting for rejection arbitration")??;
 
-    assert!(!second_log.data.decision);
+    assert!(!second_log.decision);
 
     charlie_oracle
         .unsubscribe(listen_result.subscription_id)
