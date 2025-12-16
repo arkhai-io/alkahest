@@ -520,7 +520,6 @@ impl TrustedOracleModule {
         stream: SubscriptionStream<alloy::rpc::types::Log>,
         strategy: Strategy,
         on_after_arbitrate: OnAfterArbitrate,
-        skip_arbitrated: bool,
     ) where
         Strategy::Future: Send,
     {
@@ -528,7 +527,6 @@ impl TrustedOracleModule {
         let eas_address = self.addresses.eas;
         let arbiter_address = self.addresses.trusted_oracle_arbiter;
         let signer_address = self.signer_address;
-        let public_provider = self.public_provider.clone();
 
         tokio::spawn(async move {
             let eas = IEAS::new(eas_address, &wallet_provider);
@@ -549,25 +547,6 @@ impl TrustedOracleModule {
                 else {
                     continue;
                 };
-
-                if skip_arbitrated {
-                    // ArbitrationMade event: (bytes32 indexed decisionKey, bytes32 indexed obligation, address indexed oracle, bool decision)
-                    // topic1 = decisionKey, topic2 = obligation, topic3 = oracle
-                    let filter = Filter::new()
-                        .address(arbiter_address)
-                        .event_signature(TrustedOracleArbiter::ArbitrationMade::SIGNATURE_HASH)
-                        .topic2(attestation.uid)
-                        .topic3(signer_address)
-                        .from_block(BlockNumberOrTag::Earliest)
-                        .to_block(BlockNumberOrTag::Latest);
-                    let logs_result = public_provider.get_logs(&filter).await;
-
-                    if let Ok(logs) = logs_result {
-                        if logs.len() > 0 {
-                            continue;
-                        }
-                    }
-                }
 
                 let now = SystemTime::now()
                     .duration_since(UNIX_EPOCH)
@@ -622,10 +601,9 @@ impl TrustedOracleModule {
         stream: SubscriptionStream<alloy::rpc::types::Log>,
         arbitrate: Arbitrate,
         on_after_arbitrate: OnAfterArbitrate,
-        skip_arbitrated: bool,
     ) {
         let strategy = SyncArbitration::new(arbitrate);
-        self.spawn_arbitration_listener(stream, strategy, on_after_arbitrate, skip_arbitrated)
+        self.spawn_arbitration_listener(stream, strategy, on_after_arbitrate)
             .await;
     }
 
@@ -639,10 +617,9 @@ impl TrustedOracleModule {
         stream: SubscriptionStream<alloy::rpc::types::Log>,
         arbitrate: Arbitrate,
         on_after_arbitrate: OnAfterArbitrate,
-        skip_arbitrated: bool,
     ) {
         let strategy = AsyncArbitration::new(arbitrate);
-        self.spawn_arbitration_listener(stream, strategy, on_after_arbitrate, skip_arbitrated)
+        self.spawn_arbitration_listener(stream, strategy, on_after_arbitrate)
             .await;
     }
 
@@ -655,7 +632,6 @@ impl TrustedOracleModule {
         mut stream: SubscriptionStream<alloy::rpc::types::Log>,
         arbitrate: Arbitrate,
         on_after_arbitrate: OnAfterArbitrate,
-        skip_arbitrated: bool,
         timeout: Option<Duration>,
     ) {
         let eas = IEAS::new(self.addresses.eas, &*self.wallet_provider);
@@ -695,17 +671,6 @@ impl TrustedOracleModule {
             else {
                 continue;
             };
-
-            if skip_arbitrated {
-                let filter = self.make_arbitration_made_filter(Some(attestation.uid));
-                let logs_result = self.public_provider.get_logs(&filter).await;
-
-                if let Ok(logs) = logs_result {
-                    if logs.len() > 0 {
-                        continue;
-                    }
-                }
-            }
 
             let now = SystemTime::now()
                 .duration_since(UNIX_EPOCH)
@@ -783,8 +748,7 @@ impl TrustedOracleModule {
         let local_id = *sub.local_id();
         let stream: SubscriptionStream<alloy::rpc::types::Log> = sub.into_stream();
 
-        let skip_arbitrated = mode == ArbitrationMode::Unarbitrated;
-        self.spawn_arbitration_listener_sync(stream, arbitrate, on_after_arbitrate, skip_arbitrated)
+        self.spawn_arbitration_listener_sync(stream, arbitrate, on_after_arbitrate)
             .await;
 
         Ok(ListenAndArbitrateResult {
@@ -824,8 +788,7 @@ impl TrustedOracleModule {
         let local_id = *sub.local_id();
         let stream: SubscriptionStream<alloy::rpc::types::Log> = sub.into_stream();
 
-        let skip_arbitrated = mode == ArbitrationMode::Unarbitrated;
-        self.spawn_arbitration_listener_async(stream, arbitrate, on_after_arbitrate, skip_arbitrated)
+        self.spawn_arbitration_listener_async(stream, arbitrate, on_after_arbitrate)
             .await;
 
         Ok(ListenAndArbitrateResult {
@@ -856,15 +819,8 @@ impl TrustedOracleModule {
         let local_id = *sub.local_id();
         let stream: SubscriptionStream<alloy::rpc::types::Log> = sub.into_stream();
 
-        let skip_arbitrated = mode == ArbitrationMode::Unarbitrated;
-        self.handle_arbitration_stream_no_spawn(
-            stream,
-            arbitrate,
-            on_after_arbitrate,
-            skip_arbitrated,
-            timeout,
-        )
-        .await;
+        self.handle_arbitration_stream_no_spawn(stream, arbitrate, on_after_arbitrate, timeout)
+            .await;
 
         Ok(ListenAndArbitrateResult {
             decisions,
