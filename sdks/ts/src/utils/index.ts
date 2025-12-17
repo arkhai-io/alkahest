@@ -1,7 +1,7 @@
 import { type Account, type Chain, type PublicActions, parseEventLogs, type Transport, type WalletClient } from "viem";
-import { contractAddresses } from "./config";
-import { abi as easAbi, abi as iEasAbi } from "./contracts/IEAS";
-import type { ChainAddresses, TokenBundle, TokenBundleFlat } from "./types";
+import { contractAddresses } from "../config";
+import { abi as easAbi, abi as iEasAbi } from "../contracts/IEAS";
+import type { ChainAddresses, TokenBundle, TokenBundleFlat } from "../types";
 
 export type ViemClient = WalletClient<Transport, Chain, Account> & PublicActions;
 
@@ -88,9 +88,6 @@ export const flattenTokenBundle = (bundle: TokenBundle): TokenBundleFlat => ({
   erc1155Amounts: bundle.erc1155s.map((x) => x.value),
 });
 
-// Export demand parsing utilities
-export * from "./utils/demandParsing";
-
 /**
  * Wrapper for viemClient.writeContract that adds required chain parameter
  */
@@ -117,5 +114,16 @@ export const readContract = async <T>(
   }) as Promise<T>;
 };
 
-// Re-export demand parsing utilities
-export { ArbiterRegistry, type ArbiterDemandParser, type ParsedDemand, DemandParsingUtils } from "./utils/demandParsing";
+// Export demand parsing utilities
+export * from "./demandParsing";
+
+// Re-export specific demand parsing utilities for convenience
+export {
+  createDecodersFromAddresses,
+  decodeDemand,
+  decodeDemandWithAddresses,
+  type DecodedDemandResult,
+  type DecodersRecord,
+  type RecursivelyDecodedDemand,
+  type DemandDecoder,
+} from "./demandParsing";

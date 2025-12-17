@@ -13,6 +13,31 @@ const refUidArbiterDecodeDemandFunction = getAbiItem({
 const refUidArbiterDemandDataType = refUidArbiterDecodeDemandFunction.outputs[0];
 
 /**
+ * RefUidArbiter DemandData type
+ */
+export type RefUidArbiterDemandData = {
+  refUID: `0x${string}`;
+};
+
+/**
+ * Encodes RefUidArbiter.DemandData to bytes.
+ * @param demand - struct DemandData {bytes32 refUID}
+ * @returns abi encoded bytes
+ */
+export const encodeDemand = (demand: RefUidArbiterDemandData): `0x${string}` => {
+  return encodeAbiParameters([refUidArbiterDemandDataType], [demand]);
+};
+
+/**
+ * Decodes RefUidArbiter.DemandData from bytes.
+ * @param demandData - DemandData as abi encoded bytes
+ * @returns the decoded DemandData object
+ */
+export const decodeDemand = (demandData: `0x${string}`): RefUidArbiterDemandData => {
+  return decodeAbiParameters([refUidArbiterDemandDataType], demandData)[0] as RefUidArbiterDemandData;
+};
+
+/**
  * RefUid Arbiter Client
  *
  * Validates the reference UID of attestations.
@@ -20,22 +45,7 @@ const refUidArbiterDemandDataType = refUidArbiterDecodeDemandFunction.outputs[0]
  */
 export const makeRefUidArbiterClient = (viemClient: ViemClient, addresses: ChainAddresses) => {
   return {
-    /**
-     * Encodes RefUidArbiter.DemandData to bytes.
-     * @param demand - struct DemandData {bytes32 refUID}
-     * @returns abi encoded bytes
-     */
-    encode: (demand: { refUID: `0x${string}` }) => {
-      return encodeAbiParameters([refUidArbiterDemandDataType], [demand]);
-    },
-
-    /**
-     * Decodes RefUidArbiter.DemandData from bytes.
-     * @param data - abi encoded bytes
-     * @returns decoded DemandData struct
-     */
-    decode: (data: `0x${string}`) => {
-      return decodeAbiParameters([refUidArbiterDemandDataType], data)[0];
-    },
+    encodeDemand,
+    decodeDemand,
   };
 };

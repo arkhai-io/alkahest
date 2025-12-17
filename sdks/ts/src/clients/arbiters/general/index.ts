@@ -2,7 +2,14 @@ import type { ChainAddresses } from "../../../types";
 import type { ViemClient } from "../../../utils";
 import { makeIntrinsicsArbiterClient } from "./IntrinsicsArbiter";
 import { makeIntrinsicsArbiter2Client } from "./IntrinsicsArbiter2";
-import { TrustedOracleArbiterCodec, makeTrustedOracleArbiterClient } from "./trustedOracle";
+import { makeTrustedOracleArbiterClient } from "./trustedOracle";
+
+// Re-export static encode/decode functions from trustedOracle
+export {
+  encodeDemand as encodeTrustedOracleDemand,
+  decodeDemand as decodeTrustedOracleDemand,
+  type TrustedOracleArbiterDemandData,
+} from "./trustedOracle";
 
 /**
  * General Arbiters Client
@@ -26,6 +33,3 @@ export const makeGeneralArbitersClient = (viemClient: ViemClient, addresses: Cha
     trustedOracle,
   };
 };
-
-// Export static codec for use without client instantiation
-export { TrustedOracleArbiterCodec };

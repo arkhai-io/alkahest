@@ -13,6 +13,31 @@ const revocableArbiterDecodeDemandFunction = getAbiItem({
 const revocableArbiterDemandDataType = revocableArbiterDecodeDemandFunction.outputs[0];
 
 /**
+ * RevocableArbiter DemandData type
+ */
+export type RevocableArbiterDemandData = {
+  revocable: boolean;
+};
+
+/**
+ * Encodes RevocableArbiter.DemandData to bytes.
+ * @param demand - struct DemandData {bool revocable}
+ * @returns abi encoded bytes
+ */
+export const encodeDemand = (demand: RevocableArbiterDemandData): `0x${string}` => {
+  return encodeAbiParameters([revocableArbiterDemandDataType], [demand]);
+};
+
+/**
+ * Decodes RevocableArbiter.DemandData from bytes.
+ * @param demandData - DemandData as abi encoded bytes
+ * @returns the decoded DemandData object
+ */
+export const decodeDemand = (demandData: `0x${string}`): RevocableArbiterDemandData => {
+  return decodeAbiParameters([revocableArbiterDemandDataType], demandData)[0] as RevocableArbiterDemandData;
+};
+
+/**
  * Revocable Arbiter Client
  *
  * Validates the revocable flag of attestations.
@@ -20,22 +45,7 @@ const revocableArbiterDemandDataType = revocableArbiterDecodeDemandFunction.outp
  */
 export const makeRevocableArbiterClient = (viemClient: ViemClient, addresses: ChainAddresses) => {
   return {
-    /**
-     * Encodes RevocableArbiter.DemandData to bytes.
-     * @param demand - struct DemandData {bool revocable}
-     * @returns abi encoded bytes
-     */
-    encode: (demand: { revocable: boolean }) => {
-      return encodeAbiParameters([revocableArbiterDemandDataType], [demand]);
-    },
-
-    /**
-     * Decodes RevocableArbiter.DemandData from bytes.
-     * @param data - abi encoded bytes
-     * @returns decoded DemandData struct
-     */
-    decode: (data: `0x${string}`) => {
-      return decodeAbiParameters([revocableArbiterDemandDataType], data)[0];
-    },
+    encodeDemand,
+    decodeDemand,
   };
 };

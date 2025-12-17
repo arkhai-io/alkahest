@@ -13,6 +13,31 @@ const expirationTimeAfterArbiterDecodeDemandFunction = getAbiItem({
 const expirationTimeAfterArbiterDemandDataType = expirationTimeAfterArbiterDecodeDemandFunction.outputs[0];
 
 /**
+ * ExpirationTimeAfterArbiter DemandData type
+ */
+export type ExpirationTimeAfterArbiterDemandData = {
+  expirationTime: bigint;
+};
+
+/**
+ * Encodes ExpirationTimeAfterArbiter.DemandData to bytes.
+ * @param demand - struct DemandData {uint64 expirationTime}
+ * @returns abi encoded bytes
+ */
+export const encodeDemand = (demand: ExpirationTimeAfterArbiterDemandData): `0x${string}` => {
+  return encodeAbiParameters([expirationTimeAfterArbiterDemandDataType], [demand]);
+};
+
+/**
+ * Decodes ExpirationTimeAfterArbiter.DemandData from bytes.
+ * @param demandData - DemandData as abi encoded bytes
+ * @returns the decoded DemandData object
+ */
+export const decodeDemand = (demandData: `0x${string}`): ExpirationTimeAfterArbiterDemandData => {
+  return decodeAbiParameters([expirationTimeAfterArbiterDemandDataType], demandData)[0] as ExpirationTimeAfterArbiterDemandData;
+};
+
+/**
  * ExpirationTimeAfterArbiter Client
  *
  * Validates that the attestation expiration time is after a specified time.
@@ -20,27 +45,7 @@ const expirationTimeAfterArbiterDemandDataType = expirationTimeAfterArbiterDecod
  */
 export const makeExpirationTimeAfterArbiterClient = (viemClient: ViemClient, addresses: ChainAddresses) => {
   return {
-    /**
-     * Get the arbiter address
-     */
-    address: addresses.expirationTimeAfterArbiter,
-
-    /**
-     * Encodes ExpirationTimeAfterArbiter.DemandData to bytes.
-     * @param demand - struct DemandData {uint64 expirationTime}
-     * @returns abi encoded bytes
-     */
-    encode: (demand: { expirationTime: bigint }) => {
-      return encodeAbiParameters([expirationTimeAfterArbiterDemandDataType], [demand]);
-    },
-
-    /**
-     * Decodes bytes to ExpirationTimeAfterArbiter.DemandData.
-     * @param data - abi encoded bytes
-     * @returns decoded DemandData struct
-     */
-    decode: (data: `0x${string}`) => {
-      return decodeAbiParameters([expirationTimeAfterArbiterDemandDataType], data)[0];
-    },
+    encodeDemand,
+    decodeDemand,
   };
 };

@@ -13,6 +13,31 @@ const timeAfterArbiterDecodeDemandFunction = getAbiItem({
 const timeAfterArbiterDemandDataType = timeAfterArbiterDecodeDemandFunction.outputs[0];
 
 /**
+ * TimeAfterArbiter DemandData type
+ */
+export type TimeAfterArbiterDemandData = {
+  time: bigint;
+};
+
+/**
+ * Encodes TimeAfterArbiter.DemandData to bytes.
+ * @param demand - struct DemandData {uint64 time}
+ * @returns abi encoded bytes
+ */
+export const encodeDemand = (demand: TimeAfterArbiterDemandData): `0x${string}` => {
+  return encodeAbiParameters([timeAfterArbiterDemandDataType], [demand]);
+};
+
+/**
+ * Decodes TimeAfterArbiter.DemandData from bytes.
+ * @param demandData - DemandData as abi encoded bytes
+ * @returns the decoded DemandData object
+ */
+export const decodeDemand = (demandData: `0x${string}`): TimeAfterArbiterDemandData => {
+  return decodeAbiParameters([timeAfterArbiterDemandDataType], demandData)[0] as TimeAfterArbiterDemandData;
+};
+
+/**
  * TimeAfterArbiter Client
  *
  * Validates that the attestation timestamp is after a specified time.
@@ -20,27 +45,7 @@ const timeAfterArbiterDemandDataType = timeAfterArbiterDecodeDemandFunction.outp
  */
 export const makeTimeAfterArbiterClient = (viemClient: ViemClient, addresses: ChainAddresses) => {
   return {
-    /**
-     * Get the arbiter address
-     */
-    address: addresses.timeAfterArbiter,
-
-    /**
-     * Encodes TimeAfterArbiter.DemandData to bytes.
-     * @param demand - struct DemandData {uint64 time}
-     * @returns abi encoded bytes
-     */
-    encode: (demand: { time: bigint }) => {
-      return encodeAbiParameters([timeAfterArbiterDemandDataType], [demand]);
-    },
-
-    /**
-     * Decodes bytes to TimeAfterArbiter.DemandData.
-     * @param data - abi encoded bytes
-     * @returns decoded DemandData struct
-     */
-    decode: (data: `0x${string}`) => {
-      return decodeAbiParameters([timeAfterArbiterDemandDataType], data)[0];
-    },
+    encodeDemand,
+    decodeDemand,
   };
 };

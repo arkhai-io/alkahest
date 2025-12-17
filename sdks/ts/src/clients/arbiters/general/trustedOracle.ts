@@ -13,28 +13,30 @@ const trustedOracleArbiterDecodeDemandFunction = getAbiItem({
 const trustedOracleArbiterDemandDataType = trustedOracleArbiterDecodeDemandFunction.outputs[0];
 
 /**
- * Static encoding/decoding utilities for TrustedOracleArbiter demands
- * These functions don't require client instantiation since they only handle data transformation
+ * TrustedOracleArbiter DemandData type
  */
-export const TrustedOracleArbiterCodec = {
-  /**
-   * Encodes TrustedOracleArbiter.DemandData to bytes.
-   * @param demand - struct DemandData {address oracle, bytes data}
-   * @returns abi encoded bytes
-   */
-  encode: (demand: { oracle: `0x${string}`; data: `0x${string}` }) => {
-    return encodeAbiParameters([trustedOracleArbiterDemandDataType], [demand]);
-  },
+export type TrustedOracleArbiterDemandData = {
+  oracle: `0x${string}`;
+  data: `0x${string}`;
+};
 
-  /**
-   * Decodes TrustedOracleArbiter.DemandData from bytes.
-   * @param demandData - DemandData as abi encoded bytes
-   * @returns the decoded DemandData object
-   */
-  decode: (demandData: `0x${string}`) => {
-    return decodeAbiParameters([trustedOracleArbiterDemandDataType], demandData)[0];
-  },
-} as const;
+/**
+ * Encodes TrustedOracleArbiter.DemandData to bytes.
+ * @param demand - struct DemandData {address oracle, bytes data}
+ * @returns abi encoded bytes
+ */
+export const encodeDemand = (demand: TrustedOracleArbiterDemandData): `0x${string}` => {
+  return encodeAbiParameters([trustedOracleArbiterDemandDataType], [demand]);
+};
+
+/**
+ * Decodes TrustedOracleArbiter.DemandData from bytes.
+ * @param demandData - DemandData as abi encoded bytes
+ * @returns the decoded DemandData object
+ */
+export const decodeDemand = (demandData: `0x${string}`): TrustedOracleArbiterDemandData => {
+  return decodeAbiParameters([trustedOracleArbiterDemandDataType], demandData)[0] as TrustedOracleArbiterDemandData;
+};
 
 /**
  * Options for arbitration
@@ -263,19 +265,8 @@ export const makeTrustedOracleArbiterClient = (viemClient: ViemClient, addresses
   };
 
   return {
-    /**
-     * Encodes TrustedOracleArbiter.DemandData to bytes.
-     * @param demand - struct DemandData {address oracle, bytes data}
-     * @returns abi encoded bytes
-     */
-    encode: TrustedOracleArbiterCodec.encode,
-
-    /**
-     * Decodes TrustedOracleArbiter.DemandData from bytes.
-     * @param demandData - DemandData as abi encoded bytes
-     * @returns the decoded DemandData object
-     */
-    decode: TrustedOracleArbiterCodec.decode,
+    encodeDemand,
+    decodeDemand,
 
     /**
      * Arbitrate on the validity of an obligation fulfilling a demand

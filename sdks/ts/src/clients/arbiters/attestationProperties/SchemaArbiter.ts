@@ -13,6 +13,31 @@ const schemaArbiterDecodeDemandFunction = getAbiItem({
 const schemaArbiterDemandDataType = schemaArbiterDecodeDemandFunction.outputs[0];
 
 /**
+ * SchemaArbiter DemandData type
+ */
+export type SchemaArbiterDemandData = {
+  schema: `0x${string}`;
+};
+
+/**
+ * Encodes SchemaArbiter.DemandData to bytes.
+ * @param demand - struct DemandData {bytes32 schema}
+ * @returns abi encoded bytes
+ */
+export const encodeDemand = (demand: SchemaArbiterDemandData): `0x${string}` => {
+  return encodeAbiParameters([schemaArbiterDemandDataType], [demand]);
+};
+
+/**
+ * Decodes SchemaArbiter.DemandData from bytes.
+ * @param demandData - DemandData as abi encoded bytes
+ * @returns the decoded DemandData object
+ */
+export const decodeDemand = (demandData: `0x${string}`): SchemaArbiterDemandData => {
+  return decodeAbiParameters([schemaArbiterDemandDataType], demandData)[0] as SchemaArbiterDemandData;
+};
+
+/**
  * SchemaArbiter Client
  *
  * Validates the schema hash of attestations.
@@ -20,22 +45,7 @@ const schemaArbiterDemandDataType = schemaArbiterDecodeDemandFunction.outputs[0]
  */
 export const makeSchemaArbiterClient = (viemClient: ViemClient, addresses: ChainAddresses) => {
   return {
-    /**
-     * Encodes SchemaArbiter.DemandData to bytes.
-     * @param demand - struct DemandData {bytes32 schema}
-     * @returns abi encoded bytes
-     */
-    encode: (demand: { schema: `0x${string}` }) => {
-      return encodeAbiParameters([schemaArbiterDemandDataType], [demand]);
-    },
-
-    /**
-     * Decodes SchemaArbiter.DemandData from bytes.
-     * @param demandData - DemandData as abi encoded bytes
-     * @returns the decoded DemandData object
-     */
-    decode: (demandData: `0x${string}`) => {
-      return decodeAbiParameters([schemaArbiterDemandDataType], demandData)[0];
-    },
+    encodeDemand,
+    decodeDemand,
   };
 };

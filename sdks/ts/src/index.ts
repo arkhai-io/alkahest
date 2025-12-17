@@ -23,7 +23,8 @@ import { contractAddresses as defaultContractAddresses, supportedChains } from "
 import { abi as easAbi } from "./contracts/IEAS";
 import { makeDefaultExtension } from "./extensions";
 import type { ChainAddresses } from "./types";
-import { getAttestation, getOptimalPollingInterval } from "./utils";
+import { getAttestation, getOptimalPollingInterval, decodeDemandWithAddresses, type DecodedDemandResult } from "./utils";
+import type { Demand } from "./types";
 
 // Forward declarations to avoid circular type inference
 type Extended = {
@@ -72,6 +73,7 @@ export type MinimalClient = ExtendableClient<{
     demandAbi: DemandData,
     fulfillment: { refUID: `0x${string}` },
   ) => Promise<[Awaited<ReturnType<typeof getAttestation>>, DecodeAbiParametersReturnType<DemandData>]>;
+  decodeDemand: (demand: Demand) => DecodedDemandResult;
 }>;
 
 // Full client type with default extensions
@@ -444,6 +446,28 @@ export const makeMinimalClient = (
       const demand = decodeAbiParameters(demandAbi, trustedOracleDemand.data);
 
       return [escrow, demand];
+    },
+
+    /**
+     * Decode an arbiter demand using the client's ChainAddresses
+     * Recursively decodes nested demands for composing arbiters (All/Any)
+     *
+     * @param demand - The demand to decode {arbiter: Address, demand: Bytes}
+     * @returns Decoded demand with optional children for composing arbiters
+     *
+     * @example
+     * ```ts
+     * const decoded = client.decodeDemand({
+     *   arbiter: contractAddresses.allArbiter,
+     *   demand: "0x..."
+     * });
+     * console.log(decoded.arbiter); // the arbiter address
+     * console.log(decoded.decoded); // the decoded demand data
+     * console.log(decoded.children); // nested demands if composing arbiter
+     * ```
+     */
+    decodeDemand: (demand: Demand): DecodedDemandResult => {
+      return decodeDemandWithAddresses(demand, addresses);
     },
   };
 

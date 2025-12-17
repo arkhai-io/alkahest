@@ -13,6 +13,31 @@ const recipientArbiterDecodeDemandFunction = getAbiItem({
 const recipientArbiterDemandDataType = recipientArbiterDecodeDemandFunction.outputs[0];
 
 /**
+ * RecipientArbiter DemandData type
+ */
+export type RecipientArbiterDemandData = {
+  recipient: `0x${string}`;
+};
+
+/**
+ * Encodes RecipientArbiter.DemandData to bytes.
+ * @param demand - struct DemandData {address recipient}
+ * @returns abi encoded bytes
+ */
+export const encodeDemand = (demand: RecipientArbiterDemandData): `0x${string}` => {
+  return encodeAbiParameters([recipientArbiterDemandDataType], [demand]);
+};
+
+/**
+ * Decodes RecipientArbiter.DemandData from bytes.
+ * @param demandData - DemandData as abi encoded bytes
+ * @returns the decoded DemandData object
+ */
+export const decodeDemand = (demandData: `0x${string}`): RecipientArbiterDemandData => {
+  return decodeAbiParameters([recipientArbiterDemandDataType], demandData)[0] as RecipientArbiterDemandData;
+};
+
+/**
  * RecipientArbiter Client
  *
  * Validates the recipient address of attestations.
@@ -20,22 +45,7 @@ const recipientArbiterDemandDataType = recipientArbiterDecodeDemandFunction.outp
  */
 export const makeRecipientArbiterClient = (viemClient: ViemClient, addresses: ChainAddresses) => {
   return {
-    /**
-     * Encodes RecipientArbiter.DemandData to bytes.
-     * @param demand - struct DemandData {address recipient}
-     * @returns abi encoded bytes
-     */
-    encode: (demand: { recipient: `0x${string}` }) => {
-      return encodeAbiParameters([recipientArbiterDemandDataType], [demand]);
-    },
-
-    /**
-     * Decodes RecipientArbiter.DemandData from bytes.
-     * @param demandData - DemandData as abi encoded bytes
-     * @returns the decoded DemandData object
-     */
-    decode: (demandData: `0x${string}`) => {
-      return decodeAbiParameters([recipientArbiterDemandDataType], demandData)[0];
-    },
+    encodeDemand,
+    decodeDemand,
   };
 };
