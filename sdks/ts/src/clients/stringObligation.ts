@@ -2,7 +2,7 @@ import type { Type } from "arktype";
 import { decodeAbiParameters, encodeAbiParameters, getAbiItem } from "viem";
 import type { SafeParseReturnType, ZodTypeDef, z } from "zod";
 
-import { abi as stringObligationAbi } from "../contracts/StringObligation";
+import { abi as stringObligationAbi } from "../contracts/obligations/StringObligation";
 import type { ChainAddresses } from "../types";
 import type { ViemClient } from "../utils";
 import { getAttestation, getAttestedEventFromTxHash } from "../utils";

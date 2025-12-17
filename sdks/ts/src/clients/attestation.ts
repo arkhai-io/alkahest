@@ -1,7 +1,7 @@
 import { decodeAbiParameters, encodeAbiParameters, getAbiItem } from "viem";
-import { abi as attestationBarterUtilsAbi } from "../contracts/AttestationBarterUtils";
-import { abi as attestationEscrowAbi } from "../contracts/AttestationEscrowObligation";
-import { abi as attestationEscrow2Abi } from "../contracts/AttestationEscrowObligation2";
+import { abi as attestationBarterUtilsAbi } from "../contracts/utils/AttestationBarterUtils";
+import { abi as attestationEscrowAbi } from "../contracts/obligations/escrow/non-tierable/AttestationEscrowObligation";
+import { abi as attestationEscrow2Abi } from "../contracts/obligations/escrow/non-tierable/AttestationEscrowObligation2";
 import type { ChainAddresses } from "../types";
 import { getAttestation, getAttestedEventFromTxHash, type ViemClient } from "../utils";
 

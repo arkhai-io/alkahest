@@ -1,7 +1,7 @@
 // convert-abi.ts
 
-import { readdir, mkdir } from "fs/promises";
-import { join } from "path";
+import { readdir, mkdir, stat } from "fs/promises";
+import { join, relative } from "path";
 import { parseArgs } from "util";
 
 const { values } = parseArgs({
@@ -43,27 +43,25 @@ Example:
 const inputDir = join(process.cwd(), values.in ?? "");
 const outputDir = values.out ? join(process.cwd(), values.out) : inputDir;
 
-async function convertAbiFiles() {
-  try {
-    // Ensure output directory exists
-    await mkdir(outputDir, { recursive: true });
+async function convertAbiFilesRecursive(currentInputDir: string, currentOutputDir: string, rootInputDir: string): Promise<number> {
+  let convertedCount = 0;
 
-    // Read all files in the input directory
-    const files = await readdir(inputDir);
+  // Ensure output directory exists
+  await mkdir(currentOutputDir, { recursive: true });
 
-    // Filter for .json files
-    const jsonFiles = files.filter((file) => file.endsWith(".json"));
+  // Read all entries in the current directory
+  const entries = await readdir(currentInputDir, { withFileTypes: true });
 
-    if (jsonFiles.length === 0) {
-      console.log("No JSON files found in the input directory.");
-      return;
-    }
+  for (const entry of entries) {
+    const inputPath = join(currentInputDir, entry.name);
+    const outputPath = join(currentOutputDir, entry.name);
 
-    console.log(`Converting ABI files from ${inputDir} to ${outputDir}\n`);
-
-    for (const file of jsonFiles) {
-      const inputPath = join(inputDir, file);
-      const outputPath = join(outputDir, file.replace(".json", ".ts"));
+    if (entry.isDirectory()) {
+      // Recursively process subdirectories
+      convertedCount += await convertAbiFilesRecursive(inputPath, outputPath, rootInputDir);
+    } else if (entry.isFile() && entry.name.endsWith(".json")) {
+      const tsOutputPath = outputPath.replace(".json", ".ts");
+      const relativePath = relative(rootInputDir, inputPath);
 
       try {
         // Read and parse JSON file
@@ -75,16 +73,31 @@ async function convertAbiFiles() {
         const tsContent = `export const abi = ${JSON.stringify(abi, null, 2)} as const;`;
 
         // Write TypeScript file
-        const outputFile = Bun.file(outputPath);
+        const outputFile = Bun.file(tsOutputPath);
         await Bun.write(outputFile, tsContent);
 
-        console.log(`✓ Converted ${file} -> ${file.replace(".json", ".ts")}`);
+        console.log(`✓ Converted ${relativePath} -> ${relativePath.replace(".json", ".ts")}`);
+        convertedCount++;
       } catch (error) {
-        console.error(`✗ Error converting ${file}:`, error);
+        console.error(`✗ Error converting ${relativePath}:`, error);
       }
     }
+  }
 
-    console.log("\nConversion completed!");
+  return convertedCount;
+}
+
+async function convertAbiFiles() {
+  try {
+    console.log(`Converting ABI files from ${inputDir} to ${outputDir}\n`);
+
+    const count = await convertAbiFilesRecursive(inputDir, outputDir, inputDir);
+
+    if (count === 0) {
+      console.log("No JSON files found in the input directory.");
+    } else {
+      console.log(`\nConversion completed! Converted ${count} files.`);
+    }
   } catch (error) {
     console.error("Error during conversion:", error);
     process.exit(1);

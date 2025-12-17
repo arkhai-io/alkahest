@@ -2,10 +2,10 @@ import { decodeAbiParameters, encodeAbiParameters, getAbiItem } from "viem";
 import { abi as erc20Abi } from "../contracts/ERC20Permit";
 import { abi as erc721Abi } from "../contracts/IERC721";
 import { abi as erc1155Abi } from "../contracts/IERC1155";
-import { abi as tokenBundleBarterUtilsAbi } from "../contracts/TokenBundleBarterUtils";
-import { abi as tokenBundleEscrowAbi } from "../contracts/TokenBundleEscrowObligation";
-import { abi as tokenBundlePaymentAbi } from "../contracts/TokenBundlePaymentObligation";
-import { abi as nativeTokenBarterUtilsAbi } from "../contracts/NativeTokenBarterUtils";
+import { abi as tokenBundleBarterUtilsAbi } from "../contracts/utils/TokenBundleBarterUtils";
+import { abi as tokenBundleEscrowAbi } from "../contracts/obligations/escrow/non-tierable/TokenBundleEscrowObligation";
+import { abi as tokenBundlePaymentAbi } from "../contracts/obligations/payment/TokenBundlePaymentObligation";
+import { abi as nativeTokenBarterUtilsAbi } from "../contracts/utils/NativeTokenBarterUtils";
 import { abi as easAbi } from "../contracts/IEAS";
 import type { ApprovalPurpose, ChainAddresses, Demand, TokenBundle } from "../types";
 import { flattenTokenBundle, getAttestedEventFromTxHash, type ViemClient } from "../utils";
@@ -28,6 +28,7 @@ export const makeTokenBundleClient = (viemClient: ViemClient, addresses: ChainAd
    * @returns the abi encoded ObligationData as bytes
    */
   const encodeEscrowObligationRaw = (data: {
+    nativeAmount: bigint;
     erc20Tokens: `0x${string}`[];
     erc20Amounts: bigint[];
     erc721Tokens: `0x${string}`[];
@@ -47,6 +48,7 @@ export const makeTokenBundleClient = (viemClient: ViemClient, addresses: ChainAd
    * @returns the abi encoded ObligationData as bytes
    */
   const encodePaymentObligationRaw = (data: {
+    nativeAmount: bigint;
     erc20Tokens: `0x${string}`[];
     erc20Amounts: bigint[];
     erc721Tokens: `0x${string}`[];
@@ -188,7 +190,7 @@ export const makeTokenBundleClient = (viemClient: ViemClient, addresses: ChainAd
      * );
      * ```
      */
-    payWithBundle: async (price: TokenBundle, payee: `0x${string}`) => {
+    payWithBundle: async (price: TokenBundle, payee: `0x${string}`, refUID: `0x${string}` = "0x0000000000000000000000000000000000000000000000000000000000000000") => {
       const hash = await viemClient.writeContract({
         address: addresses.tokenBundlePaymentObligation,
         abi: tokenBundlePaymentAbi.abi,
@@ -198,6 +200,7 @@ export const makeTokenBundleClient = (viemClient: ViemClient, addresses: ChainAd
             ...flattenTokenBundle(price),
             payee,
           },
+          refUID,
         ],
       });
 

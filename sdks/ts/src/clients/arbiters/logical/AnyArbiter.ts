@@ -1,5 +1,5 @@
 import { decodeAbiParameters, encodeAbiParameters, getAbiItem } from "viem";
-import { abi as AnyArbiterAbi } from "../../../contracts/AnyArbiter";
+import { abi as AnyArbiterAbi } from "../../../contracts/arbiters/logical/AnyArbiter";
 import type { ChainAddresses } from "../../../types";
 import type { ViemClient } from "../../../utils";
 

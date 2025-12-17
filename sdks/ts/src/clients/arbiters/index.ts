@@ -1,6 +1,7 @@
 import type { ChainAddresses } from "../../types";
 import type { ViemClient } from "../../utils";
-import { makeAttestationPropertiesArbitersClient } from "./attestation";
+import { makeAttestationPropertiesArbitersClient } from "./attestationProperties";
+import { makeConfirmationArbitersClient } from "./confirmation";
 import { TrustedOracleArbiterCodec, makeGeneralArbitersClient } from "./general";
 import { AnyArbiterCodec, AllArbiterCodec, makeLogicalArbitersClient } from "./logical";
 
@@ -8,27 +9,28 @@ import { AnyArbiterCodec, AllArbiterCodec, makeLogicalArbitersClient } from "./l
  * Hierarchical Arbiters Client
  *
  * Provides a structured, object-oriented interface for all arbiter functionality.
- * 
- * New API structure:
- * - client.arbiters.general.intrinsics2.encode(...)
- * - client.arbiters.general.trustedParty.decode(...)
+ *
+ * API structure:
+ * - client.arbiters.general.intrinsics (no DemandData)
+ * - client.arbiters.general.intrinsics2.encode(...) (schema-based)
+ * - client.arbiters.general.trustedOracle.arbitrate(...)
  * - client.arbiters.logical.any.encode(...)
  * - client.arbiters.logical.all.decode(...)
- * - client.arbiters.attestation.recipient.composing.encode(...)
- * - client.arbiters.attestation.schema.nonComposing.decode(...)
- * 
- * Also maintains backward compatibility with flat method names.
+ * - client.arbiters.attestationProperties.recipient.encode(...)
+ * - client.arbiters.attestationProperties.schema.decode(...)
+ * - client.arbiters.confirmation.exclusiveRevocable.confirm(...)
  */
 export const makeArbitersClient = (viemClient: ViemClient, addresses: ChainAddresses) => {
   const generalArbiters = makeGeneralArbitersClient(viemClient, addresses);
   const logicalArbiters = makeLogicalArbitersClient(viemClient, addresses);
-  const attestationArbiters = makeAttestationPropertiesArbitersClient(viemClient, addresses);
+  const attestationPropertiesArbiters = makeAttestationPropertiesArbitersClient(viemClient, addresses);
+  const confirmationArbiters = makeConfirmationArbitersClient(viemClient, addresses);
 
-  // Create a client that exposes only the hierarchical API
   return {
     general: generalArbiters,
     logical: logicalArbiters,
-    attestation: attestationArbiters,
+    attestationProperties: attestationPropertiesArbiters,
+    confirmation: confirmationArbiters,
   };
 };
 

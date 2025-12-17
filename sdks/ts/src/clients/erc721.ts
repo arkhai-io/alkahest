@@ -1,8 +1,8 @@
 import { decodeAbiParameters, encodeAbiParameters, getAbiItem } from "viem";
-import { abi as erc721BarterUtilsAbi } from "../contracts/ERC721BarterCrossToken";
-import { abi as erc721EscrowAbi } from "../contracts/ERC721EscrowObligation";
-import { abi as erc721PaymentAbi } from "../contracts/ERC721PaymentObligation";
-import { abi as nativeTokenBarterUtilsAbi } from "../contracts/NativeTokenBarterUtils";
+import { abi as erc721BarterUtilsAbi } from "../contracts/utils/ERC721BarterUtils";
+import { abi as erc721EscrowAbi } from "../contracts/obligations/escrow/non-tierable/ERC721EscrowObligation";
+import { abi as erc721PaymentAbi } from "../contracts/obligations/payment/ERC721PaymentObligation";
+import { abi as nativeTokenBarterUtilsAbi } from "../contracts/utils/NativeTokenBarterUtils";
 import { abi as easAbi } from "../contracts/IEAS";
 import { abi as erc721Abi } from "../contracts/IERC721";
 import type { ApprovalPurpose, ChainAddresses, Demand, Erc20, Erc721, Erc1155, TokenBundle } from "../types";
@@ -232,7 +232,7 @@ export const makeErc721Client = (
      * );
      * ```
      */
-    payWithErc721: async (price: Erc721, payee: `0x${string}`) => {
+    payWithErc721: async (price: Erc721, payee: `0x${string}`, refUID: `0x${string}` = "0x0000000000000000000000000000000000000000000000000000000000000000") => {
       const hash = await viemClient.writeContract({
         address: addresses.erc721PaymentObligation,
         abi: erc721PaymentAbi.abi,
@@ -243,6 +243,7 @@ export const makeErc721Client = (
             tokenId: price.id,
             payee,
           },
+          refUID,
         ],
       });
 

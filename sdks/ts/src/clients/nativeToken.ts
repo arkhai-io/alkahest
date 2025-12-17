@@ -18,8 +18,8 @@ import {
   type PublicClient,
 } from "viem";
 
-import { abi as nativeTokenPaymentAbi } from "../contracts/NativeTokenPaymentObligation";
-import { abi as nativeTokenEscrowAbi } from "../contracts/NativeTokenEscrowObligation";
+import { abi as nativeTokenPaymentAbi } from "../contracts/obligations/payment/NativeTokenPaymentObligation";
+import { abi as nativeTokenEscrowAbi } from "../contracts/obligations/escrow/non-tierable/NativeTokenEscrowObligation";
 import { abi as easAbi } from "../contracts/IEAS";
 
 // Extract ObligationData struct ABI from contract ABI at module initialization
@@ -154,7 +154,8 @@ export const makeNativeTokenClient = (
    * Executes a Native Token payment obligation
    */
     const doNativeTokenPaymentObligation = async (
-    data: NativeTokenPaymentObligationData
+    data: NativeTokenPaymentObligationData,
+    refUID: `0x${string}` = "0x0000000000000000000000000000000000000000000000000000000000000000"
   ): Promise<{ hash: Hash }> => {
     // Contract expects a struct (tuple) not encoded bytes
     const { request } = await viemClient.simulateContract({
@@ -164,10 +165,10 @@ export const makeNativeTokenClient = (
       args: [{
         amount: data.amount,
         payee: data.payee
-      }],
+      }, refUID],
       value: data.amount,
     });
-    
+
     const hash = await viemClient.writeContract(request);
     return { hash };
   };
@@ -177,8 +178,8 @@ export const makeNativeTokenClient = (
    */
   const doNativeTokenPaymentObligationFor = async (
     data: NativeTokenPaymentObligationData,
-    payer: Address,
-    recipient: Address
+    recipient: Address,
+    refUID: `0x${string}` = "0x0000000000000000000000000000000000000000000000000000000000000000"
   ): Promise<Hash> => {
     const { request } = await viemClient.simulateContract({
       address: addresses.nativeTokenPaymentObligation,
@@ -187,7 +188,7 @@ export const makeNativeTokenClient = (
       args: [{
         amount: data.amount,
         payee: data.payee
-      }, payer, recipient],
+      }, recipient, refUID],
       value: data.amount,
     });
 
@@ -219,14 +220,13 @@ export const makeNativeTokenClient = (
   const doNativeTokenEscrowObligationFor = async (
     data: NativeTokenEscrowObligationData,
     expirationTime: bigint,
-    payer: Address,
     recipient: Address
   ): Promise<Hash> => {
     const { request } = await viemClient.simulateContract({
       address: addresses.nativeTokenEscrowObligation,
       abi: nativeTokenEscrowAbi.abi,
       functionName: 'doObligationFor',
-      args: [data, expirationTime, payer, recipient],
+      args: [data, expirationTime, recipient],
       value: data.amount,
     });
 

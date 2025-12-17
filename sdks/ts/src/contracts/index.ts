@@ -1,65 +1,65 @@
-// Export all contract ABIs and types
-export { abi as AllArbiter } from "./AllArbiter";
-export { abi as AnyArbiter } from "./AnyArbiter";
-export { abi as AttestationBarterUtils } from "./AttestationBarterUtils";
-export { abi as AttestationEscrowObligation } from "./AttestationEscrowObligation";
-export { abi as AttestationEscrowObligation2 } from "./AttestationEscrowObligation2";
-export { abi as AttesterArbiter } from "./AttesterArbiter";
-export { abi as AttesterArbiterComposing } from "./AttesterArbiterComposing";
-export { abi as AttesterArbiterNonComposing } from "./AttesterArbiterNonComposing";
-export { abi as ERC1155BarterCrossToken } from "./ERC1155BarterCrossToken";
-export { abi as ERC1155BarterUtils } from "./ERC1155BarterUtils";
-export { abi as ERC1155EscrowObligation } from "./ERC1155EscrowObligation";
-export { abi as ERC1155PaymentObligation } from "./ERC1155PaymentObligation";
-export { abi as ERC20BarterCrossToken } from "./ERC20BarterCrossToken";
-export { abi as ERC20BarterUtils } from "./ERC20BarterUtils";
-export { abi as ERC20EscrowObligation } from "./ERC20EscrowObligation";
-export { abi as ERC20PaymentFulfillmentArbiter } from "./ERC20PaymentFulfillmentArbiter";
-export { abi as ERC20PaymentObligation } from "./ERC20PaymentObligation";
-export { abi as ERC20Permit } from "./ERC20Permit";
-export { abi as ERC721BarterCrossToken } from "./ERC721BarterCrossToken";
-export { abi as ERC721BarterUtils } from "./ERC721BarterUtils";
-export { abi as ERC721EscrowObligation } from "./ERC721EscrowObligation";
-export { abi as ERC721PaymentObligation } from "./ERC721PaymentObligation";
-export { abi as ExpirationTimeAfterArbiterComposing } from "./ExpirationTimeAfterArbiterComposing";
-export { abi as ExpirationTimeAfterArbiterNonComposing } from "./ExpirationTimeAfterArbiterNonComposing";
-export { abi as ExpirationTimeBeforeArbiterComposing } from "./ExpirationTimeBeforeArbiterComposing";
-export { abi as ExpirationTimeBeforeArbiterNonComposing } from "./ExpirationTimeBeforeArbiterNonComposing";
-export { abi as ExpirationTimeEqualArbiterComposing } from "./ExpirationTimeEqualArbiterComposing";
-export { abi as ExpirationTimeEqualArbiterNonComposing } from "./ExpirationTimeEqualArbiterNonComposing";
-export { abi as IEAS } from "./IEAS";
-export { abi as IERC1155 } from "./IERC1155";
-export { abi as IERC20 } from "./IERC20";
-export { abi as IERC721 } from "./IERC721";
-export { abi as ISchemaRegistry } from "./ISchemaRegistry";
-export { abi as IntrinsicsArbiter } from "./IntrinsicsArbiter";
-export { abi as IntrinsicsArbiter2 } from "./IntrinsicsArbiter2";
-export { abi as JobResultObligation } from "./JobResultObligation";
-export { abi as NativeTokenBarterUtils } from "./NativeTokenBarterUtils";
-export { abi as NativeTokenEscrowObligation } from "./NativeTokenEscrowObligation";
-export { abi as NativeTokenPaymentObligation } from "./NativeTokenPaymentObligation";
-export { abi as RecipientArbiterComposing } from "./RecipientArbiterComposing";
-export { abi as RecipientArbiterNonComposing } from "./RecipientArbiterNonComposing";
-export { abi as RefUidArbiterComposing } from "./RefUidArbiterComposing";
-export { abi as RefUidArbiterNonComposing } from "./RefUidArbiterNonComposing";
-export { abi as RevocableArbiterComposing } from "./RevocableArbiterComposing";
-export { abi as RevocableArbiterNonComposing } from "./RevocableArbiterNonComposing";
-export { abi as SchemaArbiterComposing } from "./SchemaArbiterComposing";
-export { abi as SchemaArbiterNonComposing } from "./SchemaArbiterNonComposing";
-export { abi as SpecificAttestationArbiter } from "./SpecificAttestationArbiter";
-export { abi as StringObligation } from "./StringObligation";
-export { abi as TimeAfterArbiter } from "./TimeAfterArbiter";
-export { abi as TimeAfterArbiterComposing } from "./TimeAfterArbiterComposing";
-export { abi as TimeAfterArbiterNonComposing } from "./TimeAfterArbiterNonComposing";
-export { abi as TimeBeforeArbiterComposing } from "./TimeBeforeArbiterComposing";
-export { abi as TimeBeforeArbiterNonComposing } from "./TimeBeforeArbiterNonComposing";
-export { abi as TimeEqualArbiterComposing } from "./TimeEqualArbiterComposing";
-export { abi as TimeEqualArbiterNonComposing } from "./TimeEqualArbiterNonComposing";
-export { abi as TokenBundleBarterUtils } from "./TokenBundleBarterUtils";
-export { abi as TokenBundleEscrowObligation } from "./TokenBundleEscrowObligation";
-export { abi as TokenBundlePaymentObligation } from "./TokenBundlePaymentObligation";
-export { abi as TrivialArbiter } from "./TrivialArbiter";
-export { abi as TrustedOracleArbiter } from "./TrustedOracleArbiter";
-export { abi as TrustedPartyArbiter } from "./TrustedPartyArbiter";
-export { abi as UidArbiterComposing } from "./UidArbiterComposing";
-export { abi as UidArbiterNonComposing } from "./UidArbiterNonComposing";
+// Core contracts
+export * as ERC20Permit from "./ERC20Permit";
+export * as IEAS from "./IEAS";
+export * as IERC20 from "./IERC20";
+export * as IERC721 from "./IERC721";
+export * as IERC1155 from "./IERC1155";
+export * as ISchemaRegistry from "./ISchemaRegistry";
+
+// Arbiters
+export * as TrivialArbiter from "./arbiters/TrivialArbiter";
+export * as TrustedOracleArbiter from "./arbiters/TrustedOracleArbiter";
+export * as IntrinsicsArbiter from "./arbiters/IntrinsicsArbiter";
+export * as IntrinsicsArbiter2 from "./arbiters/IntrinsicsArbiter2";
+export * as ERC8004Arbiter from "./arbiters/ERC8004Arbiter";
+
+// Logical arbiters
+export * as AllArbiter from "./arbiters/logical/AllArbiter";
+export * as AnyArbiter from "./arbiters/logical/AnyArbiter";
+
+// Confirmation arbiters
+export * as ExclusiveRevocableConfirmationArbiter from "./arbiters/confirmation/ExclusiveRevocableConfirmationArbiter";
+export * as ExclusiveUnrevocableConfirmationArbiter from "./arbiters/confirmation/ExclusiveUnrevocableConfirmationArbiter";
+export * as NonexclusiveRevocableConfirmationArbiter from "./arbiters/confirmation/NonexclusiveRevocableConfirmationArbiter";
+export * as NonexclusiveUnrevocableConfirmationArbiter from "./arbiters/confirmation/NonexclusiveUnrevocableConfirmationArbiter";
+
+// Attestation properties arbiters
+export * as AttesterArbiter from "./arbiters/attestation-properties/AttesterArbiter";
+export * as RecipientArbiter from "./arbiters/attestation-properties/RecipientArbiter";
+export * as SchemaArbiter from "./arbiters/attestation-properties/SchemaArbiter";
+export * as UidArbiter from "./arbiters/attestation-properties/UidArbiter";
+export * as RefUidArbiter from "./arbiters/attestation-properties/RefUidArbiter";
+export * as RevocableArbiter from "./arbiters/attestation-properties/RevocableArbiter";
+export * as TimeAfterArbiter from "./arbiters/attestation-properties/TimeAfterArbiter";
+export * as TimeBeforeArbiter from "./arbiters/attestation-properties/TimeBeforeArbiter";
+export * as TimeEqualArbiter from "./arbiters/attestation-properties/TimeEqualArbiter";
+export * as ExpirationTimeAfterArbiter from "./arbiters/attestation-properties/ExpirationTimeAfterArbiter";
+export * as ExpirationTimeBeforeArbiter from "./arbiters/attestation-properties/ExpirationTimeBeforeArbiter";
+export * as ExpirationTimeEqualArbiter from "./arbiters/attestation-properties/ExpirationTimeEqualArbiter";
+
+// Utils
+export * as AttestationBarterUtils from "./utils/AttestationBarterUtils";
+export * as ERC20BarterUtils from "./utils/ERC20BarterUtils";
+export * as ERC721BarterUtils from "./utils/ERC721BarterUtils";
+export * as ERC1155BarterUtils from "./utils/ERC1155BarterUtils";
+export * as NativeTokenBarterUtils from "./utils/NativeTokenBarterUtils";
+export * as TokenBundleBarterUtils from "./utils/TokenBundleBarterUtils";
+
+// Obligations - Payment
+export * as ERC20PaymentObligation from "./obligations/payment/ERC20PaymentObligation";
+export * as ERC721PaymentObligation from "./obligations/payment/ERC721PaymentObligation";
+export * as ERC1155PaymentObligation from "./obligations/payment/ERC1155PaymentObligation";
+export * as NativeTokenPaymentObligation from "./obligations/payment/NativeTokenPaymentObligation";
+export * as TokenBundlePaymentObligation from "./obligations/payment/TokenBundlePaymentObligation";
+
+// Obligations - Escrow (non-tierable)
+export * as AttestationEscrowObligation from "./obligations/escrow/non-tierable/AttestationEscrowObligation";
+export * as AttestationEscrowObligation2 from "./obligations/escrow/non-tierable/AttestationEscrowObligation2";
+export * as ERC20EscrowObligation from "./obligations/escrow/non-tierable/ERC20EscrowObligation";
+export * as ERC721EscrowObligation from "./obligations/escrow/non-tierable/ERC721EscrowObligation";
+export * as ERC1155EscrowObligation from "./obligations/escrow/non-tierable/ERC1155EscrowObligation";
+export * as NativeTokenEscrowObligation from "./obligations/escrow/non-tierable/NativeTokenEscrowObligation";
+export * as TokenBundleEscrowObligation from "./obligations/escrow/non-tierable/TokenBundleEscrowObligation";
+
+// Obligations - Other
+export * as StringObligation from "./obligations/StringObligation";

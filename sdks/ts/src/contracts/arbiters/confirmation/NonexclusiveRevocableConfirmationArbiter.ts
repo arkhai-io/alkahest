@@ -1,0 +1,691 @@
+export const abi = {
+  "abi": [
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "_eas",
+          "type": "address",
+          "internalType": "contract IEAS"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "checkObligation",
+      "inputs": [
+        {
+          "name": "fulfillment",
+          "type": "tuple",
+          "internalType": "struct Attestation",
+          "components": [
+            {
+              "name": "uid",
+              "type": "bytes32",
+              "internalType": "bytes32"
+            },
+            {
+              "name": "schema",
+              "type": "bytes32",
+              "internalType": "bytes32"
+            },
+            {
+              "name": "time",
+              "type": "uint64",
+              "internalType": "uint64"
+            },
+            {
+              "name": "expirationTime",
+              "type": "uint64",
+              "internalType": "uint64"
+            },
+            {
+              "name": "revocationTime",
+              "type": "uint64",
+              "internalType": "uint64"
+            },
+            {
+              "name": "refUID",
+              "type": "bytes32",
+              "internalType": "bytes32"
+            },
+            {
+              "name": "recipient",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "attester",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "revocable",
+              "type": "bool",
+              "internalType": "bool"
+            },
+            {
+              "name": "data",
+              "type": "bytes",
+              "internalType": "bytes"
+            }
+          ]
+        },
+        {
+          "name": "",
+          "type": "bytes",
+          "internalType": "bytes"
+        },
+        {
+          "name": "fulfilling",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "confirm",
+      "inputs": [
+        {
+          "name": "_fulfillment",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "_escrow",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "confirmations",
+      "inputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "eas",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IEAS"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "requestConfirmation",
+      "inputs": [
+        {
+          "name": "_fulfillment",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "_escrow",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "revoke",
+      "inputs": [
+        {
+          "name": "_fulfillment",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "_escrow",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "event",
+      "name": "ConfirmationMade",
+      "inputs": [
+        {
+          "name": "fulfillment",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "escrow",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "ConfirmationRequested",
+      "inputs": [
+        {
+          "name": "fulfillment",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "confirmer",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "escrow",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "ConfirmationRevoked",
+      "inputs": [
+        {
+          "name": "fulfillment",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "escrow",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "error",
+      "name": "NoConfirmationToRevoke",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "UnauthorizedConfirmation",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "UnauthorizedConfirmationRequest",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "UnauthorizedRevocation",
+      "inputs": []
+    }
+  ],
+  "bytecode": {
+    "object": "0x60a03461007f57601f61085b38819003918201601f19168301916001600160401b038311848410176100835780849260209460405283398101031261007f57516001600160a01b038116810361007f576080526040516107c3908161009882396080518181816101c50152818161030501528181610360015261043d0152f35b5f80fd5b634e487b7160e01b5f52604160045260245ffdfe6080806040526004361015610012575f80fd5b5f3560e01c90816352155df71461041b5750806357f784ba146103345780638150864d146102f0578063887d686d146102bd578063c2664610146101995763e6c9714d1461005e575f80fd5b346101955760603660031901126101955760043567ffffffffffffffff8111610195576101406003198236030112610195576040519061009d8261056b565b80600401358252602481013560208301526100ba604482016105be565b60408301526100cb606482016105be565b60608301526100dc608482016105be565b608083015260a481013560a08301526100f760c482016105d3565b60c083015261010860e482016105d3565b60e08301526101048101358015158103610195576101008301526101248101359067ffffffffffffffff82116101955760046101479236920101610603565b61012082015260243567ffffffffffffffff81116101955761016d903690600401610603565b50515f525f60205260405f206044355f52602052602060ff60405f2054166040519015158152f35b5f80fd5b34610195576101a736610555565b6040516328c44a9960e21b8152600481018290529091905f816024817f00000000000000000000000000000000000000000000000000000000000000006001600160a01b03165afa9081156102b2575f91610290575b5060c001516001600160a01b0316330361028157805f525f60205260405f20825f5260205260ff60405f2054161561027257805f525f60205260405f20825f5260205260405f2060ff1981541690557f137a0dfcce695307235e039aa2ae70da634ed7f10a6a5a536b3a8c15d758aa1e5f80a3005b6339abb17d60e01b5f5260045ffd5b630feaf7d560e31b5f5260045ffd5b6102ac91503d805f833e6102a4818361059c565b810190610672565b836101fd565b6040513d5f823e3d90fd5b34610195576102cb36610555565b905f525f60205260405f20905f52602052602060ff60405f2054166040519015158152f35b34610195575f366003190112610195576040517f00000000000000000000000000000000000000000000000000000000000000006001600160a01b03168152602090f35b346101955761034236610555565b6040516328c44a9960e21b8152600481018290529091905f816024817f00000000000000000000000000000000000000000000000000000000000000006001600160a01b03165afa9081156102b2575f91610401575b5060c001516001600160a01b031633036103f257805f525f60205260405f20825f5260205260405f20600160ff198254161790557fd22fd165f2b163f7b94d6e2b15443105c17bfae3fa2242150644ab76a95d532e5f80a3005b6331eb5cd360e11b5f5260045ffd5b61041591503d805f833e6102a4818361059c565b83610398565b346101955761042936610555565b6328c44a9960e21b835260048301829052917f00000000000000000000000000000000000000000000000000000000000000006001600160a01b0316905f81602481855afa9081156102b2575f9161053b575b5060e08101516001600160a01b03163314159081610523575b50610514575f602491604051928380926328c44a9960e21b82528760048301525afa9081156102b2575f916104fa575b5060c001516001600160a01b0316907f93ece828de650a0159786850192cbcd721ab720e1ee81b00365a5c8d63886b315f80a4005b61050e91503d805f833e6102a4818361059c565b836104c5565b63020a627d60e11b5f5260045ffd5b60c001516001600160a01b0316331415905084610495565b61054f91503d805f833e6102a4818361059c565b8461047c565b6040906003190112610195576004359060243590565b610140810190811067ffffffffffffffff82111761058857604052565b634e487b7160e01b5f52604160045260245ffd5b90601f8019910116810190811067ffffffffffffffff82111761058857604052565b359067ffffffffffffffff8216820361019557565b35906001600160a01b038216820361019557565b67ffffffffffffffff811161058857601f01601f191660200190565b81601f820112156101955780359061061a826105e7565b92610628604051948561059c565b8284526020838301011161019557815f926020809301838601378301015290565b519067ffffffffffffffff8216820361019557565b51906001600160a01b038216820361019557565b6020818303126101955780519067ffffffffffffffff82116101955701906101408282031261019557604051916106a88361056b565b80518352602081015160208401526106c260408201610649565b60408401526106d360608201610649565b60608401526106e460808201610649565b608084015260a081015160a08401526106ff60c0820161065e565b60c084015261071060e0820161065e565b60e08401526101008101518015158103610195576101008401526101208101519067ffffffffffffffff8211610195570181601f8201121561019557805190610758826105e7565b92610766604051948561059c565b8284526020838301011161019557815f9260208093018386015e830101526101208201529056fea2646970667358221220c134e8f619c6e9edfcd11d111ec571ca41feeea05fa41a961afe835659ac180164736f6c634300081b0033",
+    "sourceMap": "245:2389:97:-:0;;;;;;;;;;;;;-1:-1:-1;;245:2389:97;;;;-1:-1:-1;;;;;245:2389:97;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;;;;245:2389:97;;;;;;1041:10;;245:2389;;;;;;;;1041:10;245:2389;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;245:2389:97;;;;;;-1:-1:-1;245:2389:97;;;;;-1:-1:-1;245:2389:97",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x6080806040526004361015610012575f80fd5b5f3560e01c90816352155df71461041b5750806357f784ba146103345780638150864d146102f0578063887d686d146102bd578063c2664610146101995763e6c9714d1461005e575f80fd5b346101955760603660031901126101955760043567ffffffffffffffff8111610195576101406003198236030112610195576040519061009d8261056b565b80600401358252602481013560208301526100ba604482016105be565b60408301526100cb606482016105be565b60608301526100dc608482016105be565b608083015260a481013560a08301526100f760c482016105d3565b60c083015261010860e482016105d3565b60e08301526101048101358015158103610195576101008301526101248101359067ffffffffffffffff82116101955760046101479236920101610603565b61012082015260243567ffffffffffffffff81116101955761016d903690600401610603565b50515f525f60205260405f206044355f52602052602060ff60405f2054166040519015158152f35b5f80fd5b34610195576101a736610555565b6040516328c44a9960e21b8152600481018290529091905f816024817f00000000000000000000000000000000000000000000000000000000000000006001600160a01b03165afa9081156102b2575f91610290575b5060c001516001600160a01b0316330361028157805f525f60205260405f20825f5260205260ff60405f2054161561027257805f525f60205260405f20825f5260205260405f2060ff1981541690557f137a0dfcce695307235e039aa2ae70da634ed7f10a6a5a536b3a8c15d758aa1e5f80a3005b6339abb17d60e01b5f5260045ffd5b630feaf7d560e31b5f5260045ffd5b6102ac91503d805f833e6102a4818361059c565b810190610672565b836101fd565b6040513d5f823e3d90fd5b34610195576102cb36610555565b905f525f60205260405f20905f52602052602060ff60405f2054166040519015158152f35b34610195575f366003190112610195576040517f00000000000000000000000000000000000000000000000000000000000000006001600160a01b03168152602090f35b346101955761034236610555565b6040516328c44a9960e21b8152600481018290529091905f816024817f00000000000000000000000000000000000000000000000000000000000000006001600160a01b03165afa9081156102b2575f91610401575b5060c001516001600160a01b031633036103f257805f525f60205260405f20825f5260205260405f20600160ff198254161790557fd22fd165f2b163f7b94d6e2b15443105c17bfae3fa2242150644ab76a95d532e5f80a3005b6331eb5cd360e11b5f5260045ffd5b61041591503d805f833e6102a4818361059c565b83610398565b346101955761042936610555565b6328c44a9960e21b835260048301829052917f00000000000000000000000000000000000000000000000000000000000000006001600160a01b0316905f81602481855afa9081156102b2575f9161053b575b5060e08101516001600160a01b03163314159081610523575b50610514575f602491604051928380926328c44a9960e21b82528760048301525afa9081156102b2575f916104fa575b5060c001516001600160a01b0316907f93ece828de650a0159786850192cbcd721ab720e1ee81b00365a5c8d63886b315f80a4005b61050e91503d805f833e6102a4818361059c565b836104c5565b63020a627d60e11b5f5260045ffd5b60c001516001600160a01b0316331415905084610495565b61054f91503d805f833e6102a4818361059c565b8461047c565b6040906003190112610195576004359060243590565b610140810190811067ffffffffffffffff82111761058857604052565b634e487b7160e01b5f52604160045260245ffd5b90601f8019910116810190811067ffffffffffffffff82111761058857604052565b359067ffffffffffffffff8216820361019557565b35906001600160a01b038216820361019557565b67ffffffffffffffff811161058857601f01601f191660200190565b81601f820112156101955780359061061a826105e7565b92610628604051948561059c565b8284526020838301011161019557815f926020809301838601378301015290565b519067ffffffffffffffff8216820361019557565b51906001600160a01b038216820361019557565b6020818303126101955780519067ffffffffffffffff82116101955701906101408282031261019557604051916106a88361056b565b80518352602081015160208401526106c260408201610649565b60408401526106d360608201610649565b60608401526106e460808201610649565b608084015260a081015160a08401526106ff60c0820161065e565b60c084015261071060e0820161065e565b60e08401526101008101518015158103610195576101008401526101208101519067ffffffffffffffff8211610195570181601f8201121561019557805190610758826105e7565b92610766604051948561059c565b8284526020838301011161019557815f9260208093018386015e830101526101208201529056fea2646970667358221220c134e8f619c6e9edfcd11d111ec571ca41feeea05fa41a961afe835659ac180164736f6c634300081b0033",
+    "sourceMap": "245:2389:97:-:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;245:2389:97;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;:::i;:::-;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;-1:-1:-1;;;1518:27:97;;245:2389;1518:27;;245:2389;;;;;;-1:-1:-1;245:2389:97;1518:27;245:2389;1518:3;-1:-1:-1;;;;;245:2389:97;1518:27;;;;;;;245:2389;1518:27;;;245:2389;-1:-1:-1;1560:16:97;;245:2389;-1:-1:-1;;;;;245:2389:97;1580:10;1560:30;1556:92;;245:2389;;;;;;;;;;;;;;;;;;;;1662:37;1658:99;;245:2389;;;;;;;;;;;;;;;;;;;;;;;;1827:42;245:2389;1827:42;;245:2389;1658:99;1722:24;;;245:2389;1722:24;245:2389;;1722:24;1556:92;1613:24;;;245:2389;1613:24;245:2389;;1613:24;1518:27;;;;;;245:2389;1518:27;;;;;;:::i;:::-;;;;;:::i;:::-;;;;;245:2389;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;245:2389:97;;;;;;863:25;-1:-1:-1;;;;;245:2389:97;;;;;;;;;;;;;:::i;:::-;;;-1:-1:-1;;;1165:27:97;;245:2389;1165:27;;245:2389;;;;;;-1:-1:-1;245:2389:97;1165:27;245:2389;1165:3;-1:-1:-1;;;;;245:2389:97;1165:27;;;;;;;245:2389;1165:27;;;245:2389;-1:-1:-1;1207:16:97;;245:2389;-1:-1:-1;;;;;245:2389:97;1227:10;1207:30;1203:94;;245:2389;;;;;;;;;;;;;;;;;1346:4;245:2389;;;;;;;;1366:39;245:2389;1366:39;;245:2389;1203:94;1260:26;;;245:2389;1260:26;245:2389;;1260:26;1165:27;;;;;;245:2389;1165:27;;;;;;:::i;:::-;;;;245:2389;;;;;;;:::i;:::-;-1:-1:-1;;;2000:32:97;;245:2389;2000:32;;245:2389;;;;2000:3;-1:-1:-1;;;;;245:2389:97;;-1:-1:-1;245:2389:97;2000:32;245:2389;;2000:32;;;;;;;245:2389;2000:32;;;245:2389;-1:-1:-1;245:2389:97;2059:20;;245:2389;-1:-1:-1;;;;;245:2389:97;2083:10;2059:34;;;;:85;;245:2389;2042:153;;;245:2389;2000:32;245:2389;;;;;;;;;;2234:27;;;245:2389;2234:27;;245:2389;2234:27;;;;;;;245:2389;2234:27;;;245:2389;-1:-1:-1;2338:16:97;;245:2389;-1:-1:-1;;;;;245:2389:97;;2277:108;245:2389;;2277:108;245:2389;2234:27;;;;;;245:2389;2234:27;;;;;;:::i;:::-;;;;2042:153;2162:33;;;245:2389;2162:33;245:2389;;2162:33;2059:85;2109:21;;245:2389;-1:-1:-1;;;;;245:2389:97;2083:10;2109:35;;;-1:-1:-1;2059:85:97;;;2000:32;;;;;;245:2389;2000:32;;;;;;:::i;:::-;;;;245:2389;;;;;;;;;;;;;;;:::o;:::-;;;;;;;;;;;;;;;:::o;:::-;;;;-1:-1:-1;245:2389:97;;;;;-1:-1:-1;245:2389:97;;;;;;;;;;;;;;;;;;;;;;:::o;:::-;;;;;;;;;;:::o;:::-;;;-1:-1:-1;;;;;245:2389:97;;;;;;:::o;:::-;;;;;;;;-1:-1:-1;;245:2389:97;;;;:::o;:::-;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;:::i;:::-;;;;;;;;;;;;;-1:-1:-1;245:2389:97;;;;;;;;;;;;;;:::o;:::-;;;;;;;;;;:::o;:::-;;;-1:-1:-1;;;;;245:2389:97;;;;;;:::o;:::-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;:::i;:::-;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;:::i;:::-;;;;;;;;;;;;;-1:-1:-1;245:2389:97;;;;;;;;;;;;;;;;;;:::o",
+    "linkReferences": {},
+    "immutableReferences": {
+      "55404": [
+        {
+          "start": 453,
+          "length": 32
+        },
+        {
+          "start": 773,
+          "length": 32
+        },
+        {
+          "start": 864,
+          "length": 32
+        },
+        {
+          "start": 1085,
+          "length": 32
+        }
+      ]
+    }
+  },
+  "methodIdentifiers": {
+    "checkObligation((bytes32,bytes32,uint64,uint64,uint64,bytes32,address,address,bool,bytes),bytes,bytes32)": "e6c9714d",
+    "confirm(bytes32,bytes32)": "57f784ba",
+    "confirmations(bytes32,bytes32)": "887d686d",
+    "eas()": "8150864d",
+    "requestConfirmation(bytes32,bytes32)": "52155df7",
+    "revoke(bytes32,bytes32)": "c2664610"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.27+commit.40a35a09\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"contract IEAS\",\"name\":\"_eas\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[],\"name\":\"NoConfirmationToRevoke\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"UnauthorizedConfirmation\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"UnauthorizedConfirmationRequest\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"UnauthorizedRevocation\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"fulfillment\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"escrow\",\"type\":\"bytes32\"}],\"name\":\"ConfirmationMade\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"fulfillment\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"confirmer\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"escrow\",\"type\":\"bytes32\"}],\"name\":\"ConfirmationRequested\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"fulfillment\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"escrow\",\"type\":\"bytes32\"}],\"name\":\"ConfirmationRevoked\",\"type\":\"event\"},{\"inputs\":[{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"uid\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"schema\",\"type\":\"bytes32\"},{\"internalType\":\"uint64\",\"name\":\"time\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"expirationTime\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"revocationTime\",\"type\":\"uint64\"},{\"internalType\":\"bytes32\",\"name\":\"refUID\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"attester\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"revocable\",\"type\":\"bool\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"}],\"internalType\":\"struct Attestation\",\"name\":\"fulfillment\",\"type\":\"tuple\"},{\"internalType\":\"bytes\",\"name\":\"\",\"type\":\"bytes\"},{\"internalType\":\"bytes32\",\"name\":\"fulfilling\",\"type\":\"bytes32\"}],\"name\":\"checkObligation\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"_fulfillment\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"_escrow\",\"type\":\"bytes32\"}],\"name\":\"confirm\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"confirmations\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"eas\",\"outputs\":[{\"internalType\":\"contract IEAS\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"_fulfillment\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"_escrow\",\"type\":\"bytes32\"}],\"name\":\"requestConfirmation\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"_fulfillment\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"_escrow\",\"type\":\"bytes32\"}],\"name\":\"revoke\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/arbiters/confirmation/NonexclusiveRevocableConfirmationArbiter.sol\":\"NonexclusiveRevocableConfirmationArbiter\"},\"evmVersion\":\"prague\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@eas/=lib/eas-contracts/contracts/\",\":@erc8004-oz/contracts/=lib/trustless-agents-erc-ri/lib/reference/lib/openzeppelin-contracts/contracts/\",\":@erc8004/=lib/trustless-agents-erc-ri/src/\",\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@src/=src/\",\":@test/=test/\",\":ds-test/=lib/openzeppelin-contracts/lib/forge-std/lib/ds-test/src/\",\":eas-contracts/=lib/eas-contracts/contracts/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":halmos-cheatcodes/=lib/openzeppelin-contracts/lib/halmos-cheatcodes/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":reference/=lib/trustless-agents-erc-ri/lib/reference/\",\":trustless-agents-erc-ri/=lib/trustless-agents-erc-ri/\"],\"viaIR\":true},\"sources\":{\"lib/eas-contracts/contracts/Common.sol\":{\"keccak256\":\"0x957bd2e6d0d6d637f86208b135c29fbaf4412cb08e5e7a61ede16b80561bf685\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://da1dc9aedbb1d4d39c46c2235918d3adfbc5741dd34a46010cf425d134e7936d\",\"dweb:/ipfs/QmWUk6bXnLaghS2riF3GTFEeURCzgYFMA5woa6AsgPwEgc\"]},\"lib/eas-contracts/contracts/IEAS.sol\":{\"keccak256\":\"0xdad0674defce04905dc7935f2756d6c477a6e876c0b1b7094b112a862f164c12\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://49e448c26c08952df034692d2ab3519dd40a1ebbeae4ce68b294567441933880\",\"dweb:/ipfs/QmWHcudjskUSCjgqsNWE65LVfWvcYB2vBn8RB1SmzvRLNR\"]},\"lib/eas-contracts/contracts/ISchemaRegistry.sol\":{\"keccak256\":\"0xea97dcd36a0c422169cbaac06698249e199049b627c16bff93fb8ab829058754\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://d453a929ef64a69cd31195ec2ee5ed1193bfa29f633e13c960e92154c37ad158\",\"dweb:/ipfs/QmXs1Z3njbHs2EMgHonrZDfcwdog4kozHY5tYNrhZK5yqz\"]},\"lib/eas-contracts/contracts/ISemver.sol\":{\"keccak256\":\"0x04a67939b4e1a8d0a51101b8f69f8882930bbdc66319f38023828625b5d1ff18\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://3dd543fa0e33cef1ea757627f9c2a10a66ee1ce17aa9087f437c5b53a903c7f0\",\"dweb:/ipfs/QmXsy6UsGBzF9zPCCjmiwPpCcX3tHqU13TmR67B69tKnR6\"]},\"lib/eas-contracts/contracts/resolver/ISchemaResolver.sol\":{\"keccak256\":\"0xb7d1961ed928c620cddf35c2bf46845b10828bc5d73145214630202ed355b6bb\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://cf1cabacfb15c9bace8280b540b52e5aa440e1b4eba675f9782c34ce0f03902f\",\"dweb:/ipfs/QmakYcK4xbrijzvoaBCmBJK6HeaBqbXxWKtDQ1z62aXwCR\"]},\"src/ArbiterUtils.sol\":{\"keccak256\":\"0xfa0dc252637f91219024fe156f002249723bc110ee5bee6dcaf5456e19230cfd\",\"license\":\"UNLICENSED\",\"urls\":[\"bzz-raw://9c55b7a64d1ce3133476e026a3c0437ac28287194ba605c3ee8ab985c725cc61\",\"dweb:/ipfs/Qme8ViemRPUHt6DykWThUEJVMjJ5vt14ptugbnWswE4uSV\"]},\"src/IArbiter.sol\":{\"keccak256\":\"0x6eabb640c5f16294080510e55dd266ec988a5cba822703e3cbf08ed8a2f54629\",\"license\":\"UNLICENSED\",\"urls\":[\"bzz-raw://445657c603fe315ab9d27b8500a53b1a821843f5a34902217f8d3cb12c9b5ce9\",\"dweb:/ipfs/QmXMiKUkmedsDfsGoChzL5Zn4JQggxZm5WjQqkVu8738Wv\"]},\"src/arbiters/confirmation/NonexclusiveRevocableConfirmationArbiter.sol\":{\"keccak256\":\"0xc116e79f186cd9fd83f7544807baba757fd2e7bde538e1c883957cf5ec7bb8a9\",\"license\":\"UNLICENSED\",\"urls\":[\"bzz-raw://5e03d6af7ccfc5e6c83406ea419d35e443a858b6c70eda12ee97eb64c5f1e8c9\",\"dweb:/ipfs/QmeNt6Tb6iBH9hpo7f5UrsXN7KL9rqJwNc3wgEcxj9iSPg\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.27+commit.40a35a09"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "contract IEAS",
+              "name": "_eas",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "constructor"
+        },
+        {
+          "inputs": [],
+          "type": "error",
+          "name": "NoConfirmationToRevoke"
+        },
+        {
+          "inputs": [],
+          "type": "error",
+          "name": "UnauthorizedConfirmation"
+        },
+        {
+          "inputs": [],
+          "type": "error",
+          "name": "UnauthorizedConfirmationRequest"
+        },
+        {
+          "inputs": [],
+          "type": "error",
+          "name": "UnauthorizedRevocation"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "fulfillment",
+              "type": "bytes32",
+              "indexed": true
+            },
+            {
+              "internalType": "bytes32",
+              "name": "escrow",
+              "type": "bytes32",
+              "indexed": true
+            }
+          ],
+          "type": "event",
+          "name": "ConfirmationMade",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "fulfillment",
+              "type": "bytes32",
+              "indexed": true
+            },
+            {
+              "internalType": "address",
+              "name": "confirmer",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "bytes32",
+              "name": "escrow",
+              "type": "bytes32",
+              "indexed": true
+            }
+          ],
+          "type": "event",
+          "name": "ConfirmationRequested",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "fulfillment",
+              "type": "bytes32",
+              "indexed": true
+            },
+            {
+              "internalType": "bytes32",
+              "name": "escrow",
+              "type": "bytes32",
+              "indexed": true
+            }
+          ],
+          "type": "event",
+          "name": "ConfirmationRevoked",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "struct Attestation",
+              "name": "fulfillment",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "bytes32",
+                  "name": "uid",
+                  "type": "bytes32"
+                },
+                {
+                  "internalType": "bytes32",
+                  "name": "schema",
+                  "type": "bytes32"
+                },
+                {
+                  "internalType": "uint64",
+                  "name": "time",
+                  "type": "uint64"
+                },
+                {
+                  "internalType": "uint64",
+                  "name": "expirationTime",
+                  "type": "uint64"
+                },
+                {
+                  "internalType": "uint64",
+                  "name": "revocationTime",
+                  "type": "uint64"
+                },
+                {
+                  "internalType": "bytes32",
+                  "name": "refUID",
+                  "type": "bytes32"
+                },
+                {
+                  "internalType": "address",
+                  "name": "recipient",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "attester",
+                  "type": "address"
+                },
+                {
+                  "internalType": "bool",
+                  "name": "revocable",
+                  "type": "bool"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "data",
+                  "type": "bytes"
+                }
+              ]
+            },
+            {
+              "internalType": "bytes",
+              "name": "",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "fulfilling",
+              "type": "bytes32"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "checkObligation",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "_fulfillment",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "_escrow",
+              "type": "bytes32"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "confirm"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "",
+              "type": "bytes32"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "confirmations",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "eas",
+          "outputs": [
+            {
+              "internalType": "contract IEAS",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "_fulfillment",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "_escrow",
+              "type": "bytes32"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "requestConfirmation"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "_fulfillment",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "_escrow",
+              "type": "bytes32"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "revoke"
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {},
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {},
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        "@eas/=lib/eas-contracts/contracts/",
+        "@erc8004-oz/contracts/=lib/trustless-agents-erc-ri/lib/reference/lib/openzeppelin-contracts/contracts/",
+        "@erc8004/=lib/trustless-agents-erc-ri/src/",
+        "@openzeppelin/=lib/openzeppelin-contracts/",
+        "@src/=src/",
+        "@test/=test/",
+        "ds-test/=lib/openzeppelin-contracts/lib/forge-std/lib/ds-test/src/",
+        "eas-contracts/=lib/eas-contracts/contracts/",
+        "erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        "forge-std/=lib/forge-std/src/",
+        "halmos-cheatcodes/=lib/openzeppelin-contracts/lib/halmos-cheatcodes/src/",
+        "openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        "reference/=lib/trustless-agents-erc-ri/lib/reference/",
+        "trustless-agents-erc-ri/=lib/trustless-agents-erc-ri/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/arbiters/confirmation/NonexclusiveRevocableConfirmationArbiter.sol": "NonexclusiveRevocableConfirmationArbiter"
+      },
+      "evmVersion": "prague",
+      "libraries": {},
+      "viaIR": true
+    },
+    "sources": {
+      "lib/eas-contracts/contracts/Common.sol": {
+        "keccak256": "0x957bd2e6d0d6d637f86208b135c29fbaf4412cb08e5e7a61ede16b80561bf685",
+        "urls": [
+          "bzz-raw://da1dc9aedbb1d4d39c46c2235918d3adfbc5741dd34a46010cf425d134e7936d",
+          "dweb:/ipfs/QmWUk6bXnLaghS2riF3GTFEeURCzgYFMA5woa6AsgPwEgc"
+        ],
+        "license": "MIT"
+      },
+      "lib/eas-contracts/contracts/IEAS.sol": {
+        "keccak256": "0xdad0674defce04905dc7935f2756d6c477a6e876c0b1b7094b112a862f164c12",
+        "urls": [
+          "bzz-raw://49e448c26c08952df034692d2ab3519dd40a1ebbeae4ce68b294567441933880",
+          "dweb:/ipfs/QmWHcudjskUSCjgqsNWE65LVfWvcYB2vBn8RB1SmzvRLNR"
+        ],
+        "license": "MIT"
+      },
+      "lib/eas-contracts/contracts/ISchemaRegistry.sol": {
+        "keccak256": "0xea97dcd36a0c422169cbaac06698249e199049b627c16bff93fb8ab829058754",
+        "urls": [
+          "bzz-raw://d453a929ef64a69cd31195ec2ee5ed1193bfa29f633e13c960e92154c37ad158",
+          "dweb:/ipfs/QmXs1Z3njbHs2EMgHonrZDfcwdog4kozHY5tYNrhZK5yqz"
+        ],
+        "license": "MIT"
+      },
+      "lib/eas-contracts/contracts/ISemver.sol": {
+        "keccak256": "0x04a67939b4e1a8d0a51101b8f69f8882930bbdc66319f38023828625b5d1ff18",
+        "urls": [
+          "bzz-raw://3dd543fa0e33cef1ea757627f9c2a10a66ee1ce17aa9087f437c5b53a903c7f0",
+          "dweb:/ipfs/QmXsy6UsGBzF9zPCCjmiwPpCcX3tHqU13TmR67B69tKnR6"
+        ],
+        "license": "MIT"
+      },
+      "lib/eas-contracts/contracts/resolver/ISchemaResolver.sol": {
+        "keccak256": "0xb7d1961ed928c620cddf35c2bf46845b10828bc5d73145214630202ed355b6bb",
+        "urls": [
+          "bzz-raw://cf1cabacfb15c9bace8280b540b52e5aa440e1b4eba675f9782c34ce0f03902f",
+          "dweb:/ipfs/QmakYcK4xbrijzvoaBCmBJK6HeaBqbXxWKtDQ1z62aXwCR"
+        ],
+        "license": "MIT"
+      },
+      "src/ArbiterUtils.sol": {
+        "keccak256": "0xfa0dc252637f91219024fe156f002249723bc110ee5bee6dcaf5456e19230cfd",
+        "urls": [
+          "bzz-raw://9c55b7a64d1ce3133476e026a3c0437ac28287194ba605c3ee8ab985c725cc61",
+          "dweb:/ipfs/Qme8ViemRPUHt6DykWThUEJVMjJ5vt14ptugbnWswE4uSV"
+        ],
+        "license": "UNLICENSED"
+      },
+      "src/IArbiter.sol": {
+        "keccak256": "0x6eabb640c5f16294080510e55dd266ec988a5cba822703e3cbf08ed8a2f54629",
+        "urls": [
+          "bzz-raw://445657c603fe315ab9d27b8500a53b1a821843f5a34902217f8d3cb12c9b5ce9",
+          "dweb:/ipfs/QmXMiKUkmedsDfsGoChzL5Zn4JQggxZm5WjQqkVu8738Wv"
+        ],
+        "license": "UNLICENSED"
+      },
+      "src/arbiters/confirmation/NonexclusiveRevocableConfirmationArbiter.sol": {
+        "keccak256": "0xc116e79f186cd9fd83f7544807baba757fd2e7bde538e1c883957cf5ec7bb8a9",
+        "urls": [
+          "bzz-raw://5e03d6af7ccfc5e6c83406ea419d35e443a858b6c70eda12ee97eb64c5f1e8c9",
+          "dweb:/ipfs/QmeNt6Tb6iBH9hpo7f5UrsXN7KL9rqJwNc3wgEcxj9iSPg"
+        ],
+        "license": "UNLICENSED"
+      }
+    },
+    "version": 1
+  },
+  "id": 97
+} as const;

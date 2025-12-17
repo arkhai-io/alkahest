@@ -78,6 +78,7 @@ export const getAttestedEventFromTxHash = async (client: ViemClient, hash: `0x${
 };
 
 export const flattenTokenBundle = (bundle: TokenBundle): TokenBundleFlat => ({
+  nativeAmount: 0n,
   erc20Tokens: bundle.erc20s.map((x) => x.address),
   erc20Amounts: bundle.erc20s.map((x) => x.value),
   erc721Tokens: bundle.erc721s.map((x) => x.address),
@@ -118,7 +119,3 @@ export const readContract = async <T>(
 
 // Re-export demand parsing utilities
 export { ArbiterRegistry, type ArbiterDemandParser, type ParsedDemand, DemandParsingUtils } from "./utils/demandParsing";
-
-// Re-export improved arbiter registry utilities
-export { createFullArbiterRegistry, DemandParsingRegistry } from "./utils/arbiterRegistry";
-export { createComposingArbiterCodec, createNonComposingArbiterCodec } from "./utils/codecFactory";

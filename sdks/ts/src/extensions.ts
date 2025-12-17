@@ -6,7 +6,6 @@ import { makeErc721Client } from "./clients/erc721";
 import { makeNativeTokenClient } from "./clients/nativeToken";
 import { makeStringObligationClient } from "./clients/stringObligation";
 import { makeTokenBundleClient } from "./clients/tokenBundle";
-import { makeOracleClient } from "./oracle/oracle";
 
 /**
  * Creates the default extension for the Alkahest client with all standard functionality
@@ -37,6 +36,4 @@ export const makeDefaultExtension = (client: any) => ({
 
     /** Utilities for StringObligation */
     stringObligation: makeStringObligationClient(client.viemClient, client.contractAddresses),
-
-    oracle: makeOracleClient(client.viemClient, client.contractAddresses),
 });

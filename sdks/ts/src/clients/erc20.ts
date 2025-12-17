@@ -1,13 +1,13 @@
 import { decodeAbiParameters, encodeAbiParameters, getAbiItem, hexToNumber, parseAbiParameter, slice } from "viem";
-import { abi as erc20BarterUtilsAbi } from "../contracts/ERC20BarterCrossToken";
-import { abi as erc20EscrowAbi } from "../contracts/ERC20EscrowObligation";
-import { abi as erc20PaymentAbi } from "../contracts/ERC20PaymentObligation";
+import { abi as erc20BarterUtilsAbi } from "../contracts/utils/ERC20BarterUtils";
+import { abi as erc20EscrowAbi } from "../contracts/obligations/escrow/non-tierable/ERC20EscrowObligation";
+import { abi as erc20PaymentAbi } from "../contracts/obligations/payment/ERC20PaymentObligation";
 import { abi as erc20Abi } from "../contracts/ERC20Permit";
-import { abi as erc721EscrowAbi } from "../contracts/ERC721EscrowObligation";
+import { abi as erc721EscrowAbi } from "../contracts/obligations/escrow/non-tierable/ERC721EscrowObligation";
 import { abi as easAbi } from "../contracts/IEAS";
-import { abi as nativeTokenBarterUtilsAbi } from "../contracts/NativeTokenBarterUtils";
-import { abi as tokenBundleEscrowAbi } from "../contracts/TokenBundleEscrowObligation";
-import { abi as tokenBundlePaymentAbi } from "../contracts/TokenBundlePaymentObligation";
+import { abi as nativeTokenBarterUtilsAbi } from "../contracts/utils/NativeTokenBarterUtils";
+import { abi as tokenBundleEscrowAbi } from "../contracts/obligations/escrow/non-tierable/TokenBundleEscrowObligation";
+import { abi as tokenBundlePaymentAbi } from "../contracts/obligations/payment/TokenBundlePaymentObligation";
 import type {
   ApprovalPurpose,
   ChainAddresses,
@@ -409,7 +409,7 @@ export const makeErc20Client = (
      * );
      * ```
      */
-    payWithErc20: async (price: Erc20, payee: `0x${string}`) => {
+    payWithErc20: async (price: Erc20, payee: `0x${string}`, refUID: `0x${string}` = "0x0000000000000000000000000000000000000000000000000000000000000000") => {
       const hash = await viemClient.writeContract({
         address: addresses.erc20PaymentObligation,
         abi: erc20PaymentAbi.abi,
@@ -420,6 +420,7 @@ export const makeErc20Client = (
             amount: price.value,
             payee,
           },
+          refUID,
         ],
       });
 
@@ -441,7 +442,7 @@ export const makeErc20Client = (
      * );
      * ```
      */
-    permitAndPayWithErc20: async (price: Erc20, payee: `0x${string}`) => {
+    permitAndPayWithErc20: async (price: Erc20, payee: `0x${string}`, refUID: `0x${string}` = "0x0000000000000000000000000000000000000000000000000000000000000000") => {
       const deadline = BigInt(Math.floor(Date.now() / 1000)) + 3600n;
       const permit = await signPermit({
         ownerAddress: viemClient.account.address,
@@ -466,7 +467,7 @@ export const makeErc20Client = (
         address: addresses.erc20BarterUtils,
         abi: erc20BarterUtilsAbi.abi,
         functionName: "permitAndPayWithErc20",
-        args: [price.address, price.value, payee, deadline, permit.v, permit.r, permit.s],
+        args: [price.address, price.value, payee, refUID, deadline, permit.v, permit.r, permit.s],
       });
 
       const attested = await getAttestedEventFromTxHash(viemClient, hash);
