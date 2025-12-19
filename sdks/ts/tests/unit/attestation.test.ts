@@ -112,10 +112,6 @@ describe("Attestation Tests", () => {
     });
 
     test("testCollectEscrow", async () => {
-      // Bob creates a fulfillment attestation using StringObligation
-      const { attested: fulfillmentEvent } = await bobClient.stringObligation.doObligation("fulfillment data");
-      const fulfillmentUid = fulfillmentEvent.uid as `0x${string}`;
-
       // Alice creates an escrow attestation that requires a fulfillment
       const demandData = ("0x" + Buffer.from("test demand").toString("hex")) as `0x${string}`;
       const expiration = BigInt(Math.floor(Date.now() / 1000) + 86400); // 1 day from now
@@ -138,6 +134,11 @@ describe("Attestation Tests", () => {
         },
         expiration,
       );
+
+      // Bob creates a fulfillment attestation using StringObligation
+      // The escrow.uid is passed as refUID to link the fulfillment to the escrow
+      const { attested: fulfillmentEvent } = await bobClient.stringObligation.doObligation("fulfillment data", escrowData.uid);
+      const fulfillmentUid = fulfillmentEvent.uid as `0x${string}`;
 
       // Bob collects the payment by providing his fulfillment
       const { attested: paymentData } = await bobClient.attestation.escrow.v1.collect(escrowData.uid, fulfillmentUid);
@@ -288,9 +289,10 @@ describe("Attestation Tests", () => {
       const escrowUid = escrowEvent.uid as `0x${string}`;
 
       // Create a fulfillment attestation using StringObligation - lines 180-185
+      // The escrowUid is passed as refUID to link the fulfillment to the escrow
 
       // Create the string data - lines 181-183
-      const { attested: fulfillmentEvent } = await bobClient.stringObligation.doObligation("fulfillment data");
+      const { attested: fulfillmentEvent } = await bobClient.stringObligation.doObligation("fulfillment data", escrowUid);
       const fulfillmentUid = fulfillmentEvent.uid as `0x${string}`;
 
       // Collect payment - lines 188-189

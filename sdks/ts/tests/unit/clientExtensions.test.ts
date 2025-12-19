@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { makeClient, makeMinimalClient } from "../../src";
-import { makeErc20Client } from "../../src/clients/erc20";
+import { makeErc20Client, pickErc20Addresses } from "../../src/clients/obligations/erc20";
 import { setupTestEnvironment, type TestContext } from "../utils/setup";
 import { teardownTestEnvironment } from "../utils/teardownTestEnvironment";
 
@@ -28,7 +28,7 @@ describe("Client Extension Tests", () => {
     expect(client.bundle).toBeDefined();
     expect(client.attestation).toBeDefined();
     expect(client.stringObligation).toBeDefined();
-    expect(client.oracle).toBeDefined();
+    expect(client.nativeToken).toBeDefined();
 
     // Should have core properties
     expect(client.viemClient).toBeDefined();
@@ -55,7 +55,7 @@ describe("Client Extension Tests", () => {
     expect((minimalClient as any).bundle).toBeUndefined();
     expect((minimalClient as any).attestation).toBeUndefined();
     expect((minimalClient as any).stringObligation).toBeUndefined();
-    expect((minimalClient as any).oracle).toBeUndefined();
+    expect((minimalClient as any).nativeToken).toBeUndefined();
 
     // Should have core properties
     expect(minimalClient.viemClient).toBeDefined();
@@ -75,7 +75,7 @@ describe("Client Extension Tests", () => {
     const minimalClient = makeMinimalClient(walletClient, testContext.addresses);
 
     const customClient = minimalClient.extend((client) => ({
-      erc20: makeErc20Client(client.viemClient, testContext.addresses),
+      erc20: makeErc20Client(client.viemClient, pickErc20Addresses(testContext.addresses)),
     }));
 
     // Should have only the ERC20 client, not others

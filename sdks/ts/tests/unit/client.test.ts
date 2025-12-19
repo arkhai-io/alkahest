@@ -140,10 +140,6 @@ describe("Client Tests", () => {
 
   describe("waitForFulfillment", () => {
     test("should wait for an escrow fulfillment", async () => {
-      // First create a string attestation by Bob to use for fulfillment
-      const { attested: fulfillmentEvent } = await bobClient.stringObligation.doObligation("fulfillment data");
-      const fulfillmentUid = fulfillmentEvent.uid as `0x${string}`;
-
       await aliceClient.erc20.util.approve({ address: erc20Token, value: 10n }, "escrow");
       // Alice creates an escrow attestation that requires a fulfillment
       const { attested: escrowData } = await aliceClient.erc20.escrow.nonTierable.create(
@@ -151,6 +147,11 @@ describe("Client Tests", () => {
         { arbiter: testContext.addresses.trivialArbiter, demand: "0x" },
         0n,
       );
+
+      // Create a string attestation by Bob to use for fulfillment
+      // The escrow.uid is passed as refUID to link the fulfillment to the escrow
+      const { attested: fulfillmentEvent } = await bobClient.stringObligation.doObligation("fulfillment data", escrowData.uid);
+      const fulfillmentUid = fulfillmentEvent.uid as `0x${string}`;
 
       // Start a promise that waits for fulfillment in the background
       const fulfillmentPromise = aliceClient.waitForFulfillment(

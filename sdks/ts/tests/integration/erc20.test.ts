@@ -12,7 +12,29 @@ import { privateKeyToAccount } from "viem/accounts";
 import { baseSepolia } from "viem/chains";
 import { contractAddresses, makeClient } from "../../src";
 
-import { abi as jobResultObligationAbi } from "../../src/contracts/JobResultObligation";
+// Note: JobResultObligation contract ABI is not included in the SDK
+// We inline a minimal ABI for the makeStatement function
+const jobResultObligationAbi = {
+  abi: [
+    {
+      "inputs": [
+        {
+          "components": [
+            { "internalType": "string", "name": "result", "type": "string" }
+          ],
+          "internalType": "struct JobResultObligation.StatementData",
+          "name": "data",
+          "type": "tuple"
+        },
+        { "internalType": "bytes32", "name": "refUID", "type": "bytes32" }
+      ],
+      "name": "makeStatement",
+      "outputs": [{ "internalType": "bytes32", "name": "", "type": "bytes32" }],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ]
+} as const;
 
 // Network clients - these use external network (Base Sepolia)
 let clientBuyer: ReturnType<typeof makeClient>;
@@ -112,24 +134,24 @@ beforeAll(() => {
 test("tradeErc20ForErc20", async () => {
   if (shouldSkip) return;
 
-  // approve escrow contract to spend tokens
-  const escrowApproval = await clientBuyer.erc20.approve({ address: usdc, value: 10n }, "escrow");
+  // approve barter utils contract to spend tokens (uses "barter" purpose for buyErc20ForErc20)
+  const escrowApproval = await clientBuyer.erc20.util.approve({ address: usdc, value: 10n }, "barter");
   console.log(escrowApproval);
 
   // deposit 10usdc into escrow, demanding 10eurc, with no expiration
-  const escrow = await clientBuyer.erc20.buyErc20ForErc20(
+  const escrow = await clientBuyer.erc20.barter.buyErc20ForErc20(
     { address: usdc, value: 10n },
     { address: eurc, value: 10n },
     0n,
   );
   console.log(escrow);
 
-  // approve payment contract to spend tokens
-  const paymentApproval = await clientSeller.erc20.approve({ address: eurc, value: 10n }, "escrow");
+  // approve barter utils contract to spend tokens
+  const paymentApproval = await clientSeller.erc20.util.approve({ address: eurc, value: 10n }, "barter");
   console.log(paymentApproval);
 
   // pay 10eurc for 10usdc (fulfill the buy order)
-  const payment = await clientSeller.erc20.payErc20ForErc20(escrow.attested.uid);
+  const payment = await clientSeller.erc20.barter.payErc20ForErc20(escrow.attested.uid);
   console.log(payment);
 });
 
@@ -180,14 +202,14 @@ test("tradeErc20ForCustom", async () => {
   });
 
   // approve escrow contract to spend tokens
-  const escrowApproval = await clientBuyer.erc20.approve({ address: usdc, value: 10n }, "escrow");
+  const escrowApproval = await clientBuyer.erc20.util.approve({ address: usdc, value: 10n }, "escrow");
   clientBuyer.viemClient.waitForTransactionReceipt({ hash: escrowApproval });
   console.log("escrow approval: ", escrowApproval);
 
   // make escrow with generic escrow function,
   // passing in TrustedPartyArbiter's address and our custom demand,
   // and no expiration (would be a future unix timstamp in seconds if used)
-  const escrow = await clientBuyer.erc20.buyWithErc20(
+  const escrow = await clientBuyer.erc20.escrow.nonTierable.create(
     { address: usdc, value: 10n },
     { arbiter: baseSepoliaAddresses.trustedPartyArbiter, demand },
     0n,
@@ -205,7 +227,7 @@ test("tradeErc20ForCustom", async () => {
   //     address arbiter;
   //     bytes demand;
   // }
-  const decodedObligation = clientSeller.erc20.decodeEscrowObligation(buyObligation.data);
+  const decodedObligation = clientSeller.erc20.escrow.nonTierable.decodeObligation(buyObligation.data);
   // TrustedPartyArbiter.DemandData
   // if using a custom arbiter, you can instead use decodeAbiParameters directly like below
   const decodedDemand = clientSeller.arbiters.general.trustedParty.decode(decodedObligation.demand);
@@ -246,7 +268,7 @@ test("tradeErc20ForCustom", async () => {
   console.log("result obligation: ", resultObligation);
 
   // and collect the payment from escrow
-  const collection = await clientSeller.erc20.collectEscrow(escrow.attested.uid, resultObligation.uid);
+  const collection = await clientSeller.erc20.escrow.nonTierable.collectEscrow(escrow.attested.uid, resultObligation.uid);
 
   console.log("collection: ", collection);
 

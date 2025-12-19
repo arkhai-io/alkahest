@@ -207,7 +207,9 @@ describe("Arbiters Tests", () => {
       expect(initialResult).toBe(false);
 
       // Make a positive arbitration decision
-      const arbitrateHash = await oracleClient.arbiters.general.trustedOracle.arbitrate(statementUid, demand, true);
+      // Note: arbitrate() expects the inner data portion, not the full encoded demand
+      // checkObligation computes: keccak256(obligation.uid, demand_.data)
+      const arbitrateHash = await oracleClient.arbiters.general.trustedOracle.arbitrate(statementUid, demandData.data, true);
 
       // Wait for transaction receipt
       await testClient.waitForTransactionReceipt({
@@ -236,7 +238,8 @@ describe("Arbiters Tests", () => {
         data: "0x" as const,
       };
       const demand1 = oracleClient.arbiters.general.trustedOracle.encodeDemand(demandData1);
-      const arbitrateHash1 = await oracleClient.arbiters.general.trustedOracle.arbitrate(statementUid, demand1, true);
+      // Note: arbitrate() expects the inner data portion, not the full encoded demand
+      const arbitrateHash1 = await oracleClient.arbiters.general.trustedOracle.arbitrate(statementUid, demandData1.data, true);
 
       // Wait for transaction receipt
       await testClient.waitForTransactionReceipt({
@@ -249,7 +252,8 @@ describe("Arbiters Tests", () => {
         data: "0x" as const,
       };
       const demand2 = aliceClient.arbiters.general.trustedOracle.encodeDemand(demandData2);
-      const arbitrateHash2 = await aliceClient.arbiters.general.trustedOracle.arbitrate(statementUid, demand2, false);
+      // Note: arbitrate() expects the inner data portion, not the full encoded demand
+      const arbitrateHash2 = await aliceClient.arbiters.general.trustedOracle.arbitrate(statementUid, demandData2.data, false);
 
       // Wait for transaction receipt
       await testClient.waitForTransactionReceipt({

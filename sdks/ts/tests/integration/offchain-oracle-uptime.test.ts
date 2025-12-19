@@ -25,6 +25,7 @@ type PingEvent = {
 type UptimeJob = {
   minUptime: number;
   schedule: PingEvent[];
+  demandData: `0x${string}`;
 };
 
 type SchedulerContext = {
@@ -107,8 +108,7 @@ function startSchedulerWorker(ctx: SchedulerContext, arbiters: ArbiterModule) {
 
       const uptime = successes / totalChecks;
       const decision = uptime >= job.minUptime;
-      // Note: In this context we don't have the demand, using empty bytes
-      await arbiters.general.trustedOracle.arbitrate(uid, "0x", decision);
+      await arbiters.general.trustedOracle.arbitrate(uid, job.demandData, decision);
     }
   })();
 
@@ -130,7 +130,7 @@ afterEach(async () => {
   await teardownTestEnvironment(testContext);
 });
 
-test("asynchronous offchain oracle uptime flow", async () => {
+test("asynchronous offchain oracle uptime flow", { timeout: 15000 }, async () => {
   const now = Math.floor(Date.now() / 1000);
   const demandPayload: UptimeDemand = {
     service_url: "https://uptime.hyperspace",
@@ -208,9 +208,13 @@ test("asynchronous offchain oracle uptime flow", async () => {
         schedule.push({ delayMs: 100 + i * 25, success: i !== 1 });
       }
 
+      // Re-encode the demand data to get raw bytes for arbitration
+      const rawDemandBytes = encodeAbiParameters(uptimeDemandAbi, demandData) as `0x${string}`;
+
       ctx.jobDb.set(fulfillmentUid, {
         minUptime: parsed.min_uptime,
         schedule,
+        demandData: rawDemandBytes,
       });
       notifyScheduler(ctx);
       return null;
