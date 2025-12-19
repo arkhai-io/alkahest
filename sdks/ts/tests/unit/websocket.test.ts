@@ -165,11 +165,11 @@ describe("WebSocket Transport Support", () => {
         const askAmount = parseEther("200");
         const expiration = BigInt(Math.floor(Date.now() / 1000) + 86400); // 1 day from now
 
-        // Alice approves tokens for escrow (using HTTP client for transactions)
-        await aliceClient.erc20.approve({ address: erc20TokenA, value: bidAmount }, "escrow");
+        // Alice approves tokens for barter utils (using HTTP client for transactions)
+        await aliceClient.erc20.util.approve({ address: erc20TokenA, value: bidAmount }, "barter");
 
         // Alice creates an escrow (using HTTP client for transactions)
-        const { attested: escrowData } = await aliceClient.erc20.buyErc20ForErc20(
+        const { attested: escrowData } = await aliceClient.erc20.barter.buyErc20ForErc20(
           { address: erc20TokenA, value: bidAmount },
           { address: erc20TokenB, value: askAmount },
           expiration,
@@ -190,10 +190,10 @@ describe("WebSocket Transport Support", () => {
         );
 
         // Bob approves and fulfills the escrow (using HTTP client for transactions)
-        await bobClient.erc20.approve({ address: erc20TokenB, value: askAmount }, "payment");
+        await bobClient.erc20.util.approve({ address: erc20TokenB, value: askAmount }, "barter");
 
         const fulfillmentStartTime = Date.now();
-        await bobClient.erc20.payErc20ForErc20(escrowData.uid);
+        await bobClient.erc20.barter.payErc20ForErc20(escrowData.uid);
 
         // Wait for both fulfillment promises
         const wsFulfillment = await wsFulfillmentPromise;
@@ -234,9 +234,9 @@ describe("WebSocket Transport Support", () => {
         const expiration = BigInt(Math.floor(Date.now() / 1000) + 86400);
 
         // Use HTTP clients for all transactions (more reliable)
-        await aliceClient.erc20.approve({ address: erc20TokenA, value: bidAmount }, "escrow");
+        await aliceClient.erc20.util.approve({ address: erc20TokenA, value: bidAmount }, "barter");
 
-        const { attested: escrowData } = await aliceClient.erc20.buyErc20ForErc20(
+        const { attested: escrowData } = await aliceClient.erc20.barter.buyErc20ForErc20(
           { address: erc20TokenA, value: bidAmount },
           { address: erc20TokenB, value: askAmount },
           expiration,
@@ -249,9 +249,9 @@ describe("WebSocket Transport Support", () => {
         );
 
         // Use HTTP client for fulfillment transaction
-        await bobClient.erc20.approve({ address: erc20TokenB, value: askAmount }, "payment");
+        await bobClient.erc20.util.approve({ address: erc20TokenB, value: askAmount }, "barter");
 
-        await bobClient.erc20.payErc20ForErc20(escrowData.uid);
+        await bobClient.erc20.barter.payErc20ForErc20(escrowData.uid);
 
         // WebSocket client should detect the fulfillment quickly
         const fulfillment = await fulfillmentPromise;
@@ -272,14 +272,14 @@ describe("WebSocket Transport Support", () => {
         const bidAmount = parseEther("10");
 
         // Approve using WebSocket client
-        const approvalHash = await aliceClientWs.erc20.approve({ address: erc20TokenA, value: bidAmount }, "escrow");
+        const approvalHash = await aliceClientWs.erc20.util.approve({ address: erc20TokenA, value: bidAmount }, "barter");
 
         expect(approvalHash).toBeDefined();
         expect(typeof approvalHash).toBe("string");
         expect(approvalHash.startsWith("0x")).toBe(true);
 
         // Create escrow using WebSocket client
-        const { attested } = await aliceClientWs.erc20.buyErc20ForErc20(
+        const { attested } = await aliceClientWs.erc20.barter.buyErc20ForErc20(
           { address: erc20TokenA, value: bidAmount },
           { address: erc20TokenB, value: bidAmount },
           BigInt(Math.floor(Date.now() / 1000) + 86400),

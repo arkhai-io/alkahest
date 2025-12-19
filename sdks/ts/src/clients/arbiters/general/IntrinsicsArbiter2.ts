@@ -18,24 +18,34 @@ const intrinsicsArbiter2DemandDataType = intrinsicsArbiter2DecodeDemandFunction.
  * Handles schema-based validation for attestations.
  * This arbiter validates that an attestation conforms to a specific schema.
  */
+/**
+ * IntrinsicsArbiter2 DemandData type
+ */
+export type IntrinsicsArbiter2DemandData = {
+  schema: `0x${string}`;
+};
+
+/**
+ * Encodes IntrinsicsArbiter2.DemandData to bytes.
+ * @param demand - struct DemandData {bytes32 schema}
+ * @returns abi encoded bytes
+ */
+export const encodeDemand = (demand: IntrinsicsArbiter2DemandData): `0x${string}` => {
+  return encodeAbiParameters([intrinsicsArbiter2DemandDataType], [demand]);
+};
+
+/**
+ * Decodes IntrinsicsArbiter2.DemandData from bytes.
+ * @param demandData - DemandData as abi encoded bytes
+ * @returns the decoded DemandData object
+ */
+export const decodeDemand = (demandData: `0x${string}`): IntrinsicsArbiter2DemandData => {
+  return decodeAbiParameters([intrinsicsArbiter2DemandDataType], demandData)[0] as IntrinsicsArbiter2DemandData;
+};
+
 export const makeIntrinsicsArbiter2Client = (viemClient: ViemClient, addresses: ChainAddresses) => {
   return {
-    /**
-     * Encodes IntrinsicsArbiter2.DemandData to bytes.
-     * @param demand - struct DemandData {bytes32 schema}
-     * @returns abi encoded bytes
-     */
-    encode: (demand: { schema: `0x${string}` }) => {
-      return encodeAbiParameters([intrinsicsArbiter2DemandDataType], [demand]);
-    },
-
-    /**
-     * Decodes IntrinsicsArbiter2.DemandData from bytes.
-     * @param demandData - DemandData as abi encoded bytes
-     * @returns the decoded DemandData object
-     */
-    decode: (demandData: `0x${string}`) => {
-      return decodeAbiParameters([intrinsicsArbiter2DemandDataType], demandData)[0];
-    },
+    encodeDemand,
+    decodeDemand,
   };
 };

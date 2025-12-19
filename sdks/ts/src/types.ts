@@ -129,7 +129,7 @@ export type TokenBundleFlat = {
   erc1155Amounts: bigint[];
 };
 
-export type ApprovalPurpose = "escrow" | "payment";
+export type ApprovalPurpose = "escrow" | "payment" | "barter";
 
 export type Attestation = {
   uid: `0x${string}`;

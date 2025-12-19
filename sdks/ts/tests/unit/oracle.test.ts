@@ -25,7 +25,7 @@ afterAll(async () => {
 
 test("trivial arbitratePast", async () => {
   const arbiter = testContext.addresses.trustedOracleArbiter;
-  const demand = testContext.alice.client.arbiters.general.trustedOracle.encode({
+  const demand = testContext.alice.client.arbiters.general.trustedOracle.encodeDemand({
     oracle: testContext.bob.address,
     data: encodeAbiParameters(parseAbiParameters("(string mockDemand)"), [{ mockDemand: "foo" }]),
   });
@@ -64,7 +64,7 @@ test("trivial arbitratePast", async () => {
 
 test("conditional arbitratePast", async () => {
   const arbiter = testContext.addresses.trustedOracleArbiter;
-  const demand = testContext.alice.client.arbiters.general.trustedOracle.encode({
+  const demand = testContext.alice.client.arbiters.general.trustedOracle.encodeDemand({
     oracle: testContext.bob.address,
     data: encodeAbiParameters(parseAbiParameters("(string mockDemand)"), [{ mockDemand: "foo" }]),
   });
@@ -113,7 +113,7 @@ test("conditional arbitratePast", async () => {
 
 test("arbitratePast with skipAlreadyArbitrated", async () => {
   const arbiter = testContext.addresses.trustedOracleArbiter;
-  const demand = testContext.alice.client.arbiters.general.trustedOracle.encode({
+  const demand = testContext.alice.client.arbiters.general.trustedOracle.encodeDemand({
     oracle: testContext.bob.address,
     data: encodeAbiParameters(parseAbiParameters("(string mockDemand)"), [{ mockDemand: "foo" }]),
   });
@@ -168,7 +168,7 @@ test("arbitratePast with skipAlreadyArbitrated", async () => {
 
 test("listenAndArbitrate", async () => {
   const arbiter = testContext.addresses.trustedOracleArbiter;
-  const demand = testContext.alice.client.arbiters.general.trustedOracle.encode({
+  const demand = testContext.alice.client.arbiters.general.trustedOracle.encodeDemand({
     oracle: testContext.bob.address,
     data: encodeAbiParameters(parseAbiParameters("(string mockDemand)"), [{ mockDemand: "foo" }]),
   });
@@ -215,7 +215,7 @@ test("listenAndArbitrate", async () => {
 
 test("listenAndArbitrate with onlyNew", async () => {
   const arbiter = testContext.addresses.trustedOracleArbiter;
-  const demand = testContext.alice.client.arbiters.general.trustedOracle.encode({
+  const demand = testContext.alice.client.arbiters.general.trustedOracle.encodeDemand({
     oracle: testContext.bob.address,
     data: encodeAbiParameters(parseAbiParameters("(string mockDemand)"), [{ mockDemand: "foo" }]),
   });
@@ -262,7 +262,7 @@ test("listenAndArbitrate with onlyNew", async () => {
 
 test("arbitratePast with escrow demand extraction", async () => {
   const arbiter = testContext.addresses.trustedOracleArbiter;
-  const demand = testContext.alice.client.arbiters.general.trustedOracle.encode({
+  const demand = testContext.alice.client.arbiters.general.trustedOracle.encodeDemand({
     oracle: testContext.bob.address,
     data: encodeAbiParameters(parseAbiParameters("(string mockDemand)"), [{ mockDemand: "foo" }]),
   });
@@ -314,7 +314,7 @@ test("arbitratePast with escrow demand extraction", async () => {
 
 test("waitForArbitration with existing decision", async () => {
   const arbiter = testContext.addresses.trustedOracleArbiter;
-  const demand = testContext.alice.client.arbiters.general.trustedOracle.encode({
+  const demand = testContext.alice.client.arbiters.general.trustedOracle.encodeDemand({
     oracle: testContext.bob.address,
     data: encodeAbiParameters(parseAbiParameters("(string mockDemand)"), [{ mockDemand: "foo" }]),
   });
@@ -360,7 +360,7 @@ test("waitForArbitration with existing decision", async () => {
 
 test("waitForArbitration with new decision", async () => {
   const arbiter = testContext.addresses.trustedOracleArbiter;
-  const demand = testContext.alice.client.arbiters.general.trustedOracle.encode({
+  const demand = testContext.alice.client.arbiters.general.trustedOracle.encodeDemand({
     oracle: testContext.bob.address,
     data: encodeAbiParameters(parseAbiParameters("(string mockDemand)"), [{ mockDemand: "foo" }]),
   });
@@ -404,7 +404,7 @@ test("waitForArbitration with new decision", async () => {
 
 test("waitForArbitration with false decision", async () => {
   const arbiter = testContext.addresses.trustedOracleArbiter;
-  const demand = testContext.alice.client.arbiters.general.trustedOracle.encode({
+  const demand = testContext.alice.client.arbiters.general.trustedOracle.encodeDemand({
     oracle: testContext.bob.address,
     data: encodeAbiParameters(parseAbiParameters("(string mockDemand)"), [{ mockDemand: "foo" }]),
   });
@@ -448,7 +448,7 @@ test("waitForArbitration with false decision", async () => {
 
 test("waitForArbitration integration with escrow collection", async () => {
   const arbiter = testContext.addresses.trustedOracleArbiter;
-  const demand = testContext.alice.client.arbiters.general.trustedOracle.encode({
+  const demand = testContext.alice.client.arbiters.general.trustedOracle.encodeDemand({
     oracle: testContext.bob.address,
     data: encodeAbiParameters(parseAbiParameters("(string mockDemand)"), [{ mockDemand: "foo" }]),
   });

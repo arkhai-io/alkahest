@@ -13,7 +13,12 @@ export const makeTokenBundleUtilClient = (
 ) => {
   return {
     approve: async (bundle: TokenBundle, purpose: ApprovalPurpose) => {
-      const target = purpose === "escrow" ? addresses.escrowObligation : addresses.paymentObligation;
+      const target =
+        purpose === "escrow"
+          ? addresses.escrowObligation
+          : purpose === "payment"
+            ? addresses.paymentObligation
+            : addresses.barterUtils;
       const results: `0x${string}`[] = [];
 
       // Process ERC20 tokens sequentially

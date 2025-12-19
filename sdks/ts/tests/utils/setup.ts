@@ -164,9 +164,10 @@ export type TestContext = {
     // String obligation
     stringObligation: `0x${string}`;
 
-    // Native payment
+    // Native token
     nativeTokenPaymentObligation: `0x${string}`;
     nativeTokenEscrowObligation: `0x${string}`;
+    nativeTokenBarterUtils: `0x${string}`;
   };
 
   // Mock token addresses
@@ -388,6 +389,7 @@ export async function setupTestEnvironment(options?: SetupTestEnvironmentOptions
     stringObligation: "" as `0x${string}`,
     nativeTokenPaymentObligation: "" as `0x${string}`,
     nativeTokenEscrowObligation: "" as `0x${string}`,
+    nativeTokenBarterUtils: "" as `0x${string}`,
   };
 
   const mockAddresses: TestContext["mockAddresses"] = {
@@ -486,6 +488,8 @@ export async function setupTestEnvironment(options?: SetupTestEnvironmentOptions
     addresses.erc1155PaymentObligation,
     addresses.tokenBundleEscrowObligation,
     addresses.tokenBundlePaymentObligation,
+    addresses.nativeTokenEscrowObligation,
+    addresses.nativeTokenPaymentObligation,
   ]);
 
   // ERC721 barter utils
@@ -499,6 +503,8 @@ export async function setupTestEnvironment(options?: SetupTestEnvironmentOptions
     addresses.erc1155PaymentObligation,
     addresses.tokenBundleEscrowObligation,
     addresses.tokenBundlePaymentObligation,
+    addresses.nativeTokenEscrowObligation,
+    addresses.nativeTokenPaymentObligation,
   ]);
 
   // ERC1155 barter utils
@@ -512,6 +518,23 @@ export async function setupTestEnvironment(options?: SetupTestEnvironmentOptions
     addresses.erc1155PaymentObligation,
     addresses.tokenBundleEscrowObligation,
     addresses.tokenBundlePaymentObligation,
+    addresses.nativeTokenEscrowObligation,
+    addresses.nativeTokenPaymentObligation,
+  ]);
+
+  // Native token barter utils
+  addresses.nativeTokenBarterUtils = await deployContract(NativeTokenBarterUtils, [
+    addresses.eas,
+    addresses.erc20EscrowObligation,
+    addresses.erc20PaymentObligation,
+    addresses.erc721EscrowObligation,
+    addresses.erc721PaymentObligation,
+    addresses.erc1155EscrowObligation,
+    addresses.erc1155PaymentObligation,
+    addresses.tokenBundleEscrowObligation,
+    addresses.tokenBundlePaymentObligation,
+    addresses.nativeTokenEscrowObligation,
+    addresses.nativeTokenPaymentObligation,
   ]);
 
   // Token bundle barter utils

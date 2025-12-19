@@ -82,7 +82,12 @@ export const makeErc20UtilClient = (
     getPermitDeadline,
 
     approve: async (token: Erc20, purpose: ApprovalPurpose) => {
-      const to = purpose === "escrow" ? addresses.escrowObligation : addresses.paymentObligation;
+      const to =
+        purpose === "escrow"
+          ? addresses.escrowObligation
+          : purpose === "payment"
+            ? addresses.paymentObligation
+            : addresses.barterUtils;
 
       const hash = await writeContract(viemClient, {
         address: token.address,
@@ -94,7 +99,12 @@ export const makeErc20UtilClient = (
     },
 
     approveIfLess: async (token: Erc20, purpose: ApprovalPurpose) => {
-      const to = purpose === "escrow" ? addresses.escrowObligation : addresses.paymentObligation;
+      const to =
+        purpose === "escrow"
+          ? addresses.escrowObligation
+          : purpose === "payment"
+            ? addresses.paymentObligation
+            : addresses.barterUtils;
 
       const currentAllowance = await readContract<bigint>(viemClient, {
         address: token.address,

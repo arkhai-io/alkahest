@@ -52,6 +52,9 @@ export {
   encodeTrustedOracleDemand,
   decodeTrustedOracleDemand,
   type TrustedOracleArbiterDemandData,
+  encodeIntrinsics2Demand,
+  decodeIntrinsics2Demand,
+  type IntrinsicsArbiter2DemandData,
 } from "./general";
 
 // Re-export types from attestation properties arbiters

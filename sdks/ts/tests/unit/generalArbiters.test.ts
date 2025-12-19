@@ -180,7 +180,7 @@ describe("General Arbiters Tests", () => {
         });
         expect(false).toBe(true); // Should not reach here
       } catch (error) {
-        expect((error as any).toString()).toContain("InvalidRecipient");
+        expect((error as any).toString()).toContain("RecipientMismatched");
       }
     });
 
@@ -241,7 +241,7 @@ describe("General Arbiters Tests", () => {
         });
         expect(false).toBe(true); // Should not reach here
       } catch (error) {
-        expect((error as any).toString()).toContain("InvalidUid");
+        expect((error as any).toString()).toContain("UidMismatched");
       }
     });
 
@@ -303,6 +303,7 @@ describe("General Arbiters Tests", () => {
           inputs: [
             { name: "obligation", type: "bytes32", indexed: true },
             { name: "oracle", type: "address", indexed: true },
+            { name: "demand", type: "bytes", indexed: false },
           ],
         },
         fromBlock: receipt.blockNumber,
@@ -348,6 +349,7 @@ describe("General Arbiters Tests", () => {
           inputs: [
             { name: "obligation", type: "bytes32", indexed: true },
             { name: "oracle", type: "address", indexed: true },
+            { name: "demand", type: "bytes", indexed: false },
           ],
         },
         fromBlock: "earliest",

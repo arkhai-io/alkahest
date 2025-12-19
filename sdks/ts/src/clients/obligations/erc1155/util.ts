@@ -11,7 +11,12 @@ export const makeErc1155UtilClient = (
 ) => {
   return {
     approveAll: async (tokenContract: `0x${string}`, purpose: ApprovalPurpose) => {
-      const to = purpose === "escrow" ? addresses.escrowObligation : addresses.paymentObligation;
+      const to =
+        purpose === "escrow"
+          ? addresses.escrowObligation
+          : purpose === "payment"
+            ? addresses.paymentObligation
+            : addresses.barterUtils;
       const hash = await writeContract(viemClient, {
         address: tokenContract,
         abi: erc1155Abi.abi,
@@ -22,7 +27,12 @@ export const makeErc1155UtilClient = (
     },
 
     revokeAll: async (tokenContract: `0x${string}`, purpose: ApprovalPurpose) => {
-      const to = purpose === "escrow" ? addresses.escrowObligation : addresses.paymentObligation;
+      const to =
+        purpose === "escrow"
+          ? addresses.escrowObligation
+          : purpose === "payment"
+            ? addresses.paymentObligation
+            : addresses.barterUtils;
       const hash = await writeContract(viemClient, {
         address: tokenContract,
         abi: erc1155Abi.abi,

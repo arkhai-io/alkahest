@@ -11,6 +11,13 @@ export {
   type TrustedOracleArbiterDemandData,
 } from "./trustedOracle";
 
+// Re-export static encode/decode functions from IntrinsicsArbiter2
+export {
+  encodeDemand as encodeIntrinsics2Demand,
+  decodeDemand as decodeIntrinsics2Demand,
+  type IntrinsicsArbiter2DemandData,
+} from "./IntrinsicsArbiter2";
+
 /**
  * General Arbiters Client
  *

@@ -11,7 +11,12 @@ export const makeErc721UtilClient = (
 ) => {
   return {
     approve: async (token: Erc721, purpose: ApprovalPurpose) => {
-      const to = purpose === "escrow" ? addresses.escrowObligation : addresses.paymentObligation;
+      const to =
+        purpose === "escrow"
+          ? addresses.escrowObligation
+          : purpose === "payment"
+            ? addresses.paymentObligation
+            : addresses.barterUtils;
       const hash = await writeContract(viemClient, {
         address: token.address,
         abi: erc721Abi.abi,
@@ -22,7 +27,12 @@ export const makeErc721UtilClient = (
     },
 
     approveAll: async (tokenContract: `0x${string}`, purpose: ApprovalPurpose) => {
-      const to = purpose === "escrow" ? addresses.escrowObligation : addresses.paymentObligation;
+      const to =
+        purpose === "escrow"
+          ? addresses.escrowObligation
+          : purpose === "payment"
+            ? addresses.paymentObligation
+            : addresses.barterUtils;
       const hash = await writeContract(viemClient, {
         address: tokenContract,
         abi: erc721Abi.abi,
@@ -33,7 +43,12 @@ export const makeErc721UtilClient = (
     },
 
     revokeAll: async (tokenContract: `0x${string}`, purpose: ApprovalPurpose) => {
-      const to = purpose === "escrow" ? addresses.escrowObligation : addresses.paymentObligation;
+      const to =
+        purpose === "escrow"
+          ? addresses.escrowObligation
+          : purpose === "payment"
+            ? addresses.paymentObligation
+            : addresses.barterUtils;
       const hash = await writeContract(viemClient, {
         address: tokenContract,
         abi: erc721Abi.abi,
