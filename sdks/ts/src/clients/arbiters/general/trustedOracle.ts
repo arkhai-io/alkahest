@@ -92,7 +92,7 @@ export type ListenAndArbitrateResult = {
 export const makeTrustedOracleArbiterClient = (viemClient: ViemClient, addresses: ChainAddresses) => {
   // Cache the parsed event ABIs to avoid re-parsing on each call
   const arbitrationMadeEvent = parseAbiItem(
-    "event ArbitrationMade(bytes32 indexed obligation, address indexed oracle, bool decision)",
+    "event ArbitrationMade(bytes32 indexed decisionKey, bytes32 indexed obligation, address indexed oracle, bool decision)",
   );
 
   const arbitrationRequestedEvent = parseAbiItem(
@@ -192,22 +192,29 @@ export const makeTrustedOracleArbiterClient = (viemClient: ViemClient, addresses
   ): Promise<Decision[]> => {
     const attestationsWithDemand = await getArbitrationRequests(options);
 
-    const decisions = await Promise.all(
-      attestationsWithDemand.map(async (awd) => {
-        const decision = await arbitrate(awd.attestation);
-        if (decision === null) return null;
+    // Process arbitration sequentially to avoid nonce conflicts
+    const decisions: (Decision | null)[] = [];
+    for (const awd of attestationsWithDemand) {
+      const decision = await arbitrate(awd.attestation);
+      if (decision === null) {
+        decisions.push(null);
+        continue;
+      }
 
-        // Decode the full demand to get the inner data
-        // checkObligation computes: keccak256(obligation.uid, demand_.data)
-        // so arbitrate must use the same inner data
-        // Handle empty demand case (contextless arbitration)
-        const innerData = awd.demand && awd.demand !== "0x" ? decodeDemand(awd.demand).data : "0x";
-        const hash = await arbitrateOnchain(awd.attestation.uid, innerData, decision);
-        return { hash, attestation: awd.attestation, decision };
-      }),
-    );
+      // Decode the full demand to get the inner data
+      // checkObligation computes: keccak256(obligation.uid, demand_.data)
+      // so arbitrate must use the same inner data
+      // Handle empty demand case (contextless arbitration)
+      const innerData = awd.demand && awd.demand !== "0x" ? decodeDemand(awd.demand).data : "0x";
+      const hash = await arbitrateOnchain(awd.attestation.uid, innerData, decision);
+      decisions.push({ hash, attestation: awd.attestation, decision });
+    }
 
-    return decisions.filter((d) => d !== null) as Decision[];
+    // Wait for all transactions to be mined in parallel
+    const validDecisions = decisions.filter((d) => d !== null) as Decision[];
+    await Promise.all(validDecisions.map((d) => viemClient.waitForTransactionReceipt({ hash: d.hash })));
+
+    return validDecisions;
   };
 
   /**
