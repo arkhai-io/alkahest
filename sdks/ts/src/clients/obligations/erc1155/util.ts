@@ -41,15 +41,5 @@ export const makeErc1155UtilClient = (
       });
       return hash;
     },
-
-    approveAllForBarterUtils: async (tokenContract: `0x${string}`) => {
-      const hash = await writeContract(viemClient, {
-        address: tokenContract,
-        abi: erc1155Abi.abi,
-        functionName: "setApprovalForAll",
-        args: [addresses.barterUtils, true],
-      });
-      return hash;
-    },
   };
 };

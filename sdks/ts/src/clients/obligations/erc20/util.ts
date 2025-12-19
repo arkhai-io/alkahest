@@ -123,15 +123,5 @@ export const makeErc20UtilClient = (
       }
       return null;
     },
-
-    approveForBarterUtils: async (token: Erc20) => {
-      const hash = await writeContract(viemClient, {
-        address: token.address,
-        abi: erc20Abi.abi,
-        functionName: "approve",
-        args: [addresses.barterUtils, token.value],
-      });
-      return hash;
-    },
   };
 };

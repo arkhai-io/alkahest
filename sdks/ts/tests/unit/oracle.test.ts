@@ -30,7 +30,7 @@ test("trivial arbitratePast", async () => {
     data: encodeAbiParameters(parseAbiParameters("(string mockDemand)"), [{ mockDemand: "foo" }]),
   });
 
-  const { attested: escrow } = await testContext.alice.client.erc20.permitAndBuyWithErc20(
+  const { attested: escrow } = await testContext.alice.client.erc20.escrow.nonTierable.permitAndCreate(
     {
       address: testContext.mockAddresses.erc20A,
       value: 10n,
@@ -57,7 +57,7 @@ test("trivial arbitratePast", async () => {
 
   decisions.forEach(($) => expect($.decision).toBe(true));
 
-  const collectionHash = await testContext.bob.client.erc20.collectEscrow(escrow.uid, fulfillment.uid);
+  const collectionHash = await testContext.bob.client.erc20.escrow.nonTierable.collect(escrow.uid, fulfillment.uid);
 
   expect(collectionHash).toBeTruthy();
 });
@@ -69,7 +69,7 @@ test("conditional arbitratePast", async () => {
     data: encodeAbiParameters(parseAbiParameters("(string mockDemand)"), [{ mockDemand: "foo" }]),
   });
 
-  const { attested: escrow } = await testContext.alice.client.erc20.permitAndBuyWithErc20(
+  const { attested: escrow } = await testContext.alice.client.erc20.escrow.nonTierable.permitAndCreate(
     {
       address: testContext.mockAddresses.erc20A,
       value: 10n,
@@ -103,10 +103,10 @@ test("conditional arbitratePast", async () => {
   expect(decisions.length).toBe(2);
   expect(decisions.filter((d) => d.decision).length).toBe(1);
 
-  const failedCollection = testContext.bob.client.erc20.collectEscrow(escrow.uid, fulfillment2.uid);
+  const failedCollection = testContext.bob.client.erc20.escrow.nonTierable.collect(escrow.uid, fulfillment2.uid);
   expect(async () => await failedCollection).toThrow();
 
-  const collectionHash = await testContext.bob.client.erc20.collectEscrow(escrow.uid, fulfillment1.uid);
+  const collectionHash = await testContext.bob.client.erc20.escrow.nonTierable.collect(escrow.uid, fulfillment1.uid);
 
   expect(collectionHash).toBeTruthy();
 });
@@ -118,7 +118,7 @@ test("arbitratePast with skipAlreadyArbitrated", async () => {
     data: encodeAbiParameters(parseAbiParameters("(string mockDemand)"), [{ mockDemand: "foo" }]),
   });
 
-  const { attested: escrow } = await testContext.alice.client.erc20.permitAndBuyWithErc20(
+  const { attested: escrow } = await testContext.alice.client.erc20.escrow.nonTierable.permitAndCreate(
     {
       address: testContext.mockAddresses.erc20A,
       value: 10n,
@@ -173,7 +173,7 @@ test("listenAndArbitrate", async () => {
     data: encodeAbiParameters(parseAbiParameters("(string mockDemand)"), [{ mockDemand: "foo" }]),
   });
 
-  const { attested: escrow } = await testContext.alice.client.erc20.permitAndBuyWithErc20(
+  const { attested: escrow } = await testContext.alice.client.erc20.escrow.nonTierable.permitAndCreate(
     {
       address: testContext.mockAddresses.erc20A,
       value: 10n,
@@ -206,7 +206,7 @@ test("listenAndArbitrate", async () => {
 
   await Bun.sleep(150);
 
-  const collectionHash = await testContext.bob.client.erc20.collectEscrow(escrow.uid, fulfillment.uid);
+  const collectionHash = await testContext.bob.client.erc20.escrow.nonTierable.collect(escrow.uid, fulfillment.uid);
 
   expect(collectionHash).toBeTruthy();
 
@@ -220,7 +220,7 @@ test("listenAndArbitrate with onlyNew", async () => {
     data: encodeAbiParameters(parseAbiParameters("(string mockDemand)"), [{ mockDemand: "foo" }]),
   });
 
-  const { attested: escrow } = await testContext.alice.client.erc20.permitAndBuyWithErc20(
+  const { attested: escrow } = await testContext.alice.client.erc20.escrow.nonTierable.permitAndCreate(
     {
       address: testContext.mockAddresses.erc20A,
       value: 10n,
@@ -253,7 +253,7 @@ test("listenAndArbitrate with onlyNew", async () => {
 
   await Bun.sleep(150);
 
-  const collectionHash = await testContext.bob.client.erc20.collectEscrow(escrow.uid, fulfillment.uid);
+  const collectionHash = await testContext.bob.client.erc20.escrow.nonTierable.collect(escrow.uid, fulfillment.uid);
 
   expect(collectionHash).toBeTruthy();
 
@@ -267,7 +267,7 @@ test("arbitratePast with escrow demand extraction", async () => {
     data: encodeAbiParameters(parseAbiParameters("(string mockDemand)"), [{ mockDemand: "foo" }]),
   });
 
-  const { attested: escrow } = await testContext.alice.client.erc20.permitAndBuyWithErc20(
+  const { attested: escrow } = await testContext.alice.client.erc20.escrow.nonTierable.permitAndCreate(
     {
       address: testContext.mockAddresses.erc20A,
       value: 10n,
@@ -304,10 +304,10 @@ test("arbitratePast with escrow demand extraction", async () => {
   expect(decisions.length).toBe(2);
   expect(decisions.filter((d) => d.decision).length).toBe(1);
 
-  const failedCollection = testContext.bob.client.erc20.collectEscrow(escrow.uid, fulfillment2.uid);
+  const failedCollection = testContext.bob.client.erc20.escrow.nonTierable.collect(escrow.uid, fulfillment2.uid);
   expect(async () => await failedCollection).toThrow();
 
-  const collectionHash = await testContext.bob.client.erc20.collectEscrow(escrow.uid, fulfillment1.uid);
+  const collectionHash = await testContext.bob.client.erc20.escrow.nonTierable.collect(escrow.uid, fulfillment1.uid);
 
   expect(collectionHash).toBeTruthy();
 });
@@ -319,7 +319,7 @@ test("waitForArbitration with existing decision", async () => {
     data: encodeAbiParameters(parseAbiParameters("(string mockDemand)"), [{ mockDemand: "foo" }]),
   });
 
-  const { attested: escrow } = await testContext.alice.client.erc20.permitAndBuyWithErc20(
+  const { attested: escrow } = await testContext.alice.client.erc20.escrow.nonTierable.permitAndCreate(
     {
       address: testContext.mockAddresses.erc20A,
       value: 10n,
@@ -365,7 +365,7 @@ test("waitForArbitration with new decision", async () => {
     data: encodeAbiParameters(parseAbiParameters("(string mockDemand)"), [{ mockDemand: "foo" }]),
   });
 
-  const { attested: escrow } = await testContext.alice.client.erc20.permitAndBuyWithErc20(
+  const { attested: escrow } = await testContext.alice.client.erc20.escrow.nonTierable.permitAndCreate(
     {
       address: testContext.mockAddresses.erc20A,
       value: 10n,
@@ -409,7 +409,7 @@ test("waitForArbitration with false decision", async () => {
     data: encodeAbiParameters(parseAbiParameters("(string mockDemand)"), [{ mockDemand: "foo" }]),
   });
 
-  const { attested: escrow } = await testContext.alice.client.erc20.permitAndBuyWithErc20(
+  const { attested: escrow } = await testContext.alice.client.erc20.escrow.nonTierable.permitAndCreate(
     {
       address: testContext.mockAddresses.erc20A,
       value: 10n,
@@ -453,7 +453,7 @@ test("waitForArbitration integration with escrow collection", async () => {
     data: encodeAbiParameters(parseAbiParameters("(string mockDemand)"), [{ mockDemand: "foo" }]),
   });
 
-  const { attested: escrow } = await testContext.alice.client.erc20.permitAndBuyWithErc20(
+  const { attested: escrow } = await testContext.alice.client.erc20.escrow.nonTierable.permitAndCreate(
     {
       address: testContext.mockAddresses.erc20A,
       value: 10n,
@@ -488,7 +488,7 @@ test("waitForArbitration integration with escrow collection", async () => {
   expect(result.decision).toBe(true);
 
   // Now collect escrow using the arbitration result
-  const collectionHash = await testContext.bob.client.erc20.collectEscrow(escrow.uid, fulfillment.uid);
+  const collectionHash = await testContext.bob.client.erc20.escrow.nonTierable.collect(escrow.uid, fulfillment.uid);
 
   expect(collectionHash).toBeTruthy();
 });

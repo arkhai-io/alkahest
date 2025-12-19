@@ -51,7 +51,7 @@ describe("Client Tests", () => {
     const uniqueSchemaName = `string testData${Date.now()}`;
 
     // Register schema using the SDK function
-    const hash = await aliceClient.attestation.registerSchema(
+    const hash = await aliceClient.attestation.util.registerSchema(
       uniqueSchemaName,
       testContext.addresses.attestationBarterUtils,
       true,
@@ -93,7 +93,7 @@ describe("Client Tests", () => {
       const testSchemaId = await registerTestSchema();
 
       // Create a test attestation to retrieve
-      const { attested: attestationData } = await aliceClient.attestation.createAttestation(
+      const { attested: attestationData } = await aliceClient.attestation.util.createAttestation(
         testSchemaId,
         bob,
         BigInt(Math.floor(Date.now() / 1000) + 86400), // 1 day expiration
@@ -118,7 +118,7 @@ describe("Client Tests", () => {
       const testSchemaId = await registerTestSchema();
 
       // Create a test attestation to retrieve the event for
-      const { hash: txHash } = await aliceClient.attestation.createAttestation(
+      const { hash: txHash } = await aliceClient.attestation.util.createAttestation(
         testSchemaId,
         bob,
         BigInt(Math.floor(Date.now() / 1000) + 86400), // 1 day expiration
@@ -144,9 +144,9 @@ describe("Client Tests", () => {
       const { attested: fulfillmentEvent } = await bobClient.stringObligation.doObligation("fulfillment data");
       const fulfillmentUid = fulfillmentEvent.uid as `0x${string}`;
 
-      await aliceClient.erc20.approve({ address: erc20Token, value: 10n }, "escrow");
+      await aliceClient.erc20.util.approve({ address: erc20Token, value: 10n }, "escrow");
       // Alice creates an escrow attestation that requires a fulfillment
-      const { attested: escrowData } = await aliceClient.erc20.buyWithErc20(
+      const { attested: escrowData } = await aliceClient.erc20.escrow.nonTierable.create(
         { address: erc20Token, value: 10n },
         { arbiter: testContext.addresses.trivialArbiter, demand: "0x" },
         0n,
@@ -159,7 +159,7 @@ describe("Client Tests", () => {
       );
 
       // Bob collects the escrow by providing the fulfillment
-      await bobClient.erc20.collectEscrow(escrowData.uid, fulfillmentUid);
+      await bobClient.erc20.escrow.nonTierable.collect(escrowData.uid, fulfillmentUid);
 
       // Wait for the fulfillment promise to resolve
       const fulfillment = await fulfillmentPromise;

@@ -58,46 +58,5 @@ export const makeTokenBundleUtilClient = (
 
       return results;
     },
-
-    approveForBarterUtils: async (bundle: TokenBundle) => {
-      const results: `0x${string}`[] = [];
-
-      // Process ERC20 tokens sequentially
-      for (const token of bundle.erc20s) {
-        const hash = await writeContract(viemClient, {
-          address: token.address,
-          abi: erc20Abi.abi,
-          functionName: "approve",
-          args: [addresses.barterUtils, token.value],
-        });
-        results.push(hash);
-      }
-
-      // Process ERC721 tokens sequentially
-      const erc721AddressesSet = new Set(bundle.erc721s.map((token) => token.address));
-      for (const address of erc721AddressesSet) {
-        const hash = await writeContract(viemClient, {
-          address: address,
-          abi: erc721Abi.abi,
-          functionName: "setApprovalForAll",
-          args: [addresses.barterUtils, true],
-        });
-        results.push(hash);
-      }
-
-      // Process ERC1155 tokens sequentially
-      const erc1155AddressesSet = new Set(bundle.erc1155s.map((token) => token.address));
-      for (const address of erc1155AddressesSet) {
-        const hash = await writeContract(viemClient, {
-          address: address,
-          abi: erc1155Abi.abi,
-          functionName: "setApprovalForAll",
-          args: [addresses.barterUtils, true],
-        });
-        results.push(hash);
-      }
-
-      return results;
-    },
   };
 };

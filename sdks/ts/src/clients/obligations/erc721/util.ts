@@ -57,25 +57,5 @@ export const makeErc721UtilClient = (
       });
       return hash;
     },
-
-    approveForBarterUtils: async (token: Erc721) => {
-      const hash = await writeContract(viemClient, {
-        address: token.address,
-        abi: erc721Abi.abi,
-        functionName: "approve",
-        args: [addresses.barterUtils, token.id],
-      });
-      return hash;
-    },
-
-    approveAllForBarterUtils: async (tokenContract: `0x${string}`) => {
-      const hash = await writeContract(viemClient, {
-        address: tokenContract,
-        abi: erc721Abi.abi,
-        functionName: "setApprovalForAll",
-        args: [addresses.barterUtils, true],
-      });
-      return hash;
-    },
   };
 };
