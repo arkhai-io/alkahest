@@ -1,11 +1,11 @@
 import type { Type } from "arktype";
 import { decodeAbiParameters, encodeAbiParameters, getAbiItem } from "viem";
-import type { SafeParseReturnType, ZodTypeDef, z } from "zod";
+import type { SafeParseReturnType, z } from "zod";
 
-import { abi as stringObligationAbi } from "../contracts/obligations/StringObligation";
-import type { ChainAddresses } from "../types";
-import type { ViemClient } from "../utils";
-import { getAttestation, getAttestedEventFromTxHash } from "../utils";
+import { abi as stringObligationAbi } from "../../../contracts/obligations/StringObligation";
+import type { ChainAddresses } from "../../../types";
+import type { ViemClient } from "../../../utils";
+import { getAttestation, getAttestedEventFromTxHash } from "../../../utils";
 
 // Extract ABI type at module initialization with fail-fast error handling
 const stringObligationDecodeFunction = getAbiItem({
@@ -29,9 +29,21 @@ type ZodParseReturnType<
     ? Promise<z.infer<TSchema>>
     : z.infer<TSchema>;
 
+export type StringAddresses = {
+  eas: `0x${string}`;
+  stringObligation: `0x${string}`;
+};
+
+export const pickStringAddresses = (addresses: ChainAddresses): StringAddresses => ({
+  eas: addresses.eas,
+  stringObligation: addresses.stringObligation,
+});
+
+export type StringObligationClient = ReturnType<typeof makeStringObligationClient>;
+
 export const makeStringObligationClient = (
   viemClient: ViemClient,
-  addresses: Pick<ChainAddresses, "stringObligation" | "eas">,
+  addresses: StringAddresses,
 ) => {
   const decode = (obligationData: `0x${string}`) => {
     return decodeAbiParameters([stringObligationDataType], obligationData)[0];
@@ -69,6 +81,8 @@ export const makeStringObligationClient = (
     });
 
   return {
+    address: addresses.stringObligation,
+
     encode: (data: { item: string }) => {
       return encodeAbiParameters([stringObligationDataType], [data]);
     },
@@ -104,11 +118,6 @@ export const makeStringObligationClient = (
       return await doObligation(JSON.stringify(item), refUid);
     },
     getSchema,
-    /**
-     * Gets a complete obligation from its attestation UID, combining attestation metadata with decoded obligation data
-     * @param uid - UID of the attestation
-     * @returns The complete obligation including attestation metadata and decoded obligation data
-     */
     getObligation: async (uid: `0x${string}`) => {
       const [attestation, schema] = await Promise.all([getAttestation(viemClient, uid, addresses), getSchema()]);
 

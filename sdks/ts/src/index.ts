@@ -13,12 +13,6 @@ import {
   type WalletClient,
 } from "viem";
 import { makeArbitersClient } from "./clients/arbiters";
-import { makeAttestationClient } from "./clients/attestation";
-import { makeErc20Client } from "./clients/erc20";
-import { makeErc721Client } from "./clients/erc721";
-import { makeErc1155Client } from "./clients/erc1155";
-import { makeStringObligationClient } from "./clients/stringObligation";
-import { makeTokenBundleClient } from "./clients/tokenBundle";
 import { contractAddresses as defaultContractAddresses, supportedChains } from "./config";
 import { abi as easAbi } from "./contracts/IEAS";
 import { makeDefaultExtension } from "./extensions";
