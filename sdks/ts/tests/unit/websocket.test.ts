@@ -315,15 +315,8 @@ describe("WebSocket Transport Support", () => {
       const { unwatch } = await client.arbiters.general.trustedOracle.listenAndArbitrate(
         async (attestation) => {
           const obligation = client.extractObligationData(obligationAbi, attestation);
-          const decision = obligation[0].item === "test";
-          // Return ArbitrationResult with decision and demand
-          return {
-            decision,
-            demand: client.arbiters.general.trustedOracle.encodeDemand({
-              oracle: client.address,
-              data: "0x" as `0x${string}`,
-            }),
-          };
+          // Return boolean decision
+          return obligation[0].item === "test";
         },
         {
           onAfterArbitrate: async (decision) => {

@@ -73,13 +73,13 @@ test("synchronous offchain oracle capitalization flow", async () => {
       const obligation = testContext.charlie.client.extractObligationData(stringObligationAbi, attestation);
 
       const statement = obligation[0]?.item;
-      if (!statement) return { decision: false, demand };
+      if (!statement) return false;
 
       // Get escrow and extract demand data
       const [, demandData] = await testContext.charlie.client.getEscrowAndDemand(shellDemandAbi, attestation);
 
       const payloadHex = demandData[0]?.payload;
-      if (!payloadHex) return { decision: false, demand };
+      if (!payloadHex) return false;
 
       const payloadJson = new TextDecoder().decode(hexToBytes(payloadHex));
 
@@ -87,7 +87,7 @@ test("synchronous offchain oracle capitalization flow", async () => {
       try {
         payload = JSON.parse(payloadJson) as ShellOracleDemand;
       } catch {
-        return { decision: false, demand };
+        return false;
       }
 
       for (const testCase of payload.test_cases) {
@@ -102,14 +102,14 @@ test("synchronous offchain oracle capitalization flow", async () => {
           });
 
           if (stdout.trimEnd() !== testCase.output) {
-            return { decision: false, demand };
+            return false;
           }
         } catch {
-          return { decision: false, demand };
+          return false;
         }
       }
 
-      return { decision: true, demand };
+      return true;
     },
     { skipAlreadyArbitrated: true },
   );

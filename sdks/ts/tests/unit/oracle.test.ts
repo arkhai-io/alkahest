@@ -52,7 +52,7 @@ test("trivial arbitratePast", async () => {
   const obligationAbi = parseAbiParameters("(string item)");
   const decisions = await testContext.bob.client.arbiters.general.trustedOracle.arbitratePast(async (attestation) => {
     const obligation = testContext.bob.client.extractObligationData(obligationAbi, attestation);
-    return { decision: true, demand };
+    return true;
   });
 
   decisions.forEach(($) => expect($.decision).toBe(true));
@@ -97,7 +97,7 @@ test("conditional arbitratePast", async () => {
   const obligationAbi = parseAbiParameters("(string item)");
   const decisions = await testContext.bob.client.arbiters.general.trustedOracle.arbitratePast(async (attestation) => {
     const obligation = testContext.bob.client.extractObligationData(obligationAbi, attestation);
-    return { decision: obligation[0].item === "good", demand };
+    return obligation[0].item === "good";
   });
 
   expect(decisions.length).toBe(2);
@@ -142,7 +142,7 @@ test("arbitratePast with skipAlreadyArbitrated", async () => {
   // First arbitration
   const firstDecisions = await testContext.bob.client.arbiters.general.trustedOracle.arbitratePast(async (attestation) => {
     const obligation = testContext.bob.client.extractObligationData(obligationAbi, attestation);
-    return { decision: obligation[0].item === "foo", demand };
+    return obligation[0].item === "foo";
   });
 
   expect(firstDecisions.length).toBe(1);
@@ -158,7 +158,7 @@ test("arbitratePast with skipAlreadyArbitrated", async () => {
   const secondDecisions = await testContext.bob.client.arbiters.general.trustedOracle.arbitratePast(
     async (attestation) => {
       const obligation = testContext.bob.client.extractObligationData(obligationAbi, attestation);
-      return { decision: obligation[0].item === "foo", demand };
+      return obligation[0].item === "foo";
     },
     { skipAlreadyArbitrated: true },
   );
@@ -186,7 +186,7 @@ test("listenAndArbitrate", async () => {
   const { decisions, unwatch } = await testContext.bob.client.arbiters.general.trustedOracle.listenAndArbitrate(
     async (attestation) => {
       const obligation = testContext.bob.client.extractObligationData(obligationAbi, attestation);
-      return { decision: true, demand };
+      return true;
     },
     {
       onAfterArbitrate: async (decision) => {
@@ -235,7 +235,7 @@ test("listenAndArbitrate with onlyNew", async () => {
   const { decisions, unwatch } = await testContext.bob.client.arbiters.general.trustedOracle.listenAndArbitrate(
     async (attestation) => {
       const obligation = testContext.bob.client.extractObligationData(obligationAbi, attestation);
-      return { decision: obligation[0].item === "good", demand };
+      return obligation[0].item === "good";
     },
     {
       onlyNew: true,
@@ -298,7 +298,7 @@ test("arbitratePast with escrow demand extraction", async () => {
   const decisions = await testContext.bob.client.arbiters.general.trustedOracle.arbitratePast(async (attestation) => {
     const obligation = testContext.bob.client.extractObligationData(obligationAbi, attestation);
     const [, demandData] = await testContext.bob.client.getEscrowAndDemand(demandAbi, attestation);
-    return { decision: obligation[0].item === demandData[0].mockDemand, demand };
+    return obligation[0].item === demandData[0].mockDemand;
   });
 
   expect(decisions.length).toBe(2);
@@ -340,7 +340,7 @@ test("waitForArbitration with existing decision", async () => {
   const obligationAbi = parseAbiParameters("(string item)");
   const decisions = await testContext.bob.client.arbiters.general.trustedOracle.arbitratePast(async (attestation) => {
     const obligation = testContext.bob.client.extractObligationData(obligationAbi, attestation);
-    return { decision: obligation[0].item === "foo", demand };
+    return obligation[0].item === "foo";
   });
 
   // Wait for arbitration transaction to be confirmed
@@ -390,7 +390,7 @@ test("waitForArbitration with new decision", async () => {
     const obligationAbi = parseAbiParameters("(string item)");
     await testContext.bob.client.arbiters.general.trustedOracle.arbitratePast(async (attestation) => {
       const obligation = testContext.bob.client.extractObligationData(obligationAbi, attestation);
-      return { decision: obligation[0].item === "foo", demand };
+      return obligation[0].item === "foo";
     });
   }, 100);
 
@@ -434,7 +434,7 @@ test("waitForArbitration with false decision", async () => {
     const obligationAbi = parseAbiParameters("(string item)");
     await testContext.bob.client.arbiters.general.trustedOracle.arbitratePast(async (attestation) => {
       const obligation = testContext.bob.client.extractObligationData(obligationAbi, attestation);
-      return { decision: obligation[0].item === "foo", demand }; // This will be false for "bad"
+      return obligation[0].item === "foo"; // This will be false for "bad"
     });
   }, 100);
 
@@ -478,7 +478,7 @@ test("waitForArbitration integration with escrow collection", async () => {
     const obligationAbi = parseAbiParameters("(string item)");
     await testContext.bob.client.arbiters.general.trustedOracle.arbitratePast(async (attestation) => {
       const obligation = testContext.bob.client.extractObligationData(obligationAbi, attestation);
-      return { decision: obligation[0].item === "foo", demand };
+      return obligation[0].item === "foo";
     });
   }, 100);
 

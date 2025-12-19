@@ -56,21 +56,21 @@ test("contextless offchain identity oracle flow", async () => {
       const obligation = testContext.charlie.client.extractObligationData(stringObligationAbi, attestation);
 
       const payload = obligation[0]?.item;
-      if (!payload) return { decision: false, demand };
+      if (!payload) return false;
 
       let parsed: IdentityFulfillment;
       try {
         parsed = JSON.parse(payload) as IdentityFulfillment;
       } catch {
-        return { decision: false, demand };
+        return false;
       }
 
       const currentNonce = identityRegistry.get(parsed.pubkey);
-      if (currentNonce === undefined) return { decision: false, demand };
-      if (parsed.nonce <= currentNonce) return { decision: false, demand };
+      if (currentNonce === undefined) return false;
+      if (parsed.nonce <= currentNonce) return false;
 
       if (typeof parsed.signature !== "string" || parsed.signature.length !== 132) {
-        return { decision: false, demand };
+        return false;
       }
 
       const message = `${parsed.data}:${parsed.nonce}`;
@@ -78,15 +78,15 @@ test("contextless offchain identity oracle flow", async () => {
       try {
         recovered = await recoverMessageAddress({ message, signature: parsed.signature });
       } catch {
-        return { decision: false, demand };
+        return false;
       }
 
       if (recovered.toLowerCase() !== parsed.pubkey.toLowerCase()) {
-        return { decision: false, demand };
+        return false;
       }
 
       identityRegistry.set(parsed.pubkey, parsed.nonce);
-      return { decision: true, demand };
+      return true;
     },
     { skipAlreadyArbitrated: true },
   );
