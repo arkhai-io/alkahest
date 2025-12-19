@@ -68,8 +68,8 @@ describe("WebSocket Transport Support", () => {
       expect(typeof httpClient.waitForFulfillment).toBe("function");
       expect(typeof wsClient.waitForFulfillment).toBe("function");
 
-      expect(typeof httpClient.oracle.listenAndArbitrate).toBe("function");
-      expect(typeof wsClient.oracle.listenAndArbitrate).toBe("function");
+      expect(typeof httpClient.arbiters.general.trustedOracle.listenAndArbitrate).toBe("function");
+      expect(typeof wsClient.arbiters.general.trustedOracle.listenAndArbitrate).toBe("function");
     });
 
     test("transport types should be correctly identified", () => {
@@ -312,10 +312,18 @@ describe("WebSocket Transport Support", () => {
       const obligationAbi = parseAbiParameters("(string item)");
 
       // Test real WebSocket event listening
-      const { unwatch } = await client.oracle.listenAndArbitrate(
+      const { unwatch } = await client.arbiters.general.trustedOracle.listenAndArbitrate(
         async (attestation) => {
           const obligation = client.extractObligationData(obligationAbi, attestation);
-          return obligation[0].item === "test";
+          const decision = obligation[0].item === "test";
+          // Return ArbitrationResult with decision and demand
+          return {
+            decision,
+            demand: client.arbiters.general.trustedOracle.encodeDemand({
+              oracle: client.address,
+              data: "0x" as `0x${string}`,
+            }),
+          };
         },
         {
           onAfterArbitrate: async (decision) => {
