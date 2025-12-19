@@ -57,11 +57,11 @@ describe("Logical Arbiters Tests", () => {
       };
 
       // Test encoding
-      const encoded = client.arbiters.logical.any.encode(originalDemand);
+      const encoded = client.arbiters.logical.any.encodeDemand(originalDemand);
       expect(encoded).toMatch(/^0x[0-9a-f]+$/i);
 
       // Test decoding
-      const decoded = client.arbiters.logical.any.decode(encoded);
+      const decoded = client.arbiters.logical.any.decodeDemand(encoded);
       expectAddressesEqual(decoded.arbiters, originalDemand.arbiters);
       expect(decoded.demands).toEqual(originalDemand.demands);
     });
@@ -74,8 +74,8 @@ describe("Logical Arbiters Tests", () => {
         demands: ["0x1234567890abcdef" as `0x${string}`],
       };
 
-      const encoded = client.arbiters.logical.any.encode(originalDemand);
-      const decoded = client.arbiters.logical.any.decode(encoded);
+      const encoded = client.arbiters.logical.any.encodeDemand(originalDemand);
+      const decoded = client.arbiters.logical.any.decodeDemand(encoded);
 
       expectAddressesEqual(decoded.arbiters, originalDemand.arbiters);
       expect(decoded.demands).toEqual(originalDemand.demands);
@@ -89,8 +89,8 @@ describe("Logical Arbiters Tests", () => {
         demands: ["0x" as `0x${string}`, "0x" as `0x${string}`],
       };
 
-      const encoded = client.arbiters.logical.any.encode(originalDemand);
-      const decoded = client.arbiters.logical.any.decode(encoded);
+      const encoded = client.arbiters.logical.any.encodeDemand(originalDemand);
+      const decoded = client.arbiters.logical.any.decodeDemand(encoded);
 
       expectAddressesEqual(decoded.arbiters, originalDemand.arbiters);
       expect(decoded.demands).toEqual(originalDemand.demands);
@@ -105,8 +105,8 @@ describe("Logical Arbiters Tests", () => {
 
       const originalDemand = { arbiters, demands };
 
-      const encoded = client.arbiters.logical.any.encode(originalDemand);
-      const decoded = client.arbiters.logical.any.decode(encoded);
+      const encoded = client.arbiters.logical.any.encodeDemand(originalDemand);
+      const decoded = client.arbiters.logical.any.decodeDemand(encoded);
 
       expectAddressesEqual(decoded.arbiters, originalDemand.arbiters);
       expect(decoded.demands).toEqual(originalDemand.demands);
@@ -128,8 +128,8 @@ describe("Logical Arbiters Tests", () => {
         ],
       };
 
-      const encoded = client.arbiters.logical.any.encode(originalDemand);
-      const decoded = client.arbiters.logical.any.decode(encoded);
+      const encoded = client.arbiters.logical.any.encodeDemand(originalDemand);
+      const decoded = client.arbiters.logical.any.decodeDemand(encoded);
 
       expectAddressesEqual(decoded.arbiters, originalDemand.arbiters);
       expectHexEqual(decoded.demands, originalDemand.demands);
@@ -145,10 +145,10 @@ describe("Logical Arbiters Tests", () => {
         demands: ["0x1234" as `0x${string}`], // Length mismatch
       };
 
-      const encoded = client.arbiters.logical.any.encode(demand);
+      const encoded = client.arbiters.logical.any.encodeDemand(demand);
       expect(encoded).toMatch(/^0x[0-9a-f]+$/i);
 
-      const decoded = client.arbiters.logical.any.decode(encoded);
+      const decoded = client.arbiters.logical.any.decodeDemand(encoded);
       expectAddressesEqual(decoded.arbiters, demand.arbiters);
       expect(decoded.demands).toEqual(demand.demands);
     });
@@ -164,11 +164,11 @@ describe("Logical Arbiters Tests", () => {
       };
 
       // Test encoding
-      const encoded = client.arbiters.logical.all.encode(originalDemand);
+      const encoded = client.arbiters.logical.all.encodeDemand(originalDemand);
       expect(encoded).toMatch(/^0x[0-9a-f]+$/i);
 
       // Test decoding
-      const decoded = client.arbiters.logical.all.decode(encoded);
+      const decoded = client.arbiters.logical.all.decodeDemand(encoded);
       expectAddressesEqual(decoded.arbiters, originalDemand.arbiters);
       expect(decoded.demands).toEqual(originalDemand.demands);
     });
@@ -181,8 +181,8 @@ describe("Logical Arbiters Tests", () => {
         demands: ["0xfedcba9876543210" as `0x${string}`],
       };
 
-      const encoded = client.arbiters.logical.all.encode(originalDemand);
-      const decoded = client.arbiters.logical.all.decode(encoded);
+      const encoded = client.arbiters.logical.all.encodeDemand(originalDemand);
+      const decoded = client.arbiters.logical.all.decodeDemand(encoded);
 
       expectAddressesEqual(decoded.arbiters, originalDemand.arbiters);
       expect(decoded.demands).toEqual(originalDemand.demands);
@@ -196,8 +196,8 @@ describe("Logical Arbiters Tests", () => {
         demands: [] as `0x${string}`[],
       };
 
-      const encoded = client.arbiters.logical.all.encode(originalDemand);
-      const decoded = client.arbiters.logical.all.decode(encoded);
+      const encoded = client.arbiters.logical.all.encodeDemand(originalDemand);
+      const decoded = client.arbiters.logical.all.decodeDemand(encoded);
 
       expectAddressesEqual(decoded.arbiters, originalDemand.arbiters);
       expect(decoded.demands).toEqual(originalDemand.demands);
@@ -212,8 +212,8 @@ describe("Logical Arbiters Tests", () => {
 
       const originalDemand = { arbiters, demands };
 
-      const encoded = client.arbiters.logical.all.encode(originalDemand);
-      const decoded = client.arbiters.logical.all.decode(encoded);
+      const encoded = client.arbiters.logical.all.encodeDemand(originalDemand);
+      const decoded = client.arbiters.logical.all.decodeDemand(encoded);
 
       expectAddressesEqual(decoded.arbiters, originalDemand.arbiters);
       expect(decoded.demands).toEqual(originalDemand.demands);
@@ -231,8 +231,8 @@ describe("Logical Arbiters Tests", () => {
         ],
       };
 
-      const encoded = client.arbiters.logical.all.encode(originalDemand);
-      const decoded = client.arbiters.logical.all.decode(encoded);
+      const encoded = client.arbiters.logical.all.encodeDemand(originalDemand);
+      const decoded = client.arbiters.logical.all.decodeDemand(encoded);
 
       expectAddressesEqual(decoded.arbiters, originalDemand.arbiters);
       expect(decoded.demands).toEqual(originalDemand.demands);
@@ -248,15 +248,15 @@ describe("Logical Arbiters Tests", () => {
         demands: ["0x1111" as `0x${string}`, "0x2222" as `0x${string}`],
       };
 
-      const anyEncoded = client.arbiters.logical.any.encode(demand);
-      const allEncoded = client.arbiters.logical.all.encode(demand);
+      const anyEncoded = client.arbiters.logical.any.encodeDemand(demand);
+      const allEncoded = client.arbiters.logical.all.encodeDemand(demand);
 
       // The encoding should be identical since they use the same struct
       expect(anyEncoded).toBe(allEncoded);
 
       // Both should decode correctly with either decoder
-      const anyDecoded = client.arbiters.logical.any.decode(anyEncoded);
-      const allDecoded = client.arbiters.logical.all.decode(allEncoded);
+      const anyDecoded = client.arbiters.logical.any.decodeDemand(anyEncoded);
+      const allDecoded = client.arbiters.logical.all.decodeDemand(allEncoded);
 
       expect(anyDecoded).toEqual(allDecoded);
       expect(anyDecoded.arbiters).toEqual(demand.arbiters);
@@ -269,7 +269,7 @@ describe("Logical Arbiters Tests", () => {
       const client = testContext.alice.client;
 
       expect(() => {
-        client.arbiters.logical.any.decode("invalid-hex" as `0x${string}`);
+        client.arbiters.logical.any.decodeDemand("invalid-hex" as `0x${string}`);
       }).toThrow();
     });
 
@@ -277,7 +277,7 @@ describe("Logical Arbiters Tests", () => {
       const client = testContext.alice.client;
 
       expect(() => {
-        client.arbiters.logical.all.decode("not-hex" as `0x${string}`);
+        client.arbiters.logical.all.decodeDemand("not-hex" as `0x${string}`);
       }).toThrow();
     });
 
@@ -285,11 +285,11 @@ describe("Logical Arbiters Tests", () => {
       const client = testContext.alice.client;
 
       expect(() => {
-        client.arbiters.logical.any.decode("0x123" as `0x${string}`);
+        client.arbiters.logical.any.decodeDemand("0x123" as `0x${string}`);
       }).toThrow();
 
       expect(() => {
-        client.arbiters.logical.all.decode("0x456" as `0x${string}`);
+        client.arbiters.logical.all.decodeDemand("0x456" as `0x${string}`);
       }).toThrow();
     });
 
@@ -297,7 +297,7 @@ describe("Logical Arbiters Tests", () => {
       const client = testContext.alice.client;
 
       expect(() => {
-        client.arbiters.logical.any.encode({
+        client.arbiters.logical.any.encodeDemand({
           arbiters: ["invalid-address" as `0x${string}`],
           demands: ["0x1234" as `0x${string}`],
         });
@@ -318,7 +318,7 @@ describe("Logical Arbiters Tests", () => {
       const manualEncoded = encodeAbiParameters(parseAbiParameters("(address[] arbiters, bytes[] demands)"), [demand]);
 
       // SDK encoding
-      const sdkEncoded = client.arbiters.logical.any.encode(demand);
+      const sdkEncoded = client.arbiters.logical.any.encodeDemand(demand);
 
       expect(sdkEncoded).toBe(manualEncoded);
     });
@@ -335,7 +335,7 @@ describe("Logical Arbiters Tests", () => {
       const manualEncoded = encodeAbiParameters(parseAbiParameters("(address[] arbiters, bytes[] demands)"), [demand]);
 
       // SDK encoding
-      const sdkEncoded = client.arbiters.logical.all.encode(demand);
+      const sdkEncoded = client.arbiters.logical.all.encodeDemand(demand);
 
       expect(sdkEncoded).toBe(manualEncoded);
     });
@@ -346,7 +346,7 @@ describe("Logical Arbiters Tests", () => {
       const client = testContext.alice.client;
 
       // First, create a demand for a nested AnyArbiter
-      const nestedAnyDemand = client.arbiters.logical.any.encode({
+      const nestedAnyDemand = client.arbiters.logical.any.encodeDemand({
         arbiters: [alice, bob],
         demands: ["0x1111" as `0x${string}`, "0x2222" as `0x${string}`],
       });
@@ -357,8 +357,8 @@ describe("Logical Arbiters Tests", () => {
         demands: ["0x3333" as `0x${string}`, nestedAnyDemand],
       };
 
-      const encoded = client.arbiters.logical.all.encode(allDemand);
-      const decoded = client.arbiters.logical.all.decode(encoded);
+      const encoded = client.arbiters.logical.all.encodeDemand(allDemand);
+      const decoded = client.arbiters.logical.all.decodeDemand(encoded);
 
       expectAddressesEqual(decoded.arbiters, allDemand.arbiters);
       expect(decoded.demands).toEqual(allDemand.demands);
@@ -366,7 +366,7 @@ describe("Logical Arbiters Tests", () => {
       // Verify we can decode the nested demand
       const nestedDemand = decoded.demands[1];
       if (!nestedDemand) throw new Error("No nested demand found");
-      const nestedDecoded = client.arbiters.logical.any.decode(nestedDemand);
+      const nestedDecoded = client.arbiters.logical.any.decodeDemand(nestedDemand);
       expectAddressesEqual(nestedDecoded.arbiters, [alice, bob]);
       expect(nestedDecoded.demands).toEqual(["0x1111", "0x2222"]);
     });
@@ -375,7 +375,7 @@ describe("Logical Arbiters Tests", () => {
       const client = testContext.alice.client;
 
       // First, create a demand for a nested AllArbiter
-      const nestedAllDemand = client.arbiters.logical.all.encode({
+      const nestedAllDemand = client.arbiters.logical.all.encodeDemand({
         arbiters: [alice, bob, charlie],
         demands: ["0xaaaa" as `0x${string}`, "0xbbbb" as `0x${string}`, "0xcccc" as `0x${string}`],
       });
@@ -386,8 +386,8 @@ describe("Logical Arbiters Tests", () => {
         demands: ["0x1234" as `0x${string}`, nestedAllDemand],
       };
 
-      const encoded = client.arbiters.logical.any.encode(anyDemand);
-      const decoded = client.arbiters.logical.any.decode(encoded);
+      const encoded = client.arbiters.logical.any.encodeDemand(anyDemand);
+      const decoded = client.arbiters.logical.any.decodeDemand(encoded);
 
       expectAddressesEqual(decoded.arbiters, anyDemand.arbiters);
       expect(decoded.demands).toEqual(anyDemand.demands);
@@ -395,7 +395,7 @@ describe("Logical Arbiters Tests", () => {
       // Verify we can decode the nested demand
       const nestedDemand2 = decoded.demands[1];
       if (!nestedDemand2) throw new Error("No nested demand found");
-      const nestedDecoded = client.arbiters.logical.all.decode(nestedDemand2);
+      const nestedDecoded = client.arbiters.logical.all.decodeDemand(nestedDemand2);
       expectAddressesEqual(nestedDecoded.arbiters, [alice, bob, charlie]);
       expect(nestedDecoded.demands).toEqual(["0xaaaa", "0xbbbb", "0xcccc"]);
     });
@@ -411,13 +411,13 @@ describe("Logical Arbiters Tests", () => {
       };
 
       // Get the SDK encoding (should use contract ABI)
-      const sdkEncoded = client.arbiters.logical.any.encode(demand);
+      const sdkEncoded = client.arbiters.logical.any.encodeDemand(demand);
 
       // Verify it's valid hex
       expect(sdkEncoded).toMatch(/^0x[0-9a-f]+$/i);
 
       // Verify decoding works correctly
-      const decoded = client.arbiters.logical.any.decode(sdkEncoded);
+      const decoded = client.arbiters.logical.any.decodeDemand(sdkEncoded);
       expectAddressesEqual(decoded.arbiters, demand.arbiters);
       expect(decoded.demands).toEqual(demand.demands);
 
@@ -435,13 +435,13 @@ describe("Logical Arbiters Tests", () => {
       };
 
       // Get the SDK encoding (should use contract ABI)
-      const sdkEncoded = client.arbiters.logical.all.encode(demand);
+      const sdkEncoded = client.arbiters.logical.all.encodeDemand(demand);
 
       // Verify it's valid hex
       expect(sdkEncoded).toMatch(/^0x[0-9a-f]+$/i);
 
       // Verify decoding works correctly
-      const decoded = client.arbiters.logical.all.decode(sdkEncoded);
+      const decoded = client.arbiters.logical.all.decodeDemand(sdkEncoded);
       expectAddressesEqual(decoded.arbiters, demand.arbiters);
       expect(decoded.demands).toEqual(demand.demands);
 
@@ -459,15 +459,15 @@ describe("Logical Arbiters Tests", () => {
         demands: ["0x1111" as `0x${string}`],
       };
 
-      const anyEncoded = client.arbiters.logical.any.encode(demand);
-      const allEncoded = client.arbiters.logical.all.encode(demand);
+      const anyEncoded = client.arbiters.logical.any.encodeDemand(demand);
+      const allEncoded = client.arbiters.logical.all.encodeDemand(demand);
 
       // Since both use the same DemandData struct, they should produce identical encoding
       expect(anyEncoded).toBe(allEncoded);
 
       // Both should decode correctly with cross-decoding
-      const anyDecodedByAll = client.arbiters.logical.all.decode(anyEncoded);
-      const allDecodedByAny = client.arbiters.logical.any.decode(allEncoded);
+      const anyDecodedByAll = client.arbiters.logical.all.decodeDemand(anyEncoded);
+      const allDecodedByAny = client.arbiters.logical.any.decodeDemand(allEncoded);
 
       expectAddressesEqual(anyDecodedByAll.arbiters, demand.arbiters);
       expectAddressesEqual(allDecodedByAny.arbiters, demand.arbiters);
@@ -484,10 +484,10 @@ describe("Logical Arbiters Tests", () => {
       };
 
       // Encode using our ABI-driven method
-      const encoded = client.arbiters.logical.any.encode(demand);
+      const encoded = client.arbiters.logical.any.encodeDemand(demand);
 
       // Decode using our ABI-driven method
-      const decoded = client.arbiters.logical.any.decode(encoded);
+      const decoded = client.arbiters.logical.any.decodeDemand(encoded);
 
       // Verify all types are preserved correctly
       expect(Array.isArray(decoded.arbiters)).toBe(true);
@@ -515,8 +515,8 @@ describe("Logical Arbiters Tests", () => {
         demands: [] as `0x${string}`[],
       };
 
-      const emptyEncoded = client.arbiters.logical.any.encode(emptyDemand);
-      const emptyDecoded = client.arbiters.logical.any.decode(emptyEncoded);
+      const emptyEncoded = client.arbiters.logical.any.encodeDemand(emptyDemand);
+      const emptyDecoded = client.arbiters.logical.any.decodeDemand(emptyEncoded);
 
       expect(emptyDecoded.arbiters).toEqual(emptyDemand.arbiters);
       expect(emptyDecoded.demands).toEqual(emptyDemand.demands);
@@ -527,8 +527,8 @@ describe("Logical Arbiters Tests", () => {
         demands: ["0x" as `0x${string}`],
       };
 
-      const singleEncoded = client.arbiters.logical.all.encode(singleDemand);
-      const singleDecoded = client.arbiters.logical.all.decode(singleEncoded);
+      const singleEncoded = client.arbiters.logical.all.encodeDemand(singleDemand);
+      const singleDecoded = client.arbiters.logical.all.decodeDemand(singleEncoded);
 
       expectAddressesEqual(singleDecoded.arbiters, singleDemand.arbiters);
       expect(singleDecoded.demands).toEqual(singleDemand.demands);
@@ -541,8 +541,8 @@ describe("Logical Arbiters Tests", () => {
       );
 
       const largeDemand = { arbiters: largeArbiters, demands: largeDemands };
-      const largeEncoded = client.arbiters.logical.any.encode(largeDemand);
-      const largeDecoded = client.arbiters.logical.any.decode(largeEncoded);
+      const largeEncoded = client.arbiters.logical.any.encodeDemand(largeDemand);
+      const largeDecoded = client.arbiters.logical.any.decodeDemand(largeEncoded);
 
       expectAddressesEqual(largeDecoded.arbiters, largeDemand.arbiters);
       expect(largeDecoded.demands).toEqual(largeDemand.demands);
@@ -557,18 +557,18 @@ describe("Logical Arbiters Tests", () => {
       };
 
       // Encode the same demand multiple times
-      const encoded1 = client.arbiters.logical.any.encode(demand);
-      const encoded2 = client.arbiters.logical.any.encode(demand);
-      const encoded3 = client.arbiters.logical.all.encode(demand);
+      const encoded1 = client.arbiters.logical.any.encodeDemand(demand);
+      const encoded2 = client.arbiters.logical.any.encodeDemand(demand);
+      const encoded3 = client.arbiters.logical.all.encodeDemand(demand);
 
       // All should produce identical results (deterministic)
       expect(encoded1).toBe(encoded2);
       expect(encoded1).toBe(encoded3);
 
       // All should decode to the same result
-      const decoded1 = client.arbiters.logical.any.decode(encoded1);
-      const decoded2 = client.arbiters.logical.any.decode(encoded2);
-      const decoded3 = client.arbiters.logical.any.decode(encoded3);
+      const decoded1 = client.arbiters.logical.any.decodeDemand(encoded1);
+      const decoded2 = client.arbiters.logical.any.decodeDemand(encoded2);
+      const decoded3 = client.arbiters.logical.any.decodeDemand(encoded3);
 
       expect(decoded1).toEqual(decoded2);
       expect(decoded1).toEqual(decoded3);
@@ -595,7 +595,7 @@ describe("Logical Arbiters Tests", () => {
 
       testCases.forEach((demand, index) => {
         // SDK encoding (uses ABI when available, fallback otherwise)
-        const sdkEncoded = client.arbiters.logical.any.encode(demand);
+        const sdkEncoded = client.arbiters.logical.any.encodeDemand(demand);
 
         // Manual encoding (always uses parseAbiParameters)
         const manualEncoded = encodeAbiParameters(parseAbiParameters("(address[] arbiters, bytes[] demands)"), [
@@ -606,7 +606,7 @@ describe("Logical Arbiters Tests", () => {
         expect(sdkEncoded).toBe(manualEncoded);
 
         // Decoding should work correctly
-        const decoded = client.arbiters.logical.any.decode(sdkEncoded);
+        const decoded = client.arbiters.logical.any.decodeDemand(sdkEncoded);
         expectAddressesEqual(decoded.arbiters, demand.arbiters);
         expect(decoded.demands).toEqual(demand.demands);
       });
@@ -631,8 +631,8 @@ describe("Logical Arbiters Tests", () => {
         demands: trusteeSignatures,
       };
 
-      const encoded = client.arbiters.logical.all.encode(multiSigDemand);
-      const decoded = client.arbiters.logical.all.decode(encoded);
+      const encoded = client.arbiters.logical.all.encodeDemand(multiSigDemand);
+      const decoded = client.arbiters.logical.all.decodeDemand(encoded);
 
       expect(decoded.arbiters).toEqual(trusteeAddresses);
       expect(decoded.demands).toEqual(trusteeSignatures);
@@ -650,8 +650,8 @@ describe("Logical Arbiters Tests", () => {
         ],
       };
 
-      const encoded = client.arbiters.logical.any.encode(fallbackDemand);
-      const decoded = client.arbiters.logical.any.decode(encoded);
+      const encoded = client.arbiters.logical.any.encodeDemand(fallbackDemand);
+      const decoded = client.arbiters.logical.any.decodeDemand(encoded);
 
       expect(decoded.arbiters).toEqual(fallbackDemand.arbiters);
       expect(decoded.demands).toEqual(fallbackDemand.demands);

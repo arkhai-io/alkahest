@@ -1,8 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import {
-  AnyArbiterCodec,
-  AllArbiterCodec,
-  TrustedOracleArbiterCodec,
+  AnyArbiter,
+  AllArbiter,
+  encodeTrustedOracleDemand,
+  decodeTrustedOracleDemand,
 } from "../../src/clients/arbiters";
 import {
   ArbiterRegistry,
@@ -46,18 +47,17 @@ describe("Integration Tests for New Features", () => {
 
   test("should have all new static codec functionality available", () => {
     // Static codecs should be available
-    expect(AnyArbiterCodec).toBeDefined();
-    expect(AnyArbiterCodec.encode).toBeDefined();
-    expect(AnyArbiterCodec.decode).toBeDefined();
-    
-    expect(AllArbiterCodec).toBeDefined();
-    expect(AllArbiterCodec.encode).toBeDefined();
-    expect(AllArbiterCodec.decode).toBeDefined();
-    
-    expect(TrustedOracleArbiterCodec).toBeDefined();
-    expect(TrustedOracleArbiterCodec.encode).toBeDefined();
-    expect(TrustedOracleArbiterCodec.decode).toBeDefined();
-    
+    expect(AnyArbiter).toBeDefined();
+    expect(AnyArbiter.encodeDemand).toBeDefined();
+    expect(AnyArbiter.decodeDemand).toBeDefined();
+
+    expect(AllArbiter).toBeDefined();
+    expect(AllArbiter.encodeDemand).toBeDefined();
+    expect(AllArbiter.decodeDemand).toBeDefined();
+
+    expect(encodeTrustedOracleDemand).toBeDefined();
+    expect(decodeTrustedOracleDemand).toBeDefined();
+
     // Demand parsing utilities should be available
     expect(ArbiterRegistry).toBeDefined();
     expect(DemandParsingUtils).toBeDefined();
@@ -68,7 +68,7 @@ describe("Integration Tests for New Features", () => {
     const registry = createFullArbiterRegistry(mockAddresses);
 
     // Create a complex nested demand using static codecs
-    const trustedOracleDemand = TrustedOracleArbiterCodec.encode({
+    const trustedOracleDemand = encodeTrustedOracleDemand({
       oracle: "0x1111111111111111111111111111111111111111",
       data: "0x1234567890abcdef",
     });
@@ -82,12 +82,12 @@ describe("Integration Tests for New Features", () => {
     // Create an Any arbiter demand that contains the All arbiter
     const anyArbiterDemandData = {
       arbiters: [mockAddresses.allArbiter, mockAddresses.trivialArbiter] as `0x${string}`[],
-      demands: [AllArbiterCodec.encode(allArbiterDemandData), "0x"] as `0x${string}`[],
+      demands: [AllArbiter.encodeDemand(allArbiterDemandData), "0x"] as `0x${string}`[],
     };
 
     const complexDemand: Demand = {
       arbiter: mockAddresses.anyArbiter,
-      demand: AnyArbiterCodec.encode(anyArbiterDemandData),
+      demand: AnyArbiter.encodeDemand(anyArbiterDemandData),
     };
 
     // Parse the complex demand
@@ -132,14 +132,14 @@ describe("Integration Tests for New Features", () => {
     const registry = createFullArbiterRegistry(mockAddresses);
 
     // 1. Create demands using static codecs
-    const oracleDemand = TrustedOracleArbiterCodec.encode({
+    const oracleDemand = encodeTrustedOracleDemand({
       oracle: "0x2222222222222222222222222222222222222222",
       data: "0xabcdef1234567890",
     });
 
     const logicalDemand: Demand = {
       arbiter: mockAddresses.allArbiter,
-      demand: AllArbiterCodec.encode({
+      demand: AllArbiter.encodeDemand({
         arbiters: [mockAddresses.trustedOracleArbiter] as `0x${string}`[],
         demands: [oracleDemand] as `0x${string}`[],
       }),
@@ -152,12 +152,12 @@ describe("Integration Tests for New Features", () => {
     expect(parsed.type).toBe("composing");
     expect(DemandParsingUtils.isFullyParseable(parsed)).toBe(true);
     expect(DemandParsingUtils.getAllArbiters(parsed)).toHaveLength(2);
-    
+
     // 4. Verify the parsed structure is correct
     expect(parsed.arbiter).toBe(mockAddresses.allArbiter);
     expect(parsed.nested?.[0].arbiter).toBe(mockAddresses.trustedOracleArbiter);
     expect(parsed.nested?.[0].type).toBe("simple");
-    
+
     // The workflow is complete - static codecs create demands,
     // parsing utilities analyze them correctly
   });
@@ -169,8 +169,8 @@ describe("Integration Tests for New Features", () => {
       data: "0x1234567890abcdef" as `0x${string}`,
     };
 
-    const encoded = TrustedOracleArbiterCodec.encode(oracleData);
-    const decoded = TrustedOracleArbiterCodec.decode(encoded);
+    const encoded = encodeTrustedOracleDemand(oracleData);
+    const decoded = decodeTrustedOracleDemand(encoded);
 
     expect(decoded.oracle).toBe(oracleData.oracle);
     expect(decoded.data).toBe(oracleData.data);
@@ -181,20 +181,20 @@ describe("Integration Tests for New Features", () => {
       demands: ["0x1234", "0x5678"] as `0x${string}`[],
     };
 
-    const encodedAny = AnyArbiterCodec.encode(anyData);
-    const decodedAny = AnyArbiterCodec.decode(encodedAny);
+    const encodedAny = AnyArbiter.encodeDemand(anyData);
+    const decodedAny = AnyArbiter.decodeDemand(encodedAny);
 
     expect(decodedAny.arbiters).toEqual(anyData.arbiters);
     expect(decodedAny.demands).toEqual(anyData.demands);
 
-    // Test AllArbiter codec 
+    // Test AllArbiter codec
     const allData = {
       arbiters: ["0x3333333333333333333333333333333333333333"] as `0x${string}`[],
       demands: ["0x9999"] as `0x${string}`[],
     };
 
-    const encodedAll = AllArbiterCodec.encode(allData);
-    const decodedAll = AllArbiterCodec.decode(encodedAll);
+    const encodedAll = AllArbiter.encodeDemand(allData);
+    const decodedAll = AllArbiter.decodeDemand(encodedAll);
 
     expect(decodedAll.arbiters).toEqual(allData.arbiters);
     expect(decodedAll.demands).toEqual(allData.demands);
