@@ -41,12 +41,12 @@ test("synchronous offchain oracle capitalization flow", async () => {
 
   const demandBytes = encodeAbiParameters(shellDemandAbi, [{ payload: stringToHex(JSON.stringify(demandPayload)) }]);
 
-  const demand = testContext.alice.client.arbiters.general.trustedOracle.encode({
+  const demand = testContext.alice.client.arbiters.general.trustedOracle.encodeDemand({
     oracle: testContext.charlie.address,
     data: demandBytes,
   });
 
-  const { attested: escrow } = await testContext.alice.client.erc20.permitAndBuyWithErc20(
+  const { attested: escrow } = await testContext.alice.client.erc20.escrow.nonTierable.permitAndCreate(
     {
       address: testContext.mockAddresses.erc20A,
       value: parseEther("100"),
@@ -64,22 +64,22 @@ test("synchronous offchain oracle capitalization flow", async () => {
   );
 
   // Request arbitration and wait for it to be mined before setting up listener
-  const requestHash = await testContext.bob.client.oracle.requestArbitration(fulfillment.uid, testContext.charlie.address);
+  const requestHash = await testContext.bob.client.arbiters.general.trustedOracle.requestArbitration(fulfillment.uid, testContext.charlie.address, demand);
   await testContext.bob.client.viemClient.waitForTransactionReceipt({ hash: requestHash });
 
-  const { decisions, unwatch } = await testContext.charlie.client.oracle.listenAndArbitrate(
+  const { decisions, unwatch } = await testContext.charlie.client.arbiters.general.trustedOracle.listenAndArbitrate(
     async (attestation) => {
       // Extract obligation data
       const obligation = testContext.charlie.client.extractObligationData(stringObligationAbi, attestation);
 
       const statement = obligation[0]?.item;
-      if (!statement) return false;
+      if (!statement) return { decision: false, demand };
 
       // Get escrow and extract demand data
       const [, demandData] = await testContext.charlie.client.getEscrowAndDemand(shellDemandAbi, attestation);
 
       const payloadHex = demandData[0]?.payload;
-      if (!payloadHex) return false;
+      if (!payloadHex) return { decision: false, demand };
 
       const payloadJson = new TextDecoder().decode(hexToBytes(payloadHex));
 
@@ -87,7 +87,7 @@ test("synchronous offchain oracle capitalization flow", async () => {
       try {
         payload = JSON.parse(payloadJson) as ShellOracleDemand;
       } catch {
-        return false;
+        return { decision: false, demand };
       }
 
       for (const testCase of payload.test_cases) {
@@ -102,14 +102,14 @@ test("synchronous offchain oracle capitalization flow", async () => {
           });
 
           if (stdout.trimEnd() !== testCase.output) {
-            return false;
+            return { decision: false, demand };
           }
         } catch {
-          return false;
+          return { decision: false, demand };
         }
       }
 
-      return true;
+      return { decision: true, demand };
     },
     { skipAlreadyArbitrated: true },
   );
@@ -127,7 +127,7 @@ test("synchronous offchain oracle capitalization flow", async () => {
     expect(decision?.decision).toBe(true);
   });
 
-  const collectionHash = await testContext.bob.client.erc20.collectEscrow(escrow.uid, fulfillment.uid);
+  const collectionHash = await testContext.bob.client.erc20.escrow.nonTierable.collect(escrow.uid, fulfillment.uid);
 
   expect(collectionHash).toBeTruthy();
 });

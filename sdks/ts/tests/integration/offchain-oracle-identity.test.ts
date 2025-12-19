@@ -47,27 +47,30 @@ test("contextless offchain identity oracle flow", async () => {
   const identityAccount = privateKeyToAccount(generatePrivateKey());
   identityRegistry.set(identityAccount.address, 0);
 
-  const listener = await testContext.charlie.client.oracle.listenAndArbitrate(
+  // Empty demand for contextless identity oracle
+  const demand = "0x" as `0x${string}`;
+
+  const listener = await testContext.charlie.client.arbiters.general.trustedOracle.listenAndArbitrate(
     async (attestation) => {
       // Extract obligation data
       const obligation = testContext.charlie.client.extractObligationData(stringObligationAbi, attestation);
 
       const payload = obligation[0]?.item;
-      if (!payload) return false;
+      if (!payload) return { decision: false, demand };
 
       let parsed: IdentityFulfillment;
       try {
         parsed = JSON.parse(payload) as IdentityFulfillment;
       } catch {
-        return false;
+        return { decision: false, demand };
       }
 
       const currentNonce = identityRegistry.get(parsed.pubkey);
-      if (currentNonce === undefined) return false;
-      if (parsed.nonce <= currentNonce) return false;
+      if (currentNonce === undefined) return { decision: false, demand };
+      if (parsed.nonce <= currentNonce) return { decision: false, demand };
 
       if (typeof parsed.signature !== "string" || parsed.signature.length !== 132) {
-        return false;
+        return { decision: false, demand };
       }
 
       const message = `${parsed.data}:${parsed.nonce}`;
@@ -75,15 +78,15 @@ test("contextless offchain identity oracle flow", async () => {
       try {
         recovered = await recoverMessageAddress({ message, signature: parsed.signature });
       } catch {
-        return false;
+        return { decision: false, demand };
       }
 
       if (recovered.toLowerCase() !== parsed.pubkey.toLowerCase()) {
-        return false;
+        return { decision: false, demand };
       }
 
       identityRegistry.set(parsed.pubkey, parsed.nonce);
-      return true;
+      return { decision: true, demand };
     },
     { skipAlreadyArbitrated: true },
   );
@@ -93,7 +96,7 @@ test("contextless offchain identity oracle flow", async () => {
   const goodPayload = await createPayload(1);
   const { attested: goodFulfillment } = await testContext.bob.client.stringObligation.doObligation(goodPayload);
 
-  await testContext.bob.client.oracle.requestArbitration(goodFulfillment.uid, testContext.charlie.address);
+  await testContext.bob.client.arbiters.general.trustedOracle.requestArbitration(goodFulfillment.uid, testContext.charlie.address, demand);
 
   const goodDecision = await testContext.charlie.client.arbiters.general.trustedOracle.waitForArbitration(
     goodFulfillment.uid,
@@ -106,7 +109,7 @@ test("contextless offchain identity oracle flow", async () => {
   const badPayload = await createPayload(1);
   const { attested: badFulfillment } = await testContext.bob.client.stringObligation.doObligation(badPayload);
 
-  await testContext.bob.client.oracle.requestArbitration(badFulfillment.uid, testContext.charlie.address);
+  await testContext.bob.client.arbiters.general.trustedOracle.requestArbitration(badFulfillment.uid, testContext.charlie.address, demand);
 
   const badDecision = await testContext.charlie.client.arbiters.general.trustedOracle.waitForArbitration(
     badFulfillment.uid,

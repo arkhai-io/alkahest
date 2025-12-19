@@ -53,7 +53,7 @@ describe('Native Token Integration Tests', () => {
         data: nativeTokenDemand.demand, // Use Native Token demand as the oracle data
       };
 
-      const encodedOracleData = client.arbiters.general.trustedOracle.encode(oracleData);
+      const encodedOracleData = client.arbiters.general.trustedOracle.encodeDemand(oracleData);
 
       // Verify oracle demand includes Native Token payment request
       expect(testContext.addresses.trustedOracleArbiter).toBeDefined();
@@ -62,7 +62,7 @@ describe('Native Token Integration Tests', () => {
       expect(encodedOracleData.startsWith('0x')).toBe(true);
 
       // Verify the oracle data was correctly encoded by decoding it
-      const decodedOracleData = client.arbiters.general.trustedOracle.decode(encodedOracleData);
+      const decodedOracleData = client.arbiters.general.trustedOracle.decodeDemand(encodedOracleData);
       expect(decodedOracleData.oracle.toLowerCase()).toBe(testContext.alice.address.toLowerCase());
       expect(decodedOracleData.data).toBe(nativeTokenDemand.demand);
     });
@@ -375,12 +375,12 @@ describe('Native Token Integration Tests', () => {
           data: demand.demand,
         };
 
-        const oracleDemand = aliceClient.arbiters.general.trustedOracle.encode(oracleData);
+        const oracleDemand = aliceClient.arbiters.general.trustedOracle.encodeDemand(oracleData);
         expect(oracleDemand).toBeDefined();
         expect(oracleDemand.startsWith('0x')).toBe(true);
 
         // Verify oracle demand can be decoded
-        const decodedOracle = aliceClient.arbiters.general.trustedOracle.decode(oracleDemand);
+        const decodedOracle = aliceClient.arbiters.general.trustedOracle.decodeDemand(oracleDemand);
         expect(decodedOracle.oracle.toLowerCase()).toBe(testContext.charlie.address.toLowerCase());
         expect(decodedOracle.data).toBe(demand.demand);
       });
