@@ -5,24 +5,24 @@ import {
   decodeDemand as allDecodeDemand,
   decodeDemandRecursive as allDecodeDemandRecursive,
   makeAllArbiterClient,
-} from "./AllArbiter";
+} from "./allArbiter";
 import {
   encodeDemand as anyEncodeDemand,
   decodeDemand as anyDecodeDemand,
   decodeDemandRecursive as anyDecodeDemandRecursive,
   makeAnyArbiterClient,
-} from "./AnyArbiter";
+} from "./anyArbiter";
 
-// Re-export types from AllArbiter (shared types)
+// Re-export types from allArbiter (shared types)
 export type {
   DecodedDemandWithChildren,
   DemandDecoder,
   DecodersRecord,
   RecursivelyDecodedDemand,
   AllArbiterDemandData,
-} from "./AllArbiter";
+} from "./allArbiter";
 
-export type { AnyArbiterDemandData } from "./AnyArbiter";
+export type { AnyArbiterDemandData } from "./anyArbiter";
 
 /**
  * Logical Arbiters Client

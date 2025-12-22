@@ -1,7 +1,7 @@
 import type { ChainAddresses } from "../../../types";
 import type { ViemClient } from "../../../utils";
-import { makeIntrinsicsArbiterClient } from "./IntrinsicsArbiter";
-import { makeIntrinsicsArbiter2Client } from "./IntrinsicsArbiter2";
+import { makeIntrinsicsArbiterClient } from "./intrinsicsArbiter";
+import { makeIntrinsicsArbiter2Client } from "./intrinsicsArbiter2";
 import { makeTrustedOracleArbiterClient } from "./trustedOracle";
 
 // Re-export static encode/decode functions from trustedOracle
@@ -11,12 +11,12 @@ export {
   type TrustedOracleArbiterDemandData,
 } from "./trustedOracle";
 
-// Re-export static encode/decode functions from IntrinsicsArbiter2
+// Re-export static encode/decode functions from intrinsicsArbiter2
 export {
   encodeDemand as encodeIntrinsics2Demand,
   decodeDemand as decodeIntrinsics2Demand,
   type IntrinsicsArbiter2DemandData,
-} from "./IntrinsicsArbiter2";
+} from "./intrinsicsArbiter2";
 
 /**
  * General Arbiters Client

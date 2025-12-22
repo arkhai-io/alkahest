@@ -58,29 +58,29 @@ export {
 } from "./general";
 
 // Re-export types from attestation properties arbiters
-export type { AttesterArbiterDemandData } from "./attestationProperties/AttesterArbiter";
-export type { RecipientArbiterDemandData } from "./attestationProperties/RecipientArbiter";
-export type { RefUidArbiterDemandData } from "./attestationProperties/RefUidArbiter";
-export type { RevocableArbiterDemandData } from "./attestationProperties/RevocableArbiter";
-export type { SchemaArbiterDemandData } from "./attestationProperties/SchemaArbiter";
-export type { UidArbiterDemandData } from "./attestationProperties/UidArbiter";
-export type { TimeAfterArbiterDemandData } from "./attestationProperties/TimeAfterArbiter";
-export type { TimeBeforeArbiterDemandData } from "./attestationProperties/TimeBeforeArbiter";
-export type { TimeEqualArbiterDemandData } from "./attestationProperties/TimeEqualArbiter";
-export type { ExpirationTimeAfterArbiterDemandData } from "./attestationProperties/ExpirationTimeAfterArbiter";
-export type { ExpirationTimeBeforeArbiterDemandData } from "./attestationProperties/ExpirationTimeBeforeArbiter";
-export type { ExpirationTimeEqualArbiterDemandData } from "./attestationProperties/ExpirationTimeEqualArbiter";
+export type { AttesterArbiterDemandData } from "./attestationProperties/attesterArbiter";
+export type { RecipientArbiterDemandData } from "./attestationProperties/recipientArbiter";
+export type { RefUidArbiterDemandData } from "./attestationProperties/refUidArbiter";
+export type { RevocableArbiterDemandData } from "./attestationProperties/revocableArbiter";
+export type { SchemaArbiterDemandData } from "./attestationProperties/schemaArbiter";
+export type { UidArbiterDemandData } from "./attestationProperties/uidArbiter";
+export type { TimeAfterArbiterDemandData } from "./attestationProperties/timeAfterArbiter";
+export type { TimeBeforeArbiterDemandData } from "./attestationProperties/timeBeforeArbiter";
+export type { TimeEqualArbiterDemandData } from "./attestationProperties/timeEqualArbiter";
+export type { ExpirationTimeAfterArbiterDemandData } from "./attestationProperties/expirationTimeAfterArbiter";
+export type { ExpirationTimeBeforeArbiterDemandData } from "./attestationProperties/expirationTimeBeforeArbiter";
+export type { ExpirationTimeEqualArbiterDemandData } from "./attestationProperties/expirationTimeEqualArbiter";
 
 // Re-export static encode/decode functions from attestation properties
-export { encodeDemand as encodeAttesterDemand, decodeDemand as decodeAttesterDemand } from "./attestationProperties/AttesterArbiter";
-export { encodeDemand as encodeRecipientDemand, decodeDemand as decodeRecipientDemand } from "./attestationProperties/RecipientArbiter";
-export { encodeDemand as encodeRefUidDemand, decodeDemand as decodeRefUidDemand } from "./attestationProperties/RefUidArbiter";
-export { encodeDemand as encodeRevocableDemand, decodeDemand as decodeRevocableDemand } from "./attestationProperties/RevocableArbiter";
-export { encodeDemand as encodeSchemaDemand, decodeDemand as decodeSchemaDemand } from "./attestationProperties/SchemaArbiter";
-export { encodeDemand as encodeUidDemand, decodeDemand as decodeUidDemand } from "./attestationProperties/UidArbiter";
-export { encodeDemand as encodeTimeAfterDemand, decodeDemand as decodeTimeAfterDemand } from "./attestationProperties/TimeAfterArbiter";
-export { encodeDemand as encodeTimeBeforeDemand, decodeDemand as decodeTimeBeforeDemand } from "./attestationProperties/TimeBeforeArbiter";
-export { encodeDemand as encodeTimeEqualDemand, decodeDemand as decodeTimeEqualDemand } from "./attestationProperties/TimeEqualArbiter";
-export { encodeDemand as encodeExpirationTimeAfterDemand, decodeDemand as decodeExpirationTimeAfterDemand } from "./attestationProperties/ExpirationTimeAfterArbiter";
-export { encodeDemand as encodeExpirationTimeBeforeDemand, decodeDemand as decodeExpirationTimeBeforeDemand } from "./attestationProperties/ExpirationTimeBeforeArbiter";
-export { encodeDemand as encodeExpirationTimeEqualDemand, decodeDemand as decodeExpirationTimeEqualDemand } from "./attestationProperties/ExpirationTimeEqualArbiter";
+export { encodeDemand as encodeAttesterDemand, decodeDemand as decodeAttesterDemand } from "./attestationProperties/attesterArbiter";
+export { encodeDemand as encodeRecipientDemand, decodeDemand as decodeRecipientDemand } from "./attestationProperties/recipientArbiter";
+export { encodeDemand as encodeRefUidDemand, decodeDemand as decodeRefUidDemand } from "./attestationProperties/refUidArbiter";
+export { encodeDemand as encodeRevocableDemand, decodeDemand as decodeRevocableDemand } from "./attestationProperties/revocableArbiter";
+export { encodeDemand as encodeSchemaDemand, decodeDemand as decodeSchemaDemand } from "./attestationProperties/schemaArbiter";
+export { encodeDemand as encodeUidDemand, decodeDemand as decodeUidDemand } from "./attestationProperties/uidArbiter";
+export { encodeDemand as encodeTimeAfterDemand, decodeDemand as decodeTimeAfterDemand } from "./attestationProperties/timeAfterArbiter";
+export { encodeDemand as encodeTimeBeforeDemand, decodeDemand as decodeTimeBeforeDemand } from "./attestationProperties/timeBeforeArbiter";
+export { encodeDemand as encodeTimeEqualDemand, decodeDemand as decodeTimeEqualDemand } from "./attestationProperties/timeEqualArbiter";
+export { encodeDemand as encodeExpirationTimeAfterDemand, decodeDemand as decodeExpirationTimeAfterDemand } from "./attestationProperties/expirationTimeAfterArbiter";
+export { encodeDemand as encodeExpirationTimeBeforeDemand, decodeDemand as decodeExpirationTimeBeforeDemand } from "./attestationProperties/expirationTimeBeforeArbiter";
+export { encodeDemand as encodeExpirationTimeEqualDemand, decodeDemand as decodeExpirationTimeEqualDemand } from "./attestationProperties/expirationTimeEqualArbiter";

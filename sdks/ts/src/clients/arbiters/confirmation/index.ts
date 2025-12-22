@@ -1,9 +1,9 @@
 import type { ChainAddresses } from "../../../types";
 import type { ViemClient } from "../../../utils";
-import { makeExclusiveRevocableConfirmationArbiterClient } from "./ExclusiveRevocableConfirmationArbiter";
-import { makeExclusiveUnrevocableConfirmationArbiterClient } from "./ExclusiveUnrevocableConfirmationArbiter";
-import { makeNonexclusiveRevocableConfirmationArbiterClient } from "./NonexclusiveRevocableConfirmationArbiter";
-import { makeNonexclusiveUnrevocableConfirmationArbiterClient } from "./NonexclusiveUnrevocableConfirmationArbiter";
+import { makeExclusiveRevocableConfirmationArbiterClient } from "./exclusiveRevocableConfirmationArbiter";
+import { makeExclusiveUnrevocableConfirmationArbiterClient } from "./exclusiveUnrevocableConfirmationArbiter";
+import { makeNonexclusiveRevocableConfirmationArbiterClient } from "./nonexclusiveRevocableConfirmationArbiter";
+import { makeNonexclusiveUnrevocableConfirmationArbiterClient } from "./nonexclusiveUnrevocableConfirmationArbiter";
 
 /**
  * Confirmation Arbiters Client

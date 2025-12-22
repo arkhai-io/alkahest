@@ -2,7 +2,7 @@ import { decodeAbiParameters, encodeAbiParameters, getAbiItem, type Address } fr
 import { abi as AnyArbiterAbi } from "../../../contracts/arbiters/logical/AnyArbiter";
 import type { ChainAddresses, Demand } from "../../../types";
 import type { ViemClient } from "../../../utils";
-import type { DecodedDemandWithChildren, DecodersRecord, RecursivelyDecodedDemand } from "./AllArbiter";
+import type { DecodedDemandWithChildren, DecodersRecord, RecursivelyDecodedDemand } from "./allArbiter";
 
 // Extract DemandData struct ABI from contract ABI at module initialization
 const anyArbiterDecodeDemandFunction = getAbiItem({

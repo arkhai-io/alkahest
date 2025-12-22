@@ -1,17 +1,17 @@
 import type { ChainAddresses } from "../../../types";
 import type { ViemClient } from "../../../utils";
-import { makeAttesterArbiterClient } from "./AttesterArbiter";
-import { makeExpirationTimeAfterArbiterClient } from "./ExpirationTimeAfterArbiter";
-import { makeExpirationTimeBeforeArbiterClient } from "./ExpirationTimeBeforeArbiter";
-import { makeExpirationTimeEqualArbiterClient } from "./ExpirationTimeEqualArbiter";
-import { makeRecipientArbiterClient } from "./RecipientArbiter";
-import { makeRefUidArbiterClient } from "./RefUidArbiter";
-import { makeRevocableArbiterClient } from "./RevocableArbiter";
-import { makeSchemaArbiterClient } from "./SchemaArbiter";
-import { makeTimeAfterArbiterClient } from "./TimeAfterArbiter";
-import { makeTimeBeforeArbiterClient } from "./TimeBeforeArbiter";
-import { makeTimeEqualArbiterClient } from "./TimeEqualArbiter";
-import { makeUidArbiterClient } from "./UidArbiter";
+import { makeAttesterArbiterClient } from "./attesterArbiter";
+import { makeExpirationTimeAfterArbiterClient } from "./expirationTimeAfterArbiter";
+import { makeExpirationTimeBeforeArbiterClient } from "./expirationTimeBeforeArbiter";
+import { makeExpirationTimeEqualArbiterClient } from "./expirationTimeEqualArbiter";
+import { makeRecipientArbiterClient } from "./recipientArbiter";
+import { makeRefUidArbiterClient } from "./refUidArbiter";
+import { makeRevocableArbiterClient } from "./revocableArbiter";
+import { makeSchemaArbiterClient } from "./schemaArbiter";
+import { makeTimeAfterArbiterClient } from "./timeAfterArbiter";
+import { makeTimeBeforeArbiterClient } from "./timeBeforeArbiter";
+import { makeTimeEqualArbiterClient } from "./timeEqualArbiter";
+import { makeUidArbiterClient } from "./uidArbiter";
 
 /**
  * Attestation Properties Arbiters Client

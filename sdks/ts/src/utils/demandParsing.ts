@@ -4,18 +4,18 @@ import type { DecodersRecord, RecursivelyDecodedDemand, DemandDecoder } from "..
 import { AllArbiter, AnyArbiter } from "../clients/arbiters/logical";
 
 // Import static decode functions from attestation properties arbiters
-import { decodeDemand as decodeAttesterDemand } from "../clients/arbiters/attestationProperties/AttesterArbiter";
-import { decodeDemand as decodeRecipientDemand } from "../clients/arbiters/attestationProperties/RecipientArbiter";
-import { decodeDemand as decodeRefUidDemand } from "../clients/arbiters/attestationProperties/RefUidArbiter";
-import { decodeDemand as decodeRevocableDemand } from "../clients/arbiters/attestationProperties/RevocableArbiter";
-import { decodeDemand as decodeSchemaDemand } from "../clients/arbiters/attestationProperties/SchemaArbiter";
-import { decodeDemand as decodeUidDemand } from "../clients/arbiters/attestationProperties/UidArbiter";
-import { decodeDemand as decodeTimeAfterDemand } from "../clients/arbiters/attestationProperties/TimeAfterArbiter";
-import { decodeDemand as decodeTimeBeforeDemand } from "../clients/arbiters/attestationProperties/TimeBeforeArbiter";
-import { decodeDemand as decodeTimeEqualDemand } from "../clients/arbiters/attestationProperties/TimeEqualArbiter";
-import { decodeDemand as decodeExpirationTimeAfterDemand } from "../clients/arbiters/attestationProperties/ExpirationTimeAfterArbiter";
-import { decodeDemand as decodeExpirationTimeBeforeDemand } from "../clients/arbiters/attestationProperties/ExpirationTimeBeforeArbiter";
-import { decodeDemand as decodeExpirationTimeEqualDemand } from "../clients/arbiters/attestationProperties/ExpirationTimeEqualArbiter";
+import { decodeDemand as decodeAttesterDemand } from "../clients/arbiters/attestationProperties/attesterArbiter";
+import { decodeDemand as decodeRecipientDemand } from "../clients/arbiters/attestationProperties/recipientArbiter";
+import { decodeDemand as decodeRefUidDemand } from "../clients/arbiters/attestationProperties/refUidArbiter";
+import { decodeDemand as decodeRevocableDemand } from "../clients/arbiters/attestationProperties/revocableArbiter";
+import { decodeDemand as decodeSchemaDemand } from "../clients/arbiters/attestationProperties/schemaArbiter";
+import { decodeDemand as decodeUidDemand } from "../clients/arbiters/attestationProperties/uidArbiter";
+import { decodeDemand as decodeTimeAfterDemand } from "../clients/arbiters/attestationProperties/timeAfterArbiter";
+import { decodeDemand as decodeTimeBeforeDemand } from "../clients/arbiters/attestationProperties/timeBeforeArbiter";
+import { decodeDemand as decodeTimeEqualDemand } from "../clients/arbiters/attestationProperties/timeEqualArbiter";
+import { decodeDemand as decodeExpirationTimeAfterDemand } from "../clients/arbiters/attestationProperties/expirationTimeAfterArbiter";
+import { decodeDemand as decodeExpirationTimeBeforeDemand } from "../clients/arbiters/attestationProperties/expirationTimeBeforeArbiter";
+import { decodeDemand as decodeExpirationTimeEqualDemand } from "../clients/arbiters/attestationProperties/expirationTimeEqualArbiter";
 
 // Import static decode functions from general arbiters
 import { decodeDemand as decodeTrustedOracleDemand } from "../clients/arbiters/general/trustedOracle";
