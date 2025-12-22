@@ -12,6 +12,40 @@ const tokenBundleEscrowDecodeFunction = getAbiItem({
 
 const tokenBundleEscrowObligationDataType = tokenBundleEscrowDecodeFunction.outputs[0];
 
+/**
+ * TokenBundle Non-Tierable Escrow ObligationData type
+ */
+export type TokenBundleNonTierableEscrowObligationData = {
+  nativeAmount: bigint;
+  erc20Tokens: readonly `0x${string}`[];
+  erc20Amounts: readonly bigint[];
+  erc721Tokens: readonly `0x${string}`[];
+  erc721TokenIds: readonly bigint[];
+  erc1155Tokens: readonly `0x${string}`[];
+  erc1155TokenIds: readonly bigint[];
+  erc1155Amounts: readonly bigint[];
+  arbiter: `0x${string}`;
+  demand: `0x${string}`;
+};
+
+/**
+ * Encodes TokenBundleNonTierableEscrowObligation.ObligationData to bytes.
+ * @param data - ObligationData struct
+ * @returns abi encoded bytes
+ */
+export const encodeObligation = (data: TokenBundleNonTierableEscrowObligationData): `0x${string}` => {
+  return encodeAbiParameters([tokenBundleEscrowObligationDataType], [data]);
+};
+
+/**
+ * Decodes TokenBundleNonTierableEscrowObligation.ObligationData from bytes.
+ * @param obligationData - ObligationData as abi encoded bytes
+ * @returns the decoded ObligationData object
+ */
+export const decodeObligation = (obligationData: `0x${string}`): TokenBundleNonTierableEscrowObligationData => {
+  return decodeAbiParameters([tokenBundleEscrowObligationDataType], obligationData)[0] as TokenBundleNonTierableEscrowObligationData;
+};
+
 export type TokenBundleNonTierableEscrowClient = ReturnType<typeof makeTokenBundleNonTierableEscrowClient>;
 
 export const makeTokenBundleNonTierableEscrowClient = (

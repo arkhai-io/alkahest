@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'bun:test';
 import { parseEther, zeroAddress } from 'viem';
 import { makeClient } from '../../src/index.js';
-import { type NativeTokenEscrowObligationData } from '../../src/clients/obligations/nativeToken/escrow/nonTierable.js';
+import { type NativeTokenNonTierableEscrowObligationData } from '../../src/clients/obligations/nativeToken/escrow/nonTierable.js';
 import {
   setupTestEnvironment,
   type TestContext,
@@ -191,7 +191,7 @@ describe('Native Token Integration Tests', () => {
     });
 
     it('should create escrow demands and handle ABI parameter mismatches gracefully', async () => {
-      const escrowData: NativeTokenEscrowObligationData = {
+      const escrowData: NativeTokenNonTierableEscrowObligationData = {
         arbiter: testContext.addresses.trivialArbiter, // Use a simple arbiter for the escrow
         demand: "0x", // Empty demand data
         amount: parseEther('2.0'),

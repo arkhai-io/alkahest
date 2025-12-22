@@ -12,6 +12,39 @@ const tokenBundlePaymentDecodeFunction = getAbiItem({
 
 const tokenBundlePaymentObligationDataType = tokenBundlePaymentDecodeFunction.outputs[0];
 
+/**
+ * TokenBundle Payment ObligationData type
+ */
+export type TokenBundlePaymentObligationData = {
+  nativeAmount: bigint;
+  erc20Tokens: readonly `0x${string}`[];
+  erc20Amounts: readonly bigint[];
+  erc721Tokens: readonly `0x${string}`[];
+  erc721TokenIds: readonly bigint[];
+  erc1155Tokens: readonly `0x${string}`[];
+  erc1155TokenIds: readonly bigint[];
+  erc1155Amounts: readonly bigint[];
+  payee: `0x${string}`;
+};
+
+/**
+ * Encodes TokenBundlePaymentObligation.ObligationData to bytes.
+ * @param data - ObligationData struct
+ * @returns abi encoded bytes
+ */
+export const encodeObligation = (data: TokenBundlePaymentObligationData): `0x${string}` => {
+  return encodeAbiParameters([tokenBundlePaymentObligationDataType], [data]);
+};
+
+/**
+ * Decodes TokenBundlePaymentObligation.ObligationData from bytes.
+ * @param obligationData - ObligationData as abi encoded bytes
+ * @returns the decoded ObligationData object
+ */
+export const decodeObligation = (obligationData: `0x${string}`): TokenBundlePaymentObligationData => {
+  return decodeAbiParameters([tokenBundlePaymentObligationDataType], obligationData)[0] as TokenBundlePaymentObligationData;
+};
+
 export type TokenBundlePaymentClient = ReturnType<typeof makeTokenBundlePaymentClient>;
 
 export const makeTokenBundlePaymentClient = (

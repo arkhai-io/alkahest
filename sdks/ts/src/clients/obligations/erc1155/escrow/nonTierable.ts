@@ -12,6 +12,35 @@ const erc1155EscrowDecodeFunction = getAbiItem({
 
 const erc1155EscrowObligationDataType = erc1155EscrowDecodeFunction.outputs[0];
 
+/**
+ * ERC1155 Non-Tierable Escrow ObligationData type
+ */
+export type Erc1155NonTierableEscrowObligationData = {
+  token: `0x${string}`;
+  tokenId: bigint;
+  amount: bigint;
+  arbiter: `0x${string}`;
+  demand: `0x${string}`;
+};
+
+/**
+ * Encodes ERC1155NonTierableEscrowObligation.ObligationData to bytes.
+ * @param data - struct ObligationData {address token, uint256 tokenId, uint256 amount, address arbiter, bytes demand}
+ * @returns abi encoded bytes
+ */
+export const encodeObligation = (data: Erc1155NonTierableEscrowObligationData): `0x${string}` => {
+  return encodeAbiParameters([erc1155EscrowObligationDataType], [data]);
+};
+
+/**
+ * Decodes ERC1155NonTierableEscrowObligation.ObligationData from bytes.
+ * @param obligationData - ObligationData as abi encoded bytes
+ * @returns the decoded ObligationData object
+ */
+export const decodeObligation = (obligationData: `0x${string}`): Erc1155NonTierableEscrowObligationData => {
+  return decodeAbiParameters([erc1155EscrowObligationDataType], obligationData)[0] as Erc1155NonTierableEscrowObligationData;
+};
+
 export type Erc1155NonTierableEscrowClient = ReturnType<typeof makeErc1155NonTierableEscrowClient>;
 
 export const makeErc1155NonTierableEscrowClient = (

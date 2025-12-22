@@ -12,6 +12,33 @@ const erc721PaymentDecodeFunction = getAbiItem({
 
 const erc721PaymentObligationDataType = erc721PaymentDecodeFunction.outputs[0];
 
+/**
+ * ERC721 Payment ObligationData type
+ */
+export type Erc721PaymentObligationData = {
+  token: `0x${string}`;
+  tokenId: bigint;
+  payee: `0x${string}`;
+};
+
+/**
+ * Encodes ERC721PaymentObligation.ObligationData to bytes.
+ * @param data - struct ObligationData {address token, uint256 tokenId, address payee}
+ * @returns abi encoded bytes
+ */
+export const encodeObligation = (data: Erc721PaymentObligationData): `0x${string}` => {
+  return encodeAbiParameters([erc721PaymentObligationDataType], [data]);
+};
+
+/**
+ * Decodes ERC721PaymentObligation.ObligationData from bytes.
+ * @param obligationData - ObligationData as abi encoded bytes
+ * @returns the decoded ObligationData object
+ */
+export const decodeObligation = (obligationData: `0x${string}`): Erc721PaymentObligationData => {
+  return decodeAbiParameters([erc721PaymentObligationDataType], obligationData)[0] as Erc721PaymentObligationData;
+};
+
 export type Erc721PaymentClient = ReturnType<typeof makeErc721PaymentClient>;
 
 export const makeErc721PaymentClient = (

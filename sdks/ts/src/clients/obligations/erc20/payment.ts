@@ -13,6 +13,33 @@ const erc20PaymentDoObligationFunction = getAbiItem({
 
 const erc20PaymentObligationDataType = erc20PaymentDoObligationFunction.inputs[0];
 
+/**
+ * ERC20 Payment ObligationData type
+ */
+export type Erc20PaymentObligationData = {
+  token: `0x${string}`;
+  amount: bigint;
+  payee: `0x${string}`;
+};
+
+/**
+ * Encodes ERC20PaymentObligation.ObligationData to bytes.
+ * @param data - struct ObligationData {address token, uint256 amount, address payee}
+ * @returns abi encoded bytes
+ */
+export const encodeObligation = (data: Erc20PaymentObligationData): `0x${string}` => {
+  return encodeAbiParameters([erc20PaymentObligationDataType], [data]);
+};
+
+/**
+ * Decodes ERC20PaymentObligation.ObligationData from bytes.
+ * @param obligationData - ObligationData as abi encoded bytes
+ * @returns the decoded ObligationData object
+ */
+export const decodeObligation = (obligationData: `0x${string}`): Erc20PaymentObligationData => {
+  return decodeAbiParameters([erc20PaymentObligationDataType], obligationData)[0] as Erc20PaymentObligationData;
+};
+
 export type Erc20PaymentClient = ReturnType<typeof makeErc20PaymentClient>;
 
 export const makeErc20PaymentClient = (

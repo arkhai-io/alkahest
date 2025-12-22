@@ -11,6 +11,43 @@ const escrowObligationDecodeFunction = getAbiItem({
 
 const escrowObligationDataType = escrowObligationDecodeFunction.outputs[0];
 
+/**
+ * AttestationEscrowObligation (V1) ObligationData type
+ */
+export type AttestationEscrowV1ObligationData = {
+  attestation: {
+    schema: `0x${string}`;
+    data: {
+      recipient: `0x${string}`;
+      expirationTime: bigint;
+      revocable: boolean;
+      refUID: `0x${string}`;
+      data: `0x${string}`;
+      value: bigint;
+    };
+  };
+  arbiter: `0x${string}`;
+  demand: `0x${string}`;
+};
+
+/**
+ * Encodes AttestationEscrowObligation.ObligationData to bytes.
+ * @param data - ObligationData struct
+ * @returns abi encoded bytes
+ */
+export const encodeObligation = (data: AttestationEscrowV1ObligationData): `0x${string}` => {
+  return encodeAbiParameters([escrowObligationDataType], [data]);
+};
+
+/**
+ * Decodes AttestationEscrowObligation.ObligationData from bytes.
+ * @param obligationData - ObligationData as abi encoded bytes
+ * @returns the decoded ObligationData object
+ */
+export const decodeObligation = (obligationData: `0x${string}`): AttestationEscrowV1ObligationData => {
+  return decodeAbiParameters([escrowObligationDataType], obligationData)[0] as AttestationEscrowV1ObligationData;
+};
+
 export type AttestationEscrowV1Client = ReturnType<typeof makeAttestationEscrowV1Client>;
 
 export const makeAttestationEscrowV1Client = (

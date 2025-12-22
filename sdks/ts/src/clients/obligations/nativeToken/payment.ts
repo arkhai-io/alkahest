@@ -11,9 +11,40 @@ const nativePaymentDoObligationFunction = getAbiItem({
 
 const nativePaymentObligationDataType = nativePaymentDoObligationFunction.inputs[0];
 
+/**
+ * NativeToken Payment ObligationData type
+ */
 export type NativeTokenPaymentObligationData = {
   amount: bigint;
   payee: Address;
+};
+
+/**
+ * Encodes NativeTokenPaymentObligation.ObligationData to bytes.
+ * @param data - struct ObligationData {uint256 amount, address payee}
+ * @returns abi encoded bytes
+ */
+export const encodeObligation = (data: NativeTokenPaymentObligationData): `0x${string}` => {
+  return encodeAbiParameters(
+    [{ name: "amount", type: "uint256" }, { name: "payee", type: "address" }],
+    [data.amount, data.payee]
+  );
+};
+
+/**
+ * Decodes NativeTokenPaymentObligation.ObligationData from bytes.
+ * @param obligationData - ObligationData as abi encoded bytes
+ * @returns the decoded ObligationData object
+ */
+export const decodeObligation = (obligationData: `0x${string}`): NativeTokenPaymentObligationData => {
+  const decoded = decodeAbiParameters(
+    [{ name: "amount", type: "uint256" }, { name: "payee", type: "address" }],
+    obligationData
+  );
+  return {
+    amount: decoded[0],
+    payee: decoded[1],
+  };
 };
 
 export type NativeTokenPaymentClient = ReturnType<typeof makeNativeTokenPaymentClient>;

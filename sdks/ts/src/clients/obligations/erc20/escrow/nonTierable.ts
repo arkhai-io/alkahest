@@ -13,6 +13,34 @@ const erc20EscrowDoObligationFunction = getAbiItem({
 
 const erc20EscrowObligationDataType = erc20EscrowDoObligationFunction.inputs[0];
 
+/**
+ * ERC20 Non-Tierable Escrow ObligationData type
+ */
+export type Erc20NonTierableEscrowObligationData = {
+  token: `0x${string}`;
+  amount: bigint;
+  arbiter: `0x${string}`;
+  demand: `0x${string}`;
+};
+
+/**
+ * Encodes ERC20NonTierableEscrowObligation.ObligationData to bytes.
+ * @param data - struct ObligationData {address token, uint256 amount, address arbiter, bytes demand}
+ * @returns abi encoded bytes
+ */
+export const encodeObligation = (data: Erc20NonTierableEscrowObligationData): `0x${string}` => {
+  return encodeAbiParameters([erc20EscrowObligationDataType], [data]);
+};
+
+/**
+ * Decodes ERC20NonTierableEscrowObligation.ObligationData from bytes.
+ * @param obligationData - ObligationData as abi encoded bytes
+ * @returns the decoded ObligationData object
+ */
+export const decodeObligation = (obligationData: `0x${string}`): Erc20NonTierableEscrowObligationData => {
+  return decodeAbiParameters([erc20EscrowObligationDataType], obligationData)[0] as Erc20NonTierableEscrowObligationData;
+};
+
 export type Erc20NonTierableEscrowClient = ReturnType<typeof makeErc20NonTierableEscrowClient>;
 
 export const makeErc20NonTierableEscrowClient = (

@@ -1139,7 +1139,10 @@ declare const makeNativeTokenBarterUtilsClient: (viemClient: ViemClient, address
     }>;
 };
 
-type NativeTokenEscrowObligationData$1 = {
+/**
+ * NativeToken Non-Tierable Escrow ObligationData type
+ */
+type NativeTokenNonTierableEscrowObligationData = {
     arbiter: Address;
     demand: `0x${string}`;
     amount: bigint;
@@ -1154,9 +1157,9 @@ declare const makeNativeTokenNonTierableEscrowClient: (viemClient: ViemClient, a
         amount: bigint;
     }) => `0x${string}`;
     encodeObligation: (amount: bigint, demand: Demand) => `0x${string}`;
-    decodeObligation: (obligationData: `0x${string}`) => NativeTokenEscrowObligationData$1;
+    decodeObligation: (obligationData: `0x${string}`) => NativeTokenNonTierableEscrowObligationData;
     getObligation: (uid: `0x${string}`) => Promise<{
-        data: NativeTokenEscrowObligationData$1;
+        data: NativeTokenNonTierableEscrowObligationData;
         uid: `0x${string}`;
         schema: `0x${string}`;
         time: bigint;
@@ -1179,7 +1182,10 @@ declare const makeNativeTokenNonTierableEscrowClient: (viemClient: ViemClient, a
     reclaimExpired: (buyAttestation: `0x${string}`) => Promise<`0x${string}`>;
 };
 
-type NativeTokenEscrowObligationData = {
+/**
+ * NativeToken Tierable Escrow ObligationData type
+ */
+type NativeTokenTierableEscrowObligationData = {
     arbiter: Address;
     demand: `0x${string}`;
     amount: bigint;
@@ -1194,9 +1200,9 @@ declare const makeNativeTokenTierableEscrowClient: (viemClient: ViemClient, addr
         amount: bigint;
     }) => `0x${string}`;
     encodeObligation: (amount: bigint, demand: Demand) => `0x${string}`;
-    decodeObligation: (obligationData: `0x${string}`) => NativeTokenEscrowObligationData;
+    decodeObligation: (obligationData: `0x${string}`) => NativeTokenTierableEscrowObligationData;
     getObligation: (uid: `0x${string}`) => Promise<{
-        data: NativeTokenEscrowObligationData;
+        data: NativeTokenTierableEscrowObligationData;
         uid: `0x${string}`;
         schema: `0x${string}`;
         time: bigint;
@@ -1224,6 +1230,9 @@ type NativeTokenEscrowClient = {
     tierable: NativeTokenTierableEscrowClient;
 };
 
+/**
+ * NativeToken Payment ObligationData type
+ */
 type NativeTokenPaymentObligationData = {
     amount: bigint;
     payee: Address;

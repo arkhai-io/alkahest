@@ -16,6 +16,31 @@ const stringObligationDecodeFunction = getAbiItem({
 // Extract the ObligationData struct type from the function output
 const stringObligationDataType = stringObligationDecodeFunction.outputs[0];
 
+/**
+ * StringObligation ObligationData type
+ */
+export type StringObligationData = {
+  item: string;
+};
+
+/**
+ * Encodes StringObligation.ObligationData to bytes.
+ * @param data - struct ObligationData {string item}
+ * @returns abi encoded bytes
+ */
+export const encodeObligation = (data: StringObligationData): `0x${string}` => {
+  return encodeAbiParameters([stringObligationDataType], [data]);
+};
+
+/**
+ * Decodes StringObligation.ObligationData from bytes.
+ * @param obligationData - ObligationData as abi encoded bytes
+ * @returns the decoded ObligationData object
+ */
+export const decodeObligation = (obligationData: `0x${string}`): StringObligationData => {
+  return decodeAbiParameters([stringObligationDataType], obligationData)[0] as StringObligationData;
+};
+
 // Type helper for Zod parse functions return types
 type ZodParseReturnType<
   TSchema extends z.ZodSchema,

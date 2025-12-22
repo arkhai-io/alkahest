@@ -6,9 +6,10 @@ import { makeNativeTokenPaymentClient, type NativeTokenPaymentClient, type Nativ
 
 export { makeNativeTokenBarterUtilsClient, type NativeTokenBarterUtilsClient } from "./barterUtils";
 export { makeNativeTokenEscrowClient, type NativeTokenEscrowClient } from "./escrow";
-export { makeNativeTokenNonTierableEscrowClient, type NativeTokenNonTierableEscrowClient, type NativeTokenEscrowObligationData } from "./escrow/nonTierable";
+export { makeNativeTokenNonTierableEscrowClient, type NativeTokenNonTierableEscrowClient, type NativeTokenNonTierableEscrowObligationData, encodeObligation as encodeNonTierableEscrowObligation, decodeObligation as decodeNonTierableEscrowObligation } from "./escrow/nonTierable";
+export { type NativeTokenTierableEscrowObligationData, encodeObligation as encodeTierableEscrowObligation, decodeObligation as decodeTierableEscrowObligation } from "./escrow/tierable";
 export { makeNativeTokenTierableEscrowClient, type NativeTokenTierableEscrowClient } from "./escrow/tierable";
-export { makeNativeTokenPaymentClient, type NativeTokenPaymentClient, type NativeTokenPaymentObligationData } from "./payment";
+export { makeNativeTokenPaymentClient, type NativeTokenPaymentClient, type NativeTokenPaymentObligationData, encodeObligation as encodePaymentObligation, decodeObligation as decodePaymentObligation } from "./payment";
 
 export type NativeTokenAddresses = {
   eas: `0x${string}`;

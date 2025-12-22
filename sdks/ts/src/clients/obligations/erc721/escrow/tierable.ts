@@ -12,6 +12,34 @@ const erc721EscrowDecodeFunction = getAbiItem({
 
 const erc721EscrowObligationDataType = erc721EscrowDecodeFunction.outputs[0];
 
+/**
+ * ERC721 Tierable Escrow ObligationData type
+ */
+export type Erc721TierableEscrowObligationData = {
+  token: `0x${string}`;
+  tokenId: bigint;
+  arbiter: `0x${string}`;
+  demand: `0x${string}`;
+};
+
+/**
+ * Encodes ERC721TierableEscrowObligation.ObligationData to bytes.
+ * @param data - struct ObligationData {address token, uint256 tokenId, address arbiter, bytes demand}
+ * @returns abi encoded bytes
+ */
+export const encodeObligation = (data: Erc721TierableEscrowObligationData): `0x${string}` => {
+  return encodeAbiParameters([erc721EscrowObligationDataType], [data]);
+};
+
+/**
+ * Decodes ERC721TierableEscrowObligation.ObligationData from bytes.
+ * @param obligationData - ObligationData as abi encoded bytes
+ * @returns the decoded ObligationData object
+ */
+export const decodeObligation = (obligationData: `0x${string}`): Erc721TierableEscrowObligationData => {
+  return decodeAbiParameters([erc721EscrowObligationDataType], obligationData)[0] as Erc721TierableEscrowObligationData;
+};
+
 export type Erc721TierableEscrowClient = ReturnType<typeof makeErc721TierableEscrowClient>;
 
 export const makeErc721TierableEscrowClient = (

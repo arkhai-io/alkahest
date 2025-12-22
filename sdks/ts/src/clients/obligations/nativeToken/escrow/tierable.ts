@@ -11,10 +11,39 @@ const nativeEscrowDoObligationFunction = getAbiItem({
 
 const nativeEscrowObligationDataType = nativeEscrowDoObligationFunction.inputs[0];
 
-export type NativeTokenEscrowObligationData = {
+/**
+ * NativeToken Tierable Escrow ObligationData type
+ */
+export type NativeTokenTierableEscrowObligationData = {
   arbiter: Address;
   demand: `0x${string}`;
   amount: bigint;
+};
+
+/**
+ * Encodes NativeTokenTierableEscrowObligation.ObligationData to bytes.
+ * @param data - struct ObligationData {address arbiter, bytes demand, uint256 amount}
+ * @returns abi encoded bytes
+ */
+export const encodeObligation = (data: NativeTokenTierableEscrowObligationData): `0x${string}` => {
+  return encodeAbiParameters([nativeEscrowObligationDataType], [data]);
+};
+
+/**
+ * Decodes NativeTokenTierableEscrowObligation.ObligationData from bytes.
+ * @param obligationData - ObligationData as abi encoded bytes
+ * @returns the decoded ObligationData object
+ */
+export const decodeObligation = (obligationData: `0x${string}`): NativeTokenTierableEscrowObligationData => {
+  const [arbiter, demand, amount] = decodeAbiParameters(
+    parseAbiParameters("address, bytes, uint256"),
+    obligationData
+  );
+  return {
+    arbiter: arbiter as Address,
+    demand: demand as `0x${string}`,
+    amount: amount as bigint,
+  };
 };
 
 export type NativeTokenTierableEscrowClient = ReturnType<typeof makeNativeTokenTierableEscrowClient>;
@@ -47,7 +76,7 @@ export const makeNativeTokenTierableEscrowClient = (
       }]);
     },
 
-    decodeObligation: (obligationData: `0x${string}`): NativeTokenEscrowObligationData => {
+    decodeObligation: (obligationData: `0x${string}`): NativeTokenTierableEscrowObligationData => {
       const [arbiter, demand, amount] = decodeAbiParameters(
         parseAbiParameters("address, bytes, uint256"),
         obligationData
@@ -69,7 +98,7 @@ export const makeNativeTokenTierableEscrowClient = (
         parseAbiParameters("address, bytes, uint256"),
         attestation.data
       );
-      const data: NativeTokenEscrowObligationData = {
+      const data: NativeTokenTierableEscrowObligationData = {
         arbiter: arbiter as Address,
         demand: demand as `0x${string}`,
         amount: amount as bigint,
