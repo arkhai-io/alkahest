@@ -115,7 +115,7 @@ const shouldSkip =
   !process.env.PRIVKEY_BOB ||
   !process.env.RPC_URL ||
   !baseSepoliaAddresses ||
-  baseSepoliaAddresses.trustedPartyArbiter === "0x";
+  baseSepoliaAddresses.trustedOracleArbiter === "0x";
 
 beforeAll(() => {
   // Skip tests if required environment variables are not set
@@ -195,10 +195,9 @@ test("tradeErc20ForCustom", async () => {
   // like we did for the baseDemand
   if (!baseSepoliaAddresses) throw new Error("Base Sepolia addresses not found");
 
-  const demand = clientBuyer.arbiters.general.trustedParty.encode({
-    creator: clientSeller.address,
-    baseArbiter: baseSepoliaAddresses.trivialArbiter,
-    baseDemand,
+  const demand = clientBuyer.arbiters.general.trustedOracle.encodeDemand({
+    oracle: clientSeller.address,
+    data: baseDemand,
   });
 
   // approve escrow contract to spend tokens
@@ -211,7 +210,7 @@ test("tradeErc20ForCustom", async () => {
   // and no expiration (would be a future unix timstamp in seconds if used)
   const escrow = await clientBuyer.erc20.escrow.nonTierable.create(
     { address: usdc, value: 10n },
-    { arbiter: baseSepoliaAddresses.trustedPartyArbiter, demand },
+    { arbiter: baseSepoliaAddresses.trustedOracleArbiter, demand },
     0n,
   );
   console.log("escrow: ", escrow);
@@ -228,11 +227,11 @@ test("tradeErc20ForCustom", async () => {
   //     bytes demand;
   // }
   const decodedObligation = clientSeller.erc20.escrow.nonTierable.decodeObligation(buyObligation.data);
-  // TrustedPartyArbiter.DemandData
+  // TrustedOracleArbiter.DemandData
   // if using a custom arbiter, you can instead use decodeAbiParameters directly like below
-  const decodedDemand = clientSeller.arbiters.general.trustedParty.decode(decodedObligation.demand);
-  // custom base demand described above
-  const decodedBaseDemand = decodeAbiParameters(parseAbiParameters("(string query)"), decodedDemand.baseDemand)[0];
+  const decodedDemand = clientSeller.arbiters.general.trustedOracle.decodeDemand(decodedObligation.demand);
+  // custom base demand described above - TrustedOracleArbiter stores data in `data` field
+  const decodedBaseDemand = decodeAbiParameters(parseAbiParameters("(string query)"), decodedDemand.data)[0];
 
   // uppercase string for the example;
   // this could be anything as agreed upon between buyer and seller
@@ -268,7 +267,7 @@ test("tradeErc20ForCustom", async () => {
   console.log("result obligation: ", resultObligation);
 
   // and collect the payment from escrow
-  const collection = await clientSeller.erc20.escrow.nonTierable.collectEscrow(escrow.attested.uid, resultObligation.uid);
+  const collection = await clientSeller.erc20.escrow.nonTierable.collect(escrow.attested.uid, resultObligation.uid);
 
   console.log("collection: ", collection);
 

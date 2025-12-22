@@ -160,6 +160,7 @@ describe("WebSocket Transport Support", () => {
     });
 
     describe("Real-time Event Watching", () => {
+      // @ts-expect-error - bun:test timeout option is valid but not in TS types
       test("should do speed test WS & HTTP Waiting for fulfillment", { timeout: 15000 }, async () => {
         const bidAmount = parseEther("100");
         const askAmount = parseEther("200");

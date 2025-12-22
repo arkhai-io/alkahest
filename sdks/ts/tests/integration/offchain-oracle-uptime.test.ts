@@ -130,6 +130,7 @@ afterEach(async () => {
   await teardownTestEnvironment(testContext);
 });
 
+// @ts-expect-error - bun:test timeout option is valid but not in TS types
 test("asynchronous offchain oracle uptime flow", { timeout: 15000 }, async () => {
   const now = Math.floor(Date.now() / 1000);
   const demandPayload: UptimeDemand = {

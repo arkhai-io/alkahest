@@ -203,12 +203,12 @@ export const makeMinimalClient = (
     nativeTokenEscrowObligation:
       contractAddresses?.nativeTokenEscrowObligation || baseAddresses?.nativeTokenEscrowObligation || zeroAddress,
 
+    trivialArbiter: contractAddresses?.trivialArbiter || baseAddresses?.trivialArbiter || zeroAddress,
     trustedOracleArbiter: contractAddresses?.trustedOracleArbiter || baseAddresses?.trustedOracleArbiter || zeroAddress,
     intrinsicsArbiter: contractAddresses?.intrinsicsArbiter || baseAddresses?.intrinsicsArbiter || zeroAddress,
     intrinsicsArbiter2: contractAddresses?.intrinsicsArbiter2 || baseAddresses?.intrinsicsArbiter2 || zeroAddress,
     anyArbiter: contractAddresses?.anyArbiter || baseAddresses?.anyArbiter || zeroAddress,
     allArbiter: contractAddresses?.allArbiter || baseAddresses?.allArbiter || zeroAddress,
-    notArbiter: contractAddresses?.notArbiter || baseAddresses?.notArbiter || zeroAddress,
     nativeTokenBarterUtils:
       contractAddresses?.nativeTokenBarterUtils || baseAddresses?.nativeTokenBarterUtils || zeroAddress,
 

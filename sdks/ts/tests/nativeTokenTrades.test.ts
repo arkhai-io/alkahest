@@ -235,9 +235,9 @@ describe("Native Token Trading Functions", () => {
     test("should create native token buy order for TokenBundle", async () => {
       const bidAmount = parseEther("2");
       const ask = {
-        erc20: [{ address: aliceErc20Token, value: parseEther("50") }],
-        erc721: [{ address: aliceErc721Token, id: 2n }],
-        erc1155: [{ address: aliceErc1155Token, id: 1n, value: 5n }],
+        erc20s: [{ address: aliceErc20Token, value: parseEther("50") }],
+        erc721s: [{ address: aliceErc721Token, id: 2n }],
+        erc1155s: [{ address: aliceErc1155Token, id: 1n, value: 5n }],
       };
       const payee = bob;
       const expiration = BigInt(Math.floor(Date.now() / 1000)) + 3600n;

@@ -14,33 +14,59 @@ describe("Demand Parsing and Static Codecs", () => {
   const mockAddresses: ChainAddresses = {
     eas: "0x1234567890123456789012345678901234567890",
     easSchemaRegistry: "0x1234567890123456789012345678901234567891",
-    trustedOracleArbiter: "0x1234567890123456789012345678901234567892",
-    trustedPartyArbiter: "0x1234567890123456789012345678901234567893",
+
+    erc20BarterUtils: "0x123456789012345678901234567890123456789C",
+    erc20EscrowObligation: "0x123456789012345678901234567890123456789A",
+    erc20PaymentObligation: "0x123456789012345678901234567890123456789B",
+
+    erc721BarterUtils: "0x12345678901234567890123456789012345678A2",
+    erc721EscrowObligation: "0x12345678901234567890123456789012345678A0",
+    erc721PaymentObligation: "0x12345678901234567890123456789012345678A1",
+
+    erc1155BarterUtils: "0x12345678901234567890123456789012345678A5",
+    erc1155EscrowObligation: "0x12345678901234567890123456789012345678A3",
+    erc1155PaymentObligation: "0x12345678901234567890123456789012345678A4",
+
+    tokenBundleBarterUtils: "0x12345678901234567890123456789012345678A8",
+    tokenBundleEscrowObligation: "0x12345678901234567890123456789012345678A6",
+    tokenBundlePaymentObligation: "0x12345678901234567890123456789012345678A7",
+
+    attestationBarterUtils: "0x12345678901234567890123456789012345678AB",
+    attestationEscrowObligation: "0x12345678901234567890123456789012345678A9",
+    attestationEscrowObligation2: "0x12345678901234567890123456789012345678AA",
+
+    stringObligation: "0x12345678901234567890123456789012345678AC",
+
     trivialArbiter: "0x1234567890123456789012345678901234567894",
-    specificAttestationArbiter: "0x1234567890123456789012345678901234567895",
+    trustedOracleArbiter: "0x1234567890123456789012345678901234567892",
     anyArbiter: "0x1234567890123456789012345678901234567896",
     allArbiter: "0x1234567890123456789012345678901234567897",
     intrinsicsArbiter: "0x1234567890123456789012345678901234567898",
     intrinsicsArbiter2: "0x1234567890123456789012345678901234567899",
-    erc20EscrowObligation: "0x123456789012345678901234567890123456789A",
-    erc20PaymentObligation: "0x123456789012345678901234567890123456789B",
-    erc20BarterUtils: "0x123456789012345678901234567890123456789C",
-    nativeTokenPaymentObligation: "0x123456789012345678901234567890123456789D",
-    nativeTokenEscrowObligation: "0x123456789012345678901234567890123456789E",
+
     nativeTokenBarterUtils: "0x123456789012345678901234567890123456789F",
-    erc721EscrowObligation: "0x12345678901234567890123456789012345678A0",
-    erc721PaymentObligation: "0x12345678901234567890123456789012345678A1",
-    erc721BarterUtils: "0x12345678901234567890123456789012345678A2",
-    erc1155EscrowObligation: "0x12345678901234567890123456789012345678A3",
-    erc1155PaymentObligation: "0x12345678901234567890123456789012345678A4",
-    erc1155BarterUtils: "0x12345678901234567890123456789012345678A5",
-    tokenBundleEscrowObligation: "0x12345678901234567890123456789012345678A6",
-    tokenBundlePaymentObligation: "0x12345678901234567890123456789012345678A7",
-    tokenBundleBarterUtils: "0x12345678901234567890123456789012345678A8",
-    attestationEscrowObligation: "0x12345678901234567890123456789012345678A9",
-    attestationEscrowObligation2: "0x12345678901234567890123456789012345678AA",
-    attestationBarterUtils: "0x12345678901234567890123456789012345678AB",
-    stringObligation: "0x12345678901234567890123456789012345678AC",
+    nativeTokenEscrowObligation: "0x123456789012345678901234567890123456789E",
+    nativeTokenPaymentObligation: "0x123456789012345678901234567890123456789D",
+
+    // Confirmation arbiters
+    exclusiveRevocableConfirmationArbiter: "0x12345678901234567890123456789012345678B0",
+    exclusiveUnrevocableConfirmationArbiter: "0x12345678901234567890123456789012345678B1",
+    nonexclusiveRevocableConfirmationArbiter: "0x12345678901234567890123456789012345678B2",
+    nonexclusiveUnrevocableConfirmationArbiter: "0x12345678901234567890123456789012345678B3",
+
+    // Attestation Properties Arbiters
+    recipientArbiter: "0x12345678901234567890123456789012345678C0",
+    attesterArbiter: "0x12345678901234567890123456789012345678C1",
+    schemaArbiter: "0x12345678901234567890123456789012345678C2",
+    uidArbiter: "0x12345678901234567890123456789012345678C3",
+    refUidArbiter: "0x12345678901234567890123456789012345678C4",
+    revocableArbiter: "0x12345678901234567890123456789012345678C5",
+    timeAfterArbiter: "0x12345678901234567890123456789012345678C6",
+    timeBeforeArbiter: "0x12345678901234567890123456789012345678C7",
+    timeEqualArbiter: "0x12345678901234567890123456789012345678C8",
+    expirationTimeAfterArbiter: "0x12345678901234567890123456789012345678C9",
+    expirationTimeBeforeArbiter: "0x12345678901234567890123456789012345678CA",
+    expirationTimeEqualArbiter: "0x12345678901234567890123456789012345678CB",
   };
 
   describe("Static Codec Functions", () => {
@@ -90,10 +116,10 @@ describe("Demand Parsing and Static Codecs", () => {
 
       expect(decoded.children).toBeDefined();
       expect(decoded.children).toHaveLength(2);
-      expect(decoded.children[0].arbiter).toBe(demand.arbiters[0]);
-      expect(decoded.children[0].demand).toBe(demand.demands[0]);
-      expect(decoded.children[1].arbiter).toBe(demand.arbiters[1]);
-      expect(decoded.children[1].demand).toBe(demand.demands[1]);
+      expect(decoded.children![0]!.arbiter).toBe(demand.arbiters[0]!);
+      expect(decoded.children![0]!.demand).toBe(demand.demands[0]!);
+      expect(decoded.children![1]!.arbiter).toBe(demand.arbiters[1]!);
+      expect(decoded.children![1]!.demand).toBe(demand.demands[1]!);
     });
   });
 
@@ -170,8 +196,8 @@ describe("Demand Parsing and Static Codecs", () => {
       expect(result.arbiter).toBe(mockAddresses.anyArbiter);
       expect(result.children).toBeDefined();
       expect(result.children).toHaveLength(2);
-      expect(result.children![0].arbiter).toBe(mockAddresses.trustedOracleArbiter);
-      expect(result.children![1].arbiter).toBe(mockAddresses.trivialArbiter);
+      expect(result.children![0]!.arbiter).toBe(mockAddresses.trustedOracleArbiter);
+      expect(result.children![1]!.arbiter).toBe(mockAddresses.trivialArbiter);
     });
 
     test("should handle deeply nested demands with AllArbiter", () => {
@@ -200,9 +226,9 @@ describe("Demand Parsing and Static Codecs", () => {
 
       expect(result.arbiter).toBe(mockAddresses.allArbiter);
       expect(result.children).toHaveLength(2);
-      expect(result.children![0].arbiter).toBe(mockAddresses.anyArbiter);
+      expect(result.children![0]!.arbiter).toBe(mockAddresses.anyArbiter);
       // The nested AnyArbiter should have its own children
-      expect(result.children![0].children).toBeDefined();
+      expect(result.children![0]!.children).toBeDefined();
     });
   });
 
@@ -264,8 +290,8 @@ describe("Demand Parsing and Static Codecs", () => {
 
       // Check children - one should be unknown
       expect(result.children).toHaveLength(2);
-      expect(result.children![0].isUnknown).toBe(true);
-      expect(result.children![0].decoded).toEqual({ raw: "0xdeadbeef" });
+      expect(result.children![0]!.isUnknown).toBe(true);
+      expect(result.children![0]!.decoded).toEqual({ raw: "0xdeadbeef" });
     });
 
     test("should check if entire demand tree is fully parseable", () => {
@@ -327,7 +353,7 @@ describe("Demand Parsing and Static Codecs", () => {
       const result = decodeDemandWithAddresses(singleDemand, mockAddresses);
 
       expect(result.children).toHaveLength(1);
-      expect(result.children![0].arbiter).toBe(mockAddresses.trivialArbiter);
+      expect(result.children![0]!.arbiter).toBe(mockAddresses.trivialArbiter);
     });
   });
 });
