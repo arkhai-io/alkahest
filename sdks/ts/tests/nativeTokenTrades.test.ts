@@ -14,15 +14,15 @@ import {
 import { teardownTestEnvironment } from "./utils/teardownTestEnvironment";
 
 /**
- * Test suite for native token trading functions added to ERC20, ERC721, ERC1155, and TokenBundle clients.
- * 
- * These tests verify that the new functions added to support native token (ETH) trading are properly implemented.
- * 
+ * Test suite for native token trading functions.
+ *
+ * These tests verify that the functions for trading native tokens (ETH) for other token types are properly implemented.
+ *
  * Functions tested:
- * - ERC20: buyErc20WithNative, payNativeForErc20
- * - ERC721: buyErc721WithNative, payNativeForErc721  
- * - ERC1155: buyErc1155WithNative, payNativeForErc1155
- * - TokenBundle: buyBundleWithNative, payNativeForBundle
+ * - nativeToken.barter: buyErc20WithNative, payNativeForErc20
+ * - erc721.barter: buyErc721WithNative, payNativeForErc721
+ * - erc1155.barter: buyErc1155WithNative, payNativeForErc1155
+ * - bundle.barter: buyBundleWithNative, payNativeForBundle
  */
 
 describe("Native Token Trading Functions", () => {
@@ -67,15 +67,15 @@ describe("Native Token Trading Functions", () => {
   });
 
   describe("Function Availability Tests", () => {
-    // Note: buyErc20WithNative and payNativeForErc20 are not implemented in the SDK yet
-    test.skip("should have buyErc20WithNative function", () => {
-      expect(aliceClient.erc20.barter.buyErc20WithNative).toBeDefined();
-      expect(typeof aliceClient.erc20.barter.buyErc20WithNative).toBe("function");
+    // Native token trading for ERC20 is in nativeToken.barter, not erc20.barter
+    test("should have buyErc20WithNative function", () => {
+      expect(aliceClient.nativeToken.barter.buyErc20WithNative).toBeDefined();
+      expect(typeof aliceClient.nativeToken.barter.buyErc20WithNative).toBe("function");
     });
 
-    test.skip("should have payNativeForErc20 function", () => {
-      expect(aliceClient.erc20.barter.payNativeForErc20).toBeDefined();
-      expect(typeof aliceClient.erc20.barter.payNativeForErc20).toBe("function");
+    test("should have payNativeForErc20 function", () => {
+      expect(aliceClient.nativeToken.barter.payNativeForErc20).toBeDefined();
+      expect(typeof aliceClient.nativeToken.barter.payNativeForErc20).toBe("function");
     });
 
     test("should have buyErc721WithNative function", () => {
@@ -109,15 +109,15 @@ describe("Native Token Trading Functions", () => {
     });
   });
 
-  // Note: ERC20 native token trading functions are not implemented in the SDK yet
-  describe.skip("ERC20 Native Token Trading", () => {
+  // Native token trading for ERC20 is in nativeToken.barter
+  describe("ERC20 Native Token Trading", () => {
     test("buyErc20WithNative should accept correct parameters", () => {
-      const fn = aliceClient.erc20.barter.buyErc20WithNative;
+      const fn = aliceClient.nativeToken.barter.buyErc20WithNative;
       expect(fn.length).toBe(3); // bidAmount, ask, expiration
     });
 
     test("payNativeForErc20 should accept correct parameters", () => {
-      const fn = aliceClient.erc20.barter.payNativeForErc20;
+      const fn = aliceClient.nativeToken.barter.payNativeForErc20;
       expect(fn.length).toBe(1); // buyAttestation
     });
 
@@ -130,7 +130,7 @@ describe("Native Token Trading Functions", () => {
       const expiration = BigInt(Math.floor(Date.now() / 1000)) + 3600n;
 
       try {
-        const result = await aliceClient.erc20.barter.buyErc20WithNative(
+        const result = await aliceClient.nativeToken.barter.buyErc20WithNative(
           bidAmount,
           ask,
           expiration
@@ -289,9 +289,10 @@ describe("Native Token Trading Functions", () => {
       // Note: nativeTokenBarterUtils address may not be in test mock addresses yet
     });
 
-    // Note: ERC20 native token trading functions are not implemented yet, so only 6 functions exist
-    test("should have all 6 implemented native token trading functions", () => {
+    test("should have all 8 native token trading functions", () => {
       const functions = [
+        aliceClient.nativeToken.barter.buyErc20WithNative,
+        aliceClient.nativeToken.barter.payNativeForErc20,
         aliceClient.erc721.barter.buyErc721WithNative,
         aliceClient.erc721.barter.payNativeForErc721,
         aliceClient.erc1155.barter.buyErc1155WithNative,
@@ -300,7 +301,7 @@ describe("Native Token Trading Functions", () => {
         aliceClient.bundle.barter.payNativeForBundle,
       ];
 
-      expect(functions.length).toBe(6);
+      expect(functions.length).toBe(8);
       functions.forEach(fn => {
         expect(fn).toBeDefined();
         expect(typeof fn).toBe("function");

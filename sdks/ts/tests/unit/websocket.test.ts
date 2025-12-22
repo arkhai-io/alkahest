@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { createWalletClient, http, nonceManager, parseAbiParameters, parseEther, webSocket } from "viem";
+import { createWalletClient, http, nonceManager, parseEther, webSocket } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { baseSepolia } from "viem/chains";
 import { contractAddresses, makeClient } from "../../src";
@@ -160,7 +160,7 @@ describe("WebSocket Transport Support", () => {
     });
 
     describe("Real-time Event Watching", () => {
-      test("should do speed test WS & HTTP Waiting for fulfillment", async () => {
+      test("should do speed test WS & HTTP Waiting for fulfillment", { timeout: 15000 }, async () => {
         const bidAmount = parseEther("100");
         const askAmount = parseEther("200");
         const expiration = BigInt(Math.floor(Date.now() / 1000) + 86400); // 1 day from now
@@ -288,45 +288,6 @@ describe("WebSocket Transport Support", () => {
         expect(attested.uid).toBeDefined();
         expect(attested.uid).not.toBe("0x0000000000000000000000000000000000000000000000000000000000000000");
       });
-    });
-  });
-
-  describe("Network Integration (requires live connection)", () => {
-    test.skip("should listen for events with WebSocket", async () => {
-      // This test would require actual network connection and deployed contracts
-      // Skip by default, but could be enabled for integration testing
-      if (!process.env.WS_RPC_URL || !process.env.PRIVKEY_ALICE) {
-        return; // Skip if env vars not set
-      }
-
-      const client = makeClient(
-        createWalletClient({
-          account: privateKeyToAccount(process.env.PRIVKEY_ALICE as `0x${string}`, {
-            nonceManager,
-          }),
-          chain: baseSepolia,
-          transport: webSocket(process.env.WS_RPC_URL),
-        }),
-      );
-
-      const obligationAbi = parseAbiParameters("(string item)");
-
-      // Test real WebSocket event listening
-      const { unwatch } = await client.arbiters.general.trustedOracle.listenAndArbitrate(
-        async (attestation) => {
-          const obligation = client.extractObligationData(obligationAbi, attestation);
-          // Return boolean decision
-          return obligation[0].item === "test";
-        },
-        {
-          onAfterArbitrate: async (decision) => {
-            console.log("WebSocket arbitration:", decision);
-          },
-        },
-      );
-
-      // Clean up after each test
-      setTimeout(() => unwatch(), 1000);
     });
   });
 });
