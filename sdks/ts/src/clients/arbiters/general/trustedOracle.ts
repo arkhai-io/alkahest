@@ -39,17 +39,21 @@ export const decodeDemand = (demandData: `0x${string}`): TrustedOracleArbiterDem
 };
 
 /**
+ * Mode for arbitration processing
+ * - "all": Process all past events without filtering, plus listen for new events
+ * - "unarbitrated": Process only unarbitrated past events, plus listen for new events
+ * - "new": Only listen for new events, skip past event processing
+ */
+export type ArbitrationMode = "all" | "unarbitrated" | "new";
+
+/**
  * Options for arbitration
  */
 export type ArbitrateOptions = {
   /**
-   * Skip attestations that have already been arbitrated by this oracle
+   * Mode for arbitration processing (default: "all")
    */
-  skipAlreadyArbitrated?: boolean;
-  /**
-   * Only arbitrate new attestations (don't process past attestations)
-   */
-  onlyNew?: boolean;
+  mode?: ArbitrationMode;
   /**
    * Block range for past arbitration
    */
@@ -157,8 +161,8 @@ export const makeTrustedOracleArbiterClient = (viemClient: ViemClient, addresses
         (awd.attestation.revocationTime === BigInt(0) || awd.attestation.revocationTime >= now),
     );
 
-    if (options.skipAlreadyArbitrated) {
-      // Filter out already arbitrated attestations
+    // If mode is "unarbitrated", filter out already arbitrated attestations
+    if (options.mode === "unarbitrated") {
       const filteredAttestationsWithDemand = await Promise.all(
         validAttestationsWithDemand.map(async (awd) => {
           const existingLogs = await viemClient.getLogs({
@@ -228,13 +232,14 @@ export const makeTrustedOracleArbiterClient = (viemClient: ViemClient, addresses
       pollingInterval?: number;
     } = {},
   ): Promise<ListenAndArbitrateResult> => {
-    // Arbitrate past attestations if not onlyNew
-    const decisions = options.onlyNew ? [] : await arbitratePast(arbitrate, options);
+    // Arbitrate past attestations unless mode is "new"
+    const decisions = options.mode === "new" ? [] : await arbitratePast(arbitrate, options);
 
     // Use optimal polling interval based on transport type
     const optimalInterval = getOptimalPollingInterval(viemClient, options.pollingInterval);
 
     // Listen for new arbitration requests
+    // Note: New events cannot be already arbitrated, so no skip logic needed here
     const unwatch = viemClient.watchEvent({
       address: addresses.trustedOracleArbiter,
       event: arbitrationRequestedEvent,
@@ -247,24 +252,6 @@ export const makeTrustedOracleArbiterClient = (viemClient: ViemClient, addresses
             const attestation = await getAttestation(viemClient, log.args.obligation!, addresses);
             // Extract demand from ArbitrationRequested event
             const demand = log.args.demand as `0x${string}`;
-
-            // Check if already arbitrated if skipAlreadyArbitrated is enabled
-            if (options.skipAlreadyArbitrated) {
-              const existingLogs = await viemClient.getLogs({
-                address: addresses.trustedOracleArbiter,
-                event: arbitrationMadeEvent,
-                args: {
-                  obligation: attestation.uid,
-                  oracle: viemClient.account.address,
-                },
-                fromBlock: "earliest",
-                toBlock: "latest",
-              });
-
-              if (existingLogs.length > 0) {
-                return; // Skip if already arbitrated
-              }
-            }
 
             const decisionResult = await arbitrate(attestation);
             if (decisionResult === null) return;

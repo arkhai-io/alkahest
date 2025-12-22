@@ -4,11 +4,12 @@ import { makeIntrinsicsArbiterClient } from "./intrinsicsArbiter";
 import { makeIntrinsicsArbiter2Client } from "./intrinsicsArbiter2";
 import { makeTrustedOracleArbiterClient } from "./trustedOracle";
 
-// Re-export static encode/decode functions from trustedOracle
+// Re-export static encode/decode functions and types from trustedOracle
 export {
   encodeDemand as encodeTrustedOracleDemand,
   decodeDemand as decodeTrustedOracleDemand,
   type TrustedOracleArbiterDemandData,
+  type ArbitrationMode,
 } from "./trustedOracle";
 
 // Re-export static encode/decode functions from intrinsicsArbiter2

@@ -111,7 +111,7 @@ test("synchronous offchain oracle capitalization flow", async () => {
 
       return true;
     },
-    { skipAlreadyArbitrated: true },
+    { mode: "unarbitrated" },
   );
 
   // Wait for all arbitration transactions to be mined

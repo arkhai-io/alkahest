@@ -52,6 +52,7 @@ export {
   encodeTrustedOracleDemand,
   decodeTrustedOracleDemand,
   type TrustedOracleArbiterDemandData,
+  type ArbitrationMode,
   encodeIntrinsics2Demand,
   decodeIntrinsics2Demand,
   type IntrinsicsArbiter2DemandData,

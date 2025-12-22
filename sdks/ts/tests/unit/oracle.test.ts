@@ -160,7 +160,7 @@ test("arbitratePast with skipAlreadyArbitrated", async () => {
       const obligation = testContext.bob.client.extractObligationData(obligationAbi, attestation);
       return obligation[0].item === "foo";
     },
-    { skipAlreadyArbitrated: true },
+    { mode: "unarbitrated" },
   );
 
   expect(secondDecisions.length).toBe(0);
@@ -213,7 +213,7 @@ test("listenAndArbitrate", async () => {
   unwatch();
 });
 
-test("listenAndArbitrate with onlyNew", async () => {
+test("listenAndArbitrate with mode: 'new'", async () => {
   const arbiter = testContext.addresses.trustedOracleArbiter;
   const demand = testContext.alice.client.arbiters.general.trustedOracle.encodeDemand({
     oracle: testContext.bob.address,
@@ -238,7 +238,7 @@ test("listenAndArbitrate with onlyNew", async () => {
       return obligation[0].item === "good";
     },
     {
-      onlyNew: true,
+      mode: "new",
       pollingInterval: 50,
     },
   );

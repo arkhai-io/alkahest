@@ -88,7 +88,7 @@ test("contextless offchain identity oracle flow", async () => {
       identityRegistry.set(parsed.pubkey, parsed.nonce);
       return true;
     },
-    { skipAlreadyArbitrated: true },
+    { mode: "unarbitrated" },
   );
 
   const createPayload = createIdentityPayloadFactory(identityAccount.address, identityAccount);

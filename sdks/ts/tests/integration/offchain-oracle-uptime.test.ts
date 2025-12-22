@@ -220,7 +220,7 @@ test("asynchronous offchain oracle uptime flow", { timeout: 15000 }, async () =>
       notifyScheduler(ctx);
       return null;
     },
-    { skipAlreadyArbitrated: true },
+    { mode: "unarbitrated" },
   );
 
   await testContext.bob.client.arbiters.general.trustedOracle.requestArbitration(fulfillment.uid, testContext.charlie.address, demand);
