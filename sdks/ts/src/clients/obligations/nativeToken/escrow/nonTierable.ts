@@ -35,15 +35,7 @@ export const encodeObligation = (data: NativeTokenNonTierableEscrowObligationDat
  * @returns the decoded ObligationData object
  */
 export const decodeObligation = (obligationData: `0x${string}`): NativeTokenNonTierableEscrowObligationData => {
-  const [arbiter, demand, amount] = decodeAbiParameters(
-    parseAbiParameters("address, bytes, uint256"),
-    obligationData
-  );
-  return {
-    arbiter: arbiter as Address,
-    demand: demand as `0x${string}`,
-    amount: amount as bigint,
-  };
+  return decodeAbiParameters([nativeEscrowObligationDataType], obligationData)[0] as NativeTokenNonTierableEscrowObligationData;
 };
 
 export type NativeTokenNonTierableEscrowClient = ReturnType<typeof makeNativeTokenNonTierableEscrowClient>;
