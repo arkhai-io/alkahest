@@ -26,49 +26,35 @@ export type ChainAddresses = {
 
   stringObligation: `0x${string}`;
 
-  trustedPartyArbiter: `0x${string}`;
   trivialArbiter: `0x${string}`;
-  specificAttestationArbiter: `0x${string}`;
   trustedOracleArbiter: `0x${string}`;
   anyArbiter: `0x${string}`;
   allArbiter: `0x${string}`;
-  notArbiter: `0x${string}`;
   intrinsicsArbiter: `0x${string}`;
   intrinsicsArbiter2: `0x${string}`;
-  erc8004Arbiter: `0x${string}`;
-  confirmationArbiter: `0x${string}`;
-  confirmationArbiterComposing: `0x${string}`;
-  revocableConfirmationArbiter: `0x${string}`;
-  revocableConfirmationArbiterComposing: `0x${string}`;
-  unrevocableConfirmationArbiter: `0x${string}`;
-  unrevocableArbiterComposing: `0x${string}`;
+
+  // Confirmation arbiters (new naming convention)
+  exclusiveRevocableConfirmationArbiter: `0x${string}`;
+  exclusiveUnrevocableConfirmationArbiter: `0x${string}`;
+  nonexclusiveRevocableConfirmationArbiter: `0x${string}`;
+  nonexclusiveUnrevocableConfirmationArbiter: `0x${string}`;
   nativeTokenEscrowObligation: `0x${string}`;
   nativeTokenPaymentObligation: `0x${string}`;
   nativeTokenBarterUtils: `0x${string}`;
 
-  // Attestation Properties Arbiters - Composing
-  attesterArbiterComposing?: `0x${string}`;
-  expirationTimeArbiterComposing?: `0x${string}`;
-  recipientArbiterComposing?: `0x${string}`;
-  refUidArbiterComposing?: `0x${string}`;
-  revocableArbiterComposing?: `0x${string}`;
-  revocationTimeArbiterComposing?: `0x${string}`;
-  schemaArbiterComposing?: `0x${string}`;
-  timestampArbiterComposing?: `0x${string}`;
-  uidArbiterComposing?: `0x${string}`;
-  valueArbiterComposing?: `0x${string}`;
-
-  // Attestation Properties Arbiters - Non-Composing
-  attesterArbiterNonComposing?: `0x${string}`;
-  expirationTimeArbiterNonComposing?: `0x${string}`;
-  recipientArbiterNonComposing?: `0x${string}`;
-  refUidArbiterNonComposing?: `0x${string}`;
-  revocableArbiterNonComposing?: `0x${string}`;
-  revocationTimeArbiterNonComposing?: `0x${string}`;
-  schemaArbiterNonComposing?: `0x${string}`;
-  timestampArbiterNonComposing?: `0x${string}`;
-  uidArbiterNonComposing?: `0x${string}`;
-  valueArbiterNonComposing?: `0x${string}`;
+  // Attestation Properties Arbiters
+  recipientArbiter: `0x${string}`;
+  attesterArbiter: `0x${string}`;
+  schemaArbiter: `0x${string}`;
+  uidArbiter: `0x${string}`;
+  refUidArbiter: `0x${string}`;
+  revocableArbiter: `0x${string}`;
+  timeAfterArbiter: `0x${string}`;
+  timeBeforeArbiter: `0x${string}`;
+  timeEqualArbiter: `0x${string}`;
+  expirationTimeAfterArbiter: `0x${string}`;
+  expirationTimeBeforeArbiter: `0x${string}`;
+  expirationTimeEqualArbiter: `0x${string}`;
 };
 
 export type PermitSignature = {
@@ -131,6 +117,7 @@ export type TokenBundle = {
 };
 
 export type TokenBundleFlat = {
+  nativeAmount: bigint;
   erc20Tokens: `0x${string}`[];
   erc20Amounts: bigint[];
 
@@ -142,7 +129,7 @@ export type TokenBundleFlat = {
   erc1155Amounts: bigint[];
 };
 
-export type ApprovalPurpose = "escrow" | "payment";
+export type ApprovalPurpose = "escrow" | "payment" | "barter";
 
 export type Attestation = {
   uid: `0x${string}`;

@@ -55,8 +55,8 @@ describe("Native Token Tests", () => {
       payee: bob,
     };
 
-    const encoded = aliceClient.nativeToken.encodeNativeTokenObligationData(data);
-    const decoded = aliceClient.nativeToken.decodeNativeTokenObligationData(encoded);
+    const encoded = aliceClient.nativeToken.payment.encodeObligationRaw(data);
+    const decoded = aliceClient.nativeToken.payment.decodeObligation(encoded);
     expect(decoded.amount).toEqual(data.amount);
     expect(decoded.payee.toLowerCase()).toBe(data.payee.toLowerCase());
   });
@@ -71,7 +71,7 @@ describe("Native Token Tests", () => {
       });
 
       // Alice makes a direct payment to Bob
-      const { hash } = await aliceClient.nativeToken.doNativeTokenPaymentObligation({
+      const { hash } = await aliceClient.nativeToken.payment.pay({
         amount: paymentAmount,
         payee: bob,
       });
@@ -97,7 +97,7 @@ describe("Native Token Tests", () => {
         address: bob,
       });
 
-      const { hash } = await aliceClient.nativeToken.doNativeTokenPaymentObligation({
+      const { hash } = await aliceClient.nativeToken.payment.pay({
         amount: paymentAmount,
         payee: bob,
       });
@@ -117,7 +117,7 @@ describe("Native Token Tests", () => {
         address: bob,
       });
 
-      const { hash } = await aliceClient.nativeToken.doNativeTokenPaymentObligation({
+      const { hash } = await aliceClient.nativeToken.payment.pay({
         amount: paymentAmount,
         payee: bob,
       });
@@ -139,7 +139,7 @@ describe("Native Token Tests", () => {
           address: recipient,
         });
 
-        const { hash } = await aliceClient.nativeToken.doNativeTokenPaymentObligation({
+        const { hash } = await aliceClient.nativeToken.payment.pay({
           amount: paymentAmount,
           payee: recipient,
         });
@@ -160,7 +160,7 @@ describe("Native Token Tests", () => {
         address: bob,
       });
 
-      const { hash } = await aliceClient.nativeToken.doNativeTokenPaymentObligation({
+      const { hash } = await aliceClient.nativeToken.payment.pay({
         amount: weiAmount,
         payee: bob,
       });
@@ -190,8 +190,8 @@ describe("Native Token Tests", () => {
           payee: alice,
         };
 
-        const encoded = aliceClient.nativeToken.encodeNativeTokenObligationData(obligationData);
-        const decoded = aliceClient.nativeToken.decodeNativeTokenObligationData(encoded);
+        const encoded = aliceClient.nativeToken.payment.encodeObligationRaw(obligationData);
+        const decoded = aliceClient.nativeToken.payment.decodeObligation(encoded);
 
         expect(decoded.amount).toBe(amount);
         expect(decoded.payee.toLowerCase()).toBe(alice.toLowerCase());
@@ -207,8 +207,8 @@ describe("Native Token Tests", () => {
           payee,
         };
 
-        const encoded = aliceClient.nativeToken.encodeNativeTokenObligationData(obligationData);
-        const decoded = aliceClient.nativeToken.decodeNativeTokenObligationData(encoded);
+        const encoded = aliceClient.nativeToken.payment.encodeObligationRaw(obligationData);
+        const decoded = aliceClient.nativeToken.payment.decodeObligation(encoded);
 
         expect(decoded.amount).toBe(parseEther("1.0"));
         expect(decoded.payee.toLowerCase()).toBe(payee.toLowerCase());
@@ -223,7 +223,7 @@ describe("Native Token Tests", () => {
         payee: bob,
       };
 
-      const demand = aliceClient.nativeToken.createNativeTokenPaymentDemand(obligationData);
+      const demand = aliceClient.nativeToken.payment.createDemand(obligationData.amount, obligationData.payee);
 
       // Verify the demand structure
       expect(demand.arbiter).toBe(testContext.addresses.nativeTokenPaymentObligation);
@@ -232,29 +232,28 @@ describe("Native Token Tests", () => {
       expect(demand.demand.startsWith("0x")).toBe(true);
 
       // Verify we can decode the demand data
-      const decoded = aliceClient.nativeToken.decodeNativeTokenObligationData(demand.demand);
+      const decoded = aliceClient.nativeToken.payment.decodeObligation(demand.demand);
       expect(decoded.amount).toBe(obligationData.amount);
       expect(decoded.payee.toLowerCase()).toBe(obligationData.payee.toLowerCase());
     });
 
     test("testCreateEscrowDemand", () => {
       const escrowData = {
+        arbiter: testContext.addresses.trivialArbiter,
+        demand: "0x" as `0x${string}`,
         amount: parseEther("2.0"),
-        payee: alice,
-        escrowAgent: charlie,
-        releaseCondition: "manual",
       };
 
-      try {
-        const demand = aliceClient.nativeToken.createNativeTokenEscrowDemand(escrowData);
-        expect(demand.arbiter).toBe(testContext.addresses.nativeTokenEscrowObligation);
-        expect(demand.demand).toBeDefined();
-        expect(typeof demand.demand).toBe("string");
-        expect(demand.demand.startsWith("0x")).toBe(true);
-      } catch (error) {
-        // Expected to fail due to missing required escrow parameters in current implementation
-        expect(error).toBeDefined();
-      }
+      // Manually construct escrow demand using the new nested API
+      const demand = {
+        arbiter: testContext.addresses.nativeTokenEscrowObligation,
+        demand: aliceClient.nativeToken.escrow.nonTierable.encodeObligationRaw(escrowData),
+      };
+
+      expect(demand.arbiter).toBe(testContext.addresses.nativeTokenEscrowObligation);
+      expect(demand.demand).toBeDefined();
+      expect(typeof demand.demand).toBe("string");
+      expect(demand.demand.startsWith("0x")).toBe(true);
     });
   });
 
@@ -278,7 +277,7 @@ describe("Native Token Tests", () => {
       };
 
       // Test that the payment contract can be called successfully
-      const { hash } = await aliceClient.nativeToken.doNativeTokenPaymentObligation(paymentData);
+      const { hash } = await aliceClient.nativeToken.payment.pay(paymentData);
 
       expect(hash).toBeDefined();
       expect(hash.startsWith("0x")).toBe(true);
@@ -289,41 +288,40 @@ describe("Native Token Tests", () => {
       expect(receipt.status).toBe("success");
     });
 
-    test("testValidationFunction", () => {
+    test("testEncodingRoundTrip", () => {
       const validData = {
         amount: parseEther("1.0"),
         payee: alice,
       };
 
-      const validation = aliceClient.nativeToken.validatePaymentObligationData(validData);
-      expect(validation.valid).toBe(true);
-      expect(validation.errors).toHaveLength(0);
+      // Verify round-trip encoding/decoding works correctly
+      const encoded = aliceClient.nativeToken.payment.encodeObligationRaw(validData);
+      const decoded = aliceClient.nativeToken.payment.decodeObligation(encoded);
+      expect(decoded.amount).toBe(validData.amount);
+      expect(decoded.payee.toLowerCase()).toBe(validData.payee.toLowerCase());
     });
   });
 
   describe("Native Token Escrow Tests", () => {
     test("testEscrowObligation", async () => {
       const escrowData = {
+        arbiter: testContext.addresses.trivialArbiter,
+        demand: "0x" as `0x${string}`,
         amount: parseEther("2.0"),
-        payee: bob,
-        escrowAgent: charlie,
-        releaseCondition: "manual",
       };
 
-      try {
-        // Note: This test may fail due to ABI parameter mismatches in escrow contract
-        // but it tests the client interface
-        const { hash } = await aliceClient.nativeToken.doNativeTokenEscrowObligation(escrowData);
-        expect(hash).toBeDefined();
-        expect(hash.startsWith("0x")).toBe(true);
+      // Create escrow using the new nested API
+      const { hash } = await aliceClient.nativeToken.escrow.nonTierable.create(
+        escrowData.amount,
+        { arbiter: escrowData.arbiter, demand: escrowData.demand },
+        BigInt(Math.floor(Date.now() / 1000) + 86400) // 1 day expiration
+      );
 
-        const receipt = await testClient.waitForTransactionReceipt({ hash });
-        expect(receipt.status).toBe("success");
-      } catch (error) {
-        // Expected to fail due to ABI parameter mismatch - this is a known issue
-        // The escrow contract expects different parameters than currently implemented
-        expect(error).toBeDefined();
-      }
+      expect(hash).toBeDefined();
+      expect(hash.startsWith("0x")).toBe(true);
+
+      const receipt = await testClient.waitForTransactionReceipt({ hash });
+      expect(receipt.status).toBe("success");
     });
   });
 
@@ -335,8 +333,8 @@ describe("Native Token Tests", () => {
       };
 
       // Zero amount should be encoded/decoded correctly
-      const encoded = aliceClient.nativeToken.encodeNativeTokenObligationData(paymentData);
-      const decoded = aliceClient.nativeToken.decodeNativeTokenObligationData(encoded);
+      const encoded = aliceClient.nativeToken.payment.encodeObligationRaw(paymentData);
+      const decoded = aliceClient.nativeToken.payment.decodeObligation(encoded);
 
       expect(decoded.amount).toBe(BigInt(0));
       expect(decoded.payee.toLowerCase()).toBe(bob.toLowerCase());
@@ -349,8 +347,8 @@ describe("Native Token Tests", () => {
         payee: bob,
       };
 
-      const encoded = aliceClient.nativeToken.encodeNativeTokenObligationData(paymentData);
-      const decoded = aliceClient.nativeToken.decodeNativeTokenObligationData(encoded);
+      const encoded = aliceClient.nativeToken.payment.encodeObligationRaw(paymentData);
+      const decoded = aliceClient.nativeToken.payment.decodeObligation(encoded);
 
       expect(decoded.amount).toBe(maxAmount);
       expect(decoded.payee.toLowerCase()).toBe(bob.toLowerCase());
@@ -364,7 +362,7 @@ describe("Native Token Tests", () => {
       });
 
       // Alice pays herself
-      const { hash } = await aliceClient.nativeToken.doNativeTokenPaymentObligation({
+      const { hash } = await aliceClient.nativeToken.payment.pay({
         amount: paymentAmount,
         payee: alice,
       });
@@ -383,28 +381,31 @@ describe("Native Token Tests", () => {
     });
   });
 
-  describe("Native Token Payment Validation", () => {
-    test("testPaymentAmountValidation", () => {
+  describe("Native Token Payment Encoding Validation", () => {
+    test("testPaymentAmountEncoding", () => {
       const testCases = [
-        { amount: parseEther("0.001"), valid: true },
-        { amount: parseEther("1.0"), valid: true },
-        { amount: parseEther("5.0"), valid: true },
-        { amount: BigInt(1), valid: true },
-        { amount: BigInt(0), valid: true }, // Zero should be valid for encoding
+        { amount: parseEther("0.001"), description: "small amount" },
+        { amount: parseEther("1.0"), description: "one ETH" },
+        { amount: parseEther("5.0"), description: "large amount" },
+        { amount: BigInt(1), description: "1 wei" },
+        { amount: BigInt(0), description: "zero amount" },
       ];
 
-      testCases.forEach(({ amount, valid }) => {
+      testCases.forEach(({ amount }) => {
         const obligationData = {
           amount,
           payee: bob,
         };
 
-        const validation = aliceClient.nativeToken.validatePaymentObligationData(obligationData);
-        expect(validation.valid).toBe(valid);
+        // Verify encoding/decoding round-trip works for all amounts
+        const encoded = aliceClient.nativeToken.payment.encodeObligationRaw(obligationData);
+        const decoded = aliceClient.nativeToken.payment.decodeObligation(encoded);
+        expect(decoded.amount).toBe(amount);
+        expect(decoded.payee.toLowerCase()).toBe(bob.toLowerCase());
       });
     });
 
-    test("testPayeeAddressValidation", () => {
+    test("testPayeeAddressEncoding", () => {
       const validAddresses = [alice, bob, charlie];
 
       validAddresses.forEach(payee => {
@@ -413,9 +414,11 @@ describe("Native Token Tests", () => {
           payee,
         };
 
-        const validation = aliceClient.nativeToken.validatePaymentObligationData(obligationData);
-        expect(validation.valid).toBe(true);
-        expect(validation.errors).toHaveLength(0);
+        // Verify encoding/decoding round-trip works for all addresses
+        const encoded = aliceClient.nativeToken.payment.encodeObligationRaw(obligationData);
+        const decoded = aliceClient.nativeToken.payment.decodeObligation(encoded);
+        expect(decoded.amount).toBe(parseEther("1.0"));
+        expect(decoded.payee.toLowerCase()).toBe(payee.toLowerCase());
       });
     });
   });

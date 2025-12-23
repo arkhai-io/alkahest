@@ -13,18 +13,12 @@ import {
   type WalletClient,
 } from "viem";
 import { makeArbitersClient } from "./clients/arbiters";
-import { makeAttestationClient } from "./clients/attestation";
-import { makeErc20Client } from "./clients/erc20";
-import { makeErc721Client } from "./clients/erc721";
-import { makeErc1155Client } from "./clients/erc1155";
-import { makeStringObligationClient } from "./clients/stringObligation";
-import { makeTokenBundleClient } from "./clients/tokenBundle";
 import { contractAddresses as defaultContractAddresses, supportedChains } from "./config";
 import { abi as easAbi } from "./contracts/IEAS";
 import { makeDefaultExtension } from "./extensions";
-import { makeOracleClient } from "./oracle/oracle";
 import type { ChainAddresses } from "./types";
-import { getAttestation, getOptimalPollingInterval } from "./utils";
+import { getAttestation, getOptimalPollingInterval, decodeDemandWithAddresses, type DecodedDemandResult } from "./utils";
+import type { Demand } from "./types";
 
 // Forward declarations to avoid circular type inference
 type Extended = {
@@ -73,6 +67,7 @@ export type MinimalClient = ExtendableClient<{
     demandAbi: DemandData,
     fulfillment: { refUID: `0x${string}` },
   ) => Promise<[Awaited<ReturnType<typeof getAttestation>>, DecodeAbiParametersReturnType<DemandData>]>;
+  decodeDemand: (demand: Demand) => DecodedDemandResult;
 }>;
 
 // Full client type with default extensions
@@ -208,79 +203,49 @@ export const makeMinimalClient = (
     nativeTokenEscrowObligation:
       contractAddresses?.nativeTokenEscrowObligation || baseAddresses?.nativeTokenEscrowObligation || zeroAddress,
 
-    trustedPartyArbiter: contractAddresses?.trustedPartyArbiter || baseAddresses?.trustedPartyArbiter || zeroAddress,
     trivialArbiter: contractAddresses?.trivialArbiter || baseAddresses?.trivialArbiter || zeroAddress,
-    specificAttestationArbiter:
-      contractAddresses?.specificAttestationArbiter || baseAddresses?.specificAttestationArbiter || zeroAddress,
     trustedOracleArbiter: contractAddresses?.trustedOracleArbiter || baseAddresses?.trustedOracleArbiter || zeroAddress,
     intrinsicsArbiter: contractAddresses?.intrinsicsArbiter || baseAddresses?.intrinsicsArbiter || zeroAddress,
     intrinsicsArbiter2: contractAddresses?.intrinsicsArbiter2 || baseAddresses?.intrinsicsArbiter2 || zeroAddress,
     anyArbiter: contractAddresses?.anyArbiter || baseAddresses?.anyArbiter || zeroAddress,
     allArbiter: contractAddresses?.allArbiter || baseAddresses?.allArbiter || zeroAddress,
-    notArbiter: contractAddresses?.notArbiter || baseAddresses?.notArbiter || zeroAddress,
-    erc8004Arbiter: contractAddresses?.erc8004Arbiter || baseAddresses?.erc8004Arbiter || zeroAddress,
-    confirmationArbiter: contractAddresses?.confirmationArbiter || baseAddresses?.confirmationArbiter || zeroAddress,
-    confirmationArbiterComposing:
-      contractAddresses?.confirmationArbiterComposing || baseAddresses?.confirmationArbiterComposing || zeroAddress,
-    revocableConfirmationArbiter:
-      contractAddresses?.revocableConfirmationArbiter || baseAddresses?.revocableConfirmationArbiter || zeroAddress,
-    revocableConfirmationArbiterComposing:
-      contractAddresses?.revocableConfirmationArbiterComposing ||
-      baseAddresses?.revocableConfirmationArbiterComposing ||
-      zeroAddress,
-    unrevocableConfirmationArbiter:
-      contractAddresses?.unrevocableConfirmationArbiter || baseAddresses?.unrevocableConfirmationArbiter || zeroAddress,
-    unrevocableArbiterComposing:
-      contractAddresses?.unrevocableArbiterComposing || baseAddresses?.unrevocableArbiterComposing || zeroAddress,
     nativeTokenBarterUtils:
       contractAddresses?.nativeTokenBarterUtils || baseAddresses?.nativeTokenBarterUtils || zeroAddress,
 
-    // Attestation Properties Arbiters - Composing
-    attesterArbiterComposing:
-      contractAddresses?.attesterArbiterComposing || baseAddresses?.attesterArbiterComposing || zeroAddress,
-    expirationTimeArbiterComposing:
-      contractAddresses?.expirationTimeArbiterComposing || baseAddresses?.expirationTimeArbiterComposing || zeroAddress,
-    recipientArbiterComposing:
-      contractAddresses?.recipientArbiterComposing || baseAddresses?.recipientArbiterComposing || zeroAddress,
-    refUidArbiterComposing:
-      contractAddresses?.refUidArbiterComposing || baseAddresses?.refUidArbiterComposing || zeroAddress,
-    revocableArbiterComposing:
-      contractAddresses?.revocableArbiterComposing || baseAddresses?.revocableArbiterComposing || zeroAddress,
-    revocationTimeArbiterComposing:
-      contractAddresses?.revocationTimeArbiterComposing || baseAddresses?.revocationTimeArbiterComposing || zeroAddress,
-    schemaArbiterComposing:
-      contractAddresses?.schemaArbiterComposing || baseAddresses?.schemaArbiterComposing || zeroAddress,
-    timestampArbiterComposing:
-      contractAddresses?.timestampArbiterComposing || baseAddresses?.timestampArbiterComposing || zeroAddress,
-    uidArbiterComposing: contractAddresses?.uidArbiterComposing || baseAddresses?.uidArbiterComposing || zeroAddress,
-    valueArbiterComposing:
-      contractAddresses?.valueArbiterComposing || baseAddresses?.valueArbiterComposing || zeroAddress,
+    // Confirmation arbiters (new naming convention)
+    exclusiveRevocableConfirmationArbiter:
+      contractAddresses?.exclusiveRevocableConfirmationArbiter ||
+      baseAddresses?.exclusiveRevocableConfirmationArbiter ||
+      zeroAddress,
+    exclusiveUnrevocableConfirmationArbiter:
+      contractAddresses?.exclusiveUnrevocableConfirmationArbiter ||
+      baseAddresses?.exclusiveUnrevocableConfirmationArbiter ||
+      zeroAddress,
+    nonexclusiveRevocableConfirmationArbiter:
+      contractAddresses?.nonexclusiveRevocableConfirmationArbiter ||
+      baseAddresses?.nonexclusiveRevocableConfirmationArbiter ||
+      zeroAddress,
+    nonexclusiveUnrevocableConfirmationArbiter:
+      contractAddresses?.nonexclusiveUnrevocableConfirmationArbiter ||
+      baseAddresses?.nonexclusiveUnrevocableConfirmationArbiter ||
+      zeroAddress,
 
-    // Attestation Properties Arbiters - Non-Composing
-    attesterArbiterNonComposing:
-      contractAddresses?.attesterArbiterNonComposing || baseAddresses?.attesterArbiterNonComposing || zeroAddress,
-    expirationTimeArbiterNonComposing:
-      contractAddresses?.expirationTimeArbiterNonComposing ||
-      baseAddresses?.expirationTimeArbiterNonComposing ||
-      zeroAddress,
-    recipientArbiterNonComposing:
-      contractAddresses?.recipientArbiterNonComposing || baseAddresses?.recipientArbiterNonComposing || zeroAddress,
-    refUidArbiterNonComposing:
-      contractAddresses?.refUidArbiterNonComposing || baseAddresses?.refUidArbiterNonComposing || zeroAddress,
-    revocableArbiterNonComposing:
-      contractAddresses?.revocableArbiterNonComposing || baseAddresses?.revocableArbiterNonComposing || zeroAddress,
-    revocationTimeArbiterNonComposing:
-      contractAddresses?.revocationTimeArbiterNonComposing ||
-      baseAddresses?.revocationTimeArbiterNonComposing ||
-      zeroAddress,
-    schemaArbiterNonComposing:
-      contractAddresses?.schemaArbiterNonComposing || baseAddresses?.schemaArbiterNonComposing || zeroAddress,
-    timestampArbiterNonComposing:
-      contractAddresses?.timestampArbiterNonComposing || baseAddresses?.timestampArbiterNonComposing || zeroAddress,
-    uidArbiterNonComposing:
-      contractAddresses?.uidArbiterNonComposing || baseAddresses?.uidArbiterNonComposing || zeroAddress,
-    valueArbiterNonComposing:
-      contractAddresses?.valueArbiterNonComposing || baseAddresses?.valueArbiterNonComposing || zeroAddress,
+    // Attestation Properties Arbiters
+    recipientArbiter: contractAddresses?.recipientArbiter || baseAddresses?.recipientArbiter || zeroAddress,
+    attesterArbiter: contractAddresses?.attesterArbiter || baseAddresses?.attesterArbiter || zeroAddress,
+    schemaArbiter: contractAddresses?.schemaArbiter || baseAddresses?.schemaArbiter || zeroAddress,
+    uidArbiter: contractAddresses?.uidArbiter || baseAddresses?.uidArbiter || zeroAddress,
+    refUidArbiter: contractAddresses?.refUidArbiter || baseAddresses?.refUidArbiter || zeroAddress,
+    revocableArbiter: contractAddresses?.revocableArbiter || baseAddresses?.revocableArbiter || zeroAddress,
+    timeAfterArbiter: contractAddresses?.timeAfterArbiter || baseAddresses?.timeAfterArbiter || zeroAddress,
+    timeBeforeArbiter: contractAddresses?.timeBeforeArbiter || baseAddresses?.timeBeforeArbiter || zeroAddress,
+    timeEqualArbiter: contractAddresses?.timeEqualArbiter || baseAddresses?.timeEqualArbiter || zeroAddress,
+    expirationTimeAfterArbiter:
+      contractAddresses?.expirationTimeAfterArbiter || baseAddresses?.expirationTimeAfterArbiter || zeroAddress,
+    expirationTimeBeforeArbiter:
+      contractAddresses?.expirationTimeBeforeArbiter || baseAddresses?.expirationTimeBeforeArbiter || zeroAddress,
+    expirationTimeEqualArbiter:
+      contractAddresses?.expirationTimeEqualArbiter || baseAddresses?.expirationTimeEqualArbiter || zeroAddress,
   };
 
   const client = {
@@ -475,6 +440,28 @@ export const makeMinimalClient = (
       const demand = decodeAbiParameters(demandAbi, trustedOracleDemand.data);
 
       return [escrow, demand];
+    },
+
+    /**
+     * Decode an arbiter demand using the client's ChainAddresses
+     * Recursively decodes nested demands for composing arbiters (All/Any)
+     *
+     * @param demand - The demand to decode {arbiter: Address, demand: Bytes}
+     * @returns Decoded demand with optional children for composing arbiters
+     *
+     * @example
+     * ```ts
+     * const decoded = client.decodeDemand({
+     *   arbiter: contractAddresses.allArbiter,
+     *   demand: "0x..."
+     * });
+     * console.log(decoded.arbiter); // the arbiter address
+     * console.log(decoded.decoded); // the decoded demand data
+     * console.log(decoded.children); // nested demands if composing arbiter
+     * ```
+     */
+    decodeDemand: (demand: Demand): DecodedDemandResult => {
+      return decodeDemandWithAddresses(demand, addresses);
     },
   };
 

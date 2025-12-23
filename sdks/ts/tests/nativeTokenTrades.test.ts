@@ -14,15 +14,15 @@ import {
 import { teardownTestEnvironment } from "./utils/teardownTestEnvironment";
 
 /**
- * Test suite for native token trading functions added to ERC20, ERC721, ERC1155, and TokenBundle clients.
- * 
- * These tests verify that the new functions added to support native token (ETH) trading are properly implemented.
- * 
+ * Test suite for native token trading functions.
+ *
+ * These tests verify that the functions for trading native tokens (ETH) for other token types are properly implemented.
+ *
  * Functions tested:
- * - ERC20: buyErc20WithNative, payNativeForErc20
- * - ERC721: buyErc721WithNative, payNativeForErc721  
- * - ERC1155: buyErc1155WithNative, payNativeForErc1155
- * - TokenBundle: buyBundleWithNative, payNativeForBundle
+ * - nativeToken.barter: buyErc20WithNative, payNativeForErc20
+ * - erc721.barter: buyErc721WithNative, payNativeForErc721
+ * - erc1155.barter: buyErc1155WithNative, payNativeForErc1155
+ * - bundle.barter: buyBundleWithNative, payNativeForBundle
  */
 
 describe("Native Token Trading Functions", () => {
@@ -67,55 +67,57 @@ describe("Native Token Trading Functions", () => {
   });
 
   describe("Function Availability Tests", () => {
+    // Native token trading for ERC20 is in nativeToken.barter, not erc20.barter
     test("should have buyErc20WithNative function", () => {
-      expect(aliceClient.erc20.buyErc20WithNative).toBeDefined();
-      expect(typeof aliceClient.erc20.buyErc20WithNative).toBe("function");
+      expect(aliceClient.nativeToken.barter.buyErc20WithNative).toBeDefined();
+      expect(typeof aliceClient.nativeToken.barter.buyErc20WithNative).toBe("function");
     });
 
     test("should have payNativeForErc20 function", () => {
-      expect(aliceClient.erc20.payNativeForErc20).toBeDefined();
-      expect(typeof aliceClient.erc20.payNativeForErc20).toBe("function");
+      expect(aliceClient.nativeToken.barter.payNativeForErc20).toBeDefined();
+      expect(typeof aliceClient.nativeToken.barter.payNativeForErc20).toBe("function");
     });
 
     test("should have buyErc721WithNative function", () => {
-      expect(aliceClient.erc721.buyErc721WithNative).toBeDefined();
-      expect(typeof aliceClient.erc721.buyErc721WithNative).toBe("function");
+      expect(aliceClient.erc721.barter.buyErc721WithNative).toBeDefined();
+      expect(typeof aliceClient.erc721.barter.buyErc721WithNative).toBe("function");
     });
 
     test("should have payNativeForErc721 function", () => {
-      expect(aliceClient.erc721.payNativeForErc721).toBeDefined();
-      expect(typeof aliceClient.erc721.payNativeForErc721).toBe("function");
+      expect(aliceClient.erc721.barter.payNativeForErc721).toBeDefined();
+      expect(typeof aliceClient.erc721.barter.payNativeForErc721).toBe("function");
     });
 
     test("should have buyErc1155WithNative function", () => {
-      expect(aliceClient.erc1155.buyErc1155WithNative).toBeDefined();
-      expect(typeof aliceClient.erc1155.buyErc1155WithNative).toBe("function");
+      expect(aliceClient.erc1155.barter.buyErc1155WithNative).toBeDefined();
+      expect(typeof aliceClient.erc1155.barter.buyErc1155WithNative).toBe("function");
     });
 
     test("should have payNativeForErc1155 function", () => {
-      expect(aliceClient.erc1155.payNativeForErc1155).toBeDefined();
-      expect(typeof aliceClient.erc1155.payNativeForErc1155).toBe("function");
+      expect(aliceClient.erc1155.barter.payNativeForErc1155).toBeDefined();
+      expect(typeof aliceClient.erc1155.barter.payNativeForErc1155).toBe("function");
     });
 
     test("should have buyBundleWithNative function", () => {
-      expect(aliceClient.bundle.buyBundleWithNative).toBeDefined();
-      expect(typeof aliceClient.bundle.buyBundleWithNative).toBe("function");
+      expect(aliceClient.bundle.barter.buyBundleWithNative).toBeDefined();
+      expect(typeof aliceClient.bundle.barter.buyBundleWithNative).toBe("function");
     });
 
     test("should have payNativeForBundle function", () => {
-      expect(aliceClient.bundle.payNativeForBundle).toBeDefined();
-      expect(typeof aliceClient.bundle.payNativeForBundle).toBe("function");
+      expect(aliceClient.bundle.barter.payNativeForBundle).toBeDefined();
+      expect(typeof aliceClient.bundle.barter.payNativeForBundle).toBe("function");
     });
   });
 
+  // Native token trading for ERC20 is in nativeToken.barter
   describe("ERC20 Native Token Trading", () => {
     test("buyErc20WithNative should accept correct parameters", () => {
-      const fn = aliceClient.erc20.buyErc20WithNative;
+      const fn = aliceClient.nativeToken.barter.buyErc20WithNative;
       expect(fn.length).toBe(3); // bidAmount, ask, expiration
     });
 
     test("payNativeForErc20 should accept correct parameters", () => {
-      const fn = aliceClient.erc20.payNativeForErc20;
+      const fn = aliceClient.nativeToken.barter.payNativeForErc20;
       expect(fn.length).toBe(1); // buyAttestation
     });
 
@@ -128,7 +130,7 @@ describe("Native Token Trading Functions", () => {
       const expiration = BigInt(Math.floor(Date.now() / 1000)) + 3600n;
 
       try {
-        const result = await aliceClient.erc20.buyErc20WithNative(
+        const result = await aliceClient.nativeToken.barter.buyErc20WithNative(
           bidAmount,
           ask,
           expiration
@@ -148,12 +150,12 @@ describe("Native Token Trading Functions", () => {
 
   describe("ERC721 Native Token Trading", () => {
     test("buyErc721WithNative should accept correct parameters", () => {
-      const fn = aliceClient.erc721.buyErc721WithNative;
+      const fn = aliceClient.erc721.barter.buyErc721WithNative;
       expect(fn.length).toBe(3); // bidAmount, ask, expiration
     });
 
     test("payNativeForErc721 should accept correct parameters", () => {
-      const fn = aliceClient.erc721.payNativeForErc721;
+      const fn = aliceClient.erc721.barter.payNativeForErc721;
       expect(fn.length).toBe(1); // buyAttestation
     });
 
@@ -166,7 +168,7 @@ describe("Native Token Trading Functions", () => {
       const expiration = BigInt(Math.floor(Date.now() / 1000)) + 3600n;
 
       try {
-        const result = await aliceClient.erc721.buyErc721WithNative(
+        const result = await aliceClient.erc721.barter.buyErc721WithNative(
           bidAmount,
           ask,
           expiration
@@ -184,12 +186,12 @@ describe("Native Token Trading Functions", () => {
 
   describe("ERC1155 Native Token Trading", () => {
     test("buyErc1155WithNative should accept correct parameters", () => {
-      const fn = aliceClient.erc1155.buyErc1155WithNative;
+      const fn = aliceClient.erc1155.barter.buyErc1155WithNative;
       expect(fn.length).toBe(3); // bidAmount, ask, expiration
     });
 
     test("payNativeForErc1155 should accept correct parameters", () => {
-      const fn = aliceClient.erc1155.payNativeForErc1155;
+      const fn = aliceClient.erc1155.barter.payNativeForErc1155;
       expect(fn.length).toBe(1); // buyAttestation
     });
 
@@ -203,7 +205,7 @@ describe("Native Token Trading Functions", () => {
       const expiration = BigInt(Math.floor(Date.now() / 1000)) + 3600n;
 
       try {
-        const result = await aliceClient.erc1155.buyErc1155WithNative(
+        const result = await aliceClient.erc1155.barter.buyErc1155WithNative(
           bidAmount,
           ask,
           expiration
@@ -221,27 +223,27 @@ describe("Native Token Trading Functions", () => {
 
   describe("TokenBundle Native Token Trading", () => {
     test("buyBundleWithNative should accept correct parameters", () => {
-      const fn = aliceClient.bundle.buyBundleWithNative;
+      const fn = aliceClient.bundle.barter.buyBundleWithNative;
       expect(fn.length).toBe(4); // bidAmount, ask, payee, expiration
     });
 
     test("payNativeForBundle should accept correct parameters", () => {
-      const fn = aliceClient.bundle.payNativeForBundle;
+      const fn = aliceClient.bundle.barter.payNativeForBundle;
       expect(fn.length).toBe(1); // buyAttestation
     });
 
     test("should create native token buy order for TokenBundle", async () => {
       const bidAmount = parseEther("2");
       const ask = {
-        erc20: [{ address: aliceErc20Token, value: parseEther("50") }],
-        erc721: [{ address: aliceErc721Token, id: 2n }],
-        erc1155: [{ address: aliceErc1155Token, id: 1n, value: 5n }],
+        erc20s: [{ address: aliceErc20Token, value: parseEther("50") }],
+        erc721s: [{ address: aliceErc721Token, id: 2n }],
+        erc1155s: [{ address: aliceErc1155Token, id: 1n, value: 5n }],
       };
       const payee = bob;
       const expiration = BigInt(Math.floor(Date.now() / 1000)) + 3600n;
 
       try {
-        const result = await aliceClient.bundle.buyBundleWithNative(
+        const result = await aliceClient.bundle.barter.buyBundleWithNative(
           bidAmount,
           ask,
           payee,
@@ -289,14 +291,14 @@ describe("Native Token Trading Functions", () => {
 
     test("should have all 8 native token trading functions", () => {
       const functions = [
-        aliceClient.erc20.buyErc20WithNative,
-        aliceClient.erc20.payNativeForErc20,
-        aliceClient.erc721.buyErc721WithNative,
-        aliceClient.erc721.payNativeForErc721,
-        aliceClient.erc1155.buyErc1155WithNative,
-        aliceClient.erc1155.payNativeForErc1155,
-        aliceClient.bundle.buyBundleWithNative,
-        aliceClient.bundle.payNativeForBundle,
+        aliceClient.nativeToken.barter.buyErc20WithNative,
+        aliceClient.nativeToken.barter.payNativeForErc20,
+        aliceClient.erc721.barter.buyErc721WithNative,
+        aliceClient.erc721.barter.payNativeForErc721,
+        aliceClient.erc1155.barter.buyErc1155WithNative,
+        aliceClient.erc1155.barter.payNativeForErc1155,
+        aliceClient.bundle.barter.buyBundleWithNative,
+        aliceClient.bundle.barter.payNativeForBundle,
       ];
 
       expect(functions.length).toBe(8);

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { createWalletClient, http, nonceManager, parseAbiParameters, parseEther, webSocket } from "viem";
+import { createWalletClient, http, nonceManager, parseEther, webSocket } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { baseSepolia } from "viem/chains";
 import { contractAddresses, makeClient } from "../../src";
@@ -68,8 +68,8 @@ describe("WebSocket Transport Support", () => {
       expect(typeof httpClient.waitForFulfillment).toBe("function");
       expect(typeof wsClient.waitForFulfillment).toBe("function");
 
-      expect(typeof httpClient.oracle.listenAndArbitrate).toBe("function");
-      expect(typeof wsClient.oracle.listenAndArbitrate).toBe("function");
+      expect(typeof httpClient.arbiters.general.trustedOracle.listenAndArbitrate).toBe("function");
+      expect(typeof wsClient.arbiters.general.trustedOracle.listenAndArbitrate).toBe("function");
     });
 
     test("transport types should be correctly identified", () => {
@@ -160,16 +160,17 @@ describe("WebSocket Transport Support", () => {
     });
 
     describe("Real-time Event Watching", () => {
-      test("should do speed test WS & HTTP Waiting for fulfillment", async () => {
+      // @ts-expect-error - bun:test timeout option is valid but not in TS types
+      test("should do speed test WS & HTTP Waiting for fulfillment", { timeout: 15000 }, async () => {
         const bidAmount = parseEther("100");
         const askAmount = parseEther("200");
         const expiration = BigInt(Math.floor(Date.now() / 1000) + 86400); // 1 day from now
 
-        // Alice approves tokens for escrow (using HTTP client for transactions)
-        await aliceClient.erc20.approve({ address: erc20TokenA, value: bidAmount }, "escrow");
+        // Alice approves tokens for barter utils (using HTTP client for transactions)
+        await aliceClient.erc20.util.approve({ address: erc20TokenA, value: bidAmount }, "barter");
 
         // Alice creates an escrow (using HTTP client for transactions)
-        const { attested: escrowData } = await aliceClient.erc20.buyErc20ForErc20(
+        const { attested: escrowData } = await aliceClient.erc20.barter.buyErc20ForErc20(
           { address: erc20TokenA, value: bidAmount },
           { address: erc20TokenB, value: askAmount },
           expiration,
@@ -190,10 +191,10 @@ describe("WebSocket Transport Support", () => {
         );
 
         // Bob approves and fulfills the escrow (using HTTP client for transactions)
-        await bobClient.erc20.approve({ address: erc20TokenB, value: askAmount }, "payment");
+        await bobClient.erc20.util.approve({ address: erc20TokenB, value: askAmount }, "barter");
 
         const fulfillmentStartTime = Date.now();
-        await bobClient.erc20.payErc20ForErc20(escrowData.uid);
+        await bobClient.erc20.barter.payErc20ForErc20(escrowData.uid);
 
         // Wait for both fulfillment promises
         const wsFulfillment = await wsFulfillmentPromise;
@@ -234,9 +235,9 @@ describe("WebSocket Transport Support", () => {
         const expiration = BigInt(Math.floor(Date.now() / 1000) + 86400);
 
         // Use HTTP clients for all transactions (more reliable)
-        await aliceClient.erc20.approve({ address: erc20TokenA, value: bidAmount }, "escrow");
+        await aliceClient.erc20.util.approve({ address: erc20TokenA, value: bidAmount }, "barter");
 
-        const { attested: escrowData } = await aliceClient.erc20.buyErc20ForErc20(
+        const { attested: escrowData } = await aliceClient.erc20.barter.buyErc20ForErc20(
           { address: erc20TokenA, value: bidAmount },
           { address: erc20TokenB, value: askAmount },
           expiration,
@@ -249,9 +250,9 @@ describe("WebSocket Transport Support", () => {
         );
 
         // Use HTTP client for fulfillment transaction
-        await bobClient.erc20.approve({ address: erc20TokenB, value: askAmount }, "payment");
+        await bobClient.erc20.util.approve({ address: erc20TokenB, value: askAmount }, "barter");
 
-        await bobClient.erc20.payErc20ForErc20(escrowData.uid);
+        await bobClient.erc20.barter.payErc20ForErc20(escrowData.uid);
 
         // WebSocket client should detect the fulfillment quickly
         const fulfillment = await fulfillmentPromise;
@@ -272,14 +273,14 @@ describe("WebSocket Transport Support", () => {
         const bidAmount = parseEther("10");
 
         // Approve using WebSocket client
-        const approvalHash = await aliceClientWs.erc20.approve({ address: erc20TokenA, value: bidAmount }, "escrow");
+        const approvalHash = await aliceClientWs.erc20.util.approve({ address: erc20TokenA, value: bidAmount }, "barter");
 
         expect(approvalHash).toBeDefined();
         expect(typeof approvalHash).toBe("string");
         expect(approvalHash.startsWith("0x")).toBe(true);
 
         // Create escrow using WebSocket client
-        const { attested } = await aliceClientWs.erc20.buyErc20ForErc20(
+        const { attested } = await aliceClientWs.erc20.barter.buyErc20ForErc20(
           { address: erc20TokenA, value: bidAmount },
           { address: erc20TokenB, value: bidAmount },
           BigInt(Math.floor(Date.now() / 1000) + 86400),
@@ -288,44 +289,6 @@ describe("WebSocket Transport Support", () => {
         expect(attested.uid).toBeDefined();
         expect(attested.uid).not.toBe("0x0000000000000000000000000000000000000000000000000000000000000000");
       });
-    });
-  });
-
-  describe("Network Integration (requires live connection)", () => {
-    test.skip("should listen for events with WebSocket", async () => {
-      // This test would require actual network connection and deployed contracts
-      // Skip by default, but could be enabled for integration testing
-      if (!process.env.WS_RPC_URL || !process.env.PRIVKEY_ALICE) {
-        return; // Skip if env vars not set
-      }
-
-      const client = makeClient(
-        createWalletClient({
-          account: privateKeyToAccount(process.env.PRIVKEY_ALICE as `0x${string}`, {
-            nonceManager,
-          }),
-          chain: baseSepolia,
-          transport: webSocket(process.env.WS_RPC_URL),
-        }),
-      );
-
-      const obligationAbi = parseAbiParameters("(string item)");
-
-      // Test real WebSocket event listening
-      const { unwatch } = await client.oracle.listenAndArbitrate(
-        async (attestation) => {
-          const obligation = client.extractObligationData(obligationAbi, attestation);
-          return obligation[0].item === "test";
-        },
-        {
-          onAfterArbitrate: async (decision) => {
-            console.log("WebSocket arbitration:", decision);
-          },
-        },
-      );
-
-      // Clean up after each test
-      setTimeout(() => unwatch(), 1000);
     });
   });
 });

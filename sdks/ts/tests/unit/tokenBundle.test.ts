@@ -130,11 +130,11 @@ describe("TokenBundle Tests", () => {
         testContext.addresses.tokenBundleEscrowObligation,
       );
 
-      // Alice approves tokens using bundle.approve
-      await aliceClient.bundle.approve(aliceBundle, "escrow");
+      // Alice approves tokens using bundle.util.approve (barter purpose for barter functions)
+      await aliceClient.bundle.util.approve(aliceBundle, "barter");
 
       // Alice creates buy attestation
-      const { attested: buyAttestation } = await aliceClient.bundle.buyBundleForBundle(
+      const { attested: buyAttestation } = await aliceClient.bundle.barter.buyBundleForBundle(
         aliceBundle,
         bobBundle,
         expiration,
@@ -176,13 +176,13 @@ describe("TokenBundle Tests", () => {
       const bobBundle = createBobBundle();
 
       // Bob approves and creates escrow for his bundle
-      await bobClient.bundle.approve(bobBundle, "escrow");
+      await bobClient.bundle.util.approve(bobBundle, "escrow");
 
       // Create bundle payment statement for Alice's bundle
-      const bundlePaymentStatement = bobClient.bundle.encodePaymentObligation(aliceBundle, bob);
+      const bundlePaymentStatement = bobClient.bundle.payment.encodeObligation(aliceBundle, bob);
 
       // Bob creates bundle escrow demanding Alice's bundle
-      const { attested: buyAttestation } = await bobClient.bundle.buyWithBundle(
+      const { attested: buyAttestation } = await bobClient.bundle.escrow.nonTierable.create(
         bobBundle,
         {
           arbiter: testContext.addresses.tokenBundlePaymentObligation,
@@ -206,11 +206,11 @@ describe("TokenBundle Tests", () => {
         bob,
       );
 
-      // Alice approves her tokens for payment
-      await aliceClient.bundle.approve(aliceBundle, "payment");
+      // Alice approves her tokens for barter (payBundleForBundle is a barter function)
+      await aliceClient.bundle.util.approve(aliceBundle, "barter");
 
       // Alice fulfills Bob's order
-      const { attested: payAttestation } = await aliceClient.bundle.payBundleForBundle(buyAttestation.uid);
+      const { attested: payAttestation } = await aliceClient.bundle.barter.payBundleForBundle(buyAttestation.uid);
 
       // Assert the payment attestation was created
       expect(payAttestation.uid).not.toBe("0x0000000000000000000000000000000000000000000000000000000000000000");
@@ -266,10 +266,10 @@ describe("TokenBundle Tests", () => {
       const aliceBundle = createAliceBundle();
       const bobBundle = createBobBundle();
 
-      // Alice approves and creates escrow
-      await aliceClient.bundle.approve(aliceBundle, "escrow");
+      // Alice approves and creates escrow (barter purpose for barter functions)
+      await aliceClient.bundle.util.approve(aliceBundle, "barter");
 
-      const { attested: buyAttestation } = await aliceClient.bundle.buyBundleForBundle(
+      const { attested: buyAttestation } = await aliceClient.bundle.barter.buyBundleForBundle(
         aliceBundle,
         bobBundle,
         shortExpiration,
@@ -294,7 +294,7 @@ describe("TokenBundle Tests", () => {
       expect(compareAddresses(escrowErc721Owner, testContext.addresses.tokenBundleEscrowObligation)).toBe(true);
 
       // Alice collects her expired escrow
-      await aliceClient.bundle.reclaimExpired(buyAttestation.uid);
+      await aliceClient.bundle.escrow.nonTierable.reclaimExpired(buyAttestation.uid);
 
       // Verify Alice got her tokens back
       const finalErc20Balance = await testClient.getErc20Balance({ address: aliceErc20Token }, alice);

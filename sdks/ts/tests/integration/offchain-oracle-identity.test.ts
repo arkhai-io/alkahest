@@ -47,7 +47,10 @@ test("contextless offchain identity oracle flow", async () => {
   const identityAccount = privateKeyToAccount(generatePrivateKey());
   identityRegistry.set(identityAccount.address, 0);
 
-  const listener = await testContext.charlie.client.oracle.listenAndArbitrate(
+  // Empty demand for contextless identity oracle
+  const demand = "0x" as `0x${string}`;
+
+  const listener = await testContext.charlie.client.arbiters.general.trustedOracle.listenAndArbitrate(
     async (attestation) => {
       // Extract obligation data
       const obligation = testContext.charlie.client.extractObligationData(stringObligationAbi, attestation);
@@ -85,7 +88,7 @@ test("contextless offchain identity oracle flow", async () => {
       identityRegistry.set(parsed.pubkey, parsed.nonce);
       return true;
     },
-    { skipAlreadyArbitrated: true },
+    { mode: "unarbitrated" },
   );
 
   const createPayload = createIdentityPayloadFactory(identityAccount.address, identityAccount);
@@ -93,7 +96,7 @@ test("contextless offchain identity oracle flow", async () => {
   const goodPayload = await createPayload(1);
   const { attested: goodFulfillment } = await testContext.bob.client.stringObligation.doObligation(goodPayload);
 
-  await testContext.bob.client.oracle.requestArbitration(goodFulfillment.uid, testContext.charlie.address);
+  await testContext.bob.client.arbiters.general.trustedOracle.requestArbitration(goodFulfillment.uid, testContext.charlie.address, demand);
 
   const goodDecision = await testContext.charlie.client.arbiters.general.trustedOracle.waitForArbitration(
     goodFulfillment.uid,
@@ -106,7 +109,7 @@ test("contextless offchain identity oracle flow", async () => {
   const badPayload = await createPayload(1);
   const { attested: badFulfillment } = await testContext.bob.client.stringObligation.doObligation(badPayload);
 
-  await testContext.bob.client.oracle.requestArbitration(badFulfillment.uid, testContext.charlie.address);
+  await testContext.bob.client.arbiters.general.trustedOracle.requestArbitration(badFulfillment.uid, testContext.charlie.address, demand);
 
   const badDecision = await testContext.charlie.client.arbiters.general.trustedOracle.waitForArbitration(
     badFulfillment.uid,

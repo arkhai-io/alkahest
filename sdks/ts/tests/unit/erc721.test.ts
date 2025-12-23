@@ -68,9 +68,9 @@ describe("ERC721 Tests", () => {
       const expiration = BigInt(Math.floor(Date.now() / 1000) + 86400); // 1 day from now
 
       // Alice approves and creates an escrow to trade her ERC721 for Bob's ERC721
-      await aliceClient.erc721.approve({ address: aliceErc721Token, id: aliceTokenId }, "escrow");
+      await aliceClient.erc721.util.approve({ address: aliceErc721Token, id: aliceTokenId }, "barter");
 
-      const { attested: buyAttestation } = await aliceClient.erc721.buyErc721ForErc721(
+      const { attested: buyAttestation } = await aliceClient.erc721.barter.buyErc721ForErc721(
         { address: aliceErc721Token, id: aliceTokenId },
         { address: bobErc721Token, id: bobTokenId },
         expiration,
@@ -92,9 +92,9 @@ describe("ERC721 Tests", () => {
       const expiration = BigInt(Math.floor(Date.now() / 1000) + 86400); // 1 day from now
 
       // First, create a buy attestation
-      await aliceClient.erc721.approve({ address: aliceErc721Token, id: aliceTokenId }, "escrow");
+      await aliceClient.erc721.util.approve({ address: aliceErc721Token, id: aliceTokenId }, "barter");
 
-      const { attested: buyAttestation } = await aliceClient.erc721.buyErc721ForErc721(
+      const { attested: buyAttestation } = await aliceClient.erc721.barter.buyErc721ForErc721(
         { address: aliceErc721Token, id: aliceTokenId },
         { address: bobErc721Token, id: bobTokenId },
         expiration,
@@ -112,9 +112,9 @@ describe("ERC721 Tests", () => {
       });
 
       // Bob approves and fulfills the trade
-      await bobClient.erc721.approve({ address: bobErc721Token, id: bobTokenId }, "payment");
+      await bobClient.erc721.util.approve({ address: bobErc721Token, id: bobTokenId }, "barter");
 
-      const { hash } = await bobClient.erc721.payErc721ForErc721(buyAttestation.uid);
+      const { hash } = await bobClient.erc721.barter.payErc721ForErc721(buyAttestation.uid);
 
       // Check token ownership after the exchange
       const aliceFinalOwnsToken = await testClient.getErc721Owner({
@@ -139,9 +139,9 @@ describe("ERC721 Tests", () => {
       const expiration = BigInt(Math.floor(Date.now() / 1000) + 86400); // 1 day from now
 
       // Alice approves and creates an escrow for Erc20
-      await aliceClient.erc721.approve({ address: aliceErc721Token, id: aliceTokenId }, "escrow");
+      await aliceClient.erc721.util.approve({ address: aliceErc721Token, id: aliceTokenId }, "barter");
 
-      const { attested } = await aliceClient.erc721.buyErc20WithErc721(
+      const { attested } = await aliceClient.erc721.barter.buyErc20WithErc721(
         { address: aliceErc721Token, id: aliceTokenId },
         { address: aliceErc20Token, value: Erc20Amount },
         expiration,
@@ -164,9 +164,9 @@ describe("ERC721 Tests", () => {
       const expiration = BigInt(Math.floor(Date.now() / 1000) + 86400); // 1 day from now
 
       // First create a buy attestation with Bob escrowing Erc20
-      await bobClient.erc20.approve({ address: bobErc20Token, value: erc20Amount }, "escrow");
+      await bobClient.erc20.util.approve({ address: bobErc20Token, value: erc20Amount }, "barter");
 
-      const { attested: buyAttestation } = await bobClient.erc20.buyErc721WithErc20(
+      const { attested: buyAttestation } = await bobClient.erc20.barter.buyErc721WithErc20(
         { address: bobErc20Token, value: erc20Amount },
         { address: aliceErc721Token, id: aliceTokenId },
         expiration,
@@ -176,9 +176,9 @@ describe("ERC721 Tests", () => {
       const aliceInitialBalanceErc20 = await testClient.getErc20Balance({ address: bobErc20Token }, alice);
 
       // Alice approves and fulfills the escrow with her Erc721
-      await aliceClient.erc721.approve({ address: aliceErc721Token, id: aliceTokenId }, "payment");
+      await aliceClient.erc721.util.approve({ address: aliceErc721Token, id: aliceTokenId }, "barter");
 
-      const { attested: payAttestation } = await aliceClient.erc721.payErc721ForErc20(buyAttestation.uid);
+      const { attested: payAttestation } = await aliceClient.erc721.barter.payErc721ForErc20(buyAttestation.uid);
 
       // Assert the payment attestation was created
       expect(payAttestation.uid).not.toBe("0x0000000000000000000000000000000000000000000000000000000000000000");
@@ -202,9 +202,9 @@ describe("ERC721 Tests", () => {
       const expiration = BigInt(Math.floor(Date.now() / 1000) + 86400); // 1 day from now
 
       // Alice approves and creates an escrow for Erc1155
-      await aliceClient.erc721.approve({ address: aliceErc721Token, id: aliceTokenId }, "escrow");
+      await aliceClient.erc721.util.approve({ address: aliceErc721Token, id: aliceTokenId }, "barter");
 
-      const { attested } = await aliceClient.erc721.buyErc1155WithErc721(
+      const { attested } = await aliceClient.erc721.barter.buyErc1155WithErc721(
         { address: aliceErc721Token, id: aliceTokenId },
         { address: aliceErc1155Token, id: tokenId, value: amount },
         expiration,
@@ -228,10 +228,10 @@ describe("ERC721 Tests", () => {
       const expiration = BigInt(Math.floor(Date.now() / 1000) + 86400); // 1 day from now
 
       // First create a buy attestation with Bob escrowing Erc1155
-      await bobClient.erc1155.approveAll(bobErc1155Token, "escrow");
+      await bobClient.erc1155.util.approveAll(bobErc1155Token, "barter");
 
       // Create escrow with Bob's Erc1155 tokens, demanding Alice's Erc721
-      const { attested: buyAttestation } = await bobClient.erc1155.buyErc721WithErc1155(
+      const { attested: buyAttestation } = await bobClient.erc1155.barter.buyErc721WithErc1155(
         { address: bobErc1155Token, id: tokenId, value: amount },
         { address: aliceErc721Token, id: aliceTokenId },
         expiration,
@@ -244,9 +244,9 @@ describe("ERC721 Tests", () => {
       );
 
       // Alice approves and fulfills the escrow with her Erc721
-      await aliceClient.erc721.approve({ address: aliceErc721Token, id: aliceTokenId }, "payment");
+      await aliceClient.erc721.util.approve({ address: aliceErc721Token, id: aliceTokenId }, "barter");
 
-      const { attested: payAttestation } = await aliceClient.erc721.payErc721ForErc1155(buyAttestation.uid);
+      const { attested: payAttestation } = await aliceClient.erc721.barter.payErc721ForErc1155(buyAttestation.uid);
 
       // Assert the payment attestation was created
       expect(payAttestation.uid).not.toBe("0x0000000000000000000000000000000000000000000000000000000000000000");
@@ -278,9 +278,9 @@ describe("ERC721 Tests", () => {
       };
 
       // Alice approves and creates an escrow for token bundle
-      await aliceClient.erc721.approve({ address: aliceErc721Token, id: aliceTokenId }, "escrow");
+      await aliceClient.erc721.util.approve({ address: aliceErc721Token, id: aliceTokenId }, "barter");
 
-      const { attested } = await aliceClient.erc721.buyBundleWithErc721(
+      const { attested } = await aliceClient.erc721.barter.buyBundleWithErc721(
         { address: aliceErc721Token, id: aliceTokenId },
         bundle,
         alice,
@@ -304,9 +304,9 @@ describe("ERC721 Tests", () => {
       const shortExpiration = BigInt(currentTime + 60); // 60 seconds from now
 
       // Alice approves and creates an escrow
-      await aliceClient.erc721.approve({ address: aliceErc721Token, id: aliceTokenId }, "escrow");
+      await aliceClient.erc721.util.approve({ address: aliceErc721Token, id: aliceTokenId }, "barter");
 
-      const { attested: buyAttestation } = await aliceClient.erc721.buyErc721ForErc721(
+      const { attested: buyAttestation } = await aliceClient.erc721.barter.buyErc721ForErc721(
         { address: aliceErc721Token, id: aliceTokenId },
         { address: bobErc721Token, id: bobTokenId },
         shortExpiration,
@@ -316,7 +316,7 @@ describe("ERC721 Tests", () => {
       await testClient.increaseTime({ seconds: 120 }); // Advance 120 seconds
 
       // Alice collects her expired escrow
-      const reclaimTxHash = await aliceClient.erc721.reclaimExpired(buyAttestation.uid);
+      const reclaimTxHash = await aliceClient.erc721.escrow.nonTierable.reclaimExpired(buyAttestation.uid);
 
       // increase block timestamp to index tx
       // await testClient.increaseTime({ seconds: 25 });
@@ -352,16 +352,16 @@ describe("ERC721 Tests", () => {
       };
 
       // Bob approves his tokens and creates the bundle escrow
-      await bobClient.bundle.approve(bundle, "escrow");
+      await bobClient.bundle.util.approve(bundle, "escrow");
 
       // Create Erc721 payment statement for Alice's token
-      const erc721PaymentStatement = bobClient.erc721.encodePaymentObligation(
+      const erc721PaymentStatement = bobClient.erc721.payment.encodeObligation(
         { address: aliceErc721Token, id: aliceTokenId },
         bob,
       );
 
       // Bob creates bundle escrow demanding Alice's Erc721
-      const { attested: buyAttestation } = await bobClient.bundle.buyWithBundle(
+      const { attested: buyAttestation } = await bobClient.bundle.escrow.nonTierable.create(
         bundle,
         {
           arbiter: testContext.addresses.erc721PaymentObligation,
@@ -378,11 +378,11 @@ describe("ERC721 Tests", () => {
         alice,
       );
 
-      // Alice approves her Erc721 token for payment
-      await aliceClient.erc721.approve({ address: aliceErc721Token, id: aliceTokenId }, "payment");
+      // Alice approves her Erc721 token for barter
+      await aliceClient.erc721.util.approve({ address: aliceErc721Token, id: aliceTokenId }, "barter");
 
       // Alice fulfills the bundle escrow with her Erc721
-      const { attested: payAttestation } = await aliceClient.erc721.payErc721ForBundle(buyAttestation.uid);
+      const { attested: payAttestation } = await aliceClient.erc721.barter.payErc721ForBundle(buyAttestation.uid);
 
       // Assert the payment attestation was created
       expect(payAttestation.uid).not.toBe("0x0000000000000000000000000000000000000000000000000000000000000000");

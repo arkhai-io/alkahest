@@ -25,6 +25,7 @@ type PingEvent = {
 type UptimeJob = {
   minUptime: number;
   schedule: PingEvent[];
+  demandData: `0x${string}`;
 };
 
 type SchedulerContext = {
@@ -107,7 +108,7 @@ function startSchedulerWorker(ctx: SchedulerContext, arbiters: ArbiterModule) {
 
       const uptime = successes / totalChecks;
       const decision = uptime >= job.minUptime;
-      await arbiters.general.trustedOracle.arbitrate(uid, decision);
+      await arbiters.general.trustedOracle.arbitrate(uid, job.demandData, decision);
     }
   })();
 
@@ -129,7 +130,8 @@ afterEach(async () => {
   await teardownTestEnvironment(testContext);
 });
 
-test("asynchronous offchain oracle uptime flow", async () => {
+// @ts-expect-error - bun:test timeout option is valid but not in TS types
+test("asynchronous offchain oracle uptime flow", { timeout: 15000 }, async () => {
   const now = Math.floor(Date.now() / 1000);
   const demandPayload: UptimeDemand = {
     service_url: "https://uptime.hyperspace",
@@ -141,12 +143,12 @@ test("asynchronous offchain oracle uptime flow", async () => {
 
   const demandBytes = encodeAbiParameters(uptimeDemandAbi, [{ payload: stringToHex(JSON.stringify(demandPayload)) }]);
 
-  const demand = testContext.alice.client.arbiters.general.trustedOracle.encode({
+  const demand = testContext.alice.client.arbiters.general.trustedOracle.encodeDemand({
     oracle: testContext.charlie.address,
     data: demandBytes,
   });
 
-  const { attested: escrow } = await testContext.alice.client.erc20.permitAndBuyWithErc20(
+  const { attested: escrow } = await testContext.alice.client.erc20.escrow.nonTierable.permitAndCreate(
     {
       address: testContext.mockAddresses.erc20A,
       value: parseEther("100"),
@@ -171,7 +173,7 @@ test("asynchronous offchain oracle uptime flow", async () => {
 
   const worker = startSchedulerWorker(scheduler, testContext.charlie.client.arbiters);
 
-  const listener = await testContext.charlie.client.oracle.listenAndArbitrate(
+  const listener = await testContext.charlie.client.arbiters.general.trustedOracle.listenAndArbitrate(
     async (attestation) => {
       const ctx = getScheduler();
       if (!ctx) return null;
@@ -207,17 +209,21 @@ test("asynchronous offchain oracle uptime flow", async () => {
         schedule.push({ delayMs: 100 + i * 25, success: i !== 1 });
       }
 
+      // Re-encode the demand data to get raw bytes for arbitration
+      const rawDemandBytes = encodeAbiParameters(uptimeDemandAbi, demandData) as `0x${string}`;
+
       ctx.jobDb.set(fulfillmentUid, {
         minUptime: parsed.min_uptime,
         schedule,
+        demandData: rawDemandBytes,
       });
       notifyScheduler(ctx);
       return null;
     },
-    { skipAlreadyArbitrated: true },
+    { mode: "unarbitrated" },
   );
 
-  await testContext.bob.client.oracle.requestArbitration(fulfillment.uid, testContext.charlie.address);
+  await testContext.bob.client.arbiters.general.trustedOracle.requestArbitration(fulfillment.uid, testContext.charlie.address, demand);
 
   const arbitration = await testContext.charlie.client.arbiters.general.trustedOracle.waitForArbitration(
     fulfillment.uid,
@@ -229,7 +235,7 @@ test("asynchronous offchain oracle uptime flow", async () => {
   let collectionHash: `0x${string}` | undefined;
   for (let attempts = 0; attempts < 50; attempts++) {
     try {
-      collectionHash = await testContext.bob.client.erc20.collectEscrow(escrow.uid, fulfillment.uid);
+      collectionHash = await testContext.bob.client.erc20.escrow.nonTierable.collect(escrow.uid, fulfillment.uid);
       break;
     } catch {
       await Bun.sleep(100);

@@ -1,12 +1,20 @@
 import { makeArbitersClient } from "./clients/arbiters";
-import { makeAttestationClient } from "./clients/attestation";
-import { makeErc1155Client } from "./clients/erc1155";
-import { makeErc20Client } from "./clients/erc20";
-import { makeErc721Client } from "./clients/erc721";
-import { makeNativeTokenClient } from "./clients/nativeToken";
-import { makeStringObligationClient } from "./clients/stringObligation";
-import { makeTokenBundleClient } from "./clients/tokenBundle";
-import { makeOracleClient } from "./oracle/oracle";
+import {
+  makeAttestationClient,
+  makeErc20Client,
+  makeErc721Client,
+  makeErc1155Client,
+  makeNativeTokenClient,
+  makeTokenBundleClient,
+  makeStringObligationClient,
+  pickAttestationAddresses,
+  pickErc20Addresses,
+  pickErc721Addresses,
+  pickErc1155Addresses,
+  pickNativeTokenAddresses,
+  pickTokenBundleAddresses,
+  pickStringAddresses,
+} from "./clients/obligations";
 
 /**
  * Creates the default extension for the Alkahest client with all standard functionality
@@ -18,25 +26,23 @@ export const makeDefaultExtension = (client: any) => ({
     arbiters: makeArbitersClient(client.viemClient, client.contractAddresses),
 
     /** Methods for interacting with ERC20 tokens */
-    erc20: makeErc20Client(client.viemClient, client.contractAddresses),
+    erc20: makeErc20Client(client.viemClient, pickErc20Addresses(client.contractAddresses)),
 
     /** Methods for interacting with native tokens */
-    nativeToken: makeNativeTokenClient(client.viemClient, client.contractAddresses),
+    nativeToken: makeNativeTokenClient(client.viemClient, pickNativeTokenAddresses(client.contractAddresses)),
 
     /** Methods for interacting with ERC721 tokens */
-    erc721: makeErc721Client(client.viemClient, client.contractAddresses),
+    erc721: makeErc721Client(client.viemClient, pickErc721Addresses(client.contractAddresses)),
 
     /** Methods for interacting with ERC1155 tokens */
-    erc1155: makeErc1155Client(client.viemClient, client.contractAddresses),
+    erc1155: makeErc1155Client(client.viemClient, pickErc1155Addresses(client.contractAddresses)),
 
     /** Methods for interacting with token bundles */
-    bundle: makeTokenBundleClient(client.viemClient, client.contractAddresses),
+    bundle: makeTokenBundleClient(client.viemClient, pickTokenBundleAddresses(client.contractAddresses)),
 
     /** Methods for interacting with attestations */
-    attestation: makeAttestationClient(client.viemClient, client.contractAddresses),
+    attestation: makeAttestationClient(client.viemClient, pickAttestationAddresses(client.contractAddresses)),
 
     /** Utilities for StringObligation */
-    stringObligation: makeStringObligationClient(client.viemClient, client.contractAddresses),
-
-    oracle: makeOracleClient(client.viemClient, client.contractAddresses),
+    stringObligation: makeStringObligationClient(client.viemClient, pickStringAddresses(client.contractAddresses)),
 });
