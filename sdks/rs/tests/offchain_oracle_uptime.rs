@@ -248,7 +248,8 @@ async fn run_async_uptime_oracle_example(test: &TestContext) -> eyre::Result<()>
                 let uptime = successes as f64 / total_checks as f64;
                 let decision = uptime >= job.min_uptime;
                 worker_arbiters
-                    .arbitrate_as_trusted_oracle(uid, job.demand.clone(), decision)
+                    .trusted_oracle()
+                    .arbitrate(uid, job.demand.clone(), decision)
                     .await
                     .expect("oracle arbitration tx should succeed");
             } else {
@@ -299,7 +300,7 @@ async fn run_async_uptime_oracle_example(test: &TestContext) -> eyre::Result<()>
     // Wait for the oracle to make a decision
     tokio::time::timeout(
         StdDuration::from_secs(10),
-        charlie_arbiters.wait_for_trusted_oracle_arbitration(
+        charlie_arbiters.trusted_oracle().wait_for_arbitration(
             charlie_client.address,
             fulfillment_uid,
             None,

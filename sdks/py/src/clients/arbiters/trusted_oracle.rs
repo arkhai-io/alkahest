@@ -1,9 +1,11 @@
 use alkahest_rs::{
     extensions::OracleModule as InnerOracleClient,
+    extensions::ArbitersModule,
     contracts::obligations::StringObligation,
     contracts::arbiters::TrustedOracleArbiter,
 };
 use alloy::primitives::FixedBytes;
+use alloy::sol_types::SolValue;
 use pyo3::{pyclass, pymethods, types::PyAnyMethods, PyAny, PyObject, PyResult, Python};
 use pyo3_async_runtimes::tokio::{future_into_py, into_future};
 use std::future::Future;
@@ -13,6 +15,8 @@ use std::sync::Arc;
 use crate::{
     error_handling::{map_eyre_to_pyerr, map_parse_to_pyerr},
 };
+
+use super::PyArbitrationMadeLog;
 
 #[pyclass]
 #[derive(Clone)]
@@ -65,7 +69,7 @@ impl OracleClient {
         let data_bytes = hex::decode(attestation.data.strip_prefix("0x").unwrap_or(&attestation.data))
             .map_err(|e| map_eyre_to_pyerr(eyre::eyre!("Failed to decode data hex: {}", e)))?;
 
-        let obligation_data = StringObligation::ObligationData::abi_decode(&data_bytes)
+        let obligation_data = <StringObligation::ObligationData as SolType>::abi_decode(&data_bytes)
             .map_err(|e| map_eyre_to_pyerr(eyre::eyre!("Failed to decode obligation data: {}", e)))?;
 
         Ok(obligation_data.item)
@@ -84,10 +88,10 @@ impl OracleClient {
         let data_bytes = hex::decode(escrow_attestation.data.strip_prefix("0x").unwrap_or(&escrow_attestation.data))
             .map_err(|e| map_eyre_to_pyerr(eyre::eyre!("Failed to decode data hex: {}", e)))?;
 
-        let arbiter_demand = ArbiterDemand::abi_decode(&data_bytes)
+        let arbiter_demand = <ArbiterDemand as SolType>::abi_decode(&data_bytes)
             .map_err(|e| map_eyre_to_pyerr(eyre::eyre!("Failed to decode arbiter demand: {}", e)))?;
 
-        let demand_data = TrustedOracleArbiter::DemandData::abi_decode(&arbiter_demand.demand)
+        let demand_data = <TrustedOracleArbiter::DemandData as SolType>::abi_decode(&arbiter_demand.demand)
             .map_err(|e| map_eyre_to_pyerr(eyre::eyre!("Failed to decode demand data: {}", e)))?;
 
         Ok(PyTrustedOracleArbiterDemandData::from(demand_data))
@@ -716,5 +720,112 @@ impl TryFrom<PyTrustedOracleArbiterDemandData>
         let data = Bytes::from(py_data.data);
 
         Ok(Self { oracle, data })
+    }
+}
+
+/// TrustedOracleArbiter-specific API (accessed via arbiters.trusted_oracle)
+///
+/// This provides access to trusted oracle arbitration methods through the ArbitersModule.
+#[pyclass]
+#[derive(Clone)]
+pub struct TrustedOracle {
+    inner: ArbitersModule,
+}
+
+impl TrustedOracle {
+    pub fn new(inner: ArbitersModule) -> Self {
+        Self { inner }
+    }
+}
+
+#[pymethods]
+impl TrustedOracle {
+    /// Get the TrustedOracleArbiter contract address
+    pub fn address(&self) -> String {
+        format!("{:?}", self.inner.addresses.trusted_oracle_arbiter)
+    }
+
+    /// Arbitrate as a trusted oracle
+    ///
+    /// # Arguments
+    /// * `obligation` - The obligation attestation UID
+    /// * `demand` - The demand data bytes
+    /// * `decision` - The oracle's decision (true/false)
+    pub fn arbitrate<'py>(
+        &self,
+        py: Python<'py>,
+        obligation: String,
+        demand: Vec<u8>,
+        decision: bool,
+    ) -> PyResult<pyo3::Bound<'py, PyAny>> {
+        let inner = self.inner.clone();
+        future_into_py(py, async move {
+            let receipt = inner
+                .trusted_oracle()
+                .arbitrate(
+                    obligation.parse().map_err(map_parse_to_pyerr)?,
+                    demand.into(),
+                    decision,
+                )
+                .await
+                .map_err(map_eyre_to_pyerr)?;
+            Ok(receipt.transaction_hash.to_string())
+        })
+    }
+
+    /// Wait for a trusted oracle arbitration event
+    ///
+    /// # Arguments
+    /// * `oracle` - The oracle address
+    /// * `obligation` - The obligation attestation UID
+    /// * `from_block` - Optional starting block number
+    pub fn wait_for_arbitration<'py>(
+        &self,
+        py: Python<'py>,
+        oracle: String,
+        obligation: String,
+        from_block: Option<u64>,
+    ) -> PyResult<pyo3::Bound<'py, PyAny>> {
+        let inner = self.inner.clone();
+        future_into_py(py, async move {
+            let event = inner
+                .trusted_oracle()
+                .wait_for_arbitration(
+                    oracle.parse().map_err(map_parse_to_pyerr)?,
+                    obligation.parse().map_err(map_parse_to_pyerr)?,
+                    from_block,
+                )
+                .await
+                .map_err(map_eyre_to_pyerr)?;
+            Ok(PyArbitrationMadeLog {
+                decision_key: event.decisionKey.to_string(),
+                obligation: event.obligation.to_string(),
+                oracle: format!("{:?}", event.oracle),
+                decision: event.decision,
+            })
+        })
+    }
+
+    /// Decode TrustedOracleArbiter demand data from raw bytes
+    pub fn decode(&self, demand_bytes: Vec<u8>) -> PyResult<PyTrustedOracleArbiterDemandData> {
+        let demand: TrustedOracleArbiter::DemandData =
+            TrustedOracleArbiter::DemandData::abi_decode(&demand_bytes)
+                .map_err(|e| map_eyre_to_pyerr(eyre::eyre!("Failed to decode TrustedOracleArbiter demand: {}", e)))?;
+        Ok(PyTrustedOracleArbiterDemandData::from(demand))
+    }
+
+    /// Encode TrustedOracleArbiter demand data to raw bytes
+    #[staticmethod]
+    pub fn encode(oracle: String, data: Vec<u8>) -> PyResult<Vec<u8>> {
+        let oracle_address: alloy::primitives::Address = oracle.parse().map_err(|e| {
+            pyo3::PyErr::new::<pyo3::exceptions::PyValueError, _>(format!("Invalid address: {}", e))
+        })?;
+
+        let demand_data = TrustedOracleArbiter::DemandData {
+            oracle: oracle_address,
+            data: data.into(),
+        };
+
+        Ok(demand_data.abi_encode())
     }
 }

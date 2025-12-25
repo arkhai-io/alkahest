@@ -151,7 +151,7 @@ async fn run_contextless_identity_example(test: &TestContext) -> eyre::Result<()
 
     let first_log = tokio::time::timeout(
         StdDuration::from_secs(10),
-        charlie_arbiters.wait_for_trusted_oracle_arbitration(
+        charlie_arbiters.trusted_oracle().wait_for_arbitration(
             charlie_client.address,
             good_uid,
             None,
@@ -185,7 +185,7 @@ async fn run_contextless_identity_example(test: &TestContext) -> eyre::Result<()
 
     let second_log = tokio::time::timeout(
         StdDuration::from_secs(10),
-        charlie_arbiters.wait_for_trusted_oracle_arbitration(charlie_client.address, bad_uid, None),
+        charlie_arbiters.trusted_oracle().wait_for_arbitration(charlie_client.address, bad_uid, None),
     )
     .await
     .wrap_err("timeout waiting for rejection arbitration")??;

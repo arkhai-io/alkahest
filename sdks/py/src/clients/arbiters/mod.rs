@@ -10,14 +10,12 @@ pub mod logical;
 pub mod trusted_oracle;
 
 use alkahest_rs::extensions::ArbitersModule;
-use pyo3::{pyclass, pymethods, PyResult};
-
-use crate::error_handling::{map_eyre_to_pyerr, map_parse_to_pyerr};
+use pyo3::{pyclass, pymethods};
 
 // Re-export main types for backwards compatibility
 pub use trusted_oracle::{
     OracleClient, PyArbitrateOptions, PyDecision, PyListenResult, PyOracleAddresses,
-    PyOracleAttestation, PyTrustedOracleArbiterDemandData,
+    PyOracleAttestation, PyTrustedOracleArbiterDemandData, TrustedOracle,
 };
 
 // Re-export confirmation types
@@ -91,6 +89,12 @@ impl ArbitersClient {
         Logical::new(self.inner.clone())
     }
 
+    /// Access trusted oracle arbiter API
+    #[getter]
+    pub fn trusted_oracle(&self) -> TrustedOracle {
+        TrustedOracle::new(self.inner.clone())
+    }
+
     // ===== Address getters =====
 
     /// Get the EAS address
@@ -141,67 +145,6 @@ impl ArbitersClient {
     /// Get the UidArbiter address
     pub fn uid_arbiter_address(&self) -> String {
         format!("{:?}", self.inner.addresses.uid_arbiter)
-    }
-
-    // ===== Trusted Oracle Methods =====
-
-    /// Arbitrate as a trusted oracle
-    ///
-    /// # Arguments
-    /// * `obligation` - The obligation attestation UID
-    /// * `demand` - The demand data bytes
-    /// * `decision` - The oracle's decision (true/false)
-    pub fn arbitrate_as_trusted_oracle<'py>(
-        &self,
-        py: pyo3::Python<'py>,
-        obligation: String,
-        demand: Vec<u8>,
-        decision: bool,
-    ) -> PyResult<pyo3::Bound<'py, pyo3::PyAny>> {
-        let inner = self.inner.clone();
-        pyo3_async_runtimes::tokio::future_into_py(py, async move {
-            let receipt = inner
-                .arbitrate_as_trusted_oracle(
-                    obligation.parse().map_err(map_parse_to_pyerr)?,
-                    demand.into(),
-                    decision,
-                )
-                .await
-                .map_err(map_eyre_to_pyerr)?;
-            Ok(receipt.transaction_hash.to_string())
-        })
-    }
-
-    /// Wait for a trusted oracle arbitration event
-    ///
-    /// # Arguments
-    /// * `oracle` - The oracle address
-    /// * `obligation` - The obligation attestation UID
-    /// * `from_block` - Optional starting block number
-    pub fn wait_for_trusted_oracle_arbitration<'py>(
-        &self,
-        py: pyo3::Python<'py>,
-        oracle: String,
-        obligation: String,
-        from_block: Option<u64>,
-    ) -> PyResult<pyo3::Bound<'py, pyo3::PyAny>> {
-        let inner = self.inner.clone();
-        pyo3_async_runtimes::tokio::future_into_py(py, async move {
-            let event = inner
-                .wait_for_trusted_oracle_arbitration(
-                    oracle.parse().map_err(map_parse_to_pyerr)?,
-                    obligation.parse().map_err(map_parse_to_pyerr)?,
-                    from_block,
-                )
-                .await
-                .map_err(map_eyre_to_pyerr)?;
-            Ok(PyArbitrationMadeLog {
-                decision_key: event.decisionKey.to_string(),
-                obligation: event.obligation.to_string(),
-                oracle: format!("{:?}", event.oracle),
-                decision: event.decision,
-            })
-        })
     }
 
     /// Get the address of a confirmation arbiter by type
