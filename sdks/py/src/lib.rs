@@ -24,8 +24,7 @@ use clients::{
     arbiters::trusted_oracle::OracleClient,
     obligations::{
         attestation::AttestationClient, erc1155::Erc1155Client, erc20::Erc20Client,
-        erc721::Erc721Client, string_obligation::StringObligationClient,
-        token_bundle::TokenBundleClient,
+        erc721::Erc721Client, string::StringObligationClient, token_bundle::TokenBundleClient,
     },
 };
 use pyo3::{
@@ -46,7 +45,7 @@ use crate::{
             erc1155::{PyERC1155EscrowObligationData, PyERC1155PaymentObligationData},
             erc20::{PyERC20EscrowObligationData, PyERC20PaymentObligationData},
             erc721::{PyERC721EscrowObligationData, PyERC721PaymentObligationData},
-            string_obligation::PyStringObligationData,
+            string::PyStringObligationData,
         },
     },
     contract::{
