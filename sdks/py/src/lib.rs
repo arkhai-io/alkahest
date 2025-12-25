@@ -8,9 +8,10 @@ use alkahest_rs::{
     },
     contracts::IEAS::Attested,
     extensions::{
-        AlkahestExtension, AttestationModule, Erc1155Module, Erc20Module, Erc721Module,
-        HasAttestation, HasErc1155, HasErc20, HasErc721, HasOracle, HasStringObligation,
-        HasTokenBundle, NoExtension, OracleModule, StringObligationModule, TokenBundleModule,
+        AlkahestExtension, ArbitersModule, AttestationModule, Erc1155Module, Erc20Module,
+        Erc721Module, HasArbiters, HasAttestation, HasErc1155, HasErc20, HasErc721, HasOracle,
+        HasStringObligation, HasTokenBundle, NoExtension, OracleModule, StringObligationModule,
+        TokenBundleModule,
     },
     AlkahestClient,
 };
@@ -21,7 +22,7 @@ use alloy::{
     sol_types::SolEvent,
 };
 use clients::{
-    arbiters::trusted_oracle::OracleClient,
+    arbiters::{trusted_oracle::OracleClient, ArbitersClient},
     obligations::{
         attestation::AttestationClient, erc1155::Erc1155Client, erc20::Erc20Client,
         erc721::Erc721Client, string::StringObligationClient, token_bundle::TokenBundleClient,
@@ -78,6 +79,7 @@ pub struct PyAlkahestClient {
     attestation: Option<AttestationClient>,
     string_obligation: Option<StringObligationClient>,
     oracle: Option<OracleClient>,
+    arbiters: Option<ArbitersClient>,
 }
 
 impl PyAlkahestClient {
@@ -99,6 +101,7 @@ impl PyAlkahestClient {
                 client.extensions.string_obligation().clone(),
             )),
             oracle: Some(OracleClient::new(client.extensions.oracle().clone())),
+            arbiters: Some(ArbitersClient::new(client.extensions.arbiters().clone())),
         }
     }
 
@@ -128,6 +131,7 @@ impl PyAlkahestClient {
             attestation: None, // TODO: Extract if extension_type == "attestation"
             string_obligation: None, // TODO: Extract if extension_type == "string_obligation"
             oracle: None,      // TODO: Extract if extension_type == "oracle"
+            arbiters: None,    // TODO: Extract if extension_type == "arbiters"
         }
     }
 }
@@ -172,6 +176,7 @@ impl PyAlkahestClient {
                 client.extensions.string_obligation().clone(),
             )),
             oracle: Some(OracleClient::new(client.extensions.oracle().clone())),
+            arbiters: Some(ArbitersClient::new(client.extensions.arbiters().clone())),
         };
 
         Ok(client)
@@ -187,6 +192,7 @@ impl PyAlkahestClient {
             "attestation".to_string(),
             "string_obligation".to_string(),
             "oracle".to_string(),
+            "arbiters".to_string(),
         ]
     }
 
@@ -200,6 +206,7 @@ impl PyAlkahestClient {
             "attestation" => self.attestation.is_some(),
             "string_obligation" => self.string_obligation.is_some(),
             "oracle" => self.oracle.is_some(),
+            "arbiters" => self.arbiters.is_some(),
             _ => false,
         }
     }
@@ -263,6 +270,15 @@ impl PyAlkahestClient {
         self.oracle.clone().ok_or_else(|| {
             pyo3::PyErr::new::<pyo3::exceptions::PyAttributeError, _>(
                 "Oracle extension is not available in this client",
+            )
+        })
+    }
+
+    #[getter]
+    pub fn arbiters(&self) -> PyResult<ArbitersClient> {
+        self.arbiters.clone().ok_or_else(|| {
+            pyo3::PyErr::new::<pyo3::exceptions::PyAttributeError, _>(
+                "Arbiters extension is not available in this client",
             )
         })
     }
@@ -469,6 +485,28 @@ fn alkahest_py(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyERC1155PaymentObligationData>()?;
     m.add_class::<PyStringObligationData>()?;
     m.add_class::<PyErc20Data>()?;
+
+    // Arbiters Client and related types
+    m.add_class::<ArbitersClient>()?;
+    m.add_class::<crate::clients::arbiters::PyArbitrationMadeLog>()?;
+    m.add_class::<crate::clients::arbiters::PyConfirmationArbiterType>()?;
+
+    // Confirmation arbiters
+    m.add_class::<crate::clients::arbiters::Confirmation>()?;
+    m.add_class::<crate::clients::arbiters::ExclusiveRevocable>()?;
+    m.add_class::<crate::clients::arbiters::ExclusiveUnrevocable>()?;
+    m.add_class::<crate::clients::arbiters::NonexclusiveRevocable>()?;
+    m.add_class::<crate::clients::arbiters::NonexclusiveUnrevocable>()?;
+    m.add_class::<crate::clients::arbiters::PyConfirmationMadeLog>()?;
+    m.add_class::<crate::clients::arbiters::PyConfirmationRequestedLog>()?;
+
+    // Logical arbiters
+    m.add_class::<crate::clients::arbiters::Logical>()?;
+    m.add_class::<crate::clients::arbiters::AllArbiter>()?;
+    m.add_class::<crate::clients::arbiters::AnyArbiter>()?;
+    m.add_class::<crate::clients::arbiters::PyDecodedAllArbiterDemandData>()?;
+    m.add_class::<crate::clients::arbiters::PyDecodedAnyArbiterDemandData>()?;
+    m.add_class::<crate::clients::arbiters::PyDecodedDemand>()?;
 
     // Address Configuration Classes
     m.add_class::<crate::types::PyErc20Addresses>()?;
