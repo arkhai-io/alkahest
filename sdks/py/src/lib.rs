@@ -267,7 +267,7 @@ impl PyAlkahestClient {
     ///
     /// Returns the string obligation data from the attestation
     pub fn extract_obligation_data(&self, attestation: &crate::clients::oracle::PyOracleAttestation) -> PyResult<String> {
-        use alkahest_rs::contracts::StringObligation;
+        use alkahest_rs::contracts::obligations::StringObligation;
         use alloy::hex;
         use alloy::sol_types::SolType;
 
@@ -299,6 +299,7 @@ impl PyAlkahestClient {
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let escrow: alkahest_rs::contracts::IEAS::Attestation = attestation_client
                 .inner
+                .util()
                 .get_attestation(ref_uid)
                 .await
                 .map_err(|e| pyo3::PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!("{}", e)))?;
@@ -308,7 +309,7 @@ impl PyAlkahestClient {
 
     /// Extract demand data from an escrow attestation
     pub fn extract_demand_data(&self, escrow_attestation: &crate::clients::oracle::PyOracleAttestation) -> PyResult<crate::clients::oracle::PyTrustedOracleArbiterDemandData> {
-        use alkahest_rs::clients::arbiters::TrustedOracleArbiter;
+        use alkahest_rs::contracts::arbiters::TrustedOracleArbiter;
         use alloy::{hex, sol, sol_types::SolType};
 
         sol! {
@@ -347,7 +348,7 @@ impl PyAlkahestClient {
         })?;
 
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
-            use alkahest_rs::clients::arbiters::TrustedOracleArbiter;
+            use alkahest_rs::contracts::arbiters::TrustedOracleArbiter;
             use alloy::{hex, sol, sol_types::SolType};
 
             sol! {
@@ -359,6 +360,7 @@ impl PyAlkahestClient {
 
             let escrow: alkahest_rs::contracts::IEAS::Attestation = attestation_client
                 .inner
+                .util()
                 .get_attestation(ref_uid)
                 .await
                 .map_err(|e| pyo3::PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!("{}", e)))?;

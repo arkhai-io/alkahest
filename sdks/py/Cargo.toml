@@ -11,10 +11,10 @@ crate-type = ["cdylib"]
 [dependencies]
 pyo3 = { version = "0.25.0", features = ["extension-module", "experimental-async", "eyre"] }
 pyo3-async-runtimes = { version = "0.25", features = ["tokio-runtime"] }
-alkahest-rs = { git = "https://github.com/coophive/alkahest-rs", branch = "simplify-oracle" }
+alkahest-rs = { path = "../rs" }
 futures-util = "0.3"
 tokio = { version = "1.44", features = ["full"] }
-alloy = { version = "=1.0.30", features = [
+alloy = { version = "=1.0.42", features = [
     "full",
     "node-bindings",
     "signers",

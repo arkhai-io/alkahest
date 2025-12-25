@@ -130,7 +130,7 @@ impl PyStringObligationData {
 
     #[staticmethod]
     pub fn encode(obligation: &PyStringObligationData) -> PyResult<Vec<u8>> {
-        use alkahest_rs::contracts::StringObligation;
+        use alkahest_rs::contracts::obligations::StringObligation;
         use alloy::sol_types::SolValue;
 
         let obligation_data = StringObligation::ObligationData {
@@ -184,8 +184,8 @@ impl PyStringObligationData {
     }
 }
 
-impl From<alkahest_rs::contracts::StringObligation::ObligationData> for PyStringObligationData {
-    fn from(data: alkahest_rs::contracts::StringObligation::ObligationData) -> Self {
+impl From<alkahest_rs::contracts::obligations::StringObligation::ObligationData> for PyStringObligationData {
+    fn from(data: alkahest_rs::contracts::obligations::StringObligation::ObligationData) -> Self {
         Self { item: data.item }
     }
 }

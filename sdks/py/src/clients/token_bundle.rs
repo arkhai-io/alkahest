@@ -35,6 +35,7 @@ impl TokenBundleClient {
                 _ => return Err(map_eyre_to_pyerr(eyre::eyre!("Invalid purpose"))),
             };
             let receipts = inner
+                .util()
                 .approve(&token.try_into().map_err(map_eyre_to_pyerr)?, purpose)
                 .await
                 .map_err(map_eyre_to_pyerr)?;
@@ -56,7 +57,9 @@ impl TokenBundleClient {
         let inner = self.inner.clone();
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let receipt = inner
-                .collect_escrow(
+                .escrow()
+                .non_tierable()
+                .collect(
                     buy_attestation.parse().map_err(map_parse_to_pyerr)?,
                     fulfillment.parse().map_err(map_parse_to_pyerr)?,
                 )
@@ -74,6 +77,8 @@ impl TokenBundleClient {
         let inner = self.inner.clone();
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let receipt = inner
+                .escrow()
+                .non_tierable()
                 .reclaim_expired(buy_attestation.parse().map_err(map_parse_to_pyerr)?)
                 .await
                 .map_err(map_eyre_to_pyerr)?;
@@ -91,7 +96,9 @@ impl TokenBundleClient {
         let inner = self.inner.clone();
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let receipt = inner
-                .buy_with_bundle(
+                .escrow()
+                .non_tierable()
+                .create(
                     &price.try_into().map_err(map_eyre_to_pyerr)?,
                     &item.try_into().map_err(map_eyre_to_pyerr)?,
                     expiration,
@@ -117,7 +124,8 @@ impl TokenBundleClient {
         let inner = self.inner.clone();
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let receipt = inner
-                .pay_with_bundle(
+                .payment()
+                .pay(
                     &price.try_into().map_err(map_eyre_to_pyerr)?,
                     payee.parse().map_err(map_parse_to_pyerr)?,
                 )
@@ -143,6 +151,7 @@ impl TokenBundleClient {
         let inner = self.inner.clone();
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let receipt = inner
+                .barter()
                 .buy_bundle_for_bundle(
                     &bid.try_into().map_err(map_eyre_to_pyerr)?,
                     &ask.try_into().map_err(map_eyre_to_pyerr)?,
@@ -168,6 +177,7 @@ impl TokenBundleClient {
         let inner = self.inner.clone();
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let receipt = inner
+                .barter()
                 .pay_bundle_for_bundle(buy_attestation.parse().map_err(map_parse_to_pyerr)?)
                 .await
                 .map_err(map_eyre_to_pyerr)?;

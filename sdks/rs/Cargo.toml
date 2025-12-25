@@ -7,7 +7,7 @@ license = "MIT"
 repository = "https://github.com/CoopHive/alkahest-rs"
 
 [dependencies]
-alloy = { version = "1.0.42", features = [
+alloy = { version = "=1.0.42", features = [
     "full",
     "node-bindings",
     "signers",

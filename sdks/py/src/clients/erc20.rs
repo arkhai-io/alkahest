@@ -37,6 +37,7 @@ impl Erc20Client {
                 _ => return Err(pyo3::exceptions::PyValueError::new_err("Invalid purpose")),
             };
             let receipt = inner
+                .util()
                 .approve(&token.try_into().map_err(map_eyre_to_pyerr)?, purpose)
                 .await
                 .map_err(map_eyre_to_pyerr)?;
@@ -59,6 +60,7 @@ impl Erc20Client {
                 _ => return Err(pyo3::exceptions::PyValueError::new_err("Invalid purpose")),
             };
             let receipt = inner
+                .util()
                 .approve_if_less(&token.try_into().map_err(map_eyre_to_pyerr)?, purpose)
                 .await
                 .map_err(map_eyre_to_pyerr)?;
@@ -76,7 +78,9 @@ impl Erc20Client {
         let inner = self.inner.clone();
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let receipt = inner
-                .collect_escrow(
+                .escrow()
+                .non_tierable()
+                .collect(
                     buy_attestation.parse().map_err(map_parse_to_pyerr)?,
                     fulfillment.parse().map_err(map_parse_to_pyerr)?,
                 )
@@ -94,6 +98,8 @@ impl Erc20Client {
         let inner = self.inner.clone();
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let receipt = inner
+                .escrow()
+                .non_tierable()
                 .reclaim_expired(buy_attestation.parse().map_err(map_parse_to_pyerr)?)
                 .await
                 .map_err(map_eyre_to_pyerr)?;
@@ -111,7 +117,9 @@ impl Erc20Client {
         let inner = self.inner.clone();
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let receipt = inner
-                .buy_with_erc20(
+                .escrow()
+                .non_tierable()
+                .create(
                     &price.try_into().map_err(map_eyre_to_pyerr)?,
                     &item.try_into().map_err(map_eyre_to_pyerr)?,
                     expiration,
@@ -143,7 +151,9 @@ impl Erc20Client {
                 item.try_into().map_err(map_eyre_to_pyerr)?;
 
             match inner
-                .permit_and_buy_with_erc20(&price, &item, expiration)
+                .escrow()
+                .non_tierable()
+                .permit_and_create(&price, &item, expiration)
                 .await
             {
                 Ok(receipt) => Ok(LogWithHash::<AttestedLog> {
@@ -169,7 +179,8 @@ impl Erc20Client {
         let inner = self.inner.clone();
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let receipt = inner
-                .pay_with_erc20(
+                .payment()
+                .pay(
                     &price.try_into().map_err(map_eyre_to_pyerr)?,
                     payee.parse().map_err(map_parse_to_pyerr)?,
                 )
@@ -194,7 +205,8 @@ impl Erc20Client {
         let inner = self.inner.clone();
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let receipt = inner
-                .permit_and_pay_with_erc20(
+                .payment()
+                .permit_and_pay(
                     &price.try_into().map_err(map_eyre_to_pyerr)?,
                     payee.parse().map_err(map_parse_to_pyerr)?,
                 )
@@ -220,6 +232,7 @@ impl Erc20Client {
         let inner = self.inner.clone();
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let receipt = inner
+                .barter()
                 .buy_erc20_for_erc20(
                     &bid.try_into().map_err(map_eyre_to_pyerr)?,
                     &ask.try_into().map_err(map_eyre_to_pyerr)?,
@@ -247,6 +260,7 @@ impl Erc20Client {
         let inner = self.inner.clone();
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let receipt = inner
+                .barter()
                 .permit_and_buy_erc20_for_erc20(
                     &bid.try_into().map_err(map_eyre_to_pyerr)?,
                     &ask.try_into().map_err(map_eyre_to_pyerr)?,
@@ -272,6 +286,7 @@ impl Erc20Client {
         let inner = self.inner.clone();
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let receipt = inner
+                .barter()
                 .pay_erc20_for_erc20(buy_attestation.parse().map_err(map_parse_to_pyerr)?)
                 .await
                 .map_err(map_eyre_to_pyerr)?;
@@ -293,6 +308,7 @@ impl Erc20Client {
         let inner = self.inner.clone();
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let receipt = inner
+                .barter()
                 .permit_and_pay_erc20_for_erc20(
                     buy_attestation.parse().map_err(map_parse_to_pyerr)?,
                 )
@@ -318,6 +334,7 @@ impl Erc20Client {
         let inner = self.inner.clone();
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let receipt = inner
+                .barter()
                 .buy_erc721_for_erc20(
                     &bid.try_into().map_err(map_eyre_to_pyerr)?,
                     &ask.try_into().map_err(map_eyre_to_pyerr)?,
@@ -345,6 +362,7 @@ impl Erc20Client {
         let inner = self.inner.clone();
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let receipt = inner
+                .barter()
                 .permit_and_buy_erc721_for_erc20(
                     &bid.try_into().map_err(map_eyre_to_pyerr)?,
                     &ask.try_into().map_err(map_eyre_to_pyerr)?,
@@ -370,6 +388,7 @@ impl Erc20Client {
         let inner = self.inner.clone();
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let receipt = inner
+                .barter()
                 .pay_erc20_for_erc721(buy_attestation.parse().map_err(map_parse_to_pyerr)?)
                 .await
                 .map_err(map_eyre_to_pyerr)?;
@@ -391,6 +410,7 @@ impl Erc20Client {
         let inner = self.inner.clone();
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let receipt = inner
+                .barter()
                 .permit_and_pay_erc20_for_erc721(
                     buy_attestation.parse().map_err(map_parse_to_pyerr)?,
                 )
@@ -416,6 +436,7 @@ impl Erc20Client {
         let inner = self.inner.clone();
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let receipt = inner
+                .barter()
                 .buy_erc1155_for_erc20(
                     &bid.try_into().map_err(map_eyre_to_pyerr)?,
                     &ask.try_into().map_err(map_eyre_to_pyerr)?,
@@ -443,6 +464,7 @@ impl Erc20Client {
         let inner = self.inner.clone();
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let receipt = inner
+                .barter()
                 .permit_and_buy_erc1155_for_erc20(
                     &bid.try_into().map_err(map_eyre_to_pyerr)?,
                     &ask.try_into().map_err(map_eyre_to_pyerr)?,
@@ -469,6 +491,7 @@ impl Erc20Client {
         let inner = self.inner.clone();
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let receipt = inner
+                .barter()
                 .pay_erc20_for_erc1155(buy_attestation.parse().map_err(map_parse_to_pyerr)?)
                 .await
                 .map_err(map_eyre_to_pyerr)?;
@@ -490,6 +513,7 @@ impl Erc20Client {
         let inner = self.inner.clone();
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let receipt = inner
+                .barter()
                 .permit_and_pay_erc20_for_erc1155(
                     buy_attestation.parse().map_err(map_parse_to_pyerr)?,
                 )
@@ -515,6 +539,7 @@ impl Erc20Client {
         let inner = self.inner.clone();
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let receipt = inner
+                .barter()
                 .buy_bundle_for_erc20(
                     &bid.try_into().map_err(map_eyre_to_pyerr)?,
                     &ask.try_into().map_err(map_eyre_to_pyerr)?,
@@ -543,6 +568,7 @@ impl Erc20Client {
         let inner = self.inner.clone();
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let receipt = inner
+                .barter()
                 .permit_and_buy_bundle_for_erc20(
                     &bid.try_into().map_err(map_eyre_to_pyerr)?,
                     &ask.try_into().map_err(map_eyre_to_pyerr)?,
@@ -568,6 +594,7 @@ impl Erc20Client {
         let inner = self.inner.clone();
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let receipt = inner
+                .barter()
                 .pay_erc20_for_bundle(buy_attestation.parse().map_err(map_parse_to_pyerr)?)
                 .await
                 .map_err(map_eyre_to_pyerr)?;
@@ -589,6 +616,7 @@ impl Erc20Client {
         let inner = self.inner.clone();
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let receipt = inner
+                .barter()
                 .permit_and_pay_erc20_for_bundle(
                     buy_attestation.parse().map_err(map_parse_to_pyerr)?,
                 )
@@ -637,16 +665,17 @@ impl PyERC20EscrowObligationData {
         )
     }
     #[staticmethod]
-    pub fn decode(obligation_data: Vec<u8>) -> eyre::Result<PyERC20EscrowObligationData> {
-        use alloy::primitives::Bytes;
-        let bytes = Bytes::from(obligation_data);
-        let decoded = alkahest_rs::extensions::Erc20Module::decode_escrow_obligation(&bytes)?;
+    pub fn decode(obligation_data: Vec<u8>) -> PyResult<PyERC20EscrowObligationData> {
+        use alkahest_rs::contracts::obligations::escrow::non_tierable::ERC20EscrowObligation;
+        use alloy::sol_types::SolValue;
+        let decoded = ERC20EscrowObligation::ObligationData::abi_decode(&obligation_data)
+            .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
         Ok(decoded.into())
     }
 
     #[staticmethod]
     pub fn encode(obligation: &PyERC20EscrowObligationData) -> eyre::Result<Vec<u8>> {
-        use alkahest_rs::contracts::ERC20EscrowObligation;
+        use alkahest_rs::contracts::obligations::escrow::non_tierable::ERC20EscrowObligation;
         use alloy::{
             primitives::{Address, Bytes, U256},
             sol_types::SolValue,
@@ -672,10 +701,10 @@ impl PyERC20EscrowObligationData {
     }
 }
 
-impl From<alkahest_rs::contracts::ERC20EscrowObligation::ObligationData>
+impl From<alkahest_rs::contracts::obligations::escrow::non_tierable::ERC20EscrowObligation::ObligationData>
     for PyERC20EscrowObligationData
 {
-    fn from(data: alkahest_rs::contracts::ERC20EscrowObligation::ObligationData) -> Self {
+    fn from(data: alkahest_rs::contracts::obligations::escrow::non_tierable::ERC20EscrowObligation::ObligationData) -> Self {
         Self {
             token: format!("{:?}", data.token),
             amount: data.amount.try_into().unwrap_or(0), // Handle potential overflow
@@ -716,7 +745,7 @@ impl PyERC20PaymentObligationData {
 
     #[staticmethod]
     pub fn encode(obligation: &PyERC20PaymentObligationData) -> eyre::Result<Vec<u8>> {
-        use alkahest_rs::contracts::ERC20PaymentObligation;
+        use alkahest_rs::contracts::obligations::ERC20PaymentObligation;
         use alloy::{
             primitives::{Address, U256},
             sol_types::SolValue,
@@ -736,10 +765,11 @@ impl PyERC20PaymentObligationData {
     }
 
     #[staticmethod]
-    pub fn decode(obligation_data: Vec<u8>) -> eyre::Result<PyERC20PaymentObligationData> {
-        use alloy::primitives::Bytes;
-        let bytes = Bytes::from(obligation_data);
-        let decoded = alkahest_rs::extensions::Erc20Module::decode_payment_obligation(&bytes)?;
+    pub fn decode(obligation_data: Vec<u8>) -> PyResult<PyERC20PaymentObligationData> {
+        use alkahest_rs::contracts::obligations::ERC20PaymentObligation;
+        use alloy::sol_types::SolValue;
+        let decoded = ERC20PaymentObligation::ObligationData::abi_decode(&obligation_data)
+            .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
         Ok(decoded.into())
     }
 
@@ -748,10 +778,10 @@ impl PyERC20PaymentObligationData {
     }
 }
 
-impl From<alkahest_rs::contracts::ERC20PaymentObligation::ObligationData>
+impl From<alkahest_rs::contracts::obligations::ERC20PaymentObligation::ObligationData>
     for PyERC20PaymentObligationData
 {
-    fn from(data: alkahest_rs::contracts::ERC20PaymentObligation::ObligationData) -> Self {
+    fn from(data: alkahest_rs::contracts::obligations::ERC20PaymentObligation::ObligationData) -> Self {
         Self {
             token: format!("{:?}", data.token),
             amount: data.amount.try_into().unwrap_or(0), // Handle potential overflow

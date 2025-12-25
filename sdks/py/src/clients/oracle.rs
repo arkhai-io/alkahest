@@ -1,6 +1,7 @@
 use alkahest_rs::{
     extensions::OracleModule as InnerOracleClient,
-    contracts::StringObligation,
+    contracts::obligations::StringObligation,
+    contracts::arbiters::TrustedOracleArbiter,
 };
 use alloy::primitives::FixedBytes;
 use pyo3::{pyclass, pymethods, types::PyAnyMethods, PyAny, PyObject, PyResult, Python};
@@ -12,7 +13,6 @@ use std::sync::Arc;
 use crate::{
     error_handling::{map_eyre_to_pyerr, map_parse_to_pyerr},
 };
-use alkahest_rs::clients::arbiters::TrustedOracleArbiter;
 
 #[pyclass]
 #[derive(Clone)]
@@ -41,14 +41,16 @@ impl OracleClient {
         py: Python<'py>,
         obligation_uid: String,
         oracle: String,
+        demand: Vec<u8>,
     ) -> PyResult<pyo3::Bound<'py, PyAny>> {
         let inner = self.inner.clone();
         future_into_py(py, async move {
             let uid: FixedBytes<32> = obligation_uid.parse().map_err(map_parse_to_pyerr)?;
             let oracle_addr = oracle.parse().map_err(map_parse_to_pyerr)?;
+            let demand_bytes = alloy::primitives::Bytes::from(demand);
 
             let receipt = inner
-                .request_arbitration(uid, oracle_addr)
+                .request_arbitration(uid, oracle_addr, demand_bytes)
                 .await
                 .map_err(map_eyre_to_pyerr)?;
 
@@ -666,7 +668,6 @@ impl PyTrustedOracleArbiterDemandData {
 
     #[staticmethod]
     pub fn decode(demand_bytes: Vec<u8>) -> eyre::Result<PyTrustedOracleArbiterDemandData> {
-        use alkahest_rs::clients::arbiters::TrustedOracleArbiter;
         use alloy::primitives::Bytes;
         use alloy::sol_types::SolValue;
 
@@ -677,16 +678,14 @@ impl PyTrustedOracleArbiterDemandData {
 
     #[staticmethod]
     pub fn encode(demand_data: &PyTrustedOracleArbiterDemandData) -> eyre::Result<Vec<u8>> {
-        use alkahest_rs::extensions::ArbitersModule;
-        use alkahest_rs::clients::arbiters::TrustedOracleArbiter;
         use alloy::primitives::{Address, Bytes};
+        use alloy::sol_types::SolValue;
 
         let oracle: Address = demand_data.oracle.parse()?;
         let data = Bytes::from(demand_data.data.clone());
-
         let rust_demand_data = TrustedOracleArbiter::DemandData { oracle, data };
-        let encoded = ArbitersModule::encode_trusted_oracle_arbiter_demand(&rust_demand_data);
-        Ok(encoded.to_vec())
+        let encoded = rust_demand_data.abi_encode();
+        Ok(encoded)
     }
 
     pub fn encode_self(&self) -> eyre::Result<Vec<u8>> {
@@ -694,10 +693,10 @@ impl PyTrustedOracleArbiterDemandData {
     }
 }
 
-impl From<alkahest_rs::clients::arbiters::TrustedOracleArbiter::DemandData>
+impl From<TrustedOracleArbiter::DemandData>
     for PyTrustedOracleArbiterDemandData
 {
-    fn from(data: alkahest_rs::clients::arbiters::TrustedOracleArbiter::DemandData) -> Self {
+    fn from(data: TrustedOracleArbiter::DemandData) -> Self {
         Self {
             oracle: format!("{:?}", data.oracle),
             data: data.data.to_vec(),
@@ -706,7 +705,7 @@ impl From<alkahest_rs::clients::arbiters::TrustedOracleArbiter::DemandData>
 }
 
 impl TryFrom<PyTrustedOracleArbiterDemandData>
-    for alkahest_rs::clients::arbiters::TrustedOracleArbiter::DemandData
+    for TrustedOracleArbiter::DemandData
 {
     type Error = eyre::Error;
 

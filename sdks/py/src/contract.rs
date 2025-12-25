@@ -452,13 +452,13 @@ pub struct PyDecodedAttestation<T> {
 impl
     From<
         alkahest_rs::types::DecodedAttestation<
-            alkahest_rs::contracts::StringObligation::ObligationData,
+            alkahest_rs::contracts::obligations::StringObligation::ObligationData,
         >,
     > for PyDecodedAttestation<crate::clients::string_obligation::PyStringObligationData>
 {
     fn from(
         decoded: alkahest_rs::types::DecodedAttestation<
-            alkahest_rs::contracts::StringObligation::ObligationData,
+            alkahest_rs::contracts::obligations::StringObligation::ObligationData,
         >,
     ) -> Self {
         Self {

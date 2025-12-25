@@ -34,6 +34,7 @@ impl AttestationClient {
             let schema: FixedBytes<32> = schema.parse().map_err(map_parse_to_pyerr)?;
             let resolver: Address = resolver.parse().map_err(map_parse_to_pyerr)?;
             let receipt = inner
+                .util()
                 .register_schema(schema.to_string(), resolver, revocable)
                 .await
                 .map_err(map_eyre_to_pyerr)?;
@@ -49,6 +50,7 @@ impl AttestationClient {
         let inner = self.inner.clone();
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let receipt = inner
+                .util()
                 .attest(attestation.try_into().map_err(map_eyre_to_pyerr)?)
                 .await
                 .map_err(map_eyre_to_pyerr)?;
@@ -71,7 +73,10 @@ impl AttestationClient {
         let inner = self.inner.clone();
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let receipt = inner
-                .collect_escrow(
+                .escrow()
+                .v1()
+                .non_tierable()
+                .collect(
                     buy_attestation.parse().map_err(map_parse_to_pyerr)?,
                     fulfillment.parse().map_err(map_parse_to_pyerr)?,
                 )
@@ -90,7 +95,10 @@ impl AttestationClient {
         let inner = self.inner.clone();
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let receipt = inner
-                .collect_escrow_2(
+                .escrow()
+                .v2()
+                .non_tierable()
+                .collect(
                     buy_attestation.parse().map_err(map_parse_to_pyerr)?,
                     fulfillment.parse().map_err(map_parse_to_pyerr)?,
                 )
@@ -110,9 +118,12 @@ impl AttestationClient {
         let inner = self.inner.clone();
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let receipt = inner
-                .create_escrow(
+                .escrow()
+                .v1()
+                .non_tierable()
+                .create(
                     attestation.try_into().map_err(map_eyre_to_pyerr)?,
-                    demand.try_into().map_err(map_eyre_to_pyerr)?,
+                    &demand.try_into().map_err(map_eyre_to_pyerr)?,
                     expiration,
                 )
                 .await
@@ -137,9 +148,12 @@ impl AttestationClient {
         let inner = self.inner.clone();
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let receipt = inner
-                .create_escrow_2(
+                .escrow()
+                .v2()
+                .non_tierable()
+                .create(
                     attestation.parse().map_err(map_parse_to_pyerr)?,
-                    demand.try_into().map_err(map_eyre_to_pyerr)?,
+                    &demand.try_into().map_err(map_eyre_to_pyerr)?,
                     expiration,
                 )
                 .await
@@ -164,9 +178,10 @@ impl AttestationClient {
         let inner = self.inner.clone();
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let receipt = inner
+                .util()
                 .attest_and_create_escrow(
                     attestation.try_into().map_err(map_eyre_to_pyerr)?,
-                    demand.try_into().map_err(map_eyre_to_pyerr)?,
+                    &demand.try_into().map_err(map_eyre_to_pyerr)?,
                     expiration,
                 )
                 .await
@@ -191,6 +206,7 @@ impl AttestationClient {
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let uid: FixedBytes<32> = uid.parse().map_err(map_parse_to_pyerr)?;
             let attestation = inner
+                .util()
                 .get_attestation(uid)
                 .await
                 .map_err(map_eyre_to_pyerr)?;
