@@ -21,9 +21,12 @@ use alloy::{
     sol_types::SolEvent,
 };
 use clients::{
-    attestation::AttestationClient, erc1155::Erc1155Client, erc20::Erc20Client,
-    erc721::Erc721Client, oracle::OracleClient, string_obligation::StringObligationClient,
-    token_bundle::TokenBundleClient,
+    arbiters::trusted_oracle::OracleClient,
+    obligations::{
+        attestation::AttestationClient, erc1155::Erc1155Client, erc20::Erc20Client,
+        erc721::Erc721Client, string_obligation::StringObligationClient,
+        token_bundle::TokenBundleClient,
+    },
 };
 use pyo3::{
     pyclass, pymethods, pymodule,
@@ -35,14 +38,16 @@ use types::{DefaultExtensionConfig, EscowClaimedLog};
 
 use crate::{
     clients::{
-        erc1155::{PyERC1155EscrowObligationData, PyERC1155PaymentObligationData},
-        erc20::{PyERC20EscrowObligationData, PyERC20PaymentObligationData},
-        erc721::{PyERC721EscrowObligationData, PyERC721PaymentObligationData},
-        oracle::{
+        arbiters::trusted_oracle::{
             PyArbitrateOptions, PyDecision, PyListenResult, PyOracleAddresses,
             PyOracleAttestation, PyTrustedOracleArbiterDemandData,
         },
-        string_obligation::PyStringObligationData,
+        obligations::{
+            erc1155::{PyERC1155EscrowObligationData, PyERC1155PaymentObligationData},
+            erc20::{PyERC20EscrowObligationData, PyERC20PaymentObligationData},
+            erc721::{PyERC721EscrowObligationData, PyERC721PaymentObligationData},
+            string_obligation::PyStringObligationData,
+        },
     },
     contract::{
         PyAttestation, PyAttestationRequest, PyAttestationRequestData, PyAttested,
@@ -266,7 +271,7 @@ impl PyAlkahestClient {
     /// Extract obligation data from a fulfillment attestation
     ///
     /// Returns the string obligation data from the attestation
-    pub fn extract_obligation_data(&self, attestation: &crate::clients::oracle::PyOracleAttestation) -> PyResult<String> {
+    pub fn extract_obligation_data(&self, attestation: &crate::clients::arbiters::trusted_oracle::PyOracleAttestation) -> PyResult<String> {
         use alkahest_rs::contracts::obligations::StringObligation;
         use alloy::hex;
         use alloy::sol_types::SolType;
@@ -284,7 +289,7 @@ impl PyAlkahestClient {
     pub fn get_escrow_attestation<'py>(
         &self,
         py: Python<'py>,
-        fulfillment: &crate::clients::oracle::PyOracleAttestation,
+        fulfillment: &crate::clients::arbiters::trusted_oracle::PyOracleAttestation,
     ) -> PyResult<pyo3::Bound<'py, PyAny>> {
         let attestation_client = self.attestation.clone().ok_or_else(|| {
             pyo3::PyErr::new::<pyo3::exceptions::PyAttributeError, _>(
@@ -303,12 +308,12 @@ impl PyAlkahestClient {
                 .get_attestation(ref_uid)
                 .await
                 .map_err(|e| pyo3::PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!("{}", e)))?;
-            Ok(crate::clients::oracle::PyOracleAttestation::from(&escrow))
+            Ok(crate::clients::arbiters::trusted_oracle::PyOracleAttestation::from(&escrow))
         })
     }
 
     /// Extract demand data from an escrow attestation
-    pub fn extract_demand_data(&self, escrow_attestation: &crate::clients::oracle::PyOracleAttestation) -> PyResult<crate::clients::oracle::PyTrustedOracleArbiterDemandData> {
+    pub fn extract_demand_data(&self, escrow_attestation: &crate::clients::arbiters::trusted_oracle::PyOracleAttestation) -> PyResult<crate::clients::arbiters::trusted_oracle::PyTrustedOracleArbiterDemandData> {
         use alkahest_rs::contracts::arbiters::TrustedOracleArbiter;
         use alloy::{hex, sol, sol_types::SolType};
 
@@ -328,14 +333,14 @@ impl PyAlkahestClient {
         let demand_data = TrustedOracleArbiter::DemandData::abi_decode(&arbiter_demand.demand)
             .map_err(|e| pyo3::PyErr::new::<pyo3::exceptions::PyValueError, _>(format!("Failed to decode demand data: {}", e)))?;
 
-        Ok(crate::clients::oracle::PyTrustedOracleArbiterDemandData::from(demand_data))
+        Ok(crate::clients::arbiters::trusted_oracle::PyTrustedOracleArbiterDemandData::from(demand_data))
     }
 
     /// Get escrow attestation and extract demand data in one call
     pub fn get_escrow_and_demand<'py>(
         &self,
         py: Python<'py>,
-        fulfillment: &crate::clients::oracle::PyOracleAttestation,
+        fulfillment: &crate::clients::arbiters::trusted_oracle::PyOracleAttestation,
     ) -> PyResult<pyo3::Bound<'py, PyAny>> {
         let attestation_client = self.attestation.clone().ok_or_else(|| {
             pyo3::PyErr::new::<pyo3::exceptions::PyAttributeError, _>(
@@ -374,8 +379,8 @@ impl PyAlkahestClient {
             let demand_data = TrustedOracleArbiter::DemandData::abi_decode(&arbiter_demand.demand)
                 .map_err(|e| pyo3::PyErr::new::<pyo3::exceptions::PyValueError, _>(format!("Failed to decode demand data: {}", e)))?;
 
-            let py_escrow = crate::clients::oracle::PyOracleAttestation::from(&escrow);
-            let py_demand = crate::clients::oracle::PyTrustedOracleArbiterDemandData::from(demand_data);
+            let py_escrow = crate::clients::arbiters::trusted_oracle::PyOracleAttestation::from(&escrow);
+            let py_demand = crate::clients::arbiters::trusted_oracle::PyTrustedOracleArbiterDemandData::from(demand_data);
 
             Ok((py_escrow, py_demand))
         })
