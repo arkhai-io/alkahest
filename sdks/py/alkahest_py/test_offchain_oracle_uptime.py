@@ -10,6 +10,7 @@ from alkahest_py import (
     MockERC20,
     TrustedOracleArbiterDemandData,
     ArbitrateOptions,
+    ArbitrationMode,
 )
 
 
@@ -122,7 +123,7 @@ async def test_asynchronous_offchain_oracle_uptime_flow():
         pass
 
     # Arbitrate
-    options = ArbitrateOptions(skip_arbitrated=False, only_new=False)
+    options = ArbitrateOptions(ArbitrationMode.All)
     result = await oracle_client.oracle.listen_and_arbitrate_no_spawn(
         decision_function,
         callback,

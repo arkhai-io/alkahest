@@ -122,11 +122,7 @@ impl OracleClient {
         let inner = self.inner.clone();
         future_into_py(py, async move {
             let opts = options.unwrap_or_default();
-
-            let arbitrate_options = alkahest_rs::clients::oracle::ArbitrateOptions {
-                skip_arbitrated: opts.skip_arbitrated,
-                only_new: opts.only_new,
-            };
+            let arbitrate_options = opts.to_rust_options();
 
             let arbitrate_func = |attestation: &alkahest_rs::contracts::IEAS::Attestation| -> Option<bool> {
                 Python::with_gil(|py| {
@@ -214,11 +210,7 @@ impl OracleClient {
         future_into_py(py, async move {
             let opts = options.unwrap_or_default();
             let timeout = timeout_seconds.map(|secs| std::time::Duration::from_secs_f64(secs));
-
-            let arbitrate_options = alkahest_rs::clients::oracle::ArbitrateOptions {
-                skip_arbitrated: opts.skip_arbitrated,
-                only_new: opts.only_new,
-            };
+            let arbitrate_options = opts.to_rust_options();
 
             let arbitrate_func = |attestation: &alkahest_rs::contracts::IEAS::Attestation| -> Option<bool> {
                 Python::with_gil(|py| {
@@ -298,11 +290,7 @@ impl OracleClient {
 
             let opts = options.unwrap_or_default();
             let timeout = timeout_seconds.map(|secs| std::time::Duration::from_secs_f64(secs));
-
-            let arbitrate_options = alkahest_rs::clients::oracle::ArbitrateOptions {
-                skip_arbitrated: opts.skip_arbitrated,
-                only_new: opts.only_new,
-            };
+            let arbitrate_options = opts.to_rust_options();
 
             // Wrap PyObjects in Arc so they can be cloned in Fn closure
             let decision_func = Arc::new(decision_func);
@@ -446,31 +434,70 @@ impl TryFrom<PyOracleAddresses> for alkahest_rs::clients::oracle::OracleAddresse
     }
 }
 
+/// Mode for arbitration processing
+/// - "all": Process all past events (including already arbitrated), plus listen for new events
+/// - "unarbitrated": Process only unarbitrated past events, plus listen for new events
+/// - "new": Only listen for new events, skip past event processing
+#[pyclass(eq, eq_int)]
+#[derive(Clone, PartialEq, Default)]
+pub enum PyArbitrationMode {
+    #[default]
+    All,
+    Unarbitrated,
+    New,
+}
+
+#[pymethods]
+impl PyArbitrationMode {
+    #[staticmethod]
+    pub fn all() -> Self {
+        Self::All
+    }
+
+    #[staticmethod]
+    pub fn unarbitrated() -> Self {
+        Self::Unarbitrated
+    }
+
+    #[staticmethod]
+    pub fn new_only() -> Self {
+        Self::New
+    }
+
+    pub fn __str__(&self) -> String {
+        match self {
+            Self::All => "all".to_string(),
+            Self::Unarbitrated => "unarbitrated".to_string(),
+            Self::New => "new".to_string(),
+        }
+    }
+
+    pub fn __repr__(&self) -> String {
+        format!("ArbitrationMode.{}", match self {
+            Self::All => "All",
+            Self::Unarbitrated => "Unarbitrated",
+            Self::New => "New",
+        })
+    }
+}
+
 #[pyclass]
 #[derive(Clone)]
 pub struct PyArbitrateOptions {
     #[pyo3(get, set)]
-    pub skip_arbitrated: bool,
-    #[pyo3(get, set)]
-    pub only_new: bool,
+    pub mode: PyArbitrationMode,
 }
 
 #[pymethods]
 impl PyArbitrateOptions {
     #[new]
-    #[pyo3(signature = (skip_arbitrated=false, only_new=false))]
-    pub fn __new__(skip_arbitrated: bool, only_new: bool) -> Self {
-        Self {
-            skip_arbitrated,
-            only_new,
-        }
+    #[pyo3(signature = (mode=PyArbitrationMode::All))]
+    pub fn __new__(mode: PyArbitrationMode) -> Self {
+        Self { mode }
     }
 
     pub fn __str__(&self) -> String {
-        format!(
-            "PyArbitrateOptions(skip_arbitrated={}, only_new={})",
-            self.skip_arbitrated, self.only_new
-        )
+        format!("ArbitrateOptions(mode={})", self.mode.__str__())
     }
 
     pub fn __repr__(&self) -> String {
@@ -481,8 +508,27 @@ impl PyArbitrateOptions {
 impl Default for PyArbitrateOptions {
     fn default() -> Self {
         Self {
-            skip_arbitrated: false,
-            only_new: false,
+            mode: PyArbitrationMode::All,
+        }
+    }
+}
+
+impl PyArbitrateOptions {
+    /// Convert to the Rust SDK's ArbitrateOptions
+    pub fn to_rust_options(&self) -> alkahest_rs::clients::oracle::ArbitrateOptions {
+        match self.mode {
+            PyArbitrationMode::All => alkahest_rs::clients::oracle::ArbitrateOptions {
+                skip_arbitrated: false,
+                only_new: false,
+            },
+            PyArbitrationMode::Unarbitrated => alkahest_rs::clients::oracle::ArbitrateOptions {
+                skip_arbitrated: true,
+                only_new: false,
+            },
+            PyArbitrationMode::New => alkahest_rs::clients::oracle::ArbitrateOptions {
+                skip_arbitrated: false,
+                only_new: true,
+            },
         }
     }
 }

@@ -8,6 +8,7 @@ import time
 from alkahest_py import (
     EnvTestManager,
     ArbitrateOptions,
+    ArbitrationMode,
     MockERC20,
     TrustedOracleArbiterDemandData,
 )
@@ -54,7 +55,7 @@ async def test_listen_and_arbitrate_new_fulfillments_no_spawn():
     # Start listening with only_new=True (should not process past arbitrations)
     # Note: This test is timing-dependent and may be flaky
     oracle_client = env.bob_client.oracle
-    options = ArbitrateOptions(skip_arbitrated=False, only_new=True)
+    options = ArbitrateOptions(ArbitrationMode.New)
 
     # With only_new=True and short timeout, should process 0 past decisions
     result = await oracle_client.listen_and_arbitrate_no_spawn(

@@ -8,6 +8,7 @@ import time
 from alkahest_py import (
     EnvTestManager,
     ArbitrateOptions,
+    ArbitrationMode,
     MockERC20,
     TrustedOracleArbiterDemandData,
 )
@@ -65,7 +66,7 @@ async def test_listen_and_arbitrate_no_spawn():
         print(f"Callback: Decision made: {decision.decision}")
 
     # Listen and arbitrate with short timeout (processes past, then times out)
-    options = ArbitrateOptions(skip_arbitrated=False, only_new=False)
+    options = ArbitrateOptions(ArbitrationMode.All)
     result = await oracle_client.listen_and_arbitrate_no_spawn(
         decision_function,
         callback,

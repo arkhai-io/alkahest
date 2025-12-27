@@ -10,6 +10,7 @@ from eth_account.messages import encode_defunct
 from alkahest_py import (
     EnvTestManager,
     ArbitrateOptions,
+    ArbitrationMode,
     AlkahestClient,
 )
 
@@ -143,7 +144,7 @@ async def test_contextless_offchain_identity_oracle_flow():
     await env.bob_client.oracle.request_arbitration(good_uid, oracle_address, b"")
 
     # Process the arbitration (skip already arbitrated items)
-    options = ArbitrateOptions(skip_arbitrated=True, only_new=False)
+    options = ArbitrateOptions(ArbitrationMode.Unarbitrated)
     result1 = await oracle_client.oracle.listen_and_arbitrate_no_spawn(
         decision_function,
         callback,

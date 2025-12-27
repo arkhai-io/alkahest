@@ -9,6 +9,7 @@ from alkahest_py import (
     EnvTestManager,
     StringObligationData,
     ArbitrateOptions,
+    ArbitrationMode,
     MockERC20,
     TrustedOracleArbiterDemandData,
 )
@@ -61,7 +62,7 @@ async def test_arbitrate_past_sync():
         return obligation_str == "good"
 
     # Call arbitrate_past_sync with simplified API
-    options = ArbitrateOptions(skip_arbitrated=False, only_new=False)
+    options = ArbitrateOptions(ArbitrationMode.All)
     decisions = await oracle_client.arbitrate_past_sync(decision_function, options)
 
     # Verify arbitration found decisions
@@ -125,7 +126,7 @@ async def test_conditional_arbitrate_past():
         return obligation_str == "good"
 
     # Arbitrate both
-    options = ArbitrateOptions(skip_arbitrated=False, only_new=False)
+    options = ArbitrateOptions(ArbitrationMode.All)
     decisions = await oracle_client.arbitrate_past_sync(decision_function, options)
 
     # Verify we got 2 decisions, only 1 approved
@@ -181,12 +182,12 @@ async def test_skip_arbitrated():
         return obligation_str == "good"
 
     # First arbitration
-    options = ArbitrateOptions(skip_arbitrated=False, only_new=False)
+    options = ArbitrateOptions(ArbitrationMode.All)
     decisions = await oracle_client.arbitrate_past_sync(decision_function, options)
     assert len(decisions) == 1, "First arbitration should find 1 decision"
 
-    # Second arbitration with skip_arbitrated should find nothing
-    options_skip = ArbitrateOptions(skip_arbitrated=True, only_new=False)
+    # Second arbitration with unarbitrated mode should find nothing (already arbitrated)
+    options_skip = ArbitrateOptions(ArbitrationMode.Unarbitrated)
     decisions2 = await oracle_client.arbitrate_past_sync(decision_function, options_skip)
     assert len(decisions2) == 0, "Second arbitration with skip_arbitrated should find 0 decisions"
 

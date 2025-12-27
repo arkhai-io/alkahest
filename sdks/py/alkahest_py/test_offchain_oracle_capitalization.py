@@ -12,6 +12,7 @@ from alkahest_py import (
     MockERC20,
     TrustedOracleArbiterDemandData,
     ArbitrateOptions,
+    ArbitrationMode,
     AlkahestClient,
 )
 
@@ -138,7 +139,7 @@ async def test_synchronous_offchain_oracle_capitalization_flow():
         pass
 
     # Listen and arbitrate
-    options = ArbitrateOptions(skip_arbitrated=False, only_new=False)
+    options = ArbitrateOptions(ArbitrationMode.All)
     result = await oracle_client.oracle.listen_and_arbitrate_no_spawn(
         decision_function,
         callback,
