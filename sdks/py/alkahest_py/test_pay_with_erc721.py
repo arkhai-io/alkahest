@@ -29,10 +29,10 @@ async def test_pay_with_erc721():
     }
     
     # Alice approves token for payment
-    await env.alice_client.erc721.approve(price_data, "payment")
+    await env.alice_client.erc721.util.approve(price_data, "payment")
     
     # Alice makes direct payment to Bob
-    payment_result = await env.alice_client.erc721.pay_with_erc721(price_data, env.bob)
+    payment_result = await env.alice_client.erc721.payment.pay(price_data, env.bob)
 
     assert not (not payment_result['log']['uid'] or payment_result['log']['uid'] == "0x0000000000000000000000000000000000000000000000000000000000000000"), "Invalid payment attestation UID"
     

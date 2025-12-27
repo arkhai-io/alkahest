@@ -34,7 +34,7 @@ async def test_listen_and_arbitrate_new_fulfillments_no_spawn():
     }
 
     expiration = int(time.time()) + 3600
-    escrow_receipt = await env.alice_client.erc20.permit_and_buy_with_erc20(
+    escrow_receipt = await env.alice_client.erc20.escrow.non_tierable.permit_and_create(
         price, arbiter, expiration
     )
     escrow_uid = escrow_receipt['log']['uid']

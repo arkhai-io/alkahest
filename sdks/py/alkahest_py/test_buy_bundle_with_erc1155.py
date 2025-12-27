@@ -31,21 +31,22 @@ async def test_buy_bundle_with_erc1155():
     
     # Create bundle data that Alice wants to buy
     bundle_data = {
+        "native_amount": 0,
         "erc20s": [{"address": env.mock_addresses.erc20_b, "value": 20}],
         "erc721s": [{"address": env.mock_addresses.erc721_b, "id": 2}],
         "erc1155s": [{"address": env.mock_addresses.erc1155_b, "id": 3, "value": 4}]
     }
     
     # Alice approves tokens for escrow
-    await env.alice_client.erc1155.approve_all(env.mock_addresses.erc1155_a, "escrow")
+    await env.alice_client.erc1155.util.approve_all(env.mock_addresses.erc1155_a, "barter")
     
     # Alice creates purchase offer
-    buy_result = await env.alice_client.erc1155.buy_bundle_with_erc1155(bid_data, bundle_data, 0)
+    buy_result = await env.alice_client.erc1155.barter.buy_bundle_with_erc1155(bid_data, bundle_data, 0)
     
     assert not (not buy_result['log']['uid'] or buy_result['log']['uid'] == "0x0000000000000000000000000000000000000000000000000000000000000000"), "Invalid buy attestation UID"
     
     # Verify escrow happened
-    escrow_balance = mock_erc1155_a.balance_of(env.addresses.erc1155_addresses.escrow_obligation, 1)
+    escrow_balance = mock_erc1155_a.balance_of(env.addresses.erc1155_addresses.escrow_obligation_nontierable, 1)
     alice_balance_after = mock_erc1155_a.balance_of(env.alice, 1)
     
     assert not (escrow_balance != 5), "5 tokens should be in escrow, got {escrow_balance}"

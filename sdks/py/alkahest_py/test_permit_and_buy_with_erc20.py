@@ -25,7 +25,7 @@ async def test_permit_and_buy_with_erc20():
     }
     expiration = int(time.time()) + 3600
     
-    result = await env.alice_client.erc20.permit_and_buy_with_erc20(
+    result = await env.alice_client.erc20.escrow.non_tierable.permit_and_create(
     price_data, arbiter_data, expiration
     )
     

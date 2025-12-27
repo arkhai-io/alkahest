@@ -34,13 +34,13 @@ async def test_pay_with_erc1155():
     }
     
     # Alice approves tokens for payment
-    await env.alice_client.erc1155.approve_all(env.mock_addresses.erc1155_a, "payment")
+    await env.alice_client.erc1155.util.approve_all(env.mock_addresses.erc1155_a, "payment")
     
     # Check initial Bob balance
     initial_bob_balance = mock_erc1155_a.balance_of(env.bob, 1)
     
     # Alice makes direct payment to Bob
-    pay_result = await env.alice_client.erc1155.pay_with_erc_1155(price_data, env.bob)
+    pay_result = await env.alice_client.erc1155.payment.pay(price_data, env.bob)
 
     assert not (not pay_result['log']['uid'] or pay_result['log']['uid'] == "0x0000000000000000000000000000000000000000000000000000000000000000"), "Invalid payment attestation UID"
     

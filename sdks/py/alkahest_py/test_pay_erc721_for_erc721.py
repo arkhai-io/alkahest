@@ -38,19 +38,19 @@ async def test_pay_erc721_for_erc721():
     }
     
     # Alice approves token for escrow and creates buy attestation
-    await env.alice_client.erc721.approve(bid_data, "escrow")
+    await env.alice_client.erc721.util.approve(bid_data, "barter")
     
-    buy_result = await env.alice_client.erc721.buy_erc_721_for_erc_721(bid_data, ask_data, 0)
+    buy_result = await env.alice_client.erc721.barter.buy_erc721_for_erc721(bid_data, ask_data, 0)
     
     assert not (not buy_result['log']['uid'] or buy_result['log']['uid'] == "0x0000000000000000000000000000000000000000000000000000000000000000"), "Invalid buy attestation UID"
     
     buy_attestation_uid = buy_result['log']['uid']
     
     # Bob approves token for payment
-    await env.bob_client.erc721.approve(ask_data, "payment")
+    await env.bob_client.erc721.util.approve(ask_data, "barter")
 
     # Bob fulfills the buy attestation
-    pay_result = await env.bob_client.erc721.pay_erc_721_for_erc_721(buy_attestation_uid)
+    pay_result = await env.bob_client.erc721.barter.pay_erc721_for_erc721(buy_attestation_uid)
 
     assert not (not pay_result['log']['uid'] or pay_result['log']['uid'] == "0x0000000000000000000000000000000000000000000000000000000000000000"), "Invalid payment attestation UID"
     

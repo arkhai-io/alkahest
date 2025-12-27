@@ -25,13 +25,14 @@ async def test_permit_and_buy_bundle_for_erc20():
     
     # Create bundle data (ERC20 + ERC721 + ERC1155)
     bundle_data = {
+        "native_amount": 0,
         "erc20s": [{"address": env.mock_addresses.erc20_b, "value": 20}],
         "erc721s": [{"address": env.mock_addresses.erc721_a, "id": 1}],
         "erc1155s": [{"address": env.mock_addresses.erc1155_a, "id": 1, "value": 5}]
     }
     
     # Alice creates the buy order for token bundle with permit (no pre-approval needed)
-    buy_result = await env.alice_client.erc20.permit_and_buy_bundle_for_erc20(bid_data, bundle_data, 0)
+    buy_result = await env.alice_client.erc20.barter.permit_and_buy_bundle_for_erc20(bid_data, bundle_data, 0)
     
     assert not (not buy_result['log']['uid'] or buy_result['log']['uid'] == "0x0000000000000000000000000000000000000000000000000000000000000000"), "Invalid buy attestation UID"
     
@@ -39,7 +40,7 @@ async def test_permit_and_buy_bundle_for_erc20():
     
     # Verify Alice's ERC20 tokens are in escrow
     alice_balance_after_escrow = mock_erc20.balance_of(env.alice)
-    escrow_balance = mock_erc20.balance_of(env.addresses.erc20_addresses.escrow_obligation)
+    escrow_balance = mock_erc20.balance_of(env.addresses.erc20_addresses.escrow_obligation_nontierable)
     
     expected_alice_balance = alice_initial_erc20 + 100 - 50  # initial + transfer - escrowed
     assert not (alice_balance_after_escrow != expected_alice_balance), "Alice should have {expected_alice_balance} ERC20 after escrow, got {alice_balance_after_escrow}"

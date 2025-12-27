@@ -41,15 +41,15 @@ async def test_buy_erc1155_for_erc1155():
     }
     
     # Alice approves tokens for escrow
-    await env.alice_client.erc1155.approve_all(env.mock_addresses.erc1155_a, "escrow")
+    await env.alice_client.erc1155.util.approve_all(env.mock_addresses.erc1155_a, "barter")
     
     # Alice creates escrow offering ERC1155A for ERC1155B
-    buy_result = await env.alice_client.erc1155.buy_erc1155_for_erc1155(bid_data, ask_data, 0)
+    buy_result = await env.alice_client.erc1155.barter.buy_erc1155_for_erc1155(bid_data, ask_data, 0)
     
     assert not (not buy_result['log']['uid'] or buy_result['log']['uid'] == "0x0000000000000000000000000000000000000000000000000000000000000000"), "Invalid buy attestation UID"
     
     # Verify escrow happened
-    escrow_balance = mock_erc1155_a.balance_of(env.addresses.erc1155_addresses.escrow_obligation, 1)
+    escrow_balance = mock_erc1155_a.balance_of(env.addresses.erc1155_addresses.escrow_obligation_nontierable, 1)
     alice_balance_after = mock_erc1155_a.balance_of(env.alice, 1)
     
     assert not (escrow_balance != 5), "5 tokens should be in escrow, got {escrow_balance}"

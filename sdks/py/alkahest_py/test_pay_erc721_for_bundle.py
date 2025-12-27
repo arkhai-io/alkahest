@@ -42,6 +42,7 @@ async def test_pay_erc721_for_bundle():
     
     # Bob's bundle that he'll escrow
     bundle_data = {
+        "native_amount": 0,
         "erc20s": [{"address": env.mock_addresses.erc20_b, "value": 20}],
         "erc721s": [{"address": env.mock_addresses.erc721_b, "id": bob_token_id}],
         "erc1155s": [{"address": env.mock_addresses.erc1155_a, "id": 1, "value": 5}]
@@ -58,7 +59,7 @@ async def test_pay_erc721_for_bundle():
     demand_bytes = payment_obligation.encode_self()
     
     # Bob approves all tokens for the bundle escrow
-    await env.bob_client.token_bundle.approve(bundle_data, "escrow")
+    await env.bob_client.token_bundle.util.approve(bundle_data, "escrow")
     
     # Bob creates bundle escrow demanding ERC721 from Alice
     arbiter_data = {
@@ -66,7 +67,7 @@ async def test_pay_erc721_for_bundle():
         "demand": demand_bytes
     }
     
-    buy_result = await env.bob_client.token_bundle.buy_with_bundle(bundle_data, arbiter_data, 0)
+    buy_result = await env.bob_client.token_bundle.escrow.non_tierable.create(bundle_data, arbiter_data, 0)
     
     assert not (not buy_result['log']['uid'] or buy_result['log']['uid'] == "0x0000000000000000000000000000000000000000000000000000000000000000"), "Invalid buy attestation UID"
     
@@ -74,10 +75,10 @@ async def test_pay_erc721_for_bundle():
     
     # Alice approves her ERC721 for payment
     erc721_data = {"address": env.mock_addresses.erc721_a, "id": alice_token_id}
-    await env.alice_client.erc721.approve(erc721_data, "payment")
+    await env.alice_client.erc721.util.approve(erc721_data, "barter")
     
     # Alice fulfills Bob's buy attestation with her ERC721
-    pay_result = await env.alice_client.erc721.pay_erc721_for_bundle(buy_attestation_uid)
+    pay_result = await env.alice_client.erc721.barter.pay_erc721_for_bundle(buy_attestation_uid)
 
     assert not (not pay_result['log']['uid'] or pay_result['log']['uid'] == "0x0000000000000000000000000000000000000000000000000000000000000000"), "Invalid payment attestation UID"
     

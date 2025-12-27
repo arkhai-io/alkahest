@@ -33,12 +33,12 @@ async def test_reclaim_expired():
         "id": 2  # Ask for ERC721 B token ID 2
     }
     
-    # Alice approves token for escrow
-    await env.alice_client.erc721.approve(bid_data, "escrow")
+    # Alice approves token for barter (since we use barter.buy_erc721_for_erc721)
+    await env.alice_client.erc721.util.approve(bid_data, "barter")
     
     # Alice makes escrow with a short expiration (current time + 15 seconds)
     expiration = int(time.time()) + 15
-    buy_result = await env.alice_client.erc721.buy_erc_721_for_erc_721(bid_data, ask_data, expiration)
+    buy_result = await env.alice_client.erc721.barter.buy_erc721_for_erc721(bid_data, ask_data, expiration)
     
     assert not (not buy_result['log']['uid'] or buy_result['log']['uid'] == "0x0000000000000000000000000000000000000000000000000000000000000000"), "Invalid buy attestation UID"
     
@@ -46,7 +46,7 @@ async def test_reclaim_expired():
     
     # Verify token is in escrow
     current_owner = mock_erc721_a.owner_of(token_id)
-    escrow_address = env.addresses.erc721_addresses.escrow_obligation
+    escrow_address = env.addresses.erc721_addresses.escrow_obligation_nontierable
     print(f"ERC721 token {token_id} in escrow at: {current_owner}")
     
     assert not (current_owner.lower() != escrow_address.lower()), "Token should be in escrow at {escrow_address}, but owned by {current_owner}"
@@ -54,7 +54,7 @@ async def test_reclaim_expired():
     await env.god_wallet_provider.anvil_increase_time(20)
     
     # Alice collects expired funds
-    collect_result = await env.alice_client.erc721.reclaim_expired(buy_attestation_uid)
+    collect_result = await env.alice_client.erc721.escrow.non_tierable.reclaim_expired(buy_attestation_uid)
     print(f"Collected expired escrow, transaction: {collect_result}")
     
     # Verify token returned to Alice

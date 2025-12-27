@@ -139,8 +139,8 @@ async def test_contextless_offchain_identity_oracle_flow():
         None  # No escrow reference (contextless)
     )
 
-    # Request arbitration
-    await env.bob_client.oracle.request_arbitration(good_uid, oracle_address)
+    # Request arbitration (contextless, so pass empty demand)
+    await env.bob_client.oracle.request_arbitration(good_uid, oracle_address, b"")
 
     # Process the arbitration (skip already arbitrated items)
     options = ArbitrateOptions(skip_arbitrated=True, only_new=False)
@@ -166,8 +166,8 @@ async def test_contextless_offchain_identity_oracle_flow():
         None
     )
 
-    # Request arbitration
-    await env.bob_client.oracle.request_arbitration(bad_uid, oracle_address)
+    # Request arbitration (contextless, so pass empty demand)
+    await env.bob_client.oracle.request_arbitration(bad_uid, oracle_address, b"")
 
     # Process the arbitration (skip already arbitrated, so only process the new one)
     result2 = await oracle_client.oracle.listen_and_arbitrate_no_spawn(

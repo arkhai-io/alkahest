@@ -42,13 +42,14 @@ async def test_pay_erc20_for_bundle():
     
     # Create token bundle
     bundle_data = {
+        "native_amount": 0,
         "erc20s": [{"address": env.mock_addresses.erc20_b, "value": bob_erc20_amount}],
         "erc721s": [{"address": env.mock_addresses.erc721_a, "id": erc721_token_id}],
         "erc1155s": [{"address": env.mock_addresses.erc1155_a, "id": erc1155_token_id, "value": erc1155_bundle_amount}]
     }
     
     # Step 1: Bob approves his tokens for the bundle escrow
-    await env.bob_client.token_bundle.approve(bundle_data, "escrow")
+    await env.bob_client.token_bundle.util.approve(bundle_data, "escrow")
     
     # Step 2: Bob creates bundle escrow demanding ERC20 from Alice
     # Create proper ABI-encoded payment obligation data
@@ -66,7 +67,7 @@ async def test_pay_erc20_for_bundle():
         "demand": demand_bytes
     }
     
-    buy_result = await env.bob_client.token_bundle.buy_with_bundle(
+    buy_result = await env.bob_client.token_bundle.escrow.non_tierable.create(
         bundle_data, arbiter_data, expiration
     )
     
@@ -81,10 +82,10 @@ async def test_pay_erc20_for_bundle():
     
     # Step 3: Alice approves her ERC20 tokens for payment
     erc20_data = {"address": env.mock_addresses.erc20_a, "value": erc20_amount}
-    await env.alice_client.erc20.approve(erc20_data, "payment")
+    await env.alice_client.erc20.util.approve(erc20_data, "barter")
     
     # Step 4: Alice fulfills Bob's bundle escrow
-    pay_result = await env.alice_client.erc20.pay_erc20_for_bundle(buy_attestation_uid)
+    pay_result = await env.alice_client.erc20.barter.pay_erc20_for_bundle(buy_attestation_uid)
     
     assert not (not pay_result['log']['uid'] or pay_result['log']['uid'] == "0x0000000000000000000000000000000000000000000000000000000000000000"), "Invalid payment attestation UID"
     

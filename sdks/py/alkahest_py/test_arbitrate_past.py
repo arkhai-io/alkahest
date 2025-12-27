@@ -26,8 +26,11 @@ async def test_arbitrate_past_sync():
     price = {"address": env.mock_addresses.erc20_a, "value": 100}
     trusted_oracle_arbiter = env.addresses.arbiters_addresses.trusted_oracle_arbiter
 
-    # Create proper demand data with Bob as the oracle
-    demand_data = TrustedOracleArbiterDemandData(env.bob, [])
+    # The inner data field - this is what gets passed to arbitrate() and used for decisionKey
+    inner_demand_data = b""  # Empty bytes for this simple test
+
+    # The full encoded DemandData - this is what gets stored in the escrow
+    demand_data = TrustedOracleArbiterDemandData(env.bob, inner_demand_data)
     demand_bytes = demand_data.encode_self()
 
     arbiter = {
@@ -36,7 +39,7 @@ async def test_arbitrate_past_sync():
     }
 
     expiration = int(time.time()) + 3600
-    escrow_receipt = await env.alice_client.erc20.permit_and_buy_with_erc20(
+    escrow_receipt = await env.alice_client.erc20.escrow.non_tierable.permit_and_create(
         price, arbiter, expiration
     )
     escrow_uid = escrow_receipt['log']['uid']
@@ -45,9 +48,10 @@ async def test_arbitrate_past_sync():
     string_client = env.bob_client.string_obligation
     fulfillment_uid = await string_client.do_obligation("good", escrow_uid)
 
-    # Request arbitration
+    # Request arbitration with inner demand data (not the full encoded DemandData)
+    # because TrustedOracleArbiter.checkObligation() uses only demand_.data for the decisionKey
     oracle_client = env.bob_client.oracle
-    await oracle_client.request_arbitration(fulfillment_uid, env.bob)
+    await oracle_client.request_arbitration(fulfillment_uid, env.bob, inner_demand_data)
 
     # Decision function that approves "good" obligations
     def decision_function(attestation):
@@ -65,7 +69,7 @@ async def test_arbitrate_past_sync():
     assert decisions[0].decision == True, f"Expected decision=True, got {decisions[0].decision}"
 
     # Collect payment
-    collection_receipt = await env.bob_client.erc20.collect_escrow(
+    collection_receipt = await env.bob_client.erc20.escrow.non_tierable.collect(
         escrow_uid, fulfillment_uid
     )
 
@@ -86,7 +90,11 @@ async def test_conditional_arbitrate_past():
     price = {"address": env.mock_addresses.erc20_a, "value": 100}
     trusted_oracle_arbiter = env.addresses.arbiters_addresses.trusted_oracle_arbiter
 
-    demand_data = TrustedOracleArbiterDemandData(env.bob, [])
+    # The inner data field - this is what gets passed to arbitrate() and used for decisionKey
+    inner_demand_data = b""  # Empty bytes for this simple test
+
+    # The full encoded DemandData - this is what gets stored in the escrow
+    demand_data = TrustedOracleArbiterDemandData(env.bob, inner_demand_data)
     demand_bytes = demand_data.encode_self()
 
     arbiter = {
@@ -95,7 +103,7 @@ async def test_conditional_arbitrate_past():
     }
 
     expiration = int(time.time()) + 3600
-    escrow_receipt = await env.alice_client.erc20.permit_and_buy_with_erc20(
+    escrow_receipt = await env.alice_client.erc20.escrow.non_tierable.permit_and_create(
         price, arbiter, expiration
     )
     escrow_uid = escrow_receipt['log']['uid']
@@ -105,10 +113,11 @@ async def test_conditional_arbitrate_past():
     good_fulfillment = await string_client.do_obligation("good", escrow_uid)
     bad_fulfillment = await string_client.do_obligation("bad", escrow_uid)
 
-    # Request arbitration for both
+    # Request arbitration for both with inner demand data (not the full encoded DemandData)
+    # because TrustedOracleArbiter.checkObligation() uses only demand_.data for the decisionKey
     oracle_client = env.bob_client.oracle
-    await oracle_client.request_arbitration(good_fulfillment, env.bob)
-    await oracle_client.request_arbitration(bad_fulfillment, env.bob)
+    await oracle_client.request_arbitration(good_fulfillment, env.bob, inner_demand_data)
+    await oracle_client.request_arbitration(bad_fulfillment, env.bob, inner_demand_data)
 
     # Decision function that approves only "good" obligations
     def decision_function(attestation):
@@ -139,7 +148,11 @@ async def test_skip_arbitrated():
     price = {"address": env.mock_addresses.erc20_a, "value": 100}
     trusted_oracle_arbiter = env.addresses.arbiters_addresses.trusted_oracle_arbiter
 
-    demand_data = TrustedOracleArbiterDemandData(env.bob, [])
+    # The inner data field - this is what gets passed to arbitrate() and used for decisionKey
+    inner_demand_data = b""  # Empty bytes for this simple test
+
+    # The full encoded DemandData - this is what gets stored in the escrow
+    demand_data = TrustedOracleArbiterDemandData(env.bob, inner_demand_data)
     demand_bytes = demand_data.encode_self()
 
     arbiter = {
@@ -148,7 +161,7 @@ async def test_skip_arbitrated():
     }
 
     expiration = int(time.time()) + 3600
-    escrow_receipt = await env.alice_client.erc20.permit_and_buy_with_erc20(
+    escrow_receipt = await env.alice_client.erc20.escrow.non_tierable.permit_and_create(
         price, arbiter, expiration
     )
     escrow_uid = escrow_receipt['log']['uid']
@@ -157,9 +170,10 @@ async def test_skip_arbitrated():
     string_client = env.bob_client.string_obligation
     fulfillment_uid = await string_client.do_obligation("good", escrow_uid)
 
-    # Request arbitration
+    # Request arbitration with inner demand data (not the full encoded DemandData)
+    # because TrustedOracleArbiter.checkObligation() uses only demand_.data for the decisionKey
     oracle_client = env.bob_client.oracle
-    await oracle_client.request_arbitration(fulfillment_uid, env.bob)
+    await oracle_client.request_arbitration(fulfillment_uid, env.bob, inner_demand_data)
 
     # Decision function
     def decision_function(attestation):

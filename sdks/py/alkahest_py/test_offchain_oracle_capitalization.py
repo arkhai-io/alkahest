@@ -55,17 +55,17 @@ async def test_synchronous_offchain_oracle_capitalization_flow():
         ]
     )
 
-    # Encode the demand for TrustedOracleArbiter
-    demand_data = TrustedOracleArbiterDemandData(
-        oracle_address,
-        json.dumps({
-            "description": demand_payload.description,
-            "test_cases": [
-                {"input": tc.input, "output": tc.output}
-                for tc in demand_payload.test_cases
-            ]
-        }).encode('utf-8')
-    )
+    # The inner data field (JSON payload) - this is what gets passed to arbitrate()
+    inner_demand_data = json.dumps({
+        "description": demand_payload.description,
+        "test_cases": [
+            {"input": tc.input, "output": tc.output}
+            for tc in demand_payload.test_cases
+        ]
+    }).encode('utf-8')
+
+    # The full encoded DemandData - this is what gets stored in the escrow
+    demand_data = TrustedOracleArbiterDemandData(oracle_address, inner_demand_data)
     demand_bytes = demand_data.encode_self()
 
     arbiter = {
@@ -76,7 +76,7 @@ async def test_synchronous_offchain_oracle_capitalization_flow():
     price = {"address": env.mock_addresses.erc20_a, "value": 100}
     expiration = int(time.time()) + 3600
 
-    escrow_receipt = await env.alice_client.erc20.permit_and_buy_with_erc20(
+    escrow_receipt = await env.alice_client.erc20.escrow.non_tierable.permit_and_create(
         price, arbiter, expiration
     )
     escrow_uid = escrow_receipt['log']['uid']
@@ -88,7 +88,9 @@ async def test_synchronous_offchain_oracle_capitalization_flow():
     )
 
     # Step 3: Bob asks the oracle to arbitrate his fulfillment
-    await env.bob_client.oracle.request_arbitration(fulfillment_uid, oracle_address)
+    # Pass the inner data field (not the full encoded DemandData) because
+    # TrustedOracleArbiter.checkObligation() uses only demand_.data for the decisionKey
+    await env.bob_client.oracle.request_arbitration(fulfillment_uid, oracle_address, inner_demand_data)
 
     # Step 4: Oracle evaluates with async decision function
     async def decision_function(attestation):
@@ -149,6 +151,6 @@ async def test_synchronous_offchain_oracle_capitalization_flow():
     assert all(d.decision for d in result.decisions), "Oracle rejected fulfillment"
 
     # Step 5: The successful arbitration lets Bob claim the escrowed payment
-    await env.bob_client.erc20.collect_escrow(escrow_uid, fulfillment_uid)
+    await env.bob_client.erc20.escrow.non_tierable.collect(escrow_uid, fulfillment_uid)
 
     print("✅ Synchronous offchain oracle capitalization test passed")

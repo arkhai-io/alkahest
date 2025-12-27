@@ -30,16 +30,17 @@ async def test_buy_bundle_with_erc721():
     
     # Create bundle data (multiple token types)
     bundle_data = {
+        "native_amount": 0,
         "erc20s": [{"address": env.mock_addresses.erc20_b, "value": 20}],
         "erc721s": [{"address": env.mock_addresses.erc721_b, "id": 2}],
         "erc1155s": [{"address": env.mock_addresses.erc1155_a, "id": 1, "value": 5}]
     }
     
     # Alice approves token for escrow
-    await env.alice_client.erc721.approve(bid_data, "escrow")
+    await env.alice_client.erc721.util.approve(bid_data, "barter")
 
     # Alice creates purchase offer for the bundle
-    buy_result = await env.alice_client.erc721.buy_bundle_with_erc721(bid_data, bundle_data, 0)
+    buy_result = await env.alice_client.erc721.barter.buy_bundle_with_erc721(bid_data, bundle_data, 0)
     
     assert not (not buy_result['log']['uid'] or buy_result['log']['uid'] == "0x0000000000000000000000000000000000000000000000000000000000000000"), "Invalid buy attestation UID"
     
@@ -47,7 +48,7 @@ async def test_buy_bundle_with_erc721():
     
     # Verify escrow happened
     current_owner = mock_erc721_a.owner_of(token_id)
-    escrow_address = env.addresses.erc721_addresses.escrow_obligation
+    escrow_address = env.addresses.erc721_addresses.escrow_obligation_nontierable
     print(f"ERC721 token {token_id} now owned by: {current_owner}")
     print(f"Expected escrow address: {escrow_address}")
     

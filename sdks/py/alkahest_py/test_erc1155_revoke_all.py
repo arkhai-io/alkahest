@@ -28,7 +28,7 @@ async def test_erc1155_revoke_all():
     
     # First approve_all for payment
     print("Setting approve_all for payment purpose...")
-    await env.alice_client.erc1155.approve_all(env.mock_addresses.erc1155_a, "payment")
+    await env.alice_client.erc1155.util.approve_all(env.mock_addresses.erc1155_a, "payment")
     
     # Verify approval was set
     payment_approved_before = mock_erc1155_a.is_approved_for_all(
@@ -42,7 +42,7 @@ async def test_erc1155_revoke_all():
     
     # Then revoke_all for payment
     print("Revoking all approvals for payment purpose...")
-    await env.alice_client.erc1155.revoke_all(env.mock_addresses.erc1155_a, "payment")
+    await env.alice_client.erc1155.util.revoke_all(env.mock_addresses.erc1155_a, "payment")
     
     # Verify revocation
     payment_approved_after = mock_erc1155_a.is_approved_for_all(

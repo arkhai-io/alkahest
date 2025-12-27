@@ -8,7 +8,7 @@ async def test_basic_encode_decode():
     obligation = ERC721EscrowObligationData(
     token=env.mock_addresses.erc721_a,
     token_id="12345",
-    arbiter=env.addresses.erc721_addresses.escrow_obligation,
+    arbiter=env.addresses.erc721_addresses.escrow_obligation_nontierable,
     demand=[1, 2, 3, 4, 5]
     )
     

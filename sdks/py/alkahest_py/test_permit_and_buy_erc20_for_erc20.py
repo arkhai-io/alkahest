@@ -18,10 +18,10 @@ async def test_permit_and_buy_erc20_for_erc20():
     ask_data = {"address": env.mock_addresses.erc20_b, "value": ask_amount}
     expiration = 0
     
-    escrow_result = await env.alice_client.erc20.permit_and_buy_erc20_for_erc20(bid_data, ask_data, expiration)
+    escrow_result = await env.alice_client.erc20.barter.permit_and_buy_erc20_for_erc20(bid_data, ask_data, expiration)
     
     alice_final_a = mock_erc20_a.balance_of(env.alice)
-    escrow_balance_a = mock_erc20_a.balance_of(env.addresses.erc20_addresses.escrow_obligation)
+    escrow_balance_a = mock_erc20_a.balance_of(env.addresses.erc20_addresses.escrow_obligation_nontierable)
     
     expected_alice_balance = alice_after_transfer - bid_amount
     assert not (alice_final_a != expected_alice_balance), "Alice balance incorrect. Expected {expected_alice_balance}, got {alice_final_a}"

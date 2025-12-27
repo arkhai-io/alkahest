@@ -9,7 +9,7 @@ async def test_basic_encode_decode():
     token=env.mock_addresses.erc1155_a,
     token_id="54321",
     amount="250",
-    arbiter=env.addresses.erc1155_addresses.escrow_obligation,
+    arbiter=env.addresses.erc1155_addresses.escrow_obligation_nontierable,
     demand=[1, 2, 3, 4, 5]
     )
     

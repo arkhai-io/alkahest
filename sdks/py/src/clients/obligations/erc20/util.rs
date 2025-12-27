@@ -39,6 +39,7 @@ impl Util {
             let purpose = match purpose.as_str() {
                 "payment" => alkahest_rs::types::ApprovalPurpose::Payment,
                 "escrow" => alkahest_rs::types::ApprovalPurpose::Escrow,
+                "barter" => alkahest_rs::types::ApprovalPurpose::BarterUtils,
                 _ => return Err(pyo3::exceptions::PyValueError::new_err("Invalid purpose")),
             };
             let receipt = inner
@@ -70,6 +71,7 @@ impl Util {
             let purpose = match purpose.as_str() {
                 "payment" => alkahest_rs::types::ApprovalPurpose::Payment,
                 "escrow" => alkahest_rs::types::ApprovalPurpose::Escrow,
+                "barter" => alkahest_rs::types::ApprovalPurpose::BarterUtils,
                 _ => return Err(pyo3::exceptions::PyValueError::new_err("Invalid purpose")),
             };
             let receipt = inner

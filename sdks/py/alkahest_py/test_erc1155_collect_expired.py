@@ -37,39 +37,39 @@ async def test_erc1155_reclaim_expired():
         "value": 3
     }
     
-    # Alice approves tokens for escrow
-    await env.alice_client.erc1155.approve_all(env.mock_addresses.erc1155_a, "escrow")
+    # Alice approves tokens for barter (since we use barter.buy_erc1155_for_erc1155)
+    await env.alice_client.erc1155.util.approve_all(env.mock_addresses.erc1155_a, "barter")
     
     # Check initial balance
     initial_alice_balance = mock_erc1155_a.balance_of(env.alice, 1)
 
     # Alice makes escrow with a short expiration (current time + 15 second)
     expiration = int(time.time()) + 15
-    buy_result = await env.alice_client.erc1155.buy_erc1155_for_erc1155(bid_data, ask_data, expiration)
+    buy_result = await env.alice_client.erc1155.barter.buy_erc1155_for_erc1155(bid_data, ask_data, expiration)
     
     assert not (not buy_result['log']['uid'] or buy_result['log']['uid'] == "0x0000000000000000000000000000000000000000000000000000000000000000"), "Invalid buy attestation UID"
     
     buy_attestation_uid = buy_result['log']['uid']
     
     # Verify tokens are in escrow
-    escrow_balance = mock_erc1155_a.balance_of(env.addresses.erc1155_addresses.escrow_obligation, 1)
+    escrow_balance = mock_erc1155_a.balance_of(env.addresses.erc1155_addresses.escrow_obligation_nontierable, 1)
     alice_balance_after_escrow = mock_erc1155_a.balance_of(env.alice, 1)
     
     assert not (escrow_balance != 5), "5 tokens should be in escrow, got {escrow_balance}"
     
     assert not (alice_balance_after_escrow != 5), "Alice should have 5 tokens remaining, got {alice_balance_after_escrow}"
     
-    print(f"ERC1155 tokens {bid_data['value']} in escrow at: {env.addresses.erc1155_addresses.escrow_obligation}")
+    print(f"ERC1155 tokens {bid_data['value']} in escrow at: {env.addresses.erc1155_addresses.escrow_obligation_nontierable}")
     
     await env.god_wallet_provider.anvil_increase_time(20)
     
     # Alice collects expired funds
-    collect_result = await env.alice_client.erc1155.reclaim_expired(buy_attestation_uid)
+    collect_result = await env.alice_client.erc1155.escrow.non_tierable.reclaim_expired(buy_attestation_uid)
     print(f"Collected expired escrow, transaction: {collect_result}")
     
     # Verify tokens returned to Alice
     final_alice_balance = mock_erc1155_a.balance_of(env.alice, 1)
-    final_escrow_balance = mock_erc1155_a.balance_of(env.addresses.erc1155_addresses.escrow_obligation, 1)
+    final_escrow_balance = mock_erc1155_a.balance_of(env.addresses.erc1155_addresses.escrow_obligation_nontierable, 1)
     
     assert not (final_alice_balance != initial_alice_balance), "All tokens should be returned to Alice. Expected {initial_alice_balance}, got {final_alice_balance}"
     

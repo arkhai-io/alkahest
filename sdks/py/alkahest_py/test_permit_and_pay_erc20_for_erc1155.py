@@ -48,12 +48,12 @@ async def test_permit_and_pay_erc20_for_erc1155():
     expiration = int(time.time()) + 3600  # 1 hour from now
     
     # Step 1: Bob approves his ERC1155 for escrow
-    await env.bob_client.erc1155.approve_all(env.mock_addresses.erc1155_a, "escrow")
+    await env.bob_client.erc1155.util.approve_all(env.mock_addresses.erc1155_a, "barter")
     
     # Step 2: Bob creates ERC1155 escrow requesting ERC20
     erc1155_data = {"address": env.mock_addresses.erc1155_a, "id": token_id, "value": token_amount}
     erc20_data = {"address": env.mock_addresses.erc20_a, "value": erc20_amount}
-    buy_result = await env.bob_client.erc1155.buy_erc20_with_erc1155(
+    buy_result = await env.bob_client.erc1155.barter.buy_erc20_with_erc1155(
         erc1155_data, erc20_data, expiration
     )
     
@@ -69,7 +69,7 @@ async def test_permit_and_pay_erc20_for_erc1155():
     initial_alice_erc20_balance = mock_erc20_a.balance_of(env.alice)
     
     # Step 3: Alice fulfills Bob's escrow using permit (no pre-approval needed)
-    pay_result = await env.alice_client.erc20.permit_and_pay_erc20_for_erc1155(buy_attestation_uid)
+    pay_result = await env.alice_client.erc20.barter.permit_and_pay_erc20_for_erc1155(buy_attestation_uid)
     
     assert not (not pay_result['log']['uid'] or pay_result['log']['uid'] == "0x0000000000000000000000000000000000000000000000000000000000000000"), "Invalid payment attestation UID"
     

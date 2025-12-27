@@ -21,10 +21,10 @@ async def test_buy_erc721_for_erc20():
     ask_data = {"address": env.mock_addresses.erc721_a, "id": 1}  # Alice wants NFT ID 1
     
     # Alice approves tokens for escrow
-    await env.alice_client.erc20.approve(bid_data, "escrow")
+    await env.alice_client.erc20.util.approve(bid_data, "barter")
     
     # Alice creates the buy order for ERC721
-    buy_result = await env.alice_client.erc20.buy_erc721_for_erc20(bid_data, ask_data, 0)
+    buy_result = await env.alice_client.erc20.barter.buy_erc721_for_erc20(bid_data, ask_data, 0)
     
     assert not (not buy_result['log']['uid'] or buy_result['log']['uid'] == "0x0000000000000000000000000000000000000000000000000000000000000000"), "Invalid buy attestation UID"
     
@@ -32,7 +32,7 @@ async def test_buy_erc721_for_erc20():
     
     # Verify Alice's ERC20 tokens are in escrow
     alice_balance_after_escrow = mock_erc20.balance_of(env.alice)
-    escrow_balance = mock_erc20.balance_of(env.addresses.erc20_addresses.escrow_obligation)
+    escrow_balance = mock_erc20.balance_of(env.addresses.erc20_addresses.escrow_obligation_nontierable)
     
     expected_alice_balance = alice_initial_erc20 + 100 - 50  # initial + transfer - escrowed
     assert not (alice_balance_after_escrow != expected_alice_balance), "Alice should have {expected_alice_balance} ERC20 after escrow, got {alice_balance_after_escrow}"

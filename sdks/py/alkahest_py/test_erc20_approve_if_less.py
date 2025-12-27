@@ -13,7 +13,7 @@ async def test_approve_if_less():
     token = {"address": test.mock_addresses.erc20_a, "value": 100}
     
     # First approval should return receipt
-    receipt_opt = await test.alice_client.erc20.approve_if_less(token, "payment")
+    receipt_opt = await test.alice_client.erc20.util.approve_if_less(token, "payment")
     assert receipt_opt is not None, "First approval should return receipt"
     
     payment_allowance = mock_erc20_a.allowance(
@@ -22,12 +22,12 @@ async def test_approve_if_less():
     )
     
     # Second approval with same amount should return None (no need to approve again)
-    receipt_opt = await test.alice_client.erc20.approve_if_less(token, "payment")
+    receipt_opt = await test.alice_client.erc20.util.approve_if_less(token, "payment")
     assert receipt_opt is None, f"Second approval should return None, got: {receipt_opt}"
     
     # Third approval with larger amount should return receipt
     larger_token = {"address": test.mock_addresses.erc20_a, "value": 150}
-    receipt_opt = await test.alice_client.erc20.approve_if_less(larger_token, "payment")
+    receipt_opt = await test.alice_client.erc20.util.approve_if_less(larger_token, "payment")
     assert receipt_opt is not None, "Third approval should return receipt for larger amount"
     
     new_payment_allowance = mock_erc20_a.allowance(

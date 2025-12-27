@@ -50,16 +50,17 @@ async def test_asynchronous_offchain_oracle_uptime_flow():
         check_interval_secs=2
     )
 
-    demand_data = TrustedOracleArbiterDemandData(
-        oracle_address,
-        json.dumps({
-            "service_url": demand_payload.service_url,
-            "min_uptime": demand_payload.min_uptime,
-            "start": demand_payload.start,
-            "end": demand_payload.end,
-            "check_interval_secs": demand_payload.check_interval_secs
-        }).encode('utf-8')
-    )
+    # The inner data field (JSON payload) - this is what gets passed to arbitrate()
+    inner_demand_data = json.dumps({
+        "service_url": demand_payload.service_url,
+        "min_uptime": demand_payload.min_uptime,
+        "start": demand_payload.start,
+        "end": demand_payload.end,
+        "check_interval_secs": demand_payload.check_interval_secs
+    }).encode('utf-8')
+
+    # The full encoded DemandData - this is what gets stored in the escrow
+    demand_data = TrustedOracleArbiterDemandData(oracle_address, inner_demand_data)
     demand_bytes = demand_data.encode_self()
 
     arbiter = {
@@ -70,7 +71,7 @@ async def test_asynchronous_offchain_oracle_uptime_flow():
     price = {"address": env.mock_addresses.erc20_a, "value": 100}
     expiration = now + 3600
 
-    escrow_receipt = await env.alice_client.erc20.permit_and_buy_with_erc20(
+    escrow_receipt = await env.alice_client.erc20.escrow.non_tierable.permit_and_create(
         price, arbiter, expiration
     )
     escrow_uid = escrow_receipt['log']['uid']
@@ -82,8 +83,9 @@ async def test_asynchronous_offchain_oracle_uptime_flow():
         escrow_uid
     )
 
-    # Step 3: Request arbitration
-    await env.bob_client.oracle.request_arbitration(fulfillment_uid, oracle_address)
+    # Step 3: Request arbitration with inner demand data (not the full encoded DemandData)
+    # because TrustedOracleArbiter.checkObligation() uses only demand_.data for the decisionKey
+    await env.bob_client.oracle.request_arbitration(fulfillment_uid, oracle_address, inner_demand_data)
 
     # Step 4: Oracle arbitrates using simulated uptime monitoring
     async def decision_function(attestation):
@@ -133,6 +135,6 @@ async def test_asynchronous_offchain_oracle_uptime_flow():
     assert result.decisions[0].decision == True, "Expected uptime check to pass"
 
     # Step 5: Bob collects the escrowed payment
-    await env.bob_client.erc20.collect_escrow(escrow_uid, fulfillment_uid)
+    await env.bob_client.erc20.escrow.non_tierable.collect(escrow_uid, fulfillment_uid)
 
     print("✅ Asynchronous offchain oracle uptime test passed")

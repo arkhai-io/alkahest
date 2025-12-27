@@ -28,10 +28,10 @@ async def test_pay_erc20_for_erc20():
     ask_data = {"address": env.mock_addresses.erc20_b, "value": 200}  # Alice wants token B
     
     # Alice approves tokens for escrow
-    await env.alice_client.erc20.approve(bid_data, "escrow")
+    await env.alice_client.erc20.util.approve(bid_data, "barter")
     
     # Alice creates the buy order
-    buy_result = await env.alice_client.erc20.buy_erc20_for_erc20(bid_data, ask_data, 0)
+    buy_result = await env.alice_client.erc20.barter.buy_erc20_for_erc20(bid_data, ask_data, 0)
 
     assert not (not buy_result['log']['uid'] or buy_result['log']['uid'] == "0x0000000000000000000000000000000000000000000000000000000000000000"), "Invalid buy attestation UID"
     
@@ -39,17 +39,17 @@ async def test_pay_erc20_for_erc20():
     
     # Verify Alice's tokens are in escrow
     alice_balance_a_after_escrow = mock_erc20_a.balance_of(env.alice)
-    escrow_balance_a = mock_erc20_a.balance_of(env.addresses.erc20_addresses.escrow_obligation)
+    escrow_balance_a = mock_erc20_a.balance_of(env.addresses.erc20_addresses.escrow_obligation_nontierable)
     
     assert not (alice_balance_a_after_escrow != alice_initial_a), "Alice should have {alice_initial_a} token A after escrow, got {alice_balance_a_after_escrow}"
     
     assert not (escrow_balance_a != 100), "Escrow should have 100 token A, got {escrow_balance_a}"
     
-    # Bob approves tokens for payment
-    await env.bob_client.erc20.approve(ask_data, "payment")
+    # Bob approves tokens for barter (pay_erc20_for_erc20 is a barter function)
+    await env.bob_client.erc20.util.approve(ask_data, "barter")
 
     # Bob fulfills the buy order
-    pay_result = await env.bob_client.erc20.pay_erc20_for_erc20(buy_attestation_uid)
+    pay_result = await env.bob_client.erc20.barter.pay_erc20_for_erc20(buy_attestation_uid)
 
     assert not (not pay_result['log']['uid'] or pay_result['log']['uid'] == "0x0000000000000000000000000000000000000000000000000000000000000000"), "Invalid payment attestation UID"
     

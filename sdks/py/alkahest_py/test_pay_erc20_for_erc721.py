@@ -40,11 +40,11 @@ async def test_pay_erc20_for_erc721():
     
     # Step 1: Bob approves his ERC721 for escrow
     erc721_data = {"address": env.mock_addresses.erc721_a, "id": erc721_token_id}
-    await env.bob_client.erc721.approve(erc721_data, "escrow")
+    await env.bob_client.erc721.util.approve(erc721_data, "barter")
 
     # Step 2: Bob creates ERC721 escrow requesting ERC20
     erc20_data = {"address": env.mock_addresses.erc20_a, "value": erc20_amount}
-    buy_result = await env.bob_client.erc721.buy_erc20_with_erc721(erc721_data, erc20_data, expiration)
+    buy_result = await env.bob_client.erc721.barter.buy_erc20_with_erc721(erc721_data, erc20_data, expiration)
 
     assert not (not buy_result['log']['uid'] or buy_result['log']['uid'] == "0x0000000000000000000000000000000000000000000000000000000000000000"), "Invalid buy attestation UID"
     
@@ -58,10 +58,10 @@ async def test_pay_erc20_for_erc721():
     initial_alice_erc20_balance = mock_erc20_a.balance_of(env.alice)
     
     # Step 3: Alice approves her ERC20 tokens for payment
-    await env.alice_client.erc20.approve(erc20_data, "payment")
+    await env.alice_client.erc20.util.approve(erc20_data, "barter")
     
     # Step 4: Alice fulfills Bob's escrow
-    pay_result = await env.alice_client.erc20.pay_erc20_for_erc721(buy_attestation_uid)
+    pay_result = await env.alice_client.erc20.barter.pay_erc20_for_erc721(buy_attestation_uid)
     
     assert not (not pay_result['log']['uid'] or pay_result['log']['uid'] == "0x0000000000000000000000000000000000000000000000000000000000000000"), "Invalid payment attestation UID"
     
