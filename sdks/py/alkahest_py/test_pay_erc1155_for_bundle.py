@@ -29,7 +29,7 @@ async def test_pay_erc1155_for_bundle():
     # ERC20
     mock_erc20_b.transfer(env.bob, 20)
     bob_erc20_balance = mock_erc20_b.balance_of(env.bob)
-    assert not (bob_erc20_balance != 20), "Bob should have 20 ERC20 tokens, got {bob_erc20_balance}"
+    assert bob_erc20_balance == 20, "Bob should have 20 ERC20 tokens, got {bob_erc20_balance}"
     
     # ERC721
     bob_token_id = mock_erc721_b.mint(env.bob)
@@ -38,7 +38,7 @@ async def test_pay_erc1155_for_bundle():
     # ERC1155
     mock_erc1155_b.mint(env.bob, 3, 4)
     bob_erc1155_balance = mock_erc1155_b.balance_of(env.bob, 3)
-    assert not (bob_erc1155_balance != 4), "Bob should have 4 ERC1155B tokens, got {bob_erc1155_balance}"
+    assert bob_erc1155_balance == 4, "Bob should have 4 ERC1155B tokens, got {bob_erc1155_balance}"
     
     # Check balances before the exchange
     initial_alice_erc20_balance = mock_erc20_b.balance_of(env.alice)
@@ -75,7 +75,7 @@ async def test_pay_erc1155_for_bundle():
     
     buy_result = await env.bob_client.token_bundle.escrow.non_tierable.create(bundle_data, arbiter_data, 0)
     
-    assert not (not buy_result['log']['uid'] or buy_result['log']['uid'] == "0x0000000000000000000000000000000000000000000000000000000000000000"), "Invalid buy attestation UID"
+    assert buy_result['log']['uid'] and buy_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid buy attestation UID"
     
     buy_attestation_uid = buy_result['log']['uid']
     
@@ -85,7 +85,7 @@ async def test_pay_erc1155_for_bundle():
     # Alice fulfills Bob's buy attestation with her ERC1155
     pay_result = await env.alice_client.erc1155.barter.pay_erc1155_for_bundle(buy_attestation_uid)
     
-    assert not (not pay_result['log']['uid'] or pay_result['log']['uid'] == "0x0000000000000000000000000000000000000000000000000000000000000000"), "Invalid payment attestation UID"
+    assert pay_result['log']['uid'] and pay_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid payment attestation UID"
     
     # Verify token transfers
     # Check Alice received all tokens from the bundle
@@ -97,14 +97,14 @@ async def test_pay_erc1155_for_bundle():
     final_bob_erc1155a_balance = mock_erc1155_a.balance_of(env.bob, 1)
     
     # Verify Alice received the bundle
-    assert not (final_alice_erc20_balance - initial_alice_erc20_balance != 20), "Alice should have received 20 ERC20 tokens, got {final_alice_erc20_balance - initial_alice_erc20_balance}"
+    assert final_alice_erc20_balance - initial_alice_erc20_balance == 20, "Alice should have received 20 ERC20 tokens, got {final_alice_erc20_balance - initial_alice_erc20_balance}"
     
-    assert not (alice_erc721_owner.lower() != env.alice.lower()), "Alice should have received the ERC721 token from bundle, but it's owned by {alice_erc721_owner}"
+    assert alice_erc721_owner.lower() == env.alice.lower(), "Alice should have received the ERC721 token from bundle, but it's owned by {alice_erc721_owner}"
     
-    assert not (final_alice_erc1155b_balance - initial_alice_erc1155b_balance != 4), "Alice should have received 4 ERC1155B tokens, got {final_alice_erc1155b_balance - initial_alice_erc1155b_balance}"
+    assert final_alice_erc1155b_balance - initial_alice_erc1155b_balance == 4, "Alice should have received 4 ERC1155B tokens, got {final_alice_erc1155b_balance - initial_alice_erc1155b_balance}"
     
     # Verify Bob received the ERC1155
-    assert not (final_bob_erc1155a_balance - initial_bob_erc1155a_balance != 5), "Bob should have received 5 ERC1155A tokens, got {final_bob_erc1155a_balance - initial_bob_erc1155a_balance}"
+    assert final_bob_erc1155a_balance - initial_bob_erc1155a_balance == 5, "Bob should have received 5 ERC1155A tokens, got {final_bob_erc1155a_balance - initial_bob_erc1155a_balance}"
     
     print("✅ ERC1155 for bundle exchange successful")
     print(f"Alice received bundle: {final_alice_erc20_balance - initial_alice_erc20_balance} ERC20, ERC721 {bob_token_id}, {final_alice_erc1155b_balance - initial_alice_erc1155b_balance} ERC1155B")

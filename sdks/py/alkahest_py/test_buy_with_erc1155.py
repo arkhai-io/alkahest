@@ -24,7 +24,7 @@ async def test_buy_with_erc1155():
     
     # Verify Alice owns the tokens
     alice_balance = mock_erc1155_a.balance_of(env.alice, 1)
-    assert not (alice_balance != 10), "Token ownership verification failed. Expected 10, got {alice_balance}"
+    assert alice_balance == 10, "Token ownership verification failed. Expected 10, got {alice_balance}"
     
     # Create ERC1155 price data
     price_data = {
@@ -45,18 +45,18 @@ async def test_buy_with_erc1155():
     # Alice creates escrow with custom demand
     buy_result = await env.alice_client.erc1155.escrow.non_tierable.create(price_data, arbiter_data, 0)
     
-    assert not (not buy_result['log']['uid'] or buy_result['log']['uid'] == "0x0000000000000000000000000000000000000000000000000000000000000000"), "Invalid buy attestation UID"
+    assert buy_result['log']['uid'] and buy_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid buy attestation UID"
     
     # Verify escrow happened - check alice's balance decreased
     alice_balance_after = mock_erc1155_a.balance_of(env.alice, 1)
     expected_remaining = 5  # 10 - 5 = 5
     
-    assert not (alice_balance_after != expected_remaining), "Alice should have {expected_remaining} tokens remaining, got {alice_balance_after}"
+    assert alice_balance_after == expected_remaining, "Alice should have {expected_remaining} tokens remaining, got {alice_balance_after}"
     
     # Check escrow contract's balance increased
     escrow_balance = mock_erc1155_a.balance_of(env.addresses.erc1155_addresses.escrow_obligation_nontierable, 1)
     
-    assert not (escrow_balance != 5), "Escrow should have 5 tokens, got {escrow_balance}"
+    assert escrow_balance == 5, "Escrow should have 5 tokens, got {escrow_balance}"
     
     print("✅ Tokens successfully escrowed")
     print(f"Alice remaining balance: {alice_balance_after}")

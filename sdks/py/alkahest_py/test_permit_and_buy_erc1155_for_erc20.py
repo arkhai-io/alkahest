@@ -17,7 +17,7 @@ async def test_permit_and_buy_erc1155_for_erc20():
     mock_erc20.transfer(env.alice, 100)
     alice_after_transfer = mock_erc20.balance_of(env.alice)
     
-    assert not (alice_after_transfer != alice_initial_erc20 + 100), "Alice ERC20 transfer failed. Expected {alice_initial_erc20 + 100}, got {alice_after_transfer}"
+    assert alice_after_transfer == alice_initial_erc20 + 100, "Alice ERC20 transfer failed. Expected {alice_initial_erc20 + 100}, got {alice_after_transfer}"
     
     # Alice creates buy order: offers 50 ERC20 tokens for ERC1155 tokens (ID 1, amount 10)
     # Using permit, so no pre-approval needed
@@ -27,7 +27,7 @@ async def test_permit_and_buy_erc1155_for_erc20():
     # Alice creates the buy order for ERC1155 with permit (no pre-approval needed)
     buy_result = await env.alice_client.erc20.barter.permit_and_buy_erc1155_for_erc20(bid_data, ask_data, 0)
     
-    assert not (not buy_result['log']['uid'] or buy_result['log']['uid'] == "0x0000000000000000000000000000000000000000000000000000000000000000"), "Invalid buy attestation UID"
+    assert buy_result['log']['uid'] and buy_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid buy attestation UID"
     
     buy_attestation_uid = buy_result['log']['uid']
     
@@ -36,9 +36,9 @@ async def test_permit_and_buy_erc1155_for_erc20():
     escrow_balance = mock_erc20.balance_of(env.addresses.erc20_addresses.escrow_obligation_nontierable)
     
     expected_alice_balance = alice_initial_erc20 + 100 - 50  # initial + transfer - escrowed
-    assert not (alice_balance_after_escrow != expected_alice_balance), "Alice should have {expected_alice_balance} ERC20 after escrow, got {alice_balance_after_escrow}"
+    assert alice_balance_after_escrow == expected_alice_balance, "Alice should have {expected_alice_balance} ERC20 after escrow, got {alice_balance_after_escrow}"
     
-    assert not (escrow_balance != 50), "Escrow should have 50 ERC20 tokens, got {escrow_balance}"
+    assert escrow_balance == 50, "Escrow should have 50 ERC20 tokens, got {escrow_balance}"
     
     # Verify the attestation was created (buy order is live)
-    assert not (not buy_attestation_uid), "Buy attestation UID should be valid"
+    assert buy_attestation_uid, "Buy attestation UID should be valid"

@@ -20,7 +20,7 @@ async def test_buy_with_erc721():
     
     # Verify Alice owns the token
     token_owner = mock_erc721_a.owner_of(token_id)
-    assert not (token_owner.lower() != env.alice.lower()), "Token ownership verification failed. Expected {env.alice}, got {token_owner}"
+    assert token_owner.lower() == env.alice.lower(), "Token ownership verification failed. Expected {env.alice}, got {token_owner}"
     
     # Create test data
     price_data = {
@@ -40,7 +40,7 @@ async def test_buy_with_erc721():
     # Alice creates buy order with ERC721
     buy_result = await env.alice_client.erc721.escrow.non_tierable.create(price_data, arbiter_data, 0)
 
-    assert not (not buy_result['log']['uid'] or buy_result['log']['uid'] == "0x0000000000000000000000000000000000000000000000000000000000000000"), "Invalid buy attestation UID"
+    assert buy_result['log']['uid'] and buy_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid buy attestation UID"
     
     buy_attestation_uid = buy_result['log']['uid']
     
@@ -51,7 +51,7 @@ async def test_buy_with_erc721():
     print(f"Expected escrow address: {escrow_address}")
     
     # The token should now be owned by the escrow contract
-    assert not (current_owner.lower() != escrow_address.lower()), "Token should be in escrow at {escrow_address}, but owned by {current_owner}"
+    assert current_owner.lower() == escrow_address.lower(), "Token should be in escrow at {escrow_address}, but owned by {current_owner}"
     
     # Verify the attestation was created (buy order is live)
-    assert not (not buy_attestation_uid), "Buy attestation UID should be valid"
+    assert buy_attestation_uid, "Buy attestation UID should be valid"

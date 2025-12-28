@@ -47,7 +47,7 @@ async def test_erc1155_reclaim_expired():
     expiration = int(time.time()) + 15
     buy_result = await env.alice_client.erc1155.barter.buy_erc1155_for_erc1155(bid_data, ask_data, expiration)
     
-    assert not (not buy_result['log']['uid'] or buy_result['log']['uid'] == "0x0000000000000000000000000000000000000000000000000000000000000000"), "Invalid buy attestation UID"
+    assert buy_result['log']['uid'] and buy_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid buy attestation UID"
     
     buy_attestation_uid = buy_result['log']['uid']
     
@@ -55,9 +55,9 @@ async def test_erc1155_reclaim_expired():
     escrow_balance = mock_erc1155_a.balance_of(env.addresses.erc1155_addresses.escrow_obligation_nontierable, 1)
     alice_balance_after_escrow = mock_erc1155_a.balance_of(env.alice, 1)
     
-    assert not (escrow_balance != 5), "5 tokens should be in escrow, got {escrow_balance}"
+    assert escrow_balance == 5, "5 tokens should be in escrow, got {escrow_balance}"
     
-    assert not (alice_balance_after_escrow != 5), "Alice should have 5 tokens remaining, got {alice_balance_after_escrow}"
+    assert alice_balance_after_escrow == 5, "Alice should have 5 tokens remaining, got {alice_balance_after_escrow}"
     
     print(f"ERC1155 tokens {bid_data['value']} in escrow at: {env.addresses.erc1155_addresses.escrow_obligation_nontierable}")
     
@@ -71,8 +71,8 @@ async def test_erc1155_reclaim_expired():
     final_alice_balance = mock_erc1155_a.balance_of(env.alice, 1)
     final_escrow_balance = mock_erc1155_a.balance_of(env.addresses.erc1155_addresses.escrow_obligation_nontierable, 1)
     
-    assert not (final_alice_balance != initial_alice_balance), "All tokens should be returned to Alice. Expected {initial_alice_balance}, got {final_alice_balance}"
+    assert final_alice_balance == initial_alice_balance, "All tokens should be returned to Alice. Expected {initial_alice_balance}, got {final_alice_balance}"
     
-    assert not (final_escrow_balance != 0), "Escrow should be empty after collection. Got {final_escrow_balance}"
+    assert final_escrow_balance == 0, "Escrow should be empty after collection. Got {final_escrow_balance}"
     
     print(f"ERC1155 tokens finally returned to Alice: {final_alice_balance}")

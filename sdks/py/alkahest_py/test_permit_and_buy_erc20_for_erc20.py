@@ -10,7 +10,7 @@ async def test_permit_and_buy_erc20_for_erc20():
     mock_erc20_a.transfer(env.alice, transfer_amount)
     
     alice_after_transfer = mock_erc20_a.balance_of(env.alice)
-    assert not (alice_after_transfer != transfer_amount), "Transfer failed. Expected {transfer_amount}, got {alice_after_transfer}"
+    assert alice_after_transfer == transfer_amount, "Transfer failed. Expected {transfer_amount}, got {alice_after_transfer}"
     
     bid_amount = 100
     ask_amount = 200
@@ -24,8 +24,8 @@ async def test_permit_and_buy_erc20_for_erc20():
     escrow_balance_a = mock_erc20_a.balance_of(env.addresses.erc20_addresses.escrow_obligation_nontierable)
     
     expected_alice_balance = alice_after_transfer - bid_amount
-    assert not (alice_final_a != expected_alice_balance), "Alice balance incorrect. Expected {expected_alice_balance}, got {alice_final_a}"
+    assert alice_final_a == expected_alice_balance, "Alice balance incorrect. Expected {expected_alice_balance}, got {alice_final_a}"
     
-    assert not (escrow_balance_a != bid_amount), "Escrow balance incorrect. Expected {bid_amount}, got {escrow_balance_a}"
+    assert escrow_balance_a == bid_amount, "Escrow balance incorrect. Expected {bid_amount}, got {escrow_balance_a}"
     
-    assert not (not escrow_result['log']['uid'] or escrow_result['log']['uid'] == "0x0000000000000000000000000000000000000000000000000000000000000000"), "Invalid attestation UID"
+    assert escrow_result['log']['uid'] and escrow_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid attestation UID"

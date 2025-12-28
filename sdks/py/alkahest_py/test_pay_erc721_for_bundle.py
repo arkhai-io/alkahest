@@ -25,7 +25,7 @@ async def test_pay_erc721_for_bundle():
     # ERC20
     mock_erc20_b.transfer(env.bob, 20)
     bob_erc20_balance = mock_erc20_b.balance_of(env.bob)
-    assert not (bob_erc20_balance != 20), "Bob should have 20 ERC20 tokens, got {bob_erc20_balance}"
+    assert bob_erc20_balance == 20, "Bob should have 20 ERC20 tokens, got {bob_erc20_balance}"
     
     # ERC721
     bob_token_id = mock_erc721_b.mint(env.bob)
@@ -34,7 +34,7 @@ async def test_pay_erc721_for_bundle():
     # ERC1155
     mock_erc1155_a.mint(env.bob, 1, 5)
     bob_erc1155_balance = mock_erc1155_a.balance_of(env.bob, 1)
-    assert not (bob_erc1155_balance != 5), "Bob should have 5 ERC1155 tokens, got {bob_erc1155_balance}"
+    assert bob_erc1155_balance == 5, "Bob should have 5 ERC1155 tokens, got {bob_erc1155_balance}"
     
     # Check balances before the exchange
     initial_alice_erc20_balance = mock_erc20_b.balance_of(env.alice)
@@ -69,7 +69,7 @@ async def test_pay_erc721_for_bundle():
     
     buy_result = await env.bob_client.token_bundle.escrow.non_tierable.create(bundle_data, arbiter_data, 0)
     
-    assert not (not buy_result['log']['uid'] or buy_result['log']['uid'] == "0x0000000000000000000000000000000000000000000000000000000000000000"), "Invalid buy attestation UID"
+    assert buy_result['log']['uid'] and buy_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid buy attestation UID"
     
     buy_attestation_uid = buy_result['log']['uid']
     
@@ -80,7 +80,7 @@ async def test_pay_erc721_for_bundle():
     # Alice fulfills Bob's buy attestation with her ERC721
     pay_result = await env.alice_client.erc721.barter.pay_erc721_for_bundle(buy_attestation_uid)
 
-    assert not (not pay_result['log']['uid'] or pay_result['log']['uid'] == "0x0000000000000000000000000000000000000000000000000000000000000000"), "Invalid payment attestation UID"
+    assert pay_result['log']['uid'] and pay_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid payment attestation UID"
     
     # Verify token transfers
     # Check Alice received all tokens from the bundle
@@ -92,11 +92,11 @@ async def test_pay_erc721_for_bundle():
     bob_token_owner = mock_erc721_a.owner_of(alice_token_id)
     
     # Verify Alice received the bundle
-    assert not (final_alice_erc20_balance - initial_alice_erc20_balance != 20), "Alice should have received 20 ERC20 tokens, got {final_alice_erc20_balance - initial_alice_erc20_balance}"
+    assert final_alice_erc20_balance - initial_alice_erc20_balance == 20, "Alice should have received 20 ERC20 tokens, got {final_alice_erc20_balance - initial_alice_erc20_balance}"
     
-    assert not (alice_erc721_owner.lower() != env.alice.lower()), "Alice should have received the ERC721 token from bundle, but it's owned by {alice_erc721_owner}"
+    assert alice_erc721_owner.lower() == env.alice.lower(), "Alice should have received the ERC721 token from bundle, but it's owned by {alice_erc721_owner}"
     
-    assert not (final_alice_erc1155_balance - initial_alice_erc1155_balance != 5), "Alice should have received 5 ERC1155 tokens, got {final_alice_erc1155_balance - initial_alice_erc1155_balance}"
+    assert final_alice_erc1155_balance - initial_alice_erc1155_balance == 5, "Alice should have received 5 ERC1155 tokens, got {final_alice_erc1155_balance - initial_alice_erc1155_balance}"
     
     # Verify Bob received the ERC721
-    assert not (bob_token_owner.lower() != env.bob.lower()), "Bob should have received the ERC721 token, but it's owned by {bob_token_owner}"
+    assert bob_token_owner.lower() == env.bob.lower(), "Bob should have received the ERC721 token, but it's owned by {bob_token_owner}"

@@ -24,7 +24,7 @@ async def test_erc721_revoke_all():
     
     # Verify Alice owns the token
     owner = mock_erc721_a.owner_of(token_id)
-    assert not (owner.lower() != env.alice.lower()), "Token ownership verification failed. Expected {env.alice}, got {owner}"
+    assert owner.lower() == env.alice.lower(), "Token ownership verification failed. Expected {env.alice}, got {owner}"
     
     # First approve_all for payment
     print("Setting approve_all for payment purpose...")
@@ -36,7 +36,7 @@ async def test_erc721_revoke_all():
         env.addresses.erc721_addresses.payment_obligation
     )
     
-    assert not (not payment_approved_before), "Payment approval should be set before revocation"
+    assert payment_approved_before, "Payment approval should be set before revocation"
     
     print("✅ Payment approve_all verified as set")
     
@@ -50,6 +50,6 @@ async def test_erc721_revoke_all():
         env.addresses.erc721_addresses.payment_obligation
     )
     
-    assert not (payment_approved_after), "Payment approval should be revoked"
+    assert not payment_approved_after, "Payment approval should be revoked"
     
     print("✅ Payment approval successfully revoked")

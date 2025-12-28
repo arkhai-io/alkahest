@@ -26,7 +26,7 @@ async def test_permit_and_pay_erc20_for_erc1155():
     mock_erc20_a.transfer(env.alice, 100)
     alice_after_transfer = mock_erc20_a.balance_of(env.alice)
     
-    assert not (alice_after_transfer != alice_initial_erc20 + 100), "Alice ERC20 transfer failed. Expected {alice_initial_erc20 + 100}, got {alice_after_transfer}"
+    assert alice_after_transfer == alice_initial_erc20 + 100, "Alice ERC20 transfer failed. Expected {alice_initial_erc20 + 100}, got {alice_after_transfer}"
     
     # Mint ERC1155 tokens to Bob (token ID 1, amount 50)
     token_id = 1
@@ -36,7 +36,7 @@ async def test_permit_and_pay_erc20_for_erc1155():
     
     # Verify Bob owns the tokens
     bob_balance = mock_erc1155_a.balance_of(env.bob, token_id)
-    assert not (bob_balance != token_amount), "Token balance verification failed. Expected {token_amount}, got {bob_balance}"
+    assert bob_balance == token_amount, "Token balance verification failed. Expected {token_amount}, got {bob_balance}"
     
     # Create test data
     erc20_amount = 50
@@ -57,7 +57,7 @@ async def test_permit_and_pay_erc20_for_erc1155():
         erc1155_data, erc20_data, expiration
     )
     
-    assert not (not buy_result['log']['uid'] or buy_result['log']['uid'] == "0x0000000000000000000000000000000000000000000000000000000000000000"), "Invalid buy attestation UID"
+    assert buy_result['log']['uid'] and buy_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid buy attestation UID"
     
     buy_attestation_uid = buy_result['log']['uid']
     
@@ -71,7 +71,7 @@ async def test_permit_and_pay_erc20_for_erc1155():
     # Step 3: Alice fulfills Bob's escrow using permit (no pre-approval needed)
     pay_result = await env.alice_client.erc20.barter.permit_and_pay_erc20_for_erc1155(buy_attestation_uid)
     
-    assert not (not pay_result['log']['uid'] or pay_result['log']['uid'] == "0x0000000000000000000000000000000000000000000000000000000000000000"), "Invalid payment attestation UID"
+    assert pay_result['log']['uid'] and pay_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid payment attestation UID"
     
     # Verify token transfers
     # Alice should have received the ERC1155 tokens (would check with mock_erc1155_a.balance_of when available)
@@ -81,8 +81,8 @@ async def test_permit_and_pay_erc20_for_erc1155():
     # Alice spent erc20_amount tokens
     final_alice_erc20_balance = mock_erc20_a.balance_of(env.alice)
     alice_spent = initial_alice_erc20_balance - final_alice_erc20_balance
-    assert not (alice_spent != erc20_amount), "Alice should have spent {erc20_amount} ERC20 tokens, spent {alice_spent}"
+    assert alice_spent == erc20_amount, "Alice should have spent {erc20_amount} ERC20 tokens, spent {alice_spent}"
     
     # Bob received erc20_amount tokens
     bob_erc20_balance = mock_erc20_a.balance_of(env.bob)
-    assert not (bob_erc20_balance != erc20_amount), "Bob should have received {erc20_amount} ERC20 tokens, got {bob_erc20_balance}"
+    assert bob_erc20_balance == erc20_amount, "Bob should have received {erc20_amount} ERC20 tokens, got {bob_erc20_balance}"

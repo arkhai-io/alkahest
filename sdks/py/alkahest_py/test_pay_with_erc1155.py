@@ -24,7 +24,7 @@ async def test_pay_with_erc1155():
     
     # Verify Alice owns the tokens
     alice_balance = mock_erc1155_a.balance_of(env.alice, 1)
-    assert not (alice_balance != 10), "Token ownership verification failed. Expected 10, got {alice_balance}"
+    assert alice_balance == 10, "Token ownership verification failed. Expected 10, got {alice_balance}"
     
     # Create ERC1155 price data
     price_data = {
@@ -42,17 +42,17 @@ async def test_pay_with_erc1155():
     # Alice makes direct payment to Bob
     pay_result = await env.alice_client.erc1155.payment.pay(price_data, env.bob)
 
-    assert not (not pay_result['log']['uid'] or pay_result['log']['uid'] == "0x0000000000000000000000000000000000000000000000000000000000000000"), "Invalid payment attestation UID"
+    assert pay_result['log']['uid'] and pay_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid payment attestation UID"
     
     # Verify payment happened
     final_bob_balance = mock_erc1155_a.balance_of(env.bob, 1)
     final_alice_balance = mock_erc1155_a.balance_of(env.alice, 1)
     
     # Bob should have received 5 tokens
-    assert not (final_bob_balance - initial_bob_balance != 5), "Bob should have received 5 tokens, got {final_bob_balance - initial_bob_balance}"
+    assert final_bob_balance - initial_bob_balance == 5, "Bob should have received 5 tokens, got {final_bob_balance - initial_bob_balance}"
     
     # Alice should have 5 tokens remaining
-    assert not (final_alice_balance != 5), "Alice should have 5 tokens remaining, got {final_alice_balance}"
+    assert final_alice_balance == 5, "Alice should have 5 tokens remaining, got {final_alice_balance}"
     
     print("✅ Payment successful")
     print(f"Bob received: {final_bob_balance - initial_bob_balance} tokens")

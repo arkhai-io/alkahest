@@ -24,7 +24,7 @@ async def test_buy_erc1155_for_erc1155():
     
     # Verify Alice owns the tokens
     alice_balance = mock_erc1155_a.balance_of(env.alice, 1)
-    assert not (alice_balance != 10), "Token ownership verification failed. Expected 10, got {alice_balance}"
+    assert alice_balance == 10, "Token ownership verification failed. Expected 10, got {alice_balance}"
     
     # Create bid data (what Alice is offering)
     bid_data = {
@@ -46,15 +46,15 @@ async def test_buy_erc1155_for_erc1155():
     # Alice creates escrow offering ERC1155A for ERC1155B
     buy_result = await env.alice_client.erc1155.barter.buy_erc1155_for_erc1155(bid_data, ask_data, 0)
     
-    assert not (not buy_result['log']['uid'] or buy_result['log']['uid'] == "0x0000000000000000000000000000000000000000000000000000000000000000"), "Invalid buy attestation UID"
+    assert buy_result['log']['uid'] and buy_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid buy attestation UID"
     
     # Verify escrow happened
     escrow_balance = mock_erc1155_a.balance_of(env.addresses.erc1155_addresses.escrow_obligation_nontierable, 1)
     alice_balance_after = mock_erc1155_a.balance_of(env.alice, 1)
     
-    assert not (escrow_balance != 5), "5 tokens should be in escrow, got {escrow_balance}"
+    assert escrow_balance == 5, "5 tokens should be in escrow, got {escrow_balance}"
     
-    assert not (alice_balance_after != 5), "Alice should have 5 tokens remaining, got {alice_balance_after}"
+    assert alice_balance_after == 5, "Alice should have 5 tokens remaining, got {alice_balance_after}"
     
     print("✅ ERC1155 escrow created successfully")
     print(f"Escrow balance: {escrow_balance}")

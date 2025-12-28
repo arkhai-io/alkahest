@@ -24,7 +24,7 @@ async def test_pay_erc721_for_erc20():
     mock_erc20_a.transfer(env.bob, 100)
     bob_after_transfer = mock_erc20_a.balance_of(env.bob)
     
-    assert not (bob_after_transfer != bob_initial_erc20 + 100), "Bob ERC20 transfer failed. Expected {bob_initial_erc20 + 100}, got {bob_after_transfer}"
+    assert bob_after_transfer == bob_initial_erc20 + 100, "Bob ERC20 transfer failed. Expected {bob_initial_erc20 + 100}, got {bob_after_transfer}"
     
     # Create test data
     bid_data = {  # Bob's bid
@@ -41,7 +41,7 @@ async def test_pay_erc721_for_erc20():
 
     buy_result = await env.bob_client.erc20.barter.buy_erc721_for_erc20(bid_data, ask_data, 0)
 
-    assert not (not buy_result['log']['uid'] or buy_result['log']['uid'] == "0x0000000000000000000000000000000000000000000000000000000000000000"), "Invalid buy attestation UID"
+    assert buy_result['log']['uid'] and buy_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid buy attestation UID"
     
     buy_attestation_uid = buy_result['log']['uid']
     
@@ -52,13 +52,13 @@ async def test_pay_erc721_for_erc20():
     # Alice fulfills Bob's buy attestation with her ERC721
     pay_result = await env.alice_client.erc721.barter.pay_erc721_for_erc20(buy_attestation_uid)
     
-    assert not (not pay_result['log']['uid'] or pay_result['log']['uid'] == "0x0000000000000000000000000000000000000000000000000000000000000000"), "Invalid payment attestation UID"
+    assert pay_result['log']['uid'] and pay_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid payment attestation UID"
     
     # Verify token transfers
     # Alice should have received the ERC20 tokens
     alice_erc20_balance = mock_erc20_a.balance_of(env.alice)
-    assert not (alice_erc20_balance != 100), "Alice should have received 100 ERC20 tokens, got {alice_erc20_balance}"
+    assert alice_erc20_balance == 100, "Alice should have received 100 ERC20 tokens, got {alice_erc20_balance}"
     
     # Bob should have received the ERC721 token
     token_owner = mock_erc721_a.owner_of(token_id)
-    assert not (token_owner.lower() != env.bob.lower()), "Bob should have received the ERC721 token, but it's owned by {token_owner}"
+    assert token_owner.lower() == env.bob.lower(), "Bob should have received the ERC721 token, but it's owned by {token_owner}"

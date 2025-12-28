@@ -13,7 +13,7 @@ async def test_permit_and_pay_with_erc20():
     mock_erc20.transfer(env.alice, transfer_amount)
     
     alice_after_transfer = mock_erc20.balance_of(env.alice)
-    assert not (alice_after_transfer != transfer_amount), "Transfer failed. Expected {transfer_amount}, got {alice_after_transfer}"
+    assert alice_after_transfer == transfer_amount, "Transfer failed. Expected {transfer_amount}, got {alice_after_transfer}"
     
     payment_amount = 100
     price_data = {"address": env.mock_addresses.erc20_a, "value": payment_amount}
@@ -24,9 +24,9 @@ async def test_permit_and_pay_with_erc20():
     bob_final = mock_erc20.balance_of(env.bob)
     
     expected_alice_balance = alice_after_transfer - payment_amount
-    assert not (alice_final != expected_alice_balance), "Alice balance incorrect. Expected {expected_alice_balance}, got {alice_final}"
+    assert alice_final == expected_alice_balance, "Alice balance incorrect. Expected {expected_alice_balance}, got {alice_final}"
     
     expected_bob_balance = bob_initial + payment_amount
-    assert not (bob_final != expected_bob_balance), "Bob balance incorrect. Expected {expected_bob_balance}, got {bob_final}"
+    assert bob_final == expected_bob_balance, "Bob balance incorrect. Expected {expected_bob_balance}, got {bob_final}"
     
-    assert not (not payment_result['log']['uid'] or payment_result['log']['uid'] == "0x0000000000000000000000000000000000000000000000000000000000000000"), "Invalid attestation UID"
+    assert payment_result['log']['uid'] and payment_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid attestation UID"

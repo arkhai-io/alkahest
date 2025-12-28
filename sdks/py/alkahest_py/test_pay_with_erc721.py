@@ -20,7 +20,7 @@ async def test_pay_with_erc721():
     
     # Verify Alice owns the token
     token_owner = mock_erc721_a.owner_of(token_id)
-    assert not (token_owner.lower() != env.alice.lower()), "Token ownership verification failed. Expected {env.alice}, got {token_owner}"
+    assert token_owner.lower() == env.alice.lower(), "Token ownership verification failed. Expected {env.alice}, got {token_owner}"
     
     # Create price data
     price_data = {
@@ -34,9 +34,9 @@ async def test_pay_with_erc721():
     # Alice makes direct payment to Bob
     payment_result = await env.alice_client.erc721.payment.pay(price_data, env.bob)
 
-    assert not (not payment_result['log']['uid'] or payment_result['log']['uid'] == "0x0000000000000000000000000000000000000000000000000000000000000000"), "Invalid payment attestation UID"
+    assert payment_result['log']['uid'] and payment_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid payment attestation UID"
     
     # Verify payment happened - Bob should now own the token
     final_owner = mock_erc721_a.owner_of(token_id)
     print(f"ERC721 token {token_id} finally owned by: {final_owner}")
-    assert not (final_owner.lower() != env.bob.lower()), "Bob should own the ERC721 token, but it's owned by {final_owner}"
+    assert final_owner.lower() == env.bob.lower(), "Bob should own the ERC721 token, but it's owned by {final_owner}"

@@ -30,7 +30,7 @@ async def test_erc721_approve():
     payment_approved = mock_erc721_a.get_approved(1)
     expected_payment_approval = env.addresses.erc721_addresses.payment_obligation
     
-    assert not (payment_approved.lower() != expected_payment_approval.lower()), "Payment approval should be set to {expected_payment_approval}, got {payment_approved}"
+    assert payment_approved.lower() == expected_payment_approval.lower(), "Payment approval should be set to {expected_payment_approval}, got {payment_approved}"
     
     print(f"✓ Payment approval verified: token 1 approved for {payment_approved}")
     
@@ -41,6 +41,6 @@ async def test_erc721_approve():
     escrow_approved = mock_erc721_a.get_approved(1)
     expected_escrow_approval = env.addresses.erc721_addresses.escrow_obligation_nontierable
     
-    assert not (escrow_approved.lower() != expected_escrow_approval.lower()), "Escrow approval should be set to {expected_escrow_approval}, got {escrow_approved}"
+    assert escrow_approved.lower() == expected_escrow_approval.lower(), "Escrow approval should be set to {expected_escrow_approval}, got {escrow_approved}"
     
     print(f"✓ Escrow approval verified: token 1 approved for {escrow_approved}")

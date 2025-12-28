@@ -54,7 +54,7 @@ async def test_pay_erc1155_for_erc721():
     # Alice fulfills Bob's buy attestation with her ERC1155
     pay_result = await env.alice_client.erc1155.barter.pay_erc1155_for_erc721(buy_attestation_uid)
     
-    assert not (not pay_result['log']['uid'] or pay_result['log']['uid'] == "0x0000000000000000000000000000000000000000000000000000000000000000"), "Invalid payment attestation UID"
+    assert pay_result['log']['uid'] and pay_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid payment attestation UID"
     
     # Verify token transfers
     alice_now_owns_erc721 = mock_erc721_a.owner_of(bob_token_id)
@@ -63,9 +63,9 @@ async def test_pay_erc1155_for_erc721():
     # Both sides should have received the tokens
     bob_received_erc1155 = final_bob_erc1155_balance - initial_bob_erc1155_balance
     
-    assert not (alice_now_owns_erc721.lower() != env.alice.lower()), "Alice should have received the ERC721 token, but it's owned by {alice_now_owns_erc721}"
+    assert alice_now_owns_erc721.lower() == env.alice.lower(), "Alice should have received the ERC721 token, but it's owned by {alice_now_owns_erc721}"
     
-    assert not (bob_received_erc1155 != 5), "Bob should have received 5 ERC1155 tokens, got {bob_received_erc1155}"
+    assert bob_received_erc1155 == 5, "Bob should have received 5 ERC1155 tokens, got {bob_received_erc1155}"
     
     print("✅ ERC1155 for ERC721 exchange successful")
     print(f"Alice received ERC721 token {bob_token_id}")

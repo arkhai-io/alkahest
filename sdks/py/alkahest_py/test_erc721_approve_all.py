@@ -25,8 +25,8 @@ async def test_erc721_approve_all():
     # Verify Alice owns both tokens
     owner_1 = mock_erc721_a.owner_of(token_id_1)
     owner_2 = mock_erc721_a.owner_of(token_id_2)
-    assert not (owner_1.lower() != env.alice.lower()), "Token {token_id_1} ownership verification failed. Expected {env.alice}, got {owner_1}"
-    assert not (owner_2.lower() != env.alice.lower()), "Token {token_id_2} ownership verification failed. Expected {env.alice}, got {owner_2}"
+    assert owner_1.lower() == env.alice.lower(), "Token {token_id_1} ownership verification failed. Expected {env.alice}, got {owner_1}"
+    assert owner_2.lower() == env.alice.lower(), "Token {token_id_2} ownership verification failed. Expected {env.alice}, got {owner_2}"
     
     # Test approve_all for payment
     print("Testing approve_all for payment purpose...")
@@ -38,7 +38,7 @@ async def test_erc721_approve_all():
         env.addresses.erc721_addresses.payment_obligation
     )
     
-    assert not (not payment_approved), "Payment approval for all should be set correctly"
+    assert payment_approved, "Payment approval for all should be set correctly"
     
     print("✅ Payment approve_all verified successfully")
     
@@ -52,6 +52,6 @@ async def test_erc721_approve_all():
         env.addresses.erc721_addresses.escrow_obligation_nontierable
     )
     
-    assert not (not escrow_approved), "Escrow approval for all should be set correctly"
+    assert escrow_approved, "Escrow approval for all should be set correctly"
     
     print("✅ Escrow approve_all verified successfully")

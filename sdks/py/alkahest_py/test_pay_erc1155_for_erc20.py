@@ -26,7 +26,7 @@ async def test_pay_erc1155_for_erc20():
     # Give Bob some ERC20 tokens for escrow
     mock_erc20_a.transfer(env.bob, 100)
     bob_erc20_balance = mock_erc20_a.balance_of(env.bob)
-    assert not (bob_erc20_balance != 100), "Bob should have 100 ERC20 tokens, got {bob_erc20_balance}"
+    assert bob_erc20_balance == 100, "Bob should have 100 ERC20 tokens, got {bob_erc20_balance}"
     
     # Create trade data
     bid_data = {  # Bob's bid (what he offers)
@@ -56,7 +56,7 @@ async def test_pay_erc1155_for_erc20():
     # Alice fulfills Bob's buy attestation with her ERC1155
     pay_result = await env.alice_client.erc1155.barter.pay_erc1155_for_erc20(buy_attestation_uid)
     
-    assert not (not pay_result['log']['uid'] or pay_result['log']['uid'] == "0x0000000000000000000000000000000000000000000000000000000000000000"), "Invalid payment attestation UID"
+    assert pay_result['log']['uid'] and pay_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid payment attestation UID"
     
     # Verify token transfers
     final_alice_erc20_balance = mock_erc20_a.balance_of(env.alice)
@@ -66,9 +66,9 @@ async def test_pay_erc1155_for_erc20():
     alice_received_erc20 = final_alice_erc20_balance - initial_alice_erc20_balance
     bob_received_erc1155 = final_bob_erc1155_balance - initial_bob_erc1155_balance
     
-    assert not (alice_received_erc20 != 100), "Alice should have received 100 ERC20 tokens, got {alice_received_erc20}"
+    assert alice_received_erc20 == 100, "Alice should have received 100 ERC20 tokens, got {alice_received_erc20}"
     
-    assert not (bob_received_erc1155 != 5), "Bob should have received 5 ERC1155 tokens, got {bob_received_erc1155}"
+    assert bob_received_erc1155 == 5, "Bob should have received 5 ERC1155 tokens, got {bob_received_erc1155}"
     
     print("✅ ERC1155 for ERC20 exchange successful")
     print(f"Alice received {alice_received_erc20} ERC20 tokens")

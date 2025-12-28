@@ -24,7 +24,7 @@ async def test_erc1155_revoke_all():
     
     # Verify Alice owns the tokens
     alice_balance = mock_erc1155_a.balance_of(env.alice, 1)
-    assert not (alice_balance != 10), "Token ownership verification failed. Expected 10, got {alice_balance}"
+    assert alice_balance == 10, "Token ownership verification failed. Expected 10, got {alice_balance}"
     
     # First approve_all for payment
     print("Setting approve_all for payment purpose...")
@@ -36,7 +36,7 @@ async def test_erc1155_revoke_all():
         env.addresses.erc1155_addresses.payment_obligation
     )
     
-    assert not (not payment_approved_before), "Payment approval should be set before revocation"
+    assert payment_approved_before, "Payment approval should be set before revocation"
     
     print("✅ Payment approve_all verified as set")
     
@@ -50,6 +50,6 @@ async def test_erc1155_revoke_all():
         env.addresses.erc1155_addresses.payment_obligation
     )
     
-    assert not (payment_approved_after), "Payment approval should be revoked"
+    assert not payment_approved_after, "Payment approval should be revoked"
     
     print("✅ Payment approval successfully revoked")

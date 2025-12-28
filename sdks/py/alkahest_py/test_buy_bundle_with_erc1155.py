@@ -43,15 +43,15 @@ async def test_buy_bundle_with_erc1155():
     # Alice creates purchase offer
     buy_result = await env.alice_client.erc1155.barter.buy_bundle_with_erc1155(bid_data, bundle_data, 0)
     
-    assert not (not buy_result['log']['uid'] or buy_result['log']['uid'] == "0x0000000000000000000000000000000000000000000000000000000000000000"), "Invalid buy attestation UID"
+    assert buy_result['log']['uid'] and buy_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid buy attestation UID"
     
     # Verify escrow happened
     escrow_balance = mock_erc1155_a.balance_of(env.addresses.erc1155_addresses.escrow_obligation_nontierable, 1)
     alice_balance_after = mock_erc1155_a.balance_of(env.alice, 1)
     
-    assert not (escrow_balance != 5), "5 tokens should be in escrow, got {escrow_balance}"
+    assert escrow_balance == 5, "5 tokens should be in escrow, got {escrow_balance}"
     
-    assert not (alice_balance_after != 5), "Alice should have 5 tokens remaining, got {alice_balance_after}"
+    assert alice_balance_after == 5, "Alice should have 5 tokens remaining, got {alice_balance_after}"
     
     print("✅ ERC1155 to bundle purchase offer created")
     print(f"ERC1155 tokens in escrow: {escrow_balance}")

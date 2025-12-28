@@ -24,8 +24,8 @@ async def test_pay_erc721_for_erc721():
     # Verify ownership
     alice_token_owner = mock_erc721_a.owner_of(token_id_a)
     bob_token_owner = mock_erc721_b.owner_of(token_id_b)
-    assert not (alice_token_owner.lower() != env.alice.lower()), "Alice token ownership verification failed. Expected {env.alice}, got {alice_token_owner}"
-    assert not (bob_token_owner.lower() != env.bob.lower()), "Bob token ownership verification failed. Expected {env.bob}, got {bob_token_owner}"
+    assert alice_token_owner.lower() == env.alice.lower(), "Alice token ownership verification failed. Expected {env.alice}, got {alice_token_owner}"
+    assert bob_token_owner.lower() == env.bob.lower(), "Bob token ownership verification failed. Expected {env.bob}, got {bob_token_owner}"
     
     # Create bid and ask data
     bid_data = {
@@ -42,7 +42,7 @@ async def test_pay_erc721_for_erc721():
     
     buy_result = await env.alice_client.erc721.barter.buy_erc721_for_erc721(bid_data, ask_data, 0)
     
-    assert not (not buy_result['log']['uid'] or buy_result['log']['uid'] == "0x0000000000000000000000000000000000000000000000000000000000000000"), "Invalid buy attestation UID"
+    assert buy_result['log']['uid'] and buy_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid buy attestation UID"
     
     buy_attestation_uid = buy_result['log']['uid']
     
@@ -52,7 +52,7 @@ async def test_pay_erc721_for_erc721():
     # Bob fulfills the buy attestation
     pay_result = await env.bob_client.erc721.barter.pay_erc721_for_erc721(buy_attestation_uid)
 
-    assert not (not pay_result['log']['uid'] or pay_result['log']['uid'] == "0x0000000000000000000000000000000000000000000000000000000000000000"), "Invalid payment attestation UID"
+    assert pay_result['log']['uid'] and pay_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid payment attestation UID"
     
     # Verify token transfers
     alice_final_owner = mock_erc721_b.owner_of(token_id_b)
@@ -62,5 +62,5 @@ async def test_pay_erc721_for_erc721():
     print(f"Bob now owns ERC721 A token {token_id_a}: {bob_final_owner}")
     
     # Both sides should have received the tokens
-    assert not (alice_final_owner.lower() != env.alice.lower()), "Alice should have received ERC721 B token {token_id_b}, but it's owned by {alice_final_owner}"
-    assert not (bob_final_owner.lower() != env.bob.lower()), "Bob should have received ERC721 A token {token_id_a}, but it's owned by {bob_final_owner}"
+    assert alice_final_owner.lower() == env.alice.lower(), "Alice should have received ERC721 B token {token_id_b}, but it's owned by {alice_final_owner}"
+    assert bob_final_owner.lower() == env.bob.lower(), "Bob should have received ERC721 A token {token_id_a}, but it's owned by {bob_final_owner}"
