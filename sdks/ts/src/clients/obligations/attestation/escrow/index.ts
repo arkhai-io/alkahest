@@ -1,10 +1,10 @@
 import type { ViemClient } from "../../../../utils";
 import type { AttestationAddresses } from "../index";
-import { makeAttestationEscrowV1Client, type AttestationEscrowV1Client } from "./v1";
-import { makeAttestationEscrowV2Client, type AttestationEscrowV2Client } from "./v2";
+import { type AttestationEscrowV1Client, makeAttestationEscrowV1Client } from "./v1";
+import { type AttestationEscrowV2Client, makeAttestationEscrowV2Client } from "./v2";
 
-export { makeAttestationEscrowV1Client, type AttestationEscrowV1Client } from "./v1";
-export { makeAttestationEscrowV2Client, type AttestationEscrowV2Client } from "./v2";
+export { type AttestationEscrowV1Client, makeAttestationEscrowV1Client } from "./v1";
+export { type AttestationEscrowV2Client, makeAttestationEscrowV2Client } from "./v2";
 
 export type AttestationEscrowClient = {
   v1: AttestationEscrowV1Client;

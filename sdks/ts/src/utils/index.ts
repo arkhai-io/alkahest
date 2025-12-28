@@ -91,10 +91,7 @@ export const flattenTokenBundle = (bundle: TokenBundle): TokenBundleFlat => ({
 /**
  * Wrapper for viemClient.writeContract that adds required chain parameter
  */
-export const writeContract = async (
-  viemClient: ViemClient,
-  params: Parameters<ViemClient["writeContract"]>[0]
-) => {
+export const writeContract = async (viemClient: ViemClient, params: Parameters<ViemClient["writeContract"]>[0]) => {
   return viemClient.writeContract({
     ...params,
     chain: viemClient.chain,
@@ -106,7 +103,7 @@ export const writeContract = async (
  */
 export const readContract = async <T>(
   viemClient: ViemClient,
-  params: Parameters<ViemClient["readContract"]>[0]
+  params: Parameters<ViemClient["readContract"]>[0],
 ): Promise<T> => {
   return viemClient.readContract({
     ...params,
@@ -120,10 +117,10 @@ export * from "./demandParsing";
 // Re-export specific demand parsing utilities for convenience
 export {
   createDecodersFromAddresses,
-  decodeDemand,
-  decodeDemandWithAddresses,
   type DecodedDemandResult,
   type DecodersRecord,
-  type RecursivelyDecodedDemand,
   type DemandDecoder,
+  decodeDemand,
+  decodeDemandWithAddresses,
+  type RecursivelyDecodedDemand,
 } from "./demandParsing";

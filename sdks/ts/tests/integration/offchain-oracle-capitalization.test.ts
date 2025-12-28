@@ -64,7 +64,11 @@ test("synchronous offchain oracle capitalization flow", async () => {
   );
 
   // Request arbitration and wait for it to be mined before setting up listener
-  const requestHash = await testContext.bob.client.arbiters.general.trustedOracle.requestArbitration(fulfillment.uid, testContext.charlie.address, demand);
+  const requestHash = await testContext.bob.client.arbiters.general.trustedOracle.requestArbitration(
+    fulfillment.uid,
+    testContext.charlie.address,
+    demand,
+  );
   await testContext.bob.client.viemClient.waitForTransactionReceipt({ hash: requestHash });
 
   const { decisions, unwatch } = await testContext.charlie.client.arbiters.general.trustedOracle.listenAndArbitrate(

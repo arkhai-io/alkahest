@@ -1,4 +1,12 @@
-import { type Address, type BlockNumber, type BlockTag, decodeAbiParameters, encodeAbiParameters, getAbiItem, parseAbiItem } from "viem";
+import {
+  type Address,
+  type BlockNumber,
+  type BlockTag,
+  decodeAbiParameters,
+  encodeAbiParameters,
+  getAbiItem,
+  parseAbiItem,
+} from "viem";
 import { abi as trustedOracleArbiterAbi } from "../../../contracts/arbiters/TrustedOracleArbiter";
 import type { Attestation, ChainAddresses } from "../../../types";
 import { getAttestation, getOptimalPollingInterval, type ViemClient } from "../../../utils";
@@ -85,7 +93,7 @@ export type ListenAndArbitrateResult = {
  *
  * Handles oracle-based decision making with arbitration requests.
  * This arbiter allows for external oracles to make decisions on attestation validity.
- * 
+ *
  * Features:
  * - Request arbitration from specific oracles
  * - Listen for arbitration requests
@@ -321,10 +329,10 @@ export const makeTrustedOracleArbiterClient = (viemClient: ViemClient, addresses
       oracle: `0x${string}`,
     ): Promise<
       | {
-        obligation: `0x${string}`;
-        oracle: `0x${string}`;
-        decision: boolean;
-      }
+          obligation: `0x${string}`;
+          oracle: `0x${string}`;
+          decision: boolean;
+        }
       | undefined
     > => {
       const logs = await viemClient.getLogs({
@@ -465,7 +473,11 @@ export const makeTrustedOracleArbiterClient = (viemClient: ViemClient, addresses
             if (requestedObligation && requestedOracle && demand) {
               try {
                 // Call the arbitration handler to get the decision
-                const decision = await arbitrationHandler(requestedObligation, requestedOracle, demand as `0x${string}`);
+                const decision = await arbitrationHandler(
+                  requestedObligation,
+                  requestedOracle,
+                  demand as `0x${string}`,
+                );
 
                 // Decode the full demand to get the inner data
                 // checkObligation computes: keccak256(obligation.uid, demand_.data)

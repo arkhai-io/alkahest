@@ -137,7 +137,10 @@ describe("Attestation Tests", () => {
 
       // Bob creates a fulfillment attestation using StringObligation
       // The escrow.uid is passed as refUID to link the fulfillment to the escrow
-      const { attested: fulfillmentEvent } = await bobClient.stringObligation.doObligation("fulfillment data", escrowData.uid);
+      const { attested: fulfillmentEvent } = await bobClient.stringObligation.doObligation(
+        "fulfillment data",
+        escrowData.uid,
+      );
       const fulfillmentUid = fulfillmentEvent.uid as `0x${string}`;
 
       // Bob collects the payment by providing his fulfillment
@@ -292,7 +295,10 @@ describe("Attestation Tests", () => {
       // The escrowUid is passed as refUID to link the fulfillment to the escrow
 
       // Create the string data - lines 181-183
-      const { attested: fulfillmentEvent } = await bobClient.stringObligation.doObligation("fulfillment data", escrowUid);
+      const { attested: fulfillmentEvent } = await bobClient.stringObligation.doObligation(
+        "fulfillment data",
+        escrowUid,
+      );
       const fulfillmentUid = fulfillmentEvent.uid as `0x${string}`;
 
       // Collect payment - lines 188-189

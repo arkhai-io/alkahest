@@ -1,16 +1,16 @@
 import type { ChainAddresses } from "../../../types";
 import type { ViemClient } from "../../../utils";
-import { makeErc20BarterUtilsClient, type Erc20BarterUtilsClient } from "./barterUtils";
-import { makeErc20EscrowClient, type Erc20EscrowClient } from "./escrow";
-import { makeErc20PaymentClient, type Erc20PaymentClient } from "./payment";
-import { makeErc20UtilClient, type Erc20UtilClient } from "./util";
+import { type Erc20BarterUtilsClient, makeErc20BarterUtilsClient } from "./barterUtils";
+import { type Erc20EscrowClient, makeErc20EscrowClient } from "./escrow";
+import { type Erc20PaymentClient, makeErc20PaymentClient } from "./payment";
+import { type Erc20UtilClient, makeErc20UtilClient } from "./util";
 
-export { makeErc20BarterUtilsClient, type Erc20BarterUtilsClient } from "./barterUtils";
-export { makeErc20EscrowClient, type Erc20EscrowClient } from "./escrow";
-export { makeErc20NonTierableEscrowClient, type Erc20NonTierableEscrowClient } from "./escrow/nonTierable";
-export { makeErc20TierableEscrowClient, type Erc20TierableEscrowClient } from "./escrow/tierable";
-export { makeErc20PaymentClient, type Erc20PaymentClient } from "./payment";
-export { makeErc20UtilClient, type Erc20UtilClient } from "./util";
+export { type Erc20BarterUtilsClient, makeErc20BarterUtilsClient } from "./barterUtils";
+export { type Erc20EscrowClient, makeErc20EscrowClient } from "./escrow";
+export { type Erc20NonTierableEscrowClient, makeErc20NonTierableEscrowClient } from "./escrow/nonTierable";
+export { type Erc20TierableEscrowClient, makeErc20TierableEscrowClient } from "./escrow/tierable";
+export { type Erc20PaymentClient, makeErc20PaymentClient } from "./payment";
+export { type Erc20UtilClient, makeErc20UtilClient } from "./util";
 
 export type Erc20Addresses = {
   eas: `0x${string}`;
@@ -35,10 +35,7 @@ export type Erc20Client = {
   barter: Erc20BarterUtilsClient;
 };
 
-export const makeErc20Client = (
-  viemClient: ViemClient,
-  addresses: Erc20Addresses,
-): Erc20Client => {
+export const makeErc20Client = (viemClient: ViemClient, addresses: Erc20Addresses): Erc20Client => {
   return {
     util: makeErc20UtilClient(viemClient, addresses),
     escrow: makeErc20EscrowClient(viemClient, addresses),

@@ -66,10 +66,7 @@ export const pickStringAddresses = (addresses: ChainAddresses): StringAddresses 
 
 export type StringObligationClient = ReturnType<typeof makeStringObligationClient>;
 
-export const makeStringObligationClient = (
-  viemClient: ViemClient,
-  addresses: StringAddresses,
-) => {
+export const makeStringObligationClient = (viemClient: ViemClient, addresses: StringAddresses) => {
   const decode = (obligationData: `0x${string}`) => {
     return decodeAbiParameters([stringObligationDataType], obligationData)[0];
   };

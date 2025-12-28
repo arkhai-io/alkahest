@@ -1,17 +1,8 @@
-import {
-  afterAll,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  test,
-} from "bun:test";
+import { afterAll, beforeAll, beforeEach, describe, expect, test } from "bun:test";
 import { parseEther } from "viem";
-import {
-  setupTestEnvironment,
-  type TestContext,
-} from "../utils/setup";
+import { setupTestEnvironment, type TestContext } from "../utils/setup";
 import { teardownTestEnvironment } from "../utils/teardownTestEnvironment";
+
 describe("Native Token Tests", () => {
   // Test context and variables
   let testContext: TestContext;
@@ -76,9 +67,7 @@ describe("Native Token Tests", () => {
         payee: bob,
       });
 
-      expect(hash).not.toBe(
-        "0x0000000000000000000000000000000000000000000000000000000000000000"
-      );
+      expect(hash).not.toBe("0x0000000000000000000000000000000000000000000000000000000000000000");
 
       // Wait for transaction to be mined
       await testClient.waitForTransactionReceipt({ hash });
@@ -314,7 +303,7 @@ describe("Native Token Tests", () => {
       const { hash } = await aliceClient.nativeToken.escrow.nonTierable.create(
         escrowData.amount,
         { arbiter: escrowData.arbiter, demand: escrowData.demand },
-        BigInt(Math.floor(Date.now() / 1000) + 86400) // 1 day expiration
+        BigInt(Math.floor(Date.now() / 1000) + 86400), // 1 day expiration
       );
 
       expect(hash).toBeDefined();
@@ -408,7 +397,7 @@ describe("Native Token Tests", () => {
     test("testPayeeAddressEncoding", () => {
       const validAddresses = [alice, bob, charlie];
 
-      validAddresses.forEach(payee => {
+      validAddresses.forEach((payee) => {
         const obligationData = {
           amount: parseEther("1.0"),
           payee,

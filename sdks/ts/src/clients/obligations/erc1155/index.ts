@@ -1,16 +1,16 @@
 import type { ChainAddresses } from "../../../types";
 import type { ViemClient } from "../../../utils";
-import { makeErc1155BarterUtilsClient, type Erc1155BarterUtilsClient } from "./barterUtils";
-import { makeErc1155EscrowClient, type Erc1155EscrowClient } from "./escrow";
-import { makeErc1155PaymentClient, type Erc1155PaymentClient } from "./payment";
-import { makeErc1155UtilClient, type Erc1155UtilClient } from "./util";
+import { type Erc1155BarterUtilsClient, makeErc1155BarterUtilsClient } from "./barterUtils";
+import { type Erc1155EscrowClient, makeErc1155EscrowClient } from "./escrow";
+import { type Erc1155PaymentClient, makeErc1155PaymentClient } from "./payment";
+import { type Erc1155UtilClient, makeErc1155UtilClient } from "./util";
 
-export { makeErc1155BarterUtilsClient, type Erc1155BarterUtilsClient } from "./barterUtils";
-export { makeErc1155EscrowClient, type Erc1155EscrowClient } from "./escrow";
-export { makeErc1155NonTierableEscrowClient, type Erc1155NonTierableEscrowClient } from "./escrow/nonTierable";
-export { makeErc1155TierableEscrowClient, type Erc1155TierableEscrowClient } from "./escrow/tierable";
-export { makeErc1155PaymentClient, type Erc1155PaymentClient } from "./payment";
-export { makeErc1155UtilClient, type Erc1155UtilClient } from "./util";
+export { type Erc1155BarterUtilsClient, makeErc1155BarterUtilsClient } from "./barterUtils";
+export { type Erc1155EscrowClient, makeErc1155EscrowClient } from "./escrow";
+export { type Erc1155NonTierableEscrowClient, makeErc1155NonTierableEscrowClient } from "./escrow/nonTierable";
+export { type Erc1155TierableEscrowClient, makeErc1155TierableEscrowClient } from "./escrow/tierable";
+export { type Erc1155PaymentClient, makeErc1155PaymentClient } from "./payment";
+export { type Erc1155UtilClient, makeErc1155UtilClient } from "./util";
 
 export type Erc1155Addresses = {
   eas: `0x${string}`;
@@ -37,10 +37,7 @@ export type Erc1155Client = {
   barter: Erc1155BarterUtilsClient;
 };
 
-export const makeErc1155Client = (
-  viemClient: ViemClient,
-  addresses: Erc1155Addresses,
-): Erc1155Client => {
+export const makeErc1155Client = (viemClient: ViemClient, addresses: Erc1155Addresses): Erc1155Client => {
   return {
     util: makeErc1155UtilClient(viemClient, addresses),
     escrow: makeErc1155EscrowClient(viemClient, addresses),

@@ -10,10 +10,7 @@ import { getOptimalPollingInterval, type ViemClient } from "../../../utils";
  * Only one fulfillment can be confirmed per escrow at a time,
  * and the confirmation can be revoked by the escrow recipient.
  */
-export const makeExclusiveRevocableConfirmationArbiterClient = (
-  viemClient: ViemClient,
-  addresses: ChainAddresses,
-) => {
+export const makeExclusiveRevocableConfirmationArbiterClient = (viemClient: ViemClient, addresses: ChainAddresses) => {
   const confirmationMadeEvent = parseAbiItem(
     "event ConfirmationMade(bytes32 indexed fulfillment, bytes32 indexed escrow)",
   );
@@ -102,11 +99,7 @@ export const makeExclusiveRevocableConfirmationArbiterClient = (
     /**
      * Wait for a confirmation event
      */
-    waitForConfirmation: async (
-      fulfillment: `0x${string}`,
-      escrow: `0x${string}`,
-      pollingInterval?: number,
-    ) => {
+    waitForConfirmation: async (fulfillment: `0x${string}`, escrow: `0x${string}`, pollingInterval?: number) => {
       // Check for existing confirmation
       const logs = await viemClient.getLogs({
         address: addresses.exclusiveRevocableConfirmationArbiter,

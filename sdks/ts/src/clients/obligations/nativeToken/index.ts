@@ -2,14 +2,35 @@ import type { ChainAddresses } from "../../../types";
 import type { ViemClient } from "../../../utils";
 import { makeNativeTokenBarterUtilsClient, type NativeTokenBarterUtilsClient } from "./barterUtils";
 import { makeNativeTokenEscrowClient, type NativeTokenEscrowClient } from "./escrow";
-import { makeNativeTokenPaymentClient, type NativeTokenPaymentClient, type NativeTokenPaymentObligationData } from "./payment";
+import {
+  makeNativeTokenPaymentClient,
+  type NativeTokenPaymentClient,
+  type NativeTokenPaymentObligationData,
+} from "./payment";
 
 export { makeNativeTokenBarterUtilsClient, type NativeTokenBarterUtilsClient } from "./barterUtils";
 export { makeNativeTokenEscrowClient, type NativeTokenEscrowClient } from "./escrow";
-export { makeNativeTokenNonTierableEscrowClient, type NativeTokenNonTierableEscrowClient, type NativeTokenNonTierableEscrowObligationData, encodeObligation as encodeNonTierableEscrowObligation, decodeObligation as decodeNonTierableEscrowObligation } from "./escrow/nonTierable";
-export { type NativeTokenTierableEscrowObligationData, encodeObligation as encodeTierableEscrowObligation, decodeObligation as decodeTierableEscrowObligation } from "./escrow/tierable";
-export { makeNativeTokenTierableEscrowClient, type NativeTokenTierableEscrowClient } from "./escrow/tierable";
-export { makeNativeTokenPaymentClient, type NativeTokenPaymentClient, type NativeTokenPaymentObligationData, encodeObligation as encodePaymentObligation, decodeObligation as decodePaymentObligation } from "./payment";
+export {
+  decodeObligation as decodeNonTierableEscrowObligation,
+  encodeObligation as encodeNonTierableEscrowObligation,
+  makeNativeTokenNonTierableEscrowClient,
+  type NativeTokenNonTierableEscrowClient,
+  type NativeTokenNonTierableEscrowObligationData,
+} from "./escrow/nonTierable";
+export {
+  decodeObligation as decodeTierableEscrowObligation,
+  encodeObligation as encodeTierableEscrowObligation,
+  makeNativeTokenTierableEscrowClient,
+  type NativeTokenTierableEscrowClient,
+  type NativeTokenTierableEscrowObligationData,
+} from "./escrow/tierable";
+export {
+  decodeObligation as decodePaymentObligation,
+  encodeObligation as encodePaymentObligation,
+  makeNativeTokenPaymentClient,
+  type NativeTokenPaymentClient,
+  type NativeTokenPaymentObligationData,
+} from "./payment";
 
 export type NativeTokenAddresses = {
   eas: `0x${string}`;
@@ -33,10 +54,7 @@ export type NativeTokenClient = {
   barter: NativeTokenBarterUtilsClient;
 };
 
-export const makeNativeTokenClient = (
-  viemClient: ViemClient,
-  addresses: NativeTokenAddresses,
-): NativeTokenClient => {
+export const makeNativeTokenClient = (viemClient: ViemClient, addresses: NativeTokenAddresses): NativeTokenClient => {
   return {
     escrow: makeNativeTokenEscrowClient(viemClient, addresses),
     payment: makeNativeTokenPaymentClient(viemClient, addresses),

@@ -1,14 +1,11 @@
 import { abi as erc721Abi } from "../../../contracts/IERC721";
 import type { ApprovalPurpose, Erc721 } from "../../../types";
-import { writeContract, type ViemClient } from "../../../utils";
+import { type ViemClient, writeContract } from "../../../utils";
 import type { Erc721Addresses } from "./index";
 
 export type Erc721UtilClient = ReturnType<typeof makeErc721UtilClient>;
 
-export const makeErc721UtilClient = (
-  viemClient: ViemClient,
-  addresses: Erc721Addresses,
-) => {
+export const makeErc721UtilClient = (viemClient: ViemClient, addresses: Erc721Addresses) => {
   return {
     approve: async (token: Erc721, purpose: ApprovalPurpose) => {
       const to =

@@ -1,16 +1,6 @@
-import {
-  afterAll,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  test,
-} from "bun:test";
+import { afterAll, beforeAll, beforeEach, describe, expect, test } from "bun:test";
 import { parseEther } from "viem";
-import {
-  setupTestEnvironment,
-  type TestContext,
-} from "./utils/setup";
+import { setupTestEnvironment, type TestContext } from "./utils/setup";
 import { teardownTestEnvironment } from "./utils/teardownTestEnvironment";
 
 /**
@@ -130,11 +120,7 @@ describe("Native Token Trading Functions", () => {
       const expiration = BigInt(Math.floor(Date.now() / 1000)) + 3600n;
 
       try {
-        const result = await aliceClient.nativeToken.barter.buyErc20WithNative(
-          bidAmount,
-          ask,
-          expiration
-        );
+        const result = await aliceClient.nativeToken.barter.buyErc20WithNative(bidAmount, ask, expiration);
 
         expect(result.hash).toBeDefined();
         expect(result.attested).toBeDefined();
@@ -168,11 +154,7 @@ describe("Native Token Trading Functions", () => {
       const expiration = BigInt(Math.floor(Date.now() / 1000)) + 3600n;
 
       try {
-        const result = await aliceClient.erc721.barter.buyErc721WithNative(
-          bidAmount,
-          ask,
-          expiration
-        );
+        const result = await aliceClient.erc721.barter.buyErc721WithNative(bidAmount, ask, expiration);
 
         expect(result.hash).toBeDefined();
         expect(result.attested).toBeDefined();
@@ -205,11 +187,7 @@ describe("Native Token Trading Functions", () => {
       const expiration = BigInt(Math.floor(Date.now() / 1000)) + 3600n;
 
       try {
-        const result = await aliceClient.erc1155.barter.buyErc1155WithNative(
-          bidAmount,
-          ask,
-          expiration
-        );
+        const result = await aliceClient.erc1155.barter.buyErc1155WithNative(bidAmount, ask, expiration);
 
         expect(result.hash).toBeDefined();
         expect(result.attested).toBeDefined();
@@ -243,12 +221,7 @@ describe("Native Token Trading Functions", () => {
       const expiration = BigInt(Math.floor(Date.now() / 1000)) + 3600n;
 
       try {
-        const result = await aliceClient.bundle.barter.buyBundleWithNative(
-          bidAmount,
-          ask,
-          payee,
-          expiration
-        );
+        const result = await aliceClient.bundle.barter.buyBundleWithNative(bidAmount, ask, payee, expiration);
 
         expect(result.hash).toBeDefined();
         expect(result.attested).toBeDefined();
@@ -302,7 +275,7 @@ describe("Native Token Trading Functions", () => {
       ];
 
       expect(functions.length).toBe(8);
-      functions.forEach(fn => {
+      functions.forEach((fn) => {
         expect(fn).toBeDefined();
         expect(typeof fn).toBe("function");
       });

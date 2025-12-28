@@ -223,7 +223,11 @@ test("asynchronous offchain oracle uptime flow", { timeout: 15000 }, async () =>
     { mode: "unarbitrated" },
   );
 
-  await testContext.bob.client.arbiters.general.trustedOracle.requestArbitration(fulfillment.uid, testContext.charlie.address, demand);
+  await testContext.bob.client.arbiters.general.trustedOracle.requestArbitration(
+    fulfillment.uid,
+    testContext.charlie.address,
+    demand,
+  );
 
   const arbitration = await testContext.charlie.client.arbiters.general.trustedOracle.waitForArbitration(
     fulfillment.uid,

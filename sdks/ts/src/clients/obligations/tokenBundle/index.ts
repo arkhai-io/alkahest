@@ -37,10 +37,7 @@ export type TokenBundleClient = {
   barter: TokenBundleBarterUtilsClient;
 };
 
-export const makeTokenBundleClient = (
-  viemClient: ViemClient,
-  addresses: TokenBundleAddresses,
-): TokenBundleClient => {
+export const makeTokenBundleClient = (viemClient: ViemClient, addresses: TokenBundleAddresses): TokenBundleClient => {
   return {
     util: makeTokenBundleUtilClient(viemClient, addresses),
     escrow: makeTokenBundleEscrowClient(viemClient, addresses),

@@ -221,7 +221,7 @@ export interface EnhancedArbitrateFilters
  * Oracles can verify if a native token transfer occurred with specific criteria
  */
 export interface NativeTokenTransferArbitrationRequest {
-  type: 'native_token_transfer';
+  type: "native_token_transfer";
   /** Minimum native token amount that must be transferred (in wei) */
   minAmount: bigint;
   /** Address that should receive the native token */
@@ -241,7 +241,7 @@ export interface NativeTokenTransferArbitrationRequest {
  * Oracles can verify if an address has a minimum native token balance
  */
 export interface NativeTokenBalanceArbitrationRequest {
-  type: 'native_token_balance';
+  type: "native_token_balance";
   /** Address to check balance for */
   address: `0x${string}`;
   /** Minimum balance required (in wei) */
@@ -255,7 +255,7 @@ export interface NativeTokenBalanceArbitrationRequest {
  * Oracles can verify if a payment was made from payer to payee
  */
 export interface NativeTokenPaymentArbitrationRequest {
-  type: 'native_token_payment';
+  type: "native_token_payment";
   /** Amount to be paid (in wei) */
   amount: bigint;
   /** Address that should make the payment */
@@ -276,14 +276,14 @@ export interface NativeTokenPaymentArbitrationRequest {
  * Oracles can verify escrow conditions are met
  */
 export interface NativeTokenEscrowArbitrationRequest {
-  type: 'native_token_escrow';
+  type: "native_token_escrow";
   /** Total amount in escrow (in wei) */
   totalAmount: bigint;
   /** Parties involved in the escrow */
   parties: Array<{
     address: `0x${string}`;
     amount: bigint;
-    role: 'depositor' | 'beneficiary' | 'arbiter';
+    role: "depositor" | "beneficiary" | "arbiter";
   }>;
   /** Escrow conditions */
   conditions: {
@@ -304,7 +304,7 @@ export interface NativeTokenEscrowArbitrationRequest {
 /**
  * Union type for all native token arbitration request types
  */
-export type NativeTokenArbitrationRequest = 
+export type NativeTokenArbitrationRequest =
   | NativeTokenTransferArbitrationRequest
   | NativeTokenBalanceArbitrationRequest
   | NativeTokenPaymentArbitrationRequest
@@ -352,7 +352,7 @@ export interface NativeTokenArbitrationContext {
   /** Oracle assigned to handle the request (optional) */
   assignedOracle?: `0x${string}`;
   /** Status of the request */
-  status: 'pending' | 'in_progress' | 'completed' | 'rejected';
+  status: "pending" | "in_progress" | "completed" | "rejected";
   /** Unique identifier for the request */
   requestId: `0x${string}`;
 }

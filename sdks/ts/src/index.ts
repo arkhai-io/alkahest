@@ -16,9 +16,13 @@ import { makeArbitersClient } from "./clients/arbiters";
 import { contractAddresses as defaultContractAddresses, supportedChains } from "./config";
 import { abi as easAbi } from "./contracts/IEAS";
 import { makeDefaultExtension } from "./extensions";
-import type { ChainAddresses } from "./types";
-import { getAttestation, getOptimalPollingInterval, decodeDemandWithAddresses, type DecodedDemandResult } from "./utils";
-import type { Demand } from "./types";
+import type { ChainAddresses, Demand } from "./types";
+import {
+  type DecodedDemandResult,
+  decodeDemandWithAddresses,
+  getAttestation,
+  getOptimalPollingInterval,
+} from "./utils";
 
 // Forward declarations to avoid circular type inference
 type Extended = {
@@ -468,19 +472,15 @@ export const makeMinimalClient = (
   return makeExtendableClient(client);
 };
 
+// Export test fixtures
+export * as fixtures from "../tests/fixtures";
+// Export test utilities
+export { setupTestEnvironment, type TestContext } from "../tests/utils/setup";
 // Main arbiters client - provides both hierarchical and flat APIs
 export * from "./clients/arbiters";
 export * from "./config";
+// Export contract ABIs
+export * as contracts from "./contracts";
 export * from "./extensions";
 export * from "./types";
 export * from "./utils";
-
-// Export contract ABIs
-export * as contracts from "./contracts";
-
-// Export test fixtures
-export * as fixtures from "../tests/fixtures";
-
-// Export test utilities
-export { setupTestEnvironment, type TestContext } from "../tests/utils/setup";
-

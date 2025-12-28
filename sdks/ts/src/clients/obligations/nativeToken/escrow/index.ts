@@ -3,9 +3,20 @@ import type { NativeTokenAddresses } from "../index";
 import { makeNativeTokenNonTierableEscrowClient, type NativeTokenNonTierableEscrowClient } from "./nonTierable";
 import { makeNativeTokenTierableEscrowClient, type NativeTokenTierableEscrowClient } from "./tierable";
 
-export { makeNativeTokenNonTierableEscrowClient, type NativeTokenNonTierableEscrowClient, type NativeTokenNonTierableEscrowObligationData, encodeObligation as encodeNonTierableObligation, decodeObligation as decodeNonTierableObligation } from "./nonTierable";
-export { encodeObligation as encodeTierableObligation, decodeObligation as decodeTierableObligation, type NativeTokenTierableEscrowObligationData } from "./tierable";
-export { makeNativeTokenTierableEscrowClient, type NativeTokenTierableEscrowClient } from "./tierable";
+export {
+  decodeObligation as decodeNonTierableObligation,
+  encodeObligation as encodeNonTierableObligation,
+  makeNativeTokenNonTierableEscrowClient,
+  type NativeTokenNonTierableEscrowClient,
+  type NativeTokenNonTierableEscrowObligationData,
+} from "./nonTierable";
+export {
+  decodeObligation as decodeTierableObligation,
+  encodeObligation as encodeTierableObligation,
+  makeNativeTokenTierableEscrowClient,
+  type NativeTokenTierableEscrowClient,
+  type NativeTokenTierableEscrowObligationData,
+} from "./tierable";
 
 export type NativeTokenEscrowClient = {
   nonTierable: NativeTokenNonTierableEscrowClient;

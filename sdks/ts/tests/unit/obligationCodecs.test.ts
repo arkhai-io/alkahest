@@ -1,108 +1,101 @@
-import { describe, test, expect } from "bun:test";
-
+import { describe, expect, test } from "bun:test";
+// Attestation codecs
+import {
+  type AttestationEscrowV1ObligationData,
+  decodeObligation as decodeAttestationEscrowV1,
+  encodeObligation as encodeAttestationEscrowV1,
+} from "../../src/clients/obligations/attestation/escrow/v1";
+import {
+  type AttestationEscrowV2ObligationData,
+  decodeObligation as decodeAttestationEscrowV2,
+  encodeObligation as encodeAttestationEscrowV2,
+} from "../../src/clients/obligations/attestation/escrow/v2";
 // ERC20 codecs
 import {
-  encodeObligation as encodeErc20NonTierableEscrow,
   decodeObligation as decodeErc20NonTierableEscrow,
   type Erc20NonTierableEscrowObligationData,
+  encodeObligation as encodeErc20NonTierableEscrow,
 } from "../../src/clients/obligations/erc20/escrow/nonTierable";
 import {
-  encodeObligation as encodeErc20TierableEscrow,
   decodeObligation as decodeErc20TierableEscrow,
   type Erc20TierableEscrowObligationData,
+  encodeObligation as encodeErc20TierableEscrow,
 } from "../../src/clients/obligations/erc20/escrow/tierable";
 import {
-  encodeObligation as encodeErc20Payment,
   decodeObligation as decodeErc20Payment,
   type Erc20PaymentObligationData,
+  encodeObligation as encodeErc20Payment,
 } from "../../src/clients/obligations/erc20/payment";
-
 // ERC721 codecs
 import {
-  encodeObligation as encodeErc721NonTierableEscrow,
   decodeObligation as decodeErc721NonTierableEscrow,
   type Erc721NonTierableEscrowObligationData,
+  encodeObligation as encodeErc721NonTierableEscrow,
 } from "../../src/clients/obligations/erc721/escrow/nonTierable";
 import {
-  encodeObligation as encodeErc721TierableEscrow,
   decodeObligation as decodeErc721TierableEscrow,
   type Erc721TierableEscrowObligationData,
+  encodeObligation as encodeErc721TierableEscrow,
 } from "../../src/clients/obligations/erc721/escrow/tierable";
 import {
-  encodeObligation as encodeErc721Payment,
   decodeObligation as decodeErc721Payment,
   type Erc721PaymentObligationData,
+  encodeObligation as encodeErc721Payment,
 } from "../../src/clients/obligations/erc721/payment";
-
 // ERC1155 codecs
 import {
-  encodeObligation as encodeErc1155NonTierableEscrow,
   decodeObligation as decodeErc1155NonTierableEscrow,
   type Erc1155NonTierableEscrowObligationData,
+  encodeObligation as encodeErc1155NonTierableEscrow,
 } from "../../src/clients/obligations/erc1155/escrow/nonTierable";
 import {
-  encodeObligation as encodeErc1155TierableEscrow,
   decodeObligation as decodeErc1155TierableEscrow,
   type Erc1155TierableEscrowObligationData,
+  encodeObligation as encodeErc1155TierableEscrow,
 } from "../../src/clients/obligations/erc1155/escrow/tierable";
 import {
-  encodeObligation as encodeErc1155Payment,
   decodeObligation as decodeErc1155Payment,
   type Erc1155PaymentObligationData,
+  encodeObligation as encodeErc1155Payment,
 } from "../../src/clients/obligations/erc1155/payment";
-
 // NativeToken codecs
 import {
-  encodeObligation as encodeNativeTokenNonTierableEscrow,
   decodeObligation as decodeNativeTokenNonTierableEscrow,
+  encodeObligation as encodeNativeTokenNonTierableEscrow,
   type NativeTokenNonTierableEscrowObligationData,
 } from "../../src/clients/obligations/nativeToken/escrow/nonTierable";
 import {
-  encodeObligation as encodeNativeTokenTierableEscrow,
   decodeObligation as decodeNativeTokenTierableEscrow,
+  encodeObligation as encodeNativeTokenTierableEscrow,
   type NativeTokenTierableEscrowObligationData,
 } from "../../src/clients/obligations/nativeToken/escrow/tierable";
 import {
-  encodeObligation as encodeNativeTokenPayment,
   decodeObligation as decodeNativeTokenPayment,
+  encodeObligation as encodeNativeTokenPayment,
   type NativeTokenPaymentObligationData,
 } from "../../src/clients/obligations/nativeToken/payment";
-
+// String codecs
+import {
+  decodeObligation as decodeString,
+  encodeObligation as encodeString,
+  type StringObligationData,
+} from "../../src/clients/obligations/string";
 // TokenBundle codecs
 import {
-  encodeObligation as encodeTokenBundleNonTierableEscrow,
   decodeObligation as decodeTokenBundleNonTierableEscrow,
+  encodeObligation as encodeTokenBundleNonTierableEscrow,
   type TokenBundleNonTierableEscrowObligationData,
 } from "../../src/clients/obligations/tokenBundle/escrow/nonTierable";
 import {
-  encodeObligation as encodeTokenBundleTierableEscrow,
   decodeObligation as decodeTokenBundleTierableEscrow,
+  encodeObligation as encodeTokenBundleTierableEscrow,
   type TokenBundleTierableEscrowObligationData,
 } from "../../src/clients/obligations/tokenBundle/escrow/tierable";
 import {
-  encodeObligation as encodeTokenBundlePayment,
   decodeObligation as decodeTokenBundlePayment,
+  encodeObligation as encodeTokenBundlePayment,
   type TokenBundlePaymentObligationData,
 } from "../../src/clients/obligations/tokenBundle/payment";
-
-// Attestation codecs
-import {
-  encodeObligation as encodeAttestationEscrowV1,
-  decodeObligation as decodeAttestationEscrowV1,
-  type AttestationEscrowV1ObligationData,
-} from "../../src/clients/obligations/attestation/escrow/v1";
-import {
-  encodeObligation as encodeAttestationEscrowV2,
-  decodeObligation as decodeAttestationEscrowV2,
-  type AttestationEscrowV2ObligationData,
-} from "../../src/clients/obligations/attestation/escrow/v2";
-
-// String codecs
-import {
-  encodeObligation as encodeString,
-  decodeObligation as decodeString,
-  type StringObligationData,
-} from "../../src/clients/obligations/string";
 
 // Mock addresses for testing
 const mockAddress = "0x1111111111111111111111111111111111111111" as `0x${string}`;

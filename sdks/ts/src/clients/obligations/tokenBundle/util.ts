@@ -2,15 +2,12 @@ import { abi as erc20Abi } from "../../../contracts/ERC20Permit";
 import { abi as erc721Abi } from "../../../contracts/IERC721";
 import { abi as erc1155Abi } from "../../../contracts/IERC1155";
 import type { ApprovalPurpose, TokenBundle } from "../../../types";
-import { writeContract, type ViemClient } from "../../../utils";
+import { type ViemClient, writeContract } from "../../../utils";
 import type { TokenBundleAddresses } from "./index";
 
 export type TokenBundleUtilClient = ReturnType<typeof makeTokenBundleUtilClient>;
 
-export const makeTokenBundleUtilClient = (
-  viemClient: ViemClient,
-  addresses: TokenBundleAddresses,
-) => {
+export const makeTokenBundleUtilClient = (viemClient: ViemClient, addresses: TokenBundleAddresses) => {
   return {
     approve: async (bundle: TokenBundle, purpose: ApprovalPurpose) => {
       const target =

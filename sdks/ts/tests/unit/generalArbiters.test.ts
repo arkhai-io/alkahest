@@ -12,11 +12,11 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { encodeAbiParameters, parseAbiParameters } from "viem";
 import { generatePrivateKey, privateKeyToAddress } from "viem/accounts";
 import { makeClient } from "../../src";
+import { abi as recipientArbiterAbi } from "../../src/contracts/arbiters/attestation-properties/RecipientArbiter";
+import { abi as uidArbiterAbi } from "../../src/contracts/arbiters/attestation-properties/UidArbiter";
 // Import contract artifacts needed for tests
 import { abi as intrinsicsArbiter2Abi } from "../../src/contracts/arbiters/IntrinsicsArbiter2";
 import { abi as trustedOracleArbiterAbi } from "../../src/contracts/arbiters/TrustedOracleArbiter";
-import { abi as recipientArbiterAbi } from "../../src/contracts/arbiters/attestation-properties/RecipientArbiter";
-import { abi as uidArbiterAbi } from "../../src/contracts/arbiters/attestation-properties/UidArbiter";
 import { setupTestEnvironment, type TestContext } from "../utils/setup";
 import { teardownTestEnvironment } from "../utils/teardownTestEnvironment";
 
@@ -327,7 +327,10 @@ describe("General Arbiters Tests", () => {
       const oracle = charlie;
 
       // First check - should be undefined since no arbitration made yet
-      const existingBefore = await aliceClient.arbiters.general.trustedOracle.checkExistingArbitration(obligation, oracle);
+      const existingBefore = await aliceClient.arbiters.general.trustedOracle.checkExistingArbitration(
+        obligation,
+        oracle,
+      );
       expect(existingBefore).toBeUndefined();
 
       // Request arbitration first (as this creates the initial arbitration request)
@@ -335,7 +338,11 @@ describe("General Arbiters Tests", () => {
         oracle,
         data: "0x" as `0x${string}`,
       });
-      const requestHash = await aliceClient.arbiters.general.trustedOracle.requestArbitration(obligation, oracle, demand);
+      const requestHash = await aliceClient.arbiters.general.trustedOracle.requestArbitration(
+        obligation,
+        oracle,
+        demand,
+      );
       await testClient.waitForTransactionReceipt({ hash: requestHash });
 
       // For this test, we'll verify that the arbitration request was created

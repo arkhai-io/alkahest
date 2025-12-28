@@ -1,13 +1,10 @@
 import { abi as attestationBarterUtilsAbi } from "../../../contracts/utils/AttestationBarterUtils";
-import { getAttestedEventFromTxHash, writeContract, type ViemClient } from "../../../utils";
+import { getAttestedEventFromTxHash, type ViemClient, writeContract } from "../../../utils";
 import type { AttestationAddresses } from "./index";
 
 export type AttestationUtilClient = ReturnType<typeof makeAttestationUtilClient>;
 
-export const makeAttestationUtilClient = (
-  viemClient: ViemClient,
-  addresses: AttestationAddresses,
-) => {
+export const makeAttestationUtilClient = (viemClient: ViemClient, addresses: AttestationAddresses) => {
   return {
     address: addresses.barterUtils,
 
