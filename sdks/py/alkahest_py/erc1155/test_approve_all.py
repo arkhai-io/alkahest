@@ -2,7 +2,7 @@ import pytest
 from alkahest_py import EnvTestManager, MockERC1155
 
 @pytest.mark.asyncio
-async def test_erc1155_approve_all():
+async def test_approve_all():
     """
     Test ERC1155 approve_all functionality for both payment and escrow purposes.
     This corresponds to test_erc1155_approve_all() in main.rs

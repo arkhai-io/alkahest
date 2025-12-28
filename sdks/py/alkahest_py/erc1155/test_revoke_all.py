@@ -2,7 +2,7 @@ import pytest
 from alkahest_py import EnvTestManager, MockERC1155
 
 @pytest.mark.asyncio
-async def test_erc1155_revoke_all():
+async def test_revoke_all():
     """
     Test ERC1155 revoke_all functionality for payment purpose.
     This corresponds to test_erc1155_revoke_all() in main.rs

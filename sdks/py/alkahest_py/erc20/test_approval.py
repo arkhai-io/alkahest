@@ -2,7 +2,7 @@ import pytest
 from alkahest_py import EnvTestManager, MockERC20
 
 @pytest.mark.asyncio
-async def test_erc20_approvals():
+async def test_approvals():
     # Test payment approval
     env1 = EnvTestManager()
     mock_erc20_1 = MockERC20(env1.mock_addresses.erc20_a, env1.god_wallet_provider)
