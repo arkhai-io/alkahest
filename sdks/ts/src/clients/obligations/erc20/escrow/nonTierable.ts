@@ -2,7 +2,7 @@ import { decodeAbiParameters, encodeAbiParameters, getAbiItem } from "viem";
 import { abi as erc20EscrowAbi } from "../../../../contracts/obligations/escrow/non-tierable/ERC20EscrowObligation";
 import { abi as erc20BarterUtilsAbi } from "../../../../contracts/utils/ERC20BarterUtils";
 import type { Demand, Erc20 } from "../../../../types";
-import { getAttestation, getAttestedEventFromTxHash, writeContract, type ViemClient } from "../../../../utils";
+import { getAttestation, getAttestedEventFromTxHash, type ViemClient, writeContract } from "../../../../utils";
 import type { Erc20Addresses } from "../index";
 import { makeErc20UtilClient } from "../util";
 
@@ -38,15 +38,15 @@ export const encodeObligation = (data: Erc20NonTierableEscrowObligationData): `0
  * @returns the decoded ObligationData object
  */
 export const decodeObligation = (obligationData: `0x${string}`): Erc20NonTierableEscrowObligationData => {
-  return decodeAbiParameters([erc20EscrowObligationDataType], obligationData)[0] as Erc20NonTierableEscrowObligationData;
+  return decodeAbiParameters(
+    [erc20EscrowObligationDataType],
+    obligationData,
+  )[0] as Erc20NonTierableEscrowObligationData;
 };
 
 export type Erc20NonTierableEscrowClient = ReturnType<typeof makeErc20NonTierableEscrowClient>;
 
-export const makeErc20NonTierableEscrowClient = (
-  viemClient: ViemClient,
-  addresses: Erc20Addresses,
-) => {
+export const makeErc20NonTierableEscrowClient = (viemClient: ViemClient, addresses: Erc20Addresses) => {
   const util = makeErc20UtilClient(viemClient, addresses);
 
   const getSchema = async () =>
@@ -71,12 +71,17 @@ export const makeErc20NonTierableEscrowClient = (
     },
 
     encodeObligation: (token: Erc20, demand: Demand) => {
-      return encodeAbiParameters([erc20EscrowObligationDataType], [{
-        arbiter: demand.arbiter,
-        demand: demand.demand,
-        token: token.address,
-        amount: token.value,
-      }]);
+      return encodeAbiParameters(
+        [erc20EscrowObligationDataType],
+        [
+          {
+            arbiter: demand.arbiter,
+            demand: demand.demand,
+            token: token.address,
+            amount: token.value,
+          },
+        ],
+      );
     },
 
     decodeObligation: (obligationData: `0x${string}`) => {

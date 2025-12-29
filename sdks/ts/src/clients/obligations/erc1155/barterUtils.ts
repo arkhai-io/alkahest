@@ -1,10 +1,10 @@
 import { decodeAbiParameters, getAbiItem } from "viem";
-import { abi as erc1155BarterUtilsAbi } from "../../../contracts/utils/ERC1155BarterUtils";
-import { abi as erc1155EscrowAbi } from "../../../contracts/obligations/escrow/non-tierable/ERC1155EscrowObligation";
-import { abi as nativeTokenBarterUtilsAbi } from "../../../contracts/utils/NativeTokenBarterUtils";
 import { abi as easAbi } from "../../../contracts/IEAS";
+import { abi as erc1155EscrowAbi } from "../../../contracts/obligations/escrow/non-tierable/ERC1155EscrowObligation";
+import { abi as erc1155BarterUtilsAbi } from "../../../contracts/utils/ERC1155BarterUtils";
+import { abi as nativeTokenBarterUtilsAbi } from "../../../contracts/utils/NativeTokenBarterUtils";
 import type { Erc20, Erc721, Erc1155, TokenBundle } from "../../../types";
-import { flattenTokenBundle, getAttestedEventFromTxHash, writeContract, type ViemClient } from "../../../utils";
+import { flattenTokenBundle, getAttestedEventFromTxHash, type ViemClient, writeContract } from "../../../utils";
 import type { Erc1155Addresses } from "./index";
 
 const erc1155EscrowDecodeFunction = getAbiItem({
@@ -16,10 +16,7 @@ const erc1155EscrowObligationDataType = erc1155EscrowDecodeFunction.outputs[0];
 
 export type Erc1155BarterUtilsClient = ReturnType<typeof makeErc1155BarterUtilsClient>;
 
-export const makeErc1155BarterUtilsClient = (
-  viemClient: ViemClient,
-  addresses: Erc1155Addresses,
-) => {
+export const makeErc1155BarterUtilsClient = (viemClient: ViemClient, addresses: Erc1155Addresses) => {
   return {
     address: addresses.barterUtils,
 
@@ -164,10 +161,15 @@ export const makeErc1155BarterUtilsClient = (
       const escrowData = decodeAbiParameters([erc1155EscrowObligationDataType], buyAttestationData.data)[0];
 
       const demandData = decodeAbiParameters(
-        [{ type: "tuple", components: [
-          { type: "uint256", name: "amount" },
-          { type: "address", name: "payee" }
-        ]}],
+        [
+          {
+            type: "tuple",
+            components: [
+              { type: "uint256", name: "amount" },
+              { type: "address", name: "payee" },
+            ],
+          },
+        ],
         escrowData.demand,
       )[0];
 

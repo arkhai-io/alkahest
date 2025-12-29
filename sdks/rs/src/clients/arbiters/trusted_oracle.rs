@@ -876,3 +876,92 @@ impl TrustedOracleModule {
 // Type aliases for backwards compatibility
 pub type OracleModule = TrustedOracleModule;
 pub type OracleAddresses = TrustedOracleAddresses;
+
+use super::ArbitersModule;
+
+/// TrustedOracle API accessor (accessed via `arbiters.trusted_oracle()`)
+///
+/// Provides access to trusted oracle arbitration methods through the ArbitersModule.
+pub struct TrustedOracle<'a> {
+    module: &'a ArbitersModule,
+}
+
+impl<'a> TrustedOracle<'a> {
+    pub fn new(module: &'a ArbitersModule) -> Self {
+        Self { module }
+    }
+
+    /// Get the TrustedOracleArbiter contract address
+    pub fn address(&self) -> Address {
+        self.module.addresses.trusted_oracle_arbiter
+    }
+
+    /// Arbitrate as a trusted oracle
+    ///
+    /// # Arguments
+    /// * `obligation` - The obligation attestation UID
+    /// * `demand` - The demand data bytes
+    /// * `decision` - The oracle's decision (true/false)
+    pub async fn arbitrate(
+        &self,
+        obligation: FixedBytes<32>,
+        demand: Bytes,
+        decision: bool,
+    ) -> eyre::Result<TransactionReceipt> {
+        let trusted_oracle_arbiter = TrustedOracleArbiter::new(
+            self.module.addresses.trusted_oracle_arbiter,
+            &*self.module.wallet_provider,
+        );
+
+        let receipt = trusted_oracle_arbiter
+            .arbitrate(obligation, demand, decision)
+            .send()
+            .await?
+            .get_receipt()
+            .await?;
+
+        Ok(receipt)
+    }
+
+    /// Wait for a trusted oracle arbitration event
+    ///
+    /// # Arguments
+    /// * `oracle` - The oracle address
+    /// * `obligation` - The obligation attestation UID
+    /// * `from_block` - Optional starting block number
+    pub async fn wait_for_arbitration(
+        &self,
+        oracle: Address,
+        obligation: FixedBytes<32>,
+        from_block: Option<u64>,
+    ) -> eyre::Result<TrustedOracleArbiter::ArbitrationMade> {
+        // ArbitrationMade event: (bytes32 indexed decisionKey, bytes32 indexed obligation, address indexed oracle, bool decision)
+        // topic1 = decisionKey, topic2 = obligation, topic3 = oracle
+        let filter = Filter::new()
+            .from_block(from_block.unwrap_or(0))
+            .address(self.module.addresses.trusted_oracle_arbiter)
+            .event_signature(TrustedOracleArbiter::ArbitrationMade::SIGNATURE_HASH)
+            .topic2(obligation)
+            .topic3(oracle.into_word());
+
+        let logs = self.module.public_provider.get_logs(&filter).await?;
+        if let Some(log) = logs
+            .iter()
+            .collect::<Vec<_>>()
+            .first()
+            .map(|log| log.log_decode::<TrustedOracleArbiter::ArbitrationMade>())
+        {
+            return Ok(log?.inner.data);
+        }
+
+        let sub = self.module.public_provider.subscribe_logs(&filter).await?;
+        let mut stream = sub.into_stream();
+
+        if let Some(log) = stream.next().await {
+            let log = log.log_decode::<TrustedOracleArbiter::ArbitrationMade>()?;
+            return Ok(log.inner.data);
+        }
+
+        Err(eyre::eyre!("No ArbitrationMade event found"))
+    }
+}

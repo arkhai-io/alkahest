@@ -1,7 +1,7 @@
 import { decodeAbiParameters, encodeAbiParameters, getAbiItem } from "viem";
 import { abi as attestationEscrow2Abi } from "../../../../contracts/obligations/escrow/non-tierable/AttestationEscrowObligation2";
 import type { Demand } from "../../../../types";
-import { getAttestation, getAttestedEventFromTxHash, writeContract, type ViemClient } from "../../../../utils";
+import { getAttestation, getAttestedEventFromTxHash, type ViemClient, writeContract } from "../../../../utils";
 import type { AttestationAddresses } from "../index";
 
 const escrow2ObligationDecodeFunction = getAbiItem({
@@ -40,10 +40,7 @@ export const decodeObligation = (obligationData: `0x${string}`): AttestationEscr
 
 export type AttestationEscrowV2Client = ReturnType<typeof makeAttestationEscrowV2Client>;
 
-export const makeAttestationEscrowV2Client = (
-  viemClient: ViemClient,
-  addresses: AttestationAddresses,
-) => {
+export const makeAttestationEscrowV2Client = (viemClient: ViemClient, addresses: AttestationAddresses) => {
   const getSchema = async () =>
     await viemClient.readContract({
       address: addresses.escrowObligation2,
@@ -61,11 +58,7 @@ export const makeAttestationEscrowV2Client = (
      * @param data - ObligationData object to encode
      * @returns the abi encoded ObligationData as bytes
      */
-    encodeObligation: (data: {
-      attestationUid: `0x${string}`;
-      arbiter: `0x${string}`;
-      demand: `0x${string}`;
-    }) => {
+    encodeObligation: (data: { attestationUid: `0x${string}`; arbiter: `0x${string}`; demand: `0x${string}` }) => {
       return encodeAbiParameters([escrow2ObligationDataType], [data]);
     },
 
@@ -109,11 +102,7 @@ export const makeAttestationEscrowV2Client = (
      * @param expiration - Optional expiration time for the escrow (default: 0 = no expiration)
      * @returns The transaction hash and attested escrow data
      */
-    create: async (
-      attestationUid: `0x${string}`,
-      item: Demand,
-      expiration: bigint = 0n,
-    ) => {
+    create: async (attestationUid: `0x${string}`, item: Demand, expiration: bigint = 0n) => {
       const hash = await writeContract(viemClient, {
         address: addresses.escrowObligation2,
         abi: attestationEscrow2Abi.abi,

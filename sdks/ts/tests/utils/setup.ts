@@ -1,11 +1,50 @@
 // Import contract artifacts using relative paths (not path aliases)
 // Utils
-import AttestationBarterUtils from "../../src/contracts/utils/AttestationBarterUtils.json";
-import ERC20BarterUtils from "../../src/contracts/utils/ERC20BarterUtils.json";
-import ERC721BarterUtils from "../../src/contracts/utils/ERC721BarterUtils.json";
-import ERC1155BarterUtils from "../../src/contracts/utils/ERC1155BarterUtils.json";
-import NativeTokenBarterUtils from "../../src/contracts/utils/NativeTokenBarterUtils.json";
-import TokenBundleBarterUtils from "../../src/contracts/utils/TokenBundleBarterUtils.json";
+
+import { createAnvil } from "@viem/anvil";
+import {
+  createTestClient,
+  createWalletClient,
+  http,
+  nonceManager,
+  type PublicActions,
+  parseEther,
+  publicActions,
+  type TestClient,
+  type WalletActions,
+  walletActions,
+  webSocket,
+} from "viem";
+import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
+import { foundry } from "viem/chains";
+import { fr } from "zod/v4/locales";
+import { makeClient } from "../../src";
+// Attestation Properties Arbiters
+import AttesterArbiter from "../../src/contracts/arbiters/attestation-properties/AttesterArbiter.json";
+import ExpirationTimeAfterArbiter from "../../src/contracts/arbiters/attestation-properties/ExpirationTimeAfterArbiter.json";
+import ExpirationTimeBeforeArbiter from "../../src/contracts/arbiters/attestation-properties/ExpirationTimeBeforeArbiter.json";
+import ExpirationTimeEqualArbiter from "../../src/contracts/arbiters/attestation-properties/ExpirationTimeEqualArbiter.json";
+import RecipientArbiter from "../../src/contracts/arbiters/attestation-properties/RecipientArbiter.json";
+import RefUidArbiter from "../../src/contracts/arbiters/attestation-properties/RefUidArbiter.json";
+import RevocableArbiter from "../../src/contracts/arbiters/attestation-properties/RevocableArbiter.json";
+import SchemaArbiter from "../../src/contracts/arbiters/attestation-properties/SchemaArbiter.json";
+import TimeAfterArbiter from "../../src/contracts/arbiters/attestation-properties/TimeAfterArbiter.json";
+import TimeBeforeArbiter from "../../src/contracts/arbiters/attestation-properties/TimeBeforeArbiter.json";
+import TimeEqualArbiter from "../../src/contracts/arbiters/attestation-properties/TimeEqualArbiter.json";
+import UidArbiter from "../../src/contracts/arbiters/attestation-properties/UidArbiter.json";
+// Confirmation Arbiters
+import ExclusiveRevocableConfirmationArbiter from "../../src/contracts/arbiters/confirmation/ExclusiveRevocableConfirmationArbiter.json";
+import ExclusiveUnrevocableConfirmationArbiter from "../../src/contracts/arbiters/confirmation/ExclusiveUnrevocableConfirmationArbiter.json";
+import NonexclusiveRevocableConfirmationArbiter from "../../src/contracts/arbiters/confirmation/NonexclusiveRevocableConfirmationArbiter.json";
+import NonexclusiveUnrevocableConfirmationArbiter from "../../src/contracts/arbiters/confirmation/NonexclusiveUnrevocableConfirmationArbiter.json";
+import IntrinsicsArbiter from "../../src/contracts/arbiters/IntrinsicsArbiter.json";
+import IntrinsicsArbiter2 from "../../src/contracts/arbiters/IntrinsicsArbiter2.json";
+// Logical Arbiters
+import AllArbiter from "../../src/contracts/arbiters/logical/AllArbiter.json";
+import AnyArbiter from "../../src/contracts/arbiters/logical/AnyArbiter.json";
+// General Arbiters
+import TrivialArbiter from "../../src/contracts/arbiters/TrivialArbiter.json";
+import TrustedOracleArbiter from "../../src/contracts/arbiters/TrustedOracleArbiter.json";
 // Escrow Obligations
 import AttestationEscrowObligation from "../../src/contracts/obligations/escrow/non-tierable/AttestationEscrowObligation.json";
 import AttestationEscrowObligation2 from "../../src/contracts/obligations/escrow/non-tierable/AttestationEscrowObligation2.json";
@@ -22,50 +61,12 @@ import NativeTokenPaymentObligation from "../../src/contracts/obligations/paymen
 import TokenBundlePaymentObligation from "../../src/contracts/obligations/payment/TokenBundlePaymentObligation.json";
 // Other Obligations
 import StringObligation from "../../src/contracts/obligations/StringObligation.json";
-// General Arbiters
-import TrivialArbiter from "../../src/contracts/arbiters/TrivialArbiter.json";
-import TrustedOracleArbiter from "../../src/contracts/arbiters/TrustedOracleArbiter.json";
-import IntrinsicsArbiter from "../../src/contracts/arbiters/IntrinsicsArbiter.json";
-import IntrinsicsArbiter2 from "../../src/contracts/arbiters/IntrinsicsArbiter2.json";
-import { createAnvil } from "@viem/anvil";
-
-import {
-  createTestClient,
-  createWalletClient,
-  http,
-  type PublicActions,
-  parseEther,
-  publicActions,
-  type TestClient,
-  type WalletActions,
-  walletActions,
-  webSocket,
-} from "viem";
-import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
-import { foundry } from "viem/chains";
-import { nonceManager } from "viem";
-import { makeClient } from "../../src";
-// Logical Arbiters
-import AllArbiter from "../../src/contracts/arbiters/logical/AllArbiter.json";
-import AnyArbiter from "../../src/contracts/arbiters/logical/AnyArbiter.json";
-// Attestation Properties Arbiters
-import AttesterArbiter from "../../src/contracts/arbiters/attestation-properties/AttesterArbiter.json";
-import RecipientArbiter from "../../src/contracts/arbiters/attestation-properties/RecipientArbiter.json";
-import RefUidArbiter from "../../src/contracts/arbiters/attestation-properties/RefUidArbiter.json";
-import RevocableArbiter from "../../src/contracts/arbiters/attestation-properties/RevocableArbiter.json";
-import SchemaArbiter from "../../src/contracts/arbiters/attestation-properties/SchemaArbiter.json";
-import UidArbiter from "../../src/contracts/arbiters/attestation-properties/UidArbiter.json";
-import TimeAfterArbiter from "../../src/contracts/arbiters/attestation-properties/TimeAfterArbiter.json";
-import TimeBeforeArbiter from "../../src/contracts/arbiters/attestation-properties/TimeBeforeArbiter.json";
-import TimeEqualArbiter from "../../src/contracts/arbiters/attestation-properties/TimeEqualArbiter.json";
-import ExpirationTimeAfterArbiter from "../../src/contracts/arbiters/attestation-properties/ExpirationTimeAfterArbiter.json";
-import ExpirationTimeBeforeArbiter from "../../src/contracts/arbiters/attestation-properties/ExpirationTimeBeforeArbiter.json";
-import ExpirationTimeEqualArbiter from "../../src/contracts/arbiters/attestation-properties/ExpirationTimeEqualArbiter.json";
-// Confirmation Arbiters
-import ExclusiveRevocableConfirmationArbiter from "../../src/contracts/arbiters/confirmation/ExclusiveRevocableConfirmationArbiter.json";
-import ExclusiveUnrevocableConfirmationArbiter from "../../src/contracts/arbiters/confirmation/ExclusiveUnrevocableConfirmationArbiter.json";
-import NonexclusiveRevocableConfirmationArbiter from "../../src/contracts/arbiters/confirmation/NonexclusiveRevocableConfirmationArbiter.json";
-import NonexclusiveUnrevocableConfirmationArbiter from "../../src/contracts/arbiters/confirmation/NonexclusiveUnrevocableConfirmationArbiter.json";
+import AttestationBarterUtils from "../../src/contracts/utils/AttestationBarterUtils.json";
+import ERC20BarterUtils from "../../src/contracts/utils/ERC20BarterUtils.json";
+import ERC721BarterUtils from "../../src/contracts/utils/ERC721BarterUtils.json";
+import ERC1155BarterUtils from "../../src/contracts/utils/ERC1155BarterUtils.json";
+import NativeTokenBarterUtils from "../../src/contracts/utils/NativeTokenBarterUtils.json";
+import TokenBundleBarterUtils from "../../src/contracts/utils/TokenBundleBarterUtils.json";
 // Import implementation contracts from fixtures
 import EAS from "../fixtures/EAS.json";
 import MockERC20Permit from "../fixtures/MockERC20Permit.json";
@@ -73,7 +74,6 @@ import MockERC721 from "../fixtures/MockERC721.json";
 import MockERC1155 from "../fixtures/MockERC1155.json";
 import SchemaRegistry from "../fixtures/SchemaRegistry.json";
 import { type AlkahestTestActions, createTokenTestExtension } from "./tokenTestUtils";
-import { fr } from "zod/v4/locales";
 
 export type TestContext = {
   // Anvil instance and clients
@@ -446,10 +446,19 @@ export async function setupTestEnvironment(options?: SetupTestEnvironmentOptions
   addresses.expirationTimeEqualArbiter = await deployContract(ExpirationTimeEqualArbiter);
 
   // Deploy Confirmation Arbiters
-  addresses.exclusiveRevocableConfirmationArbiter = await deployContract(ExclusiveRevocableConfirmationArbiter, [addresses.eas]);
-  addresses.exclusiveUnrevocableConfirmationArbiter = await deployContract(ExclusiveUnrevocableConfirmationArbiter, [addresses.eas]);
-  addresses.nonexclusiveRevocableConfirmationArbiter = await deployContract(NonexclusiveRevocableConfirmationArbiter, [addresses.eas]);
-  addresses.nonexclusiveUnrevocableConfirmationArbiter = await deployContract(NonexclusiveUnrevocableConfirmationArbiter, [addresses.eas]);
+  addresses.exclusiveRevocableConfirmationArbiter = await deployContract(ExclusiveRevocableConfirmationArbiter, [
+    addresses.eas,
+  ]);
+  addresses.exclusiveUnrevocableConfirmationArbiter = await deployContract(ExclusiveUnrevocableConfirmationArbiter, [
+    addresses.eas,
+  ]);
+  addresses.nonexclusiveRevocableConfirmationArbiter = await deployContract(NonexclusiveRevocableConfirmationArbiter, [
+    addresses.eas,
+  ]);
+  addresses.nonexclusiveUnrevocableConfirmationArbiter = await deployContract(
+    NonexclusiveUnrevocableConfirmationArbiter,
+    [addresses.eas],
+  );
 
   // Deploy obligation contracts (all following same pattern with EAS and schema registry)
 

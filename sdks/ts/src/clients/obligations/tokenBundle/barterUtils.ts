@@ -1,11 +1,11 @@
 import { decodeAbiParameters, encodeAbiParameters, getAbiItem } from "viem";
-import { abi as tokenBundleBarterUtilsAbi } from "../../../contracts/utils/TokenBundleBarterUtils";
+import { abi as easAbi } from "../../../contracts/IEAS";
 import { abi as tokenBundleEscrowAbi } from "../../../contracts/obligations/escrow/non-tierable/TokenBundleEscrowObligation";
 import { abi as tokenBundlePaymentAbi } from "../../../contracts/obligations/payment/TokenBundlePaymentObligation";
 import { abi as nativeTokenBarterUtilsAbi } from "../../../contracts/utils/NativeTokenBarterUtils";
-import { abi as easAbi } from "../../../contracts/IEAS";
+import { abi as tokenBundleBarterUtilsAbi } from "../../../contracts/utils/TokenBundleBarterUtils";
 import type { TokenBundle } from "../../../types";
-import { flattenTokenBundle, getAttestedEventFromTxHash, writeContract, type ViemClient } from "../../../utils";
+import { flattenTokenBundle, getAttestedEventFromTxHash, type ViemClient, writeContract } from "../../../utils";
 import type { TokenBundleAddresses } from "./index";
 
 const tokenBundleEscrowDecodeFunction = getAbiItem({
@@ -22,10 +22,7 @@ const tokenBundlePaymentObligationDataType = tokenBundlePaymentDecodeFunction.ou
 
 export type TokenBundleBarterUtilsClient = ReturnType<typeof makeTokenBundleBarterUtilsClient>;
 
-export const makeTokenBundleBarterUtilsClient = (
-  viemClient: ViemClient,
-  addresses: TokenBundleAddresses,
-) => {
+export const makeTokenBundleBarterUtilsClient = (viemClient: ViemClient, addresses: TokenBundleAddresses) => {
   const encodePaymentObligationRaw = (data: {
     nativeAmount: bigint;
     erc20Tokens: `0x${string}`[];
@@ -113,10 +110,15 @@ export const makeTokenBundleBarterUtilsClient = (
       const escrowData = decodeAbiParameters([tokenBundleEscrowObligationDataType], buyAttestationData.data)[0];
 
       const demandData = decodeAbiParameters(
-        [{ type: "tuple", components: [
-          { type: "uint256", name: "amount" },
-          { type: "address", name: "payee" }
-        ]}],
+        [
+          {
+            type: "tuple",
+            components: [
+              { type: "uint256", name: "amount" },
+              { type: "address", name: "payee" },
+            ],
+          },
+        ],
         escrowData.demand,
       )[0];
 

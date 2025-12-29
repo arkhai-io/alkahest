@@ -1,13 +1,13 @@
 import { decodeAbiParameters, getAbiItem } from "viem";
-import { abi as erc20BarterUtilsAbi } from "../../../contracts/utils/ERC20BarterUtils";
+import { abi as easAbi } from "../../../contracts/IEAS";
 import { abi as erc20EscrowAbi } from "../../../contracts/obligations/escrow/non-tierable/ERC20EscrowObligation";
-import { abi as erc20PaymentAbi } from "../../../contracts/obligations/payment/ERC20PaymentObligation";
 import { abi as erc721EscrowAbi } from "../../../contracts/obligations/escrow/non-tierable/ERC721EscrowObligation";
 import { abi as erc1155EscrowAbi } from "../../../contracts/obligations/escrow/non-tierable/ERC1155EscrowObligation";
 import { abi as tokenBundleEscrowAbi } from "../../../contracts/obligations/escrow/non-tierable/TokenBundleEscrowObligation";
-import { abi as easAbi } from "../../../contracts/IEAS";
+import { abi as erc20PaymentAbi } from "../../../contracts/obligations/payment/ERC20PaymentObligation";
+import { abi as erc20BarterUtilsAbi } from "../../../contracts/utils/ERC20BarterUtils";
 import type { Erc20, Erc721, Erc1155, TokenBundle } from "../../../types";
-import { flattenTokenBundle, getAttestedEventFromTxHash, writeContract, type ViemClient } from "../../../utils";
+import { flattenTokenBundle, getAttestedEventFromTxHash, type ViemClient, writeContract } from "../../../utils";
 import type { Erc20Addresses } from "./index";
 import { makeErc20UtilClient } from "./util";
 
@@ -40,10 +40,7 @@ const tokenBundleEscrowObligationDataType = tokenBundleEscrowDecodeFunction.outp
 
 export type Erc20BarterUtilsClient = ReturnType<typeof makeErc20BarterUtilsClient>;
 
-export const makeErc20BarterUtilsClient = (
-  viemClient: ViemClient,
-  addresses: Erc20Addresses,
-) => {
+export const makeErc20BarterUtilsClient = (viemClient: ViemClient, addresses: Erc20Addresses) => {
   const util = makeErc20UtilClient(viemClient, addresses);
 
   return {

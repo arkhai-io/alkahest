@@ -1,7 +1,7 @@
 import { decodeAbiParameters, encodeAbiParameters, getAbiItem } from "viem";
 import { abi as erc721EscrowAbi } from "../../../../contracts/obligations/escrow/non-tierable/ERC721EscrowObligation";
 import type { Demand, Erc721 } from "../../../../types";
-import { getAttestation, getAttestedEventFromTxHash, writeContract, type ViemClient } from "../../../../utils";
+import { getAttestation, getAttestedEventFromTxHash, type ViemClient, writeContract } from "../../../../utils";
 import type { Erc721Addresses } from "../index";
 import { makeErc721UtilClient } from "../util";
 
@@ -37,15 +37,15 @@ export const encodeObligation = (data: Erc721NonTierableEscrowObligationData): `
  * @returns the decoded ObligationData object
  */
 export const decodeObligation = (obligationData: `0x${string}`): Erc721NonTierableEscrowObligationData => {
-  return decodeAbiParameters([erc721EscrowObligationDataType], obligationData)[0] as Erc721NonTierableEscrowObligationData;
+  return decodeAbiParameters(
+    [erc721EscrowObligationDataType],
+    obligationData,
+  )[0] as Erc721NonTierableEscrowObligationData;
 };
 
 export type Erc721NonTierableEscrowClient = ReturnType<typeof makeErc721NonTierableEscrowClient>;
 
-export const makeErc721NonTierableEscrowClient = (
-  viemClient: ViemClient,
-  addresses: Erc721Addresses,
-) => {
+export const makeErc721NonTierableEscrowClient = (viemClient: ViemClient, addresses: Erc721Addresses) => {
   const util = makeErc721UtilClient(viemClient, addresses);
 
   const getSchema = async () =>
@@ -70,12 +70,17 @@ export const makeErc721NonTierableEscrowClient = (
     },
 
     encodeObligation: (token: Erc721, demand: Demand) => {
-      return encodeAbiParameters([erc721EscrowObligationDataType], [{
-        arbiter: demand.arbiter,
-        demand: demand.demand,
-        token: token.address,
-        tokenId: token.id,
-      }]);
+      return encodeAbiParameters(
+        [erc721EscrowObligationDataType],
+        [
+          {
+            arbiter: demand.arbiter,
+            demand: demand.demand,
+            token: token.address,
+            tokenId: token.id,
+          },
+        ],
+      );
     },
 
     decodeObligation: (obligationData: `0x${string}`) => {

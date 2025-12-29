@@ -1,10 +1,10 @@
-import { describe, test, expect } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import {
+  AllArbiter,
+  AnyArbiter,
   createDecodersFromAddresses,
   decodeDemand,
   decodeDemandWithAddresses,
-  AllArbiter,
-  AnyArbiter,
 } from "../../src";
 import { encodeDemand as encodeTrustedOracleDemand } from "../../src/clients/arbiters/general/trustedOracle";
 import type { ChainAddresses, Demand } from "../../src/types";

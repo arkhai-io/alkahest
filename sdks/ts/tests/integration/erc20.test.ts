@@ -17,23 +17,21 @@ import { contractAddresses, makeClient } from "../../src";
 const jobResultObligationAbi = {
   abi: [
     {
-      "inputs": [
+      inputs: [
         {
-          "components": [
-            { "internalType": "string", "name": "result", "type": "string" }
-          ],
-          "internalType": "struct JobResultObligation.StatementData",
-          "name": "data",
-          "type": "tuple"
+          components: [{ internalType: "string", name: "result", type: "string" }],
+          internalType: "struct JobResultObligation.StatementData",
+          name: "data",
+          type: "tuple",
         },
-        { "internalType": "bytes32", "name": "refUID", "type": "bytes32" }
+        { internalType: "bytes32", name: "refUID", type: "bytes32" },
       ],
-      "name": "makeStatement",
-      "outputs": [{ "internalType": "bytes32", "name": "", "type": "bytes32" }],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    }
-  ]
+      name: "makeStatement",
+      outputs: [{ internalType: "bytes32", name: "", type: "bytes32" }],
+      stateMutability: "nonpayable",
+      type: "function",
+    },
+  ],
 } as const;
 
 // Network clients - these use external network (Base Sepolia)

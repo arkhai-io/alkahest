@@ -8,9 +8,10 @@ use alkahest_rs::{
     },
     contracts::IEAS::Attested,
     extensions::{
-        AlkahestExtension, AttestationModule, Erc1155Module, Erc20Module, Erc721Module,
-        HasAttestation, HasErc1155, HasErc20, HasErc721, HasOracle, HasStringObligation,
-        HasTokenBundle, NoExtension, OracleModule, StringObligationModule, TokenBundleModule,
+        AlkahestExtension, ArbitersModule, AttestationModule, Erc1155Module, Erc20Module,
+        Erc721Module, HasArbiters, HasAttestation, HasErc1155, HasErc20, HasErc721, HasOracle,
+        HasStringObligation, HasTokenBundle, NoExtension, OracleModule, StringObligationModule,
+        TokenBundleModule,
     },
     AlkahestClient,
 };
@@ -21,9 +22,11 @@ use alloy::{
     sol_types::SolEvent,
 };
 use clients::{
-    attestation::AttestationClient, erc1155::Erc1155Client, erc20::Erc20Client,
-    erc721::Erc721Client, oracle::OracleClient, string_obligation::StringObligationClient,
-    token_bundle::TokenBundleClient,
+    arbiters::{trusted_oracle::OracleClient, ArbitersClient},
+    obligations::{
+        attestation::AttestationClient, erc1155::Erc1155Client, erc20::Erc20Client,
+        erc721::Erc721Client, string::StringObligationClient, token_bundle::TokenBundleClient,
+    },
 };
 use pyo3::{
     pyclass, pymethods, pymodule,
@@ -35,14 +38,16 @@ use types::{DefaultExtensionConfig, EscowClaimedLog};
 
 use crate::{
     clients::{
-        erc1155::{PyERC1155EscrowObligationData, PyERC1155PaymentObligationData},
-        erc20::{PyERC20EscrowObligationData, PyERC20PaymentObligationData},
-        erc721::{PyERC721EscrowObligationData, PyERC721PaymentObligationData},
-        oracle::{
-            PyArbitrateOptions, PyDecision, PyListenResult, PyOracleAddresses,
+        arbiters::trusted_oracle::{
+            PyArbitrateOptions, PyArbitrationMode, PyDecision, PyListenResult, PyOracleAddresses,
             PyOracleAttestation, PyTrustedOracleArbiterDemandData,
         },
-        string_obligation::PyStringObligationData,
+        obligations::{
+            erc1155::{PyERC1155EscrowObligationData, PyERC1155PaymentObligationData},
+            erc20::{PyERC20EscrowObligationData, PyERC20PaymentObligationData},
+            erc721::{PyERC721EscrowObligationData, PyERC721PaymentObligationData},
+            string::PyStringObligationData,
+        },
     },
     contract::{
         PyAttestation, PyAttestationRequest, PyAttestationRequestData, PyAttested,
@@ -74,6 +79,7 @@ pub struct PyAlkahestClient {
     attestation: Option<AttestationClient>,
     string_obligation: Option<StringObligationClient>,
     oracle: Option<OracleClient>,
+    arbiters: Option<ArbitersClient>,
 }
 
 impl PyAlkahestClient {
@@ -95,6 +101,7 @@ impl PyAlkahestClient {
                 client.extensions.string_obligation().clone(),
             )),
             oracle: Some(OracleClient::new(client.extensions.oracle().clone())),
+            arbiters: Some(ArbitersClient::new(client.extensions.arbiters().clone())),
         }
     }
 
@@ -124,6 +131,7 @@ impl PyAlkahestClient {
             attestation: None, // TODO: Extract if extension_type == "attestation"
             string_obligation: None, // TODO: Extract if extension_type == "string_obligation"
             oracle: None,      // TODO: Extract if extension_type == "oracle"
+            arbiters: None,    // TODO: Extract if extension_type == "arbiters"
         }
     }
 }
@@ -168,6 +176,7 @@ impl PyAlkahestClient {
                 client.extensions.string_obligation().clone(),
             )),
             oracle: Some(OracleClient::new(client.extensions.oracle().clone())),
+            arbiters: Some(ArbitersClient::new(client.extensions.arbiters().clone())),
         };
 
         Ok(client)
@@ -183,6 +192,7 @@ impl PyAlkahestClient {
             "attestation".to_string(),
             "string_obligation".to_string(),
             "oracle".to_string(),
+            "arbiters".to_string(),
         ]
     }
 
@@ -196,6 +206,7 @@ impl PyAlkahestClient {
             "attestation" => self.attestation.is_some(),
             "string_obligation" => self.string_obligation.is_some(),
             "oracle" => self.oracle.is_some(),
+            "arbiters" => self.arbiters.is_some(),
             _ => false,
         }
     }
@@ -263,11 +274,20 @@ impl PyAlkahestClient {
         })
     }
 
+    #[getter]
+    pub fn arbiters(&self) -> PyResult<ArbitersClient> {
+        self.arbiters.clone().ok_or_else(|| {
+            pyo3::PyErr::new::<pyo3::exceptions::PyAttributeError, _>(
+                "Arbiters extension is not available in this client",
+            )
+        })
+    }
+
     /// Extract obligation data from a fulfillment attestation
     ///
     /// Returns the string obligation data from the attestation
-    pub fn extract_obligation_data(&self, attestation: &crate::clients::oracle::PyOracleAttestation) -> PyResult<String> {
-        use alkahest_rs::contracts::StringObligation;
+    pub fn extract_obligation_data(&self, attestation: &crate::clients::arbiters::trusted_oracle::PyOracleAttestation) -> PyResult<String> {
+        use alkahest_rs::contracts::obligations::StringObligation;
         use alloy::hex;
         use alloy::sol_types::SolType;
 
@@ -284,7 +304,7 @@ impl PyAlkahestClient {
     pub fn get_escrow_attestation<'py>(
         &self,
         py: Python<'py>,
-        fulfillment: &crate::clients::oracle::PyOracleAttestation,
+        fulfillment: &crate::clients::arbiters::trusted_oracle::PyOracleAttestation,
     ) -> PyResult<pyo3::Bound<'py, PyAny>> {
         let attestation_client = self.attestation.clone().ok_or_else(|| {
             pyo3::PyErr::new::<pyo3::exceptions::PyAttributeError, _>(
@@ -299,16 +319,17 @@ impl PyAlkahestClient {
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let escrow: alkahest_rs::contracts::IEAS::Attestation = attestation_client
                 .inner
+                .util()
                 .get_attestation(ref_uid)
                 .await
                 .map_err(|e| pyo3::PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!("{}", e)))?;
-            Ok(crate::clients::oracle::PyOracleAttestation::from(&escrow))
+            Ok(crate::clients::arbiters::trusted_oracle::PyOracleAttestation::from(&escrow))
         })
     }
 
     /// Extract demand data from an escrow attestation
-    pub fn extract_demand_data(&self, escrow_attestation: &crate::clients::oracle::PyOracleAttestation) -> PyResult<crate::clients::oracle::PyTrustedOracleArbiterDemandData> {
-        use alkahest_rs::clients::arbiters::TrustedOracleArbiter;
+    pub fn extract_demand_data(&self, escrow_attestation: &crate::clients::arbiters::trusted_oracle::PyOracleAttestation) -> PyResult<crate::clients::arbiters::trusted_oracle::PyTrustedOracleArbiterDemandData> {
+        use alkahest_rs::contracts::arbiters::TrustedOracleArbiter;
         use alloy::{hex, sol, sol_types::SolType};
 
         sol! {
@@ -327,14 +348,14 @@ impl PyAlkahestClient {
         let demand_data = TrustedOracleArbiter::DemandData::abi_decode(&arbiter_demand.demand)
             .map_err(|e| pyo3::PyErr::new::<pyo3::exceptions::PyValueError, _>(format!("Failed to decode demand data: {}", e)))?;
 
-        Ok(crate::clients::oracle::PyTrustedOracleArbiterDemandData::from(demand_data))
+        Ok(crate::clients::arbiters::trusted_oracle::PyTrustedOracleArbiterDemandData::from(demand_data))
     }
 
     /// Get escrow attestation and extract demand data in one call
     pub fn get_escrow_and_demand<'py>(
         &self,
         py: Python<'py>,
-        fulfillment: &crate::clients::oracle::PyOracleAttestation,
+        fulfillment: &crate::clients::arbiters::trusted_oracle::PyOracleAttestation,
     ) -> PyResult<pyo3::Bound<'py, PyAny>> {
         let attestation_client = self.attestation.clone().ok_or_else(|| {
             pyo3::PyErr::new::<pyo3::exceptions::PyAttributeError, _>(
@@ -347,7 +368,7 @@ impl PyAlkahestClient {
         })?;
 
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
-            use alkahest_rs::clients::arbiters::TrustedOracleArbiter;
+            use alkahest_rs::contracts::arbiters::TrustedOracleArbiter;
             use alloy::{hex, sol, sol_types::SolType};
 
             sol! {
@@ -359,6 +380,7 @@ impl PyAlkahestClient {
 
             let escrow: alkahest_rs::contracts::IEAS::Attestation = attestation_client
                 .inner
+                .util()
                 .get_attestation(ref_uid)
                 .await
                 .map_err(|e| pyo3::PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!("{}", e)))?;
@@ -372,8 +394,8 @@ impl PyAlkahestClient {
             let demand_data = TrustedOracleArbiter::DemandData::abi_decode(&arbiter_demand.demand)
                 .map_err(|e| pyo3::PyErr::new::<pyo3::exceptions::PyValueError, _>(format!("Failed to decode demand data: {}", e)))?;
 
-            let py_escrow = crate::clients::oracle::PyOracleAttestation::from(&escrow);
-            let py_demand = crate::clients::oracle::PyTrustedOracleArbiterDemandData::from(demand_data);
+            let py_escrow = crate::clients::arbiters::trusted_oracle::PyOracleAttestation::from(&escrow);
+            let py_demand = crate::clients::arbiters::trusted_oracle::PyTrustedOracleArbiterDemandData::from(demand_data);
 
             Ok((py_escrow, py_demand))
         })
@@ -448,6 +470,7 @@ fn alkahest_py(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyOracleAttestation>()?;
     m.add_class::<PyDecision>()?;
     m.add_class::<PyArbitrateOptions>()?;
+    m.add_class::<PyArbitrationMode>()?;
     m.add_class::<PyListenResult>()?;
     m.add_class::<PyTrustedOracleArbiterDemandData>()?;
     m.add_class::<EnvTestManager>()?;
@@ -463,6 +486,28 @@ fn alkahest_py(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyERC1155PaymentObligationData>()?;
     m.add_class::<PyStringObligationData>()?;
     m.add_class::<PyErc20Data>()?;
+
+    // Arbiters Client and related types
+    m.add_class::<ArbitersClient>()?;
+    m.add_class::<crate::clients::arbiters::PyArbitrationMadeLog>()?;
+    m.add_class::<crate::clients::arbiters::PyConfirmationArbiterType>()?;
+
+    // Confirmation arbiters
+    m.add_class::<crate::clients::arbiters::Confirmation>()?;
+    m.add_class::<crate::clients::arbiters::ExclusiveRevocable>()?;
+    m.add_class::<crate::clients::arbiters::ExclusiveUnrevocable>()?;
+    m.add_class::<crate::clients::arbiters::NonexclusiveRevocable>()?;
+    m.add_class::<crate::clients::arbiters::NonexclusiveUnrevocable>()?;
+    m.add_class::<crate::clients::arbiters::PyConfirmationMadeLog>()?;
+    m.add_class::<crate::clients::arbiters::PyConfirmationRequestedLog>()?;
+
+    // Logical arbiters
+    m.add_class::<crate::clients::arbiters::Logical>()?;
+    m.add_class::<crate::clients::arbiters::AllArbiter>()?;
+    m.add_class::<crate::clients::arbiters::AnyArbiter>()?;
+    m.add_class::<crate::clients::arbiters::PyDecodedAllArbiterDemandData>()?;
+    m.add_class::<crate::clients::arbiters::PyDecodedAnyArbiterDemandData>()?;
+    m.add_class::<crate::clients::arbiters::PyDecodedDemand>()?;
 
     // Address Configuration Classes
     m.add_class::<crate::types::PyErc20Addresses>()?;

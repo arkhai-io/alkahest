@@ -96,7 +96,11 @@ test("contextless offchain identity oracle flow", async () => {
   const goodPayload = await createPayload(1);
   const { attested: goodFulfillment } = await testContext.bob.client.stringObligation.doObligation(goodPayload);
 
-  await testContext.bob.client.arbiters.general.trustedOracle.requestArbitration(goodFulfillment.uid, testContext.charlie.address, demand);
+  await testContext.bob.client.arbiters.general.trustedOracle.requestArbitration(
+    goodFulfillment.uid,
+    testContext.charlie.address,
+    demand,
+  );
 
   const goodDecision = await testContext.charlie.client.arbiters.general.trustedOracle.waitForArbitration(
     goodFulfillment.uid,
@@ -109,7 +113,11 @@ test("contextless offchain identity oracle flow", async () => {
   const badPayload = await createPayload(1);
   const { attested: badFulfillment } = await testContext.bob.client.stringObligation.doObligation(badPayload);
 
-  await testContext.bob.client.arbiters.general.trustedOracle.requestArbitration(badFulfillment.uid, testContext.charlie.address, demand);
+  await testContext.bob.client.arbiters.general.trustedOracle.requestArbitration(
+    badFulfillment.uid,
+    testContext.charlie.address,
+    demand,
+  );
 
   const badDecision = await testContext.charlie.client.arbiters.general.trustedOracle.waitForArbitration(
     badFulfillment.uid,

@@ -1,7 +1,13 @@
 import { decodeAbiParameters, encodeAbiParameters, getAbiItem } from "viem";
 import { abi as tokenBundleEscrowAbi } from "../../../../contracts/obligations/escrow/tierable/TokenBundleEscrowObligation";
 import type { Demand, TokenBundle } from "../../../../types";
-import { flattenTokenBundle, getAttestation, getAttestedEventFromTxHash, writeContract, type ViemClient } from "../../../../utils";
+import {
+  flattenTokenBundle,
+  getAttestation,
+  getAttestedEventFromTxHash,
+  type ViemClient,
+  writeContract,
+} from "../../../../utils";
 import type { TokenBundleAddresses } from "../index";
 import { makeTokenBundleUtilClient } from "../util";
 
@@ -43,15 +49,15 @@ export const encodeObligation = (data: TokenBundleTierableEscrowObligationData):
  * @returns the decoded ObligationData object
  */
 export const decodeObligation = (obligationData: `0x${string}`): TokenBundleTierableEscrowObligationData => {
-  return decodeAbiParameters([tokenBundleEscrowObligationDataType], obligationData)[0] as TokenBundleTierableEscrowObligationData;
+  return decodeAbiParameters(
+    [tokenBundleEscrowObligationDataType],
+    obligationData,
+  )[0] as TokenBundleTierableEscrowObligationData;
 };
 
 export type TokenBundleTierableEscrowClient = ReturnType<typeof makeTokenBundleTierableEscrowClient>;
 
-export const makeTokenBundleTierableEscrowClient = (
-  viemClient: ViemClient,
-  addresses: TokenBundleAddresses,
-) => {
+export const makeTokenBundleTierableEscrowClient = (viemClient: ViemClient, addresses: TokenBundleAddresses) => {
   const util = makeTokenBundleUtilClient(viemClient, addresses);
 
   const getSchema = async () =>
@@ -83,11 +89,16 @@ export const makeTokenBundleTierableEscrowClient = (
 
     encodeObligation: (bundle: TokenBundle, demand: Demand) => {
       const flatBundle = flattenTokenBundle(bundle);
-      return encodeAbiParameters([tokenBundleEscrowObligationDataType], [{
-        ...flatBundle,
-        arbiter: demand.arbiter,
-        demand: demand.demand,
-      }]);
+      return encodeAbiParameters(
+        [tokenBundleEscrowObligationDataType],
+        [
+          {
+            ...flatBundle,
+            arbiter: demand.arbiter,
+            demand: demand.demand,
+          },
+        ],
+      );
     },
 
     decodeObligation: (obligationData: `0x${string}`) => {

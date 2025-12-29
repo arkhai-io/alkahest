@@ -273,7 +273,10 @@ describe("WebSocket Transport Support", () => {
         const bidAmount = parseEther("10");
 
         // Approve using WebSocket client
-        const approvalHash = await aliceClientWs.erc20.util.approve({ address: erc20TokenA, value: bidAmount }, "barter");
+        const approvalHash = await aliceClientWs.erc20.util.approve(
+          { address: erc20TokenA, value: bidAmount },
+          "barter",
+        );
 
         expect(approvalHash).toBeDefined();
         expect(typeof approvalHash).toBe("string");

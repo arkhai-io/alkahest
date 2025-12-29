@@ -83,7 +83,8 @@ async fn test_trusted_oracle_arbiter_arbitrate() -> eyre::Result<()> {
     let arbitrate_hash = test
         .bob_client
         .arbiters()
-        .arbitrate_as_trusted_oracle(obligation_uid, Bytes::default(), true)
+        .trusted_oracle()
+        .arbitrate(obligation_uid, Bytes::default(), true)
         .await?
         .transaction_hash;
 
@@ -123,7 +124,8 @@ async fn test_trusted_oracle_arbiter_with_different_oracles() -> eyre::Result<()
     let arbitrate_hash1 = test
         .bob_client
         .arbiters()
-        .arbitrate_as_trusted_oracle(obligation_uid, Bytes::default(), true)
+        .trusted_oracle()
+        .arbitrate(obligation_uid, Bytes::default(), true)
         .await?
         .transaction_hash;
 
@@ -138,7 +140,8 @@ async fn test_trusted_oracle_arbiter_with_different_oracles() -> eyre::Result<()
     let arbitrate_hash2 = test
         .alice_client
         .arbiters()
-        .arbitrate_as_trusted_oracle(obligation_uid, Bytes::default(), false)
+        .trusted_oracle()
+        .arbitrate(obligation_uid, Bytes::default(), false)
         .await?
         .transaction_hash;
 
@@ -245,7 +248,8 @@ async fn test_wait_for_trusted_oracle_arbitration() -> eyre::Result<()> {
         async move {
             alice_client
                 .arbiters()
-                .wait_for_trusted_oracle_arbitration(oracle, obligation_uid, None)
+                .trusted_oracle()
+                .wait_for_arbitration(oracle, obligation_uid, None)
                 .await
         }
     });
@@ -257,7 +261,8 @@ async fn test_wait_for_trusted_oracle_arbitration() -> eyre::Result<()> {
     let arbitrate_hash = test
         .bob_client
         .arbiters()
-        .arbitrate_as_trusted_oracle(obligation_uid, Bytes::default(), true)
+        .trusted_oracle()
+        .arbitrate(obligation_uid, Bytes::default(), true)
         .await?
         .transaction_hash;
 

@@ -1,12 +1,12 @@
 import type { ChainAddresses } from "../../../types";
 import type { ViemClient } from "../../../utils";
-import { makeAttestationEscrowClient, type AttestationEscrowClient } from "./escrow";
-import { makeAttestationUtilClient, type AttestationUtilClient } from "./util";
+import { type AttestationEscrowClient, makeAttestationEscrowClient } from "./escrow";
+import { type AttestationUtilClient, makeAttestationUtilClient } from "./util";
 
-export { makeAttestationEscrowClient, type AttestationEscrowClient } from "./escrow";
-export { makeAttestationEscrowV1Client, type AttestationEscrowV1Client } from "./escrow/v1";
-export { makeAttestationEscrowV2Client, type AttestationEscrowV2Client } from "./escrow/v2";
-export { makeAttestationUtilClient, type AttestationUtilClient } from "./util";
+export { type AttestationEscrowClient, makeAttestationEscrowClient } from "./escrow";
+export { type AttestationEscrowV1Client, makeAttestationEscrowV1Client } from "./escrow/v1";
+export { type AttestationEscrowV2Client, makeAttestationEscrowV2Client } from "./escrow/v2";
+export { type AttestationUtilClient, makeAttestationUtilClient } from "./util";
 
 export type AttestationAddresses = {
   eas: `0x${string}`;
@@ -27,10 +27,7 @@ export type AttestationClient = {
   escrow: AttestationEscrowClient;
 };
 
-export const makeAttestationClient = (
-  viemClient: ViemClient,
-  addresses: AttestationAddresses,
-): AttestationClient => {
+export const makeAttestationClient = (viemClient: ViemClient, addresses: AttestationAddresses): AttestationClient => {
   return {
     util: makeAttestationUtilClient(viemClient, addresses),
     escrow: makeAttestationEscrowClient(viemClient, addresses),

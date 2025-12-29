@@ -34,7 +34,10 @@ export const encodeDemand = (demand: ExpirationTimeBeforeArbiterDemandData): `0x
  * @returns the decoded DemandData object
  */
 export const decodeDemand = (demandData: `0x${string}`): ExpirationTimeBeforeArbiterDemandData => {
-  return decodeAbiParameters([expirationTimeBeforeArbiterDemandDataType], demandData)[0] as ExpirationTimeBeforeArbiterDemandData;
+  return decodeAbiParameters(
+    [expirationTimeBeforeArbiterDemandDataType],
+    demandData,
+  )[0] as ExpirationTimeBeforeArbiterDemandData;
 };
 
 /**

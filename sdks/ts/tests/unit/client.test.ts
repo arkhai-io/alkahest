@@ -150,7 +150,10 @@ describe("Client Tests", () => {
 
       // Create a string attestation by Bob to use for fulfillment
       // The escrow.uid is passed as refUID to link the fulfillment to the escrow
-      const { attested: fulfillmentEvent } = await bobClient.stringObligation.doObligation("fulfillment data", escrowData.uid);
+      const { attested: fulfillmentEvent } = await bobClient.stringObligation.doObligation(
+        "fulfillment data",
+        escrowData.uid,
+      );
       const fulfillmentUid = fulfillmentEvent.uid as `0x${string}`;
 
       // Start a promise that waits for fulfillment in the background

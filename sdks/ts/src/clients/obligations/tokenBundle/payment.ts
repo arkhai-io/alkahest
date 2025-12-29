@@ -1,7 +1,13 @@
 import { decodeAbiParameters, encodeAbiParameters, getAbiItem } from "viem";
 import { abi as tokenBundlePaymentAbi } from "../../../contracts/obligations/payment/TokenBundlePaymentObligation";
 import type { Demand, TokenBundle } from "../../../types";
-import { flattenTokenBundle, getAttestation, getAttestedEventFromTxHash, writeContract, type ViemClient } from "../../../utils";
+import {
+  flattenTokenBundle,
+  getAttestation,
+  getAttestedEventFromTxHash,
+  type ViemClient,
+  writeContract,
+} from "../../../utils";
 import type { TokenBundleAddresses } from "./index";
 import { makeTokenBundleUtilClient } from "./util";
 
@@ -42,15 +48,15 @@ export const encodeObligation = (data: TokenBundlePaymentObligationData): `0x${s
  * @returns the decoded ObligationData object
  */
 export const decodeObligation = (obligationData: `0x${string}`): TokenBundlePaymentObligationData => {
-  return decodeAbiParameters([tokenBundlePaymentObligationDataType], obligationData)[0] as TokenBundlePaymentObligationData;
+  return decodeAbiParameters(
+    [tokenBundlePaymentObligationDataType],
+    obligationData,
+  )[0] as TokenBundlePaymentObligationData;
 };
 
 export type TokenBundlePaymentClient = ReturnType<typeof makeTokenBundlePaymentClient>;
 
-export const makeTokenBundlePaymentClient = (
-  viemClient: ViemClient,
-  addresses: TokenBundleAddresses,
-) => {
+export const makeTokenBundlePaymentClient = (viemClient: ViemClient, addresses: TokenBundleAddresses) => {
   const util = makeTokenBundleUtilClient(viemClient, addresses);
 
   const getSchema = async () =>
@@ -81,10 +87,15 @@ export const makeTokenBundlePaymentClient = (
 
     encodeObligation: (bundle: TokenBundle, payee: `0x${string}`) => {
       const flatBundle = flattenTokenBundle(bundle);
-      return encodeAbiParameters([tokenBundlePaymentObligationDataType], [{
-        ...flatBundle,
-        payee,
-      }]);
+      return encodeAbiParameters(
+        [tokenBundlePaymentObligationDataType],
+        [
+          {
+            ...flatBundle,
+            payee,
+          },
+        ],
+      );
     },
 
     decodeObligation: (obligationData: `0x${string}`) => {
@@ -105,7 +116,11 @@ export const makeTokenBundlePaymentClient = (
       };
     },
 
-    pay: async (price: TokenBundle, payee: `0x${string}`, refUID: `0x${string}` = "0x0000000000000000000000000000000000000000000000000000000000000000") => {
+    pay: async (
+      price: TokenBundle,
+      payee: `0x${string}`,
+      refUID: `0x${string}` = "0x0000000000000000000000000000000000000000000000000000000000000000",
+    ) => {
       const hash = await writeContract(viemClient, {
         address: addresses.paymentObligation,
         abi: tokenBundlePaymentAbi.abi,
@@ -123,7 +138,11 @@ export const makeTokenBundlePaymentClient = (
       return { hash, attested };
     },
 
-    approveAndPay: async (price: TokenBundle, payee: `0x${string}`, refUID: `0x${string}` = "0x0000000000000000000000000000000000000000000000000000000000000000") => {
+    approveAndPay: async (
+      price: TokenBundle,
+      payee: `0x${string}`,
+      refUID: `0x${string}` = "0x0000000000000000000000000000000000000000000000000000000000000000",
+    ) => {
       await util.approve(price, "payment");
       const hash = await writeContract(viemClient, {
         address: addresses.paymentObligation,

@@ -1,9 +1,9 @@
 import { decodeAbiParameters, getAbiItem } from "viem";
-import { abi as nativeTokenBarterUtilsAbi } from "../../../contracts/utils/NativeTokenBarterUtils";
-import { abi as nativeTokenEscrowAbi } from "../../../contracts/obligations/escrow/non-tierable/NativeTokenEscrowObligation";
 import { abi as easAbi } from "../../../contracts/IEAS";
+import { abi as nativeTokenEscrowAbi } from "../../../contracts/obligations/escrow/non-tierable/NativeTokenEscrowObligation";
+import { abi as nativeTokenBarterUtilsAbi } from "../../../contracts/utils/NativeTokenBarterUtils";
 import type { Erc20, Erc721, Erc1155, TokenBundle } from "../../../types";
-import { flattenTokenBundle, getAttestedEventFromTxHash, writeContract, type ViemClient } from "../../../utils";
+import { flattenTokenBundle, getAttestedEventFromTxHash, type ViemClient, writeContract } from "../../../utils";
 import type { NativeTokenAddresses } from "./index";
 
 const nativeEscrowDecodeFunction = getAbiItem({
@@ -15,10 +15,7 @@ const nativeEscrowObligationDataType = nativeEscrowDecodeFunction.outputs[0];
 
 export type NativeTokenBarterUtilsClient = ReturnType<typeof makeNativeTokenBarterUtilsClient>;
 
-export const makeNativeTokenBarterUtilsClient = (
-  viemClient: ViemClient,
-  addresses: NativeTokenAddresses,
-) => {
+export const makeNativeTokenBarterUtilsClient = (viemClient: ViemClient, addresses: NativeTokenAddresses) => {
   return {
     address: addresses.barterUtils,
 
@@ -52,10 +49,15 @@ export const makeNativeTokenBarterUtilsClient = (
       const escrowData = decodeAbiParameters([nativeEscrowObligationDataType], buyAttestationData.data)[0];
 
       const demandData = decodeAbiParameters(
-        [{ type: "tuple", components: [
-          { type: "uint256", name: "amount" },
-          { type: "address", name: "payee" }
-        ]}],
+        [
+          {
+            type: "tuple",
+            components: [
+              { type: "uint256", name: "amount" },
+              { type: "address", name: "payee" },
+            ],
+          },
+        ],
         escrowData.demand,
       )[0];
 
@@ -102,10 +104,15 @@ export const makeNativeTokenBarterUtilsClient = (
       const escrowData = decodeAbiParameters([nativeEscrowObligationDataType], buyAttestationData.data)[0];
 
       const demandData = decodeAbiParameters(
-        [{ type: "tuple", components: [
-          { type: "uint256", name: "amount" },
-          { type: "address", name: "payee" }
-        ]}],
+        [
+          {
+            type: "tuple",
+            components: [
+              { type: "uint256", name: "amount" },
+              { type: "address", name: "payee" },
+            ],
+          },
+        ],
         escrowData.demand,
       )[0];
 
@@ -152,10 +159,15 @@ export const makeNativeTokenBarterUtilsClient = (
       const escrowData = decodeAbiParameters([nativeEscrowObligationDataType], buyAttestationData.data)[0];
 
       const demandData = decodeAbiParameters(
-        [{ type: "tuple", components: [
-          { type: "uint256", name: "amount" },
-          { type: "address", name: "payee" }
-        ]}],
+        [
+          {
+            type: "tuple",
+            components: [
+              { type: "uint256", name: "amount" },
+              { type: "address", name: "payee" },
+            ],
+          },
+        ],
         escrowData.demand,
       )[0];
 
@@ -202,10 +214,15 @@ export const makeNativeTokenBarterUtilsClient = (
       const escrowData = decodeAbiParameters([nativeEscrowObligationDataType], buyAttestationData.data)[0];
 
       const demandData = decodeAbiParameters(
-        [{ type: "tuple", components: [
-          { type: "uint256", name: "amount" },
-          { type: "address", name: "payee" }
-        ]}],
+        [
+          {
+            type: "tuple",
+            components: [
+              { type: "uint256", name: "amount" },
+              { type: "address", name: "payee" },
+            ],
+          },
+        ],
         escrowData.demand,
       )[0];
 

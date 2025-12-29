@@ -1,4 +1,4 @@
-import { decodeAbiParameters, encodeAbiParameters, getAbiItem, type Address } from "viem";
+import { type Address, decodeAbiParameters, encodeAbiParameters, getAbiItem } from "viem";
 import { abi as AllArbiterAbi } from "../../../contracts/arbiters/logical/AllArbiter";
 import type { ChainAddresses, Demand } from "../../../types";
 import type { ViemClient } from "../../../utils";

@@ -323,7 +323,6 @@ describe("ERC721 Tests", () => {
       // Wait for transaction to be mined before checking ownership
       await testClient.waitForTransactionReceipt({ hash: reclaimTxHash });
 
-
       // Verify Alice got her token back
       const tokenOwner = await testClient.getErc721Owner({
         address: aliceErc721Token,

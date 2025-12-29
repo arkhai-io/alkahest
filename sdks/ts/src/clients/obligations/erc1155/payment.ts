@@ -1,7 +1,7 @@
 import { decodeAbiParameters, encodeAbiParameters, getAbiItem } from "viem";
 import { abi as erc1155PaymentAbi } from "../../../contracts/obligations/payment/ERC1155PaymentObligation";
 import type { Erc1155 } from "../../../types";
-import { getAttestation, getAttestedEventFromTxHash, writeContract, type ViemClient } from "../../../utils";
+import { getAttestation, getAttestedEventFromTxHash, type ViemClient, writeContract } from "../../../utils";
 import type { Erc1155Addresses } from "./index";
 import { makeErc1155UtilClient } from "./util";
 
@@ -42,10 +42,7 @@ export const decodeObligation = (obligationData: `0x${string}`): Erc1155PaymentO
 
 export type Erc1155PaymentClient = ReturnType<typeof makeErc1155PaymentClient>;
 
-export const makeErc1155PaymentClient = (
-  viemClient: ViemClient,
-  addresses: Erc1155Addresses,
-) => {
+export const makeErc1155PaymentClient = (viemClient: ViemClient, addresses: Erc1155Addresses) => {
   const util = makeErc1155UtilClient(viemClient, addresses);
 
   const getSchema = async () =>
@@ -65,12 +62,17 @@ export const makeErc1155PaymentClient = (
     },
 
     encodeObligation: (token: Erc1155, payee: `0x${string}`) => {
-      return encodeAbiParameters([erc1155PaymentObligationDataType], [{
-        token: token.address,
-        tokenId: token.id,
-        amount: token.value,
-        payee,
-      }]);
+      return encodeAbiParameters(
+        [erc1155PaymentObligationDataType],
+        [
+          {
+            token: token.address,
+            tokenId: token.id,
+            amount: token.value,
+            payee,
+          },
+        ],
+      );
     },
 
     decodeObligation: (obligationData: `0x${string}`) => {
@@ -91,7 +93,11 @@ export const makeErc1155PaymentClient = (
       };
     },
 
-    pay: async (price: Erc1155, payee: `0x${string}`, refUID: `0x${string}` = "0x0000000000000000000000000000000000000000000000000000000000000000") => {
+    pay: async (
+      price: Erc1155,
+      payee: `0x${string}`,
+      refUID: `0x${string}` = "0x0000000000000000000000000000000000000000000000000000000000000000",
+    ) => {
       const hash = await writeContract(viemClient, {
         address: addresses.paymentObligation,
         abi: erc1155PaymentAbi.abi,
@@ -111,7 +117,11 @@ export const makeErc1155PaymentClient = (
       return { hash, attested };
     },
 
-    approveAndPay: async (price: Erc1155, payee: `0x${string}`, refUID: `0x${string}` = "0x0000000000000000000000000000000000000000000000000000000000000000") => {
+    approveAndPay: async (
+      price: Erc1155,
+      payee: `0x${string}`,
+      refUID: `0x${string}` = "0x0000000000000000000000000000000000000000000000000000000000000000",
+    ) => {
       await util.approveAll(price.address, "payment");
       const hash = await writeContract(viemClient, {
         address: addresses.paymentObligation,

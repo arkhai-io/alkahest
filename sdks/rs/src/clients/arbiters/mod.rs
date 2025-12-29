@@ -18,13 +18,9 @@ impl_from_attestation!(contracts::arbiters::TrustedOracleArbiter::Attestation);
 impl_from_attestation!(contracts::arbiters::IntrinsicsArbiter::Attestation);
 impl_from_attestation!(contracts::arbiters::IntrinsicsArbiter2::Attestation);
 use alloy::{
-    primitives::{Address, Bytes, FixedBytes},
-    providers::Provider as _,
-    rpc::types::{Filter, TransactionReceipt},
+    primitives::Address,
     signers::local::PrivateKeySigner,
-    sol_types::SolEvent as _,
 };
-use futures_util::StreamExt as _;
 use serde::{Deserialize, Serialize};
 
 mod attestation_properties;
@@ -43,7 +39,7 @@ pub use logical::{
 // Re-export trusted oracle module (with backwards-compatible aliases)
 pub use trusted_oracle::{
     ArbitrateOptions, AttestationWithDemand, Decision, ListenAndArbitrateResult,
-    OracleAddresses, OracleModule, TrustedOracleAddresses, TrustedOracleModule,
+    OracleAddresses, OracleModule, TrustedOracle, TrustedOracleAddresses, TrustedOracleModule,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -80,8 +76,8 @@ pub struct ArbitersAddresses {
 #[derive(Clone)]
 pub struct ArbitersModule {
     signer: PrivateKeySigner,
-    public_provider: SharedPublicProvider,
-    wallet_provider: SharedWalletProvider,
+    pub(crate) public_provider: SharedPublicProvider,
+    pub(crate) wallet_provider: SharedWalletProvider,
 
     pub addresses: ArbitersAddresses,
 }
@@ -168,72 +164,15 @@ impl ArbitersModule {
         })
     }
 
-    /// Arbitrate as a trusted oracle with the new 3-argument API
+    /// Access trusted oracle arbiter API for arbitration functionality
     ///
-    /// # Arguments
-    /// * `obligation` - The obligation attestation UID
-    /// * `demand` - The demand data bytes
-    /// * `decision` - The oracle's decision (true/false)
-    pub async fn arbitrate_as_trusted_oracle(
-        &self,
-        obligation: FixedBytes<32>,
-        demand: Bytes,
-        decision: bool,
-    ) -> eyre::Result<TransactionReceipt> {
-        let trusted_oracle_arbiter = contracts::arbiters::TrustedOracleArbiter::new(
-            self.addresses.trusted_oracle_arbiter,
-            &*self.wallet_provider,
-        );
-
-        let receipt = trusted_oracle_arbiter
-            .arbitrate(obligation, demand, decision)
-            .send()
-            .await?
-            .get_receipt()
-            .await?;
-
-        Ok(receipt)
-    }
-
-    pub async fn wait_for_trusted_oracle_arbitration(
-        &self,
-        oracle: Address,
-        obligation: FixedBytes<32>,
-        from_block: Option<u64>,
-    ) -> eyre::Result<contracts::arbiters::TrustedOracleArbiter::ArbitrationMade> {
-        // ArbitrationMade event: (bytes32 indexed decisionKey, bytes32 indexed obligation, address indexed oracle, bool decision)
-        // topic1 = decisionKey, topic2 = obligation, topic3 = oracle
-        let filter = Filter::new()
-            .from_block(from_block.unwrap_or(0))
-            .address(self.addresses.trusted_oracle_arbiter)
-            .event_signature(
-                contracts::arbiters::TrustedOracleArbiter::ArbitrationMade::SIGNATURE_HASH,
-            )
-            .topic2(obligation)
-            .topic3(oracle.into_word());
-
-        let logs = self.public_provider.get_logs(&filter).await?;
-        if let Some(log) = logs
-            .iter()
-            .collect::<Vec<_>>()
-            .first()
-            .map(|log| {
-                log.log_decode::<contracts::arbiters::TrustedOracleArbiter::ArbitrationMade>()
-            })
-        {
-            return Ok(log?.inner.data);
-        }
-
-        let sub = self.public_provider.subscribe_logs(&filter).await?;
-        let mut stream = sub.into_stream();
-
-        if let Some(log) = stream.next().await {
-            let log =
-                log.log_decode::<contracts::arbiters::TrustedOracleArbiter::ArbitrationMade>()?;
-            return Ok(log.inner.data);
-        }
-
-        Err(eyre::eyre!("No ArbitrationMade event found"))
+    /// # Example
+    /// ```rust,ignore
+    /// let receipt = arbiters_module.trusted_oracle().arbitrate(obligation, demand, true).await?;
+    /// let event = arbiters_module.trusted_oracle().wait_for_arbitration(oracle, obligation, None).await?;
+    /// ```
+    pub fn trusted_oracle(&self) -> trusted_oracle::TrustedOracle<'_> {
+        trusted_oracle::TrustedOracle::new(self)
     }
 }
 

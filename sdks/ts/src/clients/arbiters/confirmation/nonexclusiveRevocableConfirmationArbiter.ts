@@ -90,11 +90,7 @@ export const makeNonexclusiveRevocableConfirmationArbiterClient = (
     /**
      * Wait for a confirmation event
      */
-    waitForConfirmation: async (
-      fulfillment: `0x${string}`,
-      escrow: `0x${string}`,
-      pollingInterval?: number,
-    ) => {
+    waitForConfirmation: async (fulfillment: `0x${string}`, escrow: `0x${string}`, pollingInterval?: number) => {
       const logs = await viemClient.getLogs({
         address: addresses.nonexclusiveRevocableConfirmationArbiter,
         event: confirmationMadeEvent,

@@ -1,15 +1,12 @@
 import { hexToNumber, parseAbiParameter, slice } from "viem";
 import { abi as erc20Abi } from "../../../contracts/ERC20Permit";
 import type { ApprovalPurpose, Eip2612Props, Erc20, PermitSignature } from "../../../types";
-import { readContract, writeContract, type ViemClient } from "../../../utils";
+import { readContract, type ViemClient, writeContract } from "../../../utils";
 import type { Erc20Addresses } from "./index";
 
 export type Erc20UtilClient = ReturnType<typeof makeErc20UtilClient>;
 
-export const makeErc20UtilClient = (
-  viemClient: ViemClient,
-  addresses: Erc20Addresses,
-) => {
+export const makeErc20UtilClient = (viemClient: ViemClient, addresses: Erc20Addresses) => {
   const signPermit = async (props: Eip2612Props): Promise<PermitSignature> => {
     const types = {
       Permit: parseAbiParameter("(address owner, address spender, uint256 value, uint256 nonce, uint256 deadline)")

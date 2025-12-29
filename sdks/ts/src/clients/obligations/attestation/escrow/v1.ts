@@ -1,7 +1,7 @@
 import { decodeAbiParameters, encodeAbiParameters, getAbiItem } from "viem";
 import { abi as attestationEscrowAbi } from "../../../../contracts/obligations/escrow/non-tierable/AttestationEscrowObligation";
 import type { Demand } from "../../../../types";
-import { getAttestation, getAttestedEventFromTxHash, writeContract, type ViemClient } from "../../../../utils";
+import { getAttestation, getAttestedEventFromTxHash, type ViemClient, writeContract } from "../../../../utils";
 import type { AttestationAddresses } from "../index";
 
 const escrowObligationDecodeFunction = getAbiItem({
@@ -50,10 +50,7 @@ export const decodeObligation = (obligationData: `0x${string}`): AttestationEscr
 
 export type AttestationEscrowV1Client = ReturnType<typeof makeAttestationEscrowV1Client>;
 
-export const makeAttestationEscrowV1Client = (
-  viemClient: ViemClient,
-  addresses: AttestationAddresses,
-) => {
+export const makeAttestationEscrowV1Client = (viemClient: ViemClient, addresses: AttestationAddresses) => {
   const getSchema = async () =>
     await viemClient.readContract({
       address: addresses.escrowObligation,

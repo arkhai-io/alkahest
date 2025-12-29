@@ -22,6 +22,7 @@ from .alkahest_py import (
     PyOracleAttestation as OracleAttestation,
     PyDecision as Decision,
     PyArbitrateOptions as ArbitrateOptions,
+    PyArbitrationMode as ArbitrationMode,
     PyTrustedOracleArbiterDemandData as TrustedOracleArbiterDemandData,
     PyErc20Data as Erc20Data,
     # Address Configuration Classes
@@ -64,6 +65,7 @@ __all__ = [
     "OracleAttestation",
     "Decision",
     "ArbitrateOptions",
+    "ArbitrationMode",
     "TrustedOracleArbiterDemandData",
     "Erc20Data",
     # Address Configuration Classes

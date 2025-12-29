@@ -1,4 +1,4 @@
-import { decodeAbiParameters, encodeAbiParameters, getAbiItem, type Address } from "viem";
+import { type Address, decodeAbiParameters, encodeAbiParameters, getAbiItem } from "viem";
 import { abi as nativeTokenPaymentAbi } from "../../../contracts/obligations/payment/NativeTokenPaymentObligation";
 import type { Demand } from "../../../types";
 import { getAttestation, getAttestedEventFromTxHash, type ViemClient } from "../../../utils";
@@ -26,8 +26,11 @@ export type NativeTokenPaymentObligationData = {
  */
 export const encodeObligation = (data: NativeTokenPaymentObligationData): `0x${string}` => {
   return encodeAbiParameters(
-    [{ name: "amount", type: "uint256" }, { name: "payee", type: "address" }],
-    [data.amount, data.payee]
+    [
+      { name: "amount", type: "uint256" },
+      { name: "payee", type: "address" },
+    ],
+    [data.amount, data.payee],
   );
 };
 
@@ -38,8 +41,11 @@ export const encodeObligation = (data: NativeTokenPaymentObligationData): `0x${s
  */
 export const decodeObligation = (obligationData: `0x${string}`): NativeTokenPaymentObligationData => {
   const decoded = decodeAbiParameters(
-    [{ name: "amount", type: "uint256" }, { name: "payee", type: "address" }],
-    obligationData
+    [
+      { name: "amount", type: "uint256" },
+      { name: "payee", type: "address" },
+    ],
+    obligationData,
   );
   return {
     amount: decoded[0],
@@ -49,10 +55,7 @@ export const decodeObligation = (obligationData: `0x${string}`): NativeTokenPaym
 
 export type NativeTokenPaymentClient = ReturnType<typeof makeNativeTokenPaymentClient>;
 
-export const makeNativeTokenPaymentClient = (
-  viemClient: ViemClient,
-  addresses: NativeTokenAddresses,
-) => {
+export const makeNativeTokenPaymentClient = (viemClient: ViemClient, addresses: NativeTokenAddresses) => {
   const getSchema = async () =>
     await viemClient.readContract({
       address: addresses.paymentObligation,
@@ -67,22 +70,31 @@ export const makeNativeTokenPaymentClient = (
 
     encodeObligationRaw: (data: { amount: bigint; payee: `0x${string}` }) => {
       return encodeAbiParameters(
-        [{ name: "amount", type: "uint256" }, { name: "payee", type: "address" }],
-        [data.amount, data.payee]
+        [
+          { name: "amount", type: "uint256" },
+          { name: "payee", type: "address" },
+        ],
+        [data.amount, data.payee],
       );
     },
 
     encodeObligation: (amount: bigint, payee: `0x${string}`) => {
       return encodeAbiParameters(
-        [{ name: "amount", type: "uint256" }, { name: "payee", type: "address" }],
-        [amount, payee]
+        [
+          { name: "amount", type: "uint256" },
+          { name: "payee", type: "address" },
+        ],
+        [amount, payee],
       );
     },
 
     decodeObligation: (obligationData: `0x${string}`): NativeTokenPaymentObligationData => {
       const decoded = decodeAbiParameters(
-        [{ name: "amount", type: "uint256" }, { name: "payee", type: "address" }],
-        obligationData
+        [
+          { name: "amount", type: "uint256" },
+          { name: "payee", type: "address" },
+        ],
+        obligationData,
       );
       return {
         amount: decoded[0],
@@ -97,8 +109,11 @@ export const makeNativeTokenPaymentClient = (
         throw new Error(`Unsupported schema: ${attestation.schema}`);
       }
       const decoded = decodeAbiParameters(
-        [{ name: "amount", type: "uint256" }, { name: "payee", type: "address" }],
-        attestation.data
+        [
+          { name: "amount", type: "uint256" },
+          { name: "payee", type: "address" },
+        ],
+        attestation.data,
       );
       const data: NativeTokenPaymentObligationData = {
         amount: decoded[0],
@@ -115,15 +130,18 @@ export const makeNativeTokenPaymentClient = (
       return {
         arbiter: addresses.paymentObligation,
         demand: encodeAbiParameters(
-          [{ name: "amount", type: "uint256" }, { name: "payee", type: "address" }],
-          [amount, payee]
+          [
+            { name: "amount", type: "uint256" },
+            { name: "payee", type: "address" },
+          ],
+          [amount, payee],
         ),
       };
     },
 
     pay: async (
       data: NativeTokenPaymentObligationData,
-      refUID: `0x${string}` = "0x0000000000000000000000000000000000000000000000000000000000000000"
+      refUID: `0x${string}` = "0x0000000000000000000000000000000000000000000000000000000000000000",
     ) => {
       const { request } = await viemClient.simulateContract({
         address: addresses.paymentObligation,
@@ -141,7 +159,7 @@ export const makeNativeTokenPaymentClient = (
     payFor: async (
       data: NativeTokenPaymentObligationData,
       recipient: `0x${string}`,
-      refUID: `0x${string}` = "0x0000000000000000000000000000000000000000000000000000000000000000"
+      refUID: `0x${string}` = "0x0000000000000000000000000000000000000000000000000000000000000000",
     ) => {
       const { request } = await viemClient.simulateContract({
         address: addresses.paymentObligation,

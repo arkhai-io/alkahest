@@ -2,7 +2,7 @@ import { decodeAbiParameters, encodeAbiParameters, getAbiItem } from "viem";
 import { abi as erc20PaymentAbi } from "../../../contracts/obligations/payment/ERC20PaymentObligation";
 import { abi as erc20BarterUtilsAbi } from "../../../contracts/utils/ERC20BarterUtils";
 import type { Erc20 } from "../../../types";
-import { getAttestation, getAttestedEventFromTxHash, writeContract, type ViemClient } from "../../../utils";
+import { getAttestation, getAttestedEventFromTxHash, type ViemClient, writeContract } from "../../../utils";
 import type { Erc20Addresses } from "./index";
 import { makeErc20UtilClient } from "./util";
 
@@ -42,10 +42,7 @@ export const decodeObligation = (obligationData: `0x${string}`): Erc20PaymentObl
 
 export type Erc20PaymentClient = ReturnType<typeof makeErc20PaymentClient>;
 
-export const makeErc20PaymentClient = (
-  viemClient: ViemClient,
-  addresses: Erc20Addresses,
-) => {
+export const makeErc20PaymentClient = (viemClient: ViemClient, addresses: Erc20Addresses) => {
   const util = makeErc20UtilClient(viemClient, addresses);
 
   const getSchema = async () =>
@@ -65,11 +62,16 @@ export const makeErc20PaymentClient = (
     },
 
     encodeObligation: (token: Erc20, payee: `0x${string}`) => {
-      return encodeAbiParameters([erc20PaymentObligationDataType], [{
-        token: token.address,
-        amount: token.value,
-        payee,
-      }]);
+      return encodeAbiParameters(
+        [erc20PaymentObligationDataType],
+        [
+          {
+            token: token.address,
+            amount: token.value,
+            payee,
+          },
+        ],
+      );
     },
 
     decodeObligation: (obligationData: `0x${string}`) => {
@@ -90,7 +92,11 @@ export const makeErc20PaymentClient = (
       };
     },
 
-    pay: async (price: Erc20, payee: `0x${string}`, refUID: `0x${string}` = "0x0000000000000000000000000000000000000000000000000000000000000000") => {
+    pay: async (
+      price: Erc20,
+      payee: `0x${string}`,
+      refUID: `0x${string}` = "0x0000000000000000000000000000000000000000000000000000000000000000",
+    ) => {
       const hash = await writeContract(viemClient, {
         address: addresses.paymentObligation,
         abi: erc20PaymentAbi.abi,
@@ -109,7 +115,11 @@ export const makeErc20PaymentClient = (
       return { hash, attested };
     },
 
-    approveAndPay: async (price: Erc20, payee: `0x${string}`, refUID: `0x${string}` = "0x0000000000000000000000000000000000000000000000000000000000000000") => {
+    approveAndPay: async (
+      price: Erc20,
+      payee: `0x${string}`,
+      refUID: `0x${string}` = "0x0000000000000000000000000000000000000000000000000000000000000000",
+    ) => {
       await util.approve(price, "payment");
       const hash = await writeContract(viemClient, {
         address: addresses.paymentObligation,
@@ -129,7 +139,11 @@ export const makeErc20PaymentClient = (
       return { hash, attested };
     },
 
-    permitAndPay: async (price: Erc20, payee: `0x${string}`, refUID: `0x${string}` = "0x0000000000000000000000000000000000000000000000000000000000000000") => {
+    permitAndPay: async (
+      price: Erc20,
+      payee: `0x${string}`,
+      refUID: `0x${string}` = "0x0000000000000000000000000000000000000000000000000000000000000000",
+    ) => {
       const deadline = util.getPermitDeadline();
       const permit = await util.getPermitSignature(addresses.barterUtils, price, deadline);
 
