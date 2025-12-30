@@ -97,6 +97,179 @@ impl OracleClient {
         Ok(PyTrustedOracleArbiterDemandData::from(demand_data))
     }
 
+    /// Arbitrate as a trusted oracle
+    ///
+    /// Args:
+    ///     obligation: The obligation attestation UID
+    ///     demand: The demand data bytes
+    ///     decision: The oracle's decision (true/false)
+    ///
+    /// Returns:
+    ///     Transaction hash as string
+    pub fn arbitrate<'py>(
+        &self,
+        py: Python<'py>,
+        obligation: String,
+        demand: Vec<u8>,
+        decision: bool,
+    ) -> PyResult<pyo3::Bound<'py, PyAny>> {
+        let inner = self.inner.clone();
+        future_into_py(py, async move {
+            let receipt = inner
+                .arbitrate(
+                    obligation.parse().map_err(map_parse_to_pyerr)?,
+                    demand.into(),
+                    decision,
+                )
+                .await
+                .map_err(map_eyre_to_pyerr)?;
+            Ok(receipt.transaction_hash.to_string())
+        })
+    }
+
+    /// Wait for an arbitration event
+    ///
+    /// Args:
+    ///     obligation: The obligation attestation UID
+    ///     demand: Optional demand data bytes
+    ///     oracle: Optional oracle address
+    ///     from_block: Optional starting block number
+    ///
+    /// Returns:
+    ///     ArbitrationMade event data
+    pub fn wait_for_arbitration<'py>(
+        &self,
+        py: Python<'py>,
+        obligation: String,
+        demand: Option<Vec<u8>>,
+        oracle: Option<String>,
+        from_block: Option<u64>,
+    ) -> PyResult<pyo3::Bound<'py, PyAny>> {
+        let inner = self.inner.clone();
+        future_into_py(py, async move {
+            let event = inner
+                .wait_for_arbitration(
+                    obligation.parse().map_err(map_parse_to_pyerr)?,
+                    demand.map(|d| d.into()),
+                    oracle.map(|o| o.parse()).transpose().map_err(map_parse_to_pyerr)?,
+                    from_block,
+                )
+                .await
+                .map_err(map_eyre_to_pyerr)?;
+            Ok(PyArbitrationMadeLog {
+                decision_key: event.inner.data.decisionKey.to_string(),
+                obligation: event.inner.data.obligation.to_string(),
+                oracle: format!("{:?}", event.inner.data.oracle),
+                decision: event.inner.data.decision,
+            })
+        })
+    }
+
+    /// Get the escrow attestation that a fulfillment references
+    ///
+    /// Args:
+    ///     fulfillment: The fulfillment attestation
+    ///
+    /// Returns:
+    ///     The escrow attestation
+    pub fn get_escrow_attestation<'py>(
+        &self,
+        py: Python<'py>,
+        fulfillment: PyOracleAttestation,
+    ) -> PyResult<pyo3::Bound<'py, PyAny>> {
+        let inner = self.inner.clone();
+        future_into_py(py, async move {
+            use alloy::hex;
+
+            // Convert PyOracleAttestation to Rust Attestation
+            let ref_uid_bytes = hex::decode(fulfillment.ref_uid.strip_prefix("0x").unwrap_or(&fulfillment.ref_uid))
+                .map_err(|e| map_eyre_to_pyerr(eyre::eyre!("Failed to decode ref_uid: {}", e)))?;
+            let ref_uid: FixedBytes<32> = ref_uid_bytes.as_slice().try_into()
+                .map_err(|_| map_eyre_to_pyerr(eyre::eyre!("Invalid ref_uid length")))?;
+
+            // Create a minimal attestation struct with just the refUID we need
+            let fulfillment_attestation = alkahest_rs::contracts::IEAS::Attestation {
+                uid: FixedBytes::default(),
+                schema: FixedBytes::default(),
+                refUID: ref_uid,
+                time: 0,
+                expirationTime: 0,
+                revocationTime: 0,
+                recipient: alloy::primitives::Address::default(),
+                attester: alloy::primitives::Address::default(),
+                revocable: false,
+                data: alloy::primitives::Bytes::default(),
+            };
+
+            let escrow = inner
+                .get_escrow_attestation(&fulfillment_attestation)
+                .await
+                .map_err(map_eyre_to_pyerr)?;
+
+            Ok(PyOracleAttestation::from(&escrow))
+        })
+    }
+
+    /// Get escrow attestation and extract demand data in one call
+    ///
+    /// Args:
+    ///     fulfillment: The fulfillment attestation
+    ///
+    /// Returns:
+    ///     Tuple of (escrow attestation, demand data)
+    pub fn get_escrow_and_demand<'py>(
+        &self,
+        py: Python<'py>,
+        fulfillment: PyOracleAttestation,
+    ) -> PyResult<pyo3::Bound<'py, PyAny>> {
+        let inner = self.inner.clone();
+        future_into_py(py, async move {
+            use alloy::{hex, sol, sol_types::SolType};
+
+            // Convert PyOracleAttestation to Rust Attestation
+            let ref_uid_bytes = hex::decode(fulfillment.ref_uid.strip_prefix("0x").unwrap_or(&fulfillment.ref_uid))
+                .map_err(|e| map_eyre_to_pyerr(eyre::eyre!("Failed to decode ref_uid: {}", e)))?;
+            let ref_uid: FixedBytes<32> = ref_uid_bytes.as_slice().try_into()
+                .map_err(|_| map_eyre_to_pyerr(eyre::eyre!("Invalid ref_uid length")))?;
+
+            // Create a minimal attestation struct with just the refUID we need
+            let fulfillment_attestation = alkahest_rs::contracts::IEAS::Attestation {
+                uid: FixedBytes::default(),
+                schema: FixedBytes::default(),
+                refUID: ref_uid,
+                time: 0,
+                expirationTime: 0,
+                revocationTime: 0,
+                recipient: alloy::primitives::Address::default(),
+                attester: alloy::primitives::Address::default(),
+                revocable: false,
+                data: alloy::primitives::Bytes::default(),
+            };
+
+            // Get escrow attestation
+            let escrow = inner
+                .get_escrow_attestation(&fulfillment_attestation)
+                .await
+                .map_err(map_eyre_to_pyerr)?;
+
+            // Extract demand data
+            sol! {
+                struct ArbiterDemand {
+                    address oracle;
+                    bytes demand;
+                }
+            }
+
+            let arbiter_demand = <ArbiterDemand as SolType>::abi_decode(&escrow.data)
+                .map_err(|e| map_eyre_to_pyerr(eyre::eyre!("Failed to decode arbiter demand: {}", e)))?;
+
+            let demand_data = <TrustedOracleArbiter::DemandData as SolType>::abi_decode(&arbiter_demand.demand)
+                .map_err(|e| map_eyre_to_pyerr(eyre::eyre!("Failed to decode demand data: {}", e)))?;
+
+            Ok((PyOracleAttestation::from(&escrow), PyTrustedOracleArbiterDemandData::from(demand_data)))
+        })
+    }
+
     pub fn unsubscribe<'py>(
         &self,
         py: Python<'py>,

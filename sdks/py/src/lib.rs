@@ -3,15 +3,15 @@ use std::str::FromStr;
 use alkahest_rs::{
     clients::{
         attestation::AttestationAddresses, erc1155::Erc1155Addresses, erc20::Erc20Addresses,
-        erc721::Erc721Addresses, oracle::OracleAddresses,
+        erc721::Erc721Addresses, native_token::NativeTokenAddresses, oracle::OracleAddresses,
         string_obligation::StringObligationAddresses, token_bundle::TokenBundleAddresses,
     },
     contracts::IEAS::Attested,
     extensions::{
         AlkahestExtension, ArbitersModule, AttestationModule, Erc1155Module, Erc20Module,
-        Erc721Module, HasArbiters, HasAttestation, HasErc1155, HasErc20, HasErc721, HasOracle,
-        HasStringObligation, HasTokenBundle, NoExtension, OracleModule, StringObligationModule,
-        TokenBundleModule,
+        Erc721Module, HasArbiters, HasAttestation, HasErc1155, HasErc20, HasErc721, HasNativeToken,
+        HasOracle, HasStringObligation, HasTokenBundle, NativeTokenModule, NoExtension,
+        OracleModule, StringObligationModule, TokenBundleModule,
     },
     AlkahestClient,
 };
@@ -25,7 +25,8 @@ use clients::{
     arbiters::{trusted_oracle::OracleClient, ArbitersClient},
     obligations::{
         attestation::AttestationClient, erc1155::Erc1155Client, erc20::Erc20Client,
-        erc721::Erc721Client, string::StringObligationClient, token_bundle::TokenBundleClient,
+        erc721::Erc721Client, native_token::NativeTokenClient, string::StringObligationClient,
+        token_bundle::TokenBundleClient,
     },
 };
 use pyo3::{
@@ -75,6 +76,7 @@ pub struct PyAlkahestClient {
     erc20: Option<Erc20Client>,
     erc721: Option<Erc721Client>,
     erc1155: Option<Erc1155Client>,
+    native_token: Option<NativeTokenClient>,
     token_bundle: Option<TokenBundleClient>,
     attestation: Option<AttestationClient>,
     string_obligation: Option<StringObligationClient>,
@@ -91,6 +93,9 @@ impl PyAlkahestClient {
             erc20: Some(Erc20Client::new(client.extensions.erc20().clone())),
             erc721: Some(Erc721Client::new(client.extensions.erc721().clone())),
             erc1155: Some(Erc1155Client::new(client.extensions.erc1155().clone())),
+            native_token: Some(NativeTokenClient::new(
+                client.extensions.native_token().clone(),
+            )),
             token_bundle: Some(TokenBundleClient::new(
                 client.extensions.token_bundle().clone(),
             )),
@@ -127,6 +132,7 @@ impl PyAlkahestClient {
             erc20: None,       // TODO: Extract if extension_type == "erc20"
             erc721: None,      // TODO: Extract if extension_type == "erc721"
             erc1155: None,     // TODO: Extract if extension_type == "erc1155"
+            native_token: None, // TODO: Extract if extension_type == "native_token"
             token_bundle: None, // TODO: Extract if extension_type == "token_bundle"
             attestation: None, // TODO: Extract if extension_type == "attestation"
             string_obligation: None, // TODO: Extract if extension_type == "string_obligation"
@@ -166,6 +172,9 @@ impl PyAlkahestClient {
             erc20: Some(Erc20Client::new(client.extensions.erc20().clone())),
             erc721: Some(Erc721Client::new(client.extensions.erc721().clone())),
             erc1155: Some(Erc1155Client::new(client.extensions.erc1155().clone())),
+            native_token: Some(NativeTokenClient::new(
+                client.extensions.native_token().clone(),
+            )),
             token_bundle: Some(TokenBundleClient::new(
                 client.extensions.token_bundle().clone(),
             )),
@@ -188,6 +197,7 @@ impl PyAlkahestClient {
             "erc20".to_string(),
             "erc721".to_string(),
             "erc1155".to_string(),
+            "native_token".to_string(),
             "token_bundle".to_string(),
             "attestation".to_string(),
             "string_obligation".to_string(),
@@ -202,6 +212,7 @@ impl PyAlkahestClient {
             "erc20" => self.erc20.is_some(),
             "erc721" => self.erc721.is_some(),
             "erc1155" => self.erc1155.is_some(),
+            "native_token" => self.native_token.is_some(),
             "token_bundle" => self.token_bundle.is_some(),
             "attestation" => self.attestation.is_some(),
             "string_obligation" => self.string_obligation.is_some(),
@@ -234,6 +245,15 @@ impl PyAlkahestClient {
         self.erc1155.clone().ok_or_else(|| {
             pyo3::PyErr::new::<pyo3::exceptions::PyAttributeError, _>(
                 "ERC1155 extension is not available in this client",
+            )
+        })
+    }
+
+    #[getter]
+    pub fn native_token(&self) -> PyResult<NativeTokenClient> {
+        self.native_token.clone().ok_or_else(|| {
+            pyo3::PyErr::new::<pyo3::exceptions::PyAttributeError, _>(
+                "NativeToken extension is not available in this client",
             )
         })
     }

@@ -49,4 +49,40 @@ impl Util {
             }
         })
     }
+
+    /// Revokes approval for all ERC1155 tokens in a bundle.
+    ///
+    /// Args:
+    ///     token: The token bundle data containing ERC1155 tokens to revoke
+    ///     purpose: Either "payment", "escrow", or "barter"
+    ///
+    /// Returns:
+    ///     Transaction hash of the last revoke transaction as string
+    pub fn revoke_erc1155s<'py>(
+        &self,
+        py: pyo3::Python<'py>,
+        token: TokenBundleData,
+        purpose: String,
+    ) -> PyResult<pyo3::Bound<'py, pyo3::PyAny>> {
+        let inner = self.inner.clone();
+        pyo3_async_runtimes::tokio::future_into_py(py, async move {
+            let purpose = match purpose.as_str() {
+                "payment" => alkahest_rs::types::ApprovalPurpose::Payment,
+                "escrow" => alkahest_rs::types::ApprovalPurpose::Escrow,
+                "barter" => alkahest_rs::types::ApprovalPurpose::BarterUtils,
+                _ => return Err(map_eyre_to_pyerr(eyre::eyre!("Invalid purpose"))),
+            };
+            let receipts = inner
+                .util()
+                .revoke_erc1155s(&token.try_into().map_err(map_eyre_to_pyerr)?, purpose)
+                .await
+                .map_err(map_eyre_to_pyerr)?;
+
+            // Return the transaction hash of the last receipt, or empty string if no receipts
+            match receipts.last() {
+                Some(receipt) => Ok(receipt.transaction_hash.to_string()),
+                None => Ok("".to_string()),
+            }
+        })
+    }
 }
