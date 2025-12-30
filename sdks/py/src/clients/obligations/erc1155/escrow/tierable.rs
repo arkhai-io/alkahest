@@ -56,6 +56,43 @@ impl Tierable {
         })
     }
 
+    /// Creates an escrow arrangement with ERC1155 tokens after approving, then revokes approval.
+    ///
+    /// Returns:
+    ///     Tuple of (approval_tx_hash, LogWithHash, revoke_tx_hash)
+    pub fn approve_and_create<'py>(
+        &self,
+        py: pyo3::Python<'py>,
+        price: Erc1155Data,
+        item: ArbiterData,
+        expiration: u64,
+    ) -> PyResult<pyo3::Bound<'py, pyo3::PyAny>> {
+        let inner = self.inner.clone();
+        pyo3_async_runtimes::tokio::future_into_py(py, async move {
+            let (approval_receipt, escrow_receipt, revoke_receipt) = inner
+                .escrow()
+                .tierable()
+                .approve_and_create(
+                    &price.try_into().map_err(map_eyre_to_pyerr)?,
+                    &item.try_into().map_err(map_eyre_to_pyerr)?,
+                    expiration,
+                )
+                .await
+                .map_err(map_eyre_to_pyerr)?;
+            Ok((
+                approval_receipt.transaction_hash.to_string(),
+                LogWithHash::<AttestedLog> {
+                    log: get_attested_event(escrow_receipt.clone())
+                        .map_err(map_eyre_to_pyerr)?
+                        .data
+                        .into(),
+                    transaction_hash: escrow_receipt.transaction_hash.to_string(),
+                },
+                revoke_receipt.transaction_hash.to_string(),
+            ))
+        })
+    }
+
     /// Collects payment from a fulfilled escrow.
     pub fn collect<'py>(
         &self,
