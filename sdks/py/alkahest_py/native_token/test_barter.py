@@ -35,8 +35,32 @@ async def test_buy_erc20_for_native():
 # method to pay ERC20 into a native token escrow. This cross-token payment flow isn't implemented.
 
 
-# NOTE: test_buy_native_for_native is skipped - the Rust SDK's pay_native_for_native
-# doesn't send value with the transaction. This is a bug in the Rust SDK that needs to be fixed.
+@pytest.mark.asyncio
+async def test_buy_native_for_native():
+    """
+    Test buying native tokens with native tokens (native-to-native swap).
+    """
+    env = EnvTestManager()
+
+    bid_amount = 1000  # wei Alice offers
+    ask_amount = 500  # wei Alice wants
+
+    bid_data = {"value": bid_amount}
+    ask_data = {"value": ask_amount}
+
+    # Alice creates native-for-native escrow
+    escrow_result = await env.alice_client.native_token.barter.buy_native_for_native(
+        bid_data, ask_data, 0
+    )
+
+    assert escrow_result is not None, "Escrow should succeed"
+    escrow_uid = escrow_result['log']['uid']
+
+    # Bob pays with native tokens
+    payment_result = await env.bob_client.native_token.barter.pay_native_for_native(escrow_uid)
+
+    assert payment_result is not None, "Payment should succeed"
+    print(f"Native-for-native swap succeeded")
 
 
 @pytest.mark.asyncio
