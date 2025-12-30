@@ -4,6 +4,7 @@ import { abi as erc20EscrowAbi } from "../../../contracts/obligations/escrow/non
 import { abi as erc721EscrowAbi } from "../../../contracts/obligations/escrow/non-tierable/ERC721EscrowObligation";
 import { abi as erc1155EscrowAbi } from "../../../contracts/obligations/escrow/non-tierable/ERC1155EscrowObligation";
 import { abi as tokenBundleEscrowAbi } from "../../../contracts/obligations/escrow/non-tierable/TokenBundleEscrowObligation";
+import { abi as nativeTokenEscrowAbi } from "../../../contracts/obligations/escrow/non-tierable/NativeTokenEscrowObligation";
 import { abi as erc20PaymentAbi } from "../../../contracts/obligations/payment/ERC20PaymentObligation";
 import { abi as erc20BarterUtilsAbi } from "../../../contracts/utils/ERC20BarterUtils";
 import type { Erc20, Erc721, Erc1155, TokenBundle } from "../../../types";
@@ -31,12 +32,17 @@ const tokenBundleEscrowDecodeFunction = getAbiItem({
   abi: tokenBundleEscrowAbi.abi,
   name: "decodeObligationData",
 });
+const nativeTokenEscrowDecodeFunction = getAbiItem({
+  abi: nativeTokenEscrowAbi.abi,
+  name: "decodeObligationData",
+});
 
 const erc20EscrowObligationDataType = erc20EscrowDoObligationFunction.inputs[0];
 const erc20PaymentObligationDataType = erc20PaymentDoObligationFunction.inputs[0];
 const erc721EscrowObligationDataType = erc721EscrowDoObligationFunction.inputs[0];
 const erc1155EscrowObligationDataType = erc1155EscrowDecodeFunction.outputs[0];
 const tokenBundleEscrowObligationDataType = tokenBundleEscrowDecodeFunction.outputs[0];
+const nativeTokenEscrowObligationDataType = nativeTokenEscrowDecodeFunction.outputs[0];
 
 export type Erc20BarterUtilsClient = ReturnType<typeof makeErc20BarterUtilsClient>;
 
@@ -363,6 +369,55 @@ export const makeErc20BarterUtilsClient = (viemClient: ViemClient, addresses: Er
         address: addresses.barterUtils,
         abi: erc20BarterUtilsAbi.abi,
         functionName: "permitAndPayErc20ForBundle",
+        args: [buyAttestation, deadline, permit.v, permit.r, permit.s],
+      });
+
+      const attested = await getAttestedEventFromTxHash(viemClient, hash);
+      return { hash, attested };
+    },
+
+    // =========================================================================
+    // ERC20 for Native Token (ETH)
+    // =========================================================================
+
+    payErc20ForNative: async (buyAttestation: `0x${string}`) => {
+      const hash = await writeContract(viemClient, {
+        address: addresses.barterUtils,
+        abi: erc20BarterUtilsAbi.abi,
+        functionName: "payErc20ForEth",
+        args: [buyAttestation],
+      });
+
+      const attested = await getAttestedEventFromTxHash(viemClient, hash);
+      return { hash, attested };
+    },
+
+    permitAndPayErc20ForNative: async (buyAttestation: `0x${string}`) => {
+      const deadline = util.getPermitDeadline();
+
+      const buyAttestationData = await viemClient.readContract({
+        address: addresses.eas,
+        abi: easAbi.abi,
+        functionName: "getAttestation",
+        args: [buyAttestation],
+        authorizationList: undefined,
+      });
+      const buyAttestationObligationData = decodeAbiParameters(
+        [nativeTokenEscrowObligationDataType],
+        buyAttestationData.data,
+      )[0];
+      const demandData = decodeAbiParameters([erc20PaymentObligationDataType], buyAttestationObligationData.demand)[0];
+
+      const permit = await util.getPermitSignature(
+        addresses.barterUtils,
+        { address: demandData.token, value: demandData.amount },
+        deadline,
+      );
+
+      const hash = await writeContract(viemClient, {
+        address: addresses.barterUtils,
+        abi: erc20BarterUtilsAbi.abi,
+        functionName: "permitAndPayErc20ForEth",
         args: [buyAttestation, deadline, permit.v, permit.r, permit.s],
       });
 

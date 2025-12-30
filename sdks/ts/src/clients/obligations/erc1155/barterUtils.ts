@@ -185,5 +185,17 @@ export const makeErc1155BarterUtilsClient = (viemClient: ViemClient, addresses: 
       const attested = await getAttestedEventFromTxHash(viemClient, hash);
       return { hash, attested };
     },
+
+    payErc1155ForNative: async (buyAttestation: `0x${string}`) => {
+      const hash = await writeContract(viemClient, {
+        address: addresses.barterUtils,
+        abi: erc1155BarterUtilsAbi.abi,
+        functionName: "payErc1155ForEth",
+        args: [buyAttestation],
+      });
+
+      const attested = await getAttestedEventFromTxHash(viemClient, hash);
+      return { hash, attested };
+    },
   };
 };
