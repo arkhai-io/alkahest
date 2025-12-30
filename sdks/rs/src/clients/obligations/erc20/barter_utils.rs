@@ -702,4 +702,91 @@ impl<'a> BarterUtils<'a> {
 
         Ok(receipt)
     }
+
+    // =========================================================================
+    // ERC20 for Native Token (ETH)
+    // =========================================================================
+
+    /// Fulfills an existing native-token-for-ERC20 trade escrow by paying with ERC20.
+    ///
+    /// # Arguments
+    /// * `buy_attestation` - The attestation UID of the buy order (native token escrow)
+    ///
+    /// # Returns
+    /// * `Result<TransactionReceipt>` - The transaction receipt
+    pub async fn pay_erc20_for_native(
+        &self,
+        buy_attestation: FixedBytes<32>,
+    ) -> eyre::Result<TransactionReceipt> {
+        let barter_utils_contract = contracts::utils::ERC20BarterUtils::new(
+            self.module.addresses.barter_utils,
+            &self.module.wallet_provider,
+        );
+
+        let receipt = barter_utils_contract
+            .payErc20ForEth(buy_attestation)
+            .send()
+            .await?
+            .get_receipt()
+            .await?;
+
+        Ok(receipt)
+    }
+
+    /// Fulfills an existing native-token-for-ERC20 trade escrow using permit signature.
+    ///
+    /// # Arguments
+    /// * `buy_attestation` - The attestation UID of the buy order (native token escrow)
+    ///
+    /// # Returns
+    /// * `Result<TransactionReceipt>` - The transaction receipt
+    pub async fn permit_and_pay_erc20_for_native(
+        &self,
+        buy_attestation: FixedBytes<32>,
+    ) -> eyre::Result<TransactionReceipt> {
+        let eas_contract =
+            contracts::IEAS::new(self.module.addresses.eas, &self.module.wallet_provider);
+        let barter_utils_contract = contracts::utils::ERC20BarterUtils::new(
+            self.module.addresses.barter_utils,
+            &self.module.wallet_provider,
+        );
+
+        let buy_attestation_data = eas_contract.getAttestation(buy_attestation).call().await?;
+        let buy_attestation_data =
+            contracts::obligations::escrow::non_tierable::NativeTokenEscrowObligation::ObligationData::abi_decode(
+                buy_attestation_data.data.as_ref(),
+            )?;
+        let demand_data =
+            contracts::obligations::ERC20PaymentObligation::ObligationData::abi_decode(
+                buy_attestation_data.demand.as_ref(),
+            )?;
+
+        let util = self.module.util();
+        let deadline = super::util::Util::get_permit_deadline()?;
+        let permit = util
+            .get_permit_signature(
+                self.module.addresses.barter_utils,
+                &Erc20Data {
+                    address: demand_data.token,
+                    value: demand_data.amount,
+                },
+                U256::from(deadline),
+            )
+            .await?;
+
+        let receipt = barter_utils_contract
+            .permitAndPayErc20ForEth(
+                buy_attestation,
+                U256::from(deadline),
+                27 + permit.v() as u8,
+                permit.r().into(),
+                permit.s().into(),
+            )
+            .send()
+            .await?
+            .get_receipt()
+            .await?;
+
+        Ok(receipt)
+    }
 }

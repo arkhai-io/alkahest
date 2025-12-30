@@ -231,4 +231,28 @@ impl BarterUtils {
             })
         })
     }
+
+    // --- ERC721 for Native Token (ETH) ---
+
+    pub fn pay_erc721_for_native<'py>(
+        &self,
+        py: pyo3::Python<'py>,
+        buy_attestation: String,
+    ) -> PyResult<pyo3::Bound<'py, pyo3::PyAny>> {
+        let inner = self.inner.clone();
+        pyo3_async_runtimes::tokio::future_into_py(py, async move {
+            let receipt = inner
+                .barter()
+                .pay_erc721_for_native(buy_attestation.parse().map_err(map_parse_to_pyerr)?)
+                .await
+                .map_err(map_eyre_to_pyerr)?;
+            Ok(LogWithHash::<AttestedLog> {
+                log: get_attested_event(receipt.clone())
+                    .map_err(map_eyre_to_pyerr)?
+                    .data
+                    .into(),
+                transaction_hash: receipt.transaction_hash.to_string(),
+            })
+        })
+    }
 }
