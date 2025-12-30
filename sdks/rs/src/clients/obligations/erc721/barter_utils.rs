@@ -213,4 +213,24 @@ impl<'a> BarterUtils<'a> {
 
         Ok(receipt)
     }
+
+    /// Fulfills an existing native-token-for-ERC721 trade escrow by paying with ERC721.
+    pub async fn pay_erc721_for_native(
+        &self,
+        buy_attestation: FixedBytes<32>,
+    ) -> eyre::Result<TransactionReceipt> {
+        let barter_utils_contract = contracts::utils::ERC721BarterUtils::new(
+            self.module.addresses.barter_utils,
+            &self.module.wallet_provider,
+        );
+
+        let receipt = barter_utils_contract
+            .payErc721ForEth(buy_attestation)
+            .send()
+            .await?
+            .get_receipt()
+            .await?;
+
+        Ok(receipt)
+    }
 }

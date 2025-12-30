@@ -288,4 +288,34 @@ impl<'a> BarterUtils<'a> {
 
         Ok(receipt)
     }
+
+    // =========================================================================
+    // ERC1155 for Native Token (ETH)
+    // =========================================================================
+
+    /// Fulfills an existing native-token-for-ERC1155 trade escrow by paying with ERC1155.
+    ///
+    /// # Arguments
+    /// * `buy_attestation` - The attestation UID of the buy order (native token escrow)
+    ///
+    /// # Returns
+    /// * `Result<TransactionReceipt>` - The transaction receipt
+    pub async fn pay_erc1155_for_native(
+        &self,
+        buy_attestation: FixedBytes<32>,
+    ) -> eyre::Result<TransactionReceipt> {
+        let barter_utils_contract = contracts::utils::ERC1155BarterUtils::new(
+            self.module.addresses.barter_utils,
+            &self.module.wallet_provider,
+        );
+
+        let receipt = barter_utils_contract
+            .payErc1155ForEth(buy_attestation)
+            .send()
+            .await?
+            .get_receipt()
+            .await?;
+
+        Ok(receipt)
+    }
 }

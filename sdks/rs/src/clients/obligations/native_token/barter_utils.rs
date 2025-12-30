@@ -5,6 +5,7 @@
 
 use alloy::primitives::FixedBytes;
 use alloy::rpc::types::TransactionReceipt;
+use alloy::sol_types::SolValue;
 
 use crate::contracts;
 use crate::types::{Erc20Data, Erc721Data, Erc1155Data, NativeTokenData, TokenBundleData};
@@ -67,13 +68,27 @@ impl<'a> BarterUtils<'a> {
         &self,
         buy_attestation: FixedBytes<32>,
     ) -> eyre::Result<TransactionReceipt> {
+        let eas_contract =
+            contracts::IEAS::new(self.module.addresses.eas, &self.module.wallet_provider);
         let barter_utils_contract = contracts::utils::NativeTokenBarterUtils::new(
             self.module.addresses.barter_utils,
             &self.module.wallet_provider,
         );
 
+        // Fetch the escrow attestation to get the ask amount
+        let buy_attestation_data = eas_contract.getAttestation(buy_attestation).call().await?;
+        let buy_attestation_data =
+            contracts::obligations::escrow::non_tierable::NativeTokenEscrowObligation::ObligationData::abi_decode(
+                buy_attestation_data.data.as_ref(),
+            )?;
+        let demand_data =
+            contracts::obligations::NativeTokenPaymentObligation::ObligationData::abi_decode(
+                buy_attestation_data.demand.as_ref(),
+            )?;
+
         let receipt = barter_utils_contract
             .payEthForEth(buy_attestation)
+            .value(demand_data.amount)
             .send()
             .await?
             .get_receipt()

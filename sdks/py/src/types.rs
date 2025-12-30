@@ -363,6 +363,22 @@ impl TryFrom<Erc1155Data> for alkahest_rs::types::Erc1155Data {
 
 #[derive(FromPyObject)]
 #[pyo3(from_item_all)]
+pub struct NativeTokenData {
+    pub value: u128,
+}
+
+impl TryFrom<NativeTokenData> for alkahest_rs::types::NativeTokenData {
+    type Error = eyre::Error;
+
+    fn try_from(value: NativeTokenData) -> eyre::Result<Self> {
+        Ok(Self {
+            value: U256::from(value.value),
+        })
+    }
+}
+
+#[derive(FromPyObject)]
+#[pyo3(from_item_all)]
 pub struct TokenBundleData {
     native_amount: Option<u128>,
     erc20s: Vec<Erc20Data>,

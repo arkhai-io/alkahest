@@ -20,6 +20,61 @@ export const makeNativeTokenBarterUtilsClient = (viemClient: ViemClient, address
     address: addresses.barterUtils,
 
     // =========================================================================
+    // Native Token for Native Token
+    // =========================================================================
+
+    buyNativeForNative: async (bidAmount: bigint, askAmount: bigint, expiration: bigint) => {
+      const hash = await viemClient.writeContract({
+        address: addresses.barterUtils,
+        abi: nativeTokenBarterUtilsAbi.abi,
+        functionName: "buyEthForEth",
+        args: [bidAmount, askAmount, expiration],
+        value: bidAmount,
+        chain: viemClient.chain,
+      });
+
+      const attested = await getAttestedEventFromTxHash(viemClient, hash);
+      return { hash, attested };
+    },
+
+    payNativeForNative: async (buyAttestation: `0x${string}`) => {
+      const buyAttestationData = await viemClient.readContract({
+        address: addresses.eas,
+        abi: easAbi.abi,
+        functionName: "getAttestation",
+        args: [buyAttestation],
+        authorizationList: undefined,
+      });
+
+      const escrowData = decodeAbiParameters([nativeEscrowObligationDataType], buyAttestationData.data)[0];
+
+      const demandData = decodeAbiParameters(
+        [
+          {
+            type: "tuple",
+            components: [
+              { type: "uint256", name: "amount" },
+              { type: "address", name: "payee" },
+            ],
+          },
+        ],
+        escrowData.demand,
+      )[0];
+
+      const hash = await viemClient.writeContract({
+        address: addresses.barterUtils,
+        abi: nativeTokenBarterUtilsAbi.abi,
+        functionName: "payEthForEth",
+        args: [buyAttestation],
+        value: demandData.amount,
+        chain: viemClient.chain,
+      });
+
+      const attested = await getAttestedEventFromTxHash(viemClient, hash);
+      return { hash, attested };
+    },
+
+    // =========================================================================
     // Native Token for ERC20
     // =========================================================================
 
