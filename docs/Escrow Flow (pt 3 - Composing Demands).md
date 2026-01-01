@@ -671,3 +671,87 @@ print(f"AnyArbiter sub-demands: {len(decoded_any.demands)}")
 ```
 
 For custom arbiters not included in the SDK's built-in decoders, you can extend the decoder registry (TypeScript) or manually decode the raw bytes using ABI decoding.
+
+## Why there's no NotArbiter
+
+You might expect a `NotArbiter` to complement `AllArbiter` and `AnyArbiter`, allowing you to negate any arbiter's logic. However, Alkahest intentionally does not include a `NotArbiter` due to fundamental security concerns.
+
+### The revert problem
+
+Arbiters typically signal failure by **reverting** rather than returning `false`. This allows them to provide meaningful error messages explaining why arbitration failed (e.g., "recipient mismatch" or "deadline passed"). A `NotArbiter` would need to catch these reverts and invert the result, but this creates a critical ambiguity:
+
+**A `NotArbiter` cannot distinguish between:**
+- **Logical reversions** - The arbiter intentionally reverted because its condition wasn't met (e.g., wrong recipient)
+- **Execution reversions** - The call failed for technical reasons (e.g., out of gas, invalid calldata, contract bug)
+
+If a `NotArbiter` treated all reverts as "condition not met" and returned success, it would incorrectly pass arbitration when calls fail due to out-of-gas attacks, malformed data, or other execution errors. This could allow attackers to bypass security checks.
+
+### What to do instead
+
+**Use built-in complement arbiters.** Most arbiters with useful complements already have them:
+
+| Arbiter | Complement |
+|---------|------------|
+| `TimeBeforeArbiter` | `TimeAfterArbiter` |
+| `ExpirationTimeBeforeArbiter` | `ExpirationTimeAfterArbiter` |
+
+**Write a standalone inverting arbiter.** Fork or rewrite the arbiter with inverted logic. This is the safest approach since you explicitly implement the complement:
+
+```solidity
+// Example: Standalone arbiter that inverts RecipientArbiter logic
+// (allows anyone EXCEPT a specific address)
+contract NotRecipientArbiter is IArbiter {
+    struct DemandData {
+        address excludedRecipient;
+    }
+
+    function checkStatement(
+        Attestation memory statement,
+        bytes memory demand,
+        bytes32 /* counteroffer */
+    ) external pure returns (bool) {
+        DemandData memory data = abi.decode(demand, (DemandData));
+        // Explicitly check the inverse condition
+        return statement.recipient != data.excludedRecipient;
+    }
+}
+```
+
+**Subcall the original arbiter with explicit error handling.** If you want to wrap an existing arbiter, you must explicitly handle its known revert reasons rather than catching all reverts:
+
+```solidity
+// Example: Inverting arbiter that subcalls the original
+contract InvertingArbiter is IArbiter {
+    IArbiter public immutable underlying;
+
+    constructor(IArbiter _underlying) {
+        underlying = _underlying;
+    }
+
+    function checkStatement(
+        Attestation memory statement,
+        bytes memory demand,
+        bytes32 counteroffer
+    ) external view returns (bool) {
+        try underlying.checkStatement(statement, demand, counteroffer) returns (bool result) {
+            return !result;
+        } catch (bytes memory reason) {
+            // CRITICAL: Only catch KNOWN logical revert reasons
+            // Unknown reverts (OOG, invalid data) must propagate
+            bytes4 selector = bytes4(reason);
+            if (selector == RecipientMismatch.selector) {
+                return true; // Logical failure -> inverted success
+            }
+            if (selector == DeadlinePassed.selector) {
+                return true; // Logical failure -> inverted success
+            }
+            // Unknown error - do NOT treat as success, propagate it
+            assembly {
+                revert(add(reason, 32), mload(reason))
+            }
+        }
+    }
+}
+```
+
+This approach requires you to enumerate every logical revert reason the underlying arbiter can produce. Unknown reverts (out of gas, invalid calldata, bugs) propagate rather than being incorrectly treated as "condition not met."
