@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, test } from "bun:test";
-import { encodeAbiParameters, hexToBytes, parseAbiParameters, parseEther, stringToHex } from "viem";
+import { decodeAbiParameters, encodeAbiParameters, hexToBytes, parseAbiParameters, parseEther, stringToHex } from "viem";
 import { setupTestEnvironment, type TestContext } from "../utils/setup";
 import { teardownTestEnvironment } from "../utils/teardownTestEnvironment";
 
@@ -174,7 +174,7 @@ test("asynchronous offchain oracle uptime flow", { timeout: 15000 }, async () =>
   const worker = startSchedulerWorker(scheduler, testContext.charlie.client.arbiters);
 
   const listener = await testContext.charlie.client.arbiters.general.trustedOracle.listenAndArbitrate(
-    async (attestation) => {
+    async ({ attestation, demand }) => {
       const ctx = getScheduler();
       if (!ctx) return null;
 
@@ -187,8 +187,9 @@ test("asynchronous offchain oracle uptime flow", { timeout: 15000 }, async () =>
       const fulfillmentUid = ctx.urlIndex.get(statement.item);
       if (!fulfillmentUid || ctx.jobDb.has(fulfillmentUid)) return null;
 
-      // Get escrow and extract demand data
-      const [, demandData] = await testContext.charlie.client.getEscrowAndDemand(uptimeDemandAbi, attestation);
+      // Extract demand data from callback argument (no need to fetch from escrow!)
+      const outerDemand = testContext.charlie.client.arbiters.general.trustedOracle.decodeDemand(demand);
+      const demandData = decodeAbiParameters(uptimeDemandAbi, outerDemand.data);
 
       const payloadHex = demandData[0]?.payload;
       if (!payloadHex) return null;
