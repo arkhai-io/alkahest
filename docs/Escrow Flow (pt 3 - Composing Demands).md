@@ -529,7 +529,7 @@ escrow_receipt = await alice_client.erc20.escrow.non_tierable.approve_and_create
 
 ## Parsing composed demands
 
-When parsing composed demands, you can use the arbiter address of each subdemand as a type id. You could communicate the whole composed demand off-chain, and only validate that the on-chain demand matches what was communicated.
+The SDKs provide built-in support for recursively parsing composed demands. The parsers automatically detect the arbiter type and decode each sub-demand appropriately.
 
 **Solidity**
 
@@ -562,489 +562,112 @@ require(arbiters[0] == address(timeBeforeArbiter), "First arbiter must be TimeBe
 require(arbiters[1] == address(recipientArbiter), "Second arbiter must be RecipientArbiter");
 ```
 
-**TypeScript**
+**Viem**
 
 ```typescript
-// Example: Validate that on-chain demand matches expected structure
-function validateDemand(
-  onChainDemand: `0x${string}`,
-  expectedDemand: `0x${string}`,
-): boolean {
-  // Simply check if the demands match
-  return onChainDemand.toLowerCase() === expectedDemand.toLowerCase();
+import { decodeDemandWithAddresses } from "alkahest-ts/utils/demandParsing";
+
+// Use the built-in recursive demand parser with chain addresses
+const decoded = decodeDemandWithAddresses(
+  { arbiter: allArbiter, demand: composedDemand },
+  client.addresses,
+);
+
+// The result includes arbiter, decoded data, and children for logical arbiters
+console.log("Top-level arbiter:", decoded.arbiter);
+console.log("Decoded data:", decoded.decoded);
+
+// For logical arbiters (AllArbiter, AnyArbiter), children are recursively decoded
+if (decoded.children) {
+  for (const child of decoded.children) {
+    console.log("Child arbiter:", child.arbiter);
+    console.log("Child data:", child.decoded);
+    // Children can also have their own children for nested logical arbiters
+    if (child.children) {
+      console.log("Nested children:", child.children);
+    }
+  }
 }
 
-// Or decode and validate specific parts
-const parseAllArbiterDemand = (demand: `0x${string}`) => {
-  const decoded = aliceClient.arbiters.decodeAllArbiterDemand(demand);
-  return {
-    arbiters: decoded.arbiters,
-    demands: decoded.demands,
-  };
-};
-
-// Example usage
-const { arbiters, demands } = parseAllArbiterDemand(composedDemand);
-if (arbiters[0] !== timeBeforeArbiter) {
-  throw new Error("First arbiter must be TimeBeforeArbiter");
+// Check if an arbiter was unknown (not in the registered decoders)
+if (decoded.isUnknown) {
+  console.log("Unknown arbiter, raw demand:", decoded.decoded.raw);
 }
-if (arbiters[1] !== recipientArbiter) {
-  throw new Error("Second arbiter must be RecipientArbiter");
-}
-
-// Parse sub-demands based on known arbiter types
-const deadlineData = decodeAbiParameters(
-  parseAbiParameters("(uint64 time)"),
-  demands[0] as `0x${string}`,
-)[0];
-console.log("Deadline:", new Date(Number(deadlineData.time) * 1000));
 ```
 
 **Alloy**
 
 ```rust
-use alloy::dyn_abi::DynSolValue;
+use alkahest_rs::contracts::arbiters::logical::AllArbiter as AllArbiterContract;
 
-// Example: Validate that on-chain demand matches expected structure
-fn validate_demand(on_chain_demand: &Bytes, expected_demand: &Bytes) -> bool {
-    on_chain_demand == expected_demand
+// Decode AllArbiter demand data from raw bytes
+let demand_data: AllArbiterContract::DemandData =
+    AllArbiterContract::DemandData::abi_decode(&composed_demand, true)?;
+
+// Use the built-in recursive decoder
+let decoded = alice_client
+    .arbiters()
+    .logical()
+    .all()
+    .decode(demand_data)?;
+
+// The result contains arbiters and recursively decoded demands
+println!("Arbiters: {:?}", decoded.arbiters);
+
+// Each demand is decoded into a typed enum variant
+for demand in &decoded.demands {
+    match demand {
+        DecodedDemand::TimeBeforeArbiter(data) => {
+            println!("TimeBeforeArbiter: time={}", data.time);
+        }
+        DecodedDemand::RecipientArbiter(data) => {
+            println!("RecipientArbiter: recipient={}", data.recipient);
+        }
+        DecodedDemand::TrustedOracle(data) => {
+            println!("TrustedOracle: oracle={}", data.oracle);
+        }
+        DecodedDemand::AnyArbiter(nested) => {
+            // Nested logical arbiters are also decoded
+            println!("Nested AnyArbiter with {} sub-demands", nested.demands.len());
+        }
+        DecodedDemand::AllArbiter(nested) => {
+            println!("Nested AllArbiter with {} sub-demands", nested.demands.len());
+        }
+        DecodedDemand::Unknown { arbiter, raw_data } => {
+            println!("Unknown arbiter {}: {:?}", arbiter, raw_data);
+        }
+        _ => println!("Other demand type"),
+    }
 }
-
-// Or decode and validate specific parts
-fn parse_all_arbiter_demand(
-    client: &ArbitersModule<_>,
-    demand: Bytes,
-) -> eyre::Result<(Vec<Address>, Vec<Bytes>)> {
-    let demand_data = client.decode_multi_arbiter_demand(demand)?;
-    Ok((demand_data.arbiters, demand_data.demands))
-}
-
-// Example usage
-let (arbiters, sub_demands) = parse_all_arbiter_demand(&alice_client.arbiters(), composed_demand)?;
-assert_eq!(arbiters[0], time_before_arbiter_address, "First arbiter must be TimeBeforeArbiter");
-assert_eq!(arbiters[1], recipient_arbiter_address, "Second arbiter must be RecipientArbiter");
-
-// Parse sub-demands based on known arbiter types
-let deadline_data = contracts::TimeBeforeArbiter::DemandData::abi_decode(
-    &sub_demands[0],
-    true
-)?;
-println!("Deadline: {}", deadline_data.time);
 ```
 
 **Python**
 
 ```python
-from eth_abi import decode
-from eth_utils import keccak
+# Use the built-in recursive decoder
+decoded = alice_client.arbiters.logical.all.decode(composed_demand)
 
-# Example: Validate that on-chain demand matches expected structure
-def validate_demand(on_chain_demand: bytes, expected_demand: bytes) -> bool:
-    """Simply check if the demands match"""
-    return keccak(on_chain_demand) == keccak(expected_demand)
+# The result contains arbiters and recursively decoded demands
+print(f"Arbiters: {decoded.arbiters}")
 
-# Or decode and validate specific parts
-def parse_all_arbiter_demand(demand: bytes):
-    """Decode AllArbiter.DemandData"""
-    # Decode as (address[], bytes[])
-    arbiters, demands = decode(['address[]', 'bytes[]'], demand)
-    return {'arbiters': arbiters, 'demands': demands}
+# Each demand has a type and optional raw data
+for demand in decoded.demands:
+    print(f"Demand type: {demand.demand_type}")
+    if demand.raw_data:
+        # Raw data can be further decoded based on the demand type
+        if demand.demand_type == "TimeBeforeArbiter":
+            time_value = decode(['uint64'], demand.raw_data)[0]
+            print(f"  Time: {datetime.fromtimestamp(time_value)}")
+        elif demand.demand_type == "RecipientArbiter":
+            recipient = decode(['address'], demand.raw_data)[0]
+            print(f"  Recipient: {recipient}")
+        elif demand.demand_type == "TrustedOracle":
+            oracle, data = decode(['address', 'bytes'], demand.raw_data)
+            print(f"  Oracle: {oracle}")
 
-# Example usage
-parsed = parse_all_arbiter_demand(composed_demand)
-arbiters = parsed['arbiters']
-sub_demands = parsed['demands']
-
-assert arbiters[0] == time_before_arbiter, "First arbiter must be TimeBeforeArbiter"
-assert arbiters[1] == recipient_arbiter, "Second arbiter must be RecipientArbiter"
-
-# Parse sub-demands based on known arbiter types
-deadline_data = decode(['uint64'], sub_demands[0])
-print(f"Deadline: {datetime.fromtimestamp(deadline_data[0])}")
+# For AnyArbiter, use the any decoder
+decoded_any = alice_client.arbiters.logical.any.decode(any_arbiter_demand)
+print(f"AnyArbiter sub-demands: {len(decoded_any.demands)}")
 ```
 
-If this isn't possible, you could keep a local record mapping sub-arbiters that you support (including each logical arbiter) to their DemandData formats, and parse demands recursively.
-
-**Solidity**
-
-```solidity
-// Example: Recursive demand parser contract
-contract DemandParser {
-    struct ArbiterInfo {
-        string name;
-        string demandFormat;
-        bool isLogical;
-    }
-
-    mapping(address => ArbiterInfo) public arbiterRegistry;
-
-    constructor() {
-        // Register known arbiters
-        arbiterRegistry[address(timeBeforeArbiter)] = ArbiterInfo(
-            "TimeBeforeArbiter",
-            "(uint64)",
-            false
-        );
-        arbiterRegistry[address(recipientArbiter)] = ArbiterInfo(
-            "RecipientArbiter",
-            "(address)",
-            false
-        );
-        arbiterRegistry[address(trustedOracleArbiter)] = ArbiterInfo(
-            "TrustedOracleArbiter",
-            "(address,bytes)",
-            false
-        );
-        arbiterRegistry[address(allArbiter)] = ArbiterInfo(
-            "AllArbiter",
-            "(address[],bytes[])",
-            true
-        );
-        arbiterRegistry[address(anyArbiter)] = ArbiterInfo(
-            "AnyArbiter",
-            "(address[],bytes[])",
-            true
-        );
-    }
-
-    function parseDemand(address arbiter, bytes memory demand)
-        public
-        view
-        returns (string memory arbiterName, bytes memory parsedData)
-    {
-        ArbiterInfo memory info = arbiterRegistry[arbiter];
-        require(bytes(info.name).length > 0, "Unknown arbiter");
-
-        if (info.isLogical) {
-            // Recursively parse logical arbiters
-            (address[] memory subArbiters, bytes[] memory subDemands) =
-                abi.decode(demand, (address[], bytes[]));
-
-            // Continue parsing sub-demands...
-            for (uint i = 0; i < subArbiters.length; i++) {
-                (string memory subName,) = parseDemand(subArbiters[i], subDemands[i]);
-                // Process sub-demand...
-            }
-        }
-
-        return (info.name, demand);
-    }
-}
-```
-
-**TypeScript**
-
-```typescript
-// Example: Recursive demand parser with arbiter registry
-class DemandParser {
-  private arbiterRegistry: Map<
-    string,
-    {
-      name: string;
-      demandFormat: string;
-      isLogical: boolean;
-      parseFunction?: (data: `0x${string}`) => any;
-    }
-  >;
-
-  constructor() {
-    this.arbiterRegistry = new Map();
-
-    // Register known arbiters
-    this.arbiterRegistry.set(timeBeforeArbiter, {
-      name: "TimeBeforeArbiter",
-      demandFormat: "(uint64 time)",
-      isLogical: false,
-      parseFunction: (data) =>
-        decodeAbiParameters(parseAbiParameters("(uint64 time)"), data)[0],
-    });
-
-    this.arbiterRegistry.set(recipientArbiter, {
-      name: "RecipientArbiter",
-      demandFormat: "(address recipient)",
-      isLogical: false,
-      parseFunction: (data) =>
-        decodeAbiParameters(parseAbiParameters("(address recipient)"), data)[0],
-    });
-
-    this.arbiterRegistry.set(trustedOracleArbiter, {
-      name: "TrustedOracleArbiter",
-      demandFormat: "(address oracle, bytes data)",
-      isLogical: false,
-      parseFunction: (data) => client.arbiters.decodeTrustedOracleDemand(data),
-    });
-
-    this.arbiterRegistry.set(allArbiter, {
-      name: "AllArbiter",
-      demandFormat: "(address[] arbiters, bytes[] demands)",
-      isLogical: true,
-      parseFunction: (data) => client.arbiters.decodeAllArbiterDemand(data),
-    });
-
-    this.arbiterRegistry.set(anyArbiter, {
-      name: "AnyArbiter",
-      demandFormat: "(address[] arbiters, bytes[] demands)",
-      isLogical: true,
-      parseFunction: (data) => client.arbiters.decodeAnyArbiterDemand(data),
-    });
-  }
-
-  parseDemand(arbiter: `0x${string}`, demand: `0x${string}`): any {
-    const info = this.arbiterRegistry.get(arbiter);
-    if (!info) {
-      throw new Error(`Unknown arbiter: ${arbiter}`);
-    }
-
-    const parsed = info.parseFunction ? info.parseFunction(demand) : null;
-
-    if (info.isLogical) {
-      // Recursively parse logical arbiters
-      const { arbiters, demands } = parsed;
-      const subResults = [];
-
-      for (let i = 0; i < arbiters.length; i++) {
-        subResults.push(this.parseDemand(arbiters[i], demands[i]));
-      }
-
-      return {
-        name: info.name,
-        arbiters: arbiters,
-        subDemands: subResults,
-      };
-    }
-
-    return {
-      name: info.name,
-      data: parsed,
-    };
-  }
-}
-
-// Example usage
-const parser = new DemandParser();
-const result = parser.parseDemand(allArbiter, composedDemand);
-console.log("Parsed demand structure:", JSON.stringify(result, null, 2));
-```
-
-**Alloy**
-
-```rust
-// Example: Recursive demand parser with arbiter registry
-use std::collections::HashMap;
-
-struct ArbiterInfo {
-    name: String,
-    demand_format: String,
-    is_logical: bool,
-}
-
-struct DemandParser {
-    arbiter_registry: HashMap<Address, ArbiterInfo>,
-}
-
-impl DemandParser {
-    fn new() -> Self {
-        let mut registry = HashMap::new();
-
-        // Register known arbiters
-        registry.insert(
-            time_before_arbiter_address,
-            ArbiterInfo {
-                name: "TimeBeforeArbiter".to_string(),
-                demand_format: "(uint64)".to_string(),
-                is_logical: false,
-            },
-        );
-
-        registry.insert(
-            recipient_arbiter_address,
-            ArbiterInfo {
-                name: "RecipientArbiter".to_string(),
-                demand_format: "(address)".to_string(),
-                is_logical: false,
-            },
-        );
-
-        registry.insert(
-            trusted_oracle_arbiter_address,
-            ArbiterInfo {
-                name: "TrustedOracleArbiter".to_string(),
-                demand_format: "(address,bytes)".to_string(),
-                is_logical: false,
-            },
-        );
-
-        registry.insert(
-            all_arbiter_address,
-            ArbiterInfo {
-                name: "AllArbiter".to_string(),
-                demand_format: "(address[],bytes[])".to_string(),
-                is_logical: true,
-            },
-        );
-
-        registry.insert(
-            any_arbiter_address,
-            ArbiterInfo {
-                name: "AnyArbiter".to_string(),
-                demand_format: "(address[],bytes[])".to_string(),
-                is_logical: true,
-            },
-        );
-
-        Self {
-            arbiter_registry: registry,
-        }
-    }
-
-    fn parse_demand(&self, arbiter: Address, demand: Bytes) -> eyre::Result<Value> {
-        let info = self.arbiter_registry
-            .get(&arbiter)
-            .ok_or_else(|| eyre::eyre!("Unknown arbiter: {}", arbiter))?;
-
-        if info.is_logical {
-            // Parse as MultiArbiter::DemandData
-            let demand_data = MultiArbiter::DemandData::abi_decode(&demand, true)?;
-
-            // Recursively parse sub-demands
-            let mut sub_results = Vec::new();
-            for (sub_arbiter, sub_demand) in demand_data.arbiters.iter()
-                .zip(demand_data.demands.iter())
-            {
-                sub_results.push(self.parse_demand(*sub_arbiter, sub_demand.clone())?);
-            }
-
-            return Ok(json!({
-                "name": info.name,
-                "arbiters": demand_data.arbiters,
-                "subDemands": sub_results,
-            }));
-        }
-
-        // Parse based on known format
-        let parsed_data = match info.name.as_str() {
-            "TimeBeforeArbiter" => {
-                let data = contracts::TimeBeforeArbiter::DemandData::abi_decode(&demand, true)?;
-                json!({ "time": data.time })
-            },
-            "RecipientArbiter" => {
-                let data = contracts::RecipientArbiter::DemandData::abi_decode(&demand, true)?;
-                json!({ "recipient": data.recipient })
-            },
-            "TrustedOracleArbiter" => {
-                let data = contracts::TrustedOracleArbiter::DemandData::abi_decode(&demand, true)?;
-                json!({ "oracle": data.oracle, "data": data.data })
-            },
-            _ => json!({ "raw": demand }),
-        };
-
-        Ok(json!({
-            "name": info.name,
-            "data": parsed_data,
-        }))
-    }
-}
-
-// Example usage
-let parser = DemandParser::new();
-let result = parser.parse_demand(all_arbiter_address, composed_demand)?;
-println!("Parsed demand structure: {:#?}", result);
-```
-
-**Python**
-
-```python
-# Example: Recursive demand parser with arbiter registry
-class DemandParser:
-    def __init__(self):
-        self.arbiter_registry = {}
-
-        # Register known arbiters
-        self.arbiter_registry[time_before_arbiter] = {
-            'name': 'TimeBeforeArbiter',
-            'demand_format': '(uint64)',
-            'is_logical': False,
-            'parse_function': lambda data: decode(['uint64'], data)[0]
-        }
-
-        self.arbiter_registry[recipient_arbiter] = {
-            'name': 'RecipientArbiter',
-            'demand_format': '(address)',
-            'is_logical': False,
-            'parse_function': lambda data: decode(['address'], data)[0]
-        }
-
-        self.arbiter_registry[trusted_oracle_arbiter] = {
-            'name': 'TrustedOracleArbiter',
-            'demand_format': '(address,bytes)',
-            'is_logical': False,
-            'parse_function': lambda data: decode(['address', 'bytes'], data)
-        }
-
-        self.arbiter_registry[all_arbiter] = {
-            'name': 'AllArbiter',
-            'demand_format': '(address[],bytes[])',
-            'is_logical': True,
-            'parse_function': lambda data: decode(['address[]', 'bytes[]'], data)
-        }
-
-        self.arbiter_registry[any_arbiter] = {
-            'name': 'AnyArbiter',
-            'demand_format': '(address[],bytes[])',
-            'is_logical': True,
-            'parse_function': lambda data: decode(['address[]', 'bytes[]'], data)
-        }
-
-    def parse_demand(self, arbiter, demand):
-        """Recursively parse a demand based on the arbiter type"""
-        info = self.arbiter_registry.get(arbiter)
-        if not info:
-            raise ValueError(f"Unknown arbiter: {arbiter}")
-
-        parsed = info['parse_function'](demand) if 'parse_function' in info else None
-
-        if info['is_logical']:
-            # Recursively parse logical arbiters
-            arbiters, demands = parsed
-            sub_results = []
-
-            for sub_arbiter, sub_demand in zip(arbiters, demands):
-                sub_results.append(self.parse_demand(sub_arbiter, sub_demand))
-
-            return {
-                'name': info['name'],
-                'arbiters': arbiters,
-                'subDemands': sub_results
-            }
-
-        return {
-            'name': info['name'],
-            'data': parsed
-        }
-
-# Example usage
-parser = DemandParser()
-result = parser.parse_demand(all_arbiter, composed_demand)
-import json
-print("Parsed demand structure:", json.dumps(result, indent=2, default=str))
-
-# Helper function to extract specific values from parsed structure
-def find_arbiter_data(parsed, arbiter_name):
-    """Find data for a specific arbiter in the parsed structure"""
-    if parsed['name'] == arbiter_name:
-        return parsed.get('data')
-
-    if 'subDemands' in parsed:
-        for sub in parsed['subDemands']:
-            result = find_arbiter_data(sub, arbiter_name)
-            if result is not None:
-                return result
-
-    return None
-
-# Extract specific values
-deadline = find_arbiter_data(result, 'TimeBeforeArbiter')
-recipient = find_arbiter_data(result, 'RecipientArbiter')
-print(f"Deadline: {datetime.fromtimestamp(deadline)}")
-print(f"Recipient: {recipient}")
-```
+For custom arbiters not included in the SDK's built-in decoders, you can extend the decoder registry (TypeScript) or manually decode the raw bytes using ABI decoding.
