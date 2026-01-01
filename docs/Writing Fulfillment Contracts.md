@@ -240,8 +240,8 @@ contract CryptoSignatureObligation is BaseObligation, IArbiter {
     function checkObligation(
         Attestation memory obligation,
         bytes memory demand,
-        bytes32 counteroffer
-    ) external pure override returns (bool) {
+        bytes32 fulfilling
+    ) external view override returns (bool) {
         DemandData memory demandData = abi.decode(demand, (DemandData));
         ObligationData memory obligationData = decodeObligationData(
             obligation.data

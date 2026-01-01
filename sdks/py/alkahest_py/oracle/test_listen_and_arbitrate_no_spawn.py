@@ -54,7 +54,7 @@ async def test_listen_and_arbitrate_no_spawn():
     await oracle_client.request_arbitration(fulfillment_uid, env.bob, inner_demand_data)
 
     # Decision function
-    def decision_function(attestation):
+    def decision_function(attestation, demand):
         obligation_str = env.bob_client.extract_obligation_data(attestation)
         print(f"Arbitrating obligation: {obligation_str}")
         return obligation_str == "good"

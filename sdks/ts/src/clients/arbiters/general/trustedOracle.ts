@@ -196,10 +196,10 @@ export const makeTrustedOracleArbiterClient = (viemClient: ViemClient, addresses
 
   /**
    * Arbitrate past attestations
-   * @param arbitrate - Callback that returns decision (boolean) for each attestation, or null to skip
+   * @param arbitrate - Callback that returns decision (boolean) for each attestation with demand, or null to skip
    */
   const arbitratePast = async (
-    arbitrate: (attestation: Attestation) => Promise<boolean | null>,
+    arbitrate: (awd: AttestationWithDemand) => Promise<boolean | null>,
     options: ArbitrateOptions = {},
   ): Promise<Decision[]> => {
     const attestationsWithDemand = await getArbitrationRequests(options);
@@ -207,7 +207,7 @@ export const makeTrustedOracleArbiterClient = (viemClient: ViemClient, addresses
     // Process arbitration sequentially to avoid nonce conflicts
     const decisions: (Decision | null)[] = [];
     for (const awd of attestationsWithDemand) {
-      const decision = await arbitrate(awd.attestation);
+      const decision = await arbitrate(awd);
       if (decision === null) {
         decisions.push(null);
         continue;
@@ -231,10 +231,10 @@ export const makeTrustedOracleArbiterClient = (viemClient: ViemClient, addresses
 
   /**
    * Listen for new arbitration requests and arbitrate them
-   * @param arbitrate - Callback that returns decision (boolean) for each attestation, or null to skip
+   * @param arbitrate - Callback that returns decision (boolean) for each attestation with demand, or null to skip
    */
   const listenAndArbitrate = async (
-    arbitrate: (attestation: Attestation) => Promise<boolean | null>,
+    arbitrate: (awd: AttestationWithDemand) => Promise<boolean | null>,
     options: ArbitrateOptions & {
       onAfterArbitrate?: (decision: Decision) => Promise<void>;
       pollingInterval?: number;
@@ -261,7 +261,7 @@ export const makeTrustedOracleArbiterClient = (viemClient: ViemClient, addresses
             // Extract demand from ArbitrationRequested event
             const demand = log.args.demand as `0x${string}`;
 
-            const decisionResult = await arbitrate(attestation);
+            const decisionResult = await arbitrate({ attestation, demand });
             if (decisionResult === null) return;
 
             // Decode the full demand to get the inner data

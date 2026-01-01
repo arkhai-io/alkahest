@@ -51,7 +51,7 @@ test("contextless offchain identity oracle flow", async () => {
   const demand = "0x" as `0x${string}`;
 
   const listener = await testContext.charlie.client.arbiters.general.trustedOracle.listenAndArbitrate(
-    async (attestation) => {
+    async ({ attestation }) => {
       // Extract obligation data
       const obligation = testContext.charlie.client.extractObligationData(stringObligationAbi, attestation);
 

@@ -127,7 +127,7 @@ async def test_contextless_offchain_identity_oracle_flow():
     identity_registry[identity_address] = 0
 
     # Define decision function using closure to access registry
-    def decision_function(attestation):
+    def decision_function(attestation, demand):
         return verify_identity_decision(attestation, oracle_client)
 
     def callback(decision):

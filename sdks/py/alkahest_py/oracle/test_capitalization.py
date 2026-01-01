@@ -94,7 +94,7 @@ async def test_synchronous_offchain_oracle_capitalization_flow():
     await env.bob_client.oracle.request_arbitration(fulfillment_uid, oracle_address, inner_demand_data)
 
     # Step 4: Oracle evaluates with async decision function
-    async def decision_function(attestation):
+    async def decision_function(attestation, demand):
         """Evaluate whether the fulfillment meets the demand requirements"""
         # Extract the obligation data (the bash command)
         try:
@@ -103,17 +103,14 @@ async def test_synchronous_offchain_oracle_capitalization_flow():
             print(f"Failed to extract obligation: {e}")
             return False
 
-        # Fetch escrow attestation from blockchain (async!)
+        # Parse the demand directly from callback argument (no need to fetch from escrow!)
         try:
-            escrow_attestation = await oracle_client.get_escrow_attestation(attestation)
-            demand_data_obj = oracle_client.oracle.extract_demand_data(escrow_attestation)
-            # Parse the JSON demand payload
-            demand_json = json.loads(demand_data_obj.data.decode('utf-8'))
+            demand_json = json.loads(bytes(demand).decode('utf-8'))
         except Exception as e:
-            print(f"Failed to fetch/extract demand: {e}")
+            print(f"Failed to parse demand: {e}")
             return False
 
-        # Run the test cases from the fetched demand
+        # Run the test cases from the demand
         for case in demand_json['test_cases']:
             command = f'echo "$INPUT" | {statement}'
             try:

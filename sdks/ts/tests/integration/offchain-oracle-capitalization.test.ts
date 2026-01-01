@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, expect, test } from "bun:test";
 import { exec as execCallback } from "node:child_process";
 import { promisify } from "node:util";
-import { encodeAbiParameters, hexToBytes, parseAbiParameters, parseEther, stringToHex } from "viem";
+import { decodeAbiParameters, encodeAbiParameters, hexToBytes, parseAbiParameters, parseEther, stringToHex } from "viem";
 import { setupTestEnvironment, type TestContext } from "../utils/setup";
 import { teardownTestEnvironment } from "../utils/teardownTestEnvironment";
 
@@ -72,15 +72,16 @@ test("synchronous offchain oracle capitalization flow", async () => {
   await testContext.bob.client.viemClient.waitForTransactionReceipt({ hash: requestHash });
 
   const { decisions, unwatch } = await testContext.charlie.client.arbiters.general.trustedOracle.listenAndArbitrate(
-    async (attestation) => {
+    async ({ attestation, demand }) => {
       // Extract obligation data
       const obligation = testContext.charlie.client.extractObligationData(stringObligationAbi, attestation);
 
       const statement = obligation[0]?.item;
       if (!statement) return false;
 
-      // Get escrow and extract demand data
-      const [, demandData] = await testContext.charlie.client.getEscrowAndDemand(shellDemandAbi, attestation);
+      // Extract demand data from callback argument (no need to fetch from escrow!)
+      const outerDemand = testContext.charlie.client.arbiters.general.trustedOracle.decodeDemand(demand);
+      const demandData = decodeAbiParameters(shellDemandAbi, outerDemand.data);
 
       const payloadHex = demandData[0]?.payload;
       if (!payloadHex) return false;

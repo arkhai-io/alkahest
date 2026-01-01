@@ -21,11 +21,11 @@ For a complete example of how oracles fit into the escrow/fulfillment flow, see 
 
 ## Three Validation Patterns
 
-| Pattern | Returns | State | Escrow Access | Use Case |
+| Pattern | Returns | State | Demand Access | Use Case |
 |---------|---------|-------|---------------|----------|
-| **Contextless** | `Some(bool)` | Oracle maintains state | No | Signature verification, identity validation, format checking |
-| **Demand-Based** | `Some(bool)` | Stateless | Yes - reads demand | Custom validation per escrow, test case validation |
-| **Asynchronous** | `None` | Job queue | Yes - reads demand | Time-based monitoring, long-running computations |
+| **Contextless** | `Some(bool)` | Oracle maintains state | Ignores demand | Signature verification, identity validation, format checking |
+| **Demand-Based** | `Some(bool)` | Stateless | Uses demand from callback | Custom validation per escrow, test case validation |
+| **Asynchronous** | `None` | Job queue | Uses demand from callback | Time-based monitoring, long-running computations |
 
 **Decision flowchart:**
 ```
@@ -98,20 +98,20 @@ async fn run_contextless_oracle(
 
 ### Step 3: Implement the validation callback
 
-The validation callback receives the fulfillment attestation and checks it against your registry:
+The validation callback receives an `AttestationWithDemand` containing both the fulfillment attestation and the demand bytes from the `ArbitrationRequested` event. For contextless validation, we ignore the demand and focus on the attestation:
 
 ```rust
 use alkahest_rs::{
     contracts::StringObligation,
-    clients::oracle::ArbitrateOptions,
+    clients::oracle::{ArbitrateOptions, AttestationWithDemand},
     extensions::HasOracle,
 };
 use alloy::dyn_abi::SolType;
 
 fn verify_identity(
-    attestation: &alkahest_rs::contracts::IEAS::Attestation,
+    awd: &AttestationWithDemand,
 ) -> Pin<Box<dyn Future<Output = Option<bool>> + Send>> {
-    let attestation = attestation.clone();
+    let attestation = awd.attestation.clone();
 
     Box::pin(async move {
         // Step 3a: Extract fulfillment data
@@ -270,15 +270,12 @@ Buyers encode this as JSON in the `TrustedOracleArbiter` demand's `data` field.
 
 ### Step 2: Implement validation with demand
 
-The SDK provides critical helpers for extracting both the fulfillment and the original escrow demand:
+The validation callback receives an `AttestationWithDemand` containing both the fulfillment attestation and the demand bytes from the `ArbitrationRequested` event:
 
 ```rust
 use alkahest_rs::{
     AlkahestClient,
-    clients::{
-        arbiters::TrustedOracleArbiter,
-        oracle::ArbitrateOptions,
-    },
+    clients::oracle::{ArbitrateOptions, AttestationWithDemand},
     contracts::StringObligation,
     extensions::{HasOracle, HasStringObligation},
 };
@@ -290,9 +287,10 @@ async fn run_oracle(charlie_client: AlkahestClient<BaseExtensions>) -> eyre::Res
 
     let listen_result = charlie_oracle
         .listen_and_arbitrate_async(
-            move |attestation| {
+            move |awd: &AttestationWithDemand| {
                 let client = charlie_client_arc.clone();
-                let attestation = attestation.clone();
+                let attestation = awd.attestation.clone();
+                let demand_bytes = awd.demand.clone();
 
                 async move {
                     // Step 2a: Extract fulfillment using client helper
@@ -304,27 +302,14 @@ async fn run_oracle(charlie_client: AlkahestClient<BaseExtensions>) -> eyre::Res
 
                     let submitted_command = fulfillment.item;
 
-                    // Step 2b: Get escrow and extract demand using client helper
-                    // CRITICAL: This fetches the escrow attestation from the fulfillment's refUID
-                    // and decodes the nested TrustedOracleArbiter demand structure
-                    // Without checking the refUID, Bob could reuse one valid fulfillment
-                    // to claim multiple different escrows (replay attack)
-                    let Ok((_, demand)) = client
-                        .get_escrow_and_demand::<TrustedOracleArbiter::DemandData>(&attestation)
-                        .await
-                    else {
-                        return Some(false);
-                    };
-
-                    // Step 2c: Parse your custom demand format from the inner data
-                    // This is where Alice's specific requirements are decoded
+                    // Step 2b: Parse your custom demand format from the callback argument
                     let Ok(test_demand) = serde_json::from_slice::<CommandTestDemand>(
-                        demand.data.as_ref()
+                        demand_bytes.as_ref()
                     ) else {
                         return Some(false);
                     };
 
-                    // Step 2d: Apply validation logic using demand parameters
+                    // Step 2c: Apply validation logic using demand parameters
                     // Run each test case to verify Bob's submission works correctly
                     for case in test_demand.test_cases {
                         let full_command = format!("echo \"$INPUT\" | {}", submitted_command);
@@ -366,41 +351,38 @@ async fn run_oracle(charlie_client: AlkahestClient<BaseExtensions>) -> eyre::Res
 }
 ```
 
-**SDK helpers introduced:**
+**SDK helpers:**
 
 - `client.extract_obligation_data::<T>()` - Decode fulfillment attestation data
-- `client.get_escrow_and_demand::<T>()` - **THE KEY HELPER** - Fetch escrow from refUID and decode demand structure
-  - Internally calls `get_escrow_attestation()` to fetch the escrow attestation referenced by the fulfillment
-  - Then calls `extract_demand_data()` to decode the TrustedOracleArbiter wrapper and inner demand
-  - This is how you access Alice's original requirements to validate against Bob's work
+- The `awd.demand` field contains the demand bytes from the `ArbitrationRequested` event
+  - This is Alice's original requirements encoded as bytes - parse as needed for your use case
 
 ### Step 3: Understanding the data flow
 
 ```
-Fulfillment Attestation
-  └─ data: StringObligation { item: "tr '[:lower:]' '[:upper:]'" }
-  └─ refUID: points to escrow ──┐
-                                 │
-                                 ▼
-                         Escrow Attestation
-                           └─ data: ERC20EscrowObligation {
-                                arbiter: TrustedOracleArbiter address,
-                                demand: TrustedOracleArbiter::DemandData {
-                                  oracle: charlie_address,
-                                  data: CommandTestDemand (JSON) {
-                                    test_cases: [...]
-                                  }
-                                }
-                              }
+ArbitrationRequested Event
+  └─ obligation: fulfillment UID
+  └─ oracle: charlie_address
+  └─ demand: bytes (your custom demand format)
+        │
+        ▼
+  Callback receives AttestationWithDemand {
+        │
+        ├─ attestation: Fulfillment Attestation
+        │    └─ data: StringObligation { item: "tr '[:lower:]' '[:upper:]'" }
+        │    └─ refUID: points to escrow
+        │
+        └─ demand: Bytes (from event)
+             └─ Your custom format (e.g., JSON with test_cases)
+  }
 ```
 
 **Complete pattern:**
 
 1. Define demand format (your oracle's API)
-2. Implement validation callback:
-   - Use `extract_obligation_data()` to get fulfillment
-   - Use `get_escrow_and_demand()` to get escrow demand
-   - Parse your custom inner demand format
+2. Implement validation callback that receives `&AttestationWithDemand`:
+   - Use `extract_obligation_data()` to get fulfillment from `awd.attestation`
+   - Parse `awd.demand` bytes for your custom demand format
    - Apply validation logic comparing fulfillment to demand
    - Return `Some(true)` or `Some(false)`
 3. Set up listener with after-arbitrate hook
@@ -473,10 +455,13 @@ static SCHEDULER_STATE: OnceLock<Mutex<Option<SchedulerContext>>> = OnceLock::ne
 The listener callback schedules work but **does not make a decision** - it returns `None` to defer the decision to the worker:
 
 ```rust
+use alkahest_rs::clients::oracle::AttestationWithDemand;
+
 fn schedule_pings(
-    attestation: &alkahest_rs::contracts::IEAS::Attestation,
+    awd: &AttestationWithDemand,
 ) -> Pin<Box<dyn Future<Output = Option<bool>> + Send>> {
-    let attestation = attestation.clone();
+    let attestation = awd.attestation.clone();
+    let demand_bytes = awd.demand.clone();
 
     Box::pin(async move {
         let ctx_opt = SCHEDULER_STATE.get()?.lock().await.clone();
@@ -492,17 +477,9 @@ fn schedule_pings(
         };
         let service_url = statement.item.clone();
 
-        // Step 2b: Get the demand from escrow
-        let Ok((_, demand)) = ctx.client
-            .get_escrow_and_demand::<TrustedOracleArbiter::DemandData>(&attestation)
-            .await
-        else {
-            return None;
-        };
-
-        // Step 2c: Parse demand
+        // Step 2b: Parse demand from callback argument
         let Ok(uptime_demand) = serde_json::from_slice::<UptimeDemand>(
-            demand.data.as_ref()
+            demand_bytes.as_ref()
         ) else {
             return None;
         };
@@ -663,12 +640,12 @@ async fn run_async_oracle(
 **Complete asynchronous oracle pattern:**
 
 1. Define demand format and job state structures
-2. Implement scheduling callback that:
-   - Extracts fulfillment data
-   - Gets demand from escrow
-   - Creates job schedule
-   - Stores job in shared database
-   - Returns `None` (defers decision)
+2. Implement scheduling callback that receives `&AttestationWithDemand`:
+   - Extract fulfillment data from `awd.attestation`
+   - Parse `awd.demand` bytes for your custom demand format
+   - Create job schedule
+   - Store job in shared database
+   - Return `None` (defers decision)
 3. Implement background worker that:
    - Polls job database
    - Executes scheduled work

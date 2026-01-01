@@ -14,8 +14,9 @@ use pyo3::{pyclass, pymethods};
 
 // Re-export main types for backwards compatibility
 pub use trusted_oracle::{
-    OracleClient, PyArbitrateOptions, PyArbitrationMode, PyDecision, PyListenResult,
-    PyOracleAddresses, PyOracleAttestation, PyTrustedOracleArbiterDemandData, TrustedOracle,
+    OracleClient, PyArbitrateOptions, PyArbitrationMode, PyAttestationWithDemand, PyDecision,
+    PyListenResult, PyOracleAddresses, PyOracleAttestation, PyTrustedOracleArbiterDemandData,
+    TrustedOracle,
 };
 
 // Re-export confirmation types

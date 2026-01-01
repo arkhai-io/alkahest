@@ -33,9 +33,9 @@ fn identity_registry() -> &'static Mutex<HashMap<Address, u64>> {
 }
 
 fn verify_identity(
-    attestation: &alkahest_rs::contracts::IEAS::Attestation,
+    awd: &alkahest_rs::clients::oracle::AttestationWithDemand,
 ) -> Pin<Box<dyn Future<Output = Option<bool>> + Send>> {
-    let attestation = attestation.clone();
+    let attestation = awd.attestation.clone();
     Box::pin(async move {
         // Extract obligation data
         let obligation: StringObligation::ObligationData = match StringObligation::ObligationData::abi_decode(&attestation.data) {

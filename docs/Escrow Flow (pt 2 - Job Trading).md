@@ -51,34 +51,17 @@ const demand = aliceClient.arbiters.encodeTrustedOracleDemand({
   ]),
 });
 
-// Deposit ERC-20 into escrow with permit (gasless approval)
-const { attested: escrow } = await aliceClient.erc20.permitAndBuyWithErc20(
-  {
-    address: erc20Token,
-    value: parseEther("100"),
-  },
-  {
-    arbiter: trustedOracleArbiter,
-    demand: demand,
-  },
+// Deposit ERC-20 into escrow with permit (gasless approval - single step)
+const { attested: escrow } = await aliceClient.erc20.escrow.nonTierable.permitAndCreate(
+  { address: erc20Token, value: parseEther("100") },
+  { arbiter: trustedOracleArbiter, demand: demand },
   BigInt(Math.floor(Date.now() / 1000) + 86400), // 24 hour expiration
 );
 
-// Or with traditional approve + deposit
-await aliceClient.erc20.approve(
+// Or with approveAndCreate (combines approval + deposit in one SDK call)
+const { attested: escrow } = await aliceClient.erc20.escrow.nonTierable.approveAndCreate(
   { address: erc20Token, value: parseEther("100") },
-  "escrow",
-);
-
-const { attested: escrow } = await aliceClient.erc20.buyWithErc20(
-  {
-    address: erc20Token,
-    value: parseEther("100"),
-  },
-  {
-    arbiter: trustedOracleArbiter,
-    demand: demand,
-  },
+  { arbiter: trustedOracleArbiter, demand: demand },
   BigInt(Math.floor(Date.now() / 1000) + 86400),
 );
 ```
@@ -96,47 +79,30 @@ let demand_data = ArbiterDemand {
 };
 let demand = demand_data.abi_encode().into();
 
-// Deposit ERC-20 into escrow with permit (gasless approval)
+let price = Erc20Data {
+    address: erc20_token,
+    value: U256::from(100e18),
+};
+let item = ArbiterData {
+    arbiter: trusted_oracle_arbiter,
+    demand: demand,
+};
+
+// Deposit ERC-20 into escrow with permit (gasless approval - single step)
 let escrow_receipt = alice_client
     .erc20()
-    .permit_and_buy_with_erc20(
-        &Erc20Data {
-            address: erc20_token,
-            value: U256::from(100e18),
-        },
-        &ArbiterData {
-            arbiter: trusted_oracle_arbiter,
-            demand: demand,
-        },
-        expiration_time,
-    )
+    .escrow()
+    .non_tierable()
+    .permit_and_create(&price, &item, expiration_time)
     .await?;
+let escrow_uid = DefaultAlkahestClient::get_attested_event(escrow_receipt)?.uid;
 
-// Or with traditional approve + deposit
-alice_client
-    .erc20()
-    .approve(
-        &Erc20Data {
-            address: erc20_token,
-            value: U256::from(100e18),
-        },
-        "escrow",
-    )
-    .await?;
-
+// Or with approve_and_create (combines approval + deposit in one SDK call)
 let escrow_receipt = alice_client
     .erc20()
-    .buy_with_erc20(
-        &Erc20Data {
-            address: erc20_token,
-            value: U256::from(100e18),
-        },
-        &ArbiterData {
-            arbiter: trusted_oracle_arbiter,
-            demand: demand,
-        },
-        expiration_time,
-    )
+    .escrow()
+    .non_tierable()
+    .approve_and_create(&price, &item, expiration_time)
     .await?;
 ```
 
@@ -151,24 +117,18 @@ from alkahest_py import TrustedOracleArbiterDemandData
 inner = encode(['string'], ['capitalize hello world'])
 demand = TrustedOracleArbiterDemandData(charlie, inner).encode_self()
 
-# Deposit ERC-20 into escrow with permit (gasless approval)
-escrow_receipt = await alice_client.erc20.permit_and_buy_with_erc20(
-    {"address": erc20_token, "value": 100},
-    {"arbiter": trusted_oracle_arbiter, "demand": demand},
-    int(time.time()) + 86400,  # 24 hour expiration
+price = {"address": erc20_token, "value": 100}
+item = {"arbiter": trusted_oracle_arbiter, "demand": demand}
+
+# Deposit ERC-20 into escrow with permit (gasless approval - single step)
+escrow_receipt = await alice_client.erc20.escrow.non_tierable.permit_and_create(
+    price, item, int(time.time()) + 86400  # 24 hour expiration
 )
 escrow_uid = escrow_receipt["log"]["uid"]
 
-# Or with traditional approve + deposit
-await alice_client.erc20.approve(
-    {"address": erc20_token, "value": 100},
-    "escrow",
-)
-
-escrow_receipt = await alice_client.erc20.buy_with_erc20(
-    {"address": erc20_token, "value": 100},
-    {"arbiter": trusted_oracle_arbiter, "demand": demand},
-    int(time.time()) + 86400,
+# Or with approve_and_create (combines approval + deposit in one SDK call)
+escrow_receipt = await alice_client.erc20.escrow.non_tierable.approve_and_create(
+    price, item, int(time.time()) + 86400
 )
 escrow_uid = escrow_receipt["log"]["uid"]
 ```
@@ -463,7 +423,7 @@ const checkArbitration = async () => {
   const logs = await publicClient.getFilterLogs({ filter });
   if (logs.length > 0 && logs[0].args.decision) {
     // Positive decision - Bob claims the escrow
-    await bobClient.erc20.collectEscrow(escrow.uid, fulfillment.uid);
+    await bobClient.erc20.escrow.nonTierable.collect(escrow.uid, fulfillment.uid);
     return true;
   }
   return false;
@@ -497,7 +457,9 @@ for log in logs {
         // Positive decision - Bob claims the escrow
         bob_client
             .erc20()
-            .collect_escrow(escrow_uid, fulfillment_uid)
+            .escrow()
+            .non_tierable()
+            .collect(escrow_uid, fulfillment_uid)
             .await?;
         println!("Successfully claimed escrow!");
     } else {
@@ -523,7 +485,7 @@ async def check_arbitration():
         decision = decode_log(logs[0], "ArbitrationMade")["decision"]
         if decision:
             # Positive decision - Bob claims the escrow
-            tx_hash = await bob_client.erc20.collect_escrow(
+            tx_hash = await bob_client.erc20.escrow.non_tierable.collect(
                 escrow_uid,
                 fulfillment_uid,
             )
@@ -551,7 +513,7 @@ erc20EscrowObligation.reclaimExpired(escrowUid);
 
 ```typescript
 // Alice reclaims her expired escrow
-await aliceClient.erc20.reclaimExpired(escrow.uid);
+await aliceClient.erc20.escrow.nonTierable.reclaimExpired(escrow.uid);
 ```
 
 **Rust**
@@ -560,6 +522,8 @@ await aliceClient.erc20.reclaimExpired(escrow.uid);
 // Alice reclaims her expired escrow
 alice_client
     .erc20()
+    .escrow()
+    .non_tierable()
     .reclaim_expired(escrow_uid)
     .await?;
 ```
@@ -568,7 +532,7 @@ alice_client
 
 ```python
 # Alice reclaims her expired escrow
-await alice_client.erc20.reclaim_expired(escrow_uid)
+await alice_client.erc20.escrow.non_tierable.reclaim_expired(escrow_uid)
 ```
 
 ## SDK utilities
@@ -880,7 +844,7 @@ const waitForArbitrationAndClaim = async () => {
       onLogs: async (logs) => {
         if (logs[0].args.decision) {
           // Positive decision - claim the escrow
-          await bobClient.erc20.collectEscrow(escrow.uid, fulfillment.uid);
+          await bobClient.erc20.escrow.nonTierable.collect(escrow.uid, fulfillment.uid);
           resolve({ success: true });
         } else {
           resolve({ success: false });
@@ -936,7 +900,9 @@ while let Some(log) = stream.next().await {
         // Positive decision - claim the escrow
         bob_client
             .erc20()
-            .collect_escrow(escrow_uid, fulfillment_uid)
+            .escrow()
+            .non_tierable()
+            .collect(escrow_uid, fulfillment_uid)
             .await?;
         println!("Successfully claimed escrow!");
         break;
@@ -1007,7 +973,7 @@ async def wait_for_arbitration_and_claim(fulfillment_uid, escrow_uid, timeout=60
             decision = decode_log(logs[0], "ArbitrationMade")["decision"]
             if decision:
                 # Positive decision - claim the escrow
-                tx_hash = await bob_client.erc20.collect_escrow(escrow_uid, fulfillment_uid)
+                tx_hash = await bob_client.erc20.escrow.non_tierable.collect(escrow_uid, fulfillment_uid)
                 return {"success": True, "tx_hash": tx_hash}
             else:
                 return {"success": False, "reason": "Negative arbitration"}

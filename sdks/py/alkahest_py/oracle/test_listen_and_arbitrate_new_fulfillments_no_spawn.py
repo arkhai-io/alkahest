@@ -41,7 +41,7 @@ async def test_listen_and_arbitrate_new_fulfillments_no_spawn():
     escrow_uid = escrow_receipt['log']['uid']
 
     # Decision function
-    def decision_function(attestation):
+    def decision_function(attestation, demand):
         obligation_str = env.bob_client.extract_obligation_data(attestation)
         print(f"Arbitrating obligation: {obligation_str}")
         return obligation_str == "good"

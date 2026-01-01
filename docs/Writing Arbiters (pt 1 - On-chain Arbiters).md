@@ -295,195 +295,353 @@ contract MajorityVoteArbiter is IArbiter {
 
 ## Implementing SDK extensions
 
-When writing custom arbiters, you'll want to create corresponding SDK extensions to make them easy to use from client applications. The Alkahest SDKs (TypeScript, Rust, and Python) provide extensible architectures for adding new functionality.
+When writing custom arbiters, you'll want to create corresponding SDK extensions to make them easy to use from client applications. The Alkahest SDKs (TypeScript, Rust, and Python) use a hierarchical module architecture.
 
 ### TypeScript SDK Extensions
 
-To add support for a new arbiter in the TypeScript SDK:
+The TypeScript SDK uses a factory pattern with hierarchical namespacing. To add support for a new arbiter:
 
-1. **Create a client module** in `alkahest-ts/src/clients/`:
+1. **Create the arbiter module** with static encode/decode functions and a client factory:
 
 ```typescript
-// alkahest-ts/src/clients/majorityVote.ts
-import type { ViemClient } from "../utils";
-import type { ChainAddresses } from "../types";
+// alkahest-ts/src/clients/arbiters/custom/majorityVote.ts
+import { decodeAbiParameters, encodeAbiParameters, getAbiItem, parseAbiItem } from "viem";
+import { abi as majorityVoteArbiterAbi } from "../../../contracts/arbiters/MajorityVoteArbiter";
+import type { ChainAddresses } from "../../../types";
+import type { ViemClient } from "../../../utils";
 
-export const makeMajorityVoteClient = (
-  viemClient: ViemClient,
-  addresses: ChainAddresses,
-) => ({
-  encodeMajorityVoteDemand: (
-    voters: string[],
-    quorum: number,
-    data: string,
-  ) => {
-    return encodeAbiParameters(
-      [
-        { name: "voters", type: "address[]" },
-        { name: "quorum", type: "uint256" },
-        { name: "data", type: "bytes" },
-      ],
-      [voters, quorum, data],
-    );
-  },
-
-  decodeMajorityVoteDemand: (encoded: string) => {
-    return decodeAbiParameters(
-      [
-        { name: "voters", type: "address[]" },
-        { name: "quorum", type: "uint256" },
-        { name: "data", type: "bytes" },
-      ],
-      encoded,
-    );
-  },
-
-  castVote: async (obligation: string, vote: boolean, demandData: string) => {
-    // Implementation for casting a vote
-  },
-
-  getVoteStatus: async (obligation: string) => {
-    // Implementation for checking vote status
-  },
+// Extract DemandData type from contract ABI
+const decodeDemandFunction = getAbiItem({
+  abi: majorityVoteArbiterAbi.abi,
+  name: "decodeDemandData",
 });
+const demandDataType = decodeDemandFunction.outputs[0];
+
+export type MajorityVoteDemandData = {
+  voters: `0x${string}`[];
+  quorum: bigint;
+  data: `0x${string}`;
+};
+
+// Static encode/decode functions (usable without client)
+export const encodeDemand = (demand: MajorityVoteDemandData): `0x${string}` => {
+  return encodeAbiParameters([demandDataType], [demand]);
+};
+
+export const decodeDemand = (demandData: `0x${string}`): MajorityVoteDemandData => {
+  return decodeAbiParameters([demandDataType], demandData)[0] as MajorityVoteDemandData;
+};
+
+// Client factory for instance methods
+export const makeMajorityVoteClient = (viemClient: ViemClient, addresses: ChainAddresses) => {
+  const voteEvent = parseAbiItem(
+    "event VoteCast(bytes32 indexed obligation, address indexed voter, bool vote, uint256 yesVotes, uint256 noVotes)"
+  );
+
+  return {
+    encodeDemand,
+    decodeDemand,
+
+    castVote: async (obligation: `0x${string}`, vote: boolean, demandData: `0x${string}`) => {
+      return await viemClient.writeContract({
+        address: addresses.majorityVoteArbiter,
+        abi: majorityVoteArbiterAbi.abi,
+        functionName: "castVote",
+        args: [obligation, vote, demandData],
+      });
+    },
+
+    getVoteStatus: async (obligation: `0x${string}`) => {
+      const status = await viemClient.readContract({
+        address: addresses.majorityVoteArbiter,
+        abi: majorityVoteArbiterAbi.abi,
+        functionName: "voteStatuses",
+        args: [obligation],
+      });
+      return { yesVotes: status[0], noVotes: status[1] };
+    },
+
+    waitForQuorum: async (obligation: `0x${string}`, quorum: bigint) => {
+      // Watch for VoteCast events until quorum reached
+      return new Promise((resolve) => {
+        const unwatch = viemClient.watchEvent({
+          address: addresses.majorityVoteArbiter,
+          event: voteEvent,
+          args: { obligation },
+          onLogs: (logs) => {
+            const latest = logs[logs.length - 1];
+            if (latest && BigInt(latest.args.yesVotes!) >= quorum) {
+              unwatch();
+              resolve(latest.args);
+            }
+          },
+        });
+      });
+    },
+  };
+};
 ```
 
-2. **Add to the extensions** in `alkahest-ts/src/extensions.ts`:
+2. **Integrate into the hierarchical client** by adding to a parent module:
 
 ```typescript
-export const makeDefaultExtension = (client: any) => ({
-  // ... existing extensions ...
-  majorityVote: makeMajorityVoteClient(
-    client.viemClient,
-    client.contractAddresses,
-  ),
+// alkahest-ts/src/clients/arbiters/custom/index.ts
+import type { ChainAddresses } from "../../../types";
+import type { ViemClient } from "../../../utils";
+import { makeMajorityVoteClient } from "./majorityVote";
+
+export const makeCustomArbitersClient = (viemClient: ViemClient, addresses: ChainAddresses) => ({
+  majorityVote: makeMajorityVoteClient(viemClient, addresses),
 });
+
+// Re-export static functions and types
+export { encodeDemand as encodeMajorityVoteDemand, decodeDemand as decodeMajorityVoteDemand } from "./majorityVote";
+export type { MajorityVoteDemandData } from "./majorityVote";
 ```
 
 ### Rust SDK Extensions
 
-For the Rust SDK, implement a trait-based extension:
+The Rust SDK uses a module-based architecture with macros for ABI conversions:
 
-1. **Define the trait** in `alkahest-rs/src/extensions/`:
+1. **Define the module** with DemandData types and client methods:
 
 ```rust
-// alkahest-rs/src/extensions/majority_vote.rs
-use alloy::primitives::{Address, Bytes, U256};
+// alkahest-rs/src/clients/arbiters/majority_vote.rs
+use crate::{
+    contracts,
+    extensions::ContractModule,
+    impl_abi_conversions,
+    types::{SharedPublicProvider, SharedWalletProvider},
+};
+use alloy::{
+    primitives::{Address, Bytes, U256},
+    signers::local::PrivateKeySigner,
+};
 
-#[async_trait]
-pub trait HasMajorityVote {
-    async fn encode_majority_vote_demand(
-        &self,
-        voters: Vec<Address>,
-        quorum: U256,
-        data: Bytes,
-    ) -> Result<Bytes>;
+// Implement automatic ABI encoding/decoding via .into() conversions
+impl_abi_conversions!(contracts::arbiters::MajorityVoteArbiter::DemandData);
 
-    async fn cast_vote(
+pub struct MajorityVoteAddresses {
+    pub majority_vote_arbiter: Address,
+}
+
+#[derive(Clone)]
+pub struct MajorityVoteModule {
+    signer: PrivateKeySigner,
+    public_provider: SharedPublicProvider,
+    wallet_provider: SharedWalletProvider,
+    pub addresses: MajorityVoteAddresses,
+}
+
+impl MajorityVoteModule {
+    pub fn new(
+        signer: PrivateKeySigner,
+        public_provider: SharedPublicProvider,
+        wallet_provider: SharedWalletProvider,
+        addresses: MajorityVoteAddresses,
+    ) -> Self {
+        Self { signer, public_provider, wallet_provider, addresses }
+    }
+
+    /// Cast a vote for an obligation
+    pub async fn cast_vote(
         &self,
-        obligation: Bytes32,
+        obligation: alloy::primitives::FixedBytes<32>,
         vote: bool,
         demand_data: Bytes,
-    ) -> Result<TransactionReceipt>;
+    ) -> eyre::Result<alloy::rpc::types::TransactionReceipt> {
+        let contract = contracts::arbiters::MajorityVoteArbiter::new(
+            self.addresses.majority_vote_arbiter,
+            self.wallet_provider.clone(),
+        );
 
-    async fn get_vote_status(
+        let tx = contract.castVote(obligation, vote, demand_data);
+        let pending = tx.send().await?;
+        let receipt = pending.get_receipt().await?;
+        Ok(receipt)
+    }
+
+    /// Get vote status for an obligation
+    pub async fn get_vote_status(
         &self,
-        obligation: Bytes32,
-    ) -> Result<(U256, U256)>; // (yes_votes, no_votes)
+        obligation: alloy::primitives::FixedBytes<32>,
+    ) -> eyre::Result<(U256, U256)> {
+        let contract = contracts::arbiters::MajorityVoteArbiter::new(
+            self.addresses.majority_vote_arbiter,
+            self.public_provider.clone(),
+        );
+
+        let status = contract.voteStatuses(obligation).call().await?;
+        Ok((status.yesVotes, status.noVotes))
+    }
 }
 ```
 
-2. **Implement for AlkahestClient**:
+2. **Add to the parent module** and expose via the client:
 
 ```rust
-impl<E> HasMajorityVote for AlkahestClient<E>
-where
-    E: AlkahestExtension,
-{
-    // Implementation details...
+// In alkahest-rs/src/clients/arbiters/mod.rs
+mod majority_vote;
+pub use majority_vote::{MajorityVoteModule, MajorityVoteAddresses};
+
+// In ArbitersModule, add accessor method:
+impl ArbitersModule {
+    pub fn majority_vote(&self) -> MajorityVoteModule {
+        MajorityVoteModule::new(
+            self.signer.clone(),
+            self.public_provider.clone(),
+            self.wallet_provider.clone(),
+            // addresses from config
+        )
+    }
 }
 ```
 
 ### Python SDK Extensions
 
-The Python SDK uses PyO3 bindings to expose Rust functionality:
+The Python SDK uses PyO3 to wrap Rust modules, providing Python-native interfaces:
 
-1. **Add Python bindings** in `alkahest-py/src/`:
+1. **Create PyO3 bindings** that wrap the Rust module:
 
-```python
-# alkahest-py/alkahest_py/__init__.py
-from .alkahest_py import (
-    # ... existing imports ...
-    PyMajorityVoteArbiterDemandData as MajorityVoteArbiterDemandData,
-)
+```rust
+// alkahest-py/src/clients/arbiters/majority_vote.rs
+use alkahest_rs::clients::arbiters::MajorityVoteModule;
+use pyo3::{pyclass, pymethods, PyResult};
 
-class MajorityVoteClient:
-    def encode_demand(self, voters: list[str], quorum: int, data: bytes) -> bytes:
-        """Encode demand data for MajorityVoteArbiter"""
-        pass
+#[pyclass]
+#[derive(Clone)]
+pub struct MajorityVote {
+    inner: MajorityVoteModule,
+}
 
-    def cast_vote(self, obligation: str, vote: bool, demand_data: bytes):
-        """Cast a vote for an obligation"""
-        pass
+impl MajorityVote {
+    pub fn new(inner: MajorityVoteModule) -> Self {
+        Self { inner }
+    }
+}
 
-    def get_vote_status(self, obligation: str) -> tuple[int, int]:
-        """Get current vote counts (yes_votes, no_votes)"""
-        pass
+#[pymethods]
+impl MajorityVote {
+    /// Cast a vote for an obligation
+    pub fn cast_vote<'py>(
+        &self,
+        py: pyo3::Python<'py>,
+        obligation: String,
+        vote: bool,
+        demand_data: Vec<u8>,
+    ) -> PyResult<pyo3::Bound<'py, pyo3::PyAny>> {
+        let inner = self.inner.clone();
+        pyo3_async_runtimes::tokio::future_into_py(py, async move {
+            let obligation_bytes = obligation.parse()
+                .map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("{}", e)))?;
+            let receipt = inner.cast_vote(obligation_bytes, vote, demand_data.into())
+                .await
+                .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(format!("{}", e)))?;
+            Ok(format!("{:?}", receipt.transaction_hash))
+        })
+    }
+
+    /// Get vote status for an obligation
+    pub fn get_vote_status<'py>(
+        &self,
+        py: pyo3::Python<'py>,
+        obligation: String,
+    ) -> PyResult<pyo3::Bound<'py, pyo3::PyAny>> {
+        let inner = self.inner.clone();
+        pyo3_async_runtimes::tokio::future_into_py(py, async move {
+            let obligation_bytes = obligation.parse()
+                .map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("{}", e)))?;
+            let (yes, no) = inner.get_vote_status(obligation_bytes)
+                .await
+                .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(format!("{}", e)))?;
+            Ok((yes.to_string(), no.to_string()))
+        })
+    }
+
+    /// Encode demand data (static method)
+    #[staticmethod]
+    pub fn encode_demand(voters: Vec<String>, quorum: u64, data: Vec<u8>) -> PyResult<Vec<u8>> {
+        use alloy::sol_types::SolValue;
+        let voters: Vec<alloy::primitives::Address> = voters.iter()
+            .map(|v| v.parse())
+            .collect::<Result<_, _>>()
+            .map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("{}", e)))?;
+
+        let demand = alkahest_rs::contracts::arbiters::MajorityVoteArbiter::DemandData {
+            voters,
+            quorum: alloy::primitives::U256::from(quorum),
+            data: data.into(),
+        };
+        Ok(demand.abi_encode())
+    }
+}
 ```
 
-2. **Expose via AlkahestClient**:
+2. **Expose via the ArbitersClient**:
 
-```python
-class AlkahestClient:
-    @property
-    def majority_vote(self) -> MajorityVoteClient:
-        """Access MajorityVote arbiter functionality"""
-        return MajorityVoteClient(self._client)
+```rust
+// In alkahest-py/src/clients/arbiters/mod.rs
+#[pymethods]
+impl ArbitersClient {
+    #[getter]
+    pub fn majority_vote(&self) -> MajorityVote {
+        MajorityVote::new(self.inner.majority_vote())
+    }
+}
 ```
 
 ### Best Practices for SDK Extensions
 
-1. **Type Safety**: Use proper typing in all SDKs to catch errors at compile/type-check time
-2. **Consistent APIs**: Keep method names and patterns consistent across SDKs
-3. **Documentation**: Include comprehensive docstrings/comments with usage examples
-4. **Testing**: Write integration tests that verify the SDK correctly interacts with contracts
-5. **Error Handling**: Provide meaningful error messages for common failure cases
-6. **Gas Estimation**: Include gas estimation helpers for transaction methods
-7. **Event Parsing**: Add utilities to parse and filter relevant events
+1. **Extract types from contract ABIs**: Use `getAbiItem` (TS) or `impl_abi_conversions!` (Rust) to derive types from contract ABIs rather than duplicating struct definitions
+2. **Provide static functions**: Export `encodeDemand`/`decodeDemand` as static functions usable without instantiating a client
+3. **Use hierarchical namespacing**: Organize under `client.arbiters.custom.*` or similar to match existing SDK patterns
+4. **Handle async properly**: Use appropriate async patterns for each SDK (Promises in TS, async/await in Rust, PyO3 futures in Python)
+5. **Add event helpers**: Include methods to watch for and parse relevant contract events
+6. **Test with integration tests**: Write tests that deploy contracts and verify SDK interactions
 
 ### Example Usage Across SDKs
 
-Once implemented, developers can use your arbiter consistently across all SDKs:
+Once implemented, developers can use your arbiter consistently:
 
 **TypeScript**:
 
 ```typescript
-const demandData = await client.majorityVote.encodeMajorityVoteDemand(
-  [alice, bob, charlie],
-  2,
-  "0x",
-);
-await client.majorityVote.castVote(obligationUID, true, demandData);
+// Encode demand (static, no client needed)
+import { encodeMajorityVoteDemand } from "alkahest-ts/clients/arbiters/custom";
+const demand = encodeMajorityVoteDemand({ voters: [alice, bob, charlie], quorum: 2n, data: "0x" });
+
+// Or via client instance
+const demand = client.arbiters.custom.majorityVote.encodeDemand({ ... });
+await client.arbiters.custom.majorityVote.castVote(obligationUid, true, demand);
+const status = await client.arbiters.custom.majorityVote.getVoteStatus(obligationUid);
 ```
 
 **Rust**:
 
 ```rust
-let demand_data = client.encode_majority_vote_demand(
-    vec![alice, bob, charlie],
-    U256::from(2),
-    Bytes::default(),
-).await?;
-client.cast_vote(obligation_uid, true, demand_data).await?;
+use alkahest_rs::contracts::arbiters::MajorityVoteArbiter;
+use alloy::sol_types::SolValue;
+
+// Encode demand (using .into() from impl_abi_conversions!)
+let demand_data = MajorityVoteArbiter::DemandData {
+    voters: vec![alice, bob, charlie],
+    quorum: U256::from(2),
+    data: Bytes::default(),
+};
+let encoded: Bytes = demand_data.abi_encode().into();
+
+// Via client
+client.arbiters().majority_vote().cast_vote(obligation_uid, true, encoded).await?;
+let (yes, no) = client.arbiters().majority_vote().get_vote_status(obligation_uid).await?;
 ```
 
 **Python**:
 
 ```python
-demand_data = client.majority_vote.encode_demand(
-    [alice, bob, charlie],
-    2,
-    b""
-)
-client.majority_vote.cast_vote(obligation_uid, True, demand_data)
+# Encode demand (static method)
+demand = MajorityVote.encode_demand([alice, bob, charlie], 2, b"")
+
+# Or via client
+await client.arbiters.majority_vote.cast_vote(obligation_uid, True, demand)
+yes_votes, no_votes = await client.arbiters.majority_vote.get_vote_status(obligation_uid)
 ```
