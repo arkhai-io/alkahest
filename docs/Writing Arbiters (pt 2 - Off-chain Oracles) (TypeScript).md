@@ -21,11 +21,11 @@ For a complete example of how oracles fit into the escrow/fulfillment flow, see 
 
 ## Three Validation Patterns
 
-| Pattern | Returns | State | Escrow Access | Use Case |
+| Pattern | Returns | State | Demand Access | Use Case |
 |---------|---------|-------|---------------|----------|
-| **Contextless** | `boolean` | Oracle maintains state | No | Signature verification, identity validation, format checking |
-| **Demand-Based** | `boolean` | Stateless | Yes - reads demand | Custom validation per escrow, test case validation |
-| **Asynchronous** | `null` | Job queue | Yes - reads demand | Time-based monitoring, long-running computations |
+| **Contextless** | `boolean` | Oracle maintains state | Ignores demand | Signature verification, identity validation, format checking |
+| **Demand-Based** | `boolean` | Stateless | Uses demand from callback | Custom validation per escrow, test case validation |
+| **Asynchronous** | `null` | Job queue | Uses demand from callback | Time-based monitoring, long-running computations |
 
 **Decision flowchart:**
 ```
@@ -89,11 +89,11 @@ async function runContextlessOracle(charlieClient: AlkahestClient) {
 
 ### Step 3: Implement the validation callback
 
-The validation callback receives the fulfillment attestation and checks it against your registry:
+The validation callback receives an object containing both the fulfillment attestation and the demand bytes from the `ArbitrationRequested` event. For contextless validation, we ignore the demand and focus on the attestation:
 
 ```typescript
-const listener = await charlieClient.oracle.listenAndArbitrate(
-  async (attestation) => {
+const listener = await charlieClient.arbiters.general.trustedOracle.listenAndArbitrate(
+  async ({ attestation }) => {
     // Step 3a: Extract fulfillment data
     const obligation = charlieClient.extractObligationData(
       stringObligationAbi,
@@ -148,7 +148,7 @@ const listener = await charlieClient.oracle.listenAndArbitrate(
     identityRegistry.set(parsed.pubkey, parsed.nonce);
     return true;
   },
-  { skipAlreadyArbitrated: true },
+  { mode: "unarbitrated" },
 );
 ```
 
@@ -207,6 +207,7 @@ Decide what parameters buyers provide in their escrow demands:
 
 ```typescript
 import {
+  decodeAbiParameters,
   encodeAbiParameters,
   hexToBytes,
   parseAbiParameters,
@@ -236,11 +237,11 @@ Buyers encode this as JSON in the `TrustedOracleArbiter` demand's `data` field.
 
 ### Step 2: Implement validation with demand
 
-The SDK provides critical helpers for extracting both the fulfillment and the original escrow demand:
+The validation callback receives an object containing both the fulfillment attestation and the demand bytes from the `ArbitrationRequested` event:
 
 ```typescript
-const listener = await charlieClient.oracle.listenAndArbitrate(
-  async (attestation) => {
+const listener = await charlieClient.arbiters.general.trustedOracle.listenAndArbitrate(
+  async ({ attestation, demand }) => {
     // Step 2a: Extract fulfillment using client helper
     const obligation = charlieClient.extractObligationData(
       stringObligationAbi,
@@ -250,21 +251,14 @@ const listener = await charlieClient.oracle.listenAndArbitrate(
     const statement = obligation[0]?.item;
     if (!statement) return false;
 
-    // Step 2b: Get escrow and extract demand using client helper
-    // CRITICAL: This fetches the escrow attestation from the fulfillment's refUID
-    // and decodes the nested TrustedOracleArbiter demand structure
-    // Without checking the refUID, Bob could reuse one valid fulfillment
-    // to claim multiple different escrows (replay attack)
-    const [, demandData] = await charlieClient.getEscrowAndDemand(
-      shellDemandAbi,
-      attestation,
-    );
+    // Step 2b: Decode the demand from callback argument
+    const outerDemand = charlieClient.arbiters.general.trustedOracle.decodeDemand(demand);
+    const demandData = decodeAbiParameters(shellDemandAbi, outerDemand.data);
 
     const payloadHex = demandData[0]?.payload;
     if (!payloadHex) return false;
 
-    // Step 2c: Parse your custom demand format from the inner data
-    // This is where Alice's specific requirements are decoded
+    // Step 2c: Parse your custom demand format
     const payloadJson = new TextDecoder().decode(hexToBytes(payloadHex));
 
     let payload: ShellOracleDemand;
@@ -297,45 +291,45 @@ const listener = await charlieClient.oracle.listenAndArbitrate(
 
     return true;
   },
-  { skipAlreadyArbitrated: true },
+  { mode: "unarbitrated" },
 );
 ```
 
-**SDK helpers introduced:**
+**SDK helpers:**
 
 - `client.extractObligationData(abi, attestation)` - Decode fulfillment attestation data
-- `client.getEscrowAndDemand(abi, attestation)` - **THE KEY HELPER** - Fetch escrow from refUID and decode demand structure
-  - Internally fetches the escrow attestation referenced by the fulfillment
-  - Then decodes the TrustedOracleArbiter wrapper and inner demand
-  - This is how you access Alice's original requirements to validate against Bob's work
+- `client.arbiters.general.trustedOracle.decodeDemand(demand)` - Decode the TrustedOracleArbiter demand wrapper
+  - The `demand` argument comes from the callback
+  - Returns `{ oracle, data }` where `data` is your custom demand bytes
+- `decodeAbiParameters(yourAbi, outerDemand.data)` - Decode your custom demand format from the inner data
 
 ### Step 3: Understanding the data flow
 
 ```
-Fulfillment Attestation
-  └─ data: StringObligation { item: "tr '[:lower:]' '[:upper:]'" }
-  └─ refUID: points to escrow ──┐
-                                 │
-                                 ▼
-                         Escrow Attestation
-                           └─ data: ERC20EscrowObligation {
-                                arbiter: TrustedOracleArbiter address,
-                                demand: TrustedOracleArbiter::DemandData {
-                                  oracle: charlie_address,
-                                  data: CommandTestDemand (JSON) {
-                                    test_cases: [...]
-                                  }
-                                }
-                              }
+ArbitrationRequested Event
+  └─ obligation: fulfillment UID
+  └─ oracle: charlie_address
+  └─ demand: bytes (TrustedOracleArbiter demand format)
+        │
+        ▼
+  Callback receives { attestation, demand }
+        │
+        ├─ attestation: Fulfillment Attestation
+        │    └─ data: StringObligation { item: "tr '[:lower:]' '[:upper:]'" }
+        │    └─ refUID: points to escrow
+        │
+        └─ demand: Bytes (from event)
+             └─ decodeDemand() → { oracle, data }
+                  └─ data: Your custom format (e.g., JSON with test_cases)
 ```
 
 **Complete pattern:**
 
 1. Define demand format (your oracle's API)
-2. Implement validation callback:
-   - Use `extractObligationData()` to get fulfillment
-   - Use `getEscrowAndDemand()` to get escrow demand
-   - Parse your custom inner demand format
+2. Implement validation callback that receives `{ attestation, demand }`:
+   - Use `extractObligationData()` to get fulfillment from `attestation`
+   - Use `decodeDemand(demand)` to decode the TrustedOracleArbiter wrapper
+   - Use `decodeAbiParameters()` to parse your custom demand format
    - Apply validation logic comparing fulfillment to demand
    - Return `true` or `false`
 3. Cleanup listener when done
@@ -364,7 +358,7 @@ Listener (receives requests) → Job Queue (stores pending work)
 Define both the demand buyers will provide and the internal state for tracking scheduled work:
 
 ```typescript
-import { parseAbiParameters, stringToHex, encodeAbiParameters, hexToBytes } from "viem";
+import { decodeAbiParameters, parseAbiParameters, stringToHex, encodeAbiParameters, hexToBytes } from "viem";
 
 // Demand format (buyers provide this)
 type UptimeDemand = {
@@ -405,8 +399,8 @@ const uptimeDemandAbi = parseAbiParameters("(bytes payload)");
 The listener callback schedules work but **does not make a decision** - it returns `null` to defer the decision to the worker:
 
 ```typescript
-const listener = await charlieClient.oracle.listenAndArbitrate(
-  async (attestation) => {
+const listener = await charlieClient.arbiters.general.trustedOracle.listenAndArbitrate(
+  async ({ attestation, demand }) => {
     const ctx = schedulerContext;
     if (!ctx) return null;
 
@@ -422,11 +416,9 @@ const listener = await charlieClient.oracle.listenAndArbitrate(
     const fulfillmentUid = ctx.urlIndex.get(statement.item);
     if (!fulfillmentUid || ctx.jobDb.has(fulfillmentUid)) return null;
 
-    // Step 2b: Get the demand from escrow
-    const [, demandData] = await charlieClient.getEscrowAndDemand(
-      uptimeDemandAbi,
-      attestation,
-    );
+    // Step 2b: Decode the demand from callback argument
+    const outerDemand = charlieClient.arbiters.general.trustedOracle.decodeDemand(demand);
+    const demandData = decodeAbiParameters(uptimeDemandAbi, outerDemand.data);
 
     const payloadHex = demandData[0]?.payload;
     if (!payloadHex) return null;
@@ -465,7 +457,7 @@ const listener = await charlieClient.oracle.listenAndArbitrate(
     // async oracles return null and let the worker submit the decision later
     return null;
   },
-  { skipAlreadyArbitrated: true },
+  { mode: "unarbitrated" },
 );
 ```
 
@@ -581,9 +573,9 @@ async function runAsyncOracle(charlieClient: AlkahestClient) {
   const worker = startSchedulerWorker(scheduler, charlieClient.arbiters);
 
   // Step 4c: Start listener
-  const listener = await charlieClient.oracle.listenAndArbitrate(
+  const listener = await charlieClient.arbiters.general.trustedOracle.listenAndArbitrate(
     // ... scheduling callback from Step 2 ...
-    { skipAlreadyArbitrated: true },
+    { mode: "unarbitrated" },
   );
 
   // Step 4d: Wait and cleanup
@@ -600,12 +592,12 @@ async function runAsyncOracle(charlieClient: AlkahestClient) {
 **Complete asynchronous oracle pattern:**
 
 1. Define demand format and job state structures
-2. Implement scheduling callback that:
-   - Extracts fulfillment data
-   - Gets demand from escrow
-   - Creates job schedule
-   - Stores job in shared database
-   - Returns `null` (defers decision)
+2. Implement scheduling callback that receives `{ attestation, demand }`:
+   - Extract fulfillment data from `attestation`
+   - Use `decodeDemand(demand)` and `decodeAbiParameters()` to parse demand
+   - Create job schedule
+   - Store job in shared database
+   - Return `null` (defers decision)
 3. Implement background worker that:
    - Polls job database
    - Executes scheduled work
