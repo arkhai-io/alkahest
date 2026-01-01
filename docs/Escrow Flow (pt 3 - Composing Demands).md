@@ -70,16 +70,10 @@ const composedDemand = aliceClient.arbiters.encodeAllArbiterDemand({
   demands: [recipientDemand, oracleDemand],
 });
 
-// Deposit escrow with the composed demand
-const { attested: escrow } = await aliceClient.erc20.permitAndBuyWithErc20(
-  {
-    address: erc20Token,
-    value: parseEther("100"),
-  },
-  {
-    arbiter: allArbiter,
-    demand: composedDemand,
-  },
+// Deposit escrow with the composed demand (using permit for gasless approval)
+const { attested: escrow } = await aliceClient.erc20.escrow.nonTierable.permitAndCreate(
+  { address: erc20Token, value: parseEther("100") },
+  { arbiter: allArbiter, demand: composedDemand },
   BigInt(Math.floor(Date.now() / 1000) + 86400),
 );
 ```
@@ -111,20 +105,20 @@ let composed_demand = alice_client
     .arbiters()
     .encode_multi_arbiter_demand(&composed_demand_data);
 
-// Deposit escrow with the composed demand
+// Deposit escrow with the composed demand (using permit for gasless approval)
+let price = Erc20Data {
+    address: erc20_token,
+    value: U256::from(100e18),
+};
+let item = ArbiterData {
+    arbiter: all_arbiter_address,
+    demand: composed_demand,
+};
 let escrow_receipt = alice_client
     .erc20()
-    .permit_and_buy_with_erc20(
-        &Erc20Data {
-            address: erc20_token,
-            value: U256::from(100e18),
-        },
-        &ArbiterData {
-            arbiter: all_arbiter_address,
-            demand: composed_demand,
-        },
-        expiration_time,
-    )
+    .escrow()
+    .non_tierable()
+    .permit_and_create(&price, &item, expiration_time)
     .await?;
 ```
 
@@ -146,11 +140,11 @@ composed_demand = AllArbiterDemandData(
     [recipient_demand, oracle_demand]
 ).encode_self()
 
-# Deposit escrow with the composed demand
-escrow_receipt = await alice_client.erc20.permit_and_buy_with_erc20(
-    {"address": erc20_token, "value": 100},
-    {"arbiter": all_arbiter, "demand": composed_demand},
-    int(time.time()) + 86400
+# Deposit escrow with the composed demand (using permit for gasless approval)
+price = {"address": erc20_token, "value": 100}
+item = {"arbiter": all_arbiter, "demand": composed_demand}
+escrow_receipt = await alice_client.erc20.escrow.non_tierable.permit_and_create(
+    price, item, int(time.time()) + 86400
 )
 ```
 
@@ -236,16 +230,10 @@ const composedDemand = aliceClient.arbiters.encodeAnyArbiterDemand({
   demands: [oracle1Demand, oracle2Demand, oracle3Demand],
 });
 
-// Create escrow with flexible oracle validation
-const { attested: escrow } = await aliceClient.erc20.buyWithErc20(
-  {
-    address: erc20Token,
-    value: parseEther("50"),
-  },
-  {
-    arbiter: anyArbiter,
-    demand: composedDemand,
-  },
+// Create escrow with flexible oracle validation (using approveAndCreate)
+const { attested: escrow } = await aliceClient.erc20.escrow.nonTierable.approveAndCreate(
+  { address: erc20Token, value: parseEther("50") },
+  { arbiter: anyArbiter, demand: composedDemand },
   BigInt(Math.floor(Date.now() / 1000) + 7200), // 2 hour expiration
 );
 ```
@@ -284,20 +272,20 @@ let composed_demand = alice_client
     .arbiters()
     .encode_multi_arbiter_demand(&composed_demand_data);
 
-// Create escrow with flexible oracle validation
+// Create escrow with flexible oracle validation (using approve_and_create)
+let price = Erc20Data {
+    address: erc20_token,
+    value: U256::from(50e18),
+};
+let item = ArbiterData {
+    arbiter: any_arbiter_address,
+    demand: composed_demand,
+};
 let escrow_receipt = alice_client
     .erc20()
-    .buy_with_erc20(
-        &Erc20Data {
-            address: erc20_token,
-            value: U256::from(50e18),
-        },
-        &ArbiterData {
-            arbiter: any_arbiter_address,
-            demand: composed_demand,
-        },
-        current_timestamp + 7200, // 2 hour expiration
-    )
+    .escrow()
+    .non_tierable()
+    .approve_and_create(&price, &item, current_timestamp + 7200) // 2 hour expiration
     .await?;
 ```
 
@@ -317,11 +305,11 @@ composed_demand = AnyArbiterDemandData(
     [oracle1_demand, oracle2_demand, oracle3_demand]
 ).encode_self()
 
-# Create escrow with flexible oracle validation
-escrow_receipt = await alice_client.erc20.buy_with_erc20(
-    {"address": erc20_token, "value": 50},
-    {"arbiter": any_arbiter, "demand": composed_demand},
-    int(time.time()) + 7200  # 2 hour expiration
+# Create escrow with flexible oracle validation (using approve_and_create)
+price = {"address": erc20_token, "value": 50}
+item = {"arbiter": any_arbiter, "demand": composed_demand}
+escrow_receipt = await alice_client.erc20.escrow.non_tierable.approve_and_create(
+    price, item, int(time.time()) + 7200  # 2 hour expiration
 )
 ```
 
@@ -433,16 +421,10 @@ const finalDemand = aliceClient.arbiters.encodeAllArbiterDemand({
   demands: [deadlineDemand, recipientDemand, oracleOrDemand],
 });
 
-// Create the escrow with nested logical arbiters
-const { attested: escrow } = await aliceClient.erc20.buyWithErc20(
-  {
-    address: erc20Token,
-    value: parseEther("200"),
-  },
-  {
-    arbiter: allArbiter,
-    demand: finalDemand,
-  },
+// Create the escrow with nested logical arbiters (using approveAndCreate)
+const { attested: escrow } = await aliceClient.erc20.escrow.nonTierable.approveAndCreate(
+  { address: erc20Token, value: parseEther("200") },
+  { arbiter: allArbiter, demand: finalDemand },
   BigInt(Math.floor(Date.now() / 1000) + 7200), // 2 hour overall expiration
 );
 ```
@@ -495,20 +477,20 @@ let final_demand = alice_client
     .arbiters()
     .encode_multi_arbiter_demand(&final_demand_data);
 
-// Create the escrow with nested logical arbiters
+// Create the escrow with nested logical arbiters (using approve_and_create)
+let price = Erc20Data {
+    address: erc20_token,
+    value: U256::from(200e18),
+};
+let item = ArbiterData {
+    arbiter: all_arbiter_address,
+    demand: final_demand,
+};
 let escrow_receipt = alice_client
     .erc20()
-    .buy_with_erc20(
-        &Erc20Data {
-            address: erc20_token,
-            value: U256::from(200e18),
-        },
-        &ArbiterData {
-            arbiter: all_arbiter_address,
-            demand: final_demand,
-        },
-        current_timestamp + 7200, // 2 hour overall expiration
-    )
+    .escrow()
+    .non_tierable()
+    .approve_and_create(&price, &item, current_timestamp + 7200) // 2 hour overall expiration
     .await?;
 ```
 
@@ -537,11 +519,11 @@ final_demand = AllArbiterDemandData(
     [deadline_demand, recipient_demand, oracle_or_demand]
 ).encode_self()
 
-# Create the escrow with nested logical arbiters
-escrow_receipt = await alice_client.erc20.buy_with_erc20(
-    {"address": erc20_token, "value": 200},
-    {"arbiter": all_arbiter, "demand": final_demand},
-    int(time.time()) + 7200  # 2 hour overall expiration
+# Create the escrow with nested logical arbiters (using approve_and_create)
+price = {"address": erc20_token, "value": 200}
+item = {"arbiter": all_arbiter, "demand": final_demand}
+escrow_receipt = await alice_client.erc20.escrow.non_tierable.approve_and_create(
+    price, item, int(time.time()) + 7200  # 2 hour overall expiration
 )
 ```
 
