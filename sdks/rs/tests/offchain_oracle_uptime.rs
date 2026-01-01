@@ -55,7 +55,6 @@ struct SchedulerContext {
     notify: Arc<Notify>,
     url_index: UrlIndex,
     client: Arc<alkahest_rs::AlkahestClient<alkahest_rs::extensions::BaseExtensions>>,
-    inner_demand_data: Bytes,
 }
 
 static SCHEDULER_STATE: OnceLock<Mutex<Option<SchedulerContext>>> = OnceLock::new();
@@ -65,9 +64,10 @@ fn scheduler_state() -> &'static Mutex<Option<SchedulerContext>> {
 }
 
 fn schedule_pings(
-    attestation: &alkahest_rs::contracts::IEAS::Attestation,
+    awd: &alkahest_rs::clients::oracle::AttestationWithDemand,
 ) -> Pin<Box<dyn Future<Output = Option<bool>> + Send>> {
-    let attestation = attestation.clone();
+    let attestation = awd.attestation.clone();
+    let demand_bytes = awd.demand.clone();
 
     Box::pin(async move {
         let ctx_opt = scheduler_state().lock().await.clone();
@@ -88,16 +88,8 @@ fn schedule_pings(
             return None;
         };
 
-        // Get escrow and extract demand
-        let Ok((_, demand)) = ctx
-            .client
-            .get_escrow_and_demand::<contracts::arbiters::TrustedOracleArbiter::DemandData>(&attestation)
-            .await
-        else {
-            return None;
-        };
-
-        let Ok(parsed_demand) = serde_json::from_slice::<UptimeDemand>(demand.data.as_ref()) else {
+        // Parse demand directly from awd.demand (the inner demand data passed to request_arbitration)
+        let Ok(parsed_demand) = serde_json::from_slice::<UptimeDemand>(demand_bytes.as_ref()) else {
             return None;
         };
 
@@ -118,7 +110,7 @@ fn schedule_pings(
         ctx.job_db.lock().await.entry(uid).or_insert(UptimeJob {
             min_uptime: parsed_demand.min_uptime,
             schedule,
-            demand: ctx.inner_demand_data.clone(),
+            demand: demand_bytes,
         });
         ctx.notify.notify_one();
         None
@@ -275,7 +267,6 @@ async fn run_async_uptime_oracle_example(test: &TestContext) -> eyre::Result<()>
             notify: Arc::clone(&scheduler_notify),
             url_index: Arc::clone(&url_index),
             client: Arc::new(charlie_client.clone()),
-            inner_demand_data: inner_demand_data.clone(),
         });
     }
 

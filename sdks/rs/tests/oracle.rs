@@ -88,9 +88,9 @@ mod tests {
             .bob_client
             .oracle()
             .arbitrate_past_sync(
-                move |attestation| {
+                move |awd| {
                     let obligation = bob_client
-                        .extract_obligation_data::<StringObligation::ObligationData>(attestation)
+                        .extract_obligation_data::<StringObligation::ObligationData>(&awd.attestation)
                         .ok()?;
                     Some(obligation.item == "good")
                 },
@@ -138,9 +138,9 @@ mod tests {
             .bob_client
             .oracle()
             .arbitrate_past_sync(
-                move |attestation| {
+                move |awd| {
                     let obligation = bob_client
-                        .extract_obligation_data::<StringObligation::ObligationData>(attestation)
+                        .extract_obligation_data::<StringObligation::ObligationData>(&awd.attestation)
                         .ok()?;
                     Some(obligation.item == "good")
                 },
@@ -180,9 +180,9 @@ mod tests {
             .bob_client
             .oracle()
             .arbitrate_past_sync(
-                move |attestation| {
+                move |awd| {
                     let obligation = bob_client
-                        .extract_obligation_data::<StringObligation::ObligationData>(attestation)
+                        .extract_obligation_data::<StringObligation::ObligationData>(&awd.attestation)
                         .ok()?;
                     Some(obligation.item == "good")
                 },
@@ -201,9 +201,9 @@ mod tests {
             .bob_client
             .oracle()
             .arbitrate_past_sync(
-                move |attestation| {
+                move |awd| {
                     let obligation = bob_client2
-                        .extract_obligation_data::<StringObligation::ObligationData>(attestation)
+                        .extract_obligation_data::<StringObligation::ObligationData>(&awd.attestation)
                         .ok()?;
                     Some(obligation.item == "good")
                 },
@@ -237,9 +237,9 @@ mod tests {
             .bob_client
             .oracle()
             .arbitrate_past_async(
-                move |attestation| {
+                move |awd| {
                     let client = bob_client.clone();
-                    let attestation = attestation.clone();
+                    let attestation = awd.attestation.clone();
                     async move {
                         let obligation = client
                             .extract_obligation_data::<StringObligation::ObligationData>(
@@ -280,9 +280,9 @@ mod tests {
             .bob_client
             .oracle()
             .listen_and_arbitrate_sync(
-                move |attestation| {
+                move |awd| {
                     let obligation = (*oracle_client)
-                        .extract_obligation_data::<StringObligation::ObligationData>(attestation)
+                        .extract_obligation_data::<StringObligation::ObligationData>(&awd.attestation)
                         .ok()?;
                     Some(obligation.item == "good")
                 },
@@ -315,9 +315,9 @@ mod tests {
             .bob_client
             .oracle()
             .listen_and_arbitrate_sync(
-                move |attestation| {
+                move |awd| {
                     let obligation = (*oracle_client)
-                        .extract_obligation_data::<StringObligation::ObligationData>(attestation)
+                        .extract_obligation_data::<StringObligation::ObligationData>(&awd.attestation)
                         .ok()?;
                     Some(obligation.item == "good")
                 },
@@ -378,9 +378,9 @@ mod tests {
             .bob_client
             .oracle()
             .listen_and_arbitrate_async(
-                move |attestation| {
+                move |awd| {
                     let client = bob_client.clone();
-                    let attestation = attestation.clone();
+                    let attestation = awd.attestation.clone();
                     async move {
                         let obligation = client
                             .extract_obligation_data::<StringObligation::ObligationData>(
@@ -440,9 +440,9 @@ mod tests {
             .bob_client
             .oracle()
             .listen_and_arbitrate_no_spawn(
-                move |attestation| {
+                move |awd| {
                     let obligation = oracle_client
-                        .extract_obligation_data::<StringObligation::ObligationData>(attestation)
+                        .extract_obligation_data::<StringObligation::ObligationData>(&awd.attestation)
                         .ok()?;
                     Some(obligation.item == "good")
                 },
@@ -497,9 +497,9 @@ mod tests {
             .bob_client
             .oracle()
             .listen_and_arbitrate_sync(
-                move |attestation| {
+                move |awd| {
                     let obligation = (*oracle_client)
-                        .extract_obligation_data::<StringObligation::ObligationData>(attestation)
+                        .extract_obligation_data::<StringObligation::ObligationData>(&awd.attestation)
                         .ok()?;
                     Some(obligation.item == "good")
                 },

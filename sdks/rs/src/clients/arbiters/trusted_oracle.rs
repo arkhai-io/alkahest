@@ -76,7 +76,7 @@ impl Default for ArbitrateOptions {
 trait ArbitrationStrategy {
     type Future: std::future::Future<Output = Option<bool>> + Send;
 
-    fn arbitrate(&self, attestation: &Attestation) -> Self::Future;
+    fn arbitrate(&self, awd: &AttestationWithDemand) -> Self::Future;
 }
 
 // Sync arbitration strategy
@@ -92,12 +92,12 @@ impl<F> SyncArbitration<F> {
 
 impl<F> ArbitrationStrategy for SyncArbitration<F>
 where
-    F: Fn(&Attestation) -> Option<bool>,
+    F: Fn(&AttestationWithDemand) -> Option<bool>,
 {
     type Future = std::future::Ready<Option<bool>>;
 
-    fn arbitrate(&self, attestation: &Attestation) -> Self::Future {
-        std::future::ready((self.func)(attestation))
+    fn arbitrate(&self, awd: &AttestationWithDemand) -> Self::Future {
+        std::future::ready((self.func)(awd))
     }
 }
 
@@ -114,13 +114,13 @@ impl<F> AsyncArbitration<F> {
 
 impl<F, Fut> ArbitrationStrategy for AsyncArbitration<F>
 where
-    F: Fn(&Attestation) -> Fut,
+    F: Fn(&AttestationWithDemand) -> Fut,
     Fut: std::future::Future<Output = Option<bool>> + Send,
 {
     type Future = Fut;
 
-    fn arbitrate(&self, attestation: &Attestation) -> Self::Future {
-        (self.func)(attestation)
+    fn arbitrate(&self, awd: &AttestationWithDemand) -> Self::Future {
+        (self.func)(awd)
     }
 }
 
@@ -482,17 +482,17 @@ impl TrustedOracleModule {
 
         let attestations_with_demand = self.get_arbitration_requested_attestations(options).await?;
 
-        // Strategy only sees attestations, not demand data
+        // Strategy receives full AttestationWithDemand
         let decision_futs = attestations_with_demand
             .iter()
-            .map(|awd| strategy.arbitrate(&awd.attestation));
+            .map(|awd| strategy.arbitrate(awd));
         let decisions = join_all(decision_futs).await;
 
         self.arbitrate_internal(decisions, attestations_with_demand)
             .await
     }
 
-    pub async fn arbitrate_past_sync<Arbitrate: Fn(&Attestation) -> Option<bool>>(
+    pub async fn arbitrate_past_sync<Arbitrate: Fn(&AttestationWithDemand) -> Option<bool>>(
         &self,
         arbitrate: Arbitrate,
         options: &ArbitrateOptions,
@@ -503,7 +503,7 @@ impl TrustedOracleModule {
 
     pub async fn arbitrate_past_async<
         ArbitrateFut: std::future::Future<Output = Option<bool>> + Send,
-        Arbitrate: Fn(&Attestation) -> ArbitrateFut,
+        Arbitrate: Fn(&AttestationWithDemand) -> ArbitrateFut,
     >(
         &self,
         arbitrate: Arbitrate,
@@ -553,6 +553,9 @@ impl TrustedOracleModule {
                     continue;
                 };
 
+                // Extract demand from ArbitrationRequested event
+                let demand = arbitration_log.inner.demand.clone();
+
                 if options.skip_arbitrated {
                     // ArbitrationMade event: (bytes32 indexed decisionKey, bytes32 indexed obligation, address indexed oracle, bool decision)
                     // topic1 = decisionKey, topic2 = obligation, topic3 = oracle
@@ -582,7 +585,12 @@ impl TrustedOracleModule {
                     continue;
                 }
 
-                let Some(decision_value) = strategy.arbitrate(&attestation).await else {
+                // Pass AttestationWithDemand to strategy
+                let awd = AttestationWithDemand {
+                    attestation: attestation.clone(),
+                    demand: demand.clone(),
+                };
+                let Some(decision_value) = strategy.arbitrate(&awd).await else {
                     continue;
                 };
 
@@ -590,8 +598,7 @@ impl TrustedOracleModule {
                     continue;
                 };
 
-                // Use demand from ArbitrationRequested event (not attestation data)
-                let demand = arbitration_log.inner.demand.clone();
+                // Use demand from ArbitrationRequested event
                 match arbiter
                     .arbitrate(attestation.uid, demand, decision_value)
                     .nonce(nonce)
@@ -617,7 +624,7 @@ impl TrustedOracleModule {
     }
 
     async fn spawn_arbitration_listener_sync<
-        Arbitrate: Fn(&Attestation) -> Option<bool> + Send + Sync + 'static,
+        Arbitrate: Fn(&AttestationWithDemand) -> Option<bool> + Send + Sync + 'static,
         OnAfterArbitrateFut: std::future::Future<Output = ()> + Send + 'static,
         OnAfterArbitrate: Fn(&Decision) -> OnAfterArbitrateFut + Send + Sync + 'static,
     >(
@@ -634,7 +641,7 @@ impl TrustedOracleModule {
 
     pub async fn spawn_arbitration_listener_async<
         ArbitrateFut: std::future::Future<Output = Option<bool>> + Send,
-        Arbitrate: Fn(&Attestation) -> ArbitrateFut + Send + Sync + 'static,
+        Arbitrate: Fn(&AttestationWithDemand) -> ArbitrateFut + Send + Sync + 'static,
         OnAfterArbitrateFut: std::future::Future<Output = ()> + Send + 'static,
         OnAfterArbitrate: Fn(&Decision) -> OnAfterArbitrateFut + Send + Sync + 'static,
     >(
@@ -650,7 +657,7 @@ impl TrustedOracleModule {
     }
 
     async fn handle_arbitration_stream_no_spawn<
-        Arbitrate: Fn(&Attestation) -> Option<bool>,
+        Arbitrate: Fn(&AttestationWithDemand) -> Option<bool>,
         OnAfterArbitrateFut: std::future::Future<Output = ()>,
         OnAfterArbitrate: Fn(&Decision) -> OnAfterArbitrateFut,
     >(
@@ -699,6 +706,9 @@ impl TrustedOracleModule {
                 continue;
             };
 
+            // Extract demand from ArbitrationRequested event
+            let demand = arbitration_log.inner.demand.clone();
+
             if options.skip_arbitrated {
                 let filter = self.make_arbitration_made_filter(Some(attestation.uid));
                 let logs_result = self.public_provider.get_logs(&filter).await;
@@ -720,7 +730,12 @@ impl TrustedOracleModule {
                 continue;
             }
 
-            let Some(decision_value) = arbitrate(&attestation) else {
+            // Pass AttestationWithDemand to arbitrate callback
+            let awd = AttestationWithDemand {
+                attestation: attestation.clone(),
+                demand: demand.clone(),
+            };
+            let Some(decision_value) = arbitrate(&awd) else {
                 continue;
             };
 
@@ -732,8 +747,7 @@ impl TrustedOracleModule {
                 continue;
             };
 
-            // Use demand from ArbitrationRequested event (not attestation data)
-            let demand = arbitration_log.inner.demand.clone();
+            // Use demand from ArbitrationRequested event
             match arbiter
                 .arbitrate(attestation.uid, demand, decision_value)
                 .nonce(nonce)
@@ -758,7 +772,7 @@ impl TrustedOracleModule {
     }
 
     pub async fn listen_and_arbitrate_sync<
-        Arbitrate: Fn(&Attestation) -> Option<bool> + Send + Sync + 'static,
+        Arbitrate: Fn(&AttestationWithDemand) -> Option<bool> + Send + Sync + 'static,
         OnAfterArbitrateFut: std::future::Future<Output = ()> + Send + 'static,
         OnAfterArbitrate: Fn(&Decision) -> OnAfterArbitrateFut + Send + Sync + 'static,
     >(
@@ -775,7 +789,7 @@ impl TrustedOracleModule {
                 self.get_arbitration_requested_attestations(options).await?;
             let decisions: Vec<Option<bool>> = attestations_with_demand
                 .iter()
-                .map(|awd| arbitrate(&awd.attestation))
+                .map(|awd| arbitrate(awd))
                 .collect();
             self.arbitrate_internal(decisions, attestations_with_demand)
                 .await?
@@ -797,7 +811,7 @@ impl TrustedOracleModule {
 
     pub async fn listen_and_arbitrate_async<
         ArbitrateFut: std::future::Future<Output = Option<bool>> + Send,
-        Arbitrate: Fn(&Attestation) -> ArbitrateFut + Send + Sync + 'static,
+        Arbitrate: Fn(&AttestationWithDemand) -> ArbitrateFut + Send + Sync + 'static,
         OnAfterArbitrateFut: std::future::Future<Output = ()> + Send + 'static,
         OnAfterArbitrate: Fn(&Decision) -> OnAfterArbitrateFut + Send + Sync + 'static,
     >(
@@ -815,7 +829,7 @@ impl TrustedOracleModule {
                 self.get_arbitration_requested_attestations(options).await?;
             let decision_futs = attestations_with_demand
                 .iter()
-                .map(|awd| arbitrate(&awd.attestation));
+                .map(|awd| arbitrate(awd));
             let decisions = join_all(decision_futs).await;
             self.arbitrate_internal(decisions, attestations_with_demand)
                 .await?
@@ -836,7 +850,7 @@ impl TrustedOracleModule {
     }
 
     pub async fn listen_and_arbitrate_no_spawn<
-        Arbitrate: Fn(&Attestation) -> Option<bool> + Clone,
+        Arbitrate: Fn(&AttestationWithDemand) -> Option<bool> + Clone,
         OnAfterArbitrateFut: std::future::Future<Output = ()>,
         OnAfterArbitrate: Fn(&Decision) -> OnAfterArbitrateFut + Clone,
     >(

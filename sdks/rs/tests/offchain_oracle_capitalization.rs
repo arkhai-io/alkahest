@@ -122,9 +122,10 @@ async fn run_synchronous_oracle_capitalization_example(test: &TestContext) -> ey
     let charlie_client_for_closure = Arc::new(charlie_client.clone());
     let listen_result = charlie_oracle
         .listen_and_arbitrate_async(
-            move |attestation| {
+            move |awd| {
                 let charlie_client_for_closure = charlie_client_for_closure.clone();
-                let attestation = attestation.clone();
+                let attestation = awd.attestation.clone();
+                let demand = awd.demand.clone();
                 async move {
                     // Extract the obligation data from the fulfillment attestation
                     let Ok(statement) = charlie_client_for_closure
@@ -133,19 +134,10 @@ async fn run_synchronous_oracle_capitalization_example(test: &TestContext) -> ey
                         return Some(false);
                     };
 
-                    // Get the escrow attestation and extract the demand
-                    let Ok((_, demand)) = charlie_client_for_closure
-                        .get_escrow_and_demand::<contracts::arbiters::TrustedOracleArbiter::DemandData>(
-                            &attestation,
-                        )
-                        .await
-                    else {
-                        return Some(false);
-                    };
-
-                    // Parse the demand payload
+                    // Parse the demand payload directly from awd.demand
+                    // (the inner demand data passed to request_arbitration)
                     let Ok(payload) =
-                        serde_json::from_slice::<ShellOracleDemand>(demand.data.as_ref())
+                        serde_json::from_slice::<ShellOracleDemand>(demand.as_ref())
                     else {
                         return Some(false);
                     };
