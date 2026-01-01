@@ -46,7 +46,7 @@ Contextless oracles validate fulfillments based purely on the fulfillment's intr
 
 **Composability**: Because contextless oracles are generic and reusable, they can be easily composed with other arbiters using logical combinators like `AllArbiter` and `AnyArbiter`. For example, you could require that a fulfillment is both signed by a verified identity (contextless oracle) AND meets specific job criteria (demand-based oracle). See "Escrow Flow (pt 3 - Composing Demands)" for composition patterns.
 
-**Reference implementation**: `alkahest-py/alkahest_py/test_offchain_oracle_identity.py`
+**Reference implementation**: `alkahest-py/alkahest_py/oracle/test_identity.py`
 
 ### Step 1: Define fulfillment format and registry state
 
@@ -92,7 +92,7 @@ async def run_contextless_oracle(oracle_client):
 The validation callback receives the fulfillment attestation and checks it against your registry:
 
 ```python
-from alkahest_py import ArbitrateOptions
+from alkahest_py import ArbitrateOptions, ArbitrationMode
 
 def verify_identity_decision(attestation, client) -> bool:
     """
@@ -165,7 +165,7 @@ def callback(decision):
     print(f"Arbitrated {decision.attestation.uid}: {decision.decision}")
 
 # Listen and validate
-options = ArbitrateOptions(skip_arbitrated=True, only_new=False)
+options = ArbitrateOptions(ArbitrationMode.Unarbitrated)
 result = await oracle_client.oracle.listen_and_arbitrate_no_spawn(
     decision_function,
     callback,
@@ -214,7 +214,7 @@ Demand-based oracles validate fulfillments against specific criteria provided by
 5. Bob claims payment → uses approved attestation to collect escrow
 ```
 
-**Reference implementation**: `alkahest-py/alkahest_py/test_offchain_oracle_capitalization.py`
+**Reference implementation**: `alkahest-py/alkahest_py/oracle/test_capitalization.py`
 
 ### Step 1: Define your demand format
 
@@ -328,7 +328,7 @@ def callback(decision):
     print(f"Arbitrated {decision.attestation.uid}: {decision.decision}")
 
 # Listen and arbitrate
-options = ArbitrateOptions(skip_arbitrated=False, only_new=False)
+options = ArbitrateOptions(ArbitrationMode.All)
 result = await oracle_client.oracle.listen_and_arbitrate_no_spawn(
     decision_function,
     callback,
@@ -373,7 +373,7 @@ Listener (receives requests) → Job Queue (stores pending work)
 2. Store jobs in a persistent queue (database, Redis, etc.)
 3. Run a separate worker process that polls the queue and calls `arbiters.arbitrate_as_trusted_oracle()` manually
 
-**Reference implementation**: `alkahest-py/alkahest_py/test_offchain_oracle_uptime.py`
+**Reference implementation**: `alkahest-py/alkahest_py/oracle/test_uptime.py`
 
 ### Step 1: Define demand format
 
@@ -438,7 +438,7 @@ def callback(decision):
     print(f"Arbitrated {decision.attestation.uid}: {decision.decision}")
 
 # Arbitrate
-options = ArbitrateOptions(skip_arbitrated=False, only_new=False)
+options = ArbitrateOptions(ArbitrationMode.All)
 result = await oracle_client.oracle.listen_and_arbitrate_no_spawn(
     decision_function,
     callback,
@@ -495,7 +495,8 @@ async def worker_process(arbiters_client):
                 decision = uptime >= job.min_uptime
 
                 # CRITICAL: Manually submit decision
-                await arbiters_client.arbitrate_as_trusted_oracle(uid, decision)
+                # Parameters: fulfillment_uid, demand_data (bytes), decision (bool)
+                await oracle_client.arbitrate(uid, job.demand_data, decision)
                 del job_queue[uid]
 ```
 
@@ -511,7 +512,7 @@ async def worker_process(arbiters_client):
    - Polls job queue
    - Executes scheduled work over time
    - Makes decision based on results
-   - Manually calls `arbitrate_as_trusted_oracle()` to submit
+   - Manually calls `oracle_client.arbitrate()` to submit
 4. Run worker as separate process
 
 ## Choosing the Right Pattern
@@ -620,14 +621,15 @@ Handle transaction failures gracefully:
 import asyncio
 
 async def submit_with_retry(
-    arbiters_client,
-    uid: str,
+    oracle_client,
+    fulfillment_uid: str,
+    demand_data: bytes,
     decision: bool,
     max_attempts: int = 3
 ):
     for attempt in range(max_attempts):
         try:
-            await arbiters_client.arbitrate_as_trusted_oracle(uid, decision)
+            await oracle_client.arbitrate(fulfillment_uid, demand_data, decision)
             return
         except Exception as e:
             logger.warning(f"Arbitration attempt {attempt + 1} failed: {e}")
@@ -640,8 +642,8 @@ async def submit_with_retry(
 ## Reference Implementations
 
 See the full working examples in the test suite:
-- **Pattern 1 (Contextless)**: `alkahest-py/alkahest_py/test_offchain_oracle_identity.py` - Identity verification with signature validation
-- **Pattern 2 (Demand-Based)**: `alkahest-py/alkahest_py/test_offchain_oracle_capitalization.py` - Test case validation for shell commands
-- **Pattern 3 (Asynchronous)**: `alkahest-py/alkahest_py/test_offchain_oracle_uptime.py` - Uptime monitoring simulation
+- **Pattern 1 (Contextless)**: `alkahest-py/alkahest_py/oracle/test_identity.py` - Identity verification with signature validation
+- **Pattern 2 (Demand-Based)**: `alkahest-py/alkahest_py/oracle/test_capitalization.py` - Test case validation for shell commands
+- **Pattern 3 (Asynchronous)**: `alkahest-py/alkahest_py/oracle/test_uptime.py` - Uptime monitoring simulation
 
 These tests demonstrate the complete flow including escrow creation (Alice), fulfillment submission (Bob), oracle validation (Charlie), and payment collection.
