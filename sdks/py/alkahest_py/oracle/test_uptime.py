@@ -89,22 +89,20 @@ async def test_asynchronous_offchain_oracle_uptime_flow():
     await env.bob_client.oracle.request_arbitration(fulfillment_uid, oracle_address, inner_demand_data)
 
     # Step 4: Oracle arbitrates using simulated uptime monitoring
-    async def decision_function(attestation):
+    async def decision_function(attestation, demand):
         """Simulate uptime monitoring and decide if service meets SLA"""
         try:
             # Extract service URL from fulfillment
             statement = oracle_client.oracle.extract_obligation_data(attestation)
 
-            # Fetch escrow attestation from blockchain to get demand
-            escrow_attestation = await oracle_client.get_escrow_attestation(attestation)
-            demand_data_obj = oracle_client.oracle.extract_demand_data(escrow_attestation)
-            demand_json = json.loads(demand_data_obj.data.decode('utf-8'))
+            # Parse demand directly from callback argument (no need to fetch from escrow!)
+            demand_json = json.loads(bytes(demand).decode('utf-8'))
 
             # Verify URL matches
             if statement != demand_json['service_url']:
                 return False
 
-            # Simulate uptime checks using fetched demand
+            # Simulate uptime checks using demand
             total_span = max(demand_json['end'] - demand_json['start'], 1)
             interval = max(demand_json['check_interval_secs'], 1)
             checks = max(total_span // interval, 1)

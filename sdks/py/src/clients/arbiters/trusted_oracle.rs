@@ -297,12 +297,13 @@ impl OracleClient {
             let opts = options.unwrap_or_default();
             let arbitrate_options = opts.to_rust_options();
 
-            let arbitrate_func = |attestation: &alkahest_rs::contracts::IEAS::Attestation| -> Option<bool> {
+            let arbitrate_func = |awd: &alkahest_rs::clients::oracle::AttestationWithDemand| -> Option<bool> {
                 Python::with_gil(|py| {
-                    let py_attestation = PyOracleAttestation::from(attestation);
+                    let py_attestation = PyOracleAttestation::from(&awd.attestation);
+                    let py_demand: Vec<u8> = awd.demand.to_vec();
 
-                    // Call the Python function
-                    let result = decision_func.call1(py, (py_attestation,)).ok()?;
+                    // Call the Python function with (attestation, demand) as separate arguments
+                    let result = decision_func.call1(py, (py_attestation, py_demand)).ok()?;
 
                     // Check if it's a coroutine using inspect.iscoroutine()
                     let inspect = py.import("inspect").ok()?;
@@ -385,10 +386,11 @@ impl OracleClient {
             let timeout = timeout_seconds.map(|secs| std::time::Duration::from_secs_f64(secs));
             let arbitrate_options = opts.to_rust_options();
 
-            let arbitrate_func = |attestation: &alkahest_rs::contracts::IEAS::Attestation| -> Option<bool> {
+            let arbitrate_func = |awd: &alkahest_rs::clients::oracle::AttestationWithDemand| -> Option<bool> {
                 Python::with_gil(|py| {
-                    let py_attestation = PyOracleAttestation::from(attestation);
-                    let result = decision_func.call1(py, (py_attestation,)).ok()?;
+                    let py_attestation = PyOracleAttestation::from(&awd.attestation);
+                    let py_demand: Vec<u8> = awd.demand.to_vec();
+                    let result = decision_func.call1(py, (py_attestation, py_demand)).ok()?;
                     result
                         .extract::<bool>(py)
                         .or_else(|_| result.is_truthy(py))
@@ -470,15 +472,16 @@ impl OracleClient {
             let callback_func = Arc::new(callback_func);
 
             // Create async arbitration function that converts Python coroutines to Rust futures
-            let arbitrate = move |attestation: &alkahest_rs::contracts::IEAS::Attestation| -> Pin<Box<dyn Future<Output = Option<bool>> + Send + 'static>> {
-                let attestation = attestation.clone();
+            let arbitrate = move |awd: &alkahest_rs::clients::oracle::AttestationWithDemand| -> Pin<Box<dyn Future<Output = Option<bool>> + Send + 'static>> {
+                let awd = awd.clone();
                 let decision_func = Arc::clone(&decision_func);
 
                 Box::pin(async move {
                     // Call Python function and get coroutine
                     let coro_result = Python::with_gil(|py| {
-                        let py_attestation = PyOracleAttestation::from(&attestation);
-                        decision_func.clone_ref(py).call1(py, (py_attestation,))
+                        let py_attestation = PyOracleAttestation::from(&awd.attestation);
+                        let py_demand: Vec<u8> = awd.demand.to_vec();
+                        decision_func.clone_ref(py).call1(py, (py_attestation, py_demand))
                     });
 
                     let coro = match coro_result {
@@ -792,6 +795,45 @@ impl From<&alkahest_rs::contracts::IEAS::Attestation> for PyOracleAttestation {
 impl From<alkahest_rs::contracts::IEAS::Attestation> for PyOracleAttestation {
     fn from(att: alkahest_rs::contracts::IEAS::Attestation) -> Self {
         Self::from(&att)
+    }
+}
+
+/// An attestation paired with its demand data from the ArbitrationRequested event
+#[pyclass]
+#[derive(Clone)]
+pub struct PyAttestationWithDemand {
+    #[pyo3(get)]
+    pub attestation: PyOracleAttestation,
+    #[pyo3(get)]
+    pub demand: Vec<u8>,
+}
+
+#[pymethods]
+impl PyAttestationWithDemand {
+    #[new]
+    pub fn __new__(attestation: PyOracleAttestation, demand: Vec<u8>) -> Self {
+        Self { attestation, demand }
+    }
+
+    pub fn __str__(&self) -> String {
+        format!(
+            "PyAttestationWithDemand(attestation={}, demand={} bytes)",
+            self.attestation.__str__(),
+            self.demand.len()
+        )
+    }
+
+    pub fn __repr__(&self) -> String {
+        self.__str__()
+    }
+}
+
+impl From<&alkahest_rs::clients::oracle::AttestationWithDemand> for PyAttestationWithDemand {
+    fn from(awd: &alkahest_rs::clients::oracle::AttestationWithDemand) -> Self {
+        Self {
+            attestation: PyOracleAttestation::from(&awd.attestation),
+            demand: awd.demand.to_vec(),
+        }
     }
 }
 

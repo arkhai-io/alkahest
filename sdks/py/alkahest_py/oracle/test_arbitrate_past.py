@@ -55,10 +55,10 @@ async def test_arbitrate_past_sync():
     await oracle_client.request_arbitration(fulfillment_uid, env.bob, inner_demand_data)
 
     # Decision function that approves "good" obligations
-    def decision_function(attestation):
-        """Decision function receives attestation and extracts obligation data"""
+    def decision_function(attestation, demand):
+        """Decision function receives attestation and demand as separate arguments"""
         obligation_str = env.bob_client.extract_obligation_data(attestation)
-        print(f"Decision function called with obligation: {obligation_str}")
+        print(f"Decision function called with obligation: {obligation_str}, demand: {len(demand)} bytes")
         return obligation_str == "good"
 
     # Call arbitrate_past_sync with simplified API
@@ -121,7 +121,7 @@ async def test_conditional_arbitrate_past():
     await oracle_client.request_arbitration(bad_fulfillment, env.bob, inner_demand_data)
 
     # Decision function that approves only "good" obligations
-    def decision_function(attestation):
+    def decision_function(attestation, demand):
         obligation_str = env.bob_client.extract_obligation_data(attestation)
         return obligation_str == "good"
 
@@ -177,7 +177,7 @@ async def test_skip_arbitrated():
     await oracle_client.request_arbitration(fulfillment_uid, env.bob, inner_demand_data)
 
     # Decision function
-    def decision_function(attestation):
+    def decision_function(attestation, demand):
         obligation_str = env.bob_client.extract_obligation_data(attestation)
         return obligation_str == "good"
 
