@@ -21,11 +21,11 @@ For a complete example of how oracles fit into the escrow/fulfillment flow, see 
 
 ## Three Validation Patterns
 
-| Pattern | Returns | State | Escrow Access | Use Case |
+| Pattern | Returns | State | Demand Access | Use Case |
 |---------|---------|-------|---------------|----------|
-| **Contextless** | `bool` | Oracle maintains state | No | Signature verification, identity validation, format checking |
-| **Demand-Based** | `bool` | Stateless | Yes - reads demand | Custom validation per escrow, test case validation |
-| **Asynchronous** | `bool` (simulated) | Job queue | Yes - reads demand | Time-based monitoring, long-running computations |
+| **Contextless** | `bool` | Oracle maintains state | Ignores demand | Signature verification, identity validation, format checking |
+| **Demand-Based** | `bool` | Stateless | Uses demand from callback | Custom validation per escrow, test case validation |
+| **Asynchronous** | `bool` (simulated) | Job queue | Uses demand from callback | Time-based monitoring, long-running computations |
 
 **Decision flowchart:**
 ```
@@ -89,12 +89,12 @@ async def run_contextless_oracle(oracle_client):
 
 ### Step 3: Implement the validation callback
 
-The validation callback receives the fulfillment attestation and checks it against your registry:
+The validation callback receives two arguments: the fulfillment attestation and the demand bytes from the `ArbitrationRequested` event. For contextless validation, we ignore the demand and focus on the attestation:
 
 ```python
 from alkahest_py import ArbitrateOptions, ArbitrationMode
 
-def verify_identity_decision(attestation, client) -> bool:
+def verify_identity_decision(attestation, demand, client) -> bool:
     """
     Verify an identity fulfillment by checking:
     1. The signature is valid
@@ -156,8 +156,9 @@ Wire everything together with the listener:
 
 ```python
 # Define callback wrapper (client needs to be accessible)
-def decision_function(attestation):
-    return verify_identity_decision(attestation, oracle_client)
+# The callback receives (attestation, demand) - we ignore demand for contextless validation
+def decision_function(attestation, demand):
+    return verify_identity_decision(attestation, demand, oracle_client)
 
 def callback(decision):
     # Optional: called after arbitration is submitted on-chain
@@ -241,10 +242,10 @@ Buyers encode this as JSON in the `TrustedOracleArbiter` demand's `data` field.
 
 ### Step 2: Implement validation with demand
 
-The SDK provides critical helpers for extracting both the fulfillment and the original escrow demand:
+The validation callback receives two arguments: the fulfillment attestation and the demand bytes from the `ArbitrationRequested` event:
 
 ```python
-async def decision_function(attestation):
+async def decision_function(attestation, demand):
     """Evaluate whether the fulfillment meets the demand requirements"""
     try:
         # Step 2a: Extract fulfillment using client helper
@@ -253,24 +254,14 @@ async def decision_function(attestation):
         print(f"Failed to extract obligation: {e}")
         return False
 
-    # Step 2b: Get escrow and extract demand using client helper
-    # CRITICAL: This fetches the escrow attestation from the fulfillment's refUID
-    # and decodes the nested TrustedOracleArbiter demand structure
-    # Without checking the refUID, Bob could reuse one valid fulfillment
-    # to claim multiple different escrows (replay attack)
+    # Step 2b: Parse the demand from the callback argument
     try:
-        escrow_attestation = await oracle_client.get_escrow_attestation(attestation)
-        demand_data_obj = oracle_client.oracle.extract_demand_data(escrow_attestation)
-        # Parse the JSON demand payload
-        demand_json = json.loads(demand_data_obj.data.decode('utf-8'))
+        demand_json = json.loads(bytes(demand).decode('utf-8'))
     except Exception as e:
-        print(f"Failed to fetch/extract demand: {e}")
+        print(f"Failed to parse demand: {e}")
         return False
 
-    # Step 2c: Parse your custom demand format from the inner data
-    # This is where Alice's specific requirements are decoded
-
-    # Step 2d: Apply validation logic using demand parameters
+    # Step 2c: Apply validation logic using demand parameters
     # Run each test case to verify Bob's submission works correctly
     for case in demand_json['test_cases']:
         command = f'echo "$INPUT" | {statement}'
@@ -293,31 +284,29 @@ async def decision_function(attestation):
     return True
 ```
 
-**SDK helpers introduced:**
+**SDK helpers:**
 
 - `client.oracle.extract_obligation_data(attestation)` - Decode fulfillment attestation data
-- `client.get_escrow_attestation(attestation)` - **THE KEY HELPER** - Fetch escrow from refUID
-- `client.oracle.extract_demand_data(escrow)` - Decode the TrustedOracleArbiter wrapper and inner demand
-  - This is how you access Alice's original requirements to validate against Bob's work
+- The `demand` argument is passed directly to your callback from the `ArbitrationRequested` event
+  - This is Alice's original requirements encoded as bytes - parse as needed for your use case
 
 ### Step 3: Understanding the data flow
 
 ```
-Fulfillment Attestation
-  └─ data: StringObligation { item: "tr '[:lower:]' '[:upper:]'" }
-  └─ refUID: points to escrow ──┐
-                                 │
-                                 ▼
-                         Escrow Attestation
-                           └─ data: ERC20EscrowObligation {
-                                arbiter: TrustedOracleArbiter address,
-                                demand: TrustedOracleArbiter::DemandData {
-                                  oracle: charlie_address,
-                                  data: CommandTestDemand (JSON) {
-                                    test_cases: [...]
-                                  }
-                                }
-                              }
+ArbitrationRequested Event
+  └─ obligation: fulfillment UID
+  └─ oracle: charlie_address
+  └─ demand: bytes (your custom demand format)
+        │
+        ▼
+  Callback receives (attestation, demand)
+        │
+        ├─ attestation: Fulfillment Attestation
+        │    └─ data: StringObligation { item: "tr '[:lower:]' '[:upper:]'" }
+        │    └─ refUID: points to escrow
+        │
+        └─ demand: bytes (passed directly from event)
+             └─ Your custom format (e.g., JSON with test_cases)
 ```
 
 ### Step 4: Set up the listener
@@ -343,10 +332,9 @@ assert all(d.decision for d in result.decisions), "Oracle rejected fulfillment"
 **Complete pattern:**
 
 1. Define demand format (your oracle's API)
-2. Implement validation callback:
-   - Use `extract_obligation_data()` to get fulfillment
-   - Use `get_escrow_attestation()` and `extract_demand_data()` to get escrow demand
-   - Parse your custom inner demand format
+2. Implement validation callback that receives `(attestation, demand)`:
+   - Use `extract_obligation_data(attestation)` to get fulfillment data
+   - Parse `demand` bytes (e.g., `json.loads(bytes(demand).decode('utf-8'))`)
    - Apply validation logic comparing fulfillment to demand
    - Return `True` or `False`
 3. Set up listener with callback
@@ -398,22 +386,20 @@ class UptimeDemand:
 In this simplified example, we simulate the monitoring synchronously. In production, you'd schedule real checks over time:
 
 ```python
-async def decision_function(attestation):
+async def decision_function(attestation, demand):
     """Simulate uptime monitoring and decide if service meets SLA"""
     try:
         # Step 2a: Extract service URL from fulfillment
         statement = oracle_client.oracle.extract_obligation_data(attestation)
 
-        # Step 2b: Fetch escrow attestation from blockchain to get demand
-        escrow_attestation = await oracle_client.get_escrow_attestation(attestation)
-        demand_data_obj = oracle_client.oracle.extract_demand_data(escrow_attestation)
-        demand_json = json.loads(demand_data_obj.data.decode('utf-8'))
+        # Step 2b: Parse demand from callback argument
+        demand_json = json.loads(bytes(demand).decode('utf-8'))
 
         # Verify URL matches
         if statement != demand_json['service_url']:
             return False
 
-        # Step 2c: Simulate uptime checks using fetched demand
+        # Step 2c: Simulate uptime checks using demand parameters
         # In production: this would be scheduled over the time window
         total_span = max(demand_json['end'] - demand_json['start'], 1)
         interval = max(demand_json['check_interval_secs'], 1)
@@ -467,15 +453,27 @@ class UptimeJob:
     checks_remaining: int
     successes: int
     total_checks: int
+    demand_data: bytes  # Store demand for later submission
 
 # Job queue (use Redis, database, etc. in production)
 job_queue: Dict[str, UptimeJob] = {}
 
-async def schedule_monitoring(attestation):
+async def schedule_monitoring(attestation, demand):
     """Schedule job but don't make decision yet"""
-    # Extract data and create job
-    # ...
-    job_queue[fulfillment_uid] = UptimeJob(...)
+    # Extract fulfillment data
+    statement = oracle_client.oracle.extract_obligation_data(attestation)
+    # Parse demand from callback argument
+    demand_json = json.loads(bytes(demand).decode('utf-8'))
+    # Create job with demand stored for later
+    job_queue[attestation.uid] = UptimeJob(
+        fulfillment_uid=attestation.uid,
+        service_url=statement,
+        min_uptime=demand_json['min_uptime'],
+        checks_remaining=...,
+        successes=0,
+        total_checks=...,
+        demand_data=bytes(demand)  # Store for submission
+    )
     return None  # Defer decision to worker
 
 async def worker_process(arbiters_client):
@@ -503,16 +501,17 @@ async def worker_process(arbiters_client):
 **Complete asynchronous oracle pattern:**
 
 1. Define demand format
-2. Implement scheduling callback that:
-   - Extracts fulfillment data and demand
-   - Creates job with monitoring schedule
-   - Stores job in persistent queue
-   - Returns `None` or defers decision
+2. Implement scheduling callback that receives `(attestation, demand)`:
+   - Extract fulfillment data from attestation
+   - Parse demand bytes
+   - Create job with monitoring schedule and store demand for later
+   - Store job in persistent queue
+   - Return `None` to defer decision
 3. Implement background worker that:
    - Polls job queue
    - Executes scheduled work over time
    - Makes decision based on results
-   - Manually calls `oracle_client.arbitrate()` to submit
+   - Manually calls `oracle_client.arbitrate()` with stored demand
 4. Run worker as separate process
 
 ## Choosing the Right Pattern
