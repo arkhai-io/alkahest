@@ -1909,8 +1909,8 @@ declare const makeDefaultExtension: (client: any) => {
                 }>;
                 listenForArbitrationRequestsOnly: (oracle: `0x${string}`, arbitrationHandler: (obligation: `0x${string}`, oracle: `0x${string}`, demand: `0x${string}`) => Promise<boolean>, pollingInterval?: number) => viem.WatchEventReturnType;
                 getArbitrationRequests: (options?: ArbitrateOptions) => Promise<AttestationWithDemand[]>;
-                arbitratePast: (arbitrate: (attestation: Attestation) => Promise<boolean | null>, options?: ArbitrateOptions) => Promise<Decision[]>;
-                listenAndArbitrate: (arbitrate: (attestation: Attestation) => Promise<boolean | null>, options?: ArbitrateOptions & {
+                arbitratePast: (arbitrate: (awd: AttestationWithDemand) => Promise<boolean | null>, options?: ArbitrateOptions) => Promise<Decision[]>;
+                listenAndArbitrate: (arbitrate: (awd: AttestationWithDemand) => Promise<boolean | null>, options?: ArbitrateOptions & {
                     onAfterArbitrate?: (decision: Decision) => Promise<void>;
                     pollingInterval?: number;
                 }) => Promise<ListenAndArbitrateResult>;
@@ -11193,8 +11193,8 @@ declare const makeArbitersClient: (viemClient: ViemClient, addresses: ChainAddre
             }>;
             listenForArbitrationRequestsOnly: (oracle: `0x${string}`, arbitrationHandler: (obligation: `0x${string}`, oracle: `0x${string}`, demand: `0x${string}`) => Promise<boolean>, pollingInterval?: number) => viem.WatchEventReturnType;
             getArbitrationRequests: (options?: ArbitrateOptions) => Promise<AttestationWithDemand[]>;
-            arbitratePast: (arbitrate: (attestation: Attestation) => Promise<boolean | null>, options?: ArbitrateOptions) => Promise<Decision[]>;
-            listenAndArbitrate: (arbitrate: (attestation: Attestation) => Promise<boolean | null>, options?: ArbitrateOptions & {
+            arbitratePast: (arbitrate: (awd: AttestationWithDemand) => Promise<boolean | null>, options?: ArbitrateOptions) => Promise<Decision[]>;
+            listenAndArbitrate: (arbitrate: (awd: AttestationWithDemand) => Promise<boolean | null>, options?: ArbitrateOptions & {
                 onAfterArbitrate?: (decision: Decision) => Promise<void>;
                 pollingInterval?: number;
             }) => Promise<ListenAndArbitrateResult>;
