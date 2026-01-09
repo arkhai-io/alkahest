@@ -70,6 +70,9 @@ pub mod utils;
 #[derive(Clone)]
 pub struct PyAlkahestClient {
     inner: std::sync::Arc<dyn std::any::Any + Send + Sync>,
+    // Keep the runtime alive for clients we construct ourselves so background
+    // websocket tasks spawned during client creation don't get dropped.
+    runtime: Option<std::sync::Arc<Runtime>>,
     // Store connection info to create new extension clients
     private_key: Option<String>,
     rpc_url: Option<String>,
@@ -88,6 +91,7 @@ impl PyAlkahestClient {
     pub fn from_client(client: alkahest_rs::DefaultAlkahestClient) -> Self {
         Self {
             inner: std::sync::Arc::new(client.clone()),
+            runtime: None,
             private_key: None, // Not available when creating from existing client
             rpc_url: None,     // Not available when creating from existing client
             erc20: Some(Erc20Client::new(client.extensions.erc20().clone())),
@@ -127,6 +131,7 @@ impl PyAlkahestClient {
         // but the Python wrapper doesn't expose it through the .erc20, .erc721, etc. properties
         Self {
             inner: std::sync::Arc::new(client),
+            runtime: None, // Runtime is managed externally in this constructor path
             private_key: None, // Connection info not available when creating from existing client
             rpc_url: None,     // Connection info not available when creating from existing client
             erc20: None,       // TODO: Extract if extension_type == "erc20"
@@ -167,6 +172,7 @@ impl PyAlkahestClient {
 
         let client = Self {
             inner: std::sync::Arc::new(client.clone()),
+            runtime: Some(runtime.clone()),
             private_key: Some(private_key.clone()),
             rpc_url: Some(rpc_url.clone()),
             erc20: Some(Erc20Client::new(client.extensions.erc20().clone())),
