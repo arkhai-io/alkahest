@@ -40,8 +40,8 @@ use types::{DefaultExtensionConfig, EscowClaimedLog};
 use crate::{
     clients::{
         arbiters::trusted_oracle::{
-            PyArbitrateOptions, PyArbitrationMode, PyAttestationWithDemand, PyDecision,
-            PyListenResult, PyOracleAddresses, PyOracleAttestation, PyTrustedOracleArbiterDemandData,
+            PyArbitrationMode, PyAttestationWithDemand, PyDecision,
+            PyOracleAddresses, PyOracleAttestation, PyTrustedOracleArbiterDemandData,
         },
         obligations::{
             erc1155::{PyERC1155EscrowObligationData, PyERC1155PaymentObligationData},
@@ -496,9 +496,7 @@ fn alkahest_py(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyOracleAttestation>()?;
     m.add_class::<PyAttestationWithDemand>()?;
     m.add_class::<PyDecision>()?;
-    m.add_class::<PyArbitrateOptions>()?;
     m.add_class::<PyArbitrationMode>()?;
-    m.add_class::<PyListenResult>()?;
     m.add_class::<PyTrustedOracleArbiterDemandData>()?;
     m.add_class::<EnvTestManager>()?;
     m.add_class::<PyWalletProvider>()?;

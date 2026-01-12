@@ -9,7 +9,6 @@ from alkahest_py import (
     EnvTestManager,
     MockERC20,
     TrustedOracleArbiterDemandData,
-    ArbitrateOptions,
     ArbitrationMode,
 )
 
@@ -120,20 +119,19 @@ async def test_asynchronous_offchain_oracle_uptime_flow():
     def callback(decision):
         pass
 
-    # Arbitrate
-    options = ArbitrateOptions(ArbitrationMode.All)
-    result = await oracle_client.oracle.listen_and_arbitrate_no_spawn(
+    # Arbitrate with AllUnarbitrated mode
+    decisions = await oracle_client.oracle.arbitrate_many(
         decision_function,
         callback,
-        options,
+        ArbitrationMode.AllUnarbitrated,
         timeout_seconds=2.0
     )
 
     # Verify decision
-    assert len(result.decisions) >= 1, "Expected at least 1 decision"
-    assert result.decisions[0].decision == True, "Expected uptime check to pass"
+    assert len(decisions) >= 1, "Expected at least 1 decision"
+    assert decisions[0].decision == True, "Expected uptime check to pass"
 
     # Step 5: Bob collects the escrowed payment
     await env.bob_client.erc20.escrow.non_tierable.collect(escrow_uid, fulfillment_uid)
 
-    print("✅ Asynchronous offchain oracle uptime test passed")
+    print("Asynchronous offchain oracle uptime test passed")

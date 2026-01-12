@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test the Oracle arbitrate_past_sync functionality with simplified API
+Test the Oracle arbitrate_many functionality with simplified API
 """
 
 import pytest
@@ -8,7 +8,6 @@ import time
 from alkahest_py import (
     EnvTestManager,
     StringObligationData,
-    ArbitrateOptions,
     ArbitrationMode,
     MockERC20,
     TrustedOracleArbiterDemandData,
@@ -16,7 +15,7 @@ from alkahest_py import (
 
 @pytest.mark.asyncio
 async def test_arbitrate_past_sync():
-    """Test trivial arbitrate_past_sync: escrow → fulfillment → arbitration → collection"""
+    """Test trivial arbitrate_many: escrow -> fulfillment -> arbitration -> collection"""
     # Setup test environment
     env = EnvTestManager()
 
@@ -61,9 +60,8 @@ async def test_arbitrate_past_sync():
         print(f"Decision function called with obligation: {obligation_str}, demand: {len(demand)} bytes")
         return obligation_str == "good"
 
-    # Call arbitrate_past_sync with simplified API
-    options = ArbitrateOptions(ArbitrationMode.All)
-    decisions = await oracle_client.arbitrate_past_sync(decision_function, options)
+    # Call arbitrate_many with simplified API
+    decisions = await oracle_client.arbitrate_many(decision_function, None, ArbitrationMode.Past)
 
     # Verify arbitration found decisions
     assert len(decisions) == 1, f"Expected 1 decision, got {len(decisions)}"
@@ -76,11 +74,11 @@ async def test_arbitrate_past_sync():
 
     # Verify collection receipt
     assert collection_receipt is not None, "Collection receipt should not be None"
-    print(f"✅ Arbitrate decision passed. Tx: {collection_receipt}")
+    print(f"Arbitrate decision passed. Tx: {collection_receipt}")
 
 @pytest.mark.asyncio
 async def test_conditional_arbitrate_past():
-    """Test conditional arbitrate_past_sync: approve only 'good' obligations"""
+    """Test conditional arbitrate_many: approve only 'good' obligations"""
     # Setup test environment
     env = EnvTestManager()
 
@@ -126,19 +124,18 @@ async def test_conditional_arbitrate_past():
         return obligation_str == "good"
 
     # Arbitrate both
-    options = ArbitrateOptions(ArbitrationMode.All)
-    decisions = await oracle_client.arbitrate_past_sync(decision_function, options)
+    decisions = await oracle_client.arbitrate_many(decision_function, None, ArbitrationMode.Past)
 
     # Verify we got 2 decisions, only 1 approved
     assert len(decisions) == 2, f"Expected 2 decisions, got {len(decisions)}"
     approved = [d for d in decisions if d.decision]
     assert len(approved) == 1, f"Expected 1 approved decision, got {len(approved)}"
 
-    print(f"✅ Conditional arbitration passed: {len(approved)}/2 approved")
+    print(f"Conditional arbitration passed: {len(approved)}/2 approved")
 
 @pytest.mark.asyncio
 async def test_skip_arbitrated():
-    """Test skip_arbitrated option prevents re-arbitrating"""
+    """Test PastUnarbitrated mode prevents re-arbitrating"""
     # Setup test environment
     env = EnvTestManager()
 
@@ -182,13 +179,11 @@ async def test_skip_arbitrated():
         return obligation_str == "good"
 
     # First arbitration
-    options = ArbitrateOptions(ArbitrationMode.All)
-    decisions = await oracle_client.arbitrate_past_sync(decision_function, options)
+    decisions = await oracle_client.arbitrate_many(decision_function, None, ArbitrationMode.Past)
     assert len(decisions) == 1, "First arbitration should find 1 decision"
 
-    # Second arbitration with unarbitrated mode should find nothing (already arbitrated)
-    options_skip = ArbitrateOptions(ArbitrationMode.Unarbitrated)
-    decisions2 = await oracle_client.arbitrate_past_sync(decision_function, options_skip)
-    assert len(decisions2) == 0, "Second arbitration with skip_arbitrated should find 0 decisions"
+    # Second arbitration with PastUnarbitrated mode should find nothing (already arbitrated)
+    decisions2 = await oracle_client.arbitrate_many(decision_function, None, ArbitrationMode.PastUnarbitrated)
+    assert len(decisions2) == 0, "Second arbitration with PastUnarbitrated should find 0 decisions"
 
-    print("✅ Skip arbitrated option works correctly")
+    print("Skip arbitrated option works correctly")
