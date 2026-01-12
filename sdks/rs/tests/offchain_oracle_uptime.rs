@@ -9,7 +9,7 @@ use std::{
 
 use alkahest_rs::{
     AlkahestClient, DefaultAlkahestClient,
-    clients::oracle::ArbitrateOptions,
+    clients::oracle::ArbitrationMode,
     contracts::{self, obligations::StringObligation},
     extensions::{HasArbiters, HasErc20, HasOracle, HasStringObligation},
     fixtures::MockERC20Permit,
@@ -278,13 +278,10 @@ async fn run_async_uptime_oracle_example(test: &TestContext) -> eyre::Result<()>
 
     // Listen for arbitration requests
     let listen_result = charlie_oracle
-        .listen_and_arbitrate_async(
+        .arbitrate_many_async(
             schedule_pings,
             |_| async {},
-            &ArbitrateOptions {
-                skip_arbitrated: true,
-                only_new: false,
-            },
+            ArbitrationMode::AllUnarbitrated,
         )
         .await?;
 
@@ -317,7 +314,7 @@ async fn run_async_uptime_oracle_example(test: &TestContext) -> eyre::Result<()>
     .wrap_err("timed out waiting to collect escrow")?;
 
     charlie_oracle
-        .unsubscribe(listen_result.subscription_id)
+        .unsubscribe(listen_result.subscription_id.unwrap())
         .await?;
 
     worker.await.unwrap();

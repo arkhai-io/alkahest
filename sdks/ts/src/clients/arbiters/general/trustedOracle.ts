@@ -47,19 +47,21 @@ export const decodeDemand = (demandData: `0x${string}`): TrustedOracleArbiterDem
 };
 
 /**
- * Mode for arbitration processing
- * - "all": Process all past events without filtering, plus listen for new events
- * - "unarbitrated": Process only unarbitrated past events, plus listen for new events
- * - "new": Only listen for new events, skip past event processing
+ * Mode for arbitration processing (matching Rust SDK naming)
+ * - "past": Process all past events only, no listening
+ * - "pastUnarbitrated": Process only unarbitrated past events, no listening
+ * - "allUnarbitrated": Process unarbitrated past + listen for new events (default)
+ * - "all": Process all past + listen for new events
+ * - "future": Only listen for new events, skip past event processing
  */
-export type ArbitrationMode = "all" | "unarbitrated" | "new";
+export type ArbitrationMode = "past" | "pastUnarbitrated" | "allUnarbitrated" | "all" | "future";
 
 /**
- * Options for arbitration
+ * Options for arbitrateMany
  */
-export type ArbitrateOptions = {
+export type ArbitrateManyOptions = {
   /**
-   * Mode for arbitration processing (default: "all")
+   * Mode for arbitration processing (default: "allUnarbitrated")
    */
   mode?: ArbitrationMode;
   /**
@@ -67,7 +69,16 @@ export type ArbitrateOptions = {
    */
   fromBlock?: BlockNumber | BlockTag;
   toBlock?: BlockNumber | BlockTag;
+  /**
+   * Callback called after each arbitration decision (for listening modes)
+   */
+  onAfterArbitrate?: (decision: Decision) => Promise<void>;
+  /**
+   * Polling interval in milliseconds for listening modes
+   */
+  pollingInterval?: number;
 };
+
 
 /**
  * An attestation paired with its associated demand data from ArbitrationRequested event
@@ -83,7 +94,7 @@ export type Decision = {
   decision: boolean;
 };
 
-export type ListenAndArbitrateResult = {
+export type ArbitrateManyResult = {
   decisions: Decision[];
   unwatch: () => void;
 };
@@ -169,8 +180,8 @@ export const makeTrustedOracleArbiterClient = (viemClient: ViemClient, addresses
         (awd.attestation.revocationTime === BigInt(0) || awd.attestation.revocationTime >= now),
     );
 
-    // If mode is "unarbitrated", filter out already arbitrated attestations
-    if (options.mode === "unarbitrated") {
+    // If mode includes unarbitrated filtering, filter out already arbitrated attestations
+    if (options.mode === "pastUnarbitrated" || options.mode === "allUnarbitrated") {
       const filteredAttestationsWithDemand = await Promise.all(
         validAttestationsWithDemand.map(async (awd) => {
           const existingLogs = await viemClient.getLogs({
@@ -195,53 +206,55 @@ export const makeTrustedOracleArbiterClient = (viemClient: ViemClient, addresses
   };
 
   /**
-   * Arbitrate past attestations
+   * Unified arbitration function that combines past processing and future listening
    * @param arbitrate - Callback that returns decision (boolean) for each attestation with demand, or null to skip
+   * @param options - Arbitration options including mode
+   * @returns ArbitrateManyResult with decisions array and unwatch function
    */
-  const arbitratePast = async (
+  const arbitrateMany = async (
     arbitrate: (awd: AttestationWithDemand) => Promise<boolean | null>,
-    options: ArbitrateOptions = {},
-  ): Promise<Decision[]> => {
-    const attestationsWithDemand = await getArbitrationRequests(options);
+    options: ArbitrateManyOptions = {},
+  ): Promise<ArbitrateManyResult> => {
+    const mode = options.mode ?? "allUnarbitrated";
 
-    // Process arbitration sequentially to avoid nonce conflicts
-    const decisions: (Decision | null)[] = [];
-    for (const awd of attestationsWithDemand) {
-      const decision = await arbitrate(awd);
-      if (decision === null) {
-        decisions.push(null);
-        continue;
+    // Determine if we should process past attestations
+    const shouldProcessPast = mode !== "future";
+
+    // Determine if we should listen for new events
+    const shouldListen = mode === "all" || mode === "allUnarbitrated" || mode === "future";
+
+    // Process past attestations if needed
+    let decisions: Decision[] = [];
+    if (shouldProcessPast) {
+      const attestationsWithDemand = await getArbitrationRequests(options);
+
+      // Process arbitration sequentially to avoid nonce conflicts
+      const decisionResults: (Decision | null)[] = [];
+      for (const awd of attestationsWithDemand) {
+        const decision = await arbitrate(awd);
+        if (decision === null) {
+          decisionResults.push(null);
+          continue;
+        }
+
+        // Decode the full demand to get the inner data
+        // checkObligation computes: keccak256(obligation.uid, demand_.data)
+        // so arbitrate must use the same inner data
+        // Handle empty demand case (contextless arbitration)
+        const innerData = awd.demand && awd.demand !== "0x" ? decodeDemand(awd.demand).data : "0x";
+        const hash = await arbitrateOnchain(awd.attestation.uid, innerData, decision);
+        decisionResults.push({ hash, attestation: awd.attestation, decision });
       }
 
-      // Decode the full demand to get the inner data
-      // checkObligation computes: keccak256(obligation.uid, demand_.data)
-      // so arbitrate must use the same inner data
-      // Handle empty demand case (contextless arbitration)
-      const innerData = awd.demand && awd.demand !== "0x" ? decodeDemand(awd.demand).data : "0x";
-      const hash = await arbitrateOnchain(awd.attestation.uid, innerData, decision);
-      decisions.push({ hash, attestation: awd.attestation, decision });
+      // Wait for all transactions to be mined in parallel
+      decisions = decisionResults.filter((d) => d !== null) as Decision[];
+      await Promise.all(decisions.map((d) => viemClient.waitForTransactionReceipt({ hash: d.hash })));
     }
 
-    // Wait for all transactions to be mined in parallel
-    const validDecisions = decisions.filter((d) => d !== null) as Decision[];
-    await Promise.all(validDecisions.map((d) => viemClient.waitForTransactionReceipt({ hash: d.hash })));
-
-    return validDecisions;
-  };
-
-  /**
-   * Listen for new arbitration requests and arbitrate them
-   * @param arbitrate - Callback that returns decision (boolean) for each attestation with demand, or null to skip
-   */
-  const listenAndArbitrate = async (
-    arbitrate: (awd: AttestationWithDemand) => Promise<boolean | null>,
-    options: ArbitrateOptions & {
-      onAfterArbitrate?: (decision: Decision) => Promise<void>;
-      pollingInterval?: number;
-    } = {},
-  ): Promise<ListenAndArbitrateResult> => {
-    // Arbitrate past attestations unless mode is "new"
-    const decisions = options.mode === "new" ? [] : await arbitratePast(arbitrate, options);
+    // If not listening, return just the decisions with a no-op unwatch
+    if (!shouldListen) {
+      return { decisions, unwatch: () => {} };
+    }
 
     // Use optimal polling interval based on transport type
     const optimalInterval = getOptimalPollingInterval(viemClient, options.pollingInterval);
@@ -502,9 +515,8 @@ export const makeTrustedOracleArbiterClient = (viemClient: ViemClient, addresses
       });
     },
 
-    // Oracle-specific functions (from oracle.ts)
+    // Oracle-specific functions
     getArbitrationRequests,
-    arbitratePast,
-    listenAndArbitrate,
+    arbitrateMany,
   };
 };

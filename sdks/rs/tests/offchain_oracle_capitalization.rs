@@ -4,7 +4,7 @@ use std::{
 
 use alkahest_rs::{
     AlkahestClient, DefaultAlkahestClient,
-    clients::oracle::ArbitrateOptions,
+    clients::oracle::ArbitrationMode,
     contracts::{self, obligations::StringObligation},
     extensions::{HasErc20, HasOracle, HasStringObligation},
     fixtures::MockERC20Permit,
@@ -121,7 +121,7 @@ async fn run_synchronous_oracle_capitalization_example(test: &TestContext) -> ey
     // Step 4. Charlie evaluates the backlog and watches for new fulfillments.
     let charlie_client_for_closure = Arc::new(charlie_client.clone());
     let listen_result = charlie_oracle
-        .listen_and_arbitrate_async(
+        .arbitrate_many_async(
             move |awd| {
                 let charlie_client_for_closure = charlie_client_for_closure.clone();
                 let attestation = awd.attestation.clone();
@@ -168,23 +168,20 @@ async fn run_synchronous_oracle_capitalization_example(test: &TestContext) -> ey
                 }
             },
             |_| async {},
-            &ArbitrateOptions {
-                skip_arbitrated: true,
-                only_new: false,
-            },
+            ArbitrationMode::AllUnarbitrated,
         )
         .await?;
 
     eyre::ensure!(
         listen_result
-            .decisions
+            .past_decisions
             .iter()
             .all(|decision| decision.decision),
         "oracle rejected fulfillment",
     );
 
     charlie_oracle
-        .unsubscribe(listen_result.subscription_id)
+        .unsubscribe(listen_result.subscription_id.unwrap())
         .await?;
     println!("step5: charlie arbitrate completed");
     sleep(std::time::Duration::from_secs(1));

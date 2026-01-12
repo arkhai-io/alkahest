@@ -9,7 +9,6 @@ from eth_account import Account
 from eth_account.messages import encode_defunct
 from alkahest_py import (
     EnvTestManager,
-    ArbitrateOptions,
     ArbitrationMode,
     AlkahestClient,
 )
@@ -144,17 +143,16 @@ async def test_contextless_offchain_identity_oracle_flow():
     await env.bob_client.oracle.request_arbitration(good_uid, oracle_address, b"")
 
     # Process the arbitration (skip already arbitrated items)
-    options = ArbitrateOptions(ArbitrationMode.Unarbitrated)
-    result1 = await oracle_client.oracle.listen_and_arbitrate_no_spawn(
+    decisions1 = await oracle_client.oracle.arbitrate_many(
         decision_function,
         callback,
-        options,
+        ArbitrationMode.AllUnarbitrated,
         timeout_seconds=2.0
     )
 
     # Verify the first decision was approval
-    assert len(result1.decisions) >= 1, "Expected at least 1 decision"
-    first_decision = result1.decisions[0].decision
+    assert len(decisions1) >= 1, "Expected at least 1 decision"
+    first_decision = decisions1[0].decision
     assert first_decision is True, "Expected first decision to be True"
 
     # Verify nonce was updated
@@ -171,20 +169,20 @@ async def test_contextless_offchain_identity_oracle_flow():
     await env.bob_client.oracle.request_arbitration(bad_uid, oracle_address, b"")
 
     # Process the arbitration (skip already arbitrated, so only process the new one)
-    result2 = await oracle_client.oracle.listen_and_arbitrate_no_spawn(
+    decisions2 = await oracle_client.oracle.arbitrate_many(
         decision_function,
         callback,
-        options,
+        ArbitrationMode.AllUnarbitrated,
         timeout_seconds=2.0
     )
 
     # Verify the second decision was rejection
     # Should only have one decision (the new bad one)
-    assert len(result2.decisions) >= 1, "Expected at least 1 decision"
-    second_decision = result2.decisions[0].decision
+    assert len(decisions2) >= 1, "Expected at least 1 decision"
+    second_decision = decisions2[0].decision
     assert second_decision is False, "Expected second decision to be False (replay attack)"
 
     # Cleanup
     identity_registry.clear()
 
-    print("✅ Contextless offchain identity oracle test passed")
+    print("Contextless offchain identity oracle test passed")

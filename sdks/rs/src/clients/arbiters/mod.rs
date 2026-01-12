@@ -38,8 +38,8 @@ pub use logical::{
 
 // Re-export trusted oracle module (with backwards-compatible aliases)
 pub use trusted_oracle::{
-    ArbitrateOptions, AttestationWithDemand, Decision, ListenAndArbitrateResult,
-    OracleAddresses, OracleModule, TrustedOracle, TrustedOracleAddresses, TrustedOracleModule,
+    ArbitrateManyResult, ArbitrationMode, AttestationWithDemand, Decision, OracleAddresses,
+    OracleModule, TrustedOracle, TrustedOracleAddresses, TrustedOracleModule,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -1,21 +1,20 @@
 #!/usr/bin/env python3
 """
-Test the Oracle listen_and_arbitrate_no_spawn functionality with simplified API
+Test the Oracle arbitrate_many functionality with All mode (past + future)
 """
 
 import pytest
 import time
 from alkahest_py import (
     EnvTestManager,
-    ArbitrateOptions,
     ArbitrationMode,
     MockERC20,
     TrustedOracleArbiterDemandData,
 )
 
 @pytest.mark.asyncio
-async def test_listen_and_arbitrate_no_spawn():
-    """Test listen_and_arbitrate_no_spawn: processes past arbitrations and returns immediately"""
+async def test_arbitrate_many_all():
+    """Test arbitrate_many with All mode: processes past arbitrations and waits for new ones"""
     # Setup test environment
     env = EnvTestManager()
 
@@ -65,21 +64,20 @@ async def test_listen_and_arbitrate_no_spawn():
         decision_count["count"] += 1
         print(f"Callback: Decision made: {decision.decision}")
 
-    # Listen and arbitrate with short timeout (processes past, then times out)
-    options = ArbitrateOptions(ArbitrationMode.All)
-    result = await oracle_client.listen_and_arbitrate_no_spawn(
+    # Arbitrate with All mode and short timeout (processes past, then times out)
+    decisions = await oracle_client.arbitrate_many(
         decision_function,
         callback,
-        options,
+        ArbitrationMode.All,
         timeout_seconds=1.0  # Short timeout since we're not expecting new events
     )
 
     # Verify result - past arbitrations are in the decisions list
-    assert len(result.decisions) == 1, f"Expected 1 decision, got {len(result.decisions)}"
-    assert result.decisions[0].decision == True, "Expected decision to be True"
+    assert len(decisions) == 1, f"Expected 1 decision, got {len(decisions)}"
+    assert decisions[0].decision == True, "Expected decision to be True"
 
     # The callback is NOT called for past arbitrations, only for new ones while listening
     # Since we timeout immediately, no new arbitrations come in, so callback count is 0
-    print(f"Past decisions processed: {len(result.decisions)}")
+    print(f"Past decisions processed: {len(decisions)}")
     print(f"New arbitrations (callback called): {decision_count['count']}")
-    print("✅ Listen and arbitrate passed")
+    print("Arbitrate many with All mode passed")

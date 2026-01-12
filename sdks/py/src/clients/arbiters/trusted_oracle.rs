@@ -286,83 +286,24 @@ impl OracleClient {
         })
     }
 
-    pub fn arbitrate_past_sync<'py>(
-        &self,
-        py: Python<'py>,
-        decision_func: PyObject,
-        options: Option<PyArbitrateOptions>,
-    ) -> PyResult<pyo3::Bound<'py, PyAny>> {
-        let inner = self.inner.clone();
-        future_into_py(py, async move {
-            let opts = options.unwrap_or_default();
-            let arbitrate_options = opts.to_rust_options();
-
-            let arbitrate_func = |awd: &alkahest_rs::clients::oracle::AttestationWithDemand| -> Option<bool> {
-                Python::with_gil(|py| {
-                    let py_attestation = PyOracleAttestation::from(&awd.attestation);
-                    let py_demand: Vec<u8> = awd.demand.to_vec();
-
-                    // Call the Python function with (attestation, demand) as separate arguments
-                    let result = decision_func.call1(py, (py_attestation, py_demand)).ok()?;
-
-                    // Check if it's a coroutine using inspect.iscoroutine()
-                    let inspect = py.import("inspect").ok()?;
-                    let is_coroutine = inspect
-                        .getattr("iscoroutine").ok()?
-                        .call1((result.clone_ref(py),)).ok()?
-                        .extract::<bool>().ok()?;
-
-                    if is_coroutine {
-                        // It's a coroutine - convert to Rust future and block on it
-                        let future = into_future(result.into_bound(py)).ok()?;
-
-                        // Use futures::executor::block_on which works even inside tokio runtime
-                        let awaited_result = futures::executor::block_on(future).ok()?;
-
-                        awaited_result
-                            .extract::<bool>(py)
-                            .or_else(|_| awaited_result.is_truthy(py))
-                            .ok()
-                    } else {
-                        // It's a regular return value
-                        result
-                            .extract::<bool>(py)
-                            .or_else(|_| result.is_truthy(py))
-                            .ok()
-                    }
-                })
-            };
-
-            let decisions = inner
-                .arbitrate_past_sync(arbitrate_func, &arbitrate_options)
-                .await
-                .map_err(map_eyre_to_pyerr)?;
-
-            let py_decisions: Vec<PyDecision> = decisions
-                .into_iter()
-                .map(|decision| {
-                    let attestation = PyOracleAttestation::from(&decision.attestation);
-                    PyDecision::__new__(
-                        attestation,
-                        decision.decision,
-                        format!(
-                            "0x{}",
-                            alloy::hex::encode(decision.receipt.transaction_hash.as_slice())
-                        ),
-                    )
-                })
-                .collect();
-
-            Ok(py_decisions)
-        })
-    }
-
-    pub fn listen_and_arbitrate_no_spawn<'py>(
+    /// Arbitrate attestations based on the specified mode.
+    ///
+    /// Args:
+    ///     decision_func: A function that takes (attestation, demand) and returns bool or None.
+    ///                    Can be sync or async - will be auto-detected.
+    ///     callback_func: Optional callback called after each arbitration decision.
+    ///     mode: ArbitrationMode specifying which attestations to process.
+    ///     timeout_seconds: Optional timeout for modes that listen to future events.
+    ///
+    /// Returns:
+    ///     List of Decision objects for processed attestations.
+    #[pyo3(signature = (decision_func, callback_func=None, mode=None, timeout_seconds=None))]
+    pub fn arbitrate_many<'py>(
         &self,
         py: Python<'py>,
         decision_func: PyObject,
         callback_func: Option<PyObject>,
-        options: Option<PyArbitrateOptions>,
+        mode: Option<PyArbitrationMode>,
         timeout_seconds: Option<f64>,
     ) -> PyResult<pyo3::Bound<'py, PyAny>> {
         // Check if decision_func is async
@@ -375,16 +316,14 @@ impl OracleClient {
         }).unwrap_or(false);
 
         if is_async {
-            // Use async implementation with pyo3-asyncio
-            return self.listen_and_arbitrate_async_impl(py, decision_func, callback_func, options, timeout_seconds);
+            return self.arbitrate_many_async_impl(py, decision_func, callback_func, mode, timeout_seconds);
         }
 
         // Sync implementation
         let inner = self.inner.clone();
         future_into_py(py, async move {
-            let opts = options.unwrap_or_default();
+            let rust_mode = mode.unwrap_or_default().into();
             let timeout = timeout_seconds.map(|secs| std::time::Duration::from_secs_f64(secs));
-            let arbitrate_options = opts.to_rust_options();
 
             let arbitrate_func = |awd: &alkahest_rs::clients::oracle::AttestationWithDemand| -> Option<bool> {
                 Python::with_gil(|py| {
@@ -409,7 +348,7 @@ impl OracleClient {
                         );
 
                         if let Err(e) = py_callback.call1(py, (py_decision,)) {
-                            panic!("Python callback failed: {}", e);
+                            eprintln!("Python callback failed: {}", e);
                         }
                     });
                 }
@@ -417,18 +356,18 @@ impl OracleClient {
                 Box::pin(async {})
             };
 
-            let listen_result = inner
-                .listen_and_arbitrate_no_spawn(
+            let result = inner
+                .arbitrate_many_blocking_sync(
                     arbitrate_func,
                     callback,
-                    &arbitrate_options,
+                    rust_mode,
                     timeout,
                 )
                 .await
                 .map_err(map_eyre_to_pyerr)?;
 
-            let py_decisions: Vec<PyDecision> = listen_result
-                .decisions
+            let py_decisions: Vec<PyDecision> = result
+                .past_decisions
                 .into_iter()
                 .map(|decision| {
                     let attestation = PyOracleAttestation::from(&decision.attestation);
@@ -443,29 +382,23 @@ impl OracleClient {
                 })
                 .collect();
 
-            Ok(PyListenResult::__new__(
-                py_decisions,
-                format!("0x{}", alloy::hex::encode(listen_result.subscription_id.as_slice())),
-            ))
+            Ok(py_decisions)
         })
     }
 
-    fn listen_and_arbitrate_async_impl<'py>(
+    fn arbitrate_many_async_impl<'py>(
         &self,
         py: Python<'py>,
         decision_func: PyObject,
         callback_func: Option<PyObject>,
-        options: Option<PyArbitrateOptions>,
+        mode: Option<PyArbitrationMode>,
         timeout_seconds: Option<f64>,
     ) -> PyResult<pyo3::Bound<'py, PyAny>> {
         let inner = self.inner.clone();
 
         future_into_py(py, async move {
-            use alkahest_rs::extensions::HasOracle;
-
-            let opts = options.unwrap_or_default();
+            let rust_mode = mode.unwrap_or_default().into();
             let timeout = timeout_seconds.map(|secs| std::time::Duration::from_secs_f64(secs));
-            let arbitrate_options = opts.to_rust_options();
 
             // Wrap PyObjects in Arc so they can be cloned in Fn closure
             let decision_func = Arc::new(decision_func);
@@ -537,15 +470,19 @@ impl OracleClient {
                 }) as Pin<Box<dyn Future<Output = ()> + Send + 'static>>
             };
 
-            // Call the async version
-            let listen_result = inner
-                .oracle()
-                .listen_and_arbitrate_async(arbitrate, callback, &arbitrate_options)
+            // Call the blocking async version
+            let result = inner
+                .arbitrate_many_blocking_async(
+                    arbitrate,
+                    callback,
+                    rust_mode,
+                    timeout,
+                )
                 .await
                 .map_err(map_eyre_to_pyerr)?;
 
-            let py_decisions: Vec<PyDecision> = listen_result
-                .decisions
+            let py_decisions: Vec<PyDecision> = result
+                .past_decisions
                 .into_iter()
                 .map(|decision| {
                     let attestation = PyOracleAttestation::from(&decision.attestation);
@@ -560,10 +497,7 @@ impl OracleClient {
                 })
                 .collect();
 
-            Ok(PyListenResult::__new__(
-                py_decisions,
-                format!("0x{}", alloy::hex::encode(listen_result.subscription_id.as_slice())),
-            ))
+            Ok(py_decisions)
         })
     }
 }
@@ -611,100 +545,78 @@ impl TryFrom<PyOracleAddresses> for alkahest_rs::clients::oracle::OracleAddresse
 }
 
 /// Mode for arbitration processing
+/// - "past": Process all past events (including already arbitrated), no subscription
+/// - "past_unarbitrated": Process only unarbitrated past events, no subscription
+/// - "all_unarbitrated": Process unarbitrated past events, plus listen for new events
 /// - "all": Process all past events (including already arbitrated), plus listen for new events
-/// - "unarbitrated": Process only unarbitrated past events, plus listen for new events
-/// - "new": Only listen for new events, skip past event processing
+/// - "future": Only listen for new events, skip past event processing
 #[pyclass(eq, eq_int)]
 #[derive(Clone, PartialEq, Default)]
 pub enum PyArbitrationMode {
+    Past,
+    PastUnarbitrated,
+    AllUnarbitrated,
     #[default]
     All,
-    Unarbitrated,
-    New,
+    Future,
 }
 
 #[pymethods]
 impl PyArbitrationMode {
+    #[staticmethod]
+    pub fn past() -> Self {
+        Self::Past
+    }
+
+    #[staticmethod]
+    pub fn past_unarbitrated() -> Self {
+        Self::PastUnarbitrated
+    }
+
+    #[staticmethod]
+    pub fn all_unarbitrated() -> Self {
+        Self::AllUnarbitrated
+    }
+
     #[staticmethod]
     pub fn all() -> Self {
         Self::All
     }
 
     #[staticmethod]
-    pub fn unarbitrated() -> Self {
-        Self::Unarbitrated
-    }
-
-    #[staticmethod]
-    pub fn new_only() -> Self {
-        Self::New
+    pub fn future() -> Self {
+        Self::Future
     }
 
     pub fn __str__(&self) -> String {
         match self {
+            Self::Past => "past".to_string(),
+            Self::PastUnarbitrated => "past_unarbitrated".to_string(),
+            Self::AllUnarbitrated => "all_unarbitrated".to_string(),
             Self::All => "all".to_string(),
-            Self::Unarbitrated => "unarbitrated".to_string(),
-            Self::New => "new".to_string(),
+            Self::Future => "future".to_string(),
         }
     }
 
     pub fn __repr__(&self) -> String {
         format!("ArbitrationMode.{}", match self {
+            Self::Past => "Past",
+            Self::PastUnarbitrated => "PastUnarbitrated",
+            Self::AllUnarbitrated => "AllUnarbitrated",
             Self::All => "All",
-            Self::Unarbitrated => "Unarbitrated",
-            Self::New => "New",
+            Self::Future => "Future",
         })
     }
 }
 
-#[pyclass]
-#[derive(Clone)]
-pub struct PyArbitrateOptions {
-    #[pyo3(get, set)]
-    pub mode: PyArbitrationMode,
-}
-
-#[pymethods]
-impl PyArbitrateOptions {
-    #[new]
-    #[pyo3(signature = (mode=PyArbitrationMode::All))]
-    pub fn __new__(mode: PyArbitrationMode) -> Self {
-        Self { mode }
-    }
-
-    pub fn __str__(&self) -> String {
-        format!("ArbitrateOptions(mode={})", self.mode.__str__())
-    }
-
-    pub fn __repr__(&self) -> String {
-        self.__str__()
-    }
-}
-
-impl Default for PyArbitrateOptions {
-    fn default() -> Self {
-        Self {
-            mode: PyArbitrationMode::All,
-        }
-    }
-}
-
-impl PyArbitrateOptions {
-    /// Convert to the Rust SDK's ArbitrateOptions
-    pub fn to_rust_options(&self) -> alkahest_rs::clients::oracle::ArbitrateOptions {
-        match self.mode {
-            PyArbitrationMode::All => alkahest_rs::clients::oracle::ArbitrateOptions {
-                skip_arbitrated: false,
-                only_new: false,
-            },
-            PyArbitrationMode::Unarbitrated => alkahest_rs::clients::oracle::ArbitrateOptions {
-                skip_arbitrated: true,
-                only_new: false,
-            },
-            PyArbitrationMode::New => alkahest_rs::clients::oracle::ArbitrateOptions {
-                skip_arbitrated: false,
-                only_new: true,
-            },
+impl From<PyArbitrationMode> for alkahest_rs::clients::oracle::ArbitrationMode {
+    fn from(mode: PyArbitrationMode) -> Self {
+        match mode {
+            PyArbitrationMode::Past => alkahest_rs::clients::oracle::ArbitrationMode::Past,
+            PyArbitrationMode::PastUnarbitrated => alkahest_rs::clients::oracle::ArbitrationMode::PastUnarbitrated,
+            PyArbitrationMode::AllUnarbitrated => alkahest_rs::clients::oracle::ArbitrationMode::AllUnarbitrated,
+            PyArbitrationMode::All => alkahest_rs::clients::oracle::ArbitrationMode::All,
+            PyArbitrationMode::Future => alkahest_rs::clients::oracle::ArbitrationMode::Future,
         }
     }
 }
@@ -875,37 +787,6 @@ impl PyDecision {
     }
 }
 
-#[pyclass]
-#[derive(Clone)]
-pub struct PyListenResult {
-    #[pyo3(get)]
-    pub decisions: Vec<PyDecision>,
-    #[pyo3(get)]
-    pub subscription_id: String,
-}
-
-#[pymethods]
-impl PyListenResult {
-    #[new]
-    pub fn __new__(decisions: Vec<PyDecision>, subscription_id: String) -> Self {
-        Self {
-            decisions,
-            subscription_id,
-        }
-    }
-
-    pub fn __str__(&self) -> String {
-        format!(
-            "PyListenResult(decisions={}, subscription_id={})",
-            self.decisions.len(),
-            self.subscription_id
-        )
-    }
-
-    pub fn __repr__(&self) -> String {
-        self.__str__()
-    }
-}
 
 #[pyclass]
 #[derive(Clone)]

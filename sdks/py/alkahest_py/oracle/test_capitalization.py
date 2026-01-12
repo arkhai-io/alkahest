@@ -11,7 +11,6 @@ from alkahest_py import (
     EnvTestManager,
     MockERC20,
     TrustedOracleArbiterDemandData,
-    ArbitrateOptions,
     ArbitrationMode,
     AlkahestClient,
 )
@@ -135,20 +134,19 @@ async def test_synchronous_offchain_oracle_capitalization_flow():
         """Called when arbitration completes"""
         pass
 
-    # Listen and arbitrate
-    options = ArbitrateOptions(ArbitrationMode.All)
-    result = await oracle_client.oracle.listen_and_arbitrate_no_spawn(
+    # Arbitrate with AllUnarbitrated mode
+    decisions = await oracle_client.oracle.arbitrate_many(
         decision_function,
         callback,
-        options,
+        ArbitrationMode.AllUnarbitrated,
         timeout_seconds=2.0
     )
 
     # Verify all decisions were approved
-    assert len(result.decisions) == 1, f"Expected 1 decision, got {len(result.decisions)}"
-    assert all(d.decision for d in result.decisions), "Oracle rejected fulfillment"
+    assert len(decisions) == 1, f"Expected 1 decision, got {len(decisions)}"
+    assert all(d.decision for d in decisions), "Oracle rejected fulfillment"
 
     # Step 5: The successful arbitration lets Bob claim the escrowed payment
     await env.bob_client.erc20.escrow.non_tierable.collect(escrow_uid, fulfillment_uid)
 
-    print("✅ Synchronous offchain oracle capitalization test passed")
+    print("Synchronous offchain oracle capitalization test passed")
