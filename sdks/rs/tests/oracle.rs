@@ -2,7 +2,7 @@
 mod tests {
     use alkahest_rs::{
         DefaultAlkahestClient,
-        clients::oracle::ArbitrateOptions,
+        clients::oracle::ArbitrationMode,
         contracts::{self, obligations::StringObligation},
         extensions::{HasErc20, HasOracle, HasStringObligation},
         fixtures::MockERC20Permit,
@@ -84,25 +84,24 @@ mod tests {
             .await?;
 
         let bob_client = test.bob_client.clone();
-        let decisions = test
+        let result = test
             .bob_client
             .oracle()
-            .arbitrate_past_sync(
+            .arbitrate_many_sync(
                 move |awd| {
                     let obligation = bob_client
                         .extract_obligation_data::<StringObligation::ObligationData>(&awd.attestation)
                         .ok()?;
                     Some(obligation.item == "good")
                 },
-                &ArbitrateOptions {
-                    skip_arbitrated: false,
-                    only_new: false,
-                },
+                |_| async {},
+                ArbitrationMode::Past,
             )
             .await?;
 
-        assert_eq!(decisions.len(), 1);
-        assert_eq!(decisions[0].decision, true);
+        assert_eq!(result.past_decisions.len(), 1);
+        assert_eq!(result.past_decisions[0].decision, true);
+        assert!(result.subscription_id.is_none());
 
         let collection = test
             .bob_client
@@ -134,26 +133,24 @@ mod tests {
             .await?;
 
         let bob_client = test.bob_client.clone();
-        let decisions = test
+        let result = test
             .bob_client
             .oracle()
-            .arbitrate_past_sync(
+            .arbitrate_many_sync(
                 move |awd| {
                     let obligation = bob_client
                         .extract_obligation_data::<StringObligation::ObligationData>(&awd.attestation)
                         .ok()?;
                     Some(obligation.item == "good")
                 },
-                &ArbitrateOptions {
-                    skip_arbitrated: false,
-                    only_new: false,
-                },
+                |_| async {},
+                ArbitrationMode::Past,
             )
             .await?;
 
-        assert_eq!(decisions.len(), 2);
+        assert_eq!(result.past_decisions.len(), 2);
         assert_eq!(
-            decisions.iter().filter(|d| d.decision).count(),
+            result.past_decisions.iter().filter(|d| d.decision).count(),
             1,
             "Only one should be approved"
         );
@@ -176,45 +173,41 @@ mod tests {
 
         // First arbitration
         let bob_client = test.bob_client.clone();
-        let decisions = test
+        let result = test
             .bob_client
             .oracle()
-            .arbitrate_past_sync(
+            .arbitrate_many_sync(
                 move |awd| {
                     let obligation = bob_client
                         .extract_obligation_data::<StringObligation::ObligationData>(&awd.attestation)
                         .ok()?;
                     Some(obligation.item == "good")
                 },
-                &ArbitrateOptions {
-                    skip_arbitrated: false,
-                    only_new: false,
-                },
+                |_| async {},
+                ArbitrationMode::Past,
             )
             .await?;
 
-        assert_eq!(decisions.len(), 1);
+        assert_eq!(result.past_decisions.len(), 1);
 
-        // Second arbitration with skip_arbitrated should find nothing
+        // Second arbitration with PastUnarbitrated should find nothing
         let bob_client2 = test.bob_client.clone();
-        let decisions = test
+        let result = test
             .bob_client
             .oracle()
-            .arbitrate_past_sync(
+            .arbitrate_many_sync(
                 move |awd| {
                     let obligation = bob_client2
                         .extract_obligation_data::<StringObligation::ObligationData>(&awd.attestation)
                         .ok()?;
                     Some(obligation.item == "good")
                 },
-                &ArbitrateOptions {
-                    skip_arbitrated: true,
-                    only_new: false,
-                },
+                |_| async {},
+                ArbitrationMode::PastUnarbitrated,
             )
             .await?;
 
-        assert_eq!(decisions.len(), 0, "Should skip already arbitrated");
+        assert_eq!(result.past_decisions.len(), 0, "Should skip already arbitrated");
 
         Ok(())
     }
@@ -233,10 +226,10 @@ mod tests {
             .await?;
 
         let bob_client = Arc::new(test.bob_client.clone());
-        let decisions = test
+        let result = test
             .bob_client
             .oracle()
-            .arbitrate_past_async(
+            .arbitrate_many_async(
                 move |awd| {
                     let client = bob_client.clone();
                     let attestation = awd.attestation.clone();
@@ -249,21 +242,19 @@ mod tests {
                         Some(obligation.item == "good")
                     }
                 },
-                &ArbitrateOptions {
-                    skip_arbitrated: false,
-                    only_new: false,
-                },
+                |_| async {},
+                ArbitrationMode::Past,
             )
             .await?;
 
-        assert_eq!(decisions.len(), 1);
-        assert_eq!(decisions[0].decision, true);
+        assert_eq!(result.past_decisions.len(), 1);
+        assert_eq!(result.past_decisions[0].decision, true);
 
         Ok(())
     }
 
     #[tokio::test]
-    async fn test_trivial_listen_and_arbitrate() -> eyre::Result<()> {
+    async fn test_trivial_arbitrate_all() -> eyre::Result<()> {
         let test = setup_test_environment().await?;
         let (_, _, escrow_uid) = setup_escrow(&test).await?;
 
@@ -279,7 +270,7 @@ mod tests {
         let result = test
             .bob_client
             .oracle()
-            .listen_and_arbitrate_sync(
+            .arbitrate_many_sync(
                 move |awd| {
                     let obligation = (*oracle_client)
                         .extract_obligation_data::<StringObligation::ObligationData>(&awd.attestation)
@@ -287,26 +278,23 @@ mod tests {
                     Some(obligation.item == "good")
                 },
                 |_decision| async {},
-                &ArbitrateOptions {
-                    skip_arbitrated: false,
-                    only_new: false,
-                },
+                ArbitrationMode::All,
             )
             .await?;
 
-        assert_eq!(result.decisions.len(), 1);
-        assert_eq!(result.decisions[0].decision, true);
+        assert_eq!(result.past_decisions.len(), 1);
+        assert_eq!(result.past_decisions[0].decision, true);
 
         test.bob_client
             .oracle()
-            .unsubscribe(result.subscription_id)
+            .unsubscribe(result.subscription_id.unwrap())
             .await?;
 
         Ok(())
     }
 
     #[tokio::test]
-    async fn test_listen_and_arbitrate_new_fulfillments() -> eyre::Result<()> {
+    async fn test_arbitrate_future_only() -> eyre::Result<()> {
         let test = setup_test_environment().await?;
         let (_, _, escrow_uid) = setup_escrow(&test).await?;
 
@@ -314,7 +302,7 @@ mod tests {
         let result = test
             .bob_client
             .oracle()
-            .listen_and_arbitrate_sync(
+            .arbitrate_many_sync(
                 move |awd| {
                     let obligation = (*oracle_client)
                         .extract_obligation_data::<StringObligation::ObligationData>(&awd.attestation)
@@ -322,14 +310,11 @@ mod tests {
                     Some(obligation.item == "good")
                 },
                 |_decision| async {},
-                &ArbitrateOptions {
-                    skip_arbitrated: false,
-                    only_new: true,
-                },
+                ArbitrationMode::Future,
             )
             .await?;
 
-        assert_eq!(result.decisions.len(), 0, "Should not arbitrate past");
+        assert_eq!(result.past_decisions.len(), 0, "Should not arbitrate past");
 
         // Now make a new fulfillment after listening started
         let fulfillment_uid = make_fulfillment(&test, "good", escrow_uid).await?;
@@ -355,13 +340,13 @@ mod tests {
 
         test.bob_client
             .oracle()
-            .unsubscribe(result.subscription_id)
+            .unsubscribe(result.subscription_id.unwrap())
             .await?;
         Ok(())
     }
 
     #[tokio::test]
-    async fn test_listen_and_arbitrate_async() -> eyre::Result<()> {
+    async fn test_arbitrate_all_async() -> eyre::Result<()> {
         let test = setup_test_environment().await?;
         let (_, _, escrow_uid) = setup_escrow(&test).await?;
 
@@ -377,7 +362,7 @@ mod tests {
         let result = test
             .bob_client
             .oracle()
-            .listen_and_arbitrate_async(
+            .arbitrate_many_async(
                 move |awd| {
                     let client = bob_client.clone();
                     let attestation = awd.attestation.clone();
@@ -391,15 +376,12 @@ mod tests {
                     }
                 },
                 |_decision| async {},
-                &ArbitrateOptions {
-                    skip_arbitrated: false,
-                    only_new: false,
-                },
+                ArbitrationMode::All,
             )
             .await?;
 
-        assert_eq!(result.decisions.len(), 1);
-        assert_eq!(result.decisions[0].decision, true);
+        assert_eq!(result.past_decisions.len(), 1);
+        assert_eq!(result.past_decisions[0].decision, true);
 
         test.bob_client
             .oracle()
@@ -416,66 +398,14 @@ mod tests {
 
         test.bob_client
             .oracle()
-            .unsubscribe(result.subscription_id)
+            .unsubscribe(result.subscription_id.unwrap())
             .await?;
 
         Ok(())
     }
 
     #[tokio::test]
-    async fn test_listen_and_arbitrate_no_spawn() -> eyre::Result<()> {
-        let test = setup_test_environment().await?;
-        let (_, _, escrow_uid) = setup_escrow(&test).await?;
-
-        let fulfillment_uid = make_fulfillment(&test, "good", escrow_uid).await?;
-
-        // Request arbitration
-        test.bob_client
-            .oracle()
-            .request_arbitration(fulfillment_uid, test.bob.address(), Bytes::default())
-            .await?;
-
-        let oracle_client = test.bob_client.oracle().clone();
-        let result = test
-            .bob_client
-            .oracle()
-            .listen_and_arbitrate_no_spawn(
-                move |awd| {
-                    let obligation = oracle_client
-                        .extract_obligation_data::<StringObligation::ObligationData>(&awd.attestation)
-                        .ok()?;
-                    Some(obligation.item == "good")
-                },
-                |_decision| async {},
-                &ArbitrateOptions {
-                    skip_arbitrated: false,
-                    only_new: false,
-                },
-                Some(Duration::from_secs(5)),
-            )
-            .await?;
-
-        assert_eq!(result.decisions.len(), 1);
-        assert_eq!(result.decisions[0].decision, true);
-
-        test.bob_client
-            .oracle()
-            .wait_for_arbitration(fulfillment_uid, None, None, None)
-            .await?;
-
-        let collection = test
-            .bob_client
-            .erc20()
-            .escrow().non_tierable().collect(escrow_uid, fulfillment_uid)
-            .await?;
-
-        println!("✅ Arbitrate decision passed. Tx: {:?}", collection);
-
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn test_conditional_listen_and_arbitrate() -> eyre::Result<()> {
+    async fn test_conditional_arbitrate_all() -> eyre::Result<()> {
         let test = setup_test_environment().await?;
         let (_, _, escrow_uid) = setup_escrow(&test).await?;
 
@@ -496,7 +426,7 @@ mod tests {
         let result = test
             .bob_client
             .oracle()
-            .listen_and_arbitrate_sync(
+            .arbitrate_many_sync(
                 move |awd| {
                     let obligation = (*oracle_client)
                         .extract_obligation_data::<StringObligation::ObligationData>(&awd.attestation)
@@ -504,16 +434,13 @@ mod tests {
                     Some(obligation.item == "good")
                 },
                 |_decision| async {},
-                &ArbitrateOptions {
-                    skip_arbitrated: false,
-                    only_new: false,
-                },
+                ArbitrationMode::All,
             )
             .await?;
 
-        assert_eq!(result.decisions.len(), 2);
+        assert_eq!(result.past_decisions.len(), 2);
         assert_eq!(
-            result.decisions.iter().filter(|d| d.decision).count(),
+            result.past_decisions.iter().filter(|d| d.decision).count(),
             1,
             "Only one should be approved"
         );
@@ -533,8 +460,57 @@ mod tests {
 
         test.bob_client
             .oracle()
-            .unsubscribe(result.subscription_id)
+            .unsubscribe(result.subscription_id.unwrap())
             .await?;
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_arbitrate_blocking_with_timeout() -> eyre::Result<()> {
+        let test = setup_test_environment().await?;
+        let (_, _, escrow_uid) = setup_escrow(&test).await?;
+
+        let fulfillment_uid = make_fulfillment(&test, "good", escrow_uid).await?;
+
+        // Request arbitration
+        test.bob_client
+            .oracle()
+            .request_arbitration(fulfillment_uid, test.bob.address(), Bytes::default())
+            .await?;
+
+        let oracle_client = test.bob_client.oracle().clone();
+        let result = test
+            .bob_client
+            .oracle()
+            .arbitrate_many_blocking_sync(
+                move |awd| {
+                    let obligation = oracle_client
+                        .extract_obligation_data::<StringObligation::ObligationData>(&awd.attestation)
+                        .ok()?;
+                    Some(obligation.item == "good")
+                },
+                |_decision| async {},
+                ArbitrationMode::All,
+                Some(Duration::from_secs(5)),
+            )
+            .await?;
+
+        assert_eq!(result.past_decisions.len(), 1);
+        assert_eq!(result.past_decisions[0].decision, true);
+
+        test.bob_client
+            .oracle()
+            .wait_for_arbitration(fulfillment_uid, None, None, None)
+            .await?;
+
+        let collection = test
+            .bob_client
+            .erc20()
+            .escrow().non_tierable().collect(escrow_uid, fulfillment_uid)
+            .await?;
+
+        println!("✅ Arbitrate decision passed. Tx: {:?}", collection);
 
         Ok(())
     }

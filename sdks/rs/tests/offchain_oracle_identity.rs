@@ -4,7 +4,7 @@ use std::{
 
 use alkahest_rs::{
     AlkahestClient, DefaultAlkahestClient,
-    clients::oracle::ArbitrateOptions,
+    clients::oracle::ArbitrationMode,
     contracts::obligations::StringObligation,
     extensions::{HasArbiters, HasOracle, HasStringObligation},
     utils::{TestContext, setup_test_environment},
@@ -109,13 +109,10 @@ async fn run_contextless_identity_example(test: &TestContext) -> eyre::Result<()
     }
 
     let listen_result = charlie_oracle
-        .listen_and_arbitrate_async(
+        .arbitrate_many_async(
             verify_identity,
             |_| async {},
-            &ArbitrateOptions {
-                skip_arbitrated: true,
-                only_new: true,
-            },
+            ArbitrationMode::Future,
         )
         .await?;
 
@@ -193,7 +190,7 @@ async fn run_contextless_identity_example(test: &TestContext) -> eyre::Result<()
     assert!(!second_log.decision);
 
     charlie_oracle
-        .unsubscribe(listen_result.subscription_id)
+        .unsubscribe(listen_result.subscription_id.unwrap())
         .await?;
 
     identity_registry().lock().await.clear();

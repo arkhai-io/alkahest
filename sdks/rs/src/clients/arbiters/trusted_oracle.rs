@@ -11,6 +11,7 @@ use alloy::{
     sol_types::SolEvent,
 };
 use futures::{future::try_join_all, StreamExt as _};
+use tokio::time::Duration;
 use tracing;
 
 use crate::{
@@ -529,6 +530,348 @@ impl TrustedOracleModule {
             past_decisions,
             subscription_id,
         })
+    }
+
+    /// Arbitrate multiple attestations in blocking mode (sync callback version)
+    ///
+    /// Unlike `arbitrate_many_sync`, this function does NOT spawn a background task.
+    /// Instead, it processes the event stream in the current task until the optional
+    /// timeout is reached or the stream ends. This is useful for Python SDK integration
+    /// via maturin or when you need synchronous control over the event loop.
+    ///
+    /// # Arguments
+    /// * `arbitrate` - Sync callback that returns `Some(true/false)` to arbitrate, `None` to skip
+    /// * `on_decision` - Callback invoked after each successful arbitration
+    /// * `mode` - Which attestations to process (see `ArbitrationMode`)
+    /// * `timeout` - Optional timeout for the stream processing; if None, runs until stream ends
+    pub async fn arbitrate_many_blocking_sync<
+        Arbitrate: Fn(&AttestationWithDemand) -> Option<bool>,
+        OnDecisionFut: std::future::Future<Output = ()>,
+        OnDecision: Fn(&Decision) -> OnDecisionFut,
+    >(
+        &self,
+        arbitrate: Arbitrate,
+        on_decision: OnDecision,
+        mode: ArbitrationMode,
+        timeout: Option<Duration>,
+    ) -> eyre::Result<ArbitrateManyResult> {
+        use ArbitrationMode::*;
+
+        let skip_arbitrated = matches!(mode, PastUnarbitrated | AllUnarbitrated);
+        let include_past = matches!(mode, Past | PastUnarbitrated | All | AllUnarbitrated);
+        let include_future = matches!(mode, Future | All | AllUnarbitrated);
+
+        // Process past attestations
+        let past_decisions = if include_past {
+            let attestations = self.get_past_attestations(skip_arbitrated).await?;
+            let decisions: Vec<Option<bool>> = attestations.iter().map(|awd| arbitrate(awd)).collect();
+            self.submit_arbitrations(decisions, attestations).await?
+        } else {
+            Vec::new()
+        };
+
+        // Process future events in blocking mode if needed
+        let subscription_id = if include_future {
+            let filter = self.make_arbitration_requested_filter();
+            let sub = self.public_provider.subscribe_logs(&filter).await?;
+            let local_id = *sub.local_id();
+            let stream = sub.into_stream();
+
+            self.handle_stream_blocking_sync(stream, &arbitrate, &on_decision, skip_arbitrated, timeout)
+                .await;
+
+            Some(local_id)
+        } else {
+            None
+        };
+
+        Ok(ArbitrateManyResult {
+            past_decisions,
+            subscription_id,
+        })
+    }
+
+    /// Arbitrate multiple attestations in blocking mode (async callback version)
+    ///
+    /// Unlike `arbitrate_many_async`, this function does NOT spawn a background task.
+    /// Instead, it processes the event stream in the current task until the optional
+    /// timeout is reached or the stream ends. This is useful for Python SDK integration
+    /// via maturin or when you need synchronous control over the event loop.
+    ///
+    /// # Arguments
+    /// * `arbitrate` - Async callback that returns `Some(true/false)` to arbitrate, `None` to skip
+    /// * `on_decision` - Callback invoked after each successful arbitration
+    /// * `mode` - Which attestations to process (see `ArbitrationMode`)
+    /// * `timeout` - Optional timeout for the stream processing; if None, runs until stream ends
+    pub async fn arbitrate_many_blocking_async<
+        ArbitrateFut: std::future::Future<Output = Option<bool>>,
+        Arbitrate: Fn(&AttestationWithDemand) -> ArbitrateFut,
+        OnDecisionFut: std::future::Future<Output = ()>,
+        OnDecision: Fn(&Decision) -> OnDecisionFut,
+    >(
+        &self,
+        arbitrate: Arbitrate,
+        on_decision: OnDecision,
+        mode: ArbitrationMode,
+        timeout: Option<Duration>,
+    ) -> eyre::Result<ArbitrateManyResult> {
+        use futures::future::join_all;
+        use ArbitrationMode::*;
+
+        let skip_arbitrated = matches!(mode, PastUnarbitrated | AllUnarbitrated);
+        let include_past = matches!(mode, Past | PastUnarbitrated | All | AllUnarbitrated);
+        let include_future = matches!(mode, Future | All | AllUnarbitrated);
+
+        // Process past attestations
+        let past_decisions = if include_past {
+            let attestations = self.get_past_attestations(skip_arbitrated).await?;
+            let decision_futs = attestations.iter().map(|awd| arbitrate(awd));
+            let decisions = join_all(decision_futs).await;
+            self.submit_arbitrations(decisions, attestations).await?
+        } else {
+            Vec::new()
+        };
+
+        // Process future events in blocking mode if needed
+        let subscription_id = if include_future {
+            let filter = self.make_arbitration_requested_filter();
+            let sub = self.public_provider.subscribe_logs(&filter).await?;
+            let local_id = *sub.local_id();
+            let stream = sub.into_stream();
+
+            self.handle_stream_blocking_async(stream, &arbitrate, &on_decision, skip_arbitrated, timeout)
+                .await;
+
+            Some(local_id)
+        } else {
+            None
+        };
+
+        Ok(ArbitrateManyResult {
+            past_decisions,
+            subscription_id,
+        })
+    }
+
+    async fn handle_stream_blocking_sync<
+        Arbitrate: Fn(&AttestationWithDemand) -> Option<bool>,
+        OnDecisionFut: std::future::Future<Output = ()>,
+        OnDecision: Fn(&Decision) -> OnDecisionFut,
+    >(
+        &self,
+        mut stream: SubscriptionStream<alloy::rpc::types::Log>,
+        arbitrate: &Arbitrate,
+        on_decision: &OnDecision,
+        skip_arbitrated: bool,
+        timeout: Option<Duration>,
+    ) {
+        let eas = IEAS::new(self.addresses.eas, &*self.wallet_provider);
+        let arbiter = TrustedOracleArbiter::new(
+            self.addresses.trusted_oracle_arbiter,
+            &*self.wallet_provider,
+        );
+
+        loop {
+            let next_result = if let Some(timeout_duration) = timeout {
+                match tokio::time::timeout(timeout_duration, stream.next()).await {
+                    Ok(Some(log)) => Some(log),
+                    Ok(None) => None,
+                    Err(_) => {
+                        tracing::info!("Stream timeout reached after {:?}", timeout_duration);
+                        break;
+                    }
+                }
+            } else {
+                stream.next().await
+            };
+
+            let Some(log) = next_result else {
+                break;
+            };
+
+            let Ok(arbitration_log) =
+                log.log_decode::<TrustedOracleArbiter::ArbitrationRequested>()
+            else {
+                continue;
+            };
+
+            let Ok(attestation) = eas
+                .getAttestation(arbitration_log.inner.obligation)
+                .call()
+                .await
+            else {
+                continue;
+            };
+
+            let demand = arbitration_log.inner.demand.clone();
+
+            if skip_arbitrated {
+                let filter = self.make_arbitration_made_filter(Some(attestation.uid));
+                if let Ok(logs) = self.public_provider.get_logs(&filter).await {
+                    if !logs.is_empty() {
+                        continue;
+                    }
+                }
+            }
+
+            let now = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs();
+            if (attestation.expirationTime != 0 && attestation.expirationTime < now)
+                || (attestation.revocationTime != 0 && attestation.revocationTime < now)
+            {
+                continue;
+            }
+
+            let awd = AttestationWithDemand {
+                attestation: attestation.clone(),
+                demand: demand.clone(),
+            };
+            let Some(decision_value) = arbitrate(&awd) else {
+                continue;
+            };
+
+            let Ok(nonce) = self
+                .wallet_provider
+                .get_transaction_count(self.signer_address)
+                .await
+            else {
+                continue;
+            };
+
+            match arbiter
+                .arbitrate(attestation.uid, demand, decision_value)
+                .nonce(nonce)
+                .send()
+                .await
+            {
+                Ok(tx) => {
+                    if let Ok(receipt) = tx.get_receipt().await {
+                        let decision = Decision {
+                            attestation,
+                            decision: decision_value,
+                            receipt,
+                        };
+                        on_decision(&decision).await;
+                    }
+                }
+                Err(err) => {
+                    tracing::error!("Arbitration failed for {}: {}", attestation.uid, err);
+                }
+            }
+        }
+    }
+
+    async fn handle_stream_blocking_async<
+        ArbitrateFut: std::future::Future<Output = Option<bool>>,
+        Arbitrate: Fn(&AttestationWithDemand) -> ArbitrateFut,
+        OnDecisionFut: std::future::Future<Output = ()>,
+        OnDecision: Fn(&Decision) -> OnDecisionFut,
+    >(
+        &self,
+        mut stream: SubscriptionStream<alloy::rpc::types::Log>,
+        arbitrate: &Arbitrate,
+        on_decision: &OnDecision,
+        skip_arbitrated: bool,
+        timeout: Option<Duration>,
+    ) {
+        let eas = IEAS::new(self.addresses.eas, &*self.wallet_provider);
+        let arbiter = TrustedOracleArbiter::new(
+            self.addresses.trusted_oracle_arbiter,
+            &*self.wallet_provider,
+        );
+
+        loop {
+            let next_result = if let Some(timeout_duration) = timeout {
+                match tokio::time::timeout(timeout_duration, stream.next()).await {
+                    Ok(Some(log)) => Some(log),
+                    Ok(None) => None,
+                    Err(_) => {
+                        tracing::info!("Stream timeout reached after {:?}", timeout_duration);
+                        break;
+                    }
+                }
+            } else {
+                stream.next().await
+            };
+
+            let Some(log) = next_result else {
+                break;
+            };
+
+            let Ok(arbitration_log) =
+                log.log_decode::<TrustedOracleArbiter::ArbitrationRequested>()
+            else {
+                continue;
+            };
+
+            let Ok(attestation) = eas
+                .getAttestation(arbitration_log.inner.obligation)
+                .call()
+                .await
+            else {
+                continue;
+            };
+
+            let demand = arbitration_log.inner.demand.clone();
+
+            if skip_arbitrated {
+                let filter = self.make_arbitration_made_filter(Some(attestation.uid));
+                if let Ok(logs) = self.public_provider.get_logs(&filter).await {
+                    if !logs.is_empty() {
+                        continue;
+                    }
+                }
+            }
+
+            let now = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs();
+            if (attestation.expirationTime != 0 && attestation.expirationTime < now)
+                || (attestation.revocationTime != 0 && attestation.revocationTime < now)
+            {
+                continue;
+            }
+
+            let awd = AttestationWithDemand {
+                attestation: attestation.clone(),
+                demand: demand.clone(),
+            };
+            let Some(decision_value) = arbitrate(&awd).await else {
+                continue;
+            };
+
+            let Ok(nonce) = self
+                .wallet_provider
+                .get_transaction_count(self.signer_address)
+                .await
+            else {
+                continue;
+            };
+
+            match arbiter
+                .arbitrate(attestation.uid, demand, decision_value)
+                .nonce(nonce)
+                .send()
+                .await
+            {
+                Ok(tx) => {
+                    if let Ok(receipt) = tx.get_receipt().await {
+                        let decision = Decision {
+                            attestation,
+                            decision: decision_value,
+                            receipt,
+                        };
+                        on_decision(&decision).await;
+                    }
+                }
+                Err(err) => {
+                    tracing::error!("Arbitration failed for {}: {}", attestation.uid, err);
+                }
+            }
+        }
     }
 
     fn spawn_stream_handler<
