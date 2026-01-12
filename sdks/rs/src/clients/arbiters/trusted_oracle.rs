@@ -11,7 +11,6 @@ use alloy::{
     sol_types::SolEvent,
 };
 use futures::{future::try_join_all, StreamExt as _};
-use tokio::time::Duration;
 use tracing;
 
 use crate::{
@@ -50,10 +49,19 @@ impl Default for TrustedOracleAddresses {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct ArbitrateOptions {
-    pub skip_arbitrated: bool,
-    pub only_new: bool,
+/// Mode for the `arbitrate_many` function specifying which attestations to process
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ArbitrationMode {
+    /// Process all past attestations (including already arbitrated), no listener
+    Past,
+    /// Process only past attestations that haven't been arbitrated yet, no listener
+    PastUnarbitrated,
+    /// Process past unarbitrated + listen for future attestations (filtering out already arbitrated)
+    AllUnarbitrated,
+    /// Process all past + listen for future attestations (including already arbitrated)
+    All,
+    /// Only listen for future attestations, skip past
+    Future,
 }
 
 /// An attestation paired with its associated demand data from ArbitrationRequested event
@@ -63,66 +71,6 @@ pub struct AttestationWithDemand {
     pub demand: Bytes,
 }
 
-impl Default for ArbitrateOptions {
-    fn default() -> Self {
-        ArbitrateOptions {
-            skip_arbitrated: false,
-            only_new: false,
-        }
-    }
-}
-
-// Trait for abstracting over sync and async arbitration strategies
-trait ArbitrationStrategy {
-    type Future: std::future::Future<Output = Option<bool>> + Send;
-
-    fn arbitrate(&self, awd: &AttestationWithDemand) -> Self::Future;
-}
-
-// Sync arbitration strategy
-struct SyncArbitration<F> {
-    func: F,
-}
-
-impl<F> SyncArbitration<F> {
-    fn new(func: F) -> Self {
-        Self { func }
-    }
-}
-
-impl<F> ArbitrationStrategy for SyncArbitration<F>
-where
-    F: Fn(&AttestationWithDemand) -> Option<bool>,
-{
-    type Future = std::future::Ready<Option<bool>>;
-
-    fn arbitrate(&self, awd: &AttestationWithDemand) -> Self::Future {
-        std::future::ready((self.func)(awd))
-    }
-}
-
-// Async arbitration strategy
-struct AsyncArbitration<F> {
-    func: F,
-}
-
-impl<F> AsyncArbitration<F> {
-    fn new(func: F) -> Self {
-        Self { func }
-    }
-}
-
-impl<F, Fut> ArbitrationStrategy for AsyncArbitration<F>
-where
-    F: Fn(&AttestationWithDemand) -> Fut,
-    Fut: std::future::Future<Output = Option<bool>> + Send,
-{
-    type Future = Fut;
-
-    fn arbitrate(&self, awd: &AttestationWithDemand) -> Self::Future {
-        (self.func)(awd)
-    }
-}
 
 impl AlkahestExtension for TrustedOracleModule {
     type Config = TrustedOracleAddresses;
@@ -147,9 +95,12 @@ pub struct Decision {
     pub receipt: TransactionReceipt,
 }
 
-pub struct ListenAndArbitrateResult {
-    pub decisions: Vec<Decision>,
-    pub subscription_id: FixedBytes<32>,
+/// Result from `arbitrate_many`
+pub struct ArbitrateManyResult {
+    /// Decisions made for past attestations (empty for `Future` mode)
+    pub past_decisions: Vec<Decision>,
+    /// Subscription ID for future events (None for `Past`/`PastUnarbitrated` modes)
+    pub subscription_id: Option<FixedBytes<32>>,
 }
 
 impl TrustedOracleModule {
@@ -365,9 +316,9 @@ impl TrustedOracleModule {
             .collect())
     }
 
-    async fn get_arbitration_requested_attestations(
+    async fn get_past_attestations(
         &self,
-        options: &ArbitrateOptions,
+        skip_arbitrated: bool,
     ) -> eyre::Result<Vec<AttestationWithDemand>> {
         let filter = self.make_arbitration_requested_filter();
 
@@ -405,7 +356,7 @@ impl TrustedOracleModule {
             })
             .collect();
 
-        let attestations_with_demand = if options.skip_arbitrated {
+        let attestations_with_demand = if skip_arbitrated {
             self.filter_unarbitrated_attestations_with_demand(attestations_with_demand)
                 .await?
         } else {
@@ -415,7 +366,7 @@ impl TrustedOracleModule {
         Ok(attestations_with_demand)
     }
 
-    async fn arbitrate_internal(
+    async fn submit_arbitrations(
         &self,
         decisions: Vec<Option<bool>>,
         attestations_with_demand: Vec<AttestationWithDemand>,
@@ -425,14 +376,12 @@ impl TrustedOracleModule {
         let arbitration_futs = attestations_with_demand
             .iter()
             .zip(decisions.iter())
-            .enumerate()
-            .filter_map(|(_i, (awd, decision))| {
+            .filter_map(|(awd, decision)| {
                 let trusted_oracle_arbiter = TrustedOracleArbiter::new(
                     self.addresses.trusted_oracle_arbiter,
                     &*self.wallet_provider,
                 );
                 if let Some(decision) = decision {
-                    // Use demand from ArbitrationRequested event
                     let demand = awd.demand.clone();
                     let uid = awd.attestation.uid;
                     Some(async move {
@@ -470,68 +419,134 @@ impl TrustedOracleModule {
         Ok(result)
     }
 
-    async fn arbitrate_past<Strategy: ArbitrationStrategy>(
-        &self,
-        strategy: Strategy,
-        options: &ArbitrateOptions,
-    ) -> eyre::Result<Vec<Decision>>
-    where
-        Strategy::Future: Send,
-    {
-        use futures::future::join_all;
-
-        let attestations_with_demand = self.get_arbitration_requested_attestations(options).await?;
-
-        // Strategy receives full AttestationWithDemand
-        let decision_futs = attestations_with_demand
-            .iter()
-            .map(|awd| strategy.arbitrate(awd));
-        let decisions = join_all(decision_futs).await;
-
-        self.arbitrate_internal(decisions, attestations_with_demand)
-            .await
-    }
-
-    pub async fn arbitrate_past_sync<Arbitrate: Fn(&AttestationWithDemand) -> Option<bool>>(
-        &self,
-        arbitrate: Arbitrate,
-        options: &ArbitrateOptions,
-    ) -> eyre::Result<Vec<Decision>> {
-        let strategy = SyncArbitration::new(arbitrate);
-        self.arbitrate_past(strategy, options).await
-    }
-
-    pub async fn arbitrate_past_async<
-        ArbitrateFut: std::future::Future<Output = Option<bool>> + Send,
-        Arbitrate: Fn(&AttestationWithDemand) -> ArbitrateFut,
+    /// Arbitrate multiple attestations based on the specified mode
+    ///
+    /// # Arguments
+    /// * `arbitrate` - Sync callback that returns `Some(true/false)` to arbitrate, `None` to skip
+    /// * `on_decision` - Callback invoked after each successful arbitration (for modes with listeners)
+    /// * `mode` - Which attestations to process (see `ArbitrationMode`)
+    ///
+    /// # Returns
+    /// * For `Past`/`PastUnarbitrated`: Returns decisions for past attestations, no subscription
+    /// * For `All`/`AllUnarbitrated`/`Future`: Returns past decisions (if any) and subscription ID
+    pub async fn arbitrate_many_sync<
+        Arbitrate: Fn(&AttestationWithDemand) -> Option<bool> + Clone + Send + Sync + 'static,
+        OnDecisionFut: std::future::Future<Output = ()> + Send + 'static,
+        OnDecision: Fn(&Decision) -> OnDecisionFut + Clone + Send + Sync + 'static,
     >(
         &self,
         arbitrate: Arbitrate,
-        options: &ArbitrateOptions,
-    ) -> eyre::Result<Vec<Decision>> {
-        let strategy = AsyncArbitration::new(arbitrate);
-        self.arbitrate_past(strategy, options).await
+        on_decision: OnDecision,
+        mode: ArbitrationMode,
+    ) -> eyre::Result<ArbitrateManyResult> {
+        use ArbitrationMode::*;
+
+        let skip_arbitrated = matches!(mode, PastUnarbitrated | AllUnarbitrated);
+        let include_past = matches!(mode, Past | PastUnarbitrated | All | AllUnarbitrated);
+        let include_future = matches!(mode, Future | All | AllUnarbitrated);
+
+        // Process past attestations
+        let past_decisions = if include_past {
+            let attestations = self.get_past_attestations(skip_arbitrated).await?;
+            let decisions: Vec<Option<bool>> = attestations.iter().map(|awd| arbitrate(awd)).collect();
+            self.submit_arbitrations(decisions, attestations).await?
+        } else {
+            Vec::new()
+        };
+
+        // Set up future listener if needed
+        let subscription_id = if include_future {
+            let filter = self.make_arbitration_requested_filter();
+            let sub = self.public_provider.subscribe_logs(&filter).await?;
+            let local_id = *sub.local_id();
+            let stream = sub.into_stream();
+
+            self.spawn_stream_handler(stream, arbitrate, on_decision, skip_arbitrated);
+
+            Some(local_id)
+        } else {
+            None
+        };
+
+        Ok(ArbitrateManyResult {
+            past_decisions,
+            subscription_id,
+        })
     }
 
-    async fn spawn_arbitration_listener<
-        Strategy: ArbitrationStrategy + Send + 'static,
-        OnAfterArbitrateFut: std::future::Future<Output = ()> + Send + 'static,
-        OnAfterArbitrate: Fn(&Decision) -> OnAfterArbitrateFut + Send + Sync + 'static,
+    /// Arbitrate multiple attestations based on the specified mode (async callback version)
+    ///
+    /// # Arguments
+    /// * `arbitrate` - Async callback that returns `Some(true/false)` to arbitrate, `None` to skip
+    /// * `on_decision` - Callback invoked after each successful arbitration (for modes with listeners)
+    /// * `mode` - Which attestations to process (see `ArbitrationMode`)
+    pub async fn arbitrate_many_async<
+        ArbitrateFut: std::future::Future<Output = Option<bool>> + Send,
+        Arbitrate: Fn(&AttestationWithDemand) -> ArbitrateFut + Clone + Send + Sync + 'static,
+        OnDecisionFut: std::future::Future<Output = ()> + Send + 'static,
+        OnDecision: Fn(&Decision) -> OnDecisionFut + Clone + Send + Sync + 'static,
+    >(
+        &self,
+        arbitrate: Arbitrate,
+        on_decision: OnDecision,
+        mode: ArbitrationMode,
+    ) -> eyre::Result<ArbitrateManyResult>
+    where
+        ArbitrateFut: 'static,
+    {
+        use futures::future::join_all;
+        use ArbitrationMode::*;
+
+        let skip_arbitrated = matches!(mode, PastUnarbitrated | AllUnarbitrated);
+        let include_past = matches!(mode, Past | PastUnarbitrated | All | AllUnarbitrated);
+        let include_future = matches!(mode, Future | All | AllUnarbitrated);
+
+        // Process past attestations
+        let past_decisions = if include_past {
+            let attestations = self.get_past_attestations(skip_arbitrated).await?;
+            let decision_futs = attestations.iter().map(|awd| arbitrate(awd));
+            let decisions = join_all(decision_futs).await;
+            self.submit_arbitrations(decisions, attestations).await?
+        } else {
+            Vec::new()
+        };
+
+        // Set up future listener if needed
+        let subscription_id = if include_future {
+            let filter = self.make_arbitration_requested_filter();
+            let sub = self.public_provider.subscribe_logs(&filter).await?;
+            let local_id = *sub.local_id();
+            let stream = sub.into_stream();
+
+            self.spawn_stream_handler_async(stream, arbitrate, on_decision, skip_arbitrated);
+
+            Some(local_id)
+        } else {
+            None
+        };
+
+        Ok(ArbitrateManyResult {
+            past_decisions,
+            subscription_id,
+        })
+    }
+
+    fn spawn_stream_handler<
+        Arbitrate: Fn(&AttestationWithDemand) -> Option<bool> + Send + Sync + 'static,
+        OnDecisionFut: std::future::Future<Output = ()> + Send + 'static,
+        OnDecision: Fn(&Decision) -> OnDecisionFut + Send + Sync + 'static,
     >(
         &self,
         stream: SubscriptionStream<alloy::rpc::types::Log>,
-        strategy: Strategy,
-        on_after_arbitrate: OnAfterArbitrate,
-        options: &ArbitrateOptions,
-    ) where
-        Strategy::Future: Send,
-    {
+        arbitrate: Arbitrate,
+        on_decision: OnDecision,
+        skip_arbitrated: bool,
+    ) {
         let wallet_provider = self.wallet_provider.clone();
         let eas_address = self.addresses.eas;
         let arbiter_address = self.addresses.trusted_oracle_arbiter;
         let signer_address = self.signer_address;
         let public_provider = self.public_provider.clone();
-        let options = options.clone();
 
         tokio::spawn(async move {
             let eas = IEAS::new(eas_address, &wallet_provider);
@@ -553,12 +568,9 @@ impl TrustedOracleModule {
                     continue;
                 };
 
-                // Extract demand from ArbitrationRequested event
                 let demand = arbitration_log.inner.demand.clone();
 
-                if options.skip_arbitrated {
-                    // ArbitrationMade event: (bytes32 indexed decisionKey, bytes32 indexed obligation, address indexed oracle, bool decision)
-                    // topic1 = decisionKey, topic2 = obligation, topic3 = oracle
+                if skip_arbitrated {
                     let filter = Filter::new()
                         .address(arbiter_address)
                         .event_signature(TrustedOracleArbiter::ArbitrationMade::SIGNATURE_HASH)
@@ -566,10 +578,8 @@ impl TrustedOracleModule {
                         .topic3(signer_address)
                         .from_block(BlockNumberOrTag::Earliest)
                         .to_block(BlockNumberOrTag::Latest);
-                    let logs_result = public_provider.get_logs(&filter).await;
-
-                    if let Ok(logs) = logs_result {
-                        if logs.len() > 0 {
+                    if let Ok(logs) = public_provider.get_logs(&filter).await {
+                        if !logs.is_empty() {
                             continue;
                         }
                     }
@@ -585,12 +595,11 @@ impl TrustedOracleModule {
                     continue;
                 }
 
-                // Pass AttestationWithDemand to strategy
                 let awd = AttestationWithDemand {
                     attestation: attestation.clone(),
                     demand: demand.clone(),
                 };
-                let Some(decision_value) = strategy.arbitrate(&awd).await else {
+                let Some(decision_value) = arbitrate(&awd) else {
                     continue;
                 };
 
@@ -598,7 +607,6 @@ impl TrustedOracleModule {
                     continue;
                 };
 
-                // Use demand from ArbitrationRequested event
                 match arbiter
                     .arbitrate(attestation.uid, demand, decision_value)
                     .nonce(nonce)
@@ -612,7 +620,7 @@ impl TrustedOracleModule {
                                 decision: decision_value,
                                 receipt,
                             };
-                            tokio::spawn(on_after_arbitrate(&decision));
+                            tokio::spawn(on_decision(&decision));
                         }
                     }
                     Err(err) => {
@@ -623,267 +631,105 @@ impl TrustedOracleModule {
         });
     }
 
-    async fn spawn_arbitration_listener_sync<
-        Arbitrate: Fn(&AttestationWithDemand) -> Option<bool> + Send + Sync + 'static,
-        OnAfterArbitrateFut: std::future::Future<Output = ()> + Send + 'static,
-        OnAfterArbitrate: Fn(&Decision) -> OnAfterArbitrateFut + Send + Sync + 'static,
+    fn spawn_stream_handler_async<
+        ArbitrateFut: std::future::Future<Output = Option<bool>> + Send + 'static,
+        Arbitrate: Fn(&AttestationWithDemand) -> ArbitrateFut + Send + Sync + 'static,
+        OnDecisionFut: std::future::Future<Output = ()> + Send + 'static,
+        OnDecision: Fn(&Decision) -> OnDecisionFut + Send + Sync + 'static,
     >(
         &self,
         stream: SubscriptionStream<alloy::rpc::types::Log>,
         arbitrate: Arbitrate,
-        on_after_arbitrate: OnAfterArbitrate,
-        options: &ArbitrateOptions,
+        on_decision: OnDecision,
+        skip_arbitrated: bool,
     ) {
-        let strategy = SyncArbitration::new(arbitrate);
-        self.spawn_arbitration_listener(stream, strategy, on_after_arbitrate, options)
-            .await;
-    }
+        let wallet_provider = self.wallet_provider.clone();
+        let eas_address = self.addresses.eas;
+        let arbiter_address = self.addresses.trusted_oracle_arbiter;
+        let signer_address = self.signer_address;
+        let public_provider = self.public_provider.clone();
 
-    pub async fn spawn_arbitration_listener_async<
-        ArbitrateFut: std::future::Future<Output = Option<bool>> + Send,
-        Arbitrate: Fn(&AttestationWithDemand) -> ArbitrateFut + Send + Sync + 'static,
-        OnAfterArbitrateFut: std::future::Future<Output = ()> + Send + 'static,
-        OnAfterArbitrate: Fn(&Decision) -> OnAfterArbitrateFut + Send + Sync + 'static,
-    >(
-        &self,
-        stream: SubscriptionStream<alloy::rpc::types::Log>,
-        arbitrate: Arbitrate,
-        on_after_arbitrate: OnAfterArbitrate,
-        options: &ArbitrateOptions,
-    ) {
-        let strategy = AsyncArbitration::new(arbitrate);
-        self.spawn_arbitration_listener(stream, strategy, on_after_arbitrate, options)
-            .await;
-    }
+        tokio::spawn(async move {
+            let eas = IEAS::new(eas_address, &wallet_provider);
+            let arbiter = TrustedOracleArbiter::new(arbiter_address, &wallet_provider);
+            let mut stream = stream;
 
-    async fn handle_arbitration_stream_no_spawn<
-        Arbitrate: Fn(&AttestationWithDemand) -> Option<bool>,
-        OnAfterArbitrateFut: std::future::Future<Output = ()>,
-        OnAfterArbitrate: Fn(&Decision) -> OnAfterArbitrateFut,
-    >(
-        &self,
-        mut stream: SubscriptionStream<alloy::rpc::types::Log>,
-        arbitrate: Arbitrate,
-        on_after_arbitrate: OnAfterArbitrate,
-        options: &ArbitrateOptions,
-        timeout: Option<Duration>,
-    ) {
-        let eas = IEAS::new(self.addresses.eas, &*self.wallet_provider);
-        let arbiter = TrustedOracleArbiter::new(
-            self.addresses.trusted_oracle_arbiter,
-            &*self.wallet_provider,
-        );
+            while let Some(log) = stream.next().await {
+                let Ok(arbitration_log) =
+                    log.log_decode::<TrustedOracleArbiter::ArbitrationRequested>()
+                else {
+                    continue;
+                };
 
-        loop {
-            let next_result = if let Some(timeout_duration) = timeout {
-                match tokio::time::timeout(timeout_duration, stream.next()).await {
-                    Ok(Some(log)) => Some(log),
-                    Ok(None) => None,
-                    Err(_) => {
-                        tracing::info!("Stream timeout reached after {:?}", timeout_duration);
-                        break;
+                let Ok(attestation) = eas
+                    .getAttestation(arbitration_log.inner.obligation)
+                    .call()
+                    .await
+                else {
+                    continue;
+                };
+
+                let demand = arbitration_log.inner.demand.clone();
+
+                if skip_arbitrated {
+                    let filter = Filter::new()
+                        .address(arbiter_address)
+                        .event_signature(TrustedOracleArbiter::ArbitrationMade::SIGNATURE_HASH)
+                        .topic2(attestation.uid)
+                        .topic3(signer_address)
+                        .from_block(BlockNumberOrTag::Earliest)
+                        .to_block(BlockNumberOrTag::Latest);
+                    if let Ok(logs) = public_provider.get_logs(&filter).await {
+                        if !logs.is_empty() {
+                            continue;
+                        }
                     }
                 }
-            } else {
-                stream.next().await
-            };
 
-            let Some(log) = next_result else {
-                break;
-            };
+                let now = SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs();
+                if (attestation.expirationTime != 0 && attestation.expirationTime < now)
+                    || (attestation.revocationTime != 0 && attestation.revocationTime < now)
+                {
+                    continue;
+                }
 
-            let Ok(arbitration_log) =
-                log.log_decode::<TrustedOracleArbiter::ArbitrationRequested>()
-            else {
-                continue;
-            };
+                let awd = AttestationWithDemand {
+                    attestation: attestation.clone(),
+                    demand: demand.clone(),
+                };
+                let Some(decision_value) = arbitrate(&awd).await else {
+                    continue;
+                };
 
-            let Ok(attestation) = eas
-                .getAttestation(arbitration_log.inner.obligation)
-                .call()
-                .await
-            else {
-                continue;
-            };
+                let Ok(nonce) = wallet_provider.get_transaction_count(signer_address).await else {
+                    continue;
+                };
 
-            // Extract demand from ArbitrationRequested event
-            let demand = arbitration_log.inner.demand.clone();
-
-            if options.skip_arbitrated {
-                let filter = self.make_arbitration_made_filter(Some(attestation.uid));
-                let logs_result = self.public_provider.get_logs(&filter).await;
-
-                if let Ok(logs) = logs_result {
-                    if logs.len() > 0 {
-                        continue;
+                match arbiter
+                    .arbitrate(attestation.uid, demand, decision_value)
+                    .nonce(nonce)
+                    .send()
+                    .await
+                {
+                    Ok(tx) => {
+                        if let Ok(receipt) = tx.get_receipt().await {
+                            let decision = Decision {
+                                attestation,
+                                decision: decision_value,
+                                receipt,
+                            };
+                            tokio::spawn(on_decision(&decision));
+                        }
+                    }
+                    Err(err) => {
+                        tracing::error!("Arbitration failed for {}: {}", attestation.uid, err);
                     }
                 }
             }
-
-            let now = SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap()
-                .as_secs();
-            if (attestation.expirationTime != 0 && attestation.expirationTime < now)
-                || (attestation.revocationTime != 0 && attestation.revocationTime < now)
-            {
-                continue;
-            }
-
-            // Pass AttestationWithDemand to arbitrate callback
-            let awd = AttestationWithDemand {
-                attestation: attestation.clone(),
-                demand: demand.clone(),
-            };
-            let Some(decision_value) = arbitrate(&awd) else {
-                continue;
-            };
-
-            let Ok(nonce) = self
-                .wallet_provider
-                .get_transaction_count(self.signer_address)
-                .await
-            else {
-                continue;
-            };
-
-            // Use demand from ArbitrationRequested event
-            match arbiter
-                .arbitrate(attestation.uid, demand, decision_value)
-                .nonce(nonce)
-                .send()
-                .await
-            {
-                Ok(tx) => {
-                    if let Ok(receipt) = tx.get_receipt().await {
-                        let decision = Decision {
-                            attestation,
-                            decision: decision_value,
-                            receipt,
-                        };
-                        on_after_arbitrate(&decision).await;
-                    }
-                }
-                Err(err) => {
-                    tracing::error!("Arbitration failed for {}: {}", attestation.uid, err);
-                }
-            }
-        }
-    }
-
-    pub async fn listen_and_arbitrate_sync<
-        Arbitrate: Fn(&AttestationWithDemand) -> Option<bool> + Send + Sync + 'static,
-        OnAfterArbitrateFut: std::future::Future<Output = ()> + Send + 'static,
-        OnAfterArbitrate: Fn(&Decision) -> OnAfterArbitrateFut + Send + Sync + 'static,
-    >(
-        &self,
-        arbitrate: Arbitrate,
-        on_after_arbitrate: OnAfterArbitrate,
-        options: &ArbitrateOptions,
-    ) -> eyre::Result<ListenAndArbitrateResult> {
-        let decisions = if options.only_new {
-            Vec::new()
-        } else {
-            // Need to capture arbitrate for past arbitration
-            let attestations_with_demand =
-                self.get_arbitration_requested_attestations(options).await?;
-            let decisions: Vec<Option<bool>> = attestations_with_demand
-                .iter()
-                .map(|awd| arbitrate(awd))
-                .collect();
-            self.arbitrate_internal(decisions, attestations_with_demand)
-                .await?
-        };
-
-        let filter = self.make_arbitration_requested_filter();
-        let sub = self.public_provider.subscribe_logs(&filter).await?;
-        let local_id = *sub.local_id();
-        let stream: SubscriptionStream<alloy::rpc::types::Log> = sub.into_stream();
-
-        self.spawn_arbitration_listener_sync(stream, arbitrate, on_after_arbitrate, options)
-            .await;
-
-        Ok(ListenAndArbitrateResult {
-            decisions,
-            subscription_id: local_id,
-        })
-    }
-
-    pub async fn listen_and_arbitrate_async<
-        ArbitrateFut: std::future::Future<Output = Option<bool>> + Send,
-        Arbitrate: Fn(&AttestationWithDemand) -> ArbitrateFut + Send + Sync + 'static,
-        OnAfterArbitrateFut: std::future::Future<Output = ()> + Send + 'static,
-        OnAfterArbitrate: Fn(&Decision) -> OnAfterArbitrateFut + Send + Sync + 'static,
-    >(
-        &self,
-        arbitrate: Arbitrate,
-        on_after_arbitrate: OnAfterArbitrate,
-        options: &ArbitrateOptions,
-    ) -> eyre::Result<ListenAndArbitrateResult> {
-        let decisions = if options.only_new {
-            Vec::new()
-        } else {
-            // Need to capture arbitrate for past arbitration
-            use futures::future::join_all;
-            let attestations_with_demand =
-                self.get_arbitration_requested_attestations(options).await?;
-            let decision_futs = attestations_with_demand
-                .iter()
-                .map(|awd| arbitrate(awd));
-            let decisions = join_all(decision_futs).await;
-            self.arbitrate_internal(decisions, attestations_with_demand)
-                .await?
-        };
-
-        let filter = self.make_arbitration_requested_filter();
-        let sub = self.public_provider.subscribe_logs(&filter).await?;
-        let local_id = *sub.local_id();
-        let stream: SubscriptionStream<alloy::rpc::types::Log> = sub.into_stream();
-
-        self.spawn_arbitration_listener_async(stream, arbitrate, on_after_arbitrate, options)
-            .await;
-
-        Ok(ListenAndArbitrateResult {
-            decisions,
-            subscription_id: local_id,
-        })
-    }
-
-    pub async fn listen_and_arbitrate_no_spawn<
-        Arbitrate: Fn(&AttestationWithDemand) -> Option<bool> + Clone,
-        OnAfterArbitrateFut: std::future::Future<Output = ()>,
-        OnAfterArbitrate: Fn(&Decision) -> OnAfterArbitrateFut + Clone,
-    >(
-        &self,
-        arbitrate: Arbitrate,
-        on_after_arbitrate: OnAfterArbitrate,
-        options: &ArbitrateOptions,
-        timeout: Option<Duration>,
-    ) -> eyre::Result<ListenAndArbitrateResult> {
-        let decisions = if options.only_new {
-            Vec::new()
-        } else {
-            self.arbitrate_past_sync(arbitrate.clone(), options).await?
-        };
-
-        let filter = self.make_arbitration_requested_filter();
-        let sub = self.public_provider.subscribe_logs(&filter).await?;
-        let local_id = *sub.local_id();
-        let stream: SubscriptionStream<alloy::rpc::types::Log> = sub.into_stream();
-
-        self.handle_arbitration_stream_no_spawn(
-            stream,
-            arbitrate,
-            on_after_arbitrate,
-            options,
-            timeout,
-        )
-        .await;
-
-        Ok(ListenAndArbitrateResult {
-            decisions,
-            subscription_id: local_id,
-        })
+        });
     }
 }
 
