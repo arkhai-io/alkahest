@@ -68,8 +68,8 @@ describe("WebSocket Transport Support", () => {
       expect(typeof httpClient.waitForFulfillment).toBe("function");
       expect(typeof wsClient.waitForFulfillment).toBe("function");
 
-      expect(typeof httpClient.arbiters.general.trustedOracle.listenAndArbitrate).toBe("function");
-      expect(typeof wsClient.arbiters.general.trustedOracle.listenAndArbitrate).toBe("function");
+      expect(typeof httpClient.arbiters.general.trustedOracle.arbitrateMany).toBe("function");
+      expect(typeof wsClient.arbiters.general.trustedOracle.arbitrateMany).toBe("function");
     });
 
     test("transport types should be correctly identified", () => {

@@ -71,7 +71,7 @@ test("synchronous offchain oracle capitalization flow", async () => {
   );
   await testContext.bob.client.viemClient.waitForTransactionReceipt({ hash: requestHash });
 
-  const { decisions, unwatch } = await testContext.charlie.client.arbiters.general.trustedOracle.listenAndArbitrate(
+  const { decisions, unwatch } = await testContext.charlie.client.arbiters.general.trustedOracle.arbitrateMany(
     async ({ attestation, demand }) => {
       // Extract obligation data
       const obligation = testContext.charlie.client.extractObligationData(stringObligationAbi, attestation);
@@ -116,7 +116,7 @@ test("synchronous offchain oracle capitalization flow", async () => {
 
       return true;
     },
-    { mode: "unarbitrated" },
+    { mode: "allUnarbitrated" },
   );
 
   // Wait for all arbitration transactions to be mined
