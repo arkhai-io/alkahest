@@ -173,7 +173,7 @@ test("asynchronous offchain oracle uptime flow", { timeout: 15000 }, async () =>
 
   const worker = startSchedulerWorker(scheduler, testContext.charlie.client.arbiters);
 
-  const listener = await testContext.charlie.client.arbiters.general.trustedOracle.listenAndArbitrate(
+  const listener = await testContext.charlie.client.arbiters.general.trustedOracle.arbitrateMany(
     async ({ attestation, demand }) => {
       const ctx = getScheduler();
       if (!ctx) return null;
@@ -221,7 +221,7 @@ test("asynchronous offchain oracle uptime flow", { timeout: 15000 }, async () =>
       notifyScheduler(ctx);
       return null;
     },
-    { mode: "unarbitrated" },
+    { mode: "allUnarbitrated" },
   );
 
   await testContext.bob.client.arbiters.general.trustedOracle.requestArbitration(

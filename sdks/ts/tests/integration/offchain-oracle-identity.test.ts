@@ -50,7 +50,7 @@ test("contextless offchain identity oracle flow", async () => {
   // Empty demand for contextless identity oracle
   const demand = "0x" as `0x${string}`;
 
-  const listener = await testContext.charlie.client.arbiters.general.trustedOracle.listenAndArbitrate(
+  const listener = await testContext.charlie.client.arbiters.general.trustedOracle.arbitrateMany(
     async ({ attestation }) => {
       // Extract obligation data
       const obligation = testContext.charlie.client.extractObligationData(stringObligationAbi, attestation);
@@ -88,7 +88,7 @@ test("contextless offchain identity oracle flow", async () => {
       identityRegistry.set(parsed.pubkey, parsed.nonce);
       return true;
     },
-    { mode: "unarbitrated" },
+    { mode: "allUnarbitrated" },
   );
 
   const createPayload = createIdentityPayloadFactory(identityAccount.address, identityAccount);
