@@ -11,8 +11,17 @@ pub mod confirmation;
 pub mod logical;
 pub mod trusted_oracle;
 
-use alkahest_rs::extensions::ArbitersModule;
-use pyo3::{pyclass, pymethods};
+use alkahest_rs::{
+    contracts::arbiters::{
+        ERC8004Arbiter as ERC8004ArbiterContract,
+        IntrinsicsArbiter2 as IntrinsicsArbiter2Contract,
+    },
+    extensions::ArbitersModule,
+};
+use alloy::sol_types::SolValue;
+use pyo3::{pyclass, pymethods, PyResult};
+
+use crate::error_handling::map_eyre_to_pyerr;
 
 // Re-export main types for backwards compatibility
 pub use trusted_oracle::{
@@ -163,5 +172,121 @@ impl ArbitersClient {
     /// Get the address of a confirmation arbiter by type
     pub fn confirmation_arbiter_address(&self, arbiter_type: PyConfirmationArbiterType) -> String {
         self.confirmation().address(arbiter_type)
+    }
+}
+
+// =============================================================================
+// Core Arbiter DemandData Types
+// =============================================================================
+
+// ===== IntrinsicsArbiter2DemandData =====
+
+/// Python representation of IntrinsicsArbiter2 DemandData
+///
+/// IntrinsicsArbiter2 validates that an attestation has a specific schema.
+#[pyclass]
+#[derive(Clone)]
+pub struct IntrinsicsArbiter2DemandData {
+    #[pyo3(get)]
+    pub schema: String,
+}
+
+#[pymethods]
+impl IntrinsicsArbiter2DemandData {
+    #[new]
+    pub fn new(schema: String) -> Self {
+        Self { schema }
+    }
+
+    fn __repr__(&self) -> String {
+        format!("IntrinsicsArbiter2DemandData(schema='{}')", self.schema)
+    }
+
+    #[staticmethod]
+    pub fn decode(demand_bytes: Vec<u8>) -> PyResult<IntrinsicsArbiter2DemandData> {
+        let decoded = IntrinsicsArbiter2Contract::DemandData::abi_decode(&demand_bytes)
+            .map_err(|e| map_eyre_to_pyerr(eyre::eyre!("Failed to decode: {}", e)))?;
+        Ok(IntrinsicsArbiter2DemandData {
+            schema: format!("{:?}", decoded.schema),
+        })
+    }
+
+    #[staticmethod]
+    pub fn encode(demand_data: &IntrinsicsArbiter2DemandData) -> PyResult<Vec<u8>> {
+        let schema: alloy::primitives::FixedBytes<32> = demand_data.schema.parse()
+            .map_err(|e| map_eyre_to_pyerr(eyre::eyre!("Invalid bytes32: {}", e)))?;
+        let rust_data = IntrinsicsArbiter2Contract::DemandData { schema };
+        Ok(rust_data.abi_encode())
+    }
+
+    pub fn encode_self(&self) -> PyResult<Vec<u8>> {
+        IntrinsicsArbiter2DemandData::encode(self)
+    }
+}
+
+// ===== ERC8004ArbiterDemandData =====
+
+/// Python representation of ERC8004Arbiter DemandData
+///
+/// ERC8004Arbiter wraps ERC-8004's ValidationRegistry to check validation responses.
+#[pyclass]
+#[derive(Clone)]
+pub struct ERC8004ArbiterDemandData {
+    /// The address of the ValidationRegistry contract
+    #[pyo3(get)]
+    pub validation_registry: String,
+    /// The address of the validator
+    #[pyo3(get)]
+    pub validator_address: String,
+    /// Minimum response value (0-100)
+    #[pyo3(get)]
+    pub min_response: u8,
+}
+
+#[pymethods]
+impl ERC8004ArbiterDemandData {
+    #[new]
+    pub fn new(validation_registry: String, validator_address: String, min_response: u8) -> Self {
+        Self {
+            validation_registry,
+            validator_address,
+            min_response,
+        }
+    }
+
+    fn __repr__(&self) -> String {
+        format!(
+            "ERC8004ArbiterDemandData(validation_registry='{}', validator_address='{}', min_response={})",
+            self.validation_registry, self.validator_address, self.min_response
+        )
+    }
+
+    #[staticmethod]
+    pub fn decode(demand_bytes: Vec<u8>) -> PyResult<ERC8004ArbiterDemandData> {
+        let decoded = ERC8004ArbiterContract::DemandData::abi_decode(&demand_bytes)
+            .map_err(|e| map_eyre_to_pyerr(eyre::eyre!("Failed to decode: {}", e)))?;
+        Ok(ERC8004ArbiterDemandData {
+            validation_registry: format!("{:?}", decoded.validationRegistry),
+            validator_address: format!("{:?}", decoded.validatorAddress),
+            min_response: decoded.minResponse,
+        })
+    }
+
+    #[staticmethod]
+    pub fn encode(demand_data: &ERC8004ArbiterDemandData) -> PyResult<Vec<u8>> {
+        let validation_registry: alloy::primitives::Address = demand_data.validation_registry.parse()
+            .map_err(|e| map_eyre_to_pyerr(eyre::eyre!("Invalid address: {}", e)))?;
+        let validator_address: alloy::primitives::Address = demand_data.validator_address.parse()
+            .map_err(|e| map_eyre_to_pyerr(eyre::eyre!("Invalid address: {}", e)))?;
+        let rust_data = ERC8004ArbiterContract::DemandData {
+            validationRegistry: validation_registry,
+            validatorAddress: validator_address,
+            minResponse: demand_data.min_response,
+        };
+        Ok(rust_data.abi_encode())
+    }
+
+    pub fn encode_self(&self) -> PyResult<Vec<u8>> {
+        ERC8004ArbiterDemandData::encode(self)
     }
 }

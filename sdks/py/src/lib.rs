@@ -562,6 +562,9 @@ fn alkahest_py(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<crate::clients::arbiters::TimeBeforeArbiterDemandData>()?;
     m.add_class::<crate::clients::arbiters::TimeEqualArbiterDemandData>()?;
     m.add_class::<crate::clients::arbiters::UidArbiterDemandData>()?;
+    // Core arbiter DemandData types
+    m.add_class::<crate::clients::arbiters::IntrinsicsArbiter2DemandData>()?;
+    m.add_class::<crate::clients::arbiters::ERC8004ArbiterDemandData>()?;
 
     // Address Configuration Classes
     m.add_class::<crate::types::PyErc20Addresses>()?;
