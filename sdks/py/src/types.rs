@@ -510,6 +510,8 @@ pub struct PyDefaultExtensionConfig {
     #[pyo3(get)]
     pub erc1155_addresses: Option<PyErc1155Addresses>,
     #[pyo3(get)]
+    pub native_token_addresses: Option<PyNativeTokenAddresses>,
+    #[pyo3(get)]
     pub token_bundle_addresses: Option<PyTokenBundleAddresses>,
     #[pyo3(get)]
     pub attestation_addresses: Option<PyAttestationAddresses>,
@@ -525,6 +527,7 @@ impl From<&alkahest_rs::DefaultExtensionConfig> for PyDefaultExtensionConfig {
             erc20_addresses: Some(PyErc20Addresses::from(&data.erc20_addresses)),
             erc721_addresses: Some(PyErc721Addresses::from(&data.erc721_addresses)),
             erc1155_addresses: Some(PyErc1155Addresses::from(&data.erc1155_addresses)),
+            native_token_addresses: Some(PyNativeTokenAddresses::from(&data.native_token_addresses)),
             token_bundle_addresses: Some(PyTokenBundleAddresses::from(&data.token_bundle_addresses)),
             attestation_addresses: Some(PyAttestationAddresses::from(&data.attestation_addresses)),
             arbiters_addresses: Some(PyArbitersAddresses::from(&data.arbiters_addresses)),
@@ -599,6 +602,10 @@ py_address_struct!(
 py_address_struct!(
     PyTokenBundleAddresses,
     alkahest_rs::clients::token_bundle::TokenBundleAddresses
+);
+py_address_struct!(
+    PyNativeTokenAddresses,
+    alkahest_rs::clients::native_token::NativeTokenAddresses
 );
 
 #[pyclass]
