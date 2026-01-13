@@ -4,7 +4,9 @@
 //! - `trusted_oracle`: Trusted oracle arbiter for oracle-based arbitration
 //! - `confirmation`: Confirmation-based arbiters (exclusive/nonexclusive, revocable/unrevocable)
 //! - `logical`: Logical arbiters (AllArbiter, AnyArbiter)
+//! - `attestation_properties`: Attestation property arbiters (AttesterArbiter, RecipientArbiter, etc.)
 
+pub mod attestation_properties;
 pub mod confirmation;
 pub mod logical;
 pub mod trusted_oracle;
@@ -32,6 +34,20 @@ pub use confirmation::{
 pub use logical::{
     AllArbiter, AnyArbiter, Logical, PyDecodedAllArbiterDemandData, PyDecodedAnyArbiterDemandData,
     PyDecodedDemand,
+};
+
+// Re-export attestation properties types
+pub use attestation_properties::{
+    AttestationProperties, AttesterArbiter, ExpirationTimeAfterArbiter,
+    ExpirationTimeBeforeArbiter, ExpirationTimeEqualArbiter, RecipientArbiter, RefUidArbiter,
+    RevocableArbiter, SchemaArbiter, TimeAfterArbiter, TimeBeforeArbiter, TimeEqualArbiter,
+    UidArbiter,
+    // DemandData types
+    AttesterArbiterDemandData, ExpirationTimeAfterArbiterDemandData,
+    ExpirationTimeBeforeArbiterDemandData, ExpirationTimeEqualArbiterDemandData,
+    RecipientArbiterDemandData, RefUidArbiterDemandData, RevocableArbiterDemandData,
+    SchemaArbiterDemandData, TimeAfterArbiterDemandData, TimeBeforeArbiterDemandData,
+    TimeEqualArbiterDemandData, UidArbiterDemandData,
 };
 
 /// Python representation of ArbitrationMade event
@@ -96,6 +112,12 @@ impl ArbitersClient {
         TrustedOracle::new(self.inner.clone())
     }
 
+    /// Access attestation properties arbiters API
+    #[getter]
+    pub fn attestation_properties(&self) -> AttestationProperties {
+        AttestationProperties::new(self.inner.clone())
+    }
+
     // ===== Address getters =====
 
     /// Get the EAS address
@@ -136,16 +158,6 @@ impl ArbitersClient {
     /// Get the AllArbiter address
     pub fn all_arbiter_address(&self) -> String {
         format!("{:?}", self.inner.addresses.all_arbiter)
-    }
-
-    /// Get the RecipientArbiter address
-    pub fn recipient_arbiter_address(&self) -> String {
-        format!("{:?}", self.inner.addresses.recipient_arbiter)
-    }
-
-    /// Get the UidArbiter address
-    pub fn uid_arbiter_address(&self) -> String {
-        format!("{:?}", self.inner.addresses.uid_arbiter)
     }
 
     /// Get the address of a confirmation arbiter by type

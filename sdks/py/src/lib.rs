@@ -534,6 +534,35 @@ fn alkahest_py(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<crate::clients::arbiters::PyDecodedAnyArbiterDemandData>()?;
     m.add_class::<crate::clients::arbiters::PyDecodedDemand>()?;
 
+    // Attestation properties arbiters
+    m.add_class::<crate::clients::arbiters::AttestationProperties>()?;
+    m.add_class::<crate::clients::arbiters::AttesterArbiter>()?;
+    m.add_class::<crate::clients::arbiters::ExpirationTimeAfterArbiter>()?;
+    m.add_class::<crate::clients::arbiters::ExpirationTimeBeforeArbiter>()?;
+    m.add_class::<crate::clients::arbiters::ExpirationTimeEqualArbiter>()?;
+    m.add_class::<crate::clients::arbiters::RecipientArbiter>()?;
+    m.add_class::<crate::clients::arbiters::RefUidArbiter>()?;
+    m.add_class::<crate::clients::arbiters::RevocableArbiter>()?;
+    m.add_class::<crate::clients::arbiters::SchemaArbiter>()?;
+    m.add_class::<crate::clients::arbiters::TimeAfterArbiter>()?;
+    m.add_class::<crate::clients::arbiters::TimeBeforeArbiter>()?;
+    m.add_class::<crate::clients::arbiters::TimeEqualArbiter>()?;
+    m.add_class::<crate::clients::arbiters::UidArbiter>()?;
+
+    // Attestation properties arbiter DemandData types
+    m.add_class::<crate::clients::arbiters::AttesterArbiterDemandData>()?;
+    m.add_class::<crate::clients::arbiters::ExpirationTimeAfterArbiterDemandData>()?;
+    m.add_class::<crate::clients::arbiters::ExpirationTimeBeforeArbiterDemandData>()?;
+    m.add_class::<crate::clients::arbiters::ExpirationTimeEqualArbiterDemandData>()?;
+    m.add_class::<crate::clients::arbiters::RecipientArbiterDemandData>()?;
+    m.add_class::<crate::clients::arbiters::RefUidArbiterDemandData>()?;
+    m.add_class::<crate::clients::arbiters::RevocableArbiterDemandData>()?;
+    m.add_class::<crate::clients::arbiters::SchemaArbiterDemandData>()?;
+    m.add_class::<crate::clients::arbiters::TimeAfterArbiterDemandData>()?;
+    m.add_class::<crate::clients::arbiters::TimeBeforeArbiterDemandData>()?;
+    m.add_class::<crate::clients::arbiters::TimeEqualArbiterDemandData>()?;
+    m.add_class::<crate::clients::arbiters::UidArbiterDemandData>()?;
+
     // Address Configuration Classes
     m.add_class::<crate::types::PyErc20Addresses>()?;
     m.add_class::<crate::types::PyErc721Addresses>()?;
