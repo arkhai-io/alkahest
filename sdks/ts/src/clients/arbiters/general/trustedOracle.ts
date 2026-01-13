@@ -150,7 +150,7 @@ export const makeTrustedOracleArbiterClient = (viemClient: ViemClient, addresses
    * Get arbitration requests for the current oracle
    * Returns attestations paired with their demand data from the ArbitrationRequested event
    */
-  const getArbitrationRequests = async (options: ArbitrateOptions = {}): Promise<AttestationWithDemand[]> => {
+  const getArbitrationRequests = async (options: ArbitrateManyOptions = {}): Promise<AttestationWithDemand[]> => {
     const logs = await viemClient.getLogs({
       address: addresses.trustedOracleArbiter,
       event: arbitrationRequestedEvent,
