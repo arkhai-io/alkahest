@@ -2,12 +2,12 @@
   "name": "alkahest-ts",
   "private": false,
   "type": "module",
-  "main": "./sdks/ts/src/index.ts",
-  "types": "./sdks/ts/src/index.ts",
+  "main": "./sdks/ts/dist/index.js",
+  "types": "./sdks/ts/dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./sdks/ts/src/index.ts",
-      "types": "./sdks/ts/src/index.ts"
+      "import": "./sdks/ts/dist/index.js",
+      "types": "./sdks/ts/dist/index.d.ts"
     },
     "./test-utils": {
       "import": "./sdks/ts/tests/utils/setup.ts",
@@ -15,6 +15,7 @@
     }
   },
   "files": [
+    "sdks/ts/dist",
     "sdks/ts/src",
     "sdks/ts/tests/utils",
     "sdks/ts/tests/fixtures"
