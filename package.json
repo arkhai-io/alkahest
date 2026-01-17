@@ -4,7 +4,29 @@
   "type": "module",
   "main": "./sdks/ts/dist/index.js",
   "types": "./sdks/ts/dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./sdks/ts/dist/index.js",
+      "types": "./sdks/ts/dist/index.d.ts"
+    },
+    "./test-utils": {
+      "import": "./sdks/ts/tests/utils/setup.ts",
+      "types": "./sdks/ts/tests/utils/setup.ts"
+    }
+  },
   "files": [
-    "sdks/ts/dist"
-  ]
+    "sdks/ts/dist",
+    "sdks/ts/src",
+    "sdks/ts/tests/utils",
+    "sdks/ts/tests/fixtures"
+  ],
+  "peerDependencies": {
+    "typescript": "^5.9.3",
+    "viem": "^2.38.3"
+  },
+  "dependencies": {
+    "@viem/anvil": "^0.0.10",
+    "arktype": "^2.1.23",
+    "zod": "^3.25.76"
+  }
 }
