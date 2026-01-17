@@ -99,6 +99,7 @@ export { decodeDemand as decodeUidDemand, encodeDemand as encodeUidDemand } from
 // Re-export static functions and types from general arbiters
 export {
   type ArbitrationMode,
+  type AttestationWithDemand,
   decodeIntrinsics2Demand,
   decodeTrustedOracleDemand,
   encodeIntrinsics2Demand,

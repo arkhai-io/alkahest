@@ -13,6 +13,7 @@ export {
 // Re-export static encode/decode functions and types from trustedOracle
 export {
   type ArbitrationMode,
+  type AttestationWithDemand,
   decodeDemand as decodeTrustedOracleDemand,
   encodeDemand as encodeTrustedOracleDemand,
   type TrustedOracleArbiterDemandData,
