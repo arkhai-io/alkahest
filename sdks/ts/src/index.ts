@@ -24,16 +24,31 @@ import {
   getOptimalPollingInterval,
 } from "./utils";
 
-// Forward declarations to avoid circular type inference
-type Extended = {
-  [key: string]: unknown;
-};
+// Utility type to flatten intersection types for better readability and inference
+type Prettify<T> = {
+  [K in keyof T]: T[K];
+} & {};
 
-type ExtendableClient<T extends object, TExtended extends Extended | undefined = undefined> = T &
-  (TExtended extends Extended ? TExtended : object) & {
-    extend<U extends Extended>(
-      extender: (client: T & (TExtended extends Extended ? TExtended : object)) => U,
-    ): ExtendableClient<T, U & (TExtended extends Extended ? TExtended : object)>;
+// Base client properties that cannot be overridden by extensions
+type ClientBase<T extends object> = T;
+
+// Extended type that disallows redefining base properties (following viem's pattern)
+type Extended<T extends object = object> = Prettify<
+  { [K in keyof T]?: undefined } & {
+    [key: string]: unknown;
+  }
+>;
+
+// ExtendableClient type with proper type inference across multiple .extend() calls
+// Uses `const` modifier and `Prettify` to preserve literal types (following viem's pattern)
+type ExtendableClient<
+  T extends object,
+  TExtended extends Extended<T> | undefined = undefined,
+> = ClientBase<T> &
+  (TExtended extends Extended<T> ? TExtended : unknown) & {
+    extend: <const U extends Extended<T>>(
+      extender: (client: ExtendableClient<T, TExtended>) => U,
+    ) => ExtendableClient<T, Prettify<U> & (TExtended extends Extended<T> ? TExtended : unknown)>;
   };
 
 // Base client type (without extensions)
@@ -74,21 +89,26 @@ export type MinimalClient = ExtendableClient<{
   decodeDemand: (demand: Demand) => DecodedDemandResult;
 }>;
 
-// Full client type with default extensions
-export type AlkahestClient = MinimalClient &
-  ReturnType<typeof makeDefaultExtension> & {
-    extend: MinimalClient["extend"];
-  };
+// Type for the default extensions
+type DefaultExtensions = ReturnType<typeof makeDefaultExtension>;
+
+// Helper to get the base type from MinimalClient
+type MinimalClientBase = MinimalClient extends ExtendableClient<infer T extends object, any> ? T : never;
+
+// Full client type with default extensions - properly typed to preserve extensions across .extend() calls
+export type AlkahestClient = ExtendableClient<MinimalClientBase, Prettify<DefaultExtensions>>;
 
 // Helper function to create extendable clients (following viem's pattern)
-function makeExtendableClient<T extends object, TExtended extends Extended | undefined = undefined>(
+function makeExtendableClient<T extends object, TExtended extends Extended<T> | undefined = undefined>(
   base: T,
 ): ExtendableClient<T, TExtended> {
-  type ExtendFn = (base: T & (TExtended extends Extended ? TExtended : object)) => Extended;
+  type ExtendFn = (base: typeof client) => Extended<T>;
 
-  function extend(current: typeof base) {
+  const client = base as ExtendableClient<T, TExtended>;
+
+  function extend(current: typeof client) {
     return (extendFn: ExtendFn) => {
-      const extensions = extendFn(current as any) as Extended;
+      const extensions = extendFn(current) as Extended<T>;
       // Remove any base keys from extensions to avoid conflicts
       for (const key in base) delete extensions[key];
       const combined = { ...current, ...extensions };
@@ -96,7 +116,7 @@ function makeExtendableClient<T extends object, TExtended extends Extended | und
     };
   }
 
-  return Object.assign(base, { extend: extend(base) as any }) as ExtendableClient<T, TExtended>;
+  return Object.assign(client, { extend: extend(client) as any }) as ExtendableClient<T, TExtended>;
 }
 
 /**
