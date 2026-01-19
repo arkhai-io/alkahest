@@ -1,9 +1,8 @@
 import pytest
 from alkahest_py import EnvTestManager, MockERC1155
 
-
 @pytest.mark.asyncio
-async def test_revoke_erc1155s_in_bundle():
+async def test_revoke_erc1155s_in_bundle(env, alice_client):
     """
     Test token_bundle revoke_erc1155s functionality.
 
@@ -14,7 +13,6 @@ async def test_revoke_erc1155s_in_bundle():
     4. Revoke ERC1155 approvals in the bundle
     5. Verify that approval has been revoked
     """
-    env = EnvTestManager()
 
     # Setup mock ERC1155 tokens
     mock_erc1155_a = MockERC1155(env.mock_addresses.erc1155_a, env.god_wallet_provider)
@@ -37,7 +35,7 @@ async def test_revoke_erc1155s_in_bundle():
 
     # First approve the bundle for barter
     print("Approving bundle for barter...")
-    await env.alice_client.token_bundle.util.approve(bundle, "barter")
+    await alice_client.token_bundle.util.approve(bundle, "barter")
 
     # Verify approval was set for ERC1155
     barter_approved_before = mock_erc1155_a.is_approved_for_all(
@@ -49,7 +47,7 @@ async def test_revoke_erc1155s_in_bundle():
 
     # Revoke ERC1155 approvals in the bundle
     print("Revoking ERC1155 approvals in bundle...")
-    await env.alice_client.token_bundle.util.revoke_erc1155s(bundle, "barter")
+    await alice_client.token_bundle.util.revoke_erc1155s(bundle, "barter")
 
     # Verify revocation
     barter_approved_after = mock_erc1155_a.is_approved_for_all(
@@ -60,14 +58,12 @@ async def test_revoke_erc1155s_in_bundle():
 
     print("ERC1155 approvals in bundle successfully revoked")
 
-
 @pytest.mark.asyncio
-async def test_revoke_erc1155s_empty_bundle():
+async def test_revoke_erc1155s_empty_bundle(env, alice_client):
     """
     Test revoke_erc1155s with a bundle that has no ERC1155 tokens.
     Should complete without error.
     """
-    env = EnvTestManager()
 
     # Create an empty bundle (no ERC1155s)
     bundle = {
@@ -78,7 +74,7 @@ async def test_revoke_erc1155s_empty_bundle():
     }
 
     # Revoke should succeed even with empty bundle
-    result = await env.alice_client.token_bundle.util.revoke_erc1155s(bundle, "barter")
+    result = await alice_client.token_bundle.util.revoke_erc1155s(bundle, "barter")
 
     # Empty result is expected (empty string means no receipts)
     assert result == "", f"Expected empty result for empty bundle, got {result}"

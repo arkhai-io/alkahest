@@ -2,7 +2,7 @@ import pytest
 from alkahest_py import EnvTestManager, MockERC1155
 
 @pytest.mark.asyncio
-async def test_buy_with_erc1155():
+async def test_buy_with_erc1155(env, alice_client):
     """
     Test ERC1155 buy_with_erc1155 functionality with custom arbiter data.
     This corresponds to test_buy_with_erc1155() in main.rs
@@ -13,7 +13,6 @@ async def test_buy_with_erc1155():
     3. Alice creates escrow with custom demand using buy_with_erc1155
     4. Verify tokens are in escrow and attestation is created
     """
-    env = EnvTestManager()
     
     # Setup mock ERC1155 token
     mock_erc1155_a = MockERC1155(env.mock_addresses.erc1155_a, env.god_wallet_provider)
@@ -40,10 +39,10 @@ async def test_buy_with_erc1155():
     }
     
     # Alice approves tokens for escrow
-    await env.alice_client.erc1155.util.approve_all(env.mock_addresses.erc1155_a, "escrow")
+    await alice_client.erc1155.util.approve_all(env.mock_addresses.erc1155_a, "escrow")
     
     # Alice creates escrow with custom demand
-    buy_result = await env.alice_client.erc1155.escrow.non_tierable.create(price_data, arbiter_data, 0)
+    buy_result = await alice_client.erc1155.escrow.non_tierable.create(price_data, arbiter_data, 0)
     
     assert buy_result['log']['uid'] and buy_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid buy attestation UID"
     

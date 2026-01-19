@@ -2,7 +2,7 @@ import pytest
 from alkahest_py import EnvTestManager, MockERC1155, MockERC20
 
 @pytest.mark.asyncio
-async def test_pay_erc1155_for_erc20():
+async def test_pay_erc1155_for_erc20(env, alice_client, bob_client):
     """
     Test using ERC1155 to fulfill ERC20 escrow.
     This corresponds to test_pay_erc1155_for_erc20() in main.rs
@@ -13,7 +13,6 @@ async def test_pay_erc1155_for_erc20():
     3. Alice fulfills the escrow with her ERC1155 tokens
     4. Verify both parties received their tokens
     """
-    env = EnvTestManager()
     
     # Setup mock tokens
     mock_erc1155_a = MockERC1155(env.mock_addresses.erc1155_a, env.god_wallet_provider)
@@ -41,20 +40,20 @@ async def test_pay_erc1155_for_erc20():
     }
     
     # Bob approves tokens for escrow and creates buy attestation
-    await env.bob_client.erc20.util.approve(bid_data, "barter")
+    await bob_client.erc20.util.approve(bid_data, "barter")
 
-    buy_result = await env.bob_client.erc20.barter.buy_erc1155_for_erc20(bid_data, ask_data, 0)
+    buy_result = await bob_client.erc20.barter.buy_erc1155_for_erc20(bid_data, ask_data, 0)
     buy_attestation_uid = buy_result['log']['uid']
     
     # Alice approves her ERC1155 tokens for payment
-    await env.alice_client.erc1155.util.approve_all(env.mock_addresses.erc1155_a, "barter")
+    await alice_client.erc1155.util.approve_all(env.mock_addresses.erc1155_a, "barter")
     
     # Check initial balances
     initial_alice_erc20_balance = mock_erc20_a.balance_of(env.alice)
     initial_bob_erc1155_balance = mock_erc1155_a.balance_of(env.bob, 1)
     
     # Alice fulfills Bob's buy attestation with her ERC1155
-    pay_result = await env.alice_client.erc1155.barter.pay_erc1155_for_erc20(buy_attestation_uid)
+    pay_result = await alice_client.erc1155.barter.pay_erc1155_for_erc20(buy_attestation_uid)
     
     assert pay_result['log']['uid'] and pay_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid payment attestation UID"
     

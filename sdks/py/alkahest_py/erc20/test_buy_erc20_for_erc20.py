@@ -2,8 +2,7 @@ import pytest
 from alkahest_py import EnvTestManager, MockERC20
 
 @pytest.mark.asyncio
-async def test_buy_erc20_for_erc20():
-    env = EnvTestManager()
+async def test_buy_erc20_for_erc20(env, alice_client):
     mock_erc20_a = MockERC20(env.mock_addresses.erc20_a, env.god_wallet_provider)
     
     transfer_amount = 100
@@ -15,7 +14,7 @@ async def test_buy_erc20_for_erc20():
     bid_amount = 100
     bid_data = {"address": env.mock_addresses.erc20_a, "value": bid_amount}
     
-    await env.alice_client.erc20.util.approve(bid_data, "barter")
+    await alice_client.erc20.util.approve(bid_data, "barter")
 
     barter_allowance = mock_erc20_a.allowance(env.alice, env.addresses.erc20_addresses.barter_utils)
     assert barter_allowance >= bid_amount, "Insufficient allowance. Expected >= {bid_amount}, got {barter_allowance}"
@@ -24,7 +23,7 @@ async def test_buy_erc20_for_erc20():
     ask_data = {"address": env.mock_addresses.erc20_b, "value": ask_amount}
     expiration = 0
     
-    escrow_result = await env.alice_client.erc20.barter.buy_erc20_for_erc20(bid_data, ask_data, expiration)
+    escrow_result = await alice_client.erc20.barter.buy_erc20_for_erc20(bid_data, ask_data, expiration)
     
     alice_final_a = mock_erc20_a.balance_of(env.alice)
     escrow_balance_a = mock_erc20_a.balance_of(env.addresses.erc20_addresses.escrow_obligation_nontierable)

@@ -2,7 +2,7 @@ import pytest
 from alkahest_py import EnvTestManager, MockERC1155, MockERC20, MockERC721, ERC1155PaymentObligationData
 
 @pytest.mark.asyncio
-async def test_pay_erc1155_for_bundle():
+async def test_pay_erc1155_for_bundle(env, alice_client, bob_client):
     """
     Test using ERC1155 to fulfill bundle escrow.
     This corresponds to test_pay_erc1155_for_bundle() in main.rs
@@ -13,7 +13,6 @@ async def test_pay_erc1155_for_bundle():
     3. Alice fulfills the escrow with her ERC1155 tokens
     4. Verify both parties received their tokens
     """
-    env = EnvTestManager()
     
     # Setup mock tokens
     mock_erc1155_a = MockERC1155(env.mock_addresses.erc1155_a, env.god_wallet_provider)
@@ -65,7 +64,7 @@ async def test_pay_erc1155_for_bundle():
     demand_bytes = payment_obligation.encode_self()
     
     # Bob approves all tokens for the bundle escrow
-    await env.bob_client.token_bundle.util.approve(bundle_data, "escrow")
+    await bob_client.token_bundle.util.approve(bundle_data, "escrow")
     
     # Bob creates bundle escrow demanding ERC1155 from Alice
     arbiter_data = {
@@ -73,17 +72,17 @@ async def test_pay_erc1155_for_bundle():
         "demand": demand_bytes
     }
     
-    buy_result = await env.bob_client.token_bundle.escrow.non_tierable.create(bundle_data, arbiter_data, 0)
+    buy_result = await bob_client.token_bundle.escrow.non_tierable.create(bundle_data, arbiter_data, 0)
     
     assert buy_result['log']['uid'] and buy_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid buy attestation UID"
     
     buy_attestation_uid = buy_result['log']['uid']
     
     # Alice approves her ERC1155 for payment
-    await env.alice_client.erc1155.util.approve_all(env.mock_addresses.erc1155_a, "barter")
+    await alice_client.erc1155.util.approve_all(env.mock_addresses.erc1155_a, "barter")
     
     # Alice fulfills Bob's buy attestation with her ERC1155
-    pay_result = await env.alice_client.erc1155.barter.pay_erc1155_for_bundle(buy_attestation_uid)
+    pay_result = await alice_client.erc1155.barter.pay_erc1155_for_bundle(buy_attestation_uid)
     
     assert pay_result['log']['uid'] and pay_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid payment attestation UID"
     

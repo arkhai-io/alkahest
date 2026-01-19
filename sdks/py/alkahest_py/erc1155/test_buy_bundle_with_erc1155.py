@@ -2,7 +2,7 @@ import pytest
 from alkahest_py import EnvTestManager, MockERC1155
 
 @pytest.mark.asyncio
-async def test_buy_bundle_with_erc1155():
+async def test_buy_bundle_with_erc1155(env, alice_client):
     """
     Test using ERC1155 to buy token bundles.
     This corresponds to test_buy_bundle_with_erc1155() in main.rs
@@ -13,7 +13,6 @@ async def test_buy_bundle_with_erc1155():
     3. Alice creates purchase offer using ERC1155 to buy a token bundle
     4. Verify ERC1155 tokens are in escrow and attestation is created
     """
-    env = EnvTestManager()
     
     # Setup mock ERC1155 token
     mock_erc1155_a = MockERC1155(env.mock_addresses.erc1155_a, env.god_wallet_provider)
@@ -38,10 +37,10 @@ async def test_buy_bundle_with_erc1155():
     }
     
     # Alice approves tokens for escrow
-    await env.alice_client.erc1155.util.approve_all(env.mock_addresses.erc1155_a, "barter")
+    await alice_client.erc1155.util.approve_all(env.mock_addresses.erc1155_a, "barter")
     
     # Alice creates purchase offer
-    buy_result = await env.alice_client.erc1155.barter.buy_bundle_with_erc1155(bid_data, bundle_data, 0)
+    buy_result = await alice_client.erc1155.barter.buy_bundle_with_erc1155(bid_data, bundle_data, 0)
     
     assert buy_result['log']['uid'] and buy_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid buy attestation UID"
     

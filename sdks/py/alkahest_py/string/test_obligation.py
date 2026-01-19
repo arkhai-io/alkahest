@@ -8,9 +8,8 @@ from alkahest_py import (
 )
 
 @pytest.mark.asyncio
-async def test_string_obligation():
-    env = EnvTestManager()
-    string_client = env.alice_client.string_obligation
+async def test_string_obligation(env, alice_client):
+    string_client = alice_client.string_obligation
     
     tx_hash = await string_client.do_obligation("Test obligation for PyDecodedAttestation<T>", None)
     
@@ -18,12 +17,11 @@ async def test_string_obligation():
     assert tx_hash.startswith('0x') and len(tx_hash) == 66
 
 @pytest.mark.asyncio
-async def test_do_obligation_json():
+async def test_do_obligation_json(env, alice_client):
     """
     Test the do_obligation_json function with various Python objects
     """
-    env = EnvTestManager()
-    string_client = env.alice_client.string_obligation
+    string_client = alice_client.string_obligation
     
     # Test with dictionary
     dict_data = {

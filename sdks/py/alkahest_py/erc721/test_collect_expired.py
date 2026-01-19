@@ -3,14 +3,13 @@ import time
 from alkahest_py import EnvTestManager, MockERC721
 
 @pytest.mark.asyncio
-async def test_reclaim_expired():
+async def test_reclaim_expired(env, alice_client):
     """
     Test collecting expired escrowed tokens.
     This corresponds to test_reclaim_expired() in main.rs
     
     Flow: Alice creates escrow with short expiration, waits for expiration, then collects
     """
-    env = EnvTestManager()
     
     # Setup mock ERC721 token
     mock_erc721_a = MockERC721(env.mock_addresses.erc721_a, env.god_wallet_provider)
@@ -34,11 +33,11 @@ async def test_reclaim_expired():
     }
     
     # Alice approves token for barter (since we use barter.buy_erc721_for_erc721)
-    await env.alice_client.erc721.util.approve(bid_data, "barter")
+    await alice_client.erc721.util.approve(bid_data, "barter")
     
     # Alice makes escrow with a short expiration (current time + 15 seconds)
     expiration = int(time.time()) + 15
-    buy_result = await env.alice_client.erc721.barter.buy_erc721_for_erc721(bid_data, ask_data, expiration)
+    buy_result = await alice_client.erc721.barter.buy_erc721_for_erc721(bid_data, ask_data, expiration)
     
     assert buy_result['log']['uid'] and buy_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid buy attestation UID"
     
@@ -54,7 +53,7 @@ async def test_reclaim_expired():
     await env.god_wallet_provider.anvil_increase_time(20)
     
     # Alice collects expired funds
-    collect_result = await env.alice_client.erc721.escrow.non_tierable.reclaim_expired(buy_attestation_uid)
+    collect_result = await alice_client.erc721.escrow.non_tierable.reclaim_expired(buy_attestation_uid)
     print(f"Collected expired escrow, transaction: {collect_result}")
     
     # Verify token returned to Alice

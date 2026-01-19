@@ -7,11 +7,9 @@ from alkahest_py import (
     EnvTestManager,
 )
 
-
 @pytest.mark.asyncio
-async def test_alkahest_client_init_default():
+async def test_alkahest_client_init_default(env):
     """Test AlkahestClient initialization with default extensions (no custom config)."""
-    env = EnvTestManager()
 
     # Initialize client without custom address config (should use defaults)
     client = AlkahestClient(
@@ -49,11 +47,9 @@ async def test_alkahest_client_init_default():
 
     print("✅ Default AlkahestClient initialization test passed!")
 
-
 @pytest.mark.asyncio
-async def test_alkahest_client_init_with_custom_config():
+async def test_alkahest_client_init_with_custom_config(env, alice_client):
     """Test AlkahestClient initialization with custom address configuration."""
-    env = EnvTestManager()
 
     # Test that the environment addresses are accessible and client works
     # NOTE: Creating a client with custom config requires proper config format
@@ -64,8 +60,8 @@ async def test_alkahest_client_init_with_custom_config():
     assert hasattr(env.addresses, 'arbiters_addresses'), "Should have arbiters addresses"
 
     # Verify alice_client from env works (it's already initialized with proper addresses)
-    assert env.alice_client is not None, "Alice client should exist"
-    assert env.alice_client.erc20 is not None, "Alice ERC20 client should exist"
-    assert env.alice_client.erc721 is not None, "Alice ERC721 client should exist"
+    assert alice_client is not None, "Alice client should exist"
+    assert alice_client.erc20 is not None, "Alice ERC20 client should exist"
+    assert alice_client.erc721 is not None, "Alice ERC721 client should exist"
 
     print("✅ Custom config AlkahestClient initialization test passed!")

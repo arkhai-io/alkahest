@@ -2,14 +2,13 @@ import pytest
 from alkahest_py import EnvTestManager, MockERC721
 
 @pytest.mark.asyncio
-async def test_pay_with_erc721():
+async def test_pay_with_erc721(env, alice_client):
     """
     Test paying with ERC721 tokens.
     This corresponds to test_pay_with_erc721() in main.rs
     
     Flow: Alice pays ERC721 token directly to Bob
     """
-    env = EnvTestManager()
     
     # Setup mock ERC721 token
     mock_erc721_a = MockERC721(env.mock_addresses.erc721_a, env.god_wallet_provider)
@@ -29,10 +28,10 @@ async def test_pay_with_erc721():
     }
     
     # Alice approves token for payment
-    await env.alice_client.erc721.util.approve(price_data, "payment")
+    await alice_client.erc721.util.approve(price_data, "payment")
     
     # Alice makes direct payment to Bob
-    payment_result = await env.alice_client.erc721.payment.pay(price_data, env.bob)
+    payment_result = await alice_client.erc721.payment.pay(price_data, env.bob)
 
     assert payment_result['log']['uid'] and payment_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid payment attestation UID"
     

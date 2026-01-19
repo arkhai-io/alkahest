@@ -3,8 +3,7 @@ import time
 from alkahest_py import EnvTestManager, MockERC20
 
 @pytest.mark.asyncio
-async def test_permit_and_pay_erc20_for_erc20():
-    env = EnvTestManager()
+async def test_permit_and_pay_erc20_for_erc20(env, alice_client, bob_client):
     
     # Setup mock ERC20 tokens
     mock_erc20_a = MockERC20(env.mock_addresses.erc20_a, env.god_wallet_provider)
@@ -29,10 +28,10 @@ async def test_permit_and_pay_erc20_for_erc20():
     ask_data = {"address": env.mock_addresses.erc20_b, "value": 200}  # Alice wants token B
     
     # Alice approves tokens for escrow (still needed for escrow creation)
-    await env.alice_client.erc20.util.approve(bid_data, "barter")
+    await alice_client.erc20.util.approve(bid_data, "barter")
     
     # Alice creates the buy order
-    buy_result = await env.alice_client.erc20.barter.buy_erc20_for_erc20(bid_data, ask_data, 0)
+    buy_result = await alice_client.erc20.barter.buy_erc20_for_erc20(bid_data, ask_data, 0)
     
     assert buy_result['log']['uid'] and buy_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid buy attestation UID"
     
@@ -51,7 +50,7 @@ async def test_permit_and_pay_erc20_for_erc20():
     assert bob_allowance == 0, "Bob should have no allowance before permit, got {bob_allowance}"
     
     # Bob fulfills the buy order using permit (no pre-approval needed)
-    pay_result =await env.bob_client.erc20.barter.permit_and_pay_erc20_for_erc20(buy_attestation_uid)
+    pay_result =await bob_client.erc20.barter.permit_and_pay_erc20_for_erc20(buy_attestation_uid)
     
     assert pay_result['log']['uid'] and pay_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid payment attestation UID"
     

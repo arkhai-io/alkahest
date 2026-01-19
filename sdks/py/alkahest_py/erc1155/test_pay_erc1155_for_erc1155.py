@@ -2,7 +2,7 @@ import pytest
 from alkahest_py import EnvTestManager, MockERC1155
 
 @pytest.mark.asyncio
-async def test_pay_erc1155_for_erc1155():
+async def test_pay_erc1155_for_erc1155(env, alice_client, bob_client):
     """
     Test ERC1155 to ERC1155 exchange fulfillment.
     This corresponds to test_pay_erc1155_for_erc1155() in main.rs
@@ -13,7 +13,6 @@ async def test_pay_erc1155_for_erc1155():
     3. Bob fulfills the escrow with his ERC1155B tokens
     4. Verify both parties received their tokens
     """
-    env = EnvTestManager()
     
     # Setup mock ERC1155 tokens
     mock_erc1155_a = MockERC1155(env.mock_addresses.erc1155_a, env.god_wallet_provider)
@@ -39,20 +38,20 @@ async def test_pay_erc1155_for_erc1155():
     }
     
     # Alice approves tokens for escrow and creates buy attestation
-    await env.alice_client.erc1155.util.approve_all(env.mock_addresses.erc1155_a, "barter")
+    await alice_client.erc1155.util.approve_all(env.mock_addresses.erc1155_a, "barter")
 
-    buy_result = await env.alice_client.erc1155.barter.buy_erc1155_for_erc1155(bid_data, ask_data, 0)
+    buy_result = await alice_client.erc1155.barter.buy_erc1155_for_erc1155(bid_data, ask_data, 0)
     buy_attestation_uid = buy_result['log']['uid']
     
     # Bob approves tokens for payment
-    await env.bob_client.erc1155.util.approve_all(env.mock_addresses.erc1155_b, "barter")
+    await bob_client.erc1155.util.approve_all(env.mock_addresses.erc1155_b, "barter")
 
     # Check initial balances
     initial_alice_balance_b = mock_erc1155_b.balance_of(env.alice, 2)
     initial_bob_balance_a = mock_erc1155_a.balance_of(env.bob, 1)
     
     # Bob fulfills the buy attestation
-    pay_result = await env.bob_client.erc1155.barter.pay_erc1155_for_erc1155(buy_attestation_uid)
+    pay_result = await bob_client.erc1155.barter.pay_erc1155_for_erc1155(buy_attestation_uid)
 
     assert pay_result['log']['uid'] and pay_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid payment attestation UID"
     

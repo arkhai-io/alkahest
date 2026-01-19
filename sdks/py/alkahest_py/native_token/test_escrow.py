@@ -2,13 +2,11 @@ import pytest
 import time
 from alkahest_py import EnvTestManager, TrustedOracleArbiterDemandData
 
-
 @pytest.mark.asyncio
-async def test_native_token_escrow_non_tierable():
+async def test_native_token_escrow_non_tierable(env, alice_client, bob_client):
     """
     Test native token non-tierable escrow: create, fulfill, collect.
     """
-    env = EnvTestManager()
 
     # Use small amounts for testing
     escrow_amount = 1000  # wei
@@ -28,7 +26,7 @@ async def test_native_token_escrow_non_tierable():
 
     # Alice creates native token escrow
     native_data = {"value": escrow_amount}
-    escrow_result = await env.alice_client.native_token.escrow.non_tierable.create(
+    escrow_result = await alice_client.native_token.escrow.non_tierable.create(
         native_data, arbiter, expiration
     )
 
@@ -40,29 +38,27 @@ async def test_native_token_escrow_non_tierable():
     print(f"Native token escrow created: {escrow_uid}")
 
     # Bob makes fulfillment
-    string_client = env.bob_client.string_obligation
+    string_client = bob_client.string_obligation
     fulfillment_uid = await string_client.do_obligation("fulfilled", escrow_uid)
 
     # Request and perform arbitration
-    oracle_client = env.bob_client.oracle
+    oracle_client = bob_client.oracle
     await oracle_client.request_arbitration(fulfillment_uid, env.bob, inner_demand_data)
     await oracle_client.arbitrate(fulfillment_uid, inner_demand_data, True)
 
     # Bob collects
-    collect_result = await env.bob_client.native_token.escrow.non_tierable.collect(
+    collect_result = await bob_client.native_token.escrow.non_tierable.collect(
         escrow_uid, fulfillment_uid
     )
 
     assert collect_result is not None, "Collection should succeed"
     print(f"Native token collected: {collect_result}")
 
-
 @pytest.mark.asyncio
-async def test_native_token_escrow_tierable():
+async def test_native_token_escrow_tierable(env, alice_client, bob_client):
     """
     Test native token tierable escrow: create, fulfill, collect.
     """
-    env = EnvTestManager()
 
     escrow_amount = 1000  # wei
 
@@ -81,7 +77,7 @@ async def test_native_token_escrow_tierable():
 
     # Alice creates tierable native token escrow
     native_data = {"value": escrow_amount}
-    escrow_result = await env.alice_client.native_token.escrow.tierable.create(
+    escrow_result = await alice_client.native_token.escrow.tierable.create(
         native_data, arbiter, expiration
     )
 
@@ -92,30 +88,28 @@ async def test_native_token_escrow_tierable():
     print(f"Native token tierable escrow created: {escrow_uid}")
 
     # Bob makes fulfillment
-    string_client = env.bob_client.string_obligation
+    string_client = bob_client.string_obligation
     fulfillment_uid = await string_client.do_obligation("fulfilled", escrow_uid)
 
     # Request and perform arbitration
-    oracle_client = env.bob_client.oracle
+    oracle_client = bob_client.oracle
     await oracle_client.request_arbitration(fulfillment_uid, env.bob, inner_demand_data)
     await oracle_client.arbitrate(fulfillment_uid, inner_demand_data, True)
 
     # Bob collects from tierable escrow
-    collect_result = await env.bob_client.native_token.escrow.tierable.collect(
+    collect_result = await bob_client.native_token.escrow.tierable.collect(
         escrow_uid, fulfillment_uid
     )
 
     assert collect_result is not None, "Tierable collection should succeed"
     print(f"Native token tierable collected: {collect_result}")
 
-
 @pytest.mark.asyncio
-async def test_native_token_escrow_reclaim_expired():
+async def test_native_token_escrow_reclaim_expired(env, alice_client):
     """
     Test native token escrow reclaim when expired.
     Creates an escrow with short expiration, advances time, then reclaims.
     """
-    env = EnvTestManager()
 
     escrow_amount = 1000  # wei
 
@@ -134,7 +128,7 @@ async def test_native_token_escrow_reclaim_expired():
     expiration = int(time.time()) + 15
 
     native_data = {"value": escrow_amount}
-    escrow_result = await env.alice_client.native_token.escrow.non_tierable.create(
+    escrow_result = await alice_client.native_token.escrow.non_tierable.create(
         native_data, arbiter, expiration
     )
 
@@ -145,7 +139,7 @@ async def test_native_token_escrow_reclaim_expired():
     await env.god_wallet_provider.anvil_increase_time(20)
 
     # Alice reclaims expired escrow
-    reclaim_result = await env.alice_client.native_token.escrow.non_tierable.reclaim_expired(
+    reclaim_result = await alice_client.native_token.escrow.non_tierable.reclaim_expired(
         escrow_uid
     )
 
