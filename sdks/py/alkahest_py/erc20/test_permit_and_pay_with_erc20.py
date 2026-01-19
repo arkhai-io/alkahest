@@ -2,8 +2,7 @@ import pytest
 from alkahest_py import EnvTestManager, MockERC20
 
 @pytest.mark.asyncio
-async def test_permit_and_pay_with_erc20():
-    env = EnvTestManager()
+async def test_permit_and_pay_with_erc20(env, alice_client):
     mock_erc20 = MockERC20(env.mock_addresses.erc20_a, env.god_wallet_provider)
     
     alice_initial = mock_erc20.balance_of(env.alice)
@@ -18,7 +17,7 @@ async def test_permit_and_pay_with_erc20():
     payment_amount = 100
     price_data = {"address": env.mock_addresses.erc20_a, "value": payment_amount}
     
-    payment_result = await env.alice_client.erc20.payment.permit_and_pay(price_data, env.bob)
+    payment_result = await alice_client.erc20.payment.permit_and_pay(price_data, env.bob)
     
     alice_final = mock_erc20.balance_of(env.alice)
     bob_final = mock_erc20.balance_of(env.bob)

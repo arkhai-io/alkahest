@@ -3,7 +3,7 @@ import time
 from alkahest_py import EnvTestManager, MockERC1155
 
 @pytest.mark.asyncio
-async def test_erc1155_reclaim_expired():
+async def test_erc1155_reclaim_expired(env, alice_client):
     """
     Test collecting expired escrowed ERC1155 tokens with time-based expiration.
     This corresponds to test_reclaim_expired() in main.rs for ERC1155
@@ -15,7 +15,6 @@ async def test_erc1155_reclaim_expired():
     4. Alice collects expired tokens back
     5. Verify tokens returned to Alice
     """
-    env = EnvTestManager()
     
     # Setup mock ERC1155 token
     mock_erc1155_a = MockERC1155(env.mock_addresses.erc1155_a, env.god_wallet_provider)
@@ -38,14 +37,14 @@ async def test_erc1155_reclaim_expired():
     }
     
     # Alice approves tokens for barter (since we use barter.buy_erc1155_for_erc1155)
-    await env.alice_client.erc1155.util.approve_all(env.mock_addresses.erc1155_a, "barter")
+    await alice_client.erc1155.util.approve_all(env.mock_addresses.erc1155_a, "barter")
     
     # Check initial balance
     initial_alice_balance = mock_erc1155_a.balance_of(env.alice, 1)
 
     # Alice makes escrow with a short expiration (current time + 15 second)
     expiration = int(time.time()) + 15
-    buy_result = await env.alice_client.erc1155.barter.buy_erc1155_for_erc1155(bid_data, ask_data, expiration)
+    buy_result = await alice_client.erc1155.barter.buy_erc1155_for_erc1155(bid_data, ask_data, expiration)
     
     assert buy_result['log']['uid'] and buy_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid buy attestation UID"
     
@@ -64,7 +63,7 @@ async def test_erc1155_reclaim_expired():
     await env.god_wallet_provider.anvil_increase_time(20)
     
     # Alice collects expired funds
-    collect_result = await env.alice_client.erc1155.escrow.non_tierable.reclaim_expired(buy_attestation_uid)
+    collect_result = await alice_client.erc1155.escrow.non_tierable.reclaim_expired(buy_attestation_uid)
     print(f"Collected expired escrow, transaction: {collect_result}")
     
     # Verify tokens returned to Alice

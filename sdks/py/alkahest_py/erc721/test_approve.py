@@ -2,7 +2,7 @@ import pytest
 from alkahest_py import EnvTestManager, MockERC721
 
 @pytest.mark.asyncio
-async def test_erc721_approve():
+async def test_erc721_approve(env, alice_client):
     """
     Test ERC721 token approval for both payment and escrow purposes.
     This corresponds to test_approve() in main.rs (lines 81-135)
@@ -12,7 +12,6 @@ async def test_erc721_approve():
     2. Test approve for payment purpose and verify approval
     3. Test approve for escrow purpose and verify approval
     """
-    env = EnvTestManager()
     
     # Setup mock ERC721 token
     mock_erc721_a = MockERC721(env.mock_addresses.erc721_a, env.god_wallet_provider)
@@ -24,7 +23,7 @@ async def test_erc721_approve():
     token_data = {"address": env.mock_addresses.erc721_a, "id": 1}
     
     # Test approve for payment
-    await env.alice_client.erc721.util.approve(token_data, "payment")
+    await alice_client.erc721.util.approve(token_data, "payment")
     
     # Verify approval for payment obligation
     payment_approved = mock_erc721_a.get_approved(1)
@@ -35,7 +34,7 @@ async def test_erc721_approve():
     print(f"✓ Payment approval verified: token 1 approved for {payment_approved}")
     
     # Test approve for escrow
-    await env.alice_client.erc721.util.approve(token_data, "escrow")
+    await alice_client.erc721.util.approve(token_data, "escrow")
     
     # Verify approval for escrow obligation
     escrow_approved = mock_erc721_a.get_approved(1)

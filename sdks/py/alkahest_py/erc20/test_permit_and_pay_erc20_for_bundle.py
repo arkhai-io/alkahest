@@ -2,14 +2,13 @@ import pytest
 from alkahest_py import EnvTestManager, MockERC20, ERC20PaymentObligationData
 
 @pytest.mark.asyncio
-async def test_permit_and_pay_erc20_for_bundle():
+async def test_permit_and_pay_erc20_for_bundle(env, alice_client, bob_client):
     """
     Test paying ERC20 tokens to fulfill a token bundle escrow using permit (no pre-approval needed).
     This corresponds to test_permit_and_pay_erc20_for_bundle() in main.rs
     
     Flow: Bob escrows a bundle (ERC20 + ERC721 + ERC1155), Alice pays ERC20 using permit to get the bundle
     """
-    env = EnvTestManager()
     
     # Setup mock tokens
     mock_erc20_a = MockERC20(env.mock_addresses.erc20_a, env.god_wallet_provider)  # Alice's payment token
@@ -52,7 +51,7 @@ async def test_permit_and_pay_erc20_for_bundle():
     }
     
     # Step 1: Bob approves his tokens for the bundle escrow
-    await env.bob_client.token_bundle.util.approve(bundle_data, "escrow")
+    await bob_client.token_bundle.util.approve(bundle_data, "escrow")
     
     # Step 2: Bob creates bundle escrow demanding ERC20 from Alice
     # Create proper ABI-encoded payment obligation data
@@ -70,7 +69,7 @@ async def test_permit_and_pay_erc20_for_bundle():
         "demand": demand_bytes
     }
     
-    buy_result = await env.bob_client.token_bundle.escrow.non_tierable.create(
+    buy_result = await bob_client.token_bundle.escrow.non_tierable.create(
         bundle_data, arbiter_data, expiration
     )
     
@@ -84,7 +83,7 @@ async def test_permit_and_pay_erc20_for_bundle():
     # initial_alice_erc1155_balance = mock_erc1155_a.balance_of(env.alice, erc1155_token_id)  # When available
     
     # Step 3: Alice fulfills Bob's bundle escrow using permit (no pre-approval needed)
-    pay_result = await env.alice_client.erc20.barter.permit_and_pay_erc20_for_bundle(buy_attestation_uid)
+    pay_result = await alice_client.erc20.barter.permit_and_pay_erc20_for_bundle(buy_attestation_uid)
     
     assert pay_result['log']['uid'] and pay_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid payment attestation UID"
     

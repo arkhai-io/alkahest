@@ -2,8 +2,7 @@ import pytest
 from alkahest_py import EnvTestManager, MockERC20
 
 @pytest.mark.asyncio
-async def test_pay_with_erc20():
-    env = EnvTestManager()
+async def test_pay_with_erc20(env, alice_client):
     mock_erc20 = MockERC20(env.mock_addresses.erc20_a, env.god_wallet_provider)
     
     alice_initial = mock_erc20.balance_of(env.alice)
@@ -18,12 +17,12 @@ async def test_pay_with_erc20():
     payment_amount = 50
     price_data = {"address": env.mock_addresses.erc20_a, "value": payment_amount}
     
-    await env.alice_client.erc20.util.approve(price_data, "payment")
+    await alice_client.erc20.util.approve(price_data, "payment")
     
     payment_allowance = mock_erc20.allowance(env.alice, env.addresses.erc20_addresses.payment_obligation)
     assert payment_allowance >= payment_amount, "Insufficient allowance. Expected >= {payment_amount}, got {payment_allowance}"
 
-    payment_result = await env.alice_client.erc20.payment.pay(price_data, env.bob)
+    payment_result = await alice_client.erc20.payment.pay(price_data, env.bob)
     
     alice_final = mock_erc20.balance_of(env.alice)
     bob_final = mock_erc20.balance_of(env.bob)

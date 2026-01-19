@@ -2,14 +2,13 @@ import pytest
 from alkahest_py import EnvTestManager, MockERC721, MockERC1155
 
 @pytest.mark.asyncio
-async def test_pay_erc721_for_erc1155():
+async def test_pay_erc721_for_erc1155(env, alice_client, bob_client):
     """
     Test paying ERC721 for ERC1155 tokens.
     This corresponds to test_pay_erc721_for_erc1155() in main.rs
     
     Flow: Bob escrows ERC1155, Alice pays ERC721 to get the ERC1155
     """
-    env = EnvTestManager()
     
     # Setup mock tokens
     mock_erc721_a = MockERC721(env.mock_addresses.erc721_a, env.god_wallet_provider)
@@ -38,9 +37,9 @@ async def test_pay_erc721_for_erc1155():
     }
     
     # Bob approves tokens for escrow and creates buy attestation
-    await env.bob_client.erc1155.util.approve_all(env.mock_addresses.erc1155_a, "barter")
+    await bob_client.erc1155.util.approve_all(env.mock_addresses.erc1155_a, "barter")
 
-    buy_result = await env.bob_client.erc1155.barter.buy_erc721_with_erc1155(bid_data, ask_data, 0)
+    buy_result = await bob_client.erc1155.barter.buy_erc721_with_erc1155(bid_data, ask_data, 0)
 
     assert buy_result['log']['uid'] and buy_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid buy attestation UID"
     
@@ -48,10 +47,10 @@ async def test_pay_erc721_for_erc1155():
     
     # Alice approves her token for payment
     erc721_data = {"address": env.mock_addresses.erc721_a, "id": token_id}
-    await env.alice_client.erc721.util.approve(erc721_data, "barter")
+    await alice_client.erc721.util.approve(erc721_data, "barter")
     
     # Alice fulfills the buy attestation
-    pay_result = await env.alice_client.erc721.barter.pay_erc721_for_erc1155(buy_attestation_uid)
+    pay_result = await alice_client.erc721.barter.pay_erc721_for_erc1155(buy_attestation_uid)
 
     assert pay_result['log']['uid'] and pay_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid payment attestation UID"
     

@@ -2,7 +2,7 @@ import pytest
 from alkahest_py import EnvTestManager, MockERC721
 
 @pytest.mark.asyncio
-async def test_approve_all():
+async def test_approve_all(env, alice_client):
     """
     Test ERC721 approve_all functionality for both payment and escrow purposes.
     This corresponds to test_approve_all() in main.rs
@@ -12,7 +12,6 @@ async def test_approve_all():
     2. Test approve_all for payment purpose and verify with isApprovedForAll
     3. Test approve_all for escrow purpose and verify with isApprovedForAll
     """
-    env = EnvTestManager()
     
     # Setup mock ERC721 token
     mock_erc721_a = MockERC721(env.mock_addresses.erc721_a, env.god_wallet_provider)
@@ -30,7 +29,7 @@ async def test_approve_all():
     
     # Test approve_all for payment
     print("Testing approve_all for payment purpose...")
-    await env.alice_client.erc721.util.approve_all(env.mock_addresses.erc721_a, "payment")
+    await alice_client.erc721.util.approve_all(env.mock_addresses.erc721_a, "payment")
     
     # Verify approval for payment obligation using isApprovedForAll
     payment_approved = mock_erc721_a.is_approved_for_all(
@@ -44,7 +43,7 @@ async def test_approve_all():
     
     # Test approve_all for escrow
     print("Testing approve_all for escrow purpose...")
-    await env.alice_client.erc721.util.approve_all(env.mock_addresses.erc721_a, "escrow")
+    await alice_client.erc721.util.approve_all(env.mock_addresses.erc721_a, "escrow")
     
     # Verify approval for escrow obligation using isApprovedForAll
     escrow_approved = mock_erc721_a.is_approved_for_all(

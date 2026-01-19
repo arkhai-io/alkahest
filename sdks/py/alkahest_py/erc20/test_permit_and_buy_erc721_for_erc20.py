@@ -2,12 +2,11 @@ import pytest
 from alkahest_py import EnvTestManager, MockERC20
 
 @pytest.mark.asyncio
-async def test_permit_and_buy_erc721_for_erc20():
+async def test_permit_and_buy_erc721_for_erc20(env, alice_client):
     """
     Test buying ERC721 tokens with ERC20 tokens using permit (no pre-approval needed).
     This corresponds to test_permit_and_buy_erc721_for_erc20() in main.rs
     """
-    env = EnvTestManager()
     
     # Setup mock ERC20 token  
     mock_erc20 = MockERC20(env.mock_addresses.erc20_a, env.god_wallet_provider)
@@ -25,7 +24,7 @@ async def test_permit_and_buy_erc721_for_erc20():
     ask_data = {"address": env.mock_addresses.erc721_a, "id": 1}  # Alice wants NFT ID 1
     
     # Alice creates the buy order for ERC721 with permit (no pre-approval needed)
-    buy_result = await env.alice_client.erc20.barter.permit_and_buy_erc721_for_erc20(bid_data, ask_data, 0)
+    buy_result = await alice_client.erc20.barter.permit_and_buy_erc721_for_erc20(bid_data, ask_data, 0)
     
     assert buy_result['log']['uid'] and buy_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid buy attestation UID"
     

@@ -13,10 +13,9 @@ from alkahest_py import (
 )
 
 @pytest.mark.asyncio
-async def test_arbitrate_many_future():
+async def test_arbitrate_many_future(env, alice_client, bob_client):
     """Test arbitrate_many with Future mode: only processes new fulfillments"""
     # Setup test environment
-    env = EnvTestManager()
 
     # Setup escrow
     mock_erc20 = MockERC20(env.mock_addresses.erc20_a, env.god_wallet_provider)
@@ -34,14 +33,14 @@ async def test_arbitrate_many_future():
     }
 
     expiration = int(time.time()) + 3600
-    escrow_receipt = await env.alice_client.erc20.escrow.non_tierable.permit_and_create(
+    escrow_receipt = await alice_client.erc20.escrow.non_tierable.permit_and_create(
         price, arbiter, expiration
     )
     escrow_uid = escrow_receipt['log']['uid']
 
     # Decision function
     def decision_function(attestation, demand):
-        obligation_str = env.bob_client.extract_obligation_data(attestation)
+        obligation_str = bob_client.extract_obligation_data(attestation)
         print(f"Arbitrating obligation: {obligation_str}")
         return obligation_str == "good"
 
@@ -53,7 +52,7 @@ async def test_arbitrate_many_future():
 
     # Start listening with Future mode (should not process past arbitrations)
     # Note: This test is timing-dependent and may be flaky
-    oracle_client = env.bob_client.oracle
+    oracle_client = bob_client.oracle
 
     # With Future mode and short timeout, should process 0 past decisions
     decisions = await oracle_client.arbitrate_many(

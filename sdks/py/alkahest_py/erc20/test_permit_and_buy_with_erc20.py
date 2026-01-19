@@ -3,8 +3,7 @@ import time
 from alkahest_py import EnvTestManager, MockERC20
 
 @pytest.mark.asyncio
-async def test_permit_and_buy_with_erc20():
-    env = EnvTestManager()
+async def test_permit_and_buy_with_erc20(env, alice_client):
     mock_erc20 = MockERC20(env.mock_addresses.erc20_a, env.god_wallet_provider)
     
     god_initial = mock_erc20.balance_of(env.god)
@@ -25,7 +24,7 @@ async def test_permit_and_buy_with_erc20():
     }
     expiration = int(time.time()) + 3600
     
-    result = await env.alice_client.erc20.escrow.non_tierable.permit_and_create(
+    result = await alice_client.erc20.escrow.non_tierable.permit_and_create(
     price_data, arbiter_data, expiration
     )
     

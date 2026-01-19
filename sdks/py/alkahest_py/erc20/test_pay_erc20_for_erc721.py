@@ -2,14 +2,13 @@ import pytest
 from alkahest_py import EnvTestManager, MockERC20, MockERC721
 
 @pytest.mark.asyncio
-async def test_pay_erc20_for_erc721():
+async def test_pay_erc20_for_erc721(env, alice_client, bob_client):
     """
     Test paying ERC20 tokens to fulfill an ERC721 escrow.
     This corresponds to test_pay_erc20_for_erc721() in main.rs
     
     Flow: Bob escrows ERC721, Alice pays ERC20 to get the ERC721
     """
-    env = EnvTestManager()
     
     # Setup mock tokens
     mock_erc20_a = MockERC20(env.mock_addresses.erc20_a, env.god_wallet_provider)
@@ -40,11 +39,11 @@ async def test_pay_erc20_for_erc721():
     
     # Step 1: Bob approves his ERC721 for escrow
     erc721_data = {"address": env.mock_addresses.erc721_a, "id": erc721_token_id}
-    await env.bob_client.erc721.util.approve(erc721_data, "barter")
+    await bob_client.erc721.util.approve(erc721_data, "barter")
 
     # Step 2: Bob creates ERC721 escrow requesting ERC20
     erc20_data = {"address": env.mock_addresses.erc20_a, "value": erc20_amount}
-    buy_result = await env.bob_client.erc721.barter.buy_erc20_with_erc721(erc721_data, erc20_data, expiration)
+    buy_result = await bob_client.erc721.barter.buy_erc20_with_erc721(erc721_data, erc20_data, expiration)
 
     assert buy_result['log']['uid'] and buy_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid buy attestation UID"
     
@@ -58,10 +57,10 @@ async def test_pay_erc20_for_erc721():
     initial_alice_erc20_balance = mock_erc20_a.balance_of(env.alice)
     
     # Step 3: Alice approves her ERC20 tokens for payment
-    await env.alice_client.erc20.util.approve(erc20_data, "barter")
+    await alice_client.erc20.util.approve(erc20_data, "barter")
     
     # Step 4: Alice fulfills Bob's escrow
-    pay_result = await env.alice_client.erc20.barter.pay_erc20_for_erc721(buy_attestation_uid)
+    pay_result = await alice_client.erc20.barter.pay_erc20_for_erc721(buy_attestation_uid)
     
     assert pay_result['log']['uid'] and pay_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid payment attestation UID"
     

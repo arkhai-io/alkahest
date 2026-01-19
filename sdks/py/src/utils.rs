@@ -1,8 +1,9 @@
-use crate::{types::PyDefaultExtensionConfig, PyAlkahestClient};
+use crate::types::PyDefaultExtensionConfig;
 use alkahest_rs::{
     types::WalletProvider,
     utils::{setup_test_environment, MockAddresses, TestContext},
 };
+use alloy::hex;
 use pyo3::{pyclass, pymethods, PyResult};
 
 #[pyclass]
@@ -77,13 +78,13 @@ pub struct EnvTestManager {
     #[pyo3(get)]
     pub bob: String,
     #[pyo3(get)]
+    pub alice_private_key: String,
+    #[pyo3(get)]
+    pub bob_private_key: String,
+    #[pyo3(get)]
     pub addresses: PyDefaultExtensionConfig,
     #[pyo3(get)]
     pub mock_addresses: PyMockAddresses,
-    #[pyo3(get)]
-    pub alice_client: PyAlkahestClient,
-    #[pyo3(get)]
-    pub bob_client: PyAlkahestClient,
     #[pyo3(get)]
     pub god_wallet_provider: PyWalletProvider,
 }
@@ -97,16 +98,20 @@ impl EnvTestManager {
             .block_on(setup_test_environment())
             .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
 
+        // Extract private keys as hex strings (with 0x prefix)
+        let alice_private_key = format!("0x{}", hex::encode(ctx.alice.to_bytes()));
+        let bob_private_key = format!("0x{}", hex::encode(ctx.bob.to_bytes()));
+
         Ok(Self {
             runtime: rt,
             rpc_url: ctx.anvil.ws_endpoint_url().to_string(),
             god: ctx.god.address().to_string(),
             alice: ctx.alice.address().to_string(),
             bob: ctx.bob.address().to_string(),
+            alice_private_key,
+            bob_private_key,
             addresses: PyDefaultExtensionConfig::from(&ctx.addresses),
             mock_addresses: PyMockAddresses::from(&ctx.mock_addresses),
-            alice_client: PyAlkahestClient::from_client(ctx.alice_client.clone()),
-            bob_client: PyAlkahestClient::from_client(ctx.bob_client.clone()),
             god_wallet_provider: PyWalletProvider {
                 inner: ctx.god_provider.clone(),
             },

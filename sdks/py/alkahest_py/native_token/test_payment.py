@@ -1,23 +1,21 @@
 import pytest
 from alkahest_py import EnvTestManager
 
-
 @pytest.mark.asyncio
-async def test_native_token_payment():
+async def test_native_token_payment(env, bob_client):
     """
     Test native token direct payment functionality.
 
     Flow:
     1. Bob makes a direct native token payment to Alice
     """
-    env = EnvTestManager()
 
     # Use a small amount for testing
     payment_amount = 1000  # wei
 
     # Bob makes native token payment to Alice
     native_data = {"value": payment_amount}
-    payment_result = await env.bob_client.native_token.payment.pay(
+    payment_result = await bob_client.native_token.payment.pay(
         native_data, env.alice  # payee address
     )
 

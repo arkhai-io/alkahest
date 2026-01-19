@@ -13,7 +13,6 @@ from alkahest_py import (
     AlkahestClient,
 )
 
-
 @dataclass
 class IdentityFulfillment:
     pubkey: str
@@ -21,10 +20,8 @@ class IdentityFulfillment:
     data: str
     signature: str
 
-
 # Global identity registry for tracking nonces
 identity_registry: Dict[str, int] = {}
-
 
 def verify_identity_decision(attestation, client) -> bool:
     """
@@ -80,7 +77,6 @@ def verify_identity_decision(attestation, client) -> bool:
     except Exception:
         return False
 
-
 async def create_identity_payload(account: Account, nonce: int, data: str = "proof-of-identity") -> str:
     """Create a signed identity payload"""
     message = f"{data}:{nonce}"
@@ -101,19 +97,17 @@ async def create_identity_payload(account: Account, nonce: int, data: str = "pro
         "signature": payload.signature
     })
 
-
 @pytest.mark.asyncio
-async def test_contextless_offchain_identity_oracle_flow():
+async def test_contextless_offchain_identity_oracle_flow(env, bob_client):
     """
     Test a contextless identity verification oracle
     Uses signature verification and nonce tracking without requiring escrow.
     Tests both successful verification and replay attack prevention.
     """
-    env = EnvTestManager()
 
     # Simplification: Bob acts as the oracle
     oracle_address = env.bob
-    oracle_client = env.bob_client
+    oracle_client = bob_client
 
     # Clear and setup identity registry
     identity_registry.clear()
@@ -134,13 +128,13 @@ async def test_contextless_offchain_identity_oracle_flow():
 
     # Test 1: Valid identity proof with nonce 1 (should succeed)
     good_payload = await create_identity_payload(identity_account, 1)
-    good_uid = await env.bob_client.string_obligation.do_obligation(
+    good_uid = await bob_client.string_obligation.do_obligation(
         good_payload,
         None  # No escrow reference (contextless)
     )
 
     # Request arbitration (contextless, so pass empty demand)
-    await env.bob_client.oracle.request_arbitration(good_uid, oracle_address, b"")
+    await bob_client.oracle.request_arbitration(good_uid, oracle_address, b"")
 
     # Process the arbitration (skip already arbitrated items)
     decisions1 = await oracle_client.oracle.arbitrate_many(
@@ -160,13 +154,13 @@ async def test_contextless_offchain_identity_oracle_flow():
 
     # Test 2: Replay attack with same nonce (should fail)
     bad_payload = await create_identity_payload(identity_account, 1)  # Same nonce
-    bad_uid = await env.bob_client.string_obligation.do_obligation(
+    bad_uid = await bob_client.string_obligation.do_obligation(
         bad_payload,
         None
     )
 
     # Request arbitration (contextless, so pass empty demand)
-    await env.bob_client.oracle.request_arbitration(bad_uid, oracle_address, b"")
+    await bob_client.oracle.request_arbitration(bad_uid, oracle_address, b"")
 
     # Process the arbitration (skip already arbitrated, so only process the new one)
     decisions2 = await oracle_client.oracle.arbitrate_many(

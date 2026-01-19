@@ -12,11 +12,9 @@ from alkahest_py import (
     TrustedOracleArbiterDemandData,
 )
 
-
 @pytest.mark.asyncio
-async def test_arbitrate_direct():
+async def test_arbitrate_direct(env, alice_client, bob_client):
     """Test direct arbitration using oracle_client.arbitrate()"""
-    env = EnvTestManager()
 
     # Setup escrow
     mock_erc20 = MockERC20(env.mock_addresses.erc20_a, env.god_wallet_provider)
@@ -38,17 +36,17 @@ async def test_arbitrate_direct():
     }
 
     expiration = int(time.time()) + 3600
-    escrow_receipt = await env.alice_client.erc20.escrow.non_tierable.permit_and_create(
+    escrow_receipt = await alice_client.erc20.escrow.non_tierable.permit_and_create(
         price, arbiter, expiration
     )
     escrow_uid = escrow_receipt['log']['uid']
 
     # Make fulfillment
-    string_client = env.bob_client.string_obligation
+    string_client = bob_client.string_obligation
     fulfillment_uid = await string_client.do_obligation("good", escrow_uid)
 
     # Request arbitration
-    oracle_client = env.bob_client.oracle
+    oracle_client = bob_client.oracle
     await oracle_client.request_arbitration(fulfillment_uid, env.bob, inner_demand_data)
 
     # Direct arbitration call
@@ -58,11 +56,9 @@ async def test_arbitrate_direct():
 
     print(f"Direct arbitration succeeded with tx: {tx_hash}")
 
-
 @pytest.mark.asyncio
-async def test_wait_for_arbitration():
+async def test_wait_for_arbitration(env, alice_client, bob_client):
     """Test waiting for arbitration event using oracle_client.wait_for_arbitration()"""
-    env = EnvTestManager()
 
     # Setup escrow
     mock_erc20 = MockERC20(env.mock_addresses.erc20_a, env.god_wallet_provider)
@@ -81,17 +77,17 @@ async def test_wait_for_arbitration():
     }
 
     expiration = int(time.time()) + 3600
-    escrow_receipt = await env.alice_client.erc20.escrow.non_tierable.permit_and_create(
+    escrow_receipt = await alice_client.erc20.escrow.non_tierable.permit_and_create(
         price, arbiter, expiration
     )
     escrow_uid = escrow_receipt['log']['uid']
 
     # Make fulfillment
-    string_client = env.bob_client.string_obligation
+    string_client = bob_client.string_obligation
     fulfillment_uid = await string_client.do_obligation("good", escrow_uid)
 
     # Request and perform arbitration
-    oracle_client = env.bob_client.oracle
+    oracle_client = bob_client.oracle
     await oracle_client.request_arbitration(fulfillment_uid, env.bob, inner_demand_data)
     await oracle_client.arbitrate(fulfillment_uid, inner_demand_data, True)
 
@@ -109,11 +105,9 @@ async def test_wait_for_arbitration():
 
     print(f"Found arbitration event: decision={event.decision}")
 
-
 @pytest.mark.asyncio
-async def test_get_escrow_attestation():
+async def test_get_escrow_attestation(env, alice_client, bob_client):
     """Test getting escrow attestation from a fulfillment attestation"""
-    env = EnvTestManager()
 
     # Setup escrow
     mock_erc20 = MockERC20(env.mock_addresses.erc20_a, env.god_wallet_provider)
@@ -132,17 +126,17 @@ async def test_get_escrow_attestation():
     }
 
     expiration = int(time.time()) + 3600
-    escrow_receipt = await env.alice_client.erc20.escrow.non_tierable.permit_and_create(
+    escrow_receipt = await alice_client.erc20.escrow.non_tierable.permit_and_create(
         price, arbiter, expiration
     )
     escrow_uid = escrow_receipt['log']['uid']
 
     # Make fulfillment
-    string_client = env.bob_client.string_obligation
+    string_client = bob_client.string_obligation
     fulfillment_uid = await string_client.do_obligation("test_data", escrow_uid)
 
     # Request arbitration
-    oracle_client = env.bob_client.oracle
+    oracle_client = bob_client.oracle
     await oracle_client.request_arbitration(fulfillment_uid, env.bob, inner_demand_data)
 
     # Get a fulfillment attestation (we need to construct one with the ref_uid)
@@ -168,11 +162,9 @@ async def test_get_escrow_attestation():
 
     print(f"Got escrow attestation: {escrow_attestation.uid}")
 
-
 @pytest.mark.asyncio
-async def test_get_escrow_and_demand():
+async def test_get_escrow_and_demand(env, alice_client, bob_client):
     """Test getting escrow attestation and demand data in one call"""
-    env = EnvTestManager()
 
     # Setup escrow
     mock_erc20 = MockERC20(env.mock_addresses.erc20_a, env.god_wallet_provider)
@@ -191,13 +183,13 @@ async def test_get_escrow_and_demand():
     }
 
     expiration = int(time.time()) + 3600
-    escrow_receipt = await env.alice_client.erc20.escrow.non_tierable.permit_and_create(
+    escrow_receipt = await alice_client.erc20.escrow.non_tierable.permit_and_create(
         price, arbiter, expiration
     )
     escrow_uid = escrow_receipt['log']['uid']
 
     # Make fulfillment
-    string_client = env.bob_client.string_obligation
+    string_client = bob_client.string_obligation
     fulfillment_uid = await string_client.do_obligation("test_data", escrow_uid)
 
     # Construct fulfillment attestation
@@ -216,7 +208,7 @@ async def test_get_escrow_and_demand():
     )
 
     # Get escrow and demand in one call
-    oracle_client = env.bob_client.oracle
+    oracle_client = bob_client.oracle
     escrow_attestation, extracted_demand = await oracle_client.get_escrow_and_demand(fulfillment_attestation)
 
     assert escrow_attestation is not None, "Should get escrow attestation"
