@@ -248,7 +248,7 @@ contract TokenBundleEscrowObligationTest is Test {
         assertTrue(escrowId != bytes32(0));
     }
 
-    function testInsufficientNativeTokenPayment() public {
+    function testIncorrectNativeTokenPaymentUnderpay() public {
         TokenBundleEscrowObligation.ObligationData
             memory data = createNativeOnlyBundleData();
 
@@ -256,13 +256,35 @@ contract TokenBundleEscrowObligationTest is Test {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                TokenBundleEscrowObligation.InsufficientPayment.selector,
+                TokenBundleEscrowObligation.IncorrectPayment.selector,
                 NATIVE_AMOUNT,
                 NATIVE_AMOUNT - 0.1 ether
             )
         );
 
         escrow.doObligation{value: NATIVE_AMOUNT - 0.1 ether}(
+            data,
+            uint64(block.timestamp + EXPIRATION_TIME)
+        );
+
+        vm.stopPrank();
+    }
+
+    function testIncorrectNativeTokenPaymentOverpay() public {
+        TokenBundleEscrowObligation.ObligationData
+            memory data = createNativeOnlyBundleData();
+
+        vm.startPrank(alice);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                TokenBundleEscrowObligation.IncorrectPayment.selector,
+                NATIVE_AMOUNT,
+                NATIVE_AMOUNT + 0.5 ether
+            )
+        );
+
+        escrow.doObligation{value: NATIVE_AMOUNT + 0.5 ether}(
             data,
             uint64(block.timestamp + EXPIRATION_TIME)
         );
