@@ -39,6 +39,12 @@ contract TokenBundlePaymentObligation is BaseObligation, IArbiter {
     error ArrayLengthMismatch();
     error InsufficientPayment(uint256 expected, uint256 received);
     error NativeTokenTransferFailed(address to, uint256 amount);
+    error ERC20TransferFailed(
+        address token,
+        address from,
+        address to,
+        uint256 amount
+    );
 
     constructor(
         IEAS _eas,
@@ -154,14 +160,38 @@ contract TokenBundlePaymentObligation is BaseObligation, IArbiter {
     function transferBundle(ObligationData memory data, address from) internal {
         // Transfer ERC20s
         for (uint i = 0; i < data.erc20Tokens.length; i++) {
-            require(
+            // Check balance before transfer
+            uint256 balanceBefore = IERC20(data.erc20Tokens[i]).balanceOf(
+                data.payee
+            );
+
+            bool success;
+            try
                 IERC20(data.erc20Tokens[i]).transferFrom(
                     from,
                     data.payee,
                     data.erc20Amounts[i]
-                ),
-                "ERC20 transfer failed"
+                )
+            returns (bool result) {
+                success = result;
+            } catch {
+                success = false;
+            }
+
+            // Check balance after transfer
+            uint256 balanceAfter = IERC20(data.erc20Tokens[i]).balanceOf(
+                data.payee
             );
+
+            // Verify the actual amount transferred
+            if (!success || balanceAfter < balanceBefore + data.erc20Amounts[i]) {
+                revert ERC20TransferFailed(
+                    data.erc20Tokens[i],
+                    from,
+                    data.payee,
+                    data.erc20Amounts[i]
+                );
+            }
         }
 
         // Transfer ERC721s

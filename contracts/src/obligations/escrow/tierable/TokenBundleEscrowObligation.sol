@@ -161,6 +161,11 @@ contract TokenBundleEscrowObligation is
     ) internal {
         // Transfer ERC20s
         for (uint i = 0; i < data.erc20Tokens.length; i++) {
+            // Check balance before transfer
+            uint256 balanceBefore = IERC20(data.erc20Tokens[i]).balanceOf(
+                address(this)
+            );
+
             bool success;
             try
                 IERC20(data.erc20Tokens[i]).transferFrom(
@@ -174,7 +179,13 @@ contract TokenBundleEscrowObligation is
                 success = false;
             }
 
-            if (!success) {
+            // Check balance after transfer
+            uint256 balanceAfter = IERC20(data.erc20Tokens[i]).balanceOf(
+                address(this)
+            );
+
+            // Verify the actual amount transferred
+            if (!success || balanceAfter < balanceBefore + data.erc20Amounts[i]) {
                 revert ERC20TransferFailed(
                     data.erc20Tokens[i],
                     from,
