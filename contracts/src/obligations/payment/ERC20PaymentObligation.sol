@@ -5,12 +5,14 @@ import {Attestation} from "@eas/Common.sol";
 import {IEAS, AttestationRequest, AttestationRequestData, RevocationRequest, RevocationRequestData} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {BaseObligation} from "../../BaseObligation.sol";
 import {IArbiter} from "../../IArbiter.sol";
 import {ArbiterUtils} from "../../ArbiterUtils.sol";
 
 contract ERC20PaymentObligation is BaseObligation, IArbiter {
     using ArbiterUtils for Attestation;
+    using SafeERC20 for IERC20;
 
     struct ObligationData {
         address token;
@@ -76,20 +78,24 @@ contract ERC20PaymentObligation is BaseObligation, IArbiter {
             (ObligationData)
         );
 
-        bool success;
-        try
-            IERC20(obligationData.token).transferFrom(
-                payer,
-                obligationData.payee,
-                obligationData.amount
-            )
-        returns (bool result) {
-            success = result;
-        } catch {
-            success = false;
-        }
+        // Check balance before transfer
+        uint256 balanceBefore = IERC20(obligationData.token).balanceOf(
+            obligationData.payee
+        );
 
-        if (!success) {
+        bool success = IERC20(obligationData.token).trySafeTransferFrom(
+            payer,
+            obligationData.payee,
+            obligationData.amount
+        );
+
+        // Check balance after transfer
+        uint256 balanceAfter = IERC20(obligationData.token).balanceOf(
+            obligationData.payee
+        );
+
+        // Verify the actual amount transferred
+        if (!success || balanceAfter < balanceBefore + obligationData.amount) {
             revert ERC20TransferFailed(
                 obligationData.token,
                 payer,

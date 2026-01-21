@@ -8,6 +8,7 @@ import {Attestation} from "@eas/Common.sol";
 import {IEAS} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
@@ -18,6 +19,7 @@ contract TokenBundleEscrowObligation is
     ERC1155Holder
 {
     using ArbiterUtils for Attestation;
+    using SafeERC20 for IERC20;
 
     struct ObligationData {
         address arbiter;
@@ -161,20 +163,24 @@ contract TokenBundleEscrowObligation is
     ) internal {
         // Transfer ERC20s
         for (uint i = 0; i < data.erc20Tokens.length; i++) {
-            bool success;
-            try
-                IERC20(data.erc20Tokens[i]).transferFrom(
-                    from,
-                    address(this),
-                    data.erc20Amounts[i]
-                )
-            returns (bool result) {
-                success = result;
-            } catch {
-                success = false;
-            }
+            // Check balance before transfer
+            uint256 balanceBefore = IERC20(data.erc20Tokens[i]).balanceOf(
+                address(this)
+            );
 
-            if (!success) {
+            bool success = IERC20(data.erc20Tokens[i]).trySafeTransferFrom(
+                from,
+                address(this),
+                data.erc20Amounts[i]
+            );
+
+            // Check balance after transfer
+            uint256 balanceAfter = IERC20(data.erc20Tokens[i]).balanceOf(
+                address(this)
+            );
+
+            // Verify the actual amount transferred
+            if (!success || balanceAfter < balanceBefore + data.erc20Amounts[i]) {
                 revert ERC20TransferFailed(
                     data.erc20Tokens[i],
                     from,
@@ -283,14 +289,10 @@ contract TokenBundleEscrowObligation is
     ) internal {
         // Transfer ERC20s - continue on failure
         for (uint i = 0; i < data.erc20Tokens.length; i++) {
-            bool success;
-            try
-                IERC20(data.erc20Tokens[i]).transfer(to, data.erc20Amounts[i])
-            returns (bool result) {
-                success = result;
-            } catch {
-                success = false;
-            }
+            bool success = IERC20(data.erc20Tokens[i]).trySafeTransfer(
+                to,
+                data.erc20Amounts[i]
+            );
 
             if (!success) {
                 emit ERC20TransferFailedOnRelease(

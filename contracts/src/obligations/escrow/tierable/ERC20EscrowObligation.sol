@@ -8,9 +8,11 @@ import {Attestation} from "@eas/Common.sol";
 import {IEAS} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract ERC20EscrowObligation is BaseEscrowObligationTierable, IArbiter {
     using ArbiterUtils for Attestation;
+    using SafeERC20 for IERC20;
 
     struct ObligationData {
         address arbiter;
@@ -54,18 +56,11 @@ contract ERC20EscrowObligation is BaseEscrowObligationTierable, IArbiter {
         // Check balance before transfer
         uint256 balanceBefore = IERC20(decoded.token).balanceOf(address(this));
 
-        bool success;
-        try
-            IERC20(decoded.token).transferFrom(
-                from,
-                address(this),
-                decoded.amount
-            )
-        returns (bool result) {
-            success = result;
-        } catch {
-            success = false;
-        }
+        bool success = IERC20(decoded.token).trySafeTransferFrom(
+            from,
+            address(this),
+            decoded.amount
+        );
 
         // Check balance after transfer
         uint256 balanceAfter = IERC20(decoded.token).balanceOf(address(this));
@@ -95,14 +90,7 @@ contract ERC20EscrowObligation is BaseEscrowObligationTierable, IArbiter {
         // Check balance before transfer
         uint256 balanceBefore = IERC20(decoded.token).balanceOf(to);
 
-        bool success;
-        try IERC20(decoded.token).transfer(to, decoded.amount) returns (
-            bool result
-        ) {
-            success = result;
-        } catch {
-            success = false;
-        }
+        bool success = IERC20(decoded.token).trySafeTransfer(to, decoded.amount);
 
         // Check balance after transfer
         uint256 balanceAfter = IERC20(decoded.token).balanceOf(to);
