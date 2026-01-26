@@ -56,6 +56,13 @@ contract MockERC1155 is ERC1155 {
     }
 }
 
+// Contract that rejects ETH and does not implement ERC1155Receiver
+contract RejectingRecipient {
+    receive() external payable {
+        revert("NO_ETH");
+    }
+}
+
 // Mock Arbiter contract
 contract MockArbiter {
     mapping(bytes32 => bool) public approvedFulfillments;
@@ -773,5 +780,297 @@ contract TokenBundleEscrowObligationTest is Test {
             multiToken.balanceOf(address(escrow), MULTI_TOKEN_ID_2),
             MULTI_TOKEN_AMOUNT_2
         );
+    }
+
+    // Test that collectEscrow reverts when native token transfer fails
+    function testCollectEscrowRevertsOnNativeTransferFailure() public {
+        // Create a bundle with native tokens
+        TokenBundleEscrowObligation.ObligationData
+            memory data = createNativeOnlyBundleData();
+
+        vm.startPrank(alice);
+        bytes32 escrowId = escrow.doObligation{value: NATIVE_AMOUNT}(
+            data,
+            uint64(block.timestamp + EXPIRATION_TIME)
+        );
+        vm.stopPrank();
+
+        // Create a rejecting recipient
+        RejectingRecipient badRecipient = new RejectingRecipient();
+
+        // Create and approve fulfillment
+        bytes32 fulfillmentId = bytes32(uint256(2));
+        arbiter.approveFulfillment(fulfillmentId);
+
+        // Mock the fulfillment attestation with badRecipient as the recipient
+        Attestation memory fulfillmentAttestation = Attestation({
+            uid: fulfillmentId,
+            schema: bytes32(0),
+            time: uint64(block.timestamp),
+            expirationTime: 0,
+            revocationTime: 0,
+            refUID: escrowId,
+            recipient: address(badRecipient),
+            attester: address(badRecipient),
+            revocable: true,
+            data: ""
+        });
+
+        // Mock arbiter check
+        vm.mockCall(
+            address(arbiter),
+            abi.encodeWithSelector(MockArbiter.checkObligation.selector),
+            abi.encode(true)
+        );
+
+        // Mock EAS getAttestation for fulfillment
+        vm.mockCall(
+            address(eas),
+            abi.encodeWithSelector(IEAS.getAttestation.selector, fulfillmentId),
+            abi.encode(fulfillmentAttestation)
+        );
+
+        // Mock EAS getAttestation for escrow
+        Attestation memory escrowAttestation = Attestation({
+            uid: escrowId,
+            schema: escrow.ATTESTATION_SCHEMA(),
+            time: uint64(block.timestamp),
+            expirationTime: uint64(block.timestamp + EXPIRATION_TIME),
+            revocationTime: 0,
+            refUID: bytes32(0),
+            recipient: alice,
+            attester: address(escrow),
+            revocable: true,
+            data: abi.encode(data)
+        });
+
+        vm.mockCall(
+            address(eas),
+            abi.encodeWithSelector(IEAS.getAttestation.selector, escrowId),
+            abi.encode(escrowAttestation)
+        );
+
+        // collectEscrow should revert because native token transfer fails
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                TokenBundleEscrowObligation.NativeTokenTransferFailed.selector,
+                address(badRecipient),
+                NATIVE_AMOUNT
+            )
+        );
+        escrow.collectEscrow(escrowId, fulfillmentId);
+
+        // Verify native tokens are still in escrow (not stuck)
+        assertEq(address(escrow).balance, NATIVE_AMOUNT);
+    }
+
+    // Test that unsafePartiallyCollectEscrow continues on native transfer failure
+    function testUnsafePartiallyCollectEscrowContinuesOnFailure() public {
+        // Create a bundle with native tokens
+        TokenBundleEscrowObligation.ObligationData
+            memory data = createNativeOnlyBundleData();
+
+        vm.startPrank(alice);
+        bytes32 escrowId = escrow.doObligation{value: NATIVE_AMOUNT}(
+            data,
+            uint64(block.timestamp + EXPIRATION_TIME)
+        );
+        vm.stopPrank();
+
+        // Create a rejecting recipient
+        RejectingRecipient badRecipient = new RejectingRecipient();
+
+        // Create and approve fulfillment
+        bytes32 fulfillmentId = bytes32(uint256(2));
+        arbiter.approveFulfillment(fulfillmentId);
+
+        // Mock the fulfillment attestation with badRecipient as the recipient
+        Attestation memory fulfillmentAttestation = Attestation({
+            uid: fulfillmentId,
+            schema: bytes32(0),
+            time: uint64(block.timestamp),
+            expirationTime: 0,
+            revocationTime: 0,
+            refUID: escrowId,
+            recipient: address(badRecipient),
+            attester: address(badRecipient),
+            revocable: true,
+            data: ""
+        });
+
+        // Mock arbiter check
+        vm.mockCall(
+            address(arbiter),
+            abi.encodeWithSelector(MockArbiter.checkObligation.selector),
+            abi.encode(true)
+        );
+
+        // Mock EAS getAttestation for fulfillment
+        vm.mockCall(
+            address(eas),
+            abi.encodeWithSelector(IEAS.getAttestation.selector, fulfillmentId),
+            abi.encode(fulfillmentAttestation)
+        );
+
+        // Mock EAS getAttestation for escrow
+        Attestation memory escrowAttestation = Attestation({
+            uid: escrowId,
+            schema: escrow.ATTESTATION_SCHEMA(),
+            time: uint64(block.timestamp),
+            expirationTime: uint64(block.timestamp + EXPIRATION_TIME),
+            revocationTime: 0,
+            refUID: bytes32(0),
+            recipient: alice,
+            attester: address(escrow),
+            revocable: true,
+            data: abi.encode(data)
+        });
+
+        vm.mockCall(
+            address(eas),
+            abi.encodeWithSelector(IEAS.getAttestation.selector, escrowId),
+            abi.encode(escrowAttestation)
+        );
+
+        // unsafePartiallyCollectEscrow should succeed (emitting events for failures)
+        vm.expectEmit(true, false, false, true);
+        emit TokenBundleEscrowObligation.NativeTokenTransferFailedOnRelease(
+            address(badRecipient),
+            NATIVE_AMOUNT
+        );
+
+        bool success = escrow.unsafePartiallyCollectEscrow(escrowId, fulfillmentId);
+        assertTrue(success);
+
+        // Native tokens are now stuck in escrow (this is the expected "unsafe" behavior)
+        assertEq(address(escrow).balance, NATIVE_AMOUNT);
+    }
+
+    // Test that reclaimExpired reverts when native token transfer fails
+    function testReclaimExpiredRevertsOnNativeTransferFailure() public {
+        // Use a rejecting recipient as the escrow recipient
+        RejectingRecipient badRecipient = new RejectingRecipient();
+
+        // Create a bundle with native tokens
+        TokenBundleEscrowObligation.ObligationData memory data;
+        data.arbiter = address(arbiter);
+        data.demand = abi.encode("test demand");
+        data.nativeAmount = NATIVE_AMOUNT;
+        data.erc20Tokens = new address[](0);
+        data.erc20Amounts = new uint256[](0);
+        data.erc721Tokens = new address[](0);
+        data.erc721TokenIds = new uint256[](0);
+        data.erc1155Tokens = new address[](0);
+        data.erc1155TokenIds = new uint256[](0);
+        data.erc1155Amounts = new uint256[](0);
+
+        vm.deal(alice, 10 ether);
+        vm.startPrank(alice);
+        bytes32 escrowId = escrow.doObligationFor{value: NATIVE_AMOUNT}(
+            data,
+            uint64(block.timestamp + EXPIRATION_TIME),
+            address(badRecipient)
+        );
+        vm.stopPrank();
+
+        // Mock EAS getAttestation for escrow (with badRecipient as recipient)
+        Attestation memory escrowAttestation = Attestation({
+            uid: escrowId,
+            schema: escrow.ATTESTATION_SCHEMA(),
+            time: uint64(block.timestamp),
+            expirationTime: uint64(block.timestamp + EXPIRATION_TIME),
+            revocationTime: 0,
+            refUID: bytes32(0),
+            recipient: address(badRecipient),
+            attester: address(escrow),
+            revocable: true,
+            data: abi.encode(data)
+        });
+
+        vm.mockCall(
+            address(eas),
+            abi.encodeWithSelector(IEAS.getAttestation.selector, escrowId),
+            abi.encode(escrowAttestation)
+        );
+
+        // Move time past expiration
+        vm.warp(block.timestamp + EXPIRATION_TIME + 1);
+
+        // reclaimExpired should revert because native token transfer fails
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                TokenBundleEscrowObligation.NativeTokenTransferFailed.selector,
+                address(badRecipient),
+                NATIVE_AMOUNT
+            )
+        );
+        escrow.reclaimExpired(escrowId);
+
+        // Verify native tokens are still in escrow (not stuck)
+        assertEq(address(escrow).balance, NATIVE_AMOUNT);
+    }
+
+    // Test that unsafePartiallyReclaimExpired continues on native transfer failure
+    function testUnsafePartiallyReclaimExpiredContinuesOnFailure() public {
+        // Use a rejecting recipient as the escrow recipient
+        RejectingRecipient badRecipient = new RejectingRecipient();
+
+        // Create a bundle with native tokens
+        TokenBundleEscrowObligation.ObligationData memory data;
+        data.arbiter = address(arbiter);
+        data.demand = abi.encode("test demand");
+        data.nativeAmount = NATIVE_AMOUNT;
+        data.erc20Tokens = new address[](0);
+        data.erc20Amounts = new uint256[](0);
+        data.erc721Tokens = new address[](0);
+        data.erc721TokenIds = new uint256[](0);
+        data.erc1155Tokens = new address[](0);
+        data.erc1155TokenIds = new uint256[](0);
+        data.erc1155Amounts = new uint256[](0);
+
+        vm.deal(alice, 10 ether);
+        vm.startPrank(alice);
+        bytes32 escrowId = escrow.doObligationFor{value: NATIVE_AMOUNT}(
+            data,
+            uint64(block.timestamp + EXPIRATION_TIME),
+            address(badRecipient)
+        );
+        vm.stopPrank();
+
+        // Mock EAS getAttestation for escrow (with badRecipient as recipient)
+        Attestation memory escrowAttestation = Attestation({
+            uid: escrowId,
+            schema: escrow.ATTESTATION_SCHEMA(),
+            time: uint64(block.timestamp),
+            expirationTime: uint64(block.timestamp + EXPIRATION_TIME),
+            revocationTime: 0,
+            refUID: bytes32(0),
+            recipient: address(badRecipient),
+            attester: address(escrow),
+            revocable: true,
+            data: abi.encode(data)
+        });
+
+        vm.mockCall(
+            address(eas),
+            abi.encodeWithSelector(IEAS.getAttestation.selector, escrowId),
+            abi.encode(escrowAttestation)
+        );
+
+        // Move time past expiration
+        vm.warp(block.timestamp + EXPIRATION_TIME + 1);
+
+        // unsafePartiallyReclaimExpired should succeed (emitting events for failures)
+        vm.expectEmit(true, false, false, true);
+        emit TokenBundleEscrowObligation.NativeTokenTransferFailedOnRelease(
+            address(badRecipient),
+            NATIVE_AMOUNT
+        );
+
+        bool success = escrow.unsafePartiallyReclaimExpired(escrowId);
+        assertTrue(success);
+
+        // Native tokens are now stuck in escrow (this is the expected "unsafe" behavior)
+        assertEq(address(escrow).balance, NATIVE_AMOUNT);
     }
 }
