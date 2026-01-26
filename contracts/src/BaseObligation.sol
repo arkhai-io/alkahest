@@ -5,8 +5,9 @@ import {BaseAttester} from "./BaseAttester.sol";
 import {IEAS} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {Attestation} from "@eas/Common.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-abstract contract BaseObligation is BaseAttester {
+abstract contract BaseObligation is BaseAttester, ReentrancyGuard {
     constructor(
         IEAS _eas,
         ISchemaRegistry _schemaRegistry,
@@ -33,7 +34,7 @@ abstract contract BaseObligation is BaseAttester {
         uint64 expirationTime,
         address recipient,
         bytes32 refUID
-    ) internal virtual returns (bytes32 uid_) {
+    ) internal virtual nonReentrant returns (bytes32 uid_) {
         _beforeAttest(data, msg.sender, recipient);
         uid_ = _attest(data, recipient, expirationTime, refUID);
         _afterAttest(uid_, data, msg.sender, recipient);

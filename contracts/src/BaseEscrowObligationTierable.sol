@@ -58,7 +58,7 @@ abstract contract BaseEscrowObligationTierable is BaseObligation {
     function collectEscrowRaw(
         bytes32 _escrow,
         bytes32 _fulfillment
-    ) public virtual returns (bytes memory) {
+    ) public virtual nonReentrant returns (bytes memory) {
         Attestation memory escrow;
         Attestation memory fulfillment;
 
@@ -120,7 +120,7 @@ abstract contract BaseEscrowObligationTierable is BaseObligation {
         return result;
     }
 
-    function reclaimExpired(bytes32 uid) public virtual returns (bool) {
+    function reclaimExpired(bytes32 uid) public virtual nonReentrant returns (bool) {
         Attestation memory attestation;
 
         // Get attestation with error handling
