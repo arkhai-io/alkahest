@@ -580,7 +580,7 @@ contract TokenBundleEscrowObligation is
     function unsafePartiallyCollectEscrow(
         bytes32 _escrow,
         bytes32 _fulfillment
-    ) external returns (bool) {
+    ) external nonReentrant returns (bool) {
         Attestation memory escrow;
         Attestation memory fulfillment;
 
@@ -642,7 +642,7 @@ contract TokenBundleEscrowObligation is
     /// @dev Use only as a last resort when some tokens in the bundle cannot be reclaimed.
     /// Failed transfers emit events but do not revert. The escrow will be marked as reclaimed
     /// even if some tokens remain stuck. This can result in permanent loss of stuck tokens.
-    function unsafePartiallyReclaimExpired(bytes32 uid) external returns (bool) {
+    function unsafePartiallyReclaimExpired(bytes32 uid) external nonReentrant returns (bool) {
         Attestation memory attestation;
 
         // Get attestation with error handling
