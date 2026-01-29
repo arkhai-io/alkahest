@@ -45,8 +45,7 @@ contract StringCapitalizerTest is Test {
             .DemandData({query: "hello world"});
 
         // Create an obligation with the capitalized result
-        StringObligation.ObligationData memory obligationData = StringObligation
-            .ObligationData({item: "HELLO WORLD"});
+        StringObligation.ObligationData memory obligationData = StringObligation.ObligationData({item: "HELLO WORLD", schema: bytes32(0)});
 
         // Create the attestation as bob
         vm.prank(bob);
@@ -74,8 +73,7 @@ contract StringCapitalizerTest is Test {
             .DemandData({query: "hello world"});
 
         // Create an obligation with incorrectly capitalized result
-        StringObligation.ObligationData memory obligationData = StringObligation
-            .ObligationData({item: "Hello World"}); // Only first letters capitalized
+        StringObligation.ObligationData memory obligationData = StringObligation.ObligationData({item: "Hello World", schema: bytes32(0)}); // Only first letters capitalized
 
         // Create the attestation as bob
         vm.prank(bob);
@@ -103,8 +101,7 @@ contract StringCapitalizerTest is Test {
             .DemandData({query: "HeLLo WoRLd 123!"});
 
         // Create an obligation with correctly capitalized result
-        StringObligation.ObligationData memory obligationData = StringObligation
-            .ObligationData({item: "HELLO WORLD 123!"}); // All letters uppercase, others unchanged
+        StringObligation.ObligationData memory obligationData = StringObligation.ObligationData({item: "HELLO WORLD 123!", schema: bytes32(0)}); // All letters uppercase, others unchanged
 
         // Create the attestation as bob
         vm.prank(bob);
@@ -135,8 +132,7 @@ contract StringCapitalizerTest is Test {
             .DemandData({query: "test123@email.com"});
 
         // Create an obligation with correctly capitalized result
-        StringObligation.ObligationData memory obligationData = StringObligation
-            .ObligationData({item: "TEST123@EMAIL.COM"});
+        StringObligation.ObligationData memory obligationData = StringObligation.ObligationData({item: "TEST123@EMAIL.COM", schema: bytes32(0)});
 
         // Create the attestation as bob
         vm.prank(bob);
@@ -167,8 +163,7 @@ contract StringCapitalizerTest is Test {
             .DemandData({query: "hello"});
 
         // Create an obligation with different length string
-        StringObligation.ObligationData memory obligationData = StringObligation
-            .ObligationData({item: "HELLO WORLD"}); // Different length
+        StringObligation.ObligationData memory obligationData = StringObligation.ObligationData({item: "HELLO WORLD", schema: bytes32(0)}); // Different length
 
         // Create the attestation as bob
         vm.prank(bob);
@@ -194,7 +189,7 @@ contract StringCapitalizerTest is Test {
         // First create an escrow attestation to reference
         vm.prank(alice);
         bytes32 escrowUID = stringObligation.doObligation(
-            StringObligation.ObligationData({item: "request"}),
+            StringObligation.ObligationData({item: "request", schema: bytes32(0)}),
             bytes32(0)
         );
 
@@ -203,8 +198,7 @@ contract StringCapitalizerTest is Test {
             .DemandData({query: "hello"});
 
         // Create an obligation with correct capitalization and reference
-        StringObligation.ObligationData memory obligationData = StringObligation
-            .ObligationData({item: "HELLO"});
+        StringObligation.ObligationData memory obligationData = StringObligation.ObligationData({item: "HELLO", schema: bytes32(0)});
 
         // Create the attestation with reference UID
         vm.prank(bob);
@@ -255,7 +249,7 @@ contract StringCapitalizerTest is Test {
             recipient: bob,
             attester: alice,
             revocable: true,
-            data: abi.encode(StringObligation.ObligationData({item: "HELLO"}))
+            data: abi.encode(StringObligation.ObligationData({item: "HELLO", schema: bytes32(0)}))
         });
 
         // The arbiter should revert when checking revoked attestations
@@ -287,7 +281,7 @@ contract StringCapitalizerTest is Test {
             recipient: bob,
             attester: alice,
             revocable: true,
-            data: abi.encode(StringObligation.ObligationData({item: "HELLO"}))
+            data: abi.encode(StringObligation.ObligationData({item: "HELLO", schema: bytes32(0)}))
         });
 
         // The arbiter should revert when checking expired attestations
@@ -312,8 +306,7 @@ contract StringCapitalizerTest is Test {
         StringCapitalizer.DemandData memory demand = StringCapitalizer
             .DemandData({query: input});
 
-        StringObligation.ObligationData memory obligationData = StringObligation
-            .ObligationData({item: output});
+        StringObligation.ObligationData memory obligationData = StringObligation.ObligationData({item: output, schema: bytes32(0)});
 
         // Create the attestation
         vm.prank(bob);
