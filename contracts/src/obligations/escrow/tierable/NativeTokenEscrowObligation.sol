@@ -17,7 +17,7 @@ contract NativeTokenEscrowObligation is BaseEscrowObligationTierable, IArbiter {
         uint256 amount;
     }
 
-    error InsufficientPayment(uint256 expected, uint256 received);
+    error IncorrectPayment(uint256 expected, uint256 received);
     error NativeTokenTransferFailed(address to, uint256 amount);
 
     constructor(
@@ -47,8 +47,8 @@ contract NativeTokenEscrowObligation is BaseEscrowObligationTierable, IArbiter {
     ) internal override {
         ObligationData memory decoded = abi.decode(data, (ObligationData));
 
-        if (msg.value < decoded.amount) {
-            revert InsufficientPayment(decoded.amount, msg.value);
+        if (msg.value != decoded.amount) {
+            revert IncorrectPayment(decoded.amount, msg.value);
         }
     }
 
