@@ -26,7 +26,7 @@ contract NonexclusiveUnrevocableConfirmationArbiterTest is Test {
 
         // Register a test schema
         testSchema = schemaRegistry.register(
-            "string item",
+            "string item, bytes32 schema",
             ISchemaResolver(address(0)),
             true
         );

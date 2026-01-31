@@ -93,7 +93,7 @@ contract AttestationEscrowObligationTierableTest is Test {
         StringObligation stringObligation = new StringObligation(eas, schemaRegistry);
         vm.prank(attester);
         bytes32 fulfillmentUid = stringObligation.doObligation(
-            StringObligation.ObligationData({item: "fulfillment"}),
+            StringObligation.ObligationData({item: "fulfillment", schema: bytes32(0)}),
             bytes32(0)
         );
 

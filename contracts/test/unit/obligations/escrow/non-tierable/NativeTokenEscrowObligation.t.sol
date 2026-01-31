@@ -147,7 +147,7 @@ contract NativeTokenEscrowObligationTest is Test {
         // Create fulfillment (string obligation)
         vm.prank(seller);
         bytes32 fulfillmentUid = stringObligation.doObligation(
-            StringObligation.ObligationData({item: "hello"}),
+            StringObligation.ObligationData({item: "hello", schema: bytes32(0)}),
             escrowUid
         );
 
@@ -192,7 +192,7 @@ contract NativeTokenEscrowObligationTest is Test {
         // Create wrong fulfillment
         vm.prank(seller);
         bytes32 fulfillmentUid = stringObligation.doObligation(
-            StringObligation.ObligationData({item: "goodbye"}),
+            StringObligation.ObligationData({item: "goodbye", schema: bytes32(0)}),
             escrowUid
         );
 
@@ -452,7 +452,7 @@ contract NativeTokenEscrowObligationTest is Test {
         // Create valid fulfillment
         vm.prank(seller);
         bytes32 fulfillmentUid = stringObligation.doObligation(
-            StringObligation.ObligationData({item: "hello"}),
+            StringObligation.ObligationData({item: "hello", schema: bytes32(0)}),
             wrongSchemaEscrowUid
         );
 
@@ -507,7 +507,7 @@ contract NativeTokenEscrowObligationTest is Test {
         // Create fulfillment from reverting receiver
         vm.prank(address(revertingReceiver));
         bytes32 fulfillmentUid = stringObligation.doObligation(
-            StringObligation.ObligationData({item: "hello"}),
+            StringObligation.ObligationData({item: "hello", schema: bytes32(0)}),
             escrowUid
         );
 

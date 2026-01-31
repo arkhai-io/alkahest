@@ -228,8 +228,7 @@ contract AttestationEscrowObligation2Test is Test {
 
         // Create a fulfillment attestation from the attester using StringObligation
         vm.prank(attester);
-        StringObligation.ObligationData memory stringData = StringObligation
-            .ObligationData({item: "fulfillment data"});
+        StringObligation.ObligationData memory stringData = StringObligation.ObligationData({item: "fulfillment data", schema: bytes32(0)});
 
         bytes32 fulfillmentUid = stringObligation.doObligation(
             stringData,
@@ -295,8 +294,7 @@ contract AttestationEscrowObligation2Test is Test {
 
         // Create a fulfillment attestation from the attester using StringObligation
         vm.prank(attester);
-        StringObligation.ObligationData memory stringData = StringObligation
-            .ObligationData({item: "fulfillment data"});
+        StringObligation.ObligationData memory stringData = StringObligation.ObligationData({item: "fulfillment data", schema: bytes32(0)});
 
         bytes32 fulfillmentUid = stringObligation.doObligation(
             stringData,
@@ -417,8 +415,7 @@ contract AttestationEscrowObligation2Test is Test {
         // Create a fulfillment attestation using StringObligation
         // Note: fulfillment doesn't reference anything since the escrow doesn't exist yet
         vm.prank(attester);
-        StringObligation.ObligationData memory stringData = StringObligation
-            .ObligationData({item: "fulfillment data"});
+        StringObligation.ObligationData memory stringData = StringObligation.ObligationData({item: "fulfillment data", schema: bytes32(0)});
 
         bytes32 fulfillmentUid = stringObligation.doObligation(
             stringData,

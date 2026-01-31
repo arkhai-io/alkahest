@@ -9,12 +9,13 @@ import {BaseObligation} from "../BaseObligation.sol";
 contract StringObligation is BaseObligation {
     struct ObligationData {
         string item;
+        bytes32 schema; // arbitrary tag describing the payload format
     }
 
     constructor(
         IEAS _eas,
         ISchemaRegistry _schemaRegistry
-    ) BaseObligation(_eas, _schemaRegistry, "string item", true) {}
+    ) BaseObligation(_eas, _schemaRegistry, "string item, bytes32 schema", true) {}
 
     function doObligation(
         ObligationData calldata data,

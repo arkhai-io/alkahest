@@ -72,7 +72,7 @@ contract MajorityVoteArbiterTest is Test {
         // Register a test schema
         vm.prank(attester);
         testSchema = schemaRegistry.register(
-            "string item",
+            "string item, bytes32 schema",
             ISchemaResolver(address(0)),
             true // revocable
         );

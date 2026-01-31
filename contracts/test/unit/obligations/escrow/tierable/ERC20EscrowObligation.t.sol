@@ -141,7 +141,7 @@ contract ERC20EscrowObligationTierableTest is Test {
 
         vm.prank(seller);
         bytes32 fulfillmentUid = stringObligation.doObligation(
-            StringObligation.ObligationData({item: "fulfillment data"}),
+            StringObligation.ObligationData({item: "fulfillment data", schema: bytes32(0)}),
             bytes32(0) // Note: NOT referencing paymentUid - this is the key difference for tierable
         );
 
@@ -206,7 +206,7 @@ contract ERC20EscrowObligationTierableTest is Test {
 
         vm.prank(seller);
         bytes32 fulfillmentUid = stringObligation.doObligation(
-            StringObligation.ObligationData({item: "fulfillment data"}),
+            StringObligation.ObligationData({item: "fulfillment data", schema: bytes32(0)}),
             bytes32(0) // Not referencing any specific payment
         );
 
@@ -264,7 +264,7 @@ contract ERC20EscrowObligationTierableTest is Test {
 
         vm.prank(seller);
         bytes32 fulfillmentUid = stringObligation.doObligation(
-            StringObligation.ObligationData({item: "fulfillment data"}),
+            StringObligation.ObligationData({item: "fulfillment data", schema: bytes32(0)}),
             bytes32(0)
         );
 

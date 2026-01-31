@@ -117,7 +117,7 @@ contract AttestationEscrowObligationTest is Test {
 
         vm.prank(bob);
         bytes32 fulfillmentId = stringObligation.doObligation(
-            StringObligation.ObligationData({item: "Test demand"}),
+            StringObligation.ObligationData({item: "Test demand", schema: bytes32(0)}),
             escrowId  // Reference the escrow for non-tierable pattern
         );
 

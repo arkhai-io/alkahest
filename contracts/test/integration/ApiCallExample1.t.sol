@@ -133,8 +133,7 @@ contract ApiCallExample1Test is Test {
 
         // Step 2: Bob submits API result using StringObligation
         vm.startPrank(bob);
-        StringObligation.ObligationData memory resultData = StringObligation
-            .ObligationData({item: API_RESULT});
+        StringObligation.ObligationData memory resultData = StringObligation.ObligationData({item: API_RESULT, schema: bytes32(0)});
 
         bytes32 fulfillmentUid = stringObligation.doObligation(
             resultData,
@@ -204,7 +203,7 @@ contract ApiCallExample1Test is Test {
         // Bob submits result
         vm.prank(bob);
         bytes32 fulfillmentUid = stringObligation.doObligation(
-            StringObligation.ObligationData({item: API_RESULT}),
+            StringObligation.ObligationData({item: API_RESULT, schema: bytes32(0)}),
             escrowUid
         );
 
@@ -260,7 +259,7 @@ contract ApiCallExample1Test is Test {
         // Bob submits wrong result
         vm.prank(bob);
         bytes32 fulfillmentUid = stringObligation.doObligation(
-            StringObligation.ObligationData({item: "wrong result"}),
+            StringObligation.ObligationData({item: "wrong result", schema: bytes32(0)}),
             escrowUid
         );
 

@@ -108,8 +108,7 @@ contract ApiCallExample1 {
         bytes32 escrowUid
     ) external returns (bytes32 fulfillmentUid) {
         // Submit the result via StringObligation with reference to the escrow
-        StringObligation.ObligationData memory resultData = StringObligation
-            .ObligationData({item: apiResult});
+        StringObligation.ObligationData memory resultData = StringObligation.ObligationData({item: apiResult, schema: bytes32(0)});
 
         fulfillmentUid = stringObligation.doObligation(resultData, escrowUid);
 

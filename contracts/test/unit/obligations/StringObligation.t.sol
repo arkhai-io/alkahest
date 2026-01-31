@@ -30,13 +30,12 @@ contract StringObligationTest is Test {
         // Verify schema details
         SchemaRecord memory schema = stringObligation.getSchema();
         assertEq(schema.uid, schemaId, "Schema UID should match");
-        assertEq(schema.schema, "string item", "Schema string should match");
+        assertEq(schema.schema, "string item, bytes32 schema", "Schema string should match");
     }
 
     function testDoObligation() public {
         // Setup test data
-        StringObligation.ObligationData memory data = StringObligation
-            .ObligationData({item: "Test String Data"});
+        StringObligation.ObligationData memory data = StringObligation.ObligationData({item: "Test String Data", schema: bytes32(0)});
 
         // Make an obligation
         vm.prank(testUser);
