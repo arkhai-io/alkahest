@@ -48,7 +48,7 @@ contract CommitRevealObligationTest is Test {
         bytes32 escrowUid = _makeEscrow();
         CommitRevealObligation.ObligationData memory data = _obligationData();
 
-        bytes32 commitment = obligation.computeCommitment(claimer, data);
+        bytes32 commitment = obligation.computeCommitment(escrowUid, claimer, data);
 
         // Commit with bond
         vm.deal(claimer, BOND);
@@ -94,7 +94,7 @@ contract CommitRevealObligationTest is Test {
         bytes32 fulfillmentUid = obligation.doObligation(data, escrowUid);
         Attestation memory fulfillment = eas.getAttestation(fulfillmentUid);
 
-        bytes32 commitment = obligation.computeCommitment(claimer, data);
+        bytes32 commitment = obligation.computeCommitment(escrowUid, claimer, data);
         vm.expectRevert(
             abi.encodeWithSelector(
                 CommitRevealObligation.CommitmentMissing.selector,
@@ -109,7 +109,7 @@ contract CommitRevealObligationTest is Test {
         bytes32 escrowUid = _makeEscrow();
         CommitRevealObligation.ObligationData memory data = _obligationData();
 
-        bytes32 commitment = obligation.computeCommitment(claimer, data);
+        bytes32 commitment = obligation.computeCommitment(escrowUid, claimer, data);
 
         vm.deal(claimer, BOND);
         vm.prank(claimer);
@@ -133,7 +133,7 @@ contract CommitRevealObligationTest is Test {
     function testPoc_MultipleReclaimsSameCommitmentReverts() public {
         bytes32 escrowUid = _makeEscrow();
         CommitRevealObligation.ObligationData memory data = _obligationData();
-        bytes32 commitment = obligation.computeCommitment(claimer, data);
+        bytes32 commitment = obligation.computeCommitment(escrowUid, claimer, data);
 
         vm.deal(claimer, BOND);
         vm.prank(claimer);
@@ -173,8 +173,8 @@ contract CommitRevealObligationTest is Test {
             schema: bytes32("schema-tag")
         });
 
-        bytes32 commitmentOld = obligation.computeCommitment(claimer, dataOld);
-        bytes32 commitmentNew = obligation.computeCommitment(claimer, dataNew);
+        bytes32 commitmentOld = obligation.computeCommitment(escrowUid, claimer, dataOld);
+        bytes32 commitmentNew = obligation.computeCommitment(escrowUid, claimer, dataNew);
 
         vm.deal(claimer, 2 * BOND);
         vm.startPrank(claimer);

@@ -71,7 +71,7 @@ contract CommitRevealObligation is BaseObligation, IArbiter, ReentrancyGuard {
     // ---------------------------------------------------------------------
 
     /// @notice Records a commitment hash, locking the fixed bond.
-    /// @param commitment keccak256(abi.encode(claimer, keccak256(abi.encode(data)))).
+    /// @param commitment keccak256(abi.encode(refUID, claimer, keccak256(abi.encode(data)))).
     /// @dev msg.value must equal `bondAmount` and is held as a bond reclaimable after a valid reveal.
     function commit(bytes32 commitment) external payable {
         if (commitment == bytes32(0)) revert EmptyCommitment();
@@ -87,12 +87,12 @@ contract CommitRevealObligation is BaseObligation, IArbiter, ReentrancyGuard {
     }
 
     /// @notice Pure helper to compute the commitment expected by this contract.
-    function computeCommitment(address claimer, ObligationData calldata data)
+    function computeCommitment(bytes32 refUID, address claimer, ObligationData calldata data)
         external
         pure
         returns (bytes32)
     {
-        return keccak256(abi.encode(claimer, keccak256(abi.encode(data))));
+        return keccak256(abi.encode(refUID, claimer, keccak256(abi.encode(data))));
     }
 
     // ---------------------------------------------------------------------
@@ -110,7 +110,7 @@ contract CommitRevealObligation is BaseObligation, IArbiter, ReentrancyGuard {
 
         // Lookup the prior commitment for the fulfiller
         bytes32 revealedCommitment = keccak256(
-            abi.encode(obligation.recipient, keccak256(obligation.data))
+            abi.encode(obligation.refUID, obligation.recipient, keccak256(obligation.data))
         );
         CommitInfo memory info = commitments[revealedCommitment];
         if (info.committer == address(0)) {
@@ -136,7 +136,7 @@ contract CommitRevealObligation is BaseObligation, IArbiter, ReentrancyGuard {
 
         address claimer = obligation.recipient;
         bytes32 revealedCommitment = keccak256(
-            abi.encode(claimer, keccak256(obligation.data))
+            abi.encode(obligation.refUID, claimer, keccak256(obligation.data))
         );
         CommitInfo memory info = commitments[revealedCommitment];
         if (info.committer == address(0)) revert CommitmentMissing(revealedCommitment, claimer);
