@@ -23,25 +23,27 @@ contract CommitRevealObligation is BaseObligation, IArbiter, ReentrancyGuard {
         bytes32 schema; // arbitrary tag describing the payload format
     }
 
-    /// @dev Per-escrow commitment details for a fulfiller.
+    /// @dev Commitment details for a commitment hash.
     struct CommitInfo {
-        bytes32 commitment;
         uint64 commitBlock;
+        address committer;
     }
 
-    /// @notice commitments[escrowUid][claimer] => commit information.
-    mapping(bytes32 => mapping(address => CommitInfo)) public commitments;
-    /// @notice bondClaimed[obligationUid] => bond already returned.
-    mapping(bytes32 => bool) public bondClaimed;
+    /// @notice commitments[commitment] => commit information.
+    mapping(bytes32 => CommitInfo) public commitments;
+    /// @notice commitmentClaimed[commitment] => bond already returned.
+    mapping(bytes32 => bool) public commitmentClaimed;
 
-    event Committed(bytes32 indexed escrowUid, address indexed claimer, bytes32 commitment);
+    event Committed(bytes32 indexed commitment, address indexed claimer);
     event BondReclaimed(bytes32 indexed obligationUid, address indexed claimer, uint256 amount);
 
-    error CommitmentMissing(bytes32 escrowUid, address claimer);
-    error CommitmentTooRecent(bytes32 escrowUid, address claimer);
-    error CommitmentMismatch(bytes32 escrowUid, address claimer);
-    error BondAlreadyClaimed(bytes32 obligationUid);
-    error NoBondToReclaim(bytes32 escrowUid, address claimer);
+    error CommitmentMissing(bytes32 commitment, address claimer);
+    error CommitmentTooRecent(bytes32 commitment, address claimer);
+    error CommitmentAlreadyExists(bytes32 commitment);
+    error BondAlreadyClaimed(bytes32 commitment);
+    error BondTransferFailed(address claimer, uint256 amount);
+    error EmptyCommitment();
+    error IncorrectBondAmount(uint256 provided, uint256 required);
 
     /// @notice Fixed bond amount required for each commit.
     uint256 public immutable bondAmount;
@@ -68,29 +70,29 @@ contract CommitRevealObligation is BaseObligation, IArbiter, ReentrancyGuard {
     // Commit phase helpers
     // ---------------------------------------------------------------------
 
-    /// @notice Records a commitment for a given escrow UID and claimer, locking the fixed bond.
-    /// @param escrowUid UID of the escrow attestation this commitment targets.
-    /// @param commitment keccak256(abi.encode(escrowUid, claimer, keccak256(abi.encode(data)))).
+    /// @notice Records a commitment hash, locking the fixed bond.
+    /// @param commitment keccak256(abi.encode(claimer, keccak256(abi.encode(data)))).
     /// @dev msg.value must equal `bondAmount` and is held as a bond reclaimable after a valid reveal.
-    function commit(bytes32 escrowUid, bytes32 commitment) external payable {
-        require(commitment != bytes32(0), "empty commitment");
-        require(msg.value == bondAmount, "incorrect bond");
+    function commit(bytes32 commitment) external payable {
+        if (commitment == bytes32(0)) revert EmptyCommitment();
+        if (msg.value != bondAmount) revert IncorrectBondAmount(msg.value, bondAmount);
 
-        commitments[escrowUid][msg.sender] = CommitInfo({
-            commitment: commitment,
-            commitBlock: uint64(block.number)
-        });
+        if (commitments[commitment].committer != address(0)) {
+            revert CommitmentAlreadyExists(commitment);
+        }
 
-        emit Committed(escrowUid, msg.sender, commitment);
+        commitments[commitment] = CommitInfo({commitBlock: uint64(block.number), committer: msg.sender});
+
+        emit Committed(commitment, msg.sender);
     }
 
     /// @notice Pure helper to compute the commitment expected by this contract.
-    function computeCommitment(bytes32 escrowUid, address claimer, ObligationData calldata data)
+    function computeCommitment(address claimer, ObligationData calldata data)
         external
         pure
         returns (bytes32)
     {
-        return keccak256(abi.encode(escrowUid, claimer, keccak256(abi.encode(data))));
+        return keccak256(abi.encode(claimer, keccak256(abi.encode(data))));
     }
 
     // ---------------------------------------------------------------------
@@ -101,29 +103,23 @@ contract CommitRevealObligation is BaseObligation, IArbiter, ReentrancyGuard {
     function checkObligation(
         Attestation memory obligation,
         bytes memory /* demand (unused) */,
-        bytes32 fulfilling
+        bytes32 /* fulfilling (unused) */
     ) public view override returns (bool) {
         // Basic attestation sanity checks (schema + expiry + revocation)
         obligation._checkIntrinsic(ATTESTATION_SCHEMA);
 
-        // Lookup the prior commitment made by the fulfiller for this escrow
-        CommitInfo memory info = commitments[fulfilling][obligation.recipient];
-        if (info.commitment == bytes32(0)) {
-            revert CommitmentMissing(fulfilling, obligation.recipient);
-        }
-
-        // Enforce commit happened in an earlier block to block same-block frontruns
-        if (info.commitBlock >= block.number) {
-            revert CommitmentTooRecent(fulfilling, obligation.recipient);
-        }
-
-        // Recompute commitment from the revealed data and compare
+        // Lookup the prior commitment for the fulfiller
         bytes32 revealedCommitment = keccak256(
-            abi.encode(fulfilling, obligation.recipient, keccak256(obligation.data))
+            abi.encode(obligation.recipient, keccak256(obligation.data))
         );
+        CommitInfo memory info = commitments[revealedCommitment];
+        if (info.committer == address(0)) {
+            revert CommitmentMissing(revealedCommitment, obligation.recipient);
+        }
 
-        if (revealedCommitment != info.commitment) {
-            revert CommitmentMismatch(fulfilling, obligation.recipient);
+        // Enforce commitment age to block same-block frontruns
+        if (info.commitBlock >= block.number) {
+            revert CommitmentTooRecent(revealedCommitment, obligation.recipient);
         }
 
         return true;
@@ -139,25 +135,22 @@ contract CommitRevealObligation is BaseObligation, IArbiter, ReentrancyGuard {
         Attestation memory obligation = _getAttestation(obligationUid);
 
         address claimer = obligation.recipient;
-        if (bondClaimed[obligationUid]) revert BondAlreadyClaimed(obligationUid);
-
-        bytes32 escrowUid = obligation.refUID;
-        CommitInfo memory info = commitments[escrowUid][claimer];
-        if (info.commitment == bytes32(0)) revert CommitmentMissing(escrowUid, claimer);
-
-        // Ensure commitment matches the revealed data
         bytes32 revealedCommitment = keccak256(
-            abi.encode(escrowUid, claimer, keccak256(obligation.data))
+            abi.encode(claimer, keccak256(obligation.data))
         );
-        if (revealedCommitment != info.commitment) revert CommitmentMismatch(escrowUid, claimer);
+        CommitInfo memory info = commitments[revealedCommitment];
+        if (info.committer == address(0)) revert CommitmentMissing(revealedCommitment, claimer);
+        if (info.commitBlock >= block.number) {
+            revert CommitmentTooRecent(revealedCommitment, claimer);
+        }
+        if (commitmentClaimed[revealedCommitment]) revert BondAlreadyClaimed(revealedCommitment);
 
         amount = bondAmount;
-        if (amount == 0) revert NoBondToReclaim(escrowUid, claimer);
 
-        bondClaimed[obligationUid] = true;
+        commitmentClaimed[revealedCommitment] = true;
 
         (bool success, ) = claimer.call{value: amount}("");
-        require(success, "bond transfer failed");
+        if (!success) revert BondTransferFailed(claimer, amount);
 
         emit BondReclaimed(obligationUid, claimer, amount);
     }

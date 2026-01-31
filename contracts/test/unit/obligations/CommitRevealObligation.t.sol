@@ -48,12 +48,12 @@ contract CommitRevealObligationTest is Test {
         bytes32 escrowUid = _makeEscrow();
         CommitRevealObligation.ObligationData memory data = _obligationData();
 
-        bytes32 commitment = obligation.computeCommitment(escrowUid, claimer, data);
+        bytes32 commitment = obligation.computeCommitment(claimer, data);
 
         // Commit with bond
         vm.deal(claimer, BOND);
         vm.prank(claimer);
-        obligation.commit{value: BOND}(escrowUid, commitment);
+        obligation.commit{value: BOND}(commitment);
 
         // Ensure reveal occurs in a later block
         vm.roll(block.number + 1);
@@ -80,7 +80,7 @@ contract CommitRevealObligationTest is Test {
         vm.expectRevert(
             abi.encodeWithSelector(
                 CommitRevealObligation.BondAlreadyClaimed.selector,
-                fulfillmentUid
+                commitment
             )
         );
         obligation.reclaimBond(fulfillmentUid);
@@ -94,10 +94,11 @@ contract CommitRevealObligationTest is Test {
         bytes32 fulfillmentUid = obligation.doObligation(data, escrowUid);
         Attestation memory fulfillment = eas.getAttestation(fulfillmentUid);
 
+        bytes32 commitment = obligation.computeCommitment(claimer, data);
         vm.expectRevert(
             abi.encodeWithSelector(
                 CommitRevealObligation.CommitmentMissing.selector,
-                escrowUid,
+                commitment,
                 claimer
             )
         );
@@ -108,11 +109,11 @@ contract CommitRevealObligationTest is Test {
         bytes32 escrowUid = _makeEscrow();
         CommitRevealObligation.ObligationData memory data = _obligationData();
 
-        bytes32 commitment = obligation.computeCommitment(escrowUid, claimer, data);
+        bytes32 commitment = obligation.computeCommitment(claimer, data);
 
         vm.deal(claimer, BOND);
         vm.prank(claimer);
-        obligation.commit{value: BOND}(escrowUid, commitment);
+        obligation.commit{value: BOND}(commitment);
 
         // Reveal in the same block (no vm.roll)
         vm.prank(claimer);
@@ -122,10 +123,76 @@ contract CommitRevealObligationTest is Test {
         vm.expectRevert(
             abi.encodeWithSelector(
                 CommitRevealObligation.CommitmentTooRecent.selector,
-                escrowUid,
+                commitment,
                 claimer
             )
         );
         obligation.checkObligation(fulfillment, "", escrowUid);
+    }
+
+    function testPoc_MultipleReclaimsSameCommitmentReverts() public {
+        bytes32 escrowUid = _makeEscrow();
+        CommitRevealObligation.ObligationData memory data = _obligationData();
+        bytes32 commitment = obligation.computeCommitment(claimer, data);
+
+        vm.deal(claimer, BOND);
+        vm.prank(claimer);
+        obligation.commit{value: BOND}(commitment);
+
+        vm.roll(block.number + 1);
+
+        vm.startPrank(claimer);
+        bytes32 obligationUid1 = obligation.doObligation(data, escrowUid);
+        bytes32 obligationUid2 = obligation.doObligation(data, escrowUid);
+        vm.stopPrank();
+
+        uint256 claimerBalanceBefore = claimer.balance;
+        obligation.reclaimBond(obligationUid1);
+        assertEq(claimer.balance, claimerBalanceBefore + BOND, "first reclaim succeeds");
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                CommitRevealObligation.BondAlreadyClaimed.selector,
+                commitment
+            )
+        );
+        obligation.reclaimBond(obligationUid2);
+    }
+
+    function testPoc_CommitOverwriteDoesNotLockBond() public {
+        bytes32 escrowUid = _makeEscrow();
+
+        CommitRevealObligation.ObligationData memory dataOld = CommitRevealObligation.ObligationData({
+            payload: bytes("old"),
+            salt: bytes32("salt-old"),
+            schema: bytes32("schema-tag")
+        });
+        CommitRevealObligation.ObligationData memory dataNew = CommitRevealObligation.ObligationData({
+            payload: bytes("new"),
+            salt: bytes32("salt-new"),
+            schema: bytes32("schema-tag")
+        });
+
+        bytes32 commitmentOld = obligation.computeCommitment(claimer, dataOld);
+        bytes32 commitmentNew = obligation.computeCommitment(claimer, dataNew);
+
+        vm.deal(claimer, 2 * BOND);
+        vm.startPrank(claimer);
+        obligation.commit{value: BOND}(commitmentOld);
+        obligation.commit{value: BOND}(commitmentNew);
+        vm.stopPrank();
+
+        vm.roll(block.number + 1);
+
+        uint256 claimerBalanceBefore = claimer.balance;
+
+        vm.startPrank(claimer);
+        bytes32 obligationUidOld = obligation.doObligation(dataOld, escrowUid);
+        bytes32 obligationUidNew = obligation.doObligation(dataNew, escrowUid);
+        obligation.reclaimBond(obligationUidOld);
+        obligation.reclaimBond(obligationUidNew);
+        vm.stopPrank();
+
+        assertEq(claimer.balance, claimerBalanceBefore + 2 * BOND, "both bonds reclaimed");
     }
 }
