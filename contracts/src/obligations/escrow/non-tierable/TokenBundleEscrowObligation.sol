@@ -39,7 +39,7 @@ contract TokenBundleEscrowObligation is
     }
 
     error ArrayLengthMismatch();
-    error InsufficientPayment(uint256 expected, uint256 received);
+    error IncorrectPayment(uint256 expected, uint256 received);
     error ERC20TransferFailed(
         address token,
         address from,
@@ -118,8 +118,8 @@ contract TokenBundleEscrowObligation is
 
         // Handle native tokens
         if (decoded.nativeAmount > 0) {
-            if (msg.value < decoded.nativeAmount) {
-                revert InsufficientPayment(decoded.nativeAmount, msg.value);
+            if (msg.value != decoded.nativeAmount) {
+                revert IncorrectPayment(decoded.nativeAmount, msg.value);
             }
         }
 
