@@ -5,9 +5,10 @@ import {BaseEscrowObligationTierable} from "../../../BaseEscrowObligationTierabl
 import {IArbiter} from "../../../IArbiter.sol";
 import {ArbiterUtils} from "../../../ArbiterUtils.sol";
 import {Attestation} from "@eas/Common.sol";
-import {IEAS} from "@eas/IEAS.sol";
+import {IEAS, RevocationRequest, RevocationRequestData} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
@@ -18,6 +19,7 @@ contract TokenBundleEscrowObligation is
     ERC1155Holder
 {
     using ArbiterUtils for Attestation;
+    using SafeERC20 for IERC20;
 
     struct ObligationData {
         address arbiter;
@@ -37,7 +39,7 @@ contract TokenBundleEscrowObligation is
     }
 
     error ArrayLengthMismatch();
-    error InsufficientPayment(uint256 expected, uint256 received);
+    error IncorrectPayment(uint256 expected, uint256 received);
     error ERC20TransferFailed(
         address token,
         address from,
@@ -57,9 +59,10 @@ contract TokenBundleEscrowObligation is
         uint256 tokenId,
         uint256 amount
     );
+    error NativeTokenTransferFailed(address to, uint256 amount);
 
-    // Events emitted during release phase (collect/reclaim) on failure - continue on error
-    event NativeTokenTransferFailed(address indexed to, uint256 amount);
+    // Events emitted during partial release phase - continue on error
+    event NativeTokenTransferFailedOnRelease(address indexed to, uint256 amount);
     event ERC20TransferFailedOnRelease(
         address indexed token,
         address indexed to,
@@ -115,8 +118,8 @@ contract TokenBundleEscrowObligation is
 
         // Handle native tokens
         if (decoded.nativeAmount > 0) {
-            if (msg.value < decoded.nativeAmount) {
-                revert InsufficientPayment(decoded.nativeAmount, msg.value);
+            if (msg.value != decoded.nativeAmount) {
+                revert IncorrectPayment(decoded.nativeAmount, msg.value);
             }
         }
 
@@ -124,12 +127,37 @@ contract TokenBundleEscrowObligation is
         transferInTokenBundle(decoded, from);
     }
 
-    // Transfer tokens to fulfiller
+    // Transfer tokens to fulfiller (atomic - reverts on any failure)
     function _releaseEscrow(
         bytes memory escrowData,
         address to,
         bytes32 /* fulfillmentUid */
     ) internal override returns (bytes memory) {
+        ObligationData memory decoded = abi.decode(
+            escrowData,
+            (ObligationData)
+        );
+
+        // Transfer native tokens - revert on failure
+        if (decoded.nativeAmount > 0) {
+            (bool success, ) = payable(to).call{value: decoded.nativeAmount}(
+                ""
+            );
+            if (!success) {
+                revert NativeTokenTransferFailed(to, decoded.nativeAmount);
+            }
+        }
+
+        // Transfer token bundle - reverts on any failure
+        transferOutTokenBundleAtomic(decoded, to);
+        return ""; // Token escrows don't return anything
+    }
+
+    // Transfer tokens to fulfiller (partial - continues on failure, emits events)
+    function _releaseEscrowPartial(
+        bytes memory escrowData,
+        address to
+    ) internal returns (bytes memory) {
         ObligationData memory decoded = abi.decode(
             escrowData,
             (ObligationData)
@@ -141,12 +169,12 @@ contract TokenBundleEscrowObligation is
                 ""
             );
             if (!success) {
-                emit NativeTokenTransferFailed(to, decoded.nativeAmount);
+                emit NativeTokenTransferFailedOnRelease(to, decoded.nativeAmount);
             }
         }
 
         // Transfer token bundle - continues on individual failures
-        transferOutTokenBundle(decoded, to);
+        transferOutTokenBundlePartial(decoded, to);
         return ""; // Token escrows don't return anything
     }
 
@@ -161,20 +189,24 @@ contract TokenBundleEscrowObligation is
     ) internal {
         // Transfer ERC20s
         for (uint i = 0; i < data.erc20Tokens.length; i++) {
-            bool success;
-            try
-                IERC20(data.erc20Tokens[i]).transferFrom(
-                    from,
-                    address(this),
-                    data.erc20Amounts[i]
-                )
-            returns (bool result) {
-                success = result;
-            } catch {
-                success = false;
-            }
+            // Check balance before transfer
+            uint256 balanceBefore = IERC20(data.erc20Tokens[i]).balanceOf(
+                address(this)
+            );
 
-            if (!success) {
+            bool success = IERC20(data.erc20Tokens[i]).trySafeTransferFrom(
+                from,
+                address(this),
+                data.erc20Amounts[i]
+            );
+
+            // Check balance after transfer
+            uint256 balanceAfter = IERC20(data.erc20Tokens[i]).balanceOf(
+                address(this)
+            );
+
+            // Verify the actual amount transferred
+            if (!success || balanceAfter < balanceBefore + data.erc20Amounts[i]) {
                 revert ERC20TransferFailed(
                     data.erc20Tokens[i],
                     from,
@@ -277,20 +309,121 @@ contract TokenBundleEscrowObligation is
         }
     }
 
-    function transferOutTokenBundle(
+    function transferOutTokenBundleAtomic(
+        ObligationData memory data,
+        address to
+    ) internal {
+        // Transfer ERC20s - revert on failure
+        for (uint i = 0; i < data.erc20Tokens.length; i++) {
+            // Check balance before transfer
+            uint256 balanceBefore = IERC20(data.erc20Tokens[i]).balanceOf(to);
+
+            bool success = IERC20(data.erc20Tokens[i]).trySafeTransfer(
+                to,
+                data.erc20Amounts[i]
+            );
+
+            // Check balance after transfer
+            uint256 balanceAfter = IERC20(data.erc20Tokens[i]).balanceOf(to);
+
+            // Verify the actual amount transferred
+            if (!success || balanceAfter < balanceBefore + data.erc20Amounts[i]) {
+                revert ERC20TransferFailed(
+                    data.erc20Tokens[i],
+                    address(this),
+                    to,
+                    data.erc20Amounts[i]
+                );
+            }
+        }
+
+        // Transfer ERC721s - revert on failure
+        for (uint i = 0; i < data.erc721Tokens.length; i++) {
+            try
+                IERC721(data.erc721Tokens[i]).transferFrom(
+                    address(this),
+                    to,
+                    data.erc721TokenIds[i]
+                )
+            {
+                // Transfer succeeded
+            } catch {
+                revert ERC721TransferFailed(
+                    data.erc721Tokens[i],
+                    address(this),
+                    to,
+                    data.erc721TokenIds[i]
+                );
+            }
+
+            // Verify ownership transferred
+            if (IERC721(data.erc721Tokens[i]).ownerOf(data.erc721TokenIds[i]) != to) {
+                revert ERC721TransferFailed(
+                    data.erc721Tokens[i],
+                    address(this),
+                    to,
+                    data.erc721TokenIds[i]
+                );
+            }
+        }
+
+        // Transfer ERC1155s - revert on failure
+        for (uint i = 0; i < data.erc1155Tokens.length; i++) {
+            // Check balance before transfer
+            uint256 balanceBefore = IERC1155(data.erc1155Tokens[i]).balanceOf(
+                to,
+                data.erc1155TokenIds[i]
+            );
+
+            try
+                IERC1155(data.erc1155Tokens[i]).safeTransferFrom(
+                    address(this),
+                    to,
+                    data.erc1155TokenIds[i],
+                    data.erc1155Amounts[i],
+                    ""
+                )
+            {
+                // Transfer succeeded
+            } catch {
+                revert ERC1155TransferFailed(
+                    data.erc1155Tokens[i],
+                    address(this),
+                    to,
+                    data.erc1155TokenIds[i],
+                    data.erc1155Amounts[i]
+                );
+            }
+
+            // Check balance after transfer
+            uint256 balanceAfter = IERC1155(data.erc1155Tokens[i]).balanceOf(
+                to,
+                data.erc1155TokenIds[i]
+            );
+
+            // Verify the actual amount transferred
+            if (balanceAfter < balanceBefore + data.erc1155Amounts[i]) {
+                revert ERC1155TransferFailed(
+                    data.erc1155Tokens[i],
+                    address(this),
+                    to,
+                    data.erc1155TokenIds[i],
+                    data.erc1155Amounts[i]
+                );
+            }
+        }
+    }
+
+    function transferOutTokenBundlePartial(
         ObligationData memory data,
         address to
     ) internal {
         // Transfer ERC20s - continue on failure
         for (uint i = 0; i < data.erc20Tokens.length; i++) {
-            bool success;
-            try
-                IERC20(data.erc20Tokens[i]).transfer(to, data.erc20Amounts[i])
-            returns (bool result) {
-                success = result;
-            } catch {
-                success = false;
-            }
+            bool success = IERC20(data.erc20Tokens[i]).trySafeTransfer(
+                to,
+                data.erc20Amounts[i]
+            );
 
             if (!success) {
                 emit ERC20TransferFailedOnRelease(
@@ -437,6 +570,113 @@ contract TokenBundleEscrowObligation is
         bytes32 fulfillment
     ) external returns (bool) {
         collectEscrowRaw(escrow, fulfillment);
+        return true;
+    }
+
+    /// @notice Unsafe partial escrow collection - continues on individual transfer failures
+    /// @dev Use only as a last resort when some tokens in the bundle cannot be collected.
+    /// Failed transfers emit events but do not revert. The escrow will be marked as collected
+    /// even if some tokens remain stuck. This can result in permanent loss of stuck tokens.
+    function unsafePartiallyCollectEscrow(
+        bytes32 _escrow,
+        bytes32 _fulfillment
+    ) external nonReentrant returns (bool) {
+        Attestation memory escrow;
+        Attestation memory fulfillment;
+
+        // Get attestations with error handling
+        try eas.getAttestation(_escrow) returns (
+            Attestation memory attestationResult
+        ) {
+            escrow = attestationResult;
+        } catch {
+            revert AttestationNotFound(_escrow);
+        }
+
+        try eas.getAttestation(_fulfillment) returns (
+            Attestation memory attestationResult
+        ) {
+            fulfillment = attestationResult;
+        } catch {
+            revert AttestationNotFound(_fulfillment);
+        }
+
+        // Validate escrow uses correct schema
+        if (escrow.schema != ATTESTATION_SCHEMA)
+            revert InvalidEscrowAttestation();
+
+        if (!escrow._checkIntrinsic()) revert InvalidEscrowAttestation();
+
+        // Extract arbiter and demand from escrow data
+        (address arbiter, bytes memory demand) = extractArbiterAndDemand(
+            escrow.data
+        );
+
+        // TIERABLE: No check that fulfillment.refUID == escrow.uid
+        // This allows multiple escrows to be associated with one fulfillment
+
+        // Check fulfillment via the specified arbiter
+        if (!IArbiter(arbiter).checkObligation(fulfillment, demand, escrow.uid))
+            revert InvalidFulfillment();
+
+        // Revoke attestation
+        try
+            eas.revoke(
+                RevocationRequest({
+                    schema: ATTESTATION_SCHEMA,
+                    data: RevocationRequestData({uid: _escrow, value: 0})
+                })
+            )
+        {} catch {
+            revert RevocationFailed(_escrow);
+        }
+
+        // Execute the partial escrow release (continues on failure)
+        _releaseEscrowPartial(escrow.data, fulfillment.recipient);
+
+        emit EscrowCollected(_escrow, _fulfillment, fulfillment.recipient);
+        return true;
+    }
+
+    /// @notice Unsafe partial reclaim - continues on individual transfer failures
+    /// @dev Use only as a last resort when some tokens in the bundle cannot be reclaimed.
+    /// Failed transfers emit events but do not revert. The escrow will be marked as reclaimed
+    /// even if some tokens remain stuck. This can result in permanent loss of stuck tokens.
+    function unsafePartiallyReclaimExpired(bytes32 uid) external nonReentrant returns (bool) {
+        Attestation memory attestation;
+
+        // Get attestation with error handling
+        try eas.getAttestation(uid) returns (Attestation memory result) {
+            attestation = result;
+        } catch {
+            revert AttestationNotFound(uid);
+        }
+
+        // Validate attestation uses correct schema
+        if (attestation.schema != ATTESTATION_SCHEMA)
+            revert InvalidEscrowAttestation();
+
+        // Prevent reclaiming non-expiring attestations (expirationTime 0 means never expires)
+        if (attestation.expirationTime == 0) revert UnauthorizedCall();
+
+        if (block.timestamp < attestation.expirationTime)
+            revert UnauthorizedCall();
+
+        // Revoke attestation to prevent re-entry
+        try
+            eas.revoke(
+                RevocationRequest({
+                    schema: ATTESTATION_SCHEMA,
+                    data: RevocationRequestData({uid: uid, value: 0})
+                })
+            )
+        {} catch {
+            revert RevocationFailed(uid);
+        }
+
+        // Return escrowed value to original recipient (continues on failure)
+        _releaseEscrowPartial(attestation.data, attestation.recipient);
+
         return true;
     }
 

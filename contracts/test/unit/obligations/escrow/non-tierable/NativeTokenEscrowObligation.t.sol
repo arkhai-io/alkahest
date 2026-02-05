@@ -107,7 +107,7 @@ contract NativeTokenEscrowObligationTest is Test {
         assertEq(attestation.recipient, seller);
     }
 
-    function testInsufficientPayment() public {
+    function testIncorrectPaymentUnderpay() public {
         NativeTokenEscrowObligation.ObligationData
             memory data = NativeTokenEscrowObligation.ObligationData({
                 arbiter: address(mockArbiter),
@@ -118,12 +118,34 @@ contract NativeTokenEscrowObligationTest is Test {
         vm.prank(buyer);
         vm.expectRevert(
             abi.encodeWithSelector(
-                NativeTokenEscrowObligation.InsufficientPayment.selector,
+                NativeTokenEscrowObligation.IncorrectPayment.selector,
                 AMOUNT,
                 0.5 ether
             )
         );
         escrowObligation.doObligation{value: 0.5 ether}(
+            data,
+            uint64(block.timestamp + EXPIRATION_TIME)
+        );
+    }
+
+    function testIncorrectPaymentOverpay() public {
+        NativeTokenEscrowObligation.ObligationData
+            memory data = NativeTokenEscrowObligation.ObligationData({
+                arbiter: address(mockArbiter),
+                demand: abi.encode("test demand"),
+                amount: AMOUNT
+            });
+
+        vm.prank(buyer);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                NativeTokenEscrowObligation.IncorrectPayment.selector,
+                AMOUNT,
+                2 ether
+            )
+        );
+        escrowObligation.doObligation{value: 2 ether}(
             data,
             uint64(block.timestamp + EXPIRATION_TIME)
         );
