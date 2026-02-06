@@ -173,7 +173,7 @@ contract AttestationEscrowObligationTest is Test {
 
         vm.startPrank(attester);
         fulfillmentUid = stringObligation.doObligation(
-            StringObligation.ObligationData({item: "fulfillment data"}),
+            StringObligation.ObligationData({item: "fulfillment data", schema: bytes32(0)}),
             escrowUid  // Reference the escrow for non-tierable pattern
         );
         vm.stopPrank();
@@ -243,7 +243,7 @@ contract AttestationEscrowObligationTest is Test {
         // Create a fulfillment attestation
         vm.startPrank(attester);
         bytes32 fulfillmentUid = stringObligation.doObligation(
-            StringObligation.ObligationData({item: "fulfillment data"}),
+            StringObligation.ObligationData({item: "fulfillment data", schema: bytes32(0)}),
             escrowUid
         );
 

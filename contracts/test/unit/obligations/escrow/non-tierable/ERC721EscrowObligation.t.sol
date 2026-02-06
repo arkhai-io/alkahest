@@ -184,7 +184,7 @@ contract ERC721EscrowObligationTest is Test {
 
         vm.prank(seller);
         bytes32 fulfillmentUid = stringObligation.doObligation(
-            StringObligation.ObligationData({item: "fulfillment data"}),
+            StringObligation.ObligationData({item: "fulfillment data", schema: bytes32(0)}),
             paymentUid
         );
 
@@ -231,7 +231,7 @@ contract ERC721EscrowObligationTest is Test {
 
         vm.prank(seller);
         bytes32 fulfillmentUid = stringObligation.doObligation(
-            StringObligation.ObligationData({item: "fulfillment data"}),
+            StringObligation.ObligationData({item: "fulfillment data", schema: bytes32(0)}),
             paymentUid
         );
 

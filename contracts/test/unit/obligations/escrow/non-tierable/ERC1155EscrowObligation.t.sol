@@ -201,7 +201,7 @@ contract ERC1155EscrowObligationTest is Test {
 
         vm.prank(seller);
         bytes32 fulfillmentUid = stringObligation.doObligation(
-            StringObligation.ObligationData({item: "fulfillment data"}),
+            StringObligation.ObligationData({item: "fulfillment data", schema: bytes32(0)}),
             paymentUid  // Reference the escrow for non-tierable pattern
         );
 
@@ -254,7 +254,7 @@ contract ERC1155EscrowObligationTest is Test {
 
         vm.prank(seller);
         bytes32 fulfillmentUid = stringObligation.doObligation(
-            StringObligation.ObligationData({item: "fulfillment data"}),
+            StringObligation.ObligationData({item: "fulfillment data", schema: bytes32(0)}),
             paymentUid  // Reference the escrow for non-tierable pattern
         );
 
