@@ -26,6 +26,7 @@ contract CommitRevealObligation is BaseObligation, IArbiter, ReentrancyGuard {
     /// @dev Commitment details for a commitment hash.
     struct CommitInfo {
         uint64 commitBlock;
+        uint64 commitTimestamp;
         address committer;
     }
 
@@ -36,22 +37,37 @@ contract CommitRevealObligation is BaseObligation, IArbiter, ReentrancyGuard {
 
     event Committed(bytes32 indexed commitment, address indexed claimer);
     event BondReclaimed(bytes32 indexed obligationUid, address indexed claimer, uint256 amount);
+    event BondSlashed(bytes32 indexed commitment, address indexed recipient, uint256 amount);
 
     error CommitmentMissing(bytes32 commitment, address claimer);
     error CommitmentTooRecent(bytes32 commitment, address claimer);
     error CommitmentAlreadyExists(bytes32 commitment);
     error BondAlreadyClaimed(bytes32 commitment);
     error BondTransferFailed(address claimer, uint256 amount);
+    error SlashTransferFailed(address recipient, uint256 amount);
     error EmptyCommitment();
     error IncorrectBondAmount(uint256 provided, uint256 required);
+    error CommitDeadlineNotReached(bytes32 commitment);
 
     /// @notice Fixed bond amount required for each commit.
     uint256 public immutable bondAmount;
+    /// @notice Seconds after commit within which the reveal must occur to avoid slashing.
+    uint256 public immutable commitDeadline;
+    /// @notice Recipient of slashed bonds (address(0) = burn).
+    address public immutable slashedBondRecipient;
 
-    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, uint256 _bondAmount)
+    constructor(
+        IEAS _eas,
+        ISchemaRegistry _schemaRegistry,
+        uint256 _bondAmount,
+        uint256 _commitDeadline,
+        address _slashedBondRecipient
+    )
         BaseObligation(_eas, _schemaRegistry, "bytes payload, bytes32 salt, bytes32 schema", true)
     {
         bondAmount = _bondAmount;
+        commitDeadline = _commitDeadline;
+        slashedBondRecipient = _slashedBondRecipient;
     }
 
     // ---------------------------------------------------------------------
@@ -81,7 +97,11 @@ contract CommitRevealObligation is BaseObligation, IArbiter, ReentrancyGuard {
             revert CommitmentAlreadyExists(commitment);
         }
 
-        commitments[commitment] = CommitInfo({commitBlock: uint64(block.number), committer: msg.sender});
+        commitments[commitment] = CommitInfo({
+            commitBlock: uint64(block.number),
+            commitTimestamp: uint64(block.timestamp),
+            committer: msg.sender
+        });
 
         emit Committed(commitment, msg.sender);
     }
@@ -153,6 +173,29 @@ contract CommitRevealObligation is BaseObligation, IArbiter, ReentrancyGuard {
         if (!success) revert BondTransferFailed(claimer, amount);
 
         emit BondReclaimed(obligationUid, claimer, amount);
+    }
+
+    // ---------------------------------------------------------------------
+    // Bond slashing
+    // ---------------------------------------------------------------------
+
+    /// @notice Slashes the bond for a commitment whose deadline has passed without a valid reveal.
+    /// @param commitment The commitment hash whose bond is being slashed.
+    function slashBond(bytes32 commitment) external nonReentrant returns (uint256 amount) {
+        CommitInfo memory info = commitments[commitment];
+        if (info.committer == address(0)) revert CommitmentMissing(commitment, address(0));
+        if (block.timestamp <= info.commitTimestamp + commitDeadline) {
+            revert CommitDeadlineNotReached(commitment);
+        }
+        if (commitmentClaimed[commitment]) revert BondAlreadyClaimed(commitment);
+
+        amount = bondAmount;
+        commitmentClaimed[commitment] = true;
+
+        (bool success,) = slashedBondRecipient.call{value: amount}("");
+        if (!success) revert SlashTransferFailed(slashedBondRecipient, amount);
+
+        emit BondSlashed(commitment, slashedBondRecipient, amount);
     }
 
     // ---------------------------------------------------------------------

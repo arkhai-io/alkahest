@@ -15,13 +15,16 @@ contract CommitRevealObligationTest is Test {
     ISchemaRegistry public schemaRegistry;
 
     address internal claimer;
+    address internal treasury;
     uint256 internal constant BOND = 0.1 ether;
+    uint256 internal constant COMMIT_DEADLINE = 1 hours;
 
     function setUp() public {
         EASDeployer easDeployer = new EASDeployer();
         (eas, schemaRegistry) = easDeployer.deployEAS();
 
-        obligation = new CommitRevealObligation(eas, schemaRegistry, BOND);
+        treasury = makeAddr("treasury");
+        obligation = new CommitRevealObligation(eas, schemaRegistry, BOND, COMMIT_DEADLINE, treasury);
         nativeEscrow = new NativeTokenEscrowObligation(eas, schemaRegistry);
         claimer = makeAddr("claimer");
     }
@@ -194,5 +197,117 @@ contract CommitRevealObligationTest is Test {
         vm.stopPrank();
 
         assertEq(claimer.balance, claimerBalanceBefore + 2 * BOND, "both bonds reclaimed");
+    }
+
+    // ----------------------------------------------------------------
+    // Deadline & slashing tests
+    // ----------------------------------------------------------------
+
+    function testSlashBondAfterDeadline() public {
+        bytes32 escrowUid = _makeEscrow();
+        CommitRevealObligation.ObligationData memory data = _obligationData();
+        bytes32 commitment = obligation.computeCommitment(escrowUid, claimer, data);
+
+        vm.deal(claimer, BOND);
+        vm.prank(claimer);
+        obligation.commit{value: BOND}(commitment);
+
+        // Warp past deadline without revealing
+        vm.warp(block.timestamp + COMMIT_DEADLINE + 1);
+
+        uint256 treasuryBefore = treasury.balance;
+        uint256 slashed = obligation.slashBond(commitment);
+
+        assertEq(slashed, BOND, "slashed amount");
+        assertEq(treasury.balance, treasuryBefore + BOND, "treasury received slashed bond");
+    }
+
+    function testSlashBondRevertsBeforeDeadline() public {
+        bytes32 escrowUid = _makeEscrow();
+        CommitRevealObligation.ObligationData memory data = _obligationData();
+        bytes32 commitment = obligation.computeCommitment(escrowUid, claimer, data);
+
+        vm.deal(claimer, BOND);
+        vm.prank(claimer);
+        obligation.commit{value: BOND}(commitment);
+
+        // Still within deadline
+        vm.warp(block.timestamp + COMMIT_DEADLINE);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(CommitRevealObligation.CommitDeadlineNotReached.selector, commitment)
+        );
+        obligation.slashBond(commitment);
+    }
+
+    function testSlashBondRevertsIfAlreadyClaimed() public {
+        bytes32 escrowUid = _makeEscrow();
+        CommitRevealObligation.ObligationData memory data = _obligationData();
+        bytes32 commitment = obligation.computeCommitment(escrowUid, claimer, data);
+
+        vm.deal(claimer, BOND);
+        vm.prank(claimer);
+        obligation.commit{value: BOND}(commitment);
+
+        vm.roll(block.number + 1);
+
+        // Reveal and reclaim
+        vm.prank(claimer);
+        bytes32 fulfillmentUid = obligation.doObligation(data, escrowUid);
+        obligation.reclaimBond(fulfillmentUid);
+
+        // Warp past deadline and try to slash
+        vm.warp(block.timestamp + COMMIT_DEADLINE + 1);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(CommitRevealObligation.BondAlreadyClaimed.selector, commitment)
+        );
+        obligation.slashBond(commitment);
+    }
+
+    function testReclaimBondRevertsAfterSlash() public {
+        bytes32 escrowUid = _makeEscrow();
+        CommitRevealObligation.ObligationData memory data = _obligationData();
+        bytes32 commitment = obligation.computeCommitment(escrowUid, claimer, data);
+
+        vm.deal(claimer, BOND);
+        vm.prank(claimer);
+        obligation.commit{value: BOND}(commitment);
+
+        // Warp past deadline and slash
+        vm.warp(block.timestamp + COMMIT_DEADLINE + 1);
+        vm.roll(block.number + 1);
+        obligation.slashBond(commitment);
+
+        // Now try to reveal and reclaim — reclaim should fail
+        vm.prank(claimer);
+        bytes32 fulfillmentUid = obligation.doObligation(data, escrowUid);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(CommitRevealObligation.BondAlreadyClaimed.selector, commitment)
+        );
+        obligation.reclaimBond(fulfillmentUid);
+    }
+
+    function testSlashBondToZeroAddress() public {
+        // Deploy with address(0) as slash recipient (burn)
+        CommitRevealObligation burnObligation =
+            new CommitRevealObligation(eas, schemaRegistry, BOND, COMMIT_DEADLINE, address(0));
+
+        bytes32 escrowUid = _makeEscrow();
+        CommitRevealObligation.ObligationData memory data = _obligationData();
+        bytes32 commitment = burnObligation.computeCommitment(escrowUid, claimer, data);
+
+        vm.deal(claimer, BOND);
+        vm.prank(claimer);
+        burnObligation.commit{value: BOND}(commitment);
+
+        vm.warp(block.timestamp + COMMIT_DEADLINE + 1);
+
+        uint256 zeroBalBefore = address(0).balance;
+        uint256 slashed = burnObligation.slashBond(commitment);
+
+        assertEq(slashed, BOND, "slashed amount");
+        assertEq(address(0).balance, zeroBalBefore + BOND, "ETH sent to zero address");
     }
 }
