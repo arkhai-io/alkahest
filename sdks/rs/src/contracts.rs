@@ -318,6 +318,14 @@ pub mod obligations {
         "src/contracts/obligations/StringObligation.json"
     );
 
+    sol!(
+        #[allow(missing_docs)]
+        #[sol(rpc)]
+        #[derive(Debug)]
+        CommitRevealObligation,
+        "src/contracts/obligations/CommitRevealObligation.json"
+    );
+
     // Escrow obligations submodule
     pub mod escrow {
         pub mod non_tierable {

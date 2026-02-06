@@ -221,6 +221,8 @@ export const makeMinimalClient = (
       contractAddresses?.attestationBarterUtils || baseAddresses?.attestationBarterUtils || zeroAddress,
 
     stringObligation: contractAddresses?.stringObligation || baseAddresses?.stringObligation || zeroAddress,
+    commitRevealObligation:
+      contractAddresses?.commitRevealObligation || baseAddresses?.commitRevealObligation || zeroAddress,
 
     nativeTokenPaymentObligation:
       contractAddresses?.nativeTokenPaymentObligation || baseAddresses?.nativeTokenPaymentObligation || zeroAddress,
@@ -233,6 +235,7 @@ export const makeMinimalClient = (
     intrinsicsArbiter2: contractAddresses?.intrinsicsArbiter2 || baseAddresses?.intrinsicsArbiter2 || zeroAddress,
     anyArbiter: contractAddresses?.anyArbiter || baseAddresses?.anyArbiter || zeroAddress,
     allArbiter: contractAddresses?.allArbiter || baseAddresses?.allArbiter || zeroAddress,
+    erc8004Arbiter: contractAddresses?.erc8004Arbiter || baseAddresses?.erc8004Arbiter || zeroAddress,
     nativeTokenBarterUtils:
       contractAddresses?.nativeTokenBarterUtils || baseAddresses?.nativeTokenBarterUtils || zeroAddress,
 
