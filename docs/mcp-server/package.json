@@ -1,0 +1,32 @@
+{
+  "name": "alkahest-mcp",
+  "version": "0.1.0",
+  "description": "MCP server for Alkahest documentation",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "alkahest-docs-mcp": "./dist/index.js"
+  },
+  "scripts": {
+    "generate": "bun run scripts/generate.ts",
+    "build": "bun run generate && tsc",
+    "start": "node dist/index.js",
+    "dev": "bun run src/index.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@solidity-parser/parser": "^0.18.0",
+    "lunr": "^2.3.9",
+    "marked": "^12.0.0"
+  },
+  "devDependencies": {
+    "@types/lunr": "^2.3.7",
+    "@types/node": "^20.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
+  },
+  "files": [
+    "dist",
+    "generated"
+  ]
+}
