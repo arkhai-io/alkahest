@@ -91,7 +91,7 @@ contract TokenBundleEscrowObligation_ReleaseSwallowFailure_POC is Test {
         // Non-tierable requires fulfillment.refUID == escrowUid.
         vm.prank(address(badRecipient));
         bytes32 fulfillmentUid =
-            stringObligation.doObligation(StringObligation.ObligationData({item: "fulfillment"}), escrowUid);
+            stringObligation.doObligation(StringObligation.ObligationData({item: "fulfillment", schema: bytes32(0)}), escrowUid);
 
         // NOW: Collect should REVERT because native token transfer fails
         vm.startPrank(bob);
@@ -162,7 +162,7 @@ contract TokenBundleEscrowObligation_ReleaseSwallowFailure_POC is Test {
         // Create fulfillment whose recipient is a contract that rejects ETH and is not an ERC1155Receiver.
         vm.prank(address(badRecipient));
         bytes32 fulfillmentUid =
-            stringObligation.doObligation(StringObligation.ObligationData({item: "fulfillment"}), escrowUid);
+            stringObligation.doObligation(StringObligation.ObligationData({item: "fulfillment", schema: bytes32(0)}), escrowUid);
 
         // unsafePartiallyCollectEscrow allows partial collection (user's last resort choice)
         vm.startPrank(bob);

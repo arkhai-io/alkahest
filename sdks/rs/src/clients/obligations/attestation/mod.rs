@@ -759,7 +759,7 @@ mod tests {
         let fulfillment_receipt = test
             .bob_client
             .string_obligation()
-            .do_obligation("fulfillment data".to_string(), Some(escrow_uid))
+            .do_obligation("fulfillment data".to_string(), None, Some(escrow_uid))
             .await?;
 
         let fulfillment_event = DefaultAlkahestClient::get_attested_event(fulfillment_receipt)?;
@@ -871,6 +871,7 @@ mod tests {
             .doObligation(
                 contracts::obligations::StringObligation::ObligationData {
                     item: "fulfillment data".to_string(),
+                    schema: alloy::primitives::FixedBytes::default(),
                 },
                 escrow_uid, // Reference the escrow for non-tierable pattern
             )

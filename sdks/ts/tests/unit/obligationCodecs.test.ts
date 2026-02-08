@@ -514,6 +514,7 @@ describe("Obligation Codec Static Functions", () => {
     test("should encode and decode String obligation", () => {
       const data: StringObligationData = {
         item: "Hello, World!",
+        schema: mockSchema,
       };
 
       const encoded = encodeString(data);
@@ -521,22 +522,26 @@ describe("Obligation Codec Static Functions", () => {
 
       const decoded = decodeString(encoded);
       expect(decoded.item).toBe(data.item);
+      expect(decoded.schema).toBe(data.schema);
     });
 
     test("should handle empty string", () => {
       const data: StringObligationData = {
         item: "",
+        schema: mockRefUID,
       };
 
       const encoded = encodeString(data);
       const decoded = decodeString(encoded);
       expect(decoded.item).toBe("");
+      expect(decoded.schema).toBe(mockRefUID);
     });
 
     test("should handle JSON string", () => {
       const jsonData = { name: "test", value: 123 };
       const data: StringObligationData = {
         item: JSON.stringify(jsonData),
+        schema: mockSchema,
       };
 
       const encoded = encodeString(data);
@@ -547,6 +552,7 @@ describe("Obligation Codec Static Functions", () => {
     test("should handle unicode characters", () => {
       const data: StringObligationData = {
         item: "Hello, 世界! 🌍",
+        schema: mockSchema,
       };
 
       const encoded = encodeString(data);

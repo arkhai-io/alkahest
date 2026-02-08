@@ -3,7 +3,7 @@ import { decodeAbiParameters, encodeAbiParameters, hexToBytes, parseAbiParameter
 import { setupTestEnvironment, type TestContext } from "../utils/setup";
 import { teardownTestEnvironment } from "../utils/teardownTestEnvironment";
 
-const stringObligationAbi = parseAbiParameters("(string item)");
+const stringObligationAbi = parseAbiParameters("(string item, bytes32 schema)");
 const uptimeDemandAbi = parseAbiParameters("(bytes payload)");
 const textDecoder = new TextDecoder();
 
@@ -161,7 +161,7 @@ test("asynchronous offchain oracle uptime flow", { timeout: 15000 }, async () =>
   );
 
   const serviceUrl = demandPayload.service_url;
-  const { attested: fulfillment } = await testContext.bob.client.stringObligation.doObligation(serviceUrl, escrow.uid);
+  const { attested: fulfillment } = await testContext.bob.client.stringObligation.doObligation(serviceUrl, undefined, escrow.uid);
 
   const scheduler: SchedulerContext = {
     jobDb: new Map(),

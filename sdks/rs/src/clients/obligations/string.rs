@@ -9,7 +9,7 @@ use crate::{
 // --- ABI conversions for String obligation types ---
 impl_abi_conversions!(contracts::obligations::StringObligation::ObligationData);
 use alloy::{
-    primitives::{Address, Bytes, FixedBytes},
+    primitives::{Address, Bytes, FixedBytes, B256},
     rpc::types::TransactionReceipt,
     signers::local::PrivateKeySigner,
     sol_types::SolValue as _,
@@ -112,9 +112,10 @@ impl StringObligationModule {
         return contracts::obligations::StringObligation::ObligationData::abi_encode(&obligation_data).into();
     }
 
-    pub fn encode_json<T: serde::Serialize>(obligation_data: T) -> eyre::Result<Bytes> {
+    pub fn encode_json<T: serde::Serialize>(obligation_data: T, schema: Option<B256>) -> eyre::Result<Bytes> {
         let encoded = Self::encode(&contracts::obligations::StringObligation::ObligationData {
             item: serde_json::to_string(&obligation_data)?,
+            schema: schema.unwrap_or_default(),
         });
         Ok(encoded)
     }
@@ -122,12 +123,16 @@ impl StringObligationModule {
     pub async fn do_obligation(
         &self,
         item: String,
+        schema: Option<B256>,
         ref_uid: Option<FixedBytes<32>>,
     ) -> eyre::Result<TransactionReceipt> {
         let contract =
             contracts::obligations::StringObligation::new(self.addresses.obligation, &*self.wallet_provider);
 
-        let obligation_data = contracts::obligations::StringObligation::ObligationData { item };
+        let obligation_data = contracts::obligations::StringObligation::ObligationData {
+            item,
+            schema: schema.unwrap_or_default(),
+        };
 
         let receipt = contract
             .doObligation(
@@ -145,6 +150,7 @@ impl StringObligationModule {
     pub async fn do_obligation_json<T: serde::Serialize>(
         &self,
         obligation_data: T,
+        schema: Option<B256>,
         ref_uid: Option<FixedBytes<32>>,
     ) -> eyre::Result<TransactionReceipt> {
         let contract =
@@ -152,6 +158,7 @@ impl StringObligationModule {
 
         let obligation_data = contracts::obligations::StringObligation::ObligationData {
             item: serde_json::to_string(&obligation_data)?,
+            schema: schema.unwrap_or_default(),
         };
 
         let receipt = contract
@@ -165,6 +172,86 @@ impl StringObligationModule {
             .await?;
 
         Ok(receipt)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use alloy::primitives::{Bytes, FixedBytes};
+    use alloy::sol_types::SolValue as _;
+
+    #[test]
+    fn test_encode_decode_roundtrip() {
+        let data = contracts::obligations::StringObligation::ObligationData {
+            item: "hello world".to_string(),
+            schema: FixedBytes::<32>::from([0x44; 32]),
+        };
+
+        let encoded = StringObligationModule::encode(&data);
+        let decoded = StringObligationModule::decode(&encoded).unwrap();
+
+        assert_eq!(decoded.item, data.item);
+        assert_eq!(decoded.schema, data.schema);
+    }
+
+    #[test]
+    fn test_encode_decode_zero_schema() {
+        let data = contracts::obligations::StringObligation::ObligationData {
+            item: "test".to_string(),
+            schema: FixedBytes::<32>::default(),
+        };
+
+        let encoded = StringObligationModule::encode(&data);
+        let decoded = StringObligationModule::decode(&encoded).unwrap();
+
+        assert_eq!(decoded.item, "test");
+        assert_eq!(decoded.schema, FixedBytes::<32>::default());
+    }
+
+    #[test]
+    fn test_encode_json_roundtrip() {
+        #[derive(serde::Serialize, serde::Deserialize, PartialEq, Debug)]
+        struct TestData {
+            value: u32,
+            name: String,
+        }
+
+        let test_data = TestData {
+            value: 42,
+            name: "test".to_string(),
+        };
+
+        let schema = B256::from([0x44; 32]);
+        let encoded = StringObligationModule::encode_json(&test_data, Some(schema)).unwrap();
+        let decoded: TestData = StringObligationModule::decode_json(&encoded).unwrap();
+
+        assert_eq!(decoded, test_data);
+    }
+
+    #[test]
+    fn test_deterministic_encoding() {
+        let data = contracts::obligations::StringObligation::ObligationData {
+            item: "hello".to_string(),
+            schema: FixedBytes::<32>::from([0x44; 32]),
+        };
+
+        let encoded1 = StringObligationModule::encode(&data);
+        let encoded2 = StringObligationModule::encode(&data);
+        assert_eq!(encoded1, encoded2);
+    }
+
+    #[test]
+    fn test_roundtrip_encode_decode_encode() {
+        let data = contracts::obligations::StringObligation::ObligationData {
+            item: "roundtrip".to_string(),
+            schema: FixedBytes::<32>::from([0x44; 32]),
+        };
+
+        let encoded1 = StringObligationModule::encode(&data);
+        let decoded = StringObligationModule::decode(&encoded1).unwrap();
+        let encoded2 = StringObligationModule::encode(&decoded);
+        assert_eq!(encoded1, encoded2);
     }
 }
 

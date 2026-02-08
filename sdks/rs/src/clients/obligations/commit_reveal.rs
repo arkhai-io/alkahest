@@ -255,6 +255,106 @@ impl CommitRevealObligationModule {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use alloy::primitives::{Bytes, FixedBytes};
+    use alloy::sol_types::SolValue as _;
+
+    #[test]
+    fn test_encode_decode_roundtrip() {
+        let data = contracts::obligations::CommitRevealObligation::ObligationData {
+            payload: Bytes::from(vec![0xde, 0xad, 0xbe, 0xef]),
+            salt: FixedBytes::<32>::from([0x11; 32]),
+            schema: FixedBytes::<32>::from([0x44; 32]),
+        };
+
+        let encoded = CommitRevealObligationModule::encode(&data);
+        let decoded = CommitRevealObligationModule::decode(&encoded).unwrap();
+
+        assert_eq!(decoded.payload, data.payload);
+        assert_eq!(decoded.salt, data.salt);
+        assert_eq!(decoded.schema, data.schema);
+    }
+
+    #[test]
+    fn test_encode_decode_empty_payload() {
+        let data = contracts::obligations::CommitRevealObligation::ObligationData {
+            payload: Bytes::new(),
+            salt: FixedBytes::<32>::from([0x11; 32]),
+            schema: FixedBytes::<32>::default(),
+        };
+
+        let encoded = CommitRevealObligationModule::encode(&data);
+        let decoded = CommitRevealObligationModule::decode(&encoded).unwrap();
+
+        assert_eq!(decoded.payload, data.payload);
+        assert_eq!(decoded.salt, data.salt);
+        assert_eq!(decoded.schema, data.schema);
+    }
+
+    #[test]
+    fn test_encode_decode_large_payload() {
+        let large_payload = vec![0xab; 1000];
+        let data = contracts::obligations::CommitRevealObligation::ObligationData {
+            payload: Bytes::from(large_payload.clone()),
+            salt: FixedBytes::<32>::from([0x11; 32]),
+            schema: FixedBytes::<32>::from([0x44; 32]),
+        };
+
+        let encoded = CommitRevealObligationModule::encode(&data);
+        let decoded = CommitRevealObligationModule::decode(&encoded).unwrap();
+
+        assert_eq!(decoded.payload.as_ref(), large_payload.as_slice());
+    }
+
+    #[test]
+    fn test_deterministic_encoding() {
+        let data = contracts::obligations::CommitRevealObligation::ObligationData {
+            payload: Bytes::from(vec![0xde, 0xad, 0xbe, 0xef]),
+            salt: FixedBytes::<32>::from([0x11; 32]),
+            schema: FixedBytes::<32>::from([0x44; 32]),
+        };
+
+        let encoded1 = CommitRevealObligationModule::encode(&data);
+        let encoded2 = CommitRevealObligationModule::encode(&data);
+        assert_eq!(encoded1, encoded2);
+    }
+
+    #[test]
+    fn test_roundtrip_encode_decode_encode() {
+        let data = contracts::obligations::CommitRevealObligation::ObligationData {
+            payload: Bytes::from(vec![0xde, 0xad, 0xbe, 0xef]),
+            salt: FixedBytes::<32>::from([0x11; 32]),
+            schema: FixedBytes::<32>::from([0x44; 32]),
+        };
+
+        let encoded1 = CommitRevealObligationModule::encode(&data);
+        let decoded = CommitRevealObligationModule::decode(&encoded1).unwrap();
+        let encoded2 = CommitRevealObligationModule::encode(&decoded);
+        assert_eq!(encoded1, encoded2);
+    }
+
+    #[test]
+    fn test_default_addresses() {
+        let addresses = CommitRevealObligationAddresses::default();
+        assert_ne!(addresses.eas, Address::ZERO);
+        assert_ne!(addresses.obligation, Address::ZERO);
+    }
+
+    #[test]
+    fn test_contract_module_addresses() {
+        let _signer = PrivateKeySigner::random();
+        // We can't easily create a SharedWalletProvider in unit tests,
+        // so just verify the addresses struct and contract enum
+        let addresses = CommitRevealObligationAddresses::default();
+        assert_ne!(
+            addresses.eas, addresses.obligation,
+            "EAS and obligation addresses should differ"
+        );
+    }
+}
+
 impl AlkahestExtension for CommitRevealObligationModule {
     type Config = CommitRevealObligationAddresses;
 

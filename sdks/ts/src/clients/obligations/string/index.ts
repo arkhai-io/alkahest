@@ -21,6 +21,7 @@ const stringObligationDataType = stringObligationDecodeFunction.outputs[0];
  */
 export type StringObligationData = {
   item: string;
+  schema: `0x${string}`;
 };
 
 /**
@@ -73,13 +74,14 @@ export const makeStringObligationClient = (viemClient: ViemClient, addresses: St
 
   const doObligation = async (
     item: string,
+    schema: `0x${string}` = "0x0000000000000000000000000000000000000000000000000000000000000000",
     refUID: `0x${string}` = "0x0000000000000000000000000000000000000000000000000000000000000000",
   ) => {
     const { request } = await viemClient.simulateContract({
       address: addresses.stringObligation,
       abi: stringObligationAbi.abi,
       functionName: "doObligation",
-      args: [{ item }, refUID],
+      args: [{ item, schema }, refUID],
     });
 
     const hash = await viemClient.writeContract(request);
@@ -105,7 +107,7 @@ export const makeStringObligationClient = (viemClient: ViemClient, addresses: St
   return {
     address: addresses.stringObligation,
 
-    encode: (data: { item: string }) => {
+    encode: (data: StringObligationData) => {
       return encodeAbiParameters([stringObligationDataType], [data]);
     },
     decode,
@@ -136,8 +138,8 @@ export const makeStringObligationClient = (viemClient: ViemClient, addresses: St
       return schema(JSON.parse(decoded.item)) as Schema["inferOut"];
     },
     doObligation,
-    doObligationJson: async <T>(item: T, refUid?: `0x${string}`) => {
-      return await doObligation(JSON.stringify(item), refUid);
+    doObligationJson: async <T>(item: T, schema?: `0x${string}`, refUid?: `0x${string}`) => {
+      return await doObligation(JSON.stringify(item), schema, refUid);
     },
     getSchema,
     getObligation: async (uid: `0x${string}`) => {
