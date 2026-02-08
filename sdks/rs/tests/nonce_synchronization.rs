@@ -48,7 +48,7 @@ mod tests {
         let string_receipt = test
             .alice_client
             .string_obligation()
-            .do_obligation("test obligation".to_string(), None)
+            .do_obligation("test obligation".to_string(), None, None)
             .await?;
 
         let price2 = Erc20Data {
@@ -147,7 +147,7 @@ mod tests {
 
         // Second call: do_obligation with NEW StringObligation module instance
         let string_receipt = new_string_obligation_module
-            .do_obligation("test obligation".to_string(), None)
+            .do_obligation("test obligation".to_string(), None, None)
             .await?;
 
         println!("StringObligation transaction completed with new module instance");

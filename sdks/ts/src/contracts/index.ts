@@ -49,6 +49,7 @@ export * as NativeTokenPaymentObligation from "./obligations/payment/NativeToken
 export * as TokenBundlePaymentObligation from "./obligations/payment/TokenBundlePaymentObligation";
 // Obligations - Other
 export * as StringObligation from "./obligations/StringObligation";
+export * as CommitRevealObligation from "./obligations/CommitRevealObligation";
 // Utils
 export * as AttestationBarterUtils from "./utils/AttestationBarterUtils";
 export * as ERC20BarterUtils from "./utils/ERC20BarterUtils";

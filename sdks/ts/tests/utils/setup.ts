@@ -114,6 +114,7 @@ export type TestContext = {
     intrinsicsArbiter2: `0x${string}`;
     anyArbiter: `0x${string}`;
     allArbiter: `0x${string}`;
+    erc8004Arbiter: `0x${string}`;
     notArbiter: `0x${string}`;
 
     // Attestation Properties Arbiters
@@ -163,6 +164,7 @@ export type TestContext = {
 
     // String obligation
     stringObligation: `0x${string}`;
+    commitRevealObligation: `0x${string}`;
 
     // Native token
     nativeTokenPaymentObligation: `0x${string}`;
@@ -344,6 +346,7 @@ export async function setupTestEnvironment(options?: SetupTestEnvironmentOptions
     intrinsicsArbiter2: "" as `0x${string}`,
     anyArbiter: "" as `0x${string}`,
     allArbiter: "" as `0x${string}`,
+    erc8004Arbiter: "" as `0x${string}`,
     notArbiter: "" as `0x${string}`,
 
     // Attestation Properties Arbiters
@@ -387,6 +390,7 @@ export async function setupTestEnvironment(options?: SetupTestEnvironmentOptions
     attestationBarterUtils: "" as `0x${string}`,
 
     stringObligation: "" as `0x${string}`,
+    commitRevealObligation: "" as `0x${string}`,
     nativeTokenPaymentObligation: "" as `0x${string}`,
     nativeTokenEscrowObligation: "" as `0x${string}`,
     nativeTokenBarterUtils: "" as `0x${string}`,

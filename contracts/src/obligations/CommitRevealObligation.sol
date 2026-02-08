@@ -7,13 +7,12 @@ import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {BaseObligation} from "../BaseObligation.sol";
 import {IArbiter} from "../IArbiter.sol";
 import {ArbiterUtils} from "../ArbiterUtils.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /// @title CommitRevealObligation
 /// @notice Obligation with built-in commit–reveal anti-front‑running checks.
 /// The attestation data is self contained (payload + salt), and the arbiter
 /// verifies that a matching commit exists and was made in an earlier block.
-contract CommitRevealObligation is BaseObligation, IArbiter, ReentrancyGuard {
+contract CommitRevealObligation is BaseObligation, IArbiter {
     using ArbiterUtils for Attestation;
 
     /// @dev Data stored inside the fulfillment attestation.

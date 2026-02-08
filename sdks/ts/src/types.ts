@@ -25,6 +25,7 @@ export type ChainAddresses = {
   attestationBarterUtils: `0x${string}`;
 
   stringObligation: `0x${string}`;
+  commitRevealObligation: `0x${string}`;
 
   trivialArbiter: `0x${string}`;
   trustedOracleArbiter: `0x${string}`;
@@ -32,6 +33,7 @@ export type ChainAddresses = {
   allArbiter: `0x${string}`;
   intrinsicsArbiter: `0x${string}`;
   intrinsicsArbiter2: `0x${string}`;
+  erc8004Arbiter: `0x${string}`;
 
   // Confirmation arbiters (new naming convention)
   exclusiveRevocableConfirmationArbiter: `0x${string}`;

@@ -137,7 +137,7 @@ async fn run_contextless_identity_example(test: &TestContext) -> eyre::Result<()
     let good_receipt = test
         .bob_client
         .string_obligation()
-        .do_obligation(good_payload, None)
+        .do_obligation(good_payload, None, None)
         .await?;
     let good_uid = DefaultAlkahestClient::get_attested_event(good_receipt)?.uid;
 
@@ -171,7 +171,7 @@ async fn run_contextless_identity_example(test: &TestContext) -> eyre::Result<()
     let bad_receipt = test
         .bob_client
         .string_obligation()
-        .do_obligation(bad_payload, None)
+        .do_obligation(bad_payload, None, None)
         .await?;
     let bad_uid = DefaultAlkahestClient::get_attested_event(bad_receipt)?.uid;
 

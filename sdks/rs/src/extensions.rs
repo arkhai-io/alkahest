@@ -4,7 +4,8 @@ use std::any::Any;
 
 // Re-export modules from clients
 pub use crate::clients::{
-    arbiters::ArbitersModule, attestation::AttestationModule, erc20::Erc20Module,
+    arbiters::ArbitersModule, attestation::AttestationModule,
+    commit_reveal_obligation::CommitRevealObligationModule, erc20::Erc20Module,
     erc721::Erc721Module, erc1155::Erc1155Module, native_token::NativeTokenModule,
     oracle::OracleModule, string_obligation::StringObligationModule,
     token_bundle::TokenBundleModule,
@@ -12,7 +13,8 @@ pub use crate::clients::{
 
 // Re-export address types for convenience
 pub use crate::clients::{
-    arbiters::ArbitersAddresses, attestation::AttestationAddresses, erc20::Erc20Addresses,
+    arbiters::ArbitersAddresses, attestation::AttestationAddresses,
+    commit_reveal_obligation::CommitRevealObligationAddresses, erc20::Erc20Addresses,
     erc721::Erc721Addresses, erc1155::Erc1155Addresses, native_token::NativeTokenAddresses,
     oracle::OracleAddresses, string_obligation::StringObligationAddresses,
     token_bundle::TokenBundleAddresses,
@@ -138,6 +140,7 @@ pub struct BaseExtensions {
     pub token_bundle: TokenBundleModule,
     pub attestation: AttestationModule,
     pub string_obligation: StringObligationModule,
+    pub commit_reveal: CommitRevealObligationModule,
     pub arbiters: ArbitersModule,
     pub oracle: OracleModule,
 }
@@ -160,6 +163,9 @@ impl AlkahestExtension for BaseExtensions {
         let string_obligation_config = config
             .as_ref()
             .map(|c| c.string_obligation_addresses.clone());
+        let commit_reveal_config = config
+            .as_ref()
+            .map(|c| c.commit_reveal_obligation_addresses.clone());
         let arbiters_config = config.as_ref().map(|c| c.arbiters_addresses.clone());
         let oracle_config = config.as_ref().map(|c| OracleAddresses {
             eas: c.arbiters_addresses.eas.clone(),
@@ -187,6 +193,12 @@ impl AlkahestExtension for BaseExtensions {
             string_obligation_config,
         )
         .await?;
+        let commit_reveal = CommitRevealObligationModule::init(
+            private_key.clone(),
+            providers.clone(),
+            commit_reveal_config,
+        )
+        .await?;
         let arbiters =
             ArbitersModule::init(private_key.clone(), providers.clone(), arbiters_config).await?;
         let oracle =
@@ -200,6 +212,7 @@ impl AlkahestExtension for BaseExtensions {
             token_bundle,
             attestation,
             string_obligation,
+            commit_reveal,
             arbiters,
             oracle,
         })
@@ -223,6 +236,9 @@ impl AlkahestExtension for BaseExtensions {
             return Some(client);
         }
         if let Some(client) = self.string_obligation.find_client::<T>() {
+            return Some(client);
+        }
+        if let Some(client) = self.commit_reveal.find_client::<T>() {
             return Some(client);
         }
         if let Some(client) = self.arbiters.find_client::<T>() {
@@ -260,6 +276,10 @@ pub trait HasAttestation {
 
 pub trait HasStringObligation {
     fn string_obligation(&self) -> &StringObligationModule;
+}
+
+pub trait HasCommitReveal {
+    fn commit_reveal(&self) -> &CommitRevealObligationModule;
 }
 
 pub trait HasArbiters {
@@ -313,6 +333,12 @@ impl HasStringObligation for BaseExtensions {
     }
 }
 
+impl HasCommitReveal for BaseExtensions {
+    fn commit_reveal(&self) -> &CommitRevealObligationModule {
+        &self.commit_reveal
+    }
+}
+
 impl HasArbiters for BaseExtensions {
     fn arbiters(&self) -> &ArbitersModule {
         &self.arbiters
@@ -358,6 +384,12 @@ impl HasAttestation for AttestationModule {
 
 impl HasStringObligation for StringObligationModule {
     fn string_obligation(&self) -> &StringObligationModule {
+        self
+    }
+}
+
+impl HasCommitReveal for CommitRevealObligationModule {
+    fn commit_reveal(&self) -> &CommitRevealObligationModule {
         self
     }
 }
@@ -435,6 +467,16 @@ where
     }
 }
 
+impl<A: AlkahestExtension, B: AlkahestExtension> HasCommitReveal for JoinExtension<A, B>
+where
+    Self: AlkahestExtension,
+{
+    fn commit_reveal(&self) -> &CommitRevealObligationModule {
+        self.find_client::<CommitRevealObligationModule>()
+            .expect("CommitRevealObligation module not found in JoinExtension")
+    }
+}
+
 impl<A: AlkahestExtension, B: AlkahestExtension> HasArbiters for JoinExtension<A, B>
 where
     Self: AlkahestExtension,
@@ -489,6 +531,12 @@ impl<Ext: AlkahestExtension + HasAttestation> HasAttestation for AlkahestClient<
 impl<Ext: AlkahestExtension + HasStringObligation> HasStringObligation for AlkahestClient<Ext> {
     fn string_obligation(&self) -> &StringObligationModule {
         self.extensions.string_obligation()
+    }
+}
+
+impl<Ext: AlkahestExtension + HasCommitReveal> HasCommitReveal for AlkahestClient<Ext> {
+    fn commit_reveal(&self) -> &CommitRevealObligationModule {
+        self.extensions.commit_reveal()
     }
 }
 

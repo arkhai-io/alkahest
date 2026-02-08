@@ -39,7 +39,7 @@ test("trivial arbitrateMany with mode past", async () => {
     0n,
   );
 
-  const { attested: fulfillment } = await testContext.bob.client.stringObligation.doObligation("foo", escrow.uid);
+  const { attested: fulfillment } = await testContext.bob.client.stringObligation.doObligation("foo", undefined, escrow.uid);
 
   // Request arbitration
   const requestHash = await testContext.bob.client.arbiters.general.trustedOracle.requestArbitration(
@@ -53,7 +53,7 @@ test("trivial arbitrateMany with mode past", async () => {
     hash: requestHash,
   });
 
-  const obligationAbi = parseAbiParameters("(string item)");
+  const obligationAbi = parseAbiParameters("(string item, bytes32 schema)");
   const { decisions } = await testContext.bob.client.arbiters.general.trustedOracle.arbitrateMany(async ({ attestation }) => {
     const obligation = testContext.bob.client.extractObligationData(obligationAbi, attestation);
     return true;
@@ -82,9 +82,9 @@ test("conditional arbitrateMany", async () => {
     0n,
   );
 
-  const { attested: fulfillment1 } = await testContext.bob.client.stringObligation.doObligation("good", escrow.uid);
+  const { attested: fulfillment1 } = await testContext.bob.client.stringObligation.doObligation("good", undefined, escrow.uid);
 
-  const { attested: fulfillment2 } = await testContext.bob.client.stringObligation.doObligation("bad", escrow.uid);
+  const { attested: fulfillment2 } = await testContext.bob.client.stringObligation.doObligation("bad", undefined, escrow.uid);
 
   // Request arbitration for both
   const requestHash1 = await testContext.bob.client.arbiters.general.trustedOracle.requestArbitration(
@@ -106,7 +106,7 @@ test("conditional arbitrateMany", async () => {
     hash: requestHash2,
   });
 
-  const obligationAbi = parseAbiParameters("(string item)");
+  const obligationAbi = parseAbiParameters("(string item, bytes32 schema)");
   const { decisions } = await testContext.bob.client.arbiters.general.trustedOracle.arbitrateMany(async ({ attestation }) => {
     const obligation = testContext.bob.client.extractObligationData(obligationAbi, attestation);
     return obligation[0].item === "good";
@@ -139,7 +139,7 @@ test("arbitrateMany with pastUnarbitrated skips already arbitrated", async () =>
     0n,
   );
 
-  const { attested: fulfillment } = await testContext.bob.client.stringObligation.doObligation("foo", escrow.uid);
+  const { attested: fulfillment } = await testContext.bob.client.stringObligation.doObligation("foo", undefined, escrow.uid);
 
   // Request arbitration
   const requestHash = await testContext.bob.client.arbiters.general.trustedOracle.requestArbitration(
@@ -153,7 +153,7 @@ test("arbitrateMany with pastUnarbitrated skips already arbitrated", async () =>
     hash: requestHash,
   });
 
-  const obligationAbi = parseAbiParameters("(string item)");
+  const obligationAbi = parseAbiParameters("(string item, bytes32 schema)");
 
   // First arbitration
   const { decisions: firstDecisions } = await testContext.bob.client.arbiters.general.trustedOracle.arbitrateMany(
@@ -201,7 +201,7 @@ test("arbitrateMany with mode all (past + future)", async () => {
     0n,
   );
 
-  const obligationAbi = parseAbiParameters("(string item)");
+  const obligationAbi = parseAbiParameters("(string item, bytes32 schema)");
   const { decisions, unwatch } = await testContext.bob.client.arbiters.general.trustedOracle.arbitrateMany(
     async ({ attestation }) => {
       const obligation = testContext.bob.client.extractObligationData(obligationAbi, attestation);
@@ -219,7 +219,7 @@ test("arbitrateMany with mode all (past + future)", async () => {
     },
   );
 
-  const { attested: fulfillment } = await testContext.bob.client.stringObligation.doObligation("foo", escrow.uid);
+  const { attested: fulfillment } = await testContext.bob.client.stringObligation.doObligation("foo", undefined, escrow.uid);
 
   // Request arbitration
   await testContext.bob.client.arbiters.general.trustedOracle.requestArbitration(
@@ -253,7 +253,7 @@ test("arbitrateMany with mode future (only new events)", async () => {
     0n,
   );
 
-  const obligationAbi = parseAbiParameters("(string item)");
+  const obligationAbi = parseAbiParameters("(string item, bytes32 schema)");
 
   // Start listening with mode: "future" - only new events
   const { decisions, unwatch } = await testContext.bob.client.arbiters.general.trustedOracle.arbitrateMany(
@@ -270,7 +270,7 @@ test("arbitrateMany with mode future (only new events)", async () => {
   expect(decisions.length).toBe(0); // Should not arbitrate past
 
   // Create new fulfillment
-  const { attested: fulfillment } = await testContext.bob.client.stringObligation.doObligation("good", escrow.uid);
+  const { attested: fulfillment } = await testContext.bob.client.stringObligation.doObligation("good", undefined, escrow.uid);
 
   // Request arbitration
   await testContext.bob.client.arbiters.general.trustedOracle.requestArbitration(
@@ -304,9 +304,9 @@ test("arbitrateMany with escrow demand extraction", async () => {
     0n,
   );
 
-  const { attested: fulfillment1 } = await testContext.bob.client.stringObligation.doObligation("foo", escrow.uid);
+  const { attested: fulfillment1 } = await testContext.bob.client.stringObligation.doObligation("foo", undefined, escrow.uid);
 
-  const { attested: fulfillment2 } = await testContext.bob.client.stringObligation.doObligation("bar", escrow.uid);
+  const { attested: fulfillment2 } = await testContext.bob.client.stringObligation.doObligation("bar", undefined, escrow.uid);
 
   // Request arbitration for both
   const requestHash1 = await testContext.bob.client.arbiters.general.trustedOracle.requestArbitration(
@@ -328,7 +328,7 @@ test("arbitrateMany with escrow demand extraction", async () => {
     hash: requestHash2,
   });
 
-  const obligationAbi = parseAbiParameters("(string item)");
+  const obligationAbi = parseAbiParameters("(string item, bytes32 schema)");
   const demandAbi = parseAbiParameters("(string mockDemand)");
 
   const { decisions } = await testContext.bob.client.arbiters.general.trustedOracle.arbitrateMany(async ({ attestation, demand }) => {
@@ -367,7 +367,7 @@ test("waitForArbitration with existing decision", async () => {
     0n,
   );
 
-  const { attested: fulfillment } = await testContext.bob.client.stringObligation.doObligation("foo", escrow.uid);
+  const { attested: fulfillment } = await testContext.bob.client.stringObligation.doObligation("foo", undefined, escrow.uid);
 
   // Request arbitration
   const requestHash = await testContext.bob.client.arbiters.general.trustedOracle.requestArbitration(
@@ -380,7 +380,7 @@ test("waitForArbitration with existing decision", async () => {
   });
 
   // Make arbitration decision
-  const obligationAbi = parseAbiParameters("(string item)");
+  const obligationAbi = parseAbiParameters("(string item, bytes32 schema)");
   const { decisions } = await testContext.bob.client.arbiters.general.trustedOracle.arbitrateMany(async ({ attestation }) => {
     const obligation = testContext.bob.client.extractObligationData(obligationAbi, attestation);
     return obligation[0].item === "foo";
@@ -420,7 +420,7 @@ test("waitForArbitration with new decision", async () => {
     0n,
   );
 
-  const { attested: fulfillment } = await testContext.bob.client.stringObligation.doObligation("foo", escrow.uid);
+  const { attested: fulfillment } = await testContext.bob.client.stringObligation.doObligation("foo", undefined, escrow.uid);
 
   // Request arbitration
   const requestHash = await testContext.bob.client.arbiters.general.trustedOracle.requestArbitration(
@@ -440,7 +440,7 @@ test("waitForArbitration with new decision", async () => {
 
   // Make arbitration decision after a short delay
   setTimeout(async () => {
-    const obligationAbi = parseAbiParameters("(string item)");
+    const obligationAbi = parseAbiParameters("(string item, bytes32 schema)");
     await testContext.bob.client.arbiters.general.trustedOracle.arbitrateMany(async ({ attestation }) => {
       const obligation = testContext.bob.client.extractObligationData(obligationAbi, attestation);
       return obligation[0].item === "foo";
@@ -471,7 +471,7 @@ test("waitForArbitration with false decision", async () => {
     0n,
   );
 
-  const { attested: fulfillment } = await testContext.bob.client.stringObligation.doObligation("bad", escrow.uid);
+  const { attested: fulfillment } = await testContext.bob.client.stringObligation.doObligation("bad", undefined, escrow.uid);
 
   // Request arbitration
   const requestHash = await testContext.bob.client.arbiters.general.trustedOracle.requestArbitration(
@@ -491,7 +491,7 @@ test("waitForArbitration with false decision", async () => {
 
   // Make arbitration decision with false result
   setTimeout(async () => {
-    const obligationAbi = parseAbiParameters("(string item)");
+    const obligationAbi = parseAbiParameters("(string item, bytes32 schema)");
     await testContext.bob.client.arbiters.general.trustedOracle.arbitrateMany(async ({ attestation }) => {
       const obligation = testContext.bob.client.extractObligationData(obligationAbi, attestation);
       return obligation[0].item === "foo"; // This will be false for "bad"
@@ -522,7 +522,7 @@ test("waitForArbitration integration with escrow collection", async () => {
     0n,
   );
 
-  const { attested: fulfillment } = await testContext.bob.client.stringObligation.doObligation("foo", escrow.uid);
+  const { attested: fulfillment } = await testContext.bob.client.stringObligation.doObligation("foo", undefined, escrow.uid);
 
   // Request arbitration
   const requestHash = await testContext.bob.client.arbiters.general.trustedOracle.requestArbitration(
@@ -542,7 +542,7 @@ test("waitForArbitration integration with escrow collection", async () => {
 
   // Make arbitration decision
   setTimeout(async () => {
-    const obligationAbi = parseAbiParameters("(string item)");
+    const obligationAbi = parseAbiParameters("(string item, bytes32 schema)");
     await testContext.bob.client.arbiters.general.trustedOracle.arbitrateMany(async ({ attestation }) => {
       const obligation = testContext.bob.client.extractObligationData(obligationAbi, attestation);
       return obligation[0].item === "foo";
