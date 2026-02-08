@@ -4,7 +4,7 @@ import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { setupTestEnvironment, type TestContext } from "../utils/setup";
 import { teardownTestEnvironment } from "../utils/teardownTestEnvironment";
 
-const stringObligationAbi = parseAbiParameters("(string item)");
+const stringObligationAbi = parseAbiParameters("(string item, bytes32 schema)");
 
 let testContext: TestContext;
 

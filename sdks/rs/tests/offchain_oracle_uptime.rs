@@ -169,7 +169,7 @@ async fn setup_escrow_with_uptime_demand(
     let fulfillment_receipt = test
         .bob_client
         .string_obligation()
-        .do_obligation(service_url.clone(), Some(escrow_uid))
+        .do_obligation(service_url.clone(), None, Some(escrow_uid))
         .await?;
     let fulfillment_uid = DefaultAlkahestClient::get_attested_event(fulfillment_receipt)?.uid;
 

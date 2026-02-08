@@ -1,4 +1,5 @@
 pub mod attestation;
+pub mod commit_reveal;
 pub mod erc20;
 pub mod erc721;
 pub mod erc1155;

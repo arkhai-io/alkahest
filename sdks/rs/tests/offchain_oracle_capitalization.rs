@@ -104,7 +104,7 @@ async fn run_synchronous_oracle_capitalization_example(test: &TestContext) -> ey
     let fulfillment_receipt = test
         .bob_client
         .string_obligation()
-        .do_obligation("tr '[:lower:]' '[:upper:]'".to_owned(), Some(escrow_uid))
+        .do_obligation("tr '[:lower:]' '[:upper:]'".to_owned(), None, Some(escrow_uid))
         .await?;
     let fulfillment_uid = DefaultAlkahestClient::get_attested_event(fulfillment_receipt)?.uid;
 

@@ -114,7 +114,7 @@ describe("StringObligation Tests", () => {
     test("testDecode", async () => {
       // Create encoded data for testing
       const testString = "Test Decode Function";
-      const encodedData = encodeAbiParameters(parseAbiParameters("(string item)"), [{ item: testString }]);
+      const encodedData = encodeAbiParameters(parseAbiParameters("(string item, bytes32 schema)"), [{ item: testString, schema: "0x0000000000000000000000000000000000000000000000000000000000000000" }]);
 
       // Use the decode function
       const decoded = aliceClient.stringObligation.decode(encodedData);
@@ -135,8 +135,8 @@ describe("StringObligation Tests", () => {
       };
 
       // Create encoded data for testing
-      const encodedData = encodeAbiParameters(parseAbiParameters("(string item)"), [
-        { item: JSON.stringify(testJsonData) },
+      const encodedData = encodeAbiParameters(parseAbiParameters("(string item, bytes32 schema)"), [
+        { item: JSON.stringify(testJsonData), schema: "0x0000000000000000000000000000000000000000000000000000000000000000" },
       ]);
 
       // Use the decodeJson function
@@ -152,7 +152,7 @@ describe("StringObligation Tests", () => {
         baz: 123,
       };
 
-      const encodedData = encodeAbiParameters(parseAbiParameters("(string item)"), [{ item: JSON.stringify(data) }]);
+      const encodedData = encodeAbiParameters(parseAbiParameters("(string item, bytes32 schema)"), [{ item: JSON.stringify(data), schema: "0x0000000000000000000000000000000000000000000000000000000000000000" }]);
 
       const TestSchema = z.object({
         foo: z.string(),
@@ -205,7 +205,7 @@ describe("StringObligation Tests", () => {
         baz: 123,
       };
 
-      const encodedData = encodeAbiParameters(parseAbiParameters("(string item)"), [{ item: JSON.stringify(data) }]);
+      const encodedData = encodeAbiParameters(parseAbiParameters("(string item, bytes32 schema)"), [{ item: JSON.stringify(data), schema: "0x0000000000000000000000000000000000000000000000000000000000000000" }]);
 
       const TestType = type({
         foo: "string",

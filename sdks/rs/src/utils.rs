@@ -11,7 +11,8 @@ use alloy::{
 use crate::{
     AlkahestClient, DefaultExtensionConfig,
     clients::{
-        arbiters::ArbitersAddresses, attestation::AttestationAddresses, erc20::Erc20Addresses,
+        arbiters::ArbitersAddresses, attestation::AttestationAddresses,
+        commit_reveal_obligation::CommitRevealObligationAddresses, erc20::Erc20Addresses,
         erc721::Erc721Addresses, erc1155::Erc1155Addresses, native_token::NativeTokenAddresses,
         string_obligation::StringObligationAddresses, token_bundle::TokenBundleAddresses,
     },
@@ -286,6 +287,10 @@ pub async fn setup_test_environment() -> eyre::Result<TestContext> {
         string_obligation_addresses: StringObligationAddresses {
             eas: eas.address().clone(),
             obligation: string_obligation.address().clone(),
+        },
+        commit_reveal_obligation_addresses: CommitRevealObligationAddresses {
+            eas: eas.address().clone(),
+            obligation: Address::ZERO, // CommitRevealObligation not deployed in test environment
         },
         erc20_addresses: Erc20Addresses {
             eas: eas.address().clone(),

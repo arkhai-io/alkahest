@@ -152,6 +152,7 @@ describe("Client Tests", () => {
       // The escrow.uid is passed as refUID to link the fulfillment to the escrow
       const { attested: fulfillmentEvent } = await bobClient.stringObligation.doObligation(
         "fulfillment data",
+        undefined,
         escrowData.uid,
       );
       const fulfillmentUid = fulfillmentEvent.uid as `0x${string}`;

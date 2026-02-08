@@ -7,8 +7,8 @@ use alloy::{
     sol_types::SolEvent,
 };
 use extensions::{
-    AlkahestExtension, BaseExtensions, HasArbiters, HasAttestation, HasErc20, HasErc721,
-    HasErc1155, HasStringObligation, HasTokenBundle,
+    AlkahestExtension, BaseExtensions, HasArbiters, HasAttestation, HasCommitReveal, HasErc20,
+    HasErc721, HasErc1155, HasStringObligation, HasTokenBundle,
 };
 use futures_util::StreamExt;
 use serde::{Deserialize, Serialize};
@@ -17,7 +17,8 @@ use std::sync::Arc;
 use types::{SharedPublicProvider, SharedWalletProvider};
 
 use crate::clients::{
-    arbiters::ArbitersAddresses, attestation::AttestationAddresses, erc20::Erc20Addresses,
+    arbiters::ArbitersAddresses, attestation::AttestationAddresses,
+    commit_reveal_obligation::CommitRevealObligationAddresses, erc20::Erc20Addresses,
     erc721::Erc721Addresses, erc1155::Erc1155Addresses, native_token::NativeTokenAddresses,
     string_obligation::StringObligationAddresses, token_bundle::TokenBundleAddresses,
 };
@@ -41,6 +42,7 @@ pub use clients::erc20::Erc20Contract;
 pub use clients::erc721::Erc721Contract;
 pub use clients::erc1155::Erc1155Contract;
 pub use clients::native_token::NativeTokenContract;
+pub use clients::commit_reveal_obligation::CommitRevealObligationContract;
 pub use clients::string_obligation::StringObligationContract;
 pub use clients::token_bundle::TokenBundleContract;
 pub use extensions::ContractModule;
@@ -92,6 +94,8 @@ pub struct DefaultExtensionConfig {
     pub attestation_addresses: AttestationAddresses,
     /// Addresses for string obligation contracts
     pub string_obligation_addresses: StringObligationAddresses,
+    /// Addresses for commit-reveal obligation contracts
+    pub commit_reveal_obligation_addresses: CommitRevealObligationAddresses,
 }
 
 impl Default for DefaultExtensionConfig {
@@ -292,6 +296,22 @@ impl<Extensions: AlkahestExtension> AlkahestClient<Extensions> {
         match contract {
             StringObligationContract::Eas => self.string_obligation().addresses.eas,
             StringObligationContract::Obligation => self.string_obligation().addresses.obligation,
+        }
+    }
+
+    /// Get the address of a specific CommitRevealObligation contract
+    pub fn commit_reveal_obligation_address(
+        &self,
+        contract: CommitRevealObligationContract,
+    ) -> Address
+    where
+        Extensions: extensions::HasCommitReveal,
+    {
+        match contract {
+            CommitRevealObligationContract::Eas => self.commit_reveal().addresses.eas,
+            CommitRevealObligationContract::Obligation => {
+                self.commit_reveal().addresses.obligation
+            }
         }
     }
 

@@ -65,7 +65,7 @@ mod tests {
         let receipt = test
             .bob_client
             .string_obligation()
-            .do_obligation(statement.to_string(), Some(ref_uid))
+            .do_obligation(statement.to_string(), None, Some(ref_uid))
             .await?;
         Ok(DefaultAlkahestClient::get_attested_event(receipt)?.uid)
     }

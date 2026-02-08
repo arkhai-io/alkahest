@@ -115,6 +115,7 @@ async fn test_custom_configuration() -> Result<()> {
         native_token_addresses: BASE_SEPOLIA_ADDRESSES.native_token_addresses,
         attestation_addresses: BASE_SEPOLIA_ADDRESSES.attestation_addresses,
         string_obligation_addresses: BASE_SEPOLIA_ADDRESSES.string_obligation_addresses,
+        commit_reveal_obligation_addresses: BASE_SEPOLIA_ADDRESSES.commit_reveal_obligation_addresses,
     };
 
     let client_with_custom: DefaultAlkahestClient = AlkahestClient::with_base_extensions(

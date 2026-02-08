@@ -19,7 +19,7 @@ type ShellOracleDemand = {
   test_cases: ShellTestCase[];
 };
 
-const stringObligationAbi = parseAbiParameters("(string item)");
+const stringObligationAbi = parseAbiParameters("(string item, bytes32 schema)");
 const shellDemandAbi = parseAbiParameters("(bytes payload)");
 
 beforeEach(async () => {
@@ -60,6 +60,7 @@ test("synchronous offchain oracle capitalization flow", async () => {
 
   const { attested: fulfillment } = await testContext.bob.client.stringObligation.doObligation(
     "tr '[:lower:]' '[:upper:]'",
+    undefined,
     escrow.uid,
   );
 
