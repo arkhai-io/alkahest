@@ -11,6 +11,8 @@ pub mod oracle {
 
 // Re-export obligation modules for backwards compatibility
 pub use obligations::attestation;
+pub use obligations::commit_reveal;
+pub use obligations::commit_reveal as commit_reveal_obligation;
 pub use obligations::erc1155;
 pub use obligations::erc20;
 pub use obligations::erc721;

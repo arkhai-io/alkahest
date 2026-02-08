@@ -3,7 +3,8 @@ use alloy::primitives::{Address, address};
 use crate::{
     DefaultExtensionConfig,
     clients::{
-        arbiters::ArbitersAddresses, attestation::AttestationAddresses, erc20::Erc20Addresses,
+        arbiters::ArbitersAddresses, attestation::AttestationAddresses,
+        commit_reveal_obligation::CommitRevealObligationAddresses, erc20::Erc20Addresses,
         erc721::Erc721Addresses, erc1155::Erc1155Addresses, native_token::NativeTokenAddresses,
         string_obligation::StringObligationAddresses, token_bundle::TokenBundleAddresses,
     },
@@ -42,6 +43,10 @@ pub const BASE_SEPOLIA_ADDRESSES: DefaultExtensionConfig = DefaultExtensionConfi
     string_obligation_addresses: StringObligationAddresses {
         eas: address!("0x4200000000000000000000000000000000000021"),
         obligation: address!("0x544873C22A3228798F91a71C4ef7a9bFe96E7CE0"),
+    },
+    commit_reveal_obligation_addresses: CommitRevealObligationAddresses {
+        eas: address!("0x4200000000000000000000000000000000000021"),
+        obligation: address!("0xD1e0756d7F8508aDf9b12B5039DcaD12b1e95a22"),
     },
     erc20_addresses: Erc20Addresses {
         eas: address!("0x4200000000000000000000000000000000000021"),
@@ -122,6 +127,10 @@ pub const FILECOIN_CALIBRATION_ADDRESSES: DefaultExtensionConfig = DefaultExtens
     string_obligation_addresses: StringObligationAddresses {
         eas: address!("0x3c79a0225380fB6F3CB990FfC4E3D5aF4546b524"),
         obligation: address!("0x66c3f78258823b9b899ab14b11e1dcf978c060d7"),
+    },
+    commit_reveal_obligation_addresses: CommitRevealObligationAddresses {
+        eas: address!("0x3c79a0225380fB6F3CB990FfC4E3D5aF4546b524"),
+        obligation: address!("0x931b35f81e7a585317f8cf8b45795f403eefe468"),
     },
     erc20_addresses: Erc20Addresses {
         eas: address!("0x3c79a0225380fB6F3CB990FfC4E3D5aF4546b524"),

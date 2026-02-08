@@ -1,6 +1,7 @@
 import { makeArbitersClient } from "./clients/arbiters";
 import {
   makeAttestationClient,
+  makeCommitRevealObligationClient,
   makeErc20Client,
   makeErc721Client,
   makeErc1155Client,
@@ -8,6 +9,7 @@ import {
   makeStringObligationClient,
   makeTokenBundleClient,
   pickAttestationAddresses,
+  pickCommitRevealAddresses,
   pickErc20Addresses,
   pickErc721Addresses,
   pickErc1155Addresses,
@@ -45,4 +47,7 @@ export const makeDefaultExtension = (client: any) => ({
 
   /** Utilities for StringObligation */
   stringObligation: makeStringObligationClient(client.viemClient, pickStringAddresses(client.contractAddresses)),
+
+  /** Utilities for CommitRevealObligation */
+  commitReveal: makeCommitRevealObligationClient(client.viemClient, pickCommitRevealAddresses(client.contractAddresses)),
 });
