@@ -1,10 +1,16 @@
 # alkahest-ts
 
-## usage
+TypeScript SDK for [Alkahest](https://github.com/arkhai-io/alkahest), a library and ecosystem of contracts for conditional peer-to-peer escrow. Built on [viem](https://viem.sh/).
 
-1. install Alkahest SDK and [Viem](https://viem.sh/) `npm install alkahest-ts viem`
+## Installation
 
-2. initialize a client with a viem wallet. It must be initialized with an account, chain, and transport. only Base Sepolia is supported for now.
+```bash
+npm install alkahest-ts viem
+```
+
+## Usage
+
+Initialize a client with a viem wallet. The client auto-detects contract addresses for supported chains (Base Sepolia, Filecoin Calibration).
 
 ```ts
 import { makeClient } from "alkahest-ts";
@@ -14,205 +20,113 @@ import { baseSepolia } from "viem/chains";
 
 const client = makeClient(
   createWalletClient({
-    account: privateKeyToAccount(process.env.PRIVKEY_ALICE as `0x${string}`, {
-      nonceManager, // automatic nonce management
+    account: privateKeyToAccount(process.env.PRIVKEY as `0x${string}`, {
+      nonceManager,
     }),
     chain: baseSepolia,
-    transport: http(process.env.RPC_URL as string), // Base Sepolia RPC URL
+    transport: http(process.env.RPC_URL as string),
   }),
 );
 ```
 
-## examples
+## Examples
 
-### trade erc20 for erc20
+### Trade ERC20 for ERC20
+
+Uses barter utils to combine escrow creation and payment fulfillment into simple calls.
 
 ```ts
-// approve escrow contract to spend tokens
-const escrowApproval = await clientBuyer.erc20.approve(
-  { address: usdc, value: 10n },
-  contractAddresses["Base Sepolia"].erc20EscrowObligation,
-);
-console.log(escrowApproval);
+import { parseUnits } from "viem";
 
-// deposit 10usdc into escrow, demanding 10eurc, with no expiration
-const escrow = await clientBuyer.erc20.buyErc20ForErc20(
-  { address: usdc, value: 10n },
-  { address: eurc, value: 10n },
-  0n,
-);
-console.log(escrow);
+const usdc = "0x036CbD53842c5426634e7929541eC2318f3dCF7e" as const;
+const eurc = "0x808456652fdb597867f38412077A9182bf77359F" as const;
 
-// approve payment contract to spend tokens
-const paymentApproval = await clientSeller.erc20.approve(
-  { address: eurc, value: 10n },
-  contractAddresses["Base Sepolia"].erc20PaymentObligation,
+// Alice: approve barter utils and deposit 10 USDC into escrow, demanding 10 EURC
+await clientAlice.erc20.util.approve(
+  { address: usdc, value: parseUnits("10", 6) },
+  "barter",
 );
-console.log(paymentApproval);
+const escrow = await clientAlice.erc20.barter.buyErc20ForErc20(
+  { address: usdc, value: parseUnits("10", 6) },
+  { address: eurc, value: parseUnits("10", 6) },
+  0n, // no expiration
+);
 
-// pay 10eurc for 10usdc (fulfill the buy order)
-const payment = await clientSeller.erc20.payErc20ForErc20(escrow.attested.uid);
-console.log(payment);
+// Bob: approve barter utils and fulfill the escrow by paying 10 EURC
+await clientBob.erc20.util.approve(
+  { address: eurc, value: parseUnits("10", 6) },
+  "barter",
+);
+const payment = await clientBob.erc20.barter.payErc20ForErc20(
+  escrow.attested.uid,
+);
 ```
 
-### trade erc20 for custom demand
+### Trade ERC20 for custom demand
+
+Uses TrustedOracleArbiter to delegate fulfillment validation to an off-chain oracle, and StringObligation for the fulfillment.
 
 ```ts
-// the example will use JobResultObligation to demand a string to be capitalized
-// but JobResultObligation is generic enough to represent much more (a db query, a Dockerfile...)
-// see https://github.com/CoopHive/alkahest-mocks/blob/main/src/Statements/JobResultObligation.sol
-//
-// for custom cases, you'll have to implement your own arbiter
-//
-// in the example, we'll use TrustedPartyArbiter and TrivialArbiter
-// to make sure the result is from a particular trusted party,
-// without actually validating the result
-// see https://github.com/CoopHive/alkahest-mocks/blob/main/src/Validators/TrustedPartyArbiter.sol
-// and https://github.com/CoopHive/alkahest-mocks/blob/main/src/Validators/TrivialArbiter.sol
+import { encodeAbiParameters, parseAbiParameters, parseUnits } from "viem";
 
-// construct custom demand. note that this could be anything, and is determined by the arbiter.
-// since our base arbiter is TrivialArbiter, which doesn't actually decode DemandData,
-// the format doesn't matter. though the seller and buyer do still have to agree on it
-// so that the seller can properly fulfill the demand.
-// struct DemandData {
-//     string query;
-// }
-const baseDemand = encodeAbiParameters(parseAbiParameters("(string query)"), [
-  { query: "hello world" },
-]);
+const usdc = "0x036CbD53842c5426634e7929541eC2318f3dCF7e" as const;
 
-// we use TrustedPartyArbiter to wrap the base demand. This actually does decode DemandData,
-// and we use the DemandData format it defines,
-// to demand that only our trusted seller can fulfill the demand.
-// if the baseDemand were something other than TrivialArbiter,
-// it would be an additional check on the fulfillment.
-// many arbiters can be stacked according to this pattern.
-// TrustedPartyArbiter.DemandData:
-// struct DemandData {
-//     address creator;
-//     address baseArbiter;
-//     bytes baseDemand;
-// }
-// if using a custom Arbiter not supported by the SDK, you can use encodeAbiParameters directly,
-// like we did for the baseDemand
-const demand = clientBuyer.arbiters.encodeTrustedPartyDemand({
-  creator: clientSeller.address,
-  baseArbiter: contractAddresses["Base Sepolia"].trivialArbiter,
-  baseDemand,
-});
-
-// approve escrow contract to spend tokens
-const escrowApproval = await clientBuyer.erc20.approve(
-  { address: usdc, value: 10n },
-  contractAddresses["Base Sepolia"].erc20EscrowObligation,
-);
-clientBuyer.viemClient.waitForTransactionReceipt({ hash: escrowApproval });
-console.log("escrow approval: ", escrowApproval);
-
-// make escrow with generic escrow function,
-// passing in TrustedPartyArbiter's address and our custom demand,
-// and no expiration (would be a future unix timstamp in seconds if used)
-const escrow = await clientBuyer.erc20.buyWithErc20(
-  { address: usdc, value: 10n },
-  { arbiter: contractAddresses["Base Sepolia"].trustedPartyArbiter, demand },
-  0n,
-);
-console.log("escrow: ", escrow);
-
-// now the seller manually decodes the statement and demand
-// and creates a StringResultObligation
-// and manually collects payment
-const buyStatement = await clientSeller.getAttestation(escrow.attested.uid);
-// ERC20EscrowObligation.StatementData
-// struct StatementData {
-//     address token;
-//     uint256 amount;
-//     address arbiter;
-//     bytes demand;
-// }
-const decodedStatement = clientSeller.erc20.decodeEscrowObligation(
-  buyStatement.data,
-);
-// TrustedPartyArbiter.DemandData
-// if using a custom arbiter, you can instead use decodeAbiParameters directly like below
-const decodedDemand = clientSeller.arbiters.decodeTrustedPartyDemand(
-  decodedStatement.demand,
-);
-// custom base demand described above
-const decodedBaseDemand = decodeAbiParameters(
+// Encode the inner demand data (application-specific; agreed upon by buyer and seller)
+const innerDemand = encodeAbiParameters(
   parseAbiParameters("(string query)"),
-  decodedDemand.baseDemand,
-)[0];
+  [{ query: "capitalize hello world" }],
+);
 
-// uppercase string for the example;
-// this could be anything as agreed upon between buyer and seller
-// (running a Docker job, executing a DB query...)
-// as long as the job "spec" is agreed upon between buyer and seller,
-// and the "query" is contained in the demand
-const result = decodedBaseDemand.query.toUpperCase();
-console.log("result: ", result);
-
-// manually make result statement
-
-// JobResultObligation.StatementData:
-// struct StatementData {
-//     string result;
-// }
-//
-// JobResultObligation.makeStatement
-// function makeStatement(
-//     StatementData calldata data,
-//     bytes32 refUID
-// ) public returns (bytes32)
-const resultHash = await clientSeller.viemClient.writeContract({
-  address: contractAddresses["Base Sepolia"].jobResultObligation,
-  abi: jobResultObligationAbi.abi,
-  functionName: "makeStatement",
-  args: [
-    { result },
-    "0x0000000000000000000000000000000000000000000000000000000000000000", // bytes32 0
-  ],
+// Encode the TrustedOracleArbiter demand, naming Charlie as the oracle
+const demand = clientAlice.arbiters.general.trustedOracle.encodeDemand({
+  oracle: charlieAddress,
+  data: innerDemand,
 });
-console.log(resultHash);
-const resultStatement = await clientSeller.getAttestationFromTxHash(resultHash);
-console.log("result statement: ", resultStatement);
 
-// and collect the payment from escrow
-const collection = await clientSeller.erc20.collectEscrow(
+// Alice: deposit USDC into escrow with the custom demand
+const escrow = await clientAlice.erc20.escrow.nonTierable.approveAndCreate(
+  { address: usdc, value: parseUnits("100", 6) },
+  {
+    arbiter: clientAlice.contractAddresses.trustedOracleArbiter,
+    demand,
+  },
+  BigInt(Math.floor(Date.now() / 1000) + 86400), // 24h expiration
+);
+
+// Bob: fulfill the demand with a StringObligation attestation
+const fulfillment = await clientBob.stringObligation.doObligation(
+  "HELLO WORLD", // the computed result
+  undefined,     // schema (optional)
+  escrow.attested.uid, // reference to the escrow being fulfilled
+);
+
+// Charlie: arbitrate the result (or use listenAndArbitrate for automatic polling)
+await clientCharlie.arbiters.general.trustedOracle.arbitrate(
+  fulfillment.attested.uid,
+  demand,
+  true, // decision: valid
+);
+
+// Bob: collect the escrow
+await clientBob.erc20.escrow.nonTierable.collect(
   escrow.attested.uid,
-  resultStatement.uid,
+  fulfillment.attested.uid,
 );
 
-console.log("collection: ", collection);
-
-// meanwhile, the buyer can wait for fulfillment of her escrow.
-// if called after fulfillment, like in this case, it will
-// return the fulfilling statement immediately
-const fulfillment = await clientBuyer.waitForFulfillment(
-  contractAddresses["Base Sepolia"].erc20EscrowObligation,
+// Alice: wait for fulfillment (useful if running concurrently)
+const result = await clientAlice.waitForFulfillment(
+  clientAlice.contractAddresses.erc20EscrowObligation,
   escrow.attested.uid,
 );
-console.log("fulfillment: ", fulfillment);
-
-// and extract the result from the fulfillment statement
-if (!fulfillment.fulfillment) throw new Error("invalid fulfillment");
-const fulfillmentData = await clientBuyer.getAttestation(
-  fulfillment.fulfillment,
-);
-const decodedResult = decodeAbiParameters(
-  parseAbiParameters("(string result)"),
-  fulfillmentData.data,
-)[0];
-console.log("decoded result: ", decodedResult);
 ```
 
-see [tests](https://github.com/CoopHive/alkahest-ts/blob/main/tests/tradeErc20.test.ts) for full example.
+See the [docs](../../docs/) for more detailed guides, including composing arbiters and building off-chain oracle validators.
 
 ## Development
 
 ### Running Tests with Anvil
 
-Tests can be run using an Anvil fork of Base Sepolia instead of connecting directly to the network. This makes tests faster and more reliable.
+Tests run against an Anvil fork of Base Sepolia.
 
 1. Set up your environment:
    ```
@@ -233,10 +147,8 @@ Tests can be run using an Anvil fork of Base Sepolia instead of connecting direc
    ```
    npm run anvil
    ```
-   
-### Local Development Client
 
-When developing locally with Anvil, you can create a client that connects to the local Anvil instance:
+### Local Development Client
 
 ```ts
 import { createWalletClient, http } from "viem";
@@ -244,7 +156,6 @@ import { privateKeyToAccount, nonceManager } from "viem/accounts";
 import { makeClient } from "alkahest-ts";
 import { anvilChain, ANVIL_ACCOUNTS } from "./path/to/anvil";
 
-// Connect using Anvil's default accounts
 const client = makeClient(
   createWalletClient({
     account: privateKeyToAccount(ANVIL_ACCOUNTS.ALICE.privateKey, {

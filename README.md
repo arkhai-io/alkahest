@@ -3,7 +3,7 @@
 
 # Alkahest
 
-**Contract library and SDKs for validated peer-to-peer escrow**
+**Contract library and SDKs for conditional peer-to-peer escrow**
 
 ![Solidity](https://img.shields.io/badge/solidity-0.8.27-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.10+-blue.svg)
@@ -13,13 +13,17 @@
 
 </div>
 
-Alkahest is a library and ecosystem for peer-to-peer exchange.
+Alkahest is a library and ecosystem of contracts for conditional peer-to-peer escrow. It contains three main types of contracts:
 
-Statements represent obligations within a peer-to-peer agreement, while validators represent conditions under which statements are considered valid.
-
-These compose with each other to eventually enable trading anything for anything else, with flexible per-deal assurance guarantees.
+- **Escrow contracts** conditionally guarantee an on-chain action (usually a token transfer)
+- **Arbiter contracts** represent the conditions on which escrows are released, and can be composed via AllArbiter and AnyArbiter
+- **Obligation contracts** produce [EAS](https://attest.org/) attestations that represent the fulfillments to escrows, and which are checked by arbiter contracts. Escrow contracts are also obligation contracts.
 
 Learn more at [Alkahest Docs](https://www.arkhai.io/docs).
+
+## Security
+
+Alkahest has been audited by [Zellic](https://www.zellic.io/). The full audit report is available [here](https://github.com/Zellic/publications/blob/master/Arkhai%20Alkahest%20-%20Zellic%20Audit%20Report.pdf).
 
 ## Repository Structure
 
@@ -65,13 +69,13 @@ Each SDK has its own setup and usage instructions:
 
 Comprehensive guides and tutorials are available in the [docs/](docs/) directory:
 
-- **[Escrow Flow (pt 1 - Token Trading)](<docs/Escrow%20Flow%20(pt%201%20-%20Token%20Trading).md>)** - Learn how to trade tokens using escrow
-- **[Escrow Flow (pt 2 - Job Trading)](<docs/Escrow%20Flow%20(pt%202%20-%20Job%20Trading).md>)** - Trade computational work for tokens
-- **[Escrow Flow (pt 3 - Composing Demands)](<docs/Escrow%20Flow%20(pt%203%20-%20Composing%20Demands).md>)** - Combine multiple obligations
-- **[Writing Arbiters (pt 1 - On-chain Arbiters)](<docs/Writing%20Arbiters%20(pt%201%20-%20On-chain%20Arbiters).md>)** - Create on-chain validation logic
-- **[Writing Arbiters (pt 2 - Off-chain Oracles)](<docs/Writing%20Arbiters%20(pt%202%20-%20Off-chain%20Oracles)%20(Python).md>)** - Build off-chain oracles (Python, Rust, TypeScript variants)
+- **[Escrow Flow (pt 1 - Token Trading)](<docs/Escrow%20Flow%20(pt%201%20-%20Token%20Trading).md>)** - Trade tokens for tokens using escrow and payment obligations
+- **[Escrow Flow (pt 2 - Job Trading)](<docs/Escrow%20Flow%20(pt%202%20-%20Job%20Trading).md>)** - Escrow with off-chain validation via TrustedOracleArbiter
+- **[Escrow Flow (pt 3 - Composing Demands)](<docs/Escrow%20Flow%20(pt%203%20-%20Composing%20Demands).md>)** - Composing arbiter conditions with AllArbiter and AnyArbiter
+- **[Writing Arbiters (pt 1 - On-chain Arbiters)](<docs/Writing%20Arbiters%20(pt%201%20-%20On-chain%20Arbiters).md>)** - Create custom on-chain validation logic
+- **[Writing Arbiters (pt 2 - Off-chain Oracles)](<docs/Writing%20Arbiters%20(pt%202%20-%20Off-chain%20Oracles)%20(Python).md>)** - Build off-chain oracle validators ([Python](<docs/Writing%20Arbiters%20(pt%202%20-%20Off-chain%20Oracles)%20(Python).md>), [Rust](<docs/Writing%20Arbiters%20(pt%202%20-%20Off-chain%20Oracles)%20(Rust).md>), [TypeScript](<docs/Writing%20Arbiters%20(pt%202%20-%20Off-chain%20Oracles)%20(TypeScript).md>))
 - **[Writing Escrow Contracts](docs/Writing%20Escrow%20Contracts.md)** - Create custom escrow obligations
-- **[Writing Fulfillment Contracts](docs/Writing%20Fulfillment%20Contracts.md)** - Create custom payment obligations
+- **[Writing Fulfillment Contracts](docs/Writing%20Fulfillment%20Contracts.md)** - Create custom fulfillment obligations
 
 ## Development
 
