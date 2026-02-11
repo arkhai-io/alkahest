@@ -3,33 +3,41 @@
 
 # Alkahest
 
-**Contract library and SDKs for validated peer-to-peer escrow**
+**Contract library and SDKs for conditional peer-to-peer escrow**
 
 ![Python](https://img.shields.io/badge/python-3.10+-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-yellow.svg)
 
 </div>
 
-Alkahest is a library and ecosystem for peer-to-peer exchange.
+Alkahest is a library and ecosystem of contracts for conditional peer-to-peer escrow. It contains three main types of contracts:
 
-Statements represent obligations within a peer-to-peer agreement, while validators represent conditions under which statements are considered valid.
-
-These compose with each other to eventually enable trading anything for anything else, with flexible per-deal assurance guarantees.
+- **Escrow contracts** conditionally guarantee an on-chain action (usually a token transfer)
+- **Arbiter contracts** represent the conditions on which escrows are released, and can be composed via AllArbiter and AnyArbiter
+- **Obligation contracts** produce [EAS](https://attest.org/) attestations that represent the fulfillments to escrows, and which are checked by arbiter contracts. Escrow contracts are also obligation contracts.
 
 Learn more at [Alkahest Docs](https://www.arkhai.io/docs).
+
+## Security
+
+Alkahest has been audited by [Zellic](https://www.zellic.io/). The full audit report is available [here](https://github.com/Zellic/publications/blob/master/Arkhai%20Alkahest%20-%20Zellic%20Audit%20Report.pdf).
 
 ## Contract Architecture
 
 ### Base Contracts
 
-- [IArbiter](src/IArbiter.sol) - Interface for decision-making logic
+- [IArbiter](src/IArbiter.sol) - Interface for arbiter validation logic
+- [ArbiterUtils](src/ArbiterUtils.sol) - Shared utilities for arbiter implementations
 - [BaseObligation](src/BaseObligation.sol) - Base contract for all obligation types
-- [BaseEscrowObligation](src/BaseEscrowObligation.sol) - Base contract for escrow-based obligations
+- [BaseEscrowObligation](src/BaseEscrowObligation.sol) - Base contract for non-tierable escrow obligations
+- [BaseEscrowObligationTierable](src/BaseEscrowObligationTierable.sol) - Base contract for tierable escrow obligations
 - [BaseAttester](src/BaseAttester.sol) - Base contract for EAS attestation integration
 
-### Obligations (Statements)
+### Obligations
 
-**Escrow Obligations** - Lock assets until conditions are met:
+**Escrow Obligations** - Lock assets until arbiter conditions are met:
+
+Non-tierable (one escrow per fulfillment):
 - [ERC20EscrowObligation](src/obligations/escrow/non-tierable/ERC20EscrowObligation.sol)
 - [ERC721EscrowObligation](src/obligations/escrow/non-tierable/ERC721EscrowObligation.sol)
 - [ERC1155EscrowObligation](src/obligations/escrow/non-tierable/ERC1155EscrowObligation.sol)
@@ -37,54 +45,84 @@ Learn more at [Alkahest Docs](https://www.arkhai.io/docs).
 - [TokenBundleEscrowObligation](src/obligations/escrow/non-tierable/TokenBundleEscrowObligation.sol)
 - [AttestationEscrowObligation](src/obligations/escrow/non-tierable/AttestationEscrowObligation.sol)
 
-**Payment Obligations** - Direct payment on fulfillment:
-- [ERC20PaymentObligation](src/obligations/ERC20PaymentObligation.sol)
-- [ERC721PaymentObligation](src/obligations/ERC721PaymentObligation.sol)
-- [ERC1155PaymentObligation](src/obligations/ERC1155PaymentObligation.sol)
-- [NativeTokenPaymentObligation](src/obligations/NativeTokenPaymentObligation.sol)
-- [TokenBundlePaymentObligation](src/obligations/TokenBundlePaymentObligation.sol)
+Tierable (a single fulfillment can claim multiple escrows whose conditions it satisfies):
+- [ERC20EscrowObligation](src/obligations/escrow/tierable/ERC20EscrowObligation.sol)
+- [ERC721EscrowObligation](src/obligations/escrow/tierable/ERC721EscrowObligation.sol)
+- [ERC1155EscrowObligation](src/obligations/escrow/tierable/ERC1155EscrowObligation.sol)
+- [NativeTokenEscrowObligation](src/obligations/escrow/tierable/NativeTokenEscrowObligation.sol)
+- [TokenBundleEscrowObligation](src/obligations/escrow/tierable/TokenBundleEscrowObligation.sol)
+- [AttestationEscrowObligation](src/obligations/escrow/tierable/AttestationEscrowObligation.sol)
 
-**Custom Result Obligations** - Non-token obligations:
-- [StringResultObligation](src/obligations/example/StringResultObligation.sol)
-- [ApiResultObligation](src/obligations/example/ApiResultObligation.sol)
-- [CryptoSignatureObligation](src/arbiters/example/CryptoSignatureObligation.sol)
+**Payment Obligations** - Transfer assets and produce attestations, used as fulfillments for escrows:
+- [ERC20PaymentObligation](src/obligations/payment/ERC20PaymentObligation.sol)
+- [ERC721PaymentObligation](src/obligations/payment/ERC721PaymentObligation.sol)
+- [ERC1155PaymentObligation](src/obligations/payment/ERC1155PaymentObligation.sol)
+- [NativeTokenPaymentObligation](src/obligations/payment/NativeTokenPaymentObligation.sol)
+- [TokenBundlePaymentObligation](src/obligations/payment/TokenBundlePaymentObligation.sol)
 
-### Arbiters (Validators)
+**Other Obligations** - Non-token obligations for flexible fulfillments:
+- [StringObligation](src/obligations/StringObligation.sol) - Attests arbitrary string data
+- [CommitRevealObligation](src/obligations/CommitRevealObligation.sol) - Commit-reveal scheme with anti-front-running
 
-**Trusted Arbiters**:
-- [TrustedOracleArbiter](src/arbiters/TrustedOracleArbiter.sol)
-- [ERC8004Arbiter](src/arbiters/ERC8004Arbiter.sol)
+**Example Obligations**:
+- [StringResultObligation](src/obligations/example/StringResultObligation.sol) - String result with schema field
+- [ApiResultObligation](src/obligations/example/ApiResultObligation.sol) - API call results
+- [VoteEscrowObligation](src/obligations/example/VoteEscrowObligation.sol) - Escrow that casts a governance vote on fulfillment
+- [RedisProvisionObligation](src/obligations/example/RedisProvisionObligation.sol) - Redis instance provisioning
 
-**Example Arbiters**:
-- [OptimisticStringValidator](src/arbiters/example/OptimisticStringValidator.sol)
-- [StringCapitalizer](src/arbiters/example/StringCapitalizer.sol)
-- [MajorityVoteArbiter](src/arbiters/example/MajorityVoteArbiter.sol)
-- [GameWinner](src/arbiters/example/GameWinner.sol)
+### Arbiters
+
+**General-Purpose Arbiters**:
+- [TrustedOracleArbiter](src/arbiters/TrustedOracleArbiter.sol) - Delegates decisions to a trusted off-chain oracle
+- [ERC8004Arbiter](src/arbiters/ERC8004Arbiter.sol) - ERC-8004 standard arbiter
+- [TrivialArbiter](src/arbiters/TrivialArbiter.sol) - Always approves (useful as a base arbiter)
+- [IntrinsicsArbiter](src/arbiters/IntrinsicsArbiter.sol) - Validates attestation intrinsic properties (not expired, not revoked)
+
+**Confirmation Arbiters** - Arbiter conditions based on explicit confirmation from a designated party:
+- [ExclusiveRevocableConfirmationArbiter](src/arbiters/confirmation/ExclusiveRevocableConfirmationArbiter.sol)
+- [ExclusiveUnrevocableConfirmationArbiter](src/arbiters/confirmation/ExclusiveUnrevocableConfirmationArbiter.sol)
+- [NonexclusiveRevocableConfirmationArbiter](src/arbiters/confirmation/NonexclusiveRevocableConfirmationArbiter.sol)
+- [NonexclusiveUnrevocableConfirmationArbiter](src/arbiters/confirmation/NonexclusiveUnrevocableConfirmationArbiter.sol)
 
 **Logical Combinators**:
-- [AllArbiter](src/arbiters/logical/AllArbiter.sol) - Requires all conditions
-- [AnyArbiter](src/arbiters/logical/AnyArbiter.sol) - Requires any condition
+- [AllArbiter](src/arbiters/logical/AllArbiter.sol) - Requires all child conditions to be met
+- [AnyArbiter](src/arbiters/logical/AnyArbiter.sol) - Requires any child condition to be met
 
-**Attestation Property Arbiters**:
-- Located in [src/arbiters/attestation-properties](src/arbiters/attestation-properties/)
-- Composing and non-composing variants for validating EAS attestation properties
+**Attestation Property Arbiters** - Validate individual properties of EAS attestations:
+- Located in [src/arbiters/attestation-properties/](src/arbiters/attestation-properties/) (attester, recipient, schema, time, expiration, refUID, revocable, uid)
 
-### Utilities
+**Example Arbiters**:
+- [StringCapitalizer](src/arbiters/example/StringCapitalizer.sol) - Validates that a string is correctly capitalized
+- [OptimisticStringValidator](src/arbiters/example/OptimisticStringValidator.sol) - Optimistic validation with challenge period
+- [CryptoSignatureObligation](src/arbiters/example/CryptoSignatureObligation.sol) - Validates cryptographic signatures
+- [MajorityVoteArbiter](src/arbiters/example/MajorityVoteArbiter.sol) - Requires majority agreement among voters
+- [GameWinner](src/arbiters/example/GameWinner.sol) - Validates game winner attestations from a trusted game contract
 
-- [TokenBundleBarterUtils](src/utils/TokenBundleBarterUtils.sol) - Helper for token bundle trades
-- [AttestationBarterUtils](src/utils/AttestationBarterUtils.sol) - Helper for attestation-based trades
-- [ERC20BarterUtils](src/utils/ERC20BarterUtils.sol) - Helper for ERC20 trades
+### Barter Utilities
 
-## Example Workflows
+Helper contracts that combine escrow creation and fulfillment collection into single transactions:
+- [ERC20BarterUtils](src/utils/ERC20BarterUtils.sol)
+- [ERC721BarterUtils](src/utils/ERC721BarterUtils.sol)
+- [ERC1155BarterUtils](src/utils/ERC1155BarterUtils.sol)
+- [NativeTokenBarterUtils](src/utils/NativeTokenBarterUtils.sol)
+- [TokenBundleBarterUtils](src/utils/TokenBundleBarterUtils.sol)
+- [AttestationBarterUtils](src/utils/AttestationBarterUtils.sol)
+
+## Integration Tests
 
 Integration tests demonstrate real-world usage patterns:
 
-- **Token Trading**: [ERC20BarterUtilsCrossToken.t.sol](test/integration/ERC20BarterUtilsCrossToken.t.sol) - Exchange different ERC20 tokens
-- **Token Bundles**: [TokenBundleBarterUtils.t.sol](test/integration/TokenBundleBarterUtils.t.sol) - Trade bundles of ERC20/721/1155
-- **String Processing**: [StringCapitalizer.t.sol](test/integration/StringCapitalizer.t.sol) - Buy string processing with ERC20
-- **Cryptographic Proofs**: [CryptoSignatureObligation.t.sol](test/integration/CryptoSignatureObligation.t.sol) - Validate signatures
-- **Majority Voting**: [MajorityVoteArbiter.t.sol](test/integration/MajorityVoteArbiter.t.sol) - Multi-party decision making
-- **Attestation Trading**: [AttestationBarterUtils.t.sol](test/integration/AttestationBarterUtils.t.sol) - Trade with EAS attestations
+- [ERC20BarterUtilsCrossToken](test/integration/ERC20BarterUtilsCrossToken.t.sol) - Trading different ERC20 tokens via barter utils
+- [ERC20BarterUtils](test/integration/ERC20BarterUtils.t.sol) - ERC20 barter utility flows
+- [TokenBundleBarterUtils](test/integration/TokenBundleBarterUtils.t.sol) - Trading bundles of mixed token types
+- [AttestationBarterUtils](test/integration/AttestationBarterUtils.t.sol) - Trading attestations for tokens
+- [AttestationEscrowObligation](test/integration/AttestationEscrowObligation.t.sol) - Escrowing attestations
+- [StringCapitalizer](test/integration/StringCapitalizer.t.sol) - Synchronous on-chain arbiter validating string capitalization
+- [CryptoSignatureObligation](test/integration/CryptoSignatureObligation.t.sol) - Arbiter validating cryptographic signatures to release escrow
+- [MajorityVoteArbiter](test/integration/MajorityVoteArbiter.t.sol) - Multi-party arbiter requiring majority agreement
+- [GameWinner](test/integration/GameWinner.t.sol) - Game winner attestations releasing escrowed rewards
+- [ERC8004](test/integration/ERC8004.t.sol) - ERC-8004 standard arbiter flow
+- [VoteEscrowObligation](test/integration/VoteEscrowObligation.t.sol) - Escrow that triggers a governance vote on fulfillment
 
 ## Running Tests
 
@@ -113,8 +151,6 @@ forge build
 Deployment scripts are located in [script/](script/). See [script/Deploy.s.sol](script/Deploy.s.sol) for the main deployment script.
 
 ### Current Deployments
-
-**⚠️ Alpha Status Disclaimer**: Alkahest is currently in alpha and undergoing security audits. The contracts are subject to change and may be updated in backwards-incompatible ways. Use at your own risk.
 
 Deployed contract addresses and transaction hashes are available for the following networks:
 
