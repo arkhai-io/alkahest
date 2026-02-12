@@ -35,6 +35,7 @@ impl CommitRevealObligationClient {
         })
     }
 
+    #[pyo3(signature = (payload, salt, schema, ref_uid=None))]
     pub fn do_obligation<'py>(
         &self,
         py: pyo3::Python<'py>,
