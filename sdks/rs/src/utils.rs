@@ -1,7 +1,7 @@
 use alloy::{
     network::{EthereumWallet, TxSigner},
     node_bindings::AnvilInstance,
-    primitives::{Address, Signature},
+    primitives::{Address, Signature, U256},
     providers::{
         ProviderBuilder, WsConnect,
     },
@@ -47,6 +47,7 @@ use crate::{
             // Payment obligations are at root of obligations module
             ERC20PaymentObligation, ERC721PaymentObligation, ERC1155PaymentObligation,
             NativeTokenPaymentObligation, TokenBundlePaymentObligation, StringObligation,
+            CommitRevealObligation,
         },
         utils::{
             AttestationBarterUtils, ERC20BarterUtils, ERC721BarterUtils, ERC1155BarterUtils,
@@ -167,11 +168,20 @@ pub async fn setup_test_environment() -> eyre::Result<TestContext> {
     let tierable_erc1155_escrow_obligation = deploy_obligation!(TierableERC1155EscrowObligation);
     let tierable_native_token_escrow_obligation = deploy_obligation!(TierableNativeTokenEscrowObligation);
 
-    // Note: StringObligation might need different constructor - using Address::ZERO for now
     let string_obligation = StringObligation::deploy(
         &god_provider,
         eas.address().clone(),
         schema_registry.address().clone(),
+    )
+    .await?;
+
+    let commit_reveal_obligation = CommitRevealObligation::deploy(
+        &god_provider,
+        eas.address().clone(),
+        schema_registry.address().clone(),
+        U256::from(10_000_000_000_000_000u64), // 0.01 ETH bond
+        U256::from(3600u64),                    // 1 hour deadline
+        Address::ZERO,                          // burn slashed bonds
     )
     .await?;
 
@@ -290,7 +300,7 @@ pub async fn setup_test_environment() -> eyre::Result<TestContext> {
         },
         commit_reveal_obligation_addresses: CommitRevealObligationAddresses {
             eas: eas.address().clone(),
-            obligation: Address::ZERO, // CommitRevealObligation not deployed in test environment
+            obligation: commit_reveal_obligation.address().clone(),
         },
         erc20_addresses: Erc20Addresses {
             eas: eas.address().clone(),

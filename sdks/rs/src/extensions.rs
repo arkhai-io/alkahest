@@ -516,6 +516,12 @@ impl<Ext: AlkahestExtension + HasErc1155> HasErc1155 for AlkahestClient<Ext> {
     }
 }
 
+impl<Ext: AlkahestExtension + HasNativeToken> HasNativeToken for AlkahestClient<Ext> {
+    fn native_token(&self) -> &NativeTokenModule {
+        self.extensions.native_token()
+    }
+}
+
 impl<Ext: AlkahestExtension + HasTokenBundle> HasTokenBundle for AlkahestClient<Ext> {
     fn token_bundle(&self) -> &TokenBundleModule {
         self.extensions.token_bundle()

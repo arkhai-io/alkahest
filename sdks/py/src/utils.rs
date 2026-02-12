@@ -32,6 +32,25 @@ impl PyWalletProvider {
             Ok(())
         })
     }
+
+    pub fn anvil_mine<'py>(
+        &self,
+        py: pyo3::Python<'py>,
+        blocks: u64,
+    ) -> PyResult<pyo3::Bound<'py, pyo3::PyAny>> {
+        use alloy::providers::ext::AnvilApi;
+        use pyo3_async_runtimes::tokio::future_into_py;
+
+        let provider = self.inner.clone();
+
+        future_into_py(py, async move {
+            provider
+                .anvil_mine(Some(blocks), None)
+                .await
+                .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+            Ok(())
+        })
+    }
 }
 
 #[pyclass]

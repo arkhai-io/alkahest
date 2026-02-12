@@ -61,6 +61,7 @@ import NativeTokenPaymentObligation from "../../src/contracts/obligations/paymen
 import TokenBundlePaymentObligation from "../../src/contracts/obligations/payment/TokenBundlePaymentObligation.json";
 // Other Obligations
 import StringObligation from "../../src/contracts/obligations/StringObligation.json";
+import CommitRevealObligation from "../../src/contracts/obligations/CommitRevealObligation.json";
 import AttestationBarterUtils from "../../src/contracts/utils/AttestationBarterUtils.json";
 import ERC20BarterUtils from "../../src/contracts/utils/ERC20BarterUtils.json";
 import ERC721BarterUtils from "../../src/contracts/utils/ERC721BarterUtils.json";
@@ -485,6 +486,13 @@ export async function setupTestEnvironment(options?: SetupTestEnvironmentOptions
   addresses.attestationEscrowObligation = await deployObligation(AttestationEscrowObligation);
   addresses.attestationEscrowObligation2 = await deployObligation(AttestationEscrowObligation2);
   addresses.stringObligation = await deployObligation(StringObligation);
+  addresses.commitRevealObligation = await deployContract(CommitRevealObligation, [
+    addresses.eas,
+    addresses.easSchemaRegistry,
+    parseEther("0.01"),
+    3600n,
+    "0x0000000000000000000000000000000000000000",
+  ]);
   addresses.nativeTokenPaymentObligation = await deployObligation(NativeTokenPaymentObligation);
   addresses.nativeTokenEscrowObligation = await deployObligation(NativeTokenEscrowObligation);
 
