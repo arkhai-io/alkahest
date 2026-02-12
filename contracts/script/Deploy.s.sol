@@ -72,14 +72,21 @@ import {UidArbiter} from "@src/arbiters/attestation-properties/UidArbiter.sol";
 // String Obligation
 import {StringObligation} from "@src/obligations/StringObligation.sol";
 
+// Commit Reveal Obligation
+import {CommitRevealObligation} from "@src/obligations/CommitRevealObligation.sol";
+
 contract Deploy is Script {
     function run() external {
         // Load environment variables
         string memory easAddressStr = vm.envString("EAS_ADDRESS");
         string memory easSrAddressStr = vm.envString("EAS_SR_ADDRESS");
-        uint256 deployerPrivateKey = vm.envUint("DEPLOYMENT_KEY");
+        uint256 deployerPrivateKey = vm.envOr("DEPLOYMENT_KEY", uint256(0));
 
-        vm.startBroadcast(deployerPrivateKey);
+        if (deployerPrivateKey != 0) {
+            vm.startBroadcast(deployerPrivateKey);
+        } else {
+            vm.startBroadcast();
+        }
 
         // Deploy EAS and schema registry if needed
         address easAddress;
@@ -147,6 +154,15 @@ contract Deploy is Script {
         StringObligation stringObligation = new StringObligation(
             IEAS(easAddress),
             ISchemaRegistry(schemaRegistryAddress)
+        );
+
+        // Deploy CommitRevealObligation
+        CommitRevealObligation commitRevealObligation = new CommitRevealObligation(
+            IEAS(easAddress),
+            ISchemaRegistry(schemaRegistryAddress),
+            0.005 ether,    // bondAmount
+            24 hours,       // commitDeadline
+            0xc5c132B69f57dAAAb75d9ebA86cab504b272Ccbc // slashedBondRecipient (treasury)
         );
 
         // Deploy ERC20 contracts
@@ -334,6 +350,9 @@ contract Deploy is Script {
         console.log("\nString Obligation:");
         console.log("StringObligation:", address(stringObligation));
 
+        console.log("\nCommit Reveal Obligation:");
+        console.log("CommitRevealObligation:", address(commitRevealObligation));
+
         console.log("\nERC20 Contracts:");
         console.log("ERC20EscrowObligation:", address(erc20Escrow));
         console.log("ERC20PaymentObligation:", address(erc20Payment));
@@ -460,6 +479,13 @@ contract Deploy is Script {
             deploymentJson,
             "stringObligation",
             address(stringObligation)
+        );
+
+        // Add commit reveal obligation
+        vm.serializeAddress(
+            deploymentJson,
+            "commitRevealObligation",
+            address(commitRevealObligation)
         );
 
         // Add ERC20 addresses
