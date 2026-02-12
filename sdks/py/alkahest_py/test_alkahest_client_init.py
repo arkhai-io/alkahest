@@ -24,6 +24,7 @@ async def test_alkahest_client_init_default(env):
     assert hasattr(client, 'token_bundle'), "Client should have token bundle extension"
     assert hasattr(client, 'attestation'), "Client should have attestation extension"
     assert hasattr(client, 'string_obligation'), "Client should have string obligation extension"
+    assert hasattr(client, 'commit_reveal'), "Client should have commit reveal extension"
     assert hasattr(client, 'oracle'), "Client should have oracle extension"
 
     # Verify extensions are accessible (should not raise errors)
@@ -33,6 +34,7 @@ async def test_alkahest_client_init_default(env):
     token_bundle_client = client.token_bundle
     attestation_client = client.attestation
     string_obligation_client = client.string_obligation
+    commit_reveal_client = client.commit_reveal
     oracle_client = client.oracle
 
     # Verify extensions have expected methods through util submodule

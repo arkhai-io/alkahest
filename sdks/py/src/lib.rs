@@ -8,10 +8,11 @@ use alkahest_rs::{
     },
     contracts::IEAS::Attested,
     extensions::{
-        AlkahestExtension, ArbitersModule, AttestationModule, Erc1155Module, Erc20Module,
-        Erc721Module, HasArbiters, HasAttestation, HasErc1155, HasErc20, HasErc721, HasNativeToken,
-        HasOracle, HasStringObligation, HasTokenBundle, NativeTokenModule, NoExtension,
-        OracleModule, StringObligationModule, TokenBundleModule,
+        AlkahestExtension, ArbitersModule, AttestationModule, CommitRevealObligationModule,
+        Erc1155Module, Erc20Module, Erc721Module, HasArbiters, HasAttestation, HasCommitReveal,
+        HasErc1155, HasErc20, HasErc721, HasNativeToken, HasOracle, HasStringObligation,
+        HasTokenBundle, NativeTokenModule, NoExtension, OracleModule, StringObligationModule,
+        TokenBundleModule,
     },
     AlkahestClient,
 };
@@ -24,8 +25,9 @@ use alloy::{
 use clients::{
     arbiters::{trusted_oracle::OracleClient, ArbitersClient},
     obligations::{
-        attestation::AttestationClient, erc1155::Erc1155Client, erc20::Erc20Client,
-        erc721::Erc721Client, native_token::NativeTokenClient, string::StringObligationClient,
+        attestation::AttestationClient, commit_reveal::CommitRevealObligationClient,
+        erc1155::Erc1155Client, erc20::Erc20Client, erc721::Erc721Client,
+        native_token::NativeTokenClient, string::StringObligationClient,
         token_bundle::TokenBundleClient,
     },
 };
@@ -47,6 +49,7 @@ use crate::{
             erc1155::{PyERC1155EscrowObligationData, PyERC1155PaymentObligationData},
             erc20::{PyERC20EscrowObligationData, PyERC20PaymentObligationData},
             erc721::{PyERC721EscrowObligationData, PyERC721PaymentObligationData},
+            commit_reveal::PyCommitRevealObligationData,
             string::PyStringObligationData,
         },
     },
@@ -83,6 +86,7 @@ pub struct PyAlkahestClient {
     token_bundle: Option<TokenBundleClient>,
     attestation: Option<AttestationClient>,
     string_obligation: Option<StringObligationClient>,
+    commit_reveal: Option<CommitRevealObligationClient>,
     oracle: Option<OracleClient>,
     arbiters: Option<ArbitersClient>,
 }
@@ -108,6 +112,9 @@ impl PyAlkahestClient {
             )),
             string_obligation: Some(StringObligationClient::new(
                 client.extensions.string_obligation().clone(),
+            )),
+            commit_reveal: Some(CommitRevealObligationClient::new(
+                client.extensions.commit_reveal().clone(),
             )),
             oracle: Some(OracleClient::new(client.extensions.oracle().clone())),
             arbiters: Some(ArbitersClient::new(client.extensions.arbiters().clone())),
@@ -141,6 +148,7 @@ impl PyAlkahestClient {
             token_bundle: None, // TODO: Extract if extension_type == "token_bundle"
             attestation: None, // TODO: Extract if extension_type == "attestation"
             string_obligation: None, // TODO: Extract if extension_type == "string_obligation"
+            commit_reveal: None, // TODO: Extract if extension_type == "commit_reveal"
             oracle: None,      // TODO: Extract if extension_type == "oracle"
             arbiters: None,    // TODO: Extract if extension_type == "arbiters"
         }
@@ -190,6 +198,9 @@ impl PyAlkahestClient {
             string_obligation: Some(StringObligationClient::new(
                 client.extensions.string_obligation().clone(),
             )),
+            commit_reveal: Some(CommitRevealObligationClient::new(
+                client.extensions.commit_reveal().clone(),
+            )),
             oracle: Some(OracleClient::new(client.extensions.oracle().clone())),
             arbiters: Some(ArbitersClient::new(client.extensions.arbiters().clone())),
         };
@@ -207,6 +218,7 @@ impl PyAlkahestClient {
             "token_bundle".to_string(),
             "attestation".to_string(),
             "string_obligation".to_string(),
+            "commit_reveal".to_string(),
             "oracle".to_string(),
             "arbiters".to_string(),
         ]
@@ -222,6 +234,7 @@ impl PyAlkahestClient {
             "token_bundle" => self.token_bundle.is_some(),
             "attestation" => self.attestation.is_some(),
             "string_obligation" => self.string_obligation.is_some(),
+            "commit_reveal" => self.commit_reveal.is_some(),
             "oracle" => self.oracle.is_some(),
             "arbiters" => self.arbiters.is_some(),
             _ => false,
@@ -287,6 +300,15 @@ impl PyAlkahestClient {
         self.string_obligation.clone().ok_or_else(|| {
             pyo3::PyErr::new::<pyo3::exceptions::PyAttributeError, _>(
                 "StringObligation extension is not available in this client",
+            )
+        })
+    }
+
+    #[getter]
+    pub fn commit_reveal(&self) -> PyResult<CommitRevealObligationClient> {
+        self.commit_reveal.clone().ok_or_else(|| {
+            pyo3::PyErr::new::<pyo3::exceptions::PyAttributeError, _>(
+                "CommitRevealObligation extension is not available in this client",
             )
         })
     }
@@ -510,6 +532,8 @@ fn alkahest_py(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyERC1155EscrowObligationData>()?;
     m.add_class::<PyERC1155PaymentObligationData>()?;
     m.add_class::<PyStringObligationData>()?;
+    m.add_class::<CommitRevealObligationClient>()?;
+    m.add_class::<PyCommitRevealObligationData>()?;
     m.add_class::<PyErc20Data>()?;
 
     // Arbiters Client and related types
@@ -573,6 +597,7 @@ fn alkahest_py(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<crate::types::PyTokenBundleAddresses>()?;
     m.add_class::<crate::types::PyAttestationAddresses>()?;
     m.add_class::<crate::types::PyStringObligationAddresses>()?;
+    m.add_class::<crate::types::PyCommitRevealObligationAddresses>()?;
     m.add_class::<crate::types::PyArbitersAddresses>()?;
 
     // IEAS (Ethereum Attestation Service) Types from contract.rs

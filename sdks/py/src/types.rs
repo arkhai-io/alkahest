@@ -93,6 +93,31 @@ impl TryFrom<StringObligationAddresses>
 }
 
 #[derive(FromPyObject)]
+pub struct CommitRevealObligationAddresses {
+    pub eas: String,
+    pub obligation: String,
+}
+
+impl TryFrom<CommitRevealObligationAddresses>
+    for alkahest_rs::clients::commit_reveal_obligation::CommitRevealObligationAddresses
+{
+    type Error = PyErr;
+
+    fn try_from(value: CommitRevealObligationAddresses) -> PyResult<Self> {
+        Ok(Self {
+            eas: value
+                .eas
+                .parse()
+                .map_err(|_| PyValueError::new_err("invalid address"))?,
+            obligation: value
+                .obligation
+                .parse()
+                .map_err(|_| PyValueError::new_err("invalid address"))?,
+        })
+    }
+}
+
+#[derive(FromPyObject)]
 pub struct DefaultExtensionConfig {
     pub erc20_addresses: Option<Erc20Addresses>,
     pub erc721_addresses: Option<Erc721Addresses>,
@@ -102,6 +127,7 @@ pub struct DefaultExtensionConfig {
     pub attestation_addresses: Option<AttestationAddresses>,
     pub arbiters_addresses: Option<ArbitersAddresses>,
     pub string_obligation_addresses: Option<StringObligationAddresses>,
+    pub commit_reveal_obligation_addresses: Option<CommitRevealObligationAddresses>,
 }
 
 macro_rules! try_from_address_config {
@@ -208,6 +234,9 @@ impl TryFrom<DefaultExtensionConfig> for alkahest_rs::DefaultExtensionConfig {
             arbiters_addresses: value.arbiters_addresses.and_then(|x| x.try_into().ok()).unwrap_or_default(),
             string_obligation_addresses: value
                 .string_obligation_addresses
+                .and_then(|x| x.try_into().ok()).unwrap_or_default(),
+            commit_reveal_obligation_addresses: value
+                .commit_reveal_obligation_addresses
                 .and_then(|x| x.try_into().ok()).unwrap_or_default(),
         })
     }
@@ -519,6 +548,8 @@ pub struct PyDefaultExtensionConfig {
     pub arbiters_addresses: Option<PyArbitersAddresses>,
     #[pyo3(get)]
     pub string_obligation_addresses: Option<PyStringObligationAddresses>,
+    #[pyo3(get)]
+    pub commit_reveal_obligation_addresses: Option<PyCommitRevealObligationAddresses>,
 }
 
 impl From<&alkahest_rs::DefaultExtensionConfig> for PyDefaultExtensionConfig {
@@ -532,6 +563,7 @@ impl From<&alkahest_rs::DefaultExtensionConfig> for PyDefaultExtensionConfig {
             attestation_addresses: Some(PyAttestationAddresses::from(&data.attestation_addresses)),
             arbiters_addresses: Some(PyArbitersAddresses::from(&data.arbiters_addresses)),
             string_obligation_addresses: Some(PyStringObligationAddresses::from(&data.string_obligation_addresses)),
+            commit_reveal_obligation_addresses: Some(PyCommitRevealObligationAddresses::from(&data.commit_reveal_obligation_addresses)),
         }
     }
 }
@@ -768,6 +800,36 @@ impl From<&alkahest_rs::clients::string_obligation::StringObligationAddresses>
     for PyStringObligationAddresses
 {
     fn from(data: &alkahest_rs::clients::string_obligation::StringObligationAddresses) -> Self {
+        Self {
+            eas: format!("{:?}", data.eas),
+            obligation: format!("{:?}", data.obligation),
+        }
+    }
+}
+
+#[pyclass]
+#[derive(Clone)]
+pub struct PyCommitRevealObligationAddresses {
+    #[pyo3(get)]
+    pub eas: String,
+    #[pyo3(get)]
+    pub obligation: String,
+}
+
+#[pymethods]
+impl PyCommitRevealObligationAddresses {
+    #[new]
+    pub fn new(eas: String, obligation: String) -> Self {
+        Self { eas, obligation }
+    }
+}
+
+impl From<&alkahest_rs::clients::commit_reveal_obligation::CommitRevealObligationAddresses>
+    for PyCommitRevealObligationAddresses
+{
+    fn from(
+        data: &alkahest_rs::clients::commit_reveal_obligation::CommitRevealObligationAddresses,
+    ) -> Self {
         Self {
             eas: format!("{:?}", data.eas),
             obligation: format!("{:?}", data.obligation),
