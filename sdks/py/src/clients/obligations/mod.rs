@@ -10,6 +10,7 @@
 //! - `string`: String-based obligations
 
 pub mod attestation;
+pub mod commit_reveal;
 pub mod erc1155;
 pub mod erc20;
 pub mod erc721;
@@ -19,6 +20,7 @@ pub mod token_bundle;
 
 // Re-export main client types
 pub use attestation::AttestationClient;
+pub use commit_reveal::CommitRevealObligationClient;
 pub use erc1155::Erc1155Client;
 pub use erc20::Erc20Client;
 pub use erc721::Erc721Client;
@@ -27,6 +29,7 @@ pub use string::StringObligationClient;
 pub use token_bundle::TokenBundleClient;
 
 // Re-export obligation data types
+pub use commit_reveal::PyCommitRevealObligationData;
 pub use erc1155::{PyERC1155EscrowObligationData, PyERC1155PaymentObligationData};
 pub use erc20::{PyERC20EscrowObligationData, PyERC20PaymentObligationData};
 pub use erc721::{PyERC721EscrowObligationData, PyERC721PaymentObligationData};

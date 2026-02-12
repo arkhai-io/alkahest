@@ -45,11 +45,13 @@ impl StringObligationClient {
         })
     }
 
+    #[pyo3(signature = (item, ref_uid=None, schema=None))]
     pub fn do_obligation<'py>(
         &self,
         py: pyo3::Python<'py>,
         item: String,
         ref_uid: Option<String>,
+        schema: Option<String>,
     ) -> PyResult<pyo3::Bound<'py, pyo3::PyAny>> {
         let inner = self.inner.clone();
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
@@ -58,9 +60,14 @@ impl StringObligationClient {
             } else {
                 None
             };
+            let schema = if let Some(schema_str) = schema {
+                Some(schema_str.parse().map_err(map_parse_to_pyerr)?)
+            } else {
+                None
+            };
 
             let receipt = inner
-                .do_obligation(item, ref_uid)
+                .do_obligation(item, schema, ref_uid)
                 .await
                 .map_err(map_eyre_to_pyerr)?;
 
@@ -75,11 +82,13 @@ impl StringObligationClient {
         })
     }
 
+    #[pyo3(signature = (json_data, ref_uid=None, schema=None))]
     pub fn do_obligation_json<'py>(
         &self,
         py: pyo3::Python<'py>,
         json_data: &Bound<'_, PyAny>,
         ref_uid: Option<String>,
+        schema: Option<String>,
     ) -> PyResult<pyo3::Bound<'py, pyo3::PyAny>> {
         let json_string = python_to_json_string(json_data).map_err(map_eyre_to_pyerr)?;
         let inner = self.inner.clone();
@@ -92,9 +101,14 @@ impl StringObligationClient {
             } else {
                 None
             };
+            let schema = if let Some(schema_str) = schema {
+                Some(schema_str.parse().map_err(map_parse_to_pyerr)?)
+            } else {
+                None
+            };
 
             let receipt = inner
-                .do_obligation_json(json_value, ref_uid)
+                .do_obligation_json(json_value, schema, ref_uid)
                 .await
                 .map_err(map_eyre_to_pyerr)?;
 
@@ -115,17 +129,23 @@ impl StringObligationClient {
 pub struct PyStringObligationData {
     #[pyo3(get)]
     pub item: String,
+    #[pyo3(get)]
+    pub schema: String,
 }
 
 #[pymethods]
 impl PyStringObligationData {
     #[new]
-    pub fn new(item: String) -> Self {
-        Self { item }
+    #[pyo3(signature = (item, schema=None))]
+    pub fn new(item: String, schema: Option<String>) -> Self {
+        Self {
+            item,
+            schema: schema.unwrap_or_else(|| format!("0x{}", "00".repeat(32))),
+        }
     }
 
     fn __repr__(&self) -> String {
-        format!("PyStringObligationData(item='{}')", self.item)
+        format!("PyStringObligationData(item='{}', schema='{}')", self.item, self.schema)
     }
 
     #[staticmethod]
@@ -133,8 +153,10 @@ impl PyStringObligationData {
         use alkahest_rs::contracts::obligations::StringObligation;
         use alloy::sol_types::SolValue;
 
+        let schema: FixedBytes<32> = obligation.schema.parse().map_err(map_parse_to_pyerr)?;
         let obligation_data = StringObligation::ObligationData {
             item: obligation.item.clone(),
+            schema,
         };
 
         Ok(obligation_data.abi_encode())
@@ -161,20 +183,32 @@ impl PyStringObligationData {
     }
 
     #[staticmethod]
-    pub fn encode_json(json_data: String) -> PyResult<Vec<u8>> {
+    #[pyo3(signature = (json_data, schema=None))]
+    pub fn encode_json(json_data: String, schema: Option<String>) -> PyResult<Vec<u8>> {
         let json_value: serde_json::Value =
             serde_json::from_str(&json_data).map_err(map_serde_to_pyerr)?;
-        let encoded = StringObligationModule::encode_json(json_value)
+        let schema = if let Some(schema_str) = schema {
+            Some(schema_str.parse().map_err(map_parse_to_pyerr)?)
+        } else {
+            None
+        };
+        let encoded = StringObligationModule::encode_json(json_value, schema)
             .map_err(map_eyre_to_pyerr)?;
         Ok(encoded.to_vec())
     }
 
     #[staticmethod]
-    pub fn encode_json_object(json_data: &Bound<'_, PyAny>) -> PyResult<Vec<u8>> {
+    #[pyo3(signature = (json_data, schema=None))]
+    pub fn encode_json_object(json_data: &Bound<'_, PyAny>, schema: Option<String>) -> PyResult<Vec<u8>> {
         let json_string = python_to_json_string(json_data).map_err(map_eyre_to_pyerr)?;
         let json_value: serde_json::Value =
             serde_json::from_str(&json_string).map_err(map_serde_to_pyerr)?;
-        let encoded = StringObligationModule::encode_json(json_value)
+        let schema = if let Some(schema_str) = schema {
+            Some(schema_str.parse().map_err(map_parse_to_pyerr)?)
+        } else {
+            None
+        };
+        let encoded = StringObligationModule::encode_json(json_value, schema)
             .map_err(map_eyre_to_pyerr)?;
         Ok(encoded.to_vec())
     }
@@ -186,6 +220,9 @@ impl PyStringObligationData {
 
 impl From<alkahest_rs::contracts::obligations::StringObligation::ObligationData> for PyStringObligationData {
     fn from(data: alkahest_rs::contracts::obligations::StringObligation::ObligationData) -> Self {
-        Self { item: data.item }
+        Self {
+            item: data.item,
+            schema: format!("0x{}", alloy::hex::encode(data.schema.as_slice())),
+        }
     }
 }

@@ -17,6 +17,8 @@ from .alkahest_py import (
     PyERC1155PaymentObligationData as ERC1155PaymentObligationData,
     StringObligationClient,
     PyStringObligationData as StringObligationData,
+    CommitRevealObligationClient,
+    PyCommitRevealObligationData as CommitRevealObligationData,
     OracleClient,
     PyOracleAddresses as OracleAddresses,
     PyOracleAttestation as OracleAttestation,
@@ -31,6 +33,7 @@ from .alkahest_py import (
     PyTokenBundleAddresses as TokenBundleAddresses,
     PyAttestationAddresses as AttestationAddresses,
     PyStringObligationAddresses as StringObligationAddresses,
+    PyCommitRevealObligationAddresses as CommitRevealObligationAddresses,
     PyArbitersAddresses as ArbitersAddresses,
     # IEAS Types
     PyAttestation as Attestation,
@@ -58,6 +61,8 @@ __all__ = [
     "ERC1155PaymentObligationData",
     "StringObligationClient",
     "StringObligationData",
+    "CommitRevealObligationClient",
+    "CommitRevealObligationData",
     "DecodedAttestation",
     "OracleClient",
     "OracleAddresses",
@@ -73,6 +78,7 @@ __all__ = [
     "TokenBundleAddresses",
     "AttestationAddresses",
     "StringObligationAddresses",
+    "CommitRevealObligationAddresses",
     "ArbitersAddresses",
     # IEAS Types
     "Attestation",

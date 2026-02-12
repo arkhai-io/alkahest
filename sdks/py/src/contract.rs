@@ -465,7 +465,30 @@ impl
             attestation: PyAttestation::from(decoded.attestation),
             data: crate::clients::obligations::string::PyStringObligationData {
                 item: decoded.data.item,
+                schema: format!("0x{}", alloy::hex::encode(decoded.data.schema.as_slice())),
             },
+        }
+    }
+}
+
+impl
+    From<
+        alkahest_rs::types::DecodedAttestation<
+            alkahest_rs::contracts::obligations::CommitRevealObligation::ObligationData,
+        >,
+    >
+    for PyDecodedAttestation<
+        crate::clients::obligations::commit_reveal::PyCommitRevealObligationData,
+    >
+{
+    fn from(
+        decoded: alkahest_rs::types::DecodedAttestation<
+            alkahest_rs::contracts::obligations::CommitRevealObligation::ObligationData,
+        >,
+    ) -> Self {
+        Self {
+            attestation: PyAttestation::from(decoded.attestation),
+            data: decoded.data.into(),
         }
     }
 }
