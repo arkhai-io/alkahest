@@ -17,7 +17,7 @@
   "erc721BarterUtils": "0x797a737defb8cae0a30324ecfa52eaab9c0a5fd6",
   "erc721EscrowObligation": "0x99f5335b95e1c0be4c218a59aae26efc50d5673f",
   "erc721PaymentObligation": "0x5b6bff4dc108c58b97721330666f56c8028c097c",
-  "erc8004Arbiter": "0x194c3da79a1de5f9141b1dbcdf98ec5d511b4e5a",
+  "erc8004Arbiter": "0x3c1E21911C609714dBc0Ab90800c7aD8817B8e83",
   "exclusiveRevocableConfirmationArbiter": "0xa740634e718c8727853d1e69963303d5cb8ea44c",
   "exclusiveUnrevocableConfirmationArbiter": "0xb3d71c6f96cdd41e56dd9870b232225c379f2890",
   "expirationTimeAfterArbiter": "0xbd90af50fb667724338eb8da541f923f1822ac3c",
