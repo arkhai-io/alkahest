@@ -59,7 +59,7 @@ export const contractAddresses: Record<string, ChainAddresses> = {
     expirationTimeBeforeArbiter: "0x698008cC7F4714D331Aa27278BfE6B74FA925cF7",
     expirationTimeEqualArbiter: "0x4d05EA86C2C0af7CA94dc71Da45aba9368e664e4",
   },
-  "Ethereum Sepolia": {
+  "Sepolia": {
     eas: "0xC2679fBD37d54388Ce493F1DB75320D236e1815e",
     easSchemaRegistry: "0x0a7E2Ff54e76B8E6659aedc9103FB21c038050D0",
 
@@ -177,4 +177,4 @@ export const contractAddresses: Record<string, ChainAddresses> = {
   },
 } as const;
 
-export const supportedChains = ["Base Sepolia", "Ethereum Sepolia", "Filecoin Calibration"];
+export const supportedChains = ["Base Sepolia", "Sepolia", "Filecoin Calibration"];
