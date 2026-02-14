@@ -7,6 +7,6 @@
 [submodule "lib/openzeppelin-contracts"]
 	path = contracts/lib/openzeppelin-contracts
     url = https://github.com/OpenZeppelin/openzeppelin-contracts
-[submodule "lib/trustless-agents-erc-ri"]
-	path = contracts/lib/trustless-agents-erc-ri
-	url = https://github.com/ChaosChain/trustless-agents-erc-ri
+[submodule "contracts/lib/erc-8004-contracts"]
+	path = contracts/lib/erc-8004-contracts
+	url = https://github.com/erc-8004/erc-8004-contracts

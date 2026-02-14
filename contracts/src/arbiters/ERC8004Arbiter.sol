@@ -15,7 +15,8 @@ interface IValidationRegistry {
             address validatorAddress,
             uint256 agentId,
             uint8 response,
-            bytes32 tag,
+            bytes32 responseHash,
+            string memory tag,
             uint256 lastUpdate
         );
 }
@@ -71,10 +72,11 @@ contract ERC8004Arbiter is IArbiter {
             demand_.validationRegistry
         );
         (
-            address validatorAddress, // agentId (unused)
-            ,
-            uint8 response, // tag (unused)
-            ,
+            address validatorAddress,
+            , // agentId (unused)
+            uint8 response,
+            , // responseHash (unused)
+            , // tag (unused)
 
         ) = // lastUpdate (unused)
             registry.getValidationStatus(requestHash);

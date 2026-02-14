@@ -9,6 +9,7 @@ import {ERC8004Arbiter} from "@src/arbiters/ERC8004Arbiter.sol";
 import {ERC20EscrowObligation} from "@src/obligations/escrow/non-tierable/ERC20EscrowObligation.sol";
 import {StringObligation} from "@src/obligations/StringObligation.sol";
 import {EASDeployer} from "@test/utils/EASDeployer.sol";
+import {ERC8004Deployer} from "@test/utils/ERC8004Deployer.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 // Mock ERC20 token for testing
@@ -22,10 +23,10 @@ contract MockERC20 is ERC20 {
     }
 }
 
-// Interfaces for the ERC-8004 reference contracts
+// Interfaces for the ERC-8004 contracts
 interface IIdentityRegistry {
     function register(
-        string calldata tokenURI_
+        string calldata agentURI
     ) external returns (uint256 agentId);
 
     function ownerOf(uint256 agentId) external view returns (address);
@@ -37,16 +38,16 @@ interface IValidationRegistry {
     function validationRequest(
         address validatorAddress,
         uint256 agentId,
-        string calldata requestUri,
+        string calldata requestURI,
         bytes32 requestHash
     ) external;
 
     function validationResponse(
         bytes32 requestHash,
         uint8 response,
-        string calldata responseUri,
+        string calldata responseURI,
         bytes32 responseHash,
-        bytes32 tag
+        string calldata tag
     ) external;
 
     function getValidationStatus(
@@ -58,7 +59,8 @@ interface IValidationRegistry {
             address validatorAddress,
             uint256 agentId,
             uint8 response,
-            bytes32 tag,
+            bytes32 responseHash,
+            string memory tag,
             uint256 lastUpdate
         );
 }
@@ -109,16 +111,18 @@ contract ERC8004IntegrationTest is Test {
         fulfillmentObligation = new StringObligation(eas, schemaRegistry);
         token = new MockERC20();
 
-        // Deploy IdentityRegistry using precompiled bytecode from the ERC-8004 submodule
-        address identityAddr = deployCode(
-            "lib/trustless-agents-erc-ri/out/IdentityRegistry.sol/IdentityRegistry.json"
+        // Deploy ERC-8004 upgradeable contracts via proxy
+        ERC8004Deployer erc8004Deployer = new ERC8004Deployer();
+
+        address identityAddr = erc8004Deployer.deployUpgradeable(
+            "IdentityRegistryUpgradeable",
+            abi.encodeWithSignature("initialize()")
         );
         identityRegistry = IIdentityRegistry(identityAddr);
 
-        // Deploy ValidationRegistry using precompiled bytecode
-        address validationAddr = deployCode(
-            "lib/trustless-agents-erc-ri/out/ValidationRegistry.sol/ValidationRegistry.json",
-            abi.encode(identityAddr)
+        address validationAddr = erc8004Deployer.deployUpgradeable(
+            "ValidationRegistryUpgradeable",
+            abi.encodeWithSignature("initialize(address)", identityAddr)
         );
         validationRegistry = IValidationRegistry(validationAddr);
 
@@ -213,7 +217,7 @@ contract ERC8004IntegrationTest is Test {
             75, // response >= minResponse (50)
             "ipfs://validation-response",
             bytes32(0),
-            bytes32(0)
+            ""
         );
 
         // Verify validation was recorded
@@ -221,6 +225,7 @@ contract ERC8004IntegrationTest is Test {
             address validatorAddress,
             uint256 agentId,
             uint8 response,
+            ,
             ,
 
         ) = validationRegistry.getValidationStatus(requestHash);
@@ -303,11 +308,11 @@ contract ERC8004IntegrationTest is Test {
             30, // response < minResponse (50)
             "ipfs://validation-response-failed",
             bytes32(0),
-            bytes32(0)
+            ""
         );
 
         // Verify validation was recorded with low score
-        (, , uint8 response, , ) = validationRegistry.getValidationStatus(
+        (, , uint8 response, , , ) = validationRegistry.getValidationStatus(
             requestHash
         );
         assertEq(response, 30, "Response should be 30");
@@ -377,7 +382,7 @@ contract ERC8004IntegrationTest is Test {
             MIN_RESPONSE, // response == minResponse (50)
             "ipfs://validation-response",
             bytes32(0),
-            bytes32(0)
+            ""
         );
 
         // === Step 5: Bob claims escrow (should succeed) ===
@@ -448,7 +453,7 @@ contract ERC8004IntegrationTest is Test {
             MIN_RESPONSE - 1, // response = 49, just below minResponse (50)
             "ipfs://validation-response-failed",
             bytes32(0),
-            bytes32(0)
+            ""
         );
 
         // === Step 5: Bob attempts to claim escrow (should fail) ===

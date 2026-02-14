@@ -8,11 +8,12 @@ import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {IArbiter} from "@src/IArbiter.sol";
 import {ERC8004Arbiter} from "@src/arbiters/ERC8004Arbiter.sol";
 import {EASDeployer} from "@test/utils/EASDeployer.sol";
+import {ERC8004Deployer} from "@test/utils/ERC8004Deployer.sol";
 
-// Interfaces for the ERC-8004 reference contracts
+// Interfaces for the ERC-8004 contracts
 interface IIdentityRegistry {
     function register(
-        string calldata tokenURI_
+        string calldata agentURI
     ) external returns (uint256 agentId);
 
     function ownerOf(uint256 agentId) external view returns (address);
@@ -24,16 +25,16 @@ interface IValidationRegistry {
     function validationRequest(
         address validatorAddress,
         uint256 agentId,
-        string calldata requestUri,
+        string calldata requestURI,
         bytes32 requestHash
     ) external;
 
     function validationResponse(
         bytes32 requestHash,
         uint8 response,
-        string calldata responseUri,
+        string calldata responseURI,
         bytes32 responseHash,
-        bytes32 tag
+        string calldata tag
     ) external;
 
     function getValidationStatus(
@@ -45,7 +46,8 @@ interface IValidationRegistry {
             address validatorAddress,
             uint256 agentId,
             uint8 response,
-            bytes32 tag,
+            bytes32 responseHash,
+            string memory tag,
             uint256 lastUpdate
         );
 }
@@ -67,16 +69,18 @@ contract ERC8004ArbiterTest is Test {
         (eas, schemaRegistry) = easDeployer.deployEAS();
         arbiter = new ERC8004Arbiter();
 
-        // Deploy IdentityRegistry using precompiled bytecode from the ERC-8004 submodule
-        address identityAddr = deployCode(
-            "lib/trustless-agents-erc-ri/out/IdentityRegistry.sol/IdentityRegistry.json"
+        // Deploy ERC-8004 upgradeable contracts via proxy
+        ERC8004Deployer erc8004Deployer = new ERC8004Deployer();
+
+        address identityAddr = erc8004Deployer.deployUpgradeable(
+            "IdentityRegistryUpgradeable",
+            abi.encodeWithSignature("initialize()")
         );
         identityRegistry = IIdentityRegistry(identityAddr);
 
-        // Deploy ValidationRegistry using precompiled bytecode
-        address validationAddr = deployCode(
-            "lib/trustless-agents-erc-ri/out/ValidationRegistry.sol/ValidationRegistry.json",
-            abi.encode(identityAddr)
+        address validationAddr = erc8004Deployer.deployUpgradeable(
+            "ValidationRegistryUpgradeable",
+            abi.encodeWithSignature("initialize(address)", identityAddr)
         );
         validationRegistry = IValidationRegistry(validationAddr);
 
@@ -113,7 +117,7 @@ contract ERC8004ArbiterTest is Test {
             75, // response >= minResponse (50)
             "",
             bytes32(0),
-            bytes32(0)
+            ""
         );
 
         bytes32 escrowUid = bytes32(uint256(54321));
@@ -159,7 +163,7 @@ contract ERC8004ArbiterTest is Test {
             75, // response >= minResponse (50)
             "",
             bytes32(0),
-            bytes32(0)
+            ""
         );
 
         bytes32 wrongRefUID = bytes32(uint256(12345));
@@ -208,7 +212,7 @@ contract ERC8004ArbiterTest is Test {
             30, // response < minResponse (50)
             "",
             bytes32(0),
-            bytes32(0)
+            ""
         );
 
         bytes32 escrowUid = bytes32(uint256(54321));
@@ -255,7 +259,7 @@ contract ERC8004ArbiterTest is Test {
             75,
             "",
             bytes32(0),
-            bytes32(0)
+            ""
         );
 
         bytes32 escrowUid = bytes32(uint256(54321));
@@ -288,13 +292,16 @@ contract ERC8004ArbiterTest is Test {
     }
 
     function testCheckObligationWrongRegistry() public {
-        // Deploy a second ValidationRegistry
-        address identityAddr = deployCode(
-            "lib/trustless-agents-erc-ri/out/IdentityRegistry.sol/IdentityRegistry.json"
+        // Deploy a second set of ERC-8004 contracts
+        ERC8004Deployer erc8004Deployer = new ERC8004Deployer();
+
+        address identityAddr2 = erc8004Deployer.deployUpgradeable(
+            "IdentityRegistryUpgradeable",
+            abi.encodeWithSignature("initialize()")
         );
-        address wrongRegistry = deployCode(
-            "lib/trustless-agents-erc-ri/out/ValidationRegistry.sol/ValidationRegistry.json",
-            abi.encode(identityAddr)
+        address wrongRegistry = erc8004Deployer.deployUpgradeable(
+            "ValidationRegistryUpgradeable",
+            abi.encodeWithSignature("initialize(address)", identityAddr2)
         );
 
         // Create validation request in the REAL registry
@@ -313,7 +320,7 @@ contract ERC8004ArbiterTest is Test {
             75,
             "",
             bytes32(0),
-            bytes32(0)
+            ""
         );
 
         bytes32 escrowUid = bytes32(uint256(54321));
@@ -340,7 +347,8 @@ contract ERC8004ArbiterTest is Test {
         bytes memory demand = abi.encode(demandData);
 
         // Should revert since the wrong registry won't have the validation
-        vm.expectRevert(ERC8004Arbiter.ValidationNotFound.selector);
+        // The new upgradeable ValidationRegistry reverts internally when the request doesn't exist
+        vm.expectRevert();
         arbiter.checkObligation(attestation, demand, escrowUid);
     }
 }

@@ -14,5 +14,5 @@ viaIR = true
 
 fs_permissions = [
     { access = "read-write", path = "./deployments" },
-    { access = "read", path = "./lib/trustless-agents-erc-ri/out" }
+    { access = "read", path = "./lib/erc-8004-contracts/artifacts" }
 ]
