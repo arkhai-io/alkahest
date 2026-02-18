@@ -162,7 +162,7 @@ contract Deploy is Script {
             ISchemaRegistry(schemaRegistryAddress),
             0.005 ether,    // bondAmount
             24 hours,       // commitDeadline
-            0xc5c132B69f57dAAAb75d9ebA86cab504b272Ccbc // slashedBondRecipient (treasury)
+            0x07dD7186410Aa0fe85670531FC6EFc9cd980c558 // slashedBondRecipient (treasury)
         );
 
         // Deploy ERC20 contracts
