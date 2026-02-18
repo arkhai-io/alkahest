@@ -1,6 +1,6 @@
 [package]
 name = "alkahest-rs"
-version = "0.7.0"
+version = "0.7.1"
 edition = "2024"
 description = "Rust SDK to Alkahest contracts for decentralized escrow and exchange"
 license = "MIT"
