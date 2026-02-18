@@ -46,7 +46,7 @@ pub const BASE_SEPOLIA_ADDRESSES: DefaultExtensionConfig = DefaultExtensionConfi
     },
     commit_reveal_obligation_addresses: CommitRevealObligationAddresses {
         eas: address!("0x4200000000000000000000000000000000000021"),
-        obligation: address!("0xD1e0756d7F8508aDf9b12B5039DcaD12b1e95a22"),
+        obligation: address!("0x447b11ce03237f0C674eF7F16c913c3B2e8ef494"),
     },
     erc20_addresses: Erc20Addresses {
         eas: address!("0x4200000000000000000000000000000000000021"),
@@ -130,7 +130,7 @@ pub const ETHEREUM_SEPOLIA_ADDRESSES: DefaultExtensionConfig = DefaultExtensionC
     },
     commit_reveal_obligation_addresses: CommitRevealObligationAddresses {
         eas: address!("0xC2679fBD37d54388Ce493F1DB75320D236e1815e"),
-        obligation: address!("0x05d9Aa2A6AE38619b864Ff7f87A8f94301ecAB42"),
+        obligation: address!("0x9fD6D7A3B4e4b5dD75c50F5f16Deba46162127C3"),
     },
     erc20_addresses: Erc20Addresses {
         eas: address!("0xC2679fBD37d54388Ce493F1DB75320D236e1815e"),
@@ -214,7 +214,7 @@ pub const FILECOIN_CALIBRATION_ADDRESSES: DefaultExtensionConfig = DefaultExtens
     },
     commit_reveal_obligation_addresses: CommitRevealObligationAddresses {
         eas: address!("0x3c79a0225380fB6F3CB990FfC4E3D5aF4546b524"),
-        obligation: address!("0x931b35f81e7a585317f8cf8b45795f403eefe468"),
+        obligation: address!("0x32889Ee549d61Ed5D14f2D499fCc809a4feC0dD8"),
     },
     erc20_addresses: Erc20Addresses {
         eas: address!("0x3c79a0225380fB6F3CB990FfC4E3D5aF4546b524"),
