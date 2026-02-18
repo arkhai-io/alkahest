@@ -4,6 +4,7 @@ pragma solidity ^0.8.26;
 import {Attestation} from "@eas/Common.sol";
 import {IEAS} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {BaseObligation} from "../BaseObligation.sol";
 import {IArbiter} from "../IArbiter.sol";
 import {ArbiterUtils} from "../ArbiterUtils.sol";
@@ -12,7 +13,7 @@ import {ArbiterUtils} from "../ArbiterUtils.sol";
 /// @notice Obligation with built-in commit–reveal anti-front‑running checks.
 /// The attestation data is self contained (payload + salt), and the arbiter
 /// verifies that a matching commit exists and was made in an earlier block.
-contract CommitRevealObligation is BaseObligation, IArbiter {
+contract CommitRevealObligation is BaseObligation, IArbiter, Ownable {
     using ArbiterUtils for Attestation;
 
     /// @dev Data stored inside the fulfillment attestation.
@@ -49,11 +50,11 @@ contract CommitRevealObligation is BaseObligation, IArbiter {
     error CommitDeadlineNotReached(bytes32 commitment);
 
     /// @notice Fixed bond amount required for each commit.
-    uint256 public immutable bondAmount;
+    uint256 public bondAmount;
     /// @notice Seconds after commit within which the reveal must occur to avoid slashing.
-    uint256 public immutable commitDeadline;
+    uint256 public commitDeadline;
     /// @notice Recipient of slashed bonds (address(0) = burn).
-    address public immutable slashedBondRecipient;
+    address public slashedBondRecipient;
 
     constructor(
         IEAS _eas,
@@ -63,9 +64,26 @@ contract CommitRevealObligation is BaseObligation, IArbiter {
         address _slashedBondRecipient
     )
         BaseObligation(_eas, _schemaRegistry, "bytes payload, bytes32 salt, bytes32 schema", true)
+        Ownable(msg.sender)
     {
         bondAmount = _bondAmount;
         commitDeadline = _commitDeadline;
+        slashedBondRecipient = _slashedBondRecipient;
+    }
+
+    // ---------------------------------------------------------------------
+    // Owner-only setters
+    // ---------------------------------------------------------------------
+
+    function setBondAmount(uint256 _bondAmount) external onlyOwner {
+        bondAmount = _bondAmount;
+    }
+
+    function setCommitDeadline(uint256 _commitDeadline) external onlyOwner {
+        commitDeadline = _commitDeadline;
+    }
+
+    function setSlashedBondRecipient(address _slashedBondRecipient) external onlyOwner {
         slashedBondRecipient = _slashedBondRecipient;
     }
 
