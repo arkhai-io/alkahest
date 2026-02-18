@@ -26,7 +26,7 @@ export const contractAddresses: Record<string, ChainAddresses> = {
     attestationEscrowObligation2: "0xa076e9ca47f192E6AfB67817608E382074CF0Dcf",
 
     stringObligation: "0x544873C22A3228798F91a71C4ef7a9bFe96E7CE0",
-    commitRevealObligation: "0xD1e0756d7F8508aDf9b12B5039DcaD12b1e95a22",
+    commitRevealObligation: "0x447b11ce03237f0C674eF7F16c913c3B2e8ef494",
 
     trivialArbiter: "0x50EDa6c29C740bfbA6875422287025D985b96b7b",
     trustedOracleArbiter: "0x3664b11BcCCeCA27C21BBAB43548961eD14d4D6D",
@@ -84,7 +84,7 @@ export const contractAddresses: Record<string, ChainAddresses> = {
     attestationEscrowObligation2: "0x1A7c6F951e0a33F4910dbe56a200Eb413AEca17b",
 
     stringObligation: "0xC51C938f5497be8157DAf8CCc3Eb11Afb8b752C0",
-    commitRevealObligation: "0x05d9Aa2A6AE38619b864Ff7f87A8f94301ecAB42",
+    commitRevealObligation: "0x9fD6D7A3B4e4b5dD75c50F5f16Deba46162127C3",
 
     trivialArbiter: "0x594E79466b6ac01C6416C929e428264a4bdF0C92",
     trustedOracleArbiter: "0x3B2a812E3eb3B729D40d866Da16c2BB2b6cDd2f2",
@@ -142,7 +142,7 @@ export const contractAddresses: Record<string, ChainAddresses> = {
     attestationEscrowObligation2: "0xa22b4d9fe7a746d44be1e724bb1a26593bca2c1b",
 
     stringObligation: "0x66c3f78258823b9b899ab14b11e1dcf978c060d7",
-    commitRevealObligation: "0x931b35f81e7a585317f8cf8b45795f403eefe468",
+    commitRevealObligation: "0x32889Ee549d61Ed5D14f2D499fCc809a4feC0dD8",
 
     trivialArbiter: "0xd56bd862e7bebd0bd7356603e9e52b32c241e2ae",
     trustedOracleArbiter: "0x61dc9c2d757a1c9d0d38a281288d9ef918e77baa",
