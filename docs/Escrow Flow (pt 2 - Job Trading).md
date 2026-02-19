@@ -9,6 +9,8 @@ Here's how Alice buys a compute job from Bob with her ERC-20 token, where the va
    1. If Charlie decides the fulfillment is valid, Bob can now use his result attestation from StringResultObligation to claim Alice's escrow.
    2. If not valid, Alice can wait for her escrow to expire and reclaim it.
 
+> **Note on frontrunning:** In the flow below, Bob's fulfillment data (the capitalized string) is visible in his transaction. Since the result is self-contained — anyone could copy "HELLO WORLD" and submit it as their own fulfillment — a frontrunner watching the mempool could steal Bob's work. If your fulfillment data has this property, see [Escrow Flow (pt 2b - Frontrunning Protection)](Escrow%20Flow%20(pt%202b%20-%20Frontrunning%20Protection).md) for how to prevent this using a commit-reveal mechanism.
+
 ## Depositing escrow using TrustedOracleArbiter
 
 You can use TrustedOracleArbiter when you want an off-chain judge to decide whether a deal has been validly fulfilled. The judge could be a real person or an automated program. In this example, we'll demand that Bob capitalize a string for us, and Charlie will verify off-chain whether Bob did so correctly. In practice, this might represent Bob doing a complex computation, and Charlie verifying if it meets Alice's criteria.
