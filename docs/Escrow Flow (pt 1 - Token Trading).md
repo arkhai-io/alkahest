@@ -224,6 +224,49 @@ let bundle_demand_data = contracts::TokenBundlePaymentObligation2::ObligationDat
 let bundle_demand = bundle_demand_data.abi_encode().into();
 ```
 
+**CLI**
+
+The CLI's `barter create` command wraps the barter utility contracts to combine escrow + demand in one step. For manual escrow creation, use `escrow create`.
+
+```bash
+# Alice: Create ERC20 escrow demanding an ERC721 token
+# First, get the ERC721PaymentObligation address for the demand arbiter
+bun run cli/src/index.ts config show --chain base-sepolia
+# Use the erc721PaymentObligation address as --arbiter
+
+# The demand is the ABI-encoded ERC721PaymentObligation.ObligationData
+# (token address, tokenId, payee=Alice)
+# You can construct this manually or use the SDK for encoding
+
+# Create the escrow
+bun run cli/src/index.ts --private-key 0xALICE_KEY escrow create \
+  --erc20 \
+  --token 0xERC20_TOKEN \
+  --amount 1000000000000000000000 \
+  --arbiter 0xERC721_PAYMENT_OBLIGATION \
+  --demand 0xENCODED_DEMAND \
+  --expiration 1735689600 \
+  --approve
+```
+
+Or use barter utilities for atomic swaps (recommended for simple token-for-token trades):
+
+```bash
+# Alice: Offer ERC20 for ERC20 (most common case)
+bun run cli/src/index.ts --private-key 0xALICE_KEY barter create \
+  --bid-type erc20 --ask-type erc20 \
+  --bid-token 0xUSDC --bid-amount 1000000000 \
+  --ask-token 0xEURC --ask-amount 900000000 \
+  --expiration 1735689600
+
+# Alice: Offer ERC20 for ERC721
+bun run cli/src/index.ts --private-key 0xALICE_KEY barter create \
+  --bid-type erc20 --ask-type erc721 \
+  --bid-token 0xUSDC --bid-amount 1000000000 \
+  --ask-token 0xNFT --ask-amount 0 --ask-token-id 42 \
+  --expiration 1735689600
+```
+
 If you want to pay with a different kind of token, use the corresponding EscrowObligation contract instead when calling doObligation. Remember to approve the EscrowObligation contract to spend the token you're paying with (via setApprovalForAll for ERC-1155), and to approve all tokens in the bundle if you're using TokenBundleEscrowObligation.
 **Solidity**
 
@@ -431,6 +474,21 @@ escrow_contract
     .await?;
 ```
 
+**CLI**
+
+```bash
+# Bob: Fulfill a barter escrow (counterparty pays)
+bun run cli/src/index.ts --private-key 0xBOB_KEY barter fulfill \
+  --uid 0xESCROW_UID \
+  --bid-type erc20 --ask-type erc20
+
+# Or for manual escrow collection (after separately creating a payment):
+bun run cli/src/index.ts --private-key 0xBOB_KEY escrow collect \
+  --erc20 \
+  --escrow-uid 0xESCROW_UID \
+  --fulfillment-uid 0xPAYMENT_UID
+```
+
 Use the corresponding PaymentObligation contract to fulfill demands for other tokens.
 **Solidity**
 
@@ -537,6 +595,15 @@ for erc20_token in &bundle_data.erc20s {
 ## Reclaiming expired escrow
 
 You can reclaim your escrow if nobody fulfills it before it expires.
+
+**CLI**
+
+```bash
+# Alice reclaims her expired escrow
+bun run cli/src/index.ts --private-key 0xALICE_KEY escrow reclaim \
+  --erc20 --uid 0xESCROW_UID
+```
+
 **Solidity**
 
 ```solidity
@@ -579,6 +646,35 @@ There are utility contracts that provide a convenient interface for doing token 
 The functions to escrow one type of token, demanding any other type (buyYforX), and to fulfill any type of escrow demanding that token type (payXforY), are available in \[TokenType]BarterUtils.sol, or the corresponding barter module of each SDK (e.g. `client.erc20.barter`, `client.tokenBundle.barter`...). Available token types are native tokens (ETH), ERC-20, ERC-721, ERC-1155, and bundles of all of these together.
 
 For ERC-20 tokens, `permit_and_*` functions combine approval and action in a single gasless step. For escrow and payment modules, `approve_and_create` and `approve_and_pay` functions combine approval and action in two transactions but a single SDK call.
+
+**CLI**
+
+The CLI wraps the barter utility contracts. Use `--permit` for gasless ERC-20 approval:
+
+```bash
+# Alice: Create barter (ERC20 for ERC20) with permit
+bun run cli/src/index.ts --private-key 0xALICE_KEY barter create \
+  --bid-type erc20 --ask-type erc20 \
+  --bid-token 0xUSDC --bid-amount 1000000000 \
+  --ask-token 0xEURC --ask-amount 900000000 \
+  --expiration 1735689600 \
+  --permit
+
+# Bob: Fulfill the barter
+bun run cli/src/index.ts --private-key 0xBOB_KEY barter fulfill \
+  --uid 0xBARTER_UID \
+  --bid-type erc20 --ask-type erc20 \
+  --permit
+
+# Or use escrow create with --approve for non-barter escrows
+bun run cli/src/index.ts --private-key 0xALICE_KEY escrow create \
+  --erc20 \
+  --token 0xUSDC --amount 1000000000 \
+  --arbiter 0xARBITER --demand 0xDEMAND \
+  --expiration 1735689600 \
+  --approve
+```
+
 **Solidity**
 
 ```solidity

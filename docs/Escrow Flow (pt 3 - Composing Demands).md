@@ -10,6 +10,34 @@ The logical arbiter contracts AnyArbiter and AllArbiter can be used to compose d
 
 You can use AllArbiter to demand multiple conditions at the same time. For example, that your task is completed by a particular individual before a deadline, and validated by a third party.
 
+**CLI**
+
+```bash
+# Encode individual demands
+bun run cli/src/index.ts arbiter encode-demand --type recipient \
+  --recipient 0xBOB
+# → { "encoded": "0xRECIPIENT_DEMAND" }
+
+bun run cli/src/index.ts arbiter encode-demand --type trusted-oracle \
+  --oracle 0xCHARLIE --data 0x
+# → { "encoded": "0xORACLE_DEMAND" }
+
+# Compose with AllArbiter - both conditions must be met
+# Use addresses from: bun run cli/src/index.ts config show --chain base-sepolia
+bun run cli/src/index.ts arbiter encode-demand --type all \
+  --demands '[{"arbiter":"0xRECIPIENT_ARBITER","demand":"0xRECIPIENT_DEMAND"},{"arbiter":"0xTRUSTED_ORACLE_ARBITER","demand":"0xORACLE_DEMAND"}]'
+# → { "encoded": "0xCOMPOSED_DEMAND" }
+
+# Create escrow with the composed demand
+bun run cli/src/index.ts --private-key 0xALICE_KEY escrow create \
+  --erc20 \
+  --token 0xERC20_TOKEN --amount 100000000000000000000 \
+  --arbiter 0xALL_ARBITER \
+  --demand 0xCOMPOSED_DEMAND \
+  --expiration 1735689600 \
+  --approve
+```
+
 **Solidity**
 
 ```solidity
@@ -149,6 +177,37 @@ escrow_receipt = await alice_client.erc20.escrow.non_tierable.permit_and_create(
 ```
 
 You can use AnyArbiter when multiple alternative conditions can be considered valid. For example, if you accept a decision from any of a list of trusted third party oracles, or if there are different proof mechanisms that equally ensure the validity of a result.
+
+**CLI**
+
+```bash
+# Encode individual oracle demands
+bun run cli/src/index.ts arbiter encode-demand --type trusted-oracle \
+  --oracle 0xCHARLIE --data 0x
+# → { "encoded": "0xORACLE1_DEMAND" }
+
+bun run cli/src/index.ts arbiter encode-demand --type trusted-oracle \
+  --oracle 0xDAVE --data 0x
+# → { "encoded": "0xORACLE2_DEMAND" }
+
+bun run cli/src/index.ts arbiter encode-demand --type trusted-oracle \
+  --oracle 0xEVE --data 0x
+# → { "encoded": "0xORACLE3_DEMAND" }
+
+# Compose with AnyArbiter - any one oracle can validate
+bun run cli/src/index.ts arbiter encode-demand --type any \
+  --demands '[{"arbiter":"0xTRUSTED_ORACLE_ARBITER","demand":"0xORACLE1_DEMAND"},{"arbiter":"0xTRUSTED_ORACLE_ARBITER","demand":"0xORACLE2_DEMAND"},{"arbiter":"0xTRUSTED_ORACLE_ARBITER","demand":"0xORACLE3_DEMAND"}]'
+# → { "encoded": "0xCOMPOSED_DEMAND" }
+
+# Create escrow with flexible oracle validation
+bun run cli/src/index.ts --private-key 0xALICE_KEY escrow create \
+  --erc20 \
+  --token 0xERC20_TOKEN --amount 50000000000000000000 \
+  --arbiter 0xANY_ARBITER \
+  --demand 0xCOMPOSED_DEMAND \
+  --expiration 1735689600 \
+  --approve
+```
 
 **Solidity**
 
@@ -314,6 +373,42 @@ escrow_receipt = await alice_client.erc20.escrow.non_tierable.approve_and_create
 ```
 
 Logical arbiters can be stacked. For example, you could demand that a job is completed before a deadline by a particular party, and validated by any of a list of trusted oracles.
+
+**CLI**
+
+```bash
+# Encode individual demands
+bun run cli/src/index.ts arbiter encode-demand --type time-before --time 1735693200
+# → { "encoded": "0xDEADLINE_DEMAND" }
+
+bun run cli/src/index.ts arbiter encode-demand --type recipient --recipient 0xBOB
+# → { "encoded": "0xRECIPIENT_DEMAND" }
+
+bun run cli/src/index.ts arbiter encode-demand --type trusted-oracle --oracle 0xCHARLIE --data 0x
+# → { "encoded": "0xORACLE1_DEMAND" }
+
+bun run cli/src/index.ts arbiter encode-demand --type trusted-oracle --oracle 0xDAVE --data 0x
+# → { "encoded": "0xORACLE2_DEMAND" }
+
+# Create the OR condition for oracles
+bun run cli/src/index.ts arbiter encode-demand --type any \
+  --demands '[{"arbiter":"0xTRUSTED_ORACLE_ARBITER","demand":"0xORACLE1_DEMAND"},{"arbiter":"0xTRUSTED_ORACLE_ARBITER","demand":"0xORACLE2_DEMAND"}]'
+# → { "encoded": "0xORACLE_OR_DEMAND" }
+
+# Combine all conditions with AllArbiter: deadline AND recipient AND (oracle1 OR oracle2)
+bun run cli/src/index.ts arbiter encode-demand --type all \
+  --demands '[{"arbiter":"0xTIME_BEFORE_ARBITER","demand":"0xDEADLINE_DEMAND"},{"arbiter":"0xRECIPIENT_ARBITER","demand":"0xRECIPIENT_DEMAND"},{"arbiter":"0xANY_ARBITER","demand":"0xORACLE_OR_DEMAND"}]'
+# → { "encoded": "0xFINAL_DEMAND" }
+
+# Create the escrow with nested logical arbiters
+bun run cli/src/index.ts --private-key 0xALICE_KEY escrow create \
+  --erc20 \
+  --token 0xERC20_TOKEN --amount 200000000000000000000 \
+  --arbiter 0xALL_ARBITER \
+  --demand 0xFINAL_DEMAND \
+  --expiration 1735700400 \
+  --approve
+```
 
 **Solidity**
 
@@ -529,7 +624,17 @@ escrow_receipt = await alice_client.erc20.escrow.non_tierable.approve_and_create
 
 ## Parsing composed demands
 
-The SDKs provide built-in support for recursively parsing composed demands. The parsers automatically detect the arbiter type and decode each sub-demand appropriately.
+The CLI and SDKs provide built-in support for recursively parsing composed demands. The parsers automatically detect the arbiter type and decode each sub-demand appropriately.
+
+**CLI**
+
+```bash
+# Decode a composed demand given the arbiter address and encoded demand hex
+bun run cli/src/index.ts arbiter decode-demand \
+  --arbiter 0xALL_ARBITER \
+  --demand 0xCOMPOSED_DEMAND_HEX
+# → Recursively decoded demand structure as JSON
+```
 
 **Solidity**
 
