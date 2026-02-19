@@ -1,5 +1,5 @@
 import { Command } from "commander";
-import { createAlkahestClient } from "../client.ts";
+import { createAlkahestClient, loadAddresses } from "../client.ts";
 import { resolveAccount } from "../auth.ts";
 import { resolveChain } from "../chains.ts";
 import { outputSuccess, outputError } from "../output.ts";
@@ -28,7 +28,7 @@ export function makeBarterCommand() {
     try {
       const account = await resolveAccount(globalOpts);
       const chain = resolveChain(globalOpts.chain || "base-sepolia");
-      const client = createAlkahestClient(account, chain, globalOpts.rpcUrl);
+      const client = createAlkahestClient(account, chain, globalOpts.rpcUrl, loadAddresses(globalOpts.addressesFile));
 
       const expiration = BigInt(opts.expiration);
       let result: { hash: `0x${string}`; attested: any };
@@ -101,7 +101,7 @@ export function makeBarterCommand() {
     try {
       const account = await resolveAccount(globalOpts);
       const chain = resolveChain(globalOpts.chain || "base-sepolia");
-      const client = createAlkahestClient(account, chain, globalOpts.rpcUrl);
+      const client = createAlkahestClient(account, chain, globalOpts.rpcUrl, loadAddresses(globalOpts.addressesFile));
 
       const uid = opts.uid as `0x${string}`;
       let result: { hash: `0x${string}`; attested: any };

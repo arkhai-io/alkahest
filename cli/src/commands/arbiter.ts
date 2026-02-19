@@ -1,5 +1,5 @@
 import { Command } from "commander";
-import { createAlkahestClient } from "../client.ts";
+import { createAlkahestClient, loadAddresses } from "../client.ts";
 import { resolveAccount } from "../auth.ts";
 import { resolveChain } from "../chains.ts";
 import { outputSuccess, outputError } from "../output.ts";
@@ -43,7 +43,7 @@ export function makeArbiterCommand() {
     try {
       const account = await resolveAccount(globalOpts);
       const chain = resolveChain(globalOpts.chain || "base-sepolia");
-      const client = createAlkahestClient(account, chain, globalOpts.rpcUrl);
+      const client = createAlkahestClient(account, chain, globalOpts.rpcUrl, loadAddresses(globalOpts.addressesFile));
 
       const decision = opts.decision === "true";
       const hash = await client.arbiters.general.trustedOracle.arbitrate(
@@ -74,7 +74,7 @@ export function makeArbiterCommand() {
     try {
       const account = await resolveAccount(globalOpts);
       const chain = resolveChain(globalOpts.chain || "base-sepolia");
-      const client = createAlkahestClient(account, chain, globalOpts.rpcUrl);
+      const client = createAlkahestClient(account, chain, globalOpts.rpcUrl, loadAddresses(globalOpts.addressesFile));
 
       const confirmClient = getConfirmationClient(client, opts.type as ConfirmationType);
       const hash = await confirmClient.confirm(
@@ -101,7 +101,7 @@ export function makeArbiterCommand() {
     try {
       const account = await resolveAccount(globalOpts);
       const chain = resolveChain(globalOpts.chain || "base-sepolia");
-      const client = createAlkahestClient(account, chain, globalOpts.rpcUrl);
+      const client = createAlkahestClient(account, chain, globalOpts.rpcUrl, loadAddresses(globalOpts.addressesFile));
 
       const confirmClient = getConfirmationClient(client, opts.type as ConfirmationType);
       const hash = await confirmClient.revoke(
@@ -137,7 +137,7 @@ export function makeArbiterCommand() {
     try {
       const account = await resolveAccount(globalOpts);
       const chain = resolveChain(globalOpts.chain || "base-sepolia");
-      const client = createAlkahestClient(account, chain, globalOpts.rpcUrl);
+      const client = createAlkahestClient(account, chain, globalOpts.rpcUrl, loadAddresses(globalOpts.addressesFile));
 
       let encoded: `0x${string}`;
 
@@ -145,7 +145,7 @@ export function makeArbiterCommand() {
         case "trusted-oracle":
           encoded = client.arbiters.general.trustedOracle.encodeDemand({
             oracle: opts.oracle as `0x${string}`,
-            demand: opts.data as `0x${string}`,
+            data: opts.data as `0x${string}`,
           });
           break;
         case "intrinsics2":
@@ -154,13 +154,19 @@ export function makeArbiterCommand() {
           });
           break;
         case "all": {
-          const allDemands = JSON.parse(opts.demands);
-          encoded = client.arbiters.logical.all.encodeDemand({ demands: allDemands });
+          const allParsed = JSON.parse(opts.demands) as { arbiter: string; demand: string }[];
+          encoded = client.arbiters.logical.all.encodeDemand({
+            arbiters: allParsed.map((d) => d.arbiter as `0x${string}`),
+            demands: allParsed.map((d) => d.demand as `0x${string}`),
+          });
           break;
         }
         case "any": {
-          const anyDemands = JSON.parse(opts.demands);
-          encoded = client.arbiters.logical.any.encodeDemand({ demands: anyDemands });
+          const anyParsed = JSON.parse(opts.demands) as { arbiter: string; demand: string }[];
+          encoded = client.arbiters.logical.any.encodeDemand({
+            arbiters: anyParsed.map((d) => d.arbiter as `0x${string}`),
+            demands: anyParsed.map((d) => d.demand as `0x${string}`),
+          });
           break;
         }
         case "recipient":
@@ -185,7 +191,7 @@ export function makeArbiterCommand() {
           break;
         case "ref-uid":
           encoded = client.arbiters.attestationProperties.refUid.encodeDemand({
-            refUid: opts.refUid as `0x${string}`,
+            refUID: opts.refUid as `0x${string}`,
           });
           break;
         case "revocable":
@@ -245,7 +251,7 @@ export function makeArbiterCommand() {
     try {
       const account = await resolveAccount(globalOpts);
       const chain = resolveChain(globalOpts.chain || "base-sepolia");
-      const client = createAlkahestClient(account, chain, globalOpts.rpcUrl);
+      const client = createAlkahestClient(account, chain, globalOpts.rpcUrl, loadAddresses(globalOpts.addressesFile));
 
       const decoded = client.decodeDemand({
         arbiter: opts.arbiter as `0x${string}`,

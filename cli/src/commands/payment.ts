@@ -1,5 +1,5 @@
 import { Command } from "commander";
-import { createAlkahestClient } from "../client.ts";
+import { createAlkahestClient, loadAddresses } from "../client.ts";
 import { resolveAccount } from "../auth.ts";
 import { resolveChain } from "../chains.ts";
 import { outputSuccess, outputError } from "../output.ts";
@@ -14,7 +14,7 @@ export function makePaymentCommand() {
     .description("Make a payment")
     .option("--erc20", "ERC20 token payment")
     .option("--native", "Native token payment")
-    .requiredOption("--token <address>", "Token contract address (for ERC20)")
+    .option("--token <address>", "Token contract address (required for ERC20)")
     .requiredOption("--amount <wei>", "Amount in wei")
     .requiredOption("--payee <address>", "Payee address")
     .option("--ref-uid <uid>", "Reference attestation UID")
@@ -27,7 +27,11 @@ export function makePaymentCommand() {
     try {
       const account = await resolveAccount(globalOpts);
       const chain = resolveChain(globalOpts.chain || "base-sepolia");
-      const client = createAlkahestClient(account, chain, globalOpts.rpcUrl);
+      const client = createAlkahestClient(account, chain, globalOpts.rpcUrl, loadAddresses(globalOpts.addressesFile));
+
+      if (!opts.native && !opts.token) {
+        throw new Error("--token is required for ERC20 payments");
+      }
 
       const refUID = (opts.refUid as `0x${string}`) || ZERO_UID;
       let result: { hash: `0x${string}`; attested: any };
@@ -81,7 +85,7 @@ export function makePaymentCommand() {
     try {
       const account = await resolveAccount(globalOpts);
       const chain = resolveChain(globalOpts.chain || "base-sepolia");
-      const client = createAlkahestClient(account, chain, globalOpts.rpcUrl);
+      const client = createAlkahestClient(account, chain, globalOpts.rpcUrl, loadAddresses(globalOpts.addressesFile));
 
       let obligation: any;
       if (opts.native) {

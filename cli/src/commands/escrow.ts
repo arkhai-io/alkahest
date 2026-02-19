@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { addTokenTypeFlags, resolveTokenType, type TokenType } from "../token-type.ts";
-import { createAlkahestClient } from "../client.ts";
+import { createAlkahestClient, loadAddresses } from "../client.ts";
 import { resolveAccount } from "../auth.ts";
 import { resolveChain } from "../chains.ts";
 import { outputSuccess, outputError } from "../output.ts";
@@ -43,8 +43,8 @@ export function makeEscrowCommand() {
   // escrow create
   const create = new Command("create")
     .description("Create an escrow")
-    .requiredOption("--token <address>", "Token contract address")
-    .requiredOption("--amount <wei>", "Amount in wei")
+    .option("--token <address>", "Token contract address (required for ERC20/ERC721/ERC1155)")
+    .option("--amount <wei>", "Amount in wei")
     .option("--token-id <id>", "Token ID (for ERC721/ERC1155)")
     .requiredOption("--arbiter <address>", "Arbiter contract address")
     .requiredOption("--demand <hex>", "Encoded demand data (hex)")
@@ -60,8 +60,15 @@ export function makeEscrowCommand() {
     try {
       const account = await resolveAccount(globalOpts);
       const chain = resolveChain(globalOpts.chain || "base-sepolia");
-      const client = createAlkahestClient(account, chain, globalOpts.rpcUrl);
+      const client = createAlkahestClient(account, chain, globalOpts.rpcUrl, loadAddresses(globalOpts.addressesFile));
       const tokenType = resolveTokenType(opts);
+
+      if (tokenType !== "native" && !opts.token) {
+        throw new Error("--token is required for ERC20/ERC721/ERC1155 escrows");
+      }
+      if (!opts.amount && tokenType !== "erc721") {
+        throw new Error("--amount is required");
+      }
 
       const demand: Demand = {
         arbiter: opts.arbiter as `0x${string}`,
@@ -143,7 +150,7 @@ export function makeEscrowCommand() {
     try {
       const account = await resolveAccount(globalOpts);
       const chain = resolveChain(globalOpts.chain || "base-sepolia");
-      const client = createAlkahestClient(account, chain, globalOpts.rpcUrl);
+      const client = createAlkahestClient(account, chain, globalOpts.rpcUrl, loadAddresses(globalOpts.addressesFile));
       const tokenType = resolveTokenType(opts);
 
       const escrowClient = getEscrowClient(client, tokenType);
@@ -172,7 +179,7 @@ export function makeEscrowCommand() {
     try {
       const account = await resolveAccount(globalOpts);
       const chain = resolveChain(globalOpts.chain || "base-sepolia");
-      const client = createAlkahestClient(account, chain, globalOpts.rpcUrl);
+      const client = createAlkahestClient(account, chain, globalOpts.rpcUrl, loadAddresses(globalOpts.addressesFile));
       const tokenType = resolveTokenType(opts);
 
       const escrowClient = getEscrowClient(client, tokenType);
@@ -198,7 +205,7 @@ export function makeEscrowCommand() {
     try {
       const account = await resolveAccount(globalOpts);
       const chain = resolveChain(globalOpts.chain || "base-sepolia");
-      const client = createAlkahestClient(account, chain, globalOpts.rpcUrl);
+      const client = createAlkahestClient(account, chain, globalOpts.rpcUrl, loadAddresses(globalOpts.addressesFile));
       const tokenType = resolveTokenType(opts);
 
       const escrowClient = getEscrowClient(client, tokenType);
@@ -224,7 +231,7 @@ export function makeEscrowCommand() {
     try {
       const account = await resolveAccount(globalOpts);
       const chain = resolveChain(globalOpts.chain || "base-sepolia");
-      const client = createAlkahestClient(account, chain, globalOpts.rpcUrl);
+      const client = createAlkahestClient(account, chain, globalOpts.rpcUrl, loadAddresses(globalOpts.addressesFile));
       const tokenType = resolveTokenType(opts);
 
       const contractAddress = getEscrowContractAddress(client, tokenType);

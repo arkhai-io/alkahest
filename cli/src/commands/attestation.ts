@@ -1,5 +1,5 @@
 import { Command } from "commander";
-import { createAlkahestClient } from "../client.ts";
+import { createAlkahestClient, loadAddresses } from "../client.ts";
 import { resolveAccount } from "../auth.ts";
 import { resolveChain } from "../chains.ts";
 import { outputSuccess, outputError } from "../output.ts";
@@ -17,7 +17,7 @@ export function makeAttestationCommand() {
     try {
       const account = await resolveAccount(globalOpts);
       const chain = resolveChain(globalOpts.chain || "base-sepolia");
-      const client = createAlkahestClient(account, chain, globalOpts.rpcUrl);
+      const client = createAlkahestClient(account, chain, globalOpts.rpcUrl, loadAddresses(globalOpts.addressesFile));
 
       const att = await client.getAttestation(opts.uid as `0x${string}`);
       outputSuccess(att, human);
@@ -41,7 +41,7 @@ export function makeAttestationCommand() {
     try {
       const account = await resolveAccount(globalOpts);
       const chain = resolveChain(globalOpts.chain || "base-sepolia");
-      const client = createAlkahestClient(account, chain, globalOpts.rpcUrl);
+      const client = createAlkahestClient(account, chain, globalOpts.rpcUrl, loadAddresses(globalOpts.addressesFile));
 
       const att = await client.getAttestation(opts.uid as `0x${string}`);
 

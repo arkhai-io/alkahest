@@ -1,5 +1,5 @@
 import { Command } from "commander";
-import { createAlkahestClient } from "../client.ts";
+import { createAlkahestClient, loadAddresses } from "../client.ts";
 import { resolveAccount } from "../auth.ts";
 import { resolveChain } from "../chains.ts";
 import { outputSuccess, outputError } from "../output.ts";
@@ -19,7 +19,7 @@ export function makeCommitRevealCommand() {
     try {
       const account = await resolveAccount(globalOpts);
       const chain = resolveChain(globalOpts.chain || "base-sepolia");
-      const client = createAlkahestClient(account, chain, globalOpts.rpcUrl);
+      const client = createAlkahestClient(account, chain, globalOpts.rpcUrl, loadAddresses(globalOpts.addressesFile));
 
       const result = await client.commitReveal.commit(opts.commitment as `0x${string}`);
       outputSuccess({ hash: result.hash }, human);
@@ -42,7 +42,7 @@ export function makeCommitRevealCommand() {
     try {
       const account = await resolveAccount(globalOpts);
       const chain = resolveChain(globalOpts.chain || "base-sepolia");
-      const client = createAlkahestClient(account, chain, globalOpts.rpcUrl);
+      const client = createAlkahestClient(account, chain, globalOpts.rpcUrl, loadAddresses(globalOpts.addressesFile));
 
       const refUID = (opts.refUid as `0x${string}`) || ZERO_UID;
       const data = {
@@ -82,7 +82,7 @@ export function makeCommitRevealCommand() {
     try {
       const account = await resolveAccount(globalOpts);
       const chain = resolveChain(globalOpts.chain || "base-sepolia");
-      const client = createAlkahestClient(account, chain, globalOpts.rpcUrl);
+      const client = createAlkahestClient(account, chain, globalOpts.rpcUrl, loadAddresses(globalOpts.addressesFile));
 
       const commitment = await client.commitReveal.computeCommitment(
         opts.refUid as `0x${string}`,
@@ -111,7 +111,7 @@ export function makeCommitRevealCommand() {
     try {
       const account = await resolveAccount(globalOpts);
       const chain = resolveChain(globalOpts.chain || "base-sepolia");
-      const client = createAlkahestClient(account, chain, globalOpts.rpcUrl);
+      const client = createAlkahestClient(account, chain, globalOpts.rpcUrl, loadAddresses(globalOpts.addressesFile));
 
       const result = await client.commitReveal.reclaimBond(opts.uid as `0x${string}`);
       outputSuccess({ hash: result.hash }, human);
@@ -131,7 +131,7 @@ export function makeCommitRevealCommand() {
     try {
       const account = await resolveAccount(globalOpts);
       const chain = resolveChain(globalOpts.chain || "base-sepolia");
-      const client = createAlkahestClient(account, chain, globalOpts.rpcUrl);
+      const client = createAlkahestClient(account, chain, globalOpts.rpcUrl, loadAddresses(globalOpts.addressesFile));
 
       const result = await client.commitReveal.slashBond(opts.commitment as `0x${string}`);
       outputSuccess({ hash: result.hash }, human);
@@ -150,7 +150,7 @@ export function makeCommitRevealCommand() {
     try {
       const account = await resolveAccount(globalOpts);
       const chain = resolveChain(globalOpts.chain || "base-sepolia");
-      const client = createAlkahestClient(account, chain, globalOpts.rpcUrl);
+      const client = createAlkahestClient(account, chain, globalOpts.rpcUrl, loadAddresses(globalOpts.addressesFile));
 
       const [bondAmount, commitDeadline, slashedBondRecipient] = await Promise.all([
         client.commitReveal.getBondAmount(),

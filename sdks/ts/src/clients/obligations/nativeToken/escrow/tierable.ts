@@ -1,4 +1,4 @@
-import { type Address, decodeAbiParameters, encodeAbiParameters, getAbiItem, parseAbiParameters } from "viem";
+import { decodeAbiParameters, encodeAbiParameters, getAbiItem } from "viem";
 import { abi as nativeTokenEscrowAbi } from "../../../../contracts/obligations/escrow/tierable/NativeTokenEscrowObligation";
 import type { Demand } from "../../../../types";
 import { getAttestation, getAttestedEventFromTxHash, type ViemClient, writeContract } from "../../../../utils";
@@ -74,32 +74,22 @@ export const makeNativeTokenTierableEscrowClient = (viemClient: ViemClient, addr
     },
 
     decodeObligation: (obligationData: `0x${string}`): NativeTokenTierableEscrowObligationData => {
-      const [arbiter, demand, amount] = decodeAbiParameters(
-        parseAbiParameters("address, bytes, uint256"),
+      return decodeAbiParameters(
+        [nativeEscrowObligationDataType],
         obligationData,
-      );
-      return {
-        arbiter: arbiter as Address,
-        demand: demand as `0x${string}`,
-        amount: amount as bigint,
-      };
+      )[0] as NativeTokenTierableEscrowObligationData;
     },
 
     getObligation: async (uid: `0x${string}`) => {
-      const [attestation, schema] = await Promise.all([getAttestation(viemClient, uid), getSchema()]);
+      const [attestation, schema] = await Promise.all([getAttestation(viemClient, uid, addresses), getSchema()]);
 
       if (attestation.schema !== schema) {
         throw new Error(`Unsupported schema: ${attestation.schema}`);
       }
-      const [arbiter, demand, amount] = decodeAbiParameters(
-        parseAbiParameters("address, bytes, uint256"),
+      const data = decodeAbiParameters(
+        [nativeEscrowObligationDataType],
         attestation.data,
-      );
-      const data: NativeTokenTierableEscrowObligationData = {
-        arbiter: arbiter as Address,
-        demand: demand as `0x${string}`,
-        amount: amount as bigint,
-      };
+      )[0] as NativeTokenTierableEscrowObligationData;
 
       return {
         ...attestation,

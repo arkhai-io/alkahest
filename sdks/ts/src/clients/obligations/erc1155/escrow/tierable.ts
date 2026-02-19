@@ -91,7 +91,7 @@ export const makeErc1155TierableEscrowClient = (viemClient: ViemClient, addresse
     },
 
     getObligation: async (uid: `0x${string}`) => {
-      const [attestation, schema] = await Promise.all([getAttestation(viemClient, uid), getSchema()]);
+      const [attestation, schema] = await Promise.all([getAttestation(viemClient, uid, addresses), getSchema()]);
 
       if (attestation.schema !== schema) {
         throw new Error(`Unsupported schema: ${attestation.schema}`);

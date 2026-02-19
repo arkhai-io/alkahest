@@ -23,6 +23,7 @@ program
   .option("--ledger", "Use Ledger hardware wallet (USB)")
   .option("--ledger-path <path>", "Ledger HD derivation path (default: m/44'/60'/0'/0/0)")
   .option("--rpc-url <url>", "Custom RPC URL (overrides chain default)")
+  .option("--addresses-file <path>", "JSON file with custom contract addresses (for local/custom deployments)")
   .option("--human", "Human-readable output (default: JSON)");
 
 program.addCommand(makeEscrowCommand());

@@ -504,6 +504,7 @@ export * from "./clients/arbiters";
 export * from "./config";
 // Export contract ABIs
 export * as contracts from "./contracts";
+export { deployAlkahest, type DeployFn, type DeployOptions } from "./deploy";
 export * from "./extensions";
 export * from "./types";
 export * from "./utils";
