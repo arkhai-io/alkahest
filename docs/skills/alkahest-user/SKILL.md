@@ -1,6 +1,6 @@
 ---
 name: alkahest-user
-description: Interact with Alkahest escrow contracts as a buyer, seller, or oracle using the TypeScript SDK
+description: Interact with Alkahest escrow contracts as a buyer, seller, or oracle using the CLI
 ---
 
 # Alkahest User Skill
@@ -25,273 +25,334 @@ Supported chains: Base Sepolia, Sepolia, Filecoin Calibration, Ethereum mainnet.
 | **Seller** | Fulfills the demand to collect escrowed assets |
 | **Oracle** | Validates fulfillment and submits on-chain decisions (for TrustedOracleArbiter) |
 
-## Setup
+## CLI Setup
 
-```typescript
-import { createWalletClient, http } from "viem";
-import { privateKeyToAccount } from "viem/accounts";
-import { baseSepolia } from "viem/chains";
-import { makeClient } from "@alkahest/ts-sdk";
+The CLI is at `cli/` in the repo root. Run commands with:
 
-const walletClient = createWalletClient({
-  account: privateKeyToAccount("0xYOUR_PRIVATE_KEY"),
-  chain: baseSepolia,
-  transport: http("https://your-rpc-url"),
-});
-
-const client = makeClient(walletClient);
+```bash
+bun run cli/src/index.ts [global-flags] <command> <subcommand> [options]
 ```
 
-The client auto-detects the chain and loads the correct contract addresses. To use custom addresses, pass them as the second argument to `makeClient`.
+### Authentication
+
+Provide a wallet via one of (in priority order):
+
+| Method | Flag / Env Var |
+|--------|---------------|
+| Private key flag | `--private-key 0x...` |
+| Mnemonic flag | `--mnemonic "word1 word2 ..."` |
+| Ledger USB | `--ledger [--ledger-path <path>]` |
+| Private key env | `ALKAHEST_PRIVATE_KEY=0x...` |
+| Mnemonic env | `ALKAHEST_MNEMONIC="word1 word2 ..."` |
+| Compat env | `PRIVATE_KEY=0x...` |
+
+### Global Flags
+
+```
+--chain <name>          base-sepolia (default) | sepolia | filecoin-calibration | ethereum
+--rpc-url <url>         Custom RPC URL (overrides chain default)
+--human                 Human-readable output (default: JSON)
+```
+
+### Output Format
+
+JSON by default (ideal for programmatic/agent use). All BigInts are serialized as strings.
+
+```json
+{ "success": true, "data": { "hash": "0x...", "uid": "0x..." } }
+{ "success": false, "error": { "code": "ESCROW_CREATE_FAILED", "message": "..." } }
+```
+
+Use `--human` for labeled, indented output.
 
 ## Buyer Workflow: Create Escrow
 
-### 1. Approve tokens (if ERC20/ERC721/ERC1155)
+### 1. Encode the demand
 
-```typescript
-await client.erc20.util.approve(
-  { address: TOKEN_ADDRESS, value: amount },
-  "escrow"
-);
+First, encode the demand data that specifies your release condition:
+
+```bash
+# Trusted oracle demand — oracle must approve fulfillment
+bun run cli/src/index.ts arbiter encode-demand \
+  --type trusted-oracle \
+  --oracle 0xORACLE_ADDRESS \
+  --data 0x
+# Returns: { "success": true, "data": { "encoded": "0x..." } }
 ```
 
-### 2. Encode your demand
+### 2. Create the escrow
 
-The demand specifies what fulfillment you require. Choose an arbiter and encode its demand data:
+Use the `--arbiter` address and the encoded `--demand` hex from step 1:
 
-```typescript
-// Example: require fulfillment validated by a trusted oracle
-const demand = {
-  arbiter: client.contractAddresses.trustedOracleArbiter,
-  demand: client.arbiters.general.trustedOracle.encodeDemand({
-    oracle: ORACLE_ADDRESS,
-    data: "0x", // optional extra data for the oracle
-  }),
-};
+```bash
+# ERC20 escrow with auto-approve
+bun run cli/src/index.ts --private-key 0xKEY escrow create \
+  --erc20 \
+  --token 0xTOKEN_ADDRESS \
+  --amount 1000000000000000000 \
+  --arbiter 0xARBITER_ADDRESS \
+  --demand 0xENCODED_DEMAND \
+  --expiration 1735689600 \
+  --approve
+
+# ERC721 escrow
+bun run cli/src/index.ts --private-key 0xKEY escrow create \
+  --erc721 \
+  --token 0xNFT_ADDRESS \
+  --token-id 42 \
+  --amount 0 \
+  --arbiter 0xARBITER_ADDRESS \
+  --demand 0xENCODED_DEMAND \
+  --expiration 1735689600 \
+  --approve
+
+# Native token (ETH) escrow — no approve needed
+bun run cli/src/index.ts --private-key 0xKEY escrow create \
+  --native \
+  --token 0x0000000000000000000000000000000000000000 \
+  --amount 500000000000000000 \
+  --arbiter 0xARBITER_ADDRESS \
+  --demand 0xENCODED_DEMAND \
+  --expiration 1735689600
 ```
 
-### 3. Create the escrow
+Returns `{ "success": true, "data": { "hash": "0x...", "uid": "0x...", ... } }`. Save the `uid` — this is the escrow UID.
 
-```typescript
-const { hash, attested } = await client.erc20.escrow.nonTierable.doObligation(
-  client.erc20.escrow.nonTierable.encodeObligationRaw({
-    token: TOKEN_ADDRESS,
-    amount: parseEther("1.0"),
-    arbiter: demand.arbiter,
-    demand: demand.demand,
-  }),
-);
-const escrowUid = attested.uid;
+### 3. Wait for fulfillment
+
+```bash
+bun run cli/src/index.ts --private-key 0xKEY escrow wait \
+  --erc20 --uid 0xESCROW_UID
+# Blocks until fulfilled. Returns: { payment, fulfillment, fulfiller }
 ```
 
-### 4. Wait for fulfillment
+### 4. Reclaim expired escrow (if unfulfilled)
 
-```typescript
-const result = await client.waitForFulfillment(
-  client.contractAddresses.erc20EscrowObligation,
-  escrowUid,
-);
-// result contains: { payment, fulfillment, fulfiller }
+```bash
+bun run cli/src/index.ts --private-key 0xKEY escrow reclaim \
+  --erc20 --uid 0xESCROW_UID
 ```
 
-### 5. Reclaim expired escrow (if unfulfilled)
+### 5. Get escrow details
 
-```typescript
-// Only works after the escrow's expirationTime has passed
-// Not available via SDK helper — call the contract directly if needed
+```bash
+bun run cli/src/index.ts --private-key 0xKEY escrow get \
+  --erc20 --uid 0xESCROW_UID
 ```
 
 ## Seller Workflow: Fulfill Escrow
 
 ### Using StringObligation (off-chain validated work)
 
-```typescript
-// 1. Create fulfillment referencing the escrow
-const { hash, attested } = await client.stringObligation.doObligation(
-  "Here is my completed deliverable",
-  undefined, // schema (optional)
-  escrowUid,  // refUID — links to the escrow
-);
+```bash
+# 1. Create fulfillment referencing the escrow
+bun run cli/src/index.ts --private-key 0xKEY string create \
+  --item "Here is my completed deliverable" \
+  --ref-uid 0xESCROW_UID
+# Returns: { uid: "0xFULFILLMENT_UID", ... }
 
-// 2. If escrow uses TrustedOracleArbiter, request arbitration
-await client.arbiters.general.trustedOracle.arbitrate(
-  attested.uid, // the fulfillment UID
-  true,         // approval decision (as oracle)
-);
+# 2. If escrow uses TrustedOracleArbiter, oracle arbitrates
+bun run cli/src/index.ts --private-key 0xORACLE_KEY arbiter arbitrate \
+  --obligation 0xFULFILLMENT_UID \
+  --demand 0xDEMAND_HEX \
+  --decision true
+
+# 3. Collect the escrow
+bun run cli/src/index.ts --private-key 0xSELLER_KEY escrow collect \
+  --erc20 \
+  --escrow-uid 0xESCROW_UID \
+  --fulfillment-uid 0xFULFILLMENT_UID
 ```
 
-### Using direct payment (token-for-token barter)
+### Using barter (token-for-token swap)
 
-```typescript
-// Atomic swap: buy ERC20 for ERC20
-const { hash } = await client.erc20.barter.buyErc20ForErc20(
-  { address: BID_TOKEN, value: bidAmount },  // what you're offering
-  { address: ASK_TOKEN, value: askAmount },  // what you want
-  BigInt(Math.floor(Date.now() / 1000) + 3600), // expiration
-);
+```bash
+# Create a barter offer: bid ERC20 for ERC20
+bun run cli/src/index.ts --private-key 0xKEY barter create \
+  --bid-type erc20 --ask-type erc20 \
+  --bid-token 0xBID_TOKEN --bid-amount 1000000000000000000 \
+  --ask-token 0xASK_TOKEN --ask-amount 2000000000000000000 \
+  --expiration 1735689600
+
+# Counterparty fulfills the barter
+bun run cli/src/index.ts --private-key 0xCOUNTERPARTY_KEY barter fulfill \
+  --uid 0xBARTER_UID \
+  --bid-type erc20 --ask-type erc20
 ```
+
+Supported barter pairs: `erc20/erc20`, `erc20/erc721`, `erc20/erc1155`. Use `--permit` for gasless approval.
 
 ## Oracle Workflow: Arbitrate
 
-### Manual arbitration
+```bash
+# Approve a fulfillment
+bun run cli/src/index.ts --private-key 0xORACLE_KEY arbiter arbitrate \
+  --obligation 0xFULFILLMENT_UID \
+  --demand 0xDEMAND_HEX \
+  --decision true
 
-```typescript
-// Submit decision for a specific fulfillment
-await client.arbiters.general.trustedOracle.arbitrate(
-  fulfillmentAttestation, // the attestation to judge
-  true,                    // decision: true = approve, false = reject
-);
+# Reject a fulfillment
+bun run cli/src/index.ts --private-key 0xORACLE_KEY arbiter arbitrate \
+  --obligation 0xFULFILLMENT_UID \
+  --demand 0xDEMAND_HEX \
+  --decision false
 ```
 
-### Auto-arbitration (listen and decide)
-
-```typescript
-const { decisions, unwatch } = await client.arbiters.general.trustedOracle.arbitrateMany({
-  mode: "listen",           // "listen" for live, "past" for historical
-  pollingInterval: 5000,    // ms
-  onAfterArbitrate: (uid, decision) => {
-    console.log(`Arbitrated ${uid}: ${decision}`);
-  },
-});
-```
+For auto-arbitration (listening for requests and auto-deciding), use the TypeScript SDK directly — see `references/typescript-sdk.md`.
 
 ## Commit-Reveal Workflow
 
 Use commit-reveal when fulfillment data is self-contained (e.g., a string answer) to prevent frontrunning.
 
-### Seller: Commit then reveal
+```bash
+# 1. Compute commitment hash
+bun run cli/src/index.ts --private-key 0xKEY commit-reveal compute-commitment \
+  --ref-uid 0xESCROW_UID \
+  --claimer 0xSELLER_ADDRESS \
+  --payload 0xPAYLOAD_HEX \
+  --salt 0xSALT_HEX \
+  --schema 0xSCHEMA_UID
+# Returns: { commitment: "0x..." }
 
-```typescript
-// 1. Compute commitment hash
-const commitment = await client.commitReveal.computeCommitment(
-  escrowUid,               // the escrow being fulfilled
-  sellerAddress,           // claimer address
-  { payload: "0x...", salt: "0x...", schema: "0x..." },
-);
+# 2. Commit (sends bond as ETH)
+bun run cli/src/index.ts --private-key 0xKEY commit-reveal commit \
+  --commitment 0xCOMMITMENT_HASH
 
-// 2. Commit with bond (sends ETH)
-const bondAmount = await client.commitReveal.getBondAmount();
-await client.commitReveal.commit(commitment);
-// Bond amount is sent as msg.value automatically
+# 3. Wait at least 1 block, then reveal
+bun run cli/src/index.ts --private-key 0xKEY commit-reveal reveal \
+  --payload 0xPAYLOAD_HEX \
+  --salt 0xSALT_HEX \
+  --schema 0xSCHEMA_UID \
+  --ref-uid 0xESCROW_UID
+# Returns: { uid: "0xOBLIGATION_UID", ... }
 
-// 3. Wait at least 1 block, then reveal
-const { attested } = await client.commitReveal.doObligation(
-  { payload: encodedPayload, salt: randomSalt, schema: schemaTag },
-  escrowUid,
-);
+# 4. Reclaim bond after successful reveal
+bun run cli/src/index.ts --private-key 0xKEY commit-reveal reclaim-bond \
+  --uid 0xOBLIGATION_UID
 
-// 4. Reclaim bond after successful reveal
-await client.commitReveal.reclaimBond(attested.uid);
+# Check bond amount and deadline
+bun run cli/src/index.ts --private-key 0xKEY commit-reveal info
+
+# Slash an unrevealed commitment's bond
+bun run cli/src/index.ts --private-key 0xKEY commit-reveal slash-bond \
+  --commitment 0xCOMMITMENT_HASH
 ```
 
-### Composing commit-reveal with other demands
+## Encoding Demands
 
-Use `AllArbiter` to require both commit-reveal AND other conditions:
+The `arbiter encode-demand` command encodes demand data for any arbiter type:
 
-```typescript
-const demand = client.arbiters.logical.all.encodeDemand({
-  arbiters: [
-    client.contractAddresses.commitRevealObligation, // built-in arbiter
-    client.contractAddresses.trustedOracleArbiter,
-  ],
-  demands: [
-    "0x", // commit-reveal has no demand data
-    client.arbiters.general.trustedOracle.encodeDemand({
-      oracle: ORACLE_ADDRESS,
-      data: "0x",
-    }),
-  ],
-});
+```bash
+# Trusted oracle
+bun run cli/src/index.ts arbiter encode-demand --type trusted-oracle \
+  --oracle 0xORACLE --data 0x
+
+# IntrinsicsArbiter2 (schema check)
+bun run cli/src/index.ts arbiter encode-demand --type intrinsics2 \
+  --schema 0xSCHEMA_UID
+
+# Attestation property arbiters
+bun run cli/src/index.ts arbiter encode-demand --type recipient --recipient 0xADDRESS
+bun run cli/src/index.ts arbiter encode-demand --type attester --attester 0xADDRESS
+bun run cli/src/index.ts arbiter encode-demand --type schema --schema 0xSCHEMA_UID
+bun run cli/src/index.ts arbiter encode-demand --type time-after --time 1735689600
+
+# Logical composition (AllArbiter / AnyArbiter)
+bun run cli/src/index.ts arbiter encode-demand --type all \
+  --demands '[{"arbiter":"0xARB1","demand":"0xDEM1"},{"arbiter":"0xARB2","demand":"0xDEM2"}]'
+
+bun run cli/src/index.ts arbiter encode-demand --type any \
+  --demands '[{"arbiter":"0xARB1","demand":"0xDEM1"},{"arbiter":"0xARB2","demand":"0xDEM2"}]'
 ```
 
-## Composing Demands
+Available `--type` values: `trusted-oracle`, `intrinsics2`, `all`, `any`, `recipient`, `attester`, `schema`, `uid`, `ref-uid`, `revocable`, `time-after`, `time-before`, `time-equal`, `expiration-time-after`, `expiration-time-before`, `expiration-time-equal`.
 
-### AllArbiter (AND logic)
+### Decoding demands
 
-All conditions must be satisfied:
-
-```typescript
-const demand = client.arbiters.logical.all.encodeDemand({
-  arbiters: [ARBITER_1, ARBITER_2],
-  demands: [DEMAND_1, DEMAND_2],
-});
-```
-
-### AnyArbiter (OR logic)
-
-At least one condition must be satisfied:
-
-```typescript
-const demand = client.arbiters.logical.any.encodeDemand({
-  arbiters: [ARBITER_1, ARBITER_2],
-  demands: [DEMAND_1, DEMAND_2],
-});
-```
-
-### Nesting
-
-Arbiters compose arbitrarily:
-
-```typescript
-// (conditionA AND conditionB) OR conditionC
-const innerDemand = client.arbiters.logical.all.encodeDemand({
-  arbiters: [ARBITER_A, ARBITER_B],
-  demands: [DEMAND_A, DEMAND_B],
-});
-const outerDemand = client.arbiters.logical.any.encodeDemand({
-  arbiters: [client.contractAddresses.allArbiter, ARBITER_C],
-  demands: [innerDemand, DEMAND_C],
-});
+```bash
+bun run cli/src/index.ts arbiter decode-demand \
+  --arbiter 0xARBITER_ADDRESS \
+  --demand 0xENCODED_HEX
 ```
 
 ## Confirmation Arbiters
 
 For manual buyer-side approval of fulfillments:
 
-```typescript
-// Buyer confirms a fulfillment
-await client.arbiters.confirmation.exclusiveRevocable.confirm(escrowUid, fulfillmentUid);
+```bash
+# Confirm a fulfillment
+bun run cli/src/index.ts --private-key 0xBUYER_KEY arbiter confirm \
+  --fulfillment 0xFULFILLMENT_UID \
+  --escrow 0xESCROW_UID \
+  --type exclusive-revocable
 
-// Buyer revokes confirmation (if revocable)
-await client.arbiters.confirmation.exclusiveRevocable.revokeConfirmation(escrowUid, fulfillmentUid);
-
-// Check confirmation status
-const confirmed = await client.arbiters.confirmation.exclusiveRevocable.isConfirmed(escrowUid, fulfillmentUid);
+# Revoke confirmation (revocable variants only)
+bun run cli/src/index.ts --private-key 0xBUYER_KEY arbiter revoke \
+  --fulfillment 0xFULFILLMENT_UID \
+  --escrow 0xESCROW_UID \
+  --type exclusive-revocable
 ```
 
-Variants: `exclusiveRevocable`, `exclusiveUnrevocable`, `nonexclusiveRevocable`, `nonexclusiveUnrevocable`.
+Types: `exclusive-revocable`, `exclusive-unrevocable`, `nonexclusive-revocable`, `nonexclusive-unrevocable`.
 
-## Decoding Attestations
+## Payments
 
-```typescript
-// Get an attestation by UID
-const attestation = await client.getAttestation(uid);
+```bash
+# ERC20 payment with auto-approve
+bun run cli/src/index.ts --private-key 0xKEY payment pay \
+  --erc20 \
+  --token 0xTOKEN --amount 1000000000000000000 \
+  --payee 0xRECIPIENT \
+  --approve
 
-// Decode obligation data from an escrow attestation
-const data = client.extractObligationData(erc20EscrowObligationAbi, attestation);
+# Native token payment
+bun run cli/src/index.ts --private-key 0xKEY payment pay \
+  --native \
+  --token 0x0000000000000000000000000000000000000000 \
+  --amount 500000000000000000 \
+  --payee 0xRECIPIENT
 
-// Decode demand from an escrow attestation
-const demandData = client.extractDemandData(trustedOracleArbiterDemandAbi, escrowAttestation);
+# Get payment details
+bun run cli/src/index.ts --private-key 0xKEY payment get --erc20 --uid 0xUID
+```
 
-// Generic demand decoder (auto-detects arbiter type)
-const decoded = client.decodeDemand({ arbiter: arbiterAddress, demand: demandBytes });
+## Attestations
+
+```bash
+# Get raw attestation by UID
+bun run cli/src/index.ts --private-key 0xKEY attestation get --uid 0xUID
+
+# Decode attestation data by type
+bun run cli/src/index.ts --private-key 0xKEY attestation decode \
+  --uid 0xUID --type erc20-escrow
+```
+
+Decode types: `erc20-escrow`, `erc20-payment`, `erc721-escrow`, `erc721-payment`, `erc1155-escrow`, `erc1155-payment`, `string`, `commit-reveal`.
+
+## Configuration
+
+```bash
+# Show contract addresses for a chain
+bun run cli/src/index.ts config show --chain base-sepolia
+
+# List supported chains
+bun run cli/src/index.ts config chains
 ```
 
 ## Escrow Types
 
-| Type | What's escrowed | Key fields |
-|------|----------------|------------|
-| ERC20 | Fungible tokens | `token`, `amount` |
-| ERC721 | NFTs | `token`, `id` |
-| ERC1155 | Semi-fungible tokens | `token`, `id`, `amount` |
-| Native Token | ETH/native currency | `amount` |
-| Token Bundle | Mix of all token types | `erc20s`, `erc721s`, `erc1155s` |
-| Attestation | EAS attestations | `attestation` (AttestationRequest) |
+| Type | Flag | Key options |
+|------|------|------------|
+| ERC20 | `--erc20` | `--token`, `--amount` |
+| ERC721 | `--erc721` | `--token`, `--token-id` |
+| ERC1155 | `--erc1155` | `--token`, `--token-id`, `--amount` |
+| Native Token | `--native` | `--amount` |
+| Token Bundle | `--bundle` | (SDK only for create) |
 
-All escrow types share the same workflow: approve -> encode obligation -> doObligation -> wait -> collect.
+All escrow types share the same workflow: create -> wait -> collect (or reclaim if expired).
 
 ## Additional Resources
 
-- Use the `alkahest-docs` MCP server for looking up contract details and addresses
+- See `references/typescript-sdk.md` for TypeScript SDK usage (complex workflows, auto-arbitration, bundle escrows)
 - See `references/contracts.md` for all contract addresses and obligation data schemas
 - See `references/arbiters.md` for all arbiter types and demand encoding patterns

@@ -26,6 +26,34 @@ Since CommitRevealObligation only enforces the commit-reveal protocol — it doe
 - A valid commit-reveal (prevents frontrunning)
 - Charlie's approval (validates the result)
 
+**CLI**
+
+```bash
+# Step 1: Encode oracle demand
+bun run cli/src/index.ts arbiter encode-demand \
+  --type trusted-oracle \
+  --oracle 0xCHARLIE --data 0x
+# → { "encoded": "0xORACLE_DEMAND" }
+
+# Step 2: Compose with AllArbiter (commit-reveal + oracle)
+# Get contract addresses first
+bun run cli/src/index.ts config show --chain base-sepolia
+# Use commitRevealObligation and trustedOracleArbiter addresses
+
+bun run cli/src/index.ts arbiter encode-demand --type all \
+  --demands '[{"arbiter":"0xCOMMIT_REVEAL_OBLIGATION","demand":"0x"},{"arbiter":"0xTRUSTED_ORACLE_ARBITER","demand":"0xORACLE_DEMAND"}]'
+# → { "encoded": "0xCOMPOSED_DEMAND" }
+
+# Step 3: Create escrow with the composed demand
+bun run cli/src/index.ts --private-key 0xALICE_KEY escrow create \
+  --erc20 \
+  --token 0xERC20_TOKEN --amount 100000000000000000000 \
+  --arbiter 0xALL_ARBITER \
+  --demand 0xCOMPOSED_DEMAND \
+  --expiration 1735689600 \
+  --approve
+```
+
 **Solidity**
 
 ```solidity
@@ -162,6 +190,23 @@ Bob computes his result, then commits to it before revealing. The commitment bin
 
 The `payload` field holds the actual result data (here, the ABI-encoded string). The `salt` is a random value Bob generates to make the commitment unpredictable. The `schema` field is an arbitrary tag describing the payload format — it's not enforced on-chain but helps off-chain consumers decode the payload.
 
+**CLI**
+
+```bash
+# Compute the commitment hash
+bun run cli/src/index.ts --private-key 0xBOB_KEY commit-reveal compute-commitment \
+  --ref-uid 0xESCROW_UID \
+  --claimer 0xBOB_ADDRESS \
+  --payload 0xPAYLOAD_HEX \
+  --salt 0xRANDOM_SALT_HEX \
+  --schema 0x0000000000000000000000000000000000000000000000000000000000000000
+# → { "commitment": "0x..." }
+
+# Submit the commitment with bond
+bun run cli/src/index.ts --private-key 0xBOB_KEY commit-reveal commit \
+  --commitment 0xCOMMITMENT_HASH
+```
+
 **Solidity**
 
 ```solidity
@@ -255,6 +300,18 @@ commit_tx = await bob_client.commit_reveal.commit(commitment)
 
 After waiting at least one block, Bob reveals his data by calling `doObligation()`. This creates an EAS attestation containing the payload, salt, and schema tag. The escrow UID is set as the attestation's `refUID`, linking the fulfillment to the escrow.
 
+**CLI**
+
+```bash
+# Reveal the fulfillment (must be in a later block than the commit)
+bun run cli/src/index.ts --private-key 0xBOB_KEY commit-reveal reveal \
+  --payload 0xPAYLOAD_HEX \
+  --salt 0xRANDOM_SALT_HEX \
+  --schema 0x0000000000000000000000000000000000000000000000000000000000000000 \
+  --ref-uid 0xESCROW_UID
+# → { "uid": "0xFULFILLMENT_UID", ... }
+```
+
 **Solidity**
 
 ```solidity
@@ -298,6 +355,22 @@ fulfillment_uid = await bob_client.commit_reveal.do_obligation(
 ## Arbitration and claiming
 
 The arbitration and claiming process is the same as in [pt 2](Escrow%20Flow%20(pt%202%20-%20Job%20Trading).md), with one difference: the fulfillment attestation is from CommitRevealObligation rather than StringObligation, so Charlie needs to decode `ObligationData` to extract the payload.
+
+**CLI**
+
+```bash
+# Charlie arbitrates the fulfillment (same as pt 2)
+bun run cli/src/index.ts --private-key 0xCHARLIE_KEY arbiter arbitrate \
+  --obligation 0xFULFILLMENT_UID \
+  --demand 0xORACLE_DEMAND \
+  --decision true
+
+# Bob collects the escrow
+bun run cli/src/index.ts --private-key 0xBOB_KEY escrow collect \
+  --erc20 \
+  --escrow-uid 0xESCROW_UID \
+  --fulfillment-uid 0xFULFILLMENT_UID
+```
 
 **Solidity**
 
@@ -429,6 +502,13 @@ await bob_client.erc20.escrow.non_tierable.collect(escrow_uid, fulfillment_uid)
 
 After a successful reveal (and escrow collection), Bob can reclaim his bond. The bond is returned to the address that committed (Bob).
 
+**CLI**
+
+```bash
+bun run cli/src/index.ts --private-key 0xBOB_KEY commit-reveal reclaim-bond \
+  --uid 0xFULFILLMENT_UID
+```
+
 **Solidity**
 
 ```solidity
@@ -459,6 +539,14 @@ reclaim_tx = await bob_client.commit_reveal.reclaim_bond(fulfillment_uid)
 ## Bond slashing
 
 If a commitment goes unrevealed past the deadline, anyone can slash the bond. This disincentivizes spam commits that clutter the commitment space. The slashed bond is sent to a preconfigured recipient (or burned if set to `address(0)`).
+
+**CLI**
+
+```bash
+# Slash an unrevealed commitment's bond (anyone can call after deadline)
+bun run cli/src/index.ts --private-key 0xANY_KEY commit-reveal slash-bond \
+  --commitment 0xCOMMITMENT_HASH
+```
 
 **Solidity**
 
@@ -514,7 +602,14 @@ CommitRevealObligation has three owner-configurable parameters:
 - **`commitDeadline`**: Seconds after a commit within which the reveal must occur to avoid slashing.
 - **`slashedBondRecipient`**: Address that receives slashed bonds (`address(0)` = burn).
 
-You can query these via the SDK:
+You can query these via the CLI or SDK:
+
+**CLI**
+
+```bash
+bun run cli/src/index.ts --private-key 0xKEY commit-reveal info
+# → { "bondAmount": "...", "commitDeadline": "...", "slashedBondRecipient": "0x..." }
+```
 
 **Viem**
 
