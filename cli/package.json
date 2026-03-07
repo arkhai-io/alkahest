@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "type": "module",
   "bin": {
-    "alkahest": "./dist/index.js"
+    "alkahest": "dist/index.js"
   },
   "files": [
     "dist"
