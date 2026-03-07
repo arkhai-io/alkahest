@@ -10,34 +10,6 @@ The logical arbiter contracts AnyArbiter and AllArbiter can be used to compose d
 
 You can use AllArbiter to demand multiple conditions at the same time. For example, that your task is completed by a particular individual before a deadline, and validated by a third party.
 
-**CLI**
-
-```bash
-# Encode individual demands
-alkahest arbiter encode-demand --type recipient \
-  --recipient 0xBOB
-# → { "encoded": "0xRECIPIENT_DEMAND" }
-
-alkahest arbiter encode-demand --type trusted-oracle \
-  --oracle 0xCHARLIE --data 0x
-# → { "encoded": "0xORACLE_DEMAND" }
-
-# Compose with AllArbiter - both conditions must be met
-# Use addresses from: alkahest config show --chain base-sepolia
-alkahest arbiter encode-demand --type all \
-  --demands '[{"arbiter":"0xRECIPIENT_ARBITER","demand":"0xRECIPIENT_DEMAND"},{"arbiter":"0xTRUSTED_ORACLE_ARBITER","demand":"0xORACLE_DEMAND"}]'
-# → { "encoded": "0xCOMPOSED_DEMAND" }
-
-# Create escrow with the composed demand
-alkahest --private-key 0xALICE_KEY escrow create \
-  --erc20 \
-  --token 0xERC20_TOKEN --amount 100000000000000000000 \
-  --arbiter 0xALL_ARBITER \
-  --demand 0xCOMPOSED_DEMAND \
-  --expiration 1735689600 \
-  --approve
-```
-
 **Solidity**
 
 ```solidity
@@ -76,7 +48,7 @@ bytes32 escrowUid = erc20EscrowObligation.doObligation(
 );
 ```
 
-**Viem**
+**TypeScript**
 
 ```typescript
 // Example: Require job completed by specific recipient AND validated by oracle
@@ -106,7 +78,7 @@ const { attested: escrow } = await aliceClient.erc20.escrow.nonTierable.permitAn
 );
 ```
 
-**Alloy**
+**Rust**
 
 ```rust
 use alloy::sol_types::SolValue;
@@ -176,38 +148,35 @@ escrow_receipt = await alice_client.erc20.escrow.non_tierable.permit_and_create(
 )
 ```
 
-You can use AnyArbiter when multiple alternative conditions can be considered valid. For example, if you accept a decision from any of a list of trusted third party oracles, or if there are different proof mechanisms that equally ensure the validity of a result.
-
 **CLI**
 
 ```bash
-# Encode individual oracle demands
+# Encode individual demands
+alkahest arbiter encode-demand --type recipient \
+  --recipient 0xBOB
+# → { "encoded": "0xRECIPIENT_DEMAND" }
+
 alkahest arbiter encode-demand --type trusted-oracle \
   --oracle 0xCHARLIE --data 0x
-# → { "encoded": "0xORACLE1_DEMAND" }
+# → { "encoded": "0xORACLE_DEMAND" }
 
-alkahest arbiter encode-demand --type trusted-oracle \
-  --oracle 0xDAVE --data 0x
-# → { "encoded": "0xORACLE2_DEMAND" }
-
-alkahest arbiter encode-demand --type trusted-oracle \
-  --oracle 0xEVE --data 0x
-# → { "encoded": "0xORACLE3_DEMAND" }
-
-# Compose with AnyArbiter - any one oracle can validate
-alkahest arbiter encode-demand --type any \
-  --demands '[{"arbiter":"0xTRUSTED_ORACLE_ARBITER","demand":"0xORACLE1_DEMAND"},{"arbiter":"0xTRUSTED_ORACLE_ARBITER","demand":"0xORACLE2_DEMAND"},{"arbiter":"0xTRUSTED_ORACLE_ARBITER","demand":"0xORACLE3_DEMAND"}]'
+# Compose with AllArbiter - both conditions must be met
+# Use addresses from: alkahest config show --chain base-sepolia
+alkahest arbiter encode-demand --type all \
+  --demands '[{"arbiter":"0xRECIPIENT_ARBITER","demand":"0xRECIPIENT_DEMAND"},{"arbiter":"0xTRUSTED_ORACLE_ARBITER","demand":"0xORACLE_DEMAND"}]'
 # → { "encoded": "0xCOMPOSED_DEMAND" }
 
-# Create escrow with flexible oracle validation
+# Create escrow with the composed demand
 alkahest --private-key 0xALICE_KEY escrow create \
   --erc20 \
-  --token 0xERC20_TOKEN --amount 50000000000000000000 \
-  --arbiter 0xANY_ARBITER \
+  --token 0xERC20_TOKEN --amount 100000000000000000000 \
+  --arbiter 0xALL_ARBITER \
   --demand 0xCOMPOSED_DEMAND \
   --expiration 1735689600 \
   --approve
 ```
+
+You can use AnyArbiter when multiple alternative conditions can be considered valid. For example, if you accept a decision from any of a list of trusted third party oracles, or if there are different proof mechanisms that equally ensure the validity of a result.
 
 **Solidity**
 
@@ -258,7 +227,7 @@ bytes32 escrowUid = erc20EscrowObligation.doObligation(
 );
 ```
 
-**Viem**
+**TypeScript**
 
 ```typescript
 // Example: Accept validation from ANY of multiple trusted oracles
@@ -297,7 +266,7 @@ const { attested: escrow } = await aliceClient.erc20.escrow.nonTierable.approveA
 );
 ```
 
-**Alloy**
+**Rust**
 
 ```rust
 // Example: Accept validation from ANY of multiple trusted oracles
@@ -372,43 +341,38 @@ escrow_receipt = await alice_client.erc20.escrow.non_tierable.approve_and_create
 )
 ```
 
-Logical arbiters can be stacked. For example, you could demand that a job is completed before a deadline by a particular party, and validated by any of a list of trusted oracles.
-
 **CLI**
 
 ```bash
-# Encode individual demands
-alkahest arbiter encode-demand --type time-before --time 1735693200
-# → { "encoded": "0xDEADLINE_DEMAND" }
-
-alkahest arbiter encode-demand --type recipient --recipient 0xBOB
-# → { "encoded": "0xRECIPIENT_DEMAND" }
-
-alkahest arbiter encode-demand --type trusted-oracle --oracle 0xCHARLIE --data 0x
+# Encode individual oracle demands
+alkahest arbiter encode-demand --type trusted-oracle \
+  --oracle 0xCHARLIE --data 0x
 # → { "encoded": "0xORACLE1_DEMAND" }
 
-alkahest arbiter encode-demand --type trusted-oracle --oracle 0xDAVE --data 0x
+alkahest arbiter encode-demand --type trusted-oracle \
+  --oracle 0xDAVE --data 0x
 # → { "encoded": "0xORACLE2_DEMAND" }
 
-# Create the OR condition for oracles
+alkahest arbiter encode-demand --type trusted-oracle \
+  --oracle 0xEVE --data 0x
+# → { "encoded": "0xORACLE3_DEMAND" }
+
+# Compose with AnyArbiter - any one oracle can validate
 alkahest arbiter encode-demand --type any \
-  --demands '[{"arbiter":"0xTRUSTED_ORACLE_ARBITER","demand":"0xORACLE1_DEMAND"},{"arbiter":"0xTRUSTED_ORACLE_ARBITER","demand":"0xORACLE2_DEMAND"}]'
-# → { "encoded": "0xORACLE_OR_DEMAND" }
+  --demands '[{"arbiter":"0xTRUSTED_ORACLE_ARBITER","demand":"0xORACLE1_DEMAND"},{"arbiter":"0xTRUSTED_ORACLE_ARBITER","demand":"0xORACLE2_DEMAND"},{"arbiter":"0xTRUSTED_ORACLE_ARBITER","demand":"0xORACLE3_DEMAND"}]'
+# → { "encoded": "0xCOMPOSED_DEMAND" }
 
-# Combine all conditions with AllArbiter: deadline AND recipient AND (oracle1 OR oracle2)
-alkahest arbiter encode-demand --type all \
-  --demands '[{"arbiter":"0xTIME_BEFORE_ARBITER","demand":"0xDEADLINE_DEMAND"},{"arbiter":"0xRECIPIENT_ARBITER","demand":"0xRECIPIENT_DEMAND"},{"arbiter":"0xANY_ARBITER","demand":"0xORACLE_OR_DEMAND"}]'
-# → { "encoded": "0xFINAL_DEMAND" }
-
-# Create the escrow with nested logical arbiters
+# Create escrow with flexible oracle validation
 alkahest --private-key 0xALICE_KEY escrow create \
   --erc20 \
-  --token 0xERC20_TOKEN --amount 200000000000000000000 \
-  --arbiter 0xALL_ARBITER \
-  --demand 0xFINAL_DEMAND \
-  --expiration 1735700400 \
+  --token 0xERC20_TOKEN --amount 50000000000000000000 \
+  --arbiter 0xANY_ARBITER \
+  --demand 0xCOMPOSED_DEMAND \
+  --expiration 1735689600 \
   --approve
 ```
+
+Logical arbiters can be stacked. For example, you could demand that a job is completed before a deadline by a particular party, and validated by any of a list of trusted oracles.
 
 **Solidity**
 
@@ -476,7 +440,7 @@ bytes32 escrowUid = erc20EscrowObligation.doObligation(
 );
 ```
 
-**Viem**
+**TypeScript**
 
 ```typescript
 // Example: Complex composition - deadline AND recipient AND (oracle1 OR oracle2)
@@ -524,7 +488,7 @@ const { attested: escrow } = await aliceClient.erc20.escrow.nonTierable.approveA
 );
 ```
 
-**Alloy**
+**Rust**
 
 ```rust
 // Example: Complex composition - deadline AND recipient AND (oracle1 OR oracle2)
@@ -622,19 +586,45 @@ escrow_receipt = await alice_client.erc20.escrow.non_tierable.approve_and_create
 )
 ```
 
-## Parsing composed demands
-
-The CLI and SDKs provide built-in support for recursively parsing composed demands. The parsers automatically detect the arbiter type and decode each sub-demand appropriately.
-
 **CLI**
 
 ```bash
-# Decode a composed demand given the arbiter address and encoded demand hex
-alkahest arbiter decode-demand \
+# Encode individual demands
+alkahest arbiter encode-demand --type time-before --time 1735693200
+# → { "encoded": "0xDEADLINE_DEMAND" }
+
+alkahest arbiter encode-demand --type recipient --recipient 0xBOB
+# → { "encoded": "0xRECIPIENT_DEMAND" }
+
+alkahest arbiter encode-demand --type trusted-oracle --oracle 0xCHARLIE --data 0x
+# → { "encoded": "0xORACLE1_DEMAND" }
+
+alkahest arbiter encode-demand --type trusted-oracle --oracle 0xDAVE --data 0x
+# → { "encoded": "0xORACLE2_DEMAND" }
+
+# Create the OR condition for oracles
+alkahest arbiter encode-demand --type any \
+  --demands '[{"arbiter":"0xTRUSTED_ORACLE_ARBITER","demand":"0xORACLE1_DEMAND"},{"arbiter":"0xTRUSTED_ORACLE_ARBITER","demand":"0xORACLE2_DEMAND"}]'
+# → { "encoded": "0xORACLE_OR_DEMAND" }
+
+# Combine all conditions with AllArbiter: deadline AND recipient AND (oracle1 OR oracle2)
+alkahest arbiter encode-demand --type all \
+  --demands '[{"arbiter":"0xTIME_BEFORE_ARBITER","demand":"0xDEADLINE_DEMAND"},{"arbiter":"0xRECIPIENT_ARBITER","demand":"0xRECIPIENT_DEMAND"},{"arbiter":"0xANY_ARBITER","demand":"0xORACLE_OR_DEMAND"}]'
+# → { "encoded": "0xFINAL_DEMAND" }
+
+# Create the escrow with nested logical arbiters
+alkahest --private-key 0xALICE_KEY escrow create \
+  --erc20 \
+  --token 0xERC20_TOKEN --amount 200000000000000000000 \
   --arbiter 0xALL_ARBITER \
-  --demand 0xCOMPOSED_DEMAND_HEX
-# → Recursively decoded demand structure as JSON
+  --demand 0xFINAL_DEMAND \
+  --expiration 1735700400 \
+  --approve
 ```
+
+## Parsing composed demands
+
+The CLI and SDKs provide built-in support for recursively parsing composed demands. The parsers automatically detect the arbiter type and decode each sub-demand appropriately.
 
 **Solidity**
 
@@ -667,7 +657,7 @@ require(arbiters[0] == address(timeBeforeArbiter), "First arbiter must be TimeBe
 require(arbiters[1] == address(recipientArbiter), "Second arbiter must be RecipientArbiter");
 ```
 
-**Viem**
+**TypeScript**
 
 ```typescript
 import { decodeDemandWithAddresses } from "alkahest-ts/utils/demandParsing";
@@ -700,7 +690,7 @@ if (decoded.isUnknown) {
 }
 ```
 
-**Alloy**
+**Rust**
 
 ```rust
 use alkahest_rs::contracts::arbiters::logical::AllArbiter as AllArbiterContract;
@@ -773,6 +763,16 @@ for demand in decoded.demands:
 # For AnyArbiter, use the any decoder
 decoded_any = alice_client.arbiters.logical.any.decode(any_arbiter_demand)
 print(f"AnyArbiter sub-demands: {len(decoded_any.demands)}")
+```
+
+**CLI**
+
+```bash
+# Decode a composed demand given the arbiter address and encoded demand hex
+alkahest arbiter decode-demand \
+  --arbiter 0xALL_ARBITER \
+  --demand 0xCOMPOSED_DEMAND_HEX
+# → Recursively decoded demand structure as JSON
 ```
 
 For custom arbiters not included in the SDK's built-in decoders, you can extend the decoder registry (TypeScript) or manually decode the raw bytes using ABI decoding.

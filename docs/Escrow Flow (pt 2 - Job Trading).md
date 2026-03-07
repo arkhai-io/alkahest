@@ -15,28 +15,6 @@ Here's how Alice buys a compute job from Bob with her ERC-20 token, where the va
 
 You can use TrustedOracleArbiter when you want an off-chain judge to decide whether a deal has been validly fulfilled. The judge could be a real person or an automated program. In this example, we'll demand that Bob capitalize a string for us, and Charlie will verify off-chain whether Bob did so correctly. In practice, this might represent Bob doing a complex computation, and Charlie verifying if it meets Alice's criteria.
 
-**CLI**
-
-```bash
-# Step 1: Encode the TrustedOracleArbiter demand
-alkahest arbiter encode-demand \
-  --type trusted-oracle \
-  --oracle 0xCHARLIE_ADDRESS \
-  --data 0x   # extra data for the oracle (can embed the query)
-# Returns: { "success": true, "data": { "encoded": "0x..." } }
-
-# Step 2: Create the escrow with the encoded demand
-alkahest --private-key 0xALICE_KEY escrow create \
-  --erc20 \
-  --token 0xERC20_TOKEN \
-  --amount 100000000000000000000 \
-  --arbiter 0xTRUSTED_ORACLE_ARBITER \
-  --demand 0xENCODED_DEMAND \
-  --expiration 1735689600 \
-  --approve
-# Returns: { "success": true, "data": { "uid": "0xESCROW_UID", ... } }
-```
-
 **Solidity**
 
 ```solidity
@@ -157,27 +135,33 @@ escrow_receipt = await alice_client.erc20.escrow.non_tierable.approve_and_create
 escrow_uid = escrow_receipt["log"]["uid"]
 ```
 
+**CLI**
+
+```bash
+# Step 1: Encode the TrustedOracleArbiter demand
+alkahest arbiter encode-demand \
+  --type trusted-oracle \
+  --oracle 0xCHARLIE_ADDRESS \
+  --data 0x   # extra data for the oracle (can embed the query)
+# Returns: { "success": true, "data": { "encoded": "0x..." } }
+
+# Step 2: Create the escrow with the encoded demand
+alkahest --private-key 0xALICE_KEY escrow create \
+  --erc20 \
+  --token 0xERC20_TOKEN \
+  --amount 100000000000000000000 \
+  --arbiter 0xTRUSTED_ORACLE_ARBITER \
+  --demand 0xENCODED_DEMAND \
+  --expiration 1735689600 \
+  --approve
+# Returns: { "success": true, "data": { "uid": "0xESCROW_UID", ... } }
+```
+
 ## Fulfilling a job and requesting arbitration
 
 The `data` field of TrustedOracleArbiter doesn't enforce any kind of schema, so you have to come to an agreement with a buyer beforehand in order to understand and parse their query. StringObligation is a similarly flexible contract that you can use for fulfillments when the data won't be used directly by other on-chain contracts.
 
 Note that the fulfillment should contain a copy or reference to the demand it's intended to fulfill. This is needed to prevent a fulfillment that's valid for one query being used to claim another escrow demanding the same judge, but with a different query. Usually, this is done by setting the escrow attestation as the refUID of the fulfillment.
-
-**CLI**
-
-```bash
-# Bob: Submit the result as a string fulfillment referencing the escrow
-alkahest --private-key 0xBOB_KEY string create \
-  --item "HELLO WORLD" \
-  --ref-uid 0xESCROW_UID
-# Returns: { "success": true, "data": { "uid": "0xFULFILLMENT_UID", ... } }
-
-# Charlie (oracle): Arbitrate the fulfillment
-alkahest --private-key 0xCHARLIE_KEY arbiter arbitrate \
-  --obligation 0xFULFILLMENT_UID \
-  --demand 0xDEMAND_HEX \
-  --decision true
-```
 
 **Solidity**
 
@@ -233,6 +217,22 @@ fulfillment_uid = await bob_client.string_obligation.do_obligation(
     "HELLO WORLD",  # The computed result (capitalized)
     escrow_uid      # Reference to the escrow being fulfilled
 )
+```
+
+**CLI**
+
+```bash
+# Bob: Submit the result as a string fulfillment referencing the escrow
+alkahest --private-key 0xBOB_KEY string create \
+  --item "HELLO WORLD" \
+  --ref-uid 0xESCROW_UID
+# Returns: { "success": true, "data": { "uid": "0xFULFILLMENT_UID", ... } }
+
+# Charlie (oracle): Arbitrate the fulfillment
+alkahest --private-key 0xCHARLIE_KEY arbiter arbitrate \
+  --obligation 0xFULFILLMENT_UID \
+  --demand 0xDEMAND_HEX \
+  --decision true
 ```
 
 Charlie should listen for `ArbitrationRequested` events demanding him as the oracle. Then he can retrieve the attestation from EAS, decide if it's valid, and use the arbitrate function on TrustedOracleArbiter to submit his decision on-chain.
@@ -434,20 +434,6 @@ unwatch = await charlie_client.oracle.listen_and_arbitrate_for_escrow_no_spawn(
 
 Bob can listen for the `ArbitrationMade` event from TrustedOracleArbiter, then claim the escrow if the decision was positive, or retry if not.
 
-**CLI**
-
-```bash
-# Bob: Collect the escrow after successful arbitration
-alkahest --private-key 0xBOB_KEY escrow collect \
-  --erc20 \
-  --escrow-uid 0xESCROW_UID \
-  --fulfillment-uid 0xFULFILLMENT_UID
-
-# Or wait for fulfillment (blocks until someone fulfills and collects)
-alkahest --private-key 0xALICE_KEY escrow wait \
-  --erc20 --uid 0xESCROW_UID
-```
-
 **Solidity**
 
 ```solidity
@@ -554,15 +540,21 @@ async def check_arbitration():
 result = await check_arbitration()
 ```
 
-If no valid fulfillment is made, Alice can reclaim the escrow after it expires.
-
 **CLI**
 
 ```bash
-# Alice reclaims her expired escrow
-alkahest --private-key 0xALICE_KEY escrow reclaim \
+# Bob: Collect the escrow after successful arbitration
+alkahest --private-key 0xBOB_KEY escrow collect \
+  --erc20 \
+  --escrow-uid 0xESCROW_UID \
+  --fulfillment-uid 0xFULFILLMENT_UID
+
+# Or wait for fulfillment (blocks until someone fulfills and collects)
+alkahest --private-key 0xALICE_KEY escrow wait \
   --erc20 --uid 0xESCROW_UID
 ```
+
+If no valid fulfillment is made, Alice can reclaim the escrow after it expires.
 
 **Solidity**
 
@@ -595,6 +587,14 @@ alice_client
 ```python
 # Alice reclaims her expired escrow
 await alice_client.erc20.escrow.non_tierable.reclaim_expired(escrow_uid)
+```
+
+**CLI**
+
+```bash
+# Alice reclaims her expired escrow
+alkahest --private-key 0xALICE_KEY escrow reclaim \
+  --erc20 --uid 0xESCROW_UID
 ```
 
 ## SDK utilities
