@@ -26,34 +26,6 @@ Since CommitRevealObligation only enforces the commit-reveal protocol — it doe
 - A valid commit-reveal (prevents frontrunning)
 - Charlie's approval (validates the result)
 
-**CLI**
-
-```bash
-# Step 1: Encode oracle demand
-alkahest arbiter encode-demand \
-  --type trusted-oracle \
-  --oracle 0xCHARLIE --data 0x
-# → { "encoded": "0xORACLE_DEMAND" }
-
-# Step 2: Compose with AllArbiter (commit-reveal + oracle)
-# Get contract addresses first
-alkahest config show --chain base-sepolia
-# Use commitRevealObligation and trustedOracleArbiter addresses
-
-alkahest arbiter encode-demand --type all \
-  --demands '[{"arbiter":"0xCOMMIT_REVEAL_OBLIGATION","demand":"0x"},{"arbiter":"0xTRUSTED_ORACLE_ARBITER","demand":"0xORACLE_DEMAND"}]'
-# → { "encoded": "0xCOMPOSED_DEMAND" }
-
-# Step 3: Create escrow with the composed demand
-alkahest --private-key 0xALICE_KEY escrow create \
-  --erc20 \
-  --token 0xERC20_TOKEN --amount 100000000000000000000 \
-  --arbiter 0xALL_ARBITER \
-  --demand 0xCOMPOSED_DEMAND \
-  --expiration 1735689600 \
-  --approve
-```
-
 **Solidity**
 
 ```solidity
@@ -86,7 +58,7 @@ bytes32 escrowUid = erc20EscrowObligation.doObligation(
 );
 ```
 
-**Viem**
+**TypeScript**
 
 ```typescript
 import { encodeAbiParameters, parseAbiParameters } from "viem";
@@ -113,7 +85,7 @@ const { attested: escrow } = await aliceClient.erc20.escrow.nonTierable.permitAn
 );
 ```
 
-**Alloy**
+**Rust**
 
 ```rust
 use alloy::sol_types::SolValue;
@@ -184,28 +156,39 @@ escrow_receipt = await alice_client.erc20.escrow.non_tierable.permit_and_create(
 escrow_uid = escrow_receipt["log"]["uid"]
 ```
 
+**CLI**
+
+```bash
+# Step 1: Encode oracle demand
+alkahest arbiter encode-demand \
+  --type trusted-oracle \
+  --oracle 0xCHARLIE --data 0x
+# → { "encoded": "0xORACLE_DEMAND" }
+
+# Step 2: Compose with AllArbiter (commit-reveal + oracle)
+# Get contract addresses first
+alkahest config show --chain base-sepolia
+# Use commitRevealObligation and trustedOracleArbiter addresses
+
+alkahest arbiter encode-demand --type all \
+  --demands '[{"arbiter":"0xCOMMIT_REVEAL_OBLIGATION","demand":"0x"},{"arbiter":"0xTRUSTED_ORACLE_ARBITER","demand":"0xORACLE_DEMAND"}]'
+# → { "encoded": "0xCOMPOSED_DEMAND" }
+
+# Step 3: Create escrow with the composed demand
+alkahest --private-key 0xALICE_KEY escrow create \
+  --erc20 \
+  --token 0xERC20_TOKEN --amount 100000000000000000000 \
+  --arbiter 0xALL_ARBITER \
+  --demand 0xCOMPOSED_DEMAND \
+  --expiration 1735689600 \
+  --approve
+```
+
 ## Committing to a fulfillment
 
 Bob computes his result, then commits to it before revealing. The commitment binds the data to Bob's address and the specific escrow, so no one else can use it.
 
 The `payload` field holds the actual result data (here, the ABI-encoded string). The `salt` is a random value Bob generates to make the commitment unpredictable. The `schema` field is an arbitrary tag describing the payload format — it's not enforced on-chain but helps off-chain consumers decode the payload.
-
-**CLI**
-
-```bash
-# Compute the commitment hash
-alkahest --private-key 0xBOB_KEY commit-reveal compute-commitment \
-  --ref-uid 0xESCROW_UID \
-  --claimer 0xBOB_ADDRESS \
-  --payload 0xPAYLOAD_HEX \
-  --salt 0xRANDOM_SALT_HEX \
-  --schema 0x0000000000000000000000000000000000000000000000000000000000000000
-# → { "commitment": "0x..." }
-
-# Submit the commitment with bond
-alkahest --private-key 0xBOB_KEY commit-reveal commit \
-  --commitment 0xCOMMITMENT_HASH
-```
 
 **Solidity**
 
@@ -224,7 +207,7 @@ bytes32 commitment = commitRevealObligation.computeCommitment(escrowUid, bob, da
 commitRevealObligation.commit{value: commitRevealObligation.bondAmount()}(commitment);
 ```
 
-**Viem**
+**TypeScript**
 
 ```typescript
 import { keccak256, toHex } from "viem";
@@ -247,7 +230,7 @@ const commitment = await bobClient.commitReveal.computeCommitment(
 const { hash: commitTx } = await bobClient.commitReveal.commit(commitment);
 ```
 
-**Alloy**
+**Rust**
 
 ```rust
 use alloy::primitives::{Bytes, FixedBytes};
@@ -296,21 +279,26 @@ commitment = await bob_client.commit_reveal.compute_commitment(
 commit_tx = await bob_client.commit_reveal.commit(commitment)
 ```
 
-## Revealing the fulfillment
-
-After waiting at least one block, Bob reveals his data by calling `doObligation()`. This creates an EAS attestation containing the payload, salt, and schema tag. The escrow UID is set as the attestation's `refUID`, linking the fulfillment to the escrow.
-
 **CLI**
 
 ```bash
-# Reveal the fulfillment (must be in a later block than the commit)
-alkahest --private-key 0xBOB_KEY commit-reveal reveal \
+# Compute the commitment hash
+alkahest --private-key 0xBOB_KEY commit-reveal compute-commitment \
+  --ref-uid 0xESCROW_UID \
+  --claimer 0xBOB_ADDRESS \
   --payload 0xPAYLOAD_HEX \
   --salt 0xRANDOM_SALT_HEX \
-  --schema 0x0000000000000000000000000000000000000000000000000000000000000000 \
-  --ref-uid 0xESCROW_UID
-# → { "uid": "0xFULFILLMENT_UID", ... }
+  --schema 0x0000000000000000000000000000000000000000000000000000000000000000
+# → { "commitment": "0x..." }
+
+# Submit the commitment with bond
+alkahest --private-key 0xBOB_KEY commit-reveal commit \
+  --commitment 0xCOMMITMENT_HASH
 ```
+
+## Revealing the fulfillment
+
+After waiting at least one block, Bob reveals his data by calling `doObligation()`. This creates an EAS attestation containing the payload, salt, and schema tag. The escrow UID is set as the attestation's `refUID`, linking the fulfillment to the escrow.
 
 **Solidity**
 
@@ -319,7 +307,7 @@ alkahest --private-key 0xBOB_KEY commit-reveal reveal \
 bytes32 fulfillmentUid = commitRevealObligation.doObligation(data, escrowUid);
 ```
 
-**Viem**
+**TypeScript**
 
 ```typescript
 // Bob reveals his fulfillment (must be in a later block than the commit)
@@ -329,7 +317,7 @@ const { hash: revealTx, attested: fulfillment } = await bobClient.commitReveal.d
 );
 ```
 
-**Alloy**
+**Rust**
 
 ```rust
 // Bob reveals his fulfillment (must be in a later block than the commit)
@@ -352,25 +340,21 @@ fulfillment_uid = await bob_client.commit_reveal.do_obligation(
 )
 ```
 
-## Arbitration and claiming
-
-The arbitration and claiming process is the same as in [pt 2](Escrow%20Flow%20(pt%202%20-%20Job%20Trading).md), with one difference: the fulfillment attestation is from CommitRevealObligation rather than StringObligation, so Charlie needs to decode `ObligationData` to extract the payload.
-
 **CLI**
 
 ```bash
-# Charlie arbitrates the fulfillment (same as pt 2)
-alkahest --private-key 0xCHARLIE_KEY arbiter arbitrate \
-  --obligation 0xFULFILLMENT_UID \
-  --demand 0xORACLE_DEMAND \
-  --decision true
-
-# Bob collects the escrow
-alkahest --private-key 0xBOB_KEY escrow collect \
-  --erc20 \
-  --escrow-uid 0xESCROW_UID \
-  --fulfillment-uid 0xFULFILLMENT_UID
+# Reveal the fulfillment (must be in a later block than the commit)
+alkahest --private-key 0xBOB_KEY commit-reveal reveal \
+  --payload 0xPAYLOAD_HEX \
+  --salt 0xRANDOM_SALT_HEX \
+  --schema 0x0000000000000000000000000000000000000000000000000000000000000000 \
+  --ref-uid 0xESCROW_UID
+# → { "uid": "0xFULFILLMENT_UID", ... }
 ```
+
+## Arbitration and claiming
+
+The arbitration and claiming process is the same as in [pt 2](Escrow%20Flow%20(pt%202%20-%20Job%20Trading).md), with one difference: the fulfillment attestation is from CommitRevealObligation rather than StringObligation, so Charlie needs to decode `ObligationData` to extract the payload.
 
 **Solidity**
 
@@ -388,7 +372,7 @@ bool isValid = /* validate result against the query */;
 trustedOracleArbiter.arbitrate(fulfillmentUid, isValid);
 ```
 
-**Viem**
+**TypeScript**
 
 ```typescript
 // In Charlie's arbitration callback, decode the CommitRevealObligation data
@@ -429,7 +413,7 @@ const { unwatch } = await charlieClient.oracle.listenAndArbitrateForEscrow({
 });
 ```
 
-**Alloy**
+**Rust**
 
 ```rust
 use alloy::sol_types::SolValue;
@@ -467,6 +451,22 @@ is_valid = result == query[11:].upper() if query.startswith("capitalize ") else 
 await charlie_client.oracle.arbitrate(fulfillment_uid, is_valid)
 ```
 
+**CLI**
+
+```bash
+# Charlie arbitrates the fulfillment (same as pt 2)
+alkahest --private-key 0xCHARLIE_KEY arbiter arbitrate \
+  --obligation 0xFULFILLMENT_UID \
+  --demand 0xORACLE_DEMAND \
+  --decision true
+
+# Bob collects the escrow
+alkahest --private-key 0xBOB_KEY escrow collect \
+  --erc20 \
+  --escrow-uid 0xESCROW_UID \
+  --fulfillment-uid 0xFULFILLMENT_UID
+```
+
 Once Charlie approves, Bob claims the escrow exactly as in pt 2:
 
 **Solidity**
@@ -475,13 +475,13 @@ Once Charlie approves, Bob claims the escrow exactly as in pt 2:
 erc20EscrowObligation.collectEscrow(escrowUid, fulfillmentUid);
 ```
 
-**Viem**
+**TypeScript**
 
 ```typescript
 await bobClient.erc20.escrow.nonTierable.collect(escrow.uid, fulfillment.uid);
 ```
 
-**Alloy**
+**Rust**
 
 ```rust
 bob_client
@@ -502,26 +502,19 @@ await bob_client.erc20.escrow.non_tierable.collect(escrow_uid, fulfillment_uid)
 
 After a successful reveal (and escrow collection), Bob can reclaim his bond. The bond is returned to the address that committed (Bob).
 
-**CLI**
-
-```bash
-alkahest --private-key 0xBOB_KEY commit-reveal reclaim-bond \
-  --uid 0xFULFILLMENT_UID
-```
-
 **Solidity**
 
 ```solidity
 commitRevealObligation.reclaimBond(fulfillmentUid);
 ```
 
-**Viem**
+**TypeScript**
 
 ```typescript
 const { hash: reclaimTx } = await bobClient.commitReveal.reclaimBond(fulfillment.uid);
 ```
 
-**Alloy**
+**Rust**
 
 ```rust
 let reclaim_receipt = bob_client
@@ -536,17 +529,16 @@ let reclaim_receipt = bob_client
 reclaim_tx = await bob_client.commit_reveal.reclaim_bond(fulfillment_uid)
 ```
 
-## Bond slashing
-
-If a commitment goes unrevealed past the deadline, anyone can slash the bond. This disincentivizes spam commits that clutter the commitment space. The slashed bond is sent to a preconfigured recipient (or burned if set to `address(0)`).
-
 **CLI**
 
 ```bash
-# Slash an unrevealed commitment's bond (anyone can call after deadline)
-alkahest --private-key 0xANY_KEY commit-reveal slash-bond \
-  --commitment 0xCOMMITMENT_HASH
+alkahest --private-key 0xBOB_KEY commit-reveal reclaim-bond \
+  --uid 0xFULFILLMENT_UID
 ```
+
+## Bond slashing
+
+If a commitment goes unrevealed past the deadline, anyone can slash the bond. This disincentivizes spam commits that clutter the commitment space. The slashed bond is sent to a preconfigured recipient (or burned if set to `address(0)`).
 
 **Solidity**
 
@@ -555,7 +547,7 @@ alkahest --private-key 0xANY_KEY commit-reveal slash-bond \
 commitRevealObligation.slashBond(commitment);
 ```
 
-**Viem**
+**TypeScript**
 
 ```typescript
 // Check the deadline first
@@ -566,7 +558,7 @@ const [commitBlock, commitTimestamp, committer] = await bobClient.commitReveal.g
 const { hash: slashTx } = await anyClient.commitReveal.slashBond(commitment);
 ```
 
-**Alloy**
+**Rust**
 
 ```rust
 // Check the deadline first
@@ -594,6 +586,14 @@ deadline = await client.commit_reveal.commit_deadline()
 slash_tx = await client.commit_reveal.slash_bond(commitment)
 ```
 
+**CLI**
+
+```bash
+# Slash an unrevealed commitment's bond (anyone can call after deadline)
+alkahest --private-key 0xANY_KEY commit-reveal slash-bond \
+  --commitment 0xCOMMITMENT_HASH
+```
+
 ## Configuration
 
 CommitRevealObligation has three owner-configurable parameters:
@@ -604,14 +604,7 @@ CommitRevealObligation has three owner-configurable parameters:
 
 You can query these via the CLI or SDK:
 
-**CLI**
-
-```bash
-alkahest --private-key 0xKEY commit-reveal info
-# → { "bondAmount": "...", "commitDeadline": "...", "slashedBondRecipient": "0x..." }
-```
-
-**Viem**
+**TypeScript**
 
 ```typescript
 const bondAmount = await client.commitReveal.getBondAmount();
@@ -619,7 +612,7 @@ const deadline = await client.commitReveal.getCommitDeadline();
 const recipient = await client.commitReveal.getSlashedBondRecipient();
 ```
 
-**Alloy**
+**Rust**
 
 ```rust
 let bond_amount = client.commit_reveal().bond_amount().await?;
@@ -633,4 +626,11 @@ let recipient = client.commit_reveal().slashed_bond_recipient().await?;
 bond_amount = await client.commit_reveal.bond_amount()
 deadline = await client.commit_reveal.commit_deadline()
 recipient = await client.commit_reveal.slashed_bond_recipient()
+```
+
+**CLI**
+
+```bash
+alkahest --private-key 0xKEY commit-reveal info
+# → { "bondAmount": "...", "commitDeadline": "...", "slashedBondRecipient": "0x..." }
 ```
