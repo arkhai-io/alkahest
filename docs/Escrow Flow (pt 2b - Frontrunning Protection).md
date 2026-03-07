@@ -30,22 +30,22 @@ Since CommitRevealObligation only enforces the commit-reveal protocol — it doe
 
 ```bash
 # Step 1: Encode oracle demand
-bun run cli/src/index.ts arbiter encode-demand \
+alkahest arbiter encode-demand \
   --type trusted-oracle \
   --oracle 0xCHARLIE --data 0x
 # → { "encoded": "0xORACLE_DEMAND" }
 
 # Step 2: Compose with AllArbiter (commit-reveal + oracle)
 # Get contract addresses first
-bun run cli/src/index.ts config show --chain base-sepolia
+alkahest config show --chain base-sepolia
 # Use commitRevealObligation and trustedOracleArbiter addresses
 
-bun run cli/src/index.ts arbiter encode-demand --type all \
+alkahest arbiter encode-demand --type all \
   --demands '[{"arbiter":"0xCOMMIT_REVEAL_OBLIGATION","demand":"0x"},{"arbiter":"0xTRUSTED_ORACLE_ARBITER","demand":"0xORACLE_DEMAND"}]'
 # → { "encoded": "0xCOMPOSED_DEMAND" }
 
 # Step 3: Create escrow with the composed demand
-bun run cli/src/index.ts --private-key 0xALICE_KEY escrow create \
+alkahest --private-key 0xALICE_KEY escrow create \
   --erc20 \
   --token 0xERC20_TOKEN --amount 100000000000000000000 \
   --arbiter 0xALL_ARBITER \
@@ -194,7 +194,7 @@ The `payload` field holds the actual result data (here, the ABI-encoded string).
 
 ```bash
 # Compute the commitment hash
-bun run cli/src/index.ts --private-key 0xBOB_KEY commit-reveal compute-commitment \
+alkahest --private-key 0xBOB_KEY commit-reveal compute-commitment \
   --ref-uid 0xESCROW_UID \
   --claimer 0xBOB_ADDRESS \
   --payload 0xPAYLOAD_HEX \
@@ -203,7 +203,7 @@ bun run cli/src/index.ts --private-key 0xBOB_KEY commit-reveal compute-commitmen
 # → { "commitment": "0x..." }
 
 # Submit the commitment with bond
-bun run cli/src/index.ts --private-key 0xBOB_KEY commit-reveal commit \
+alkahest --private-key 0xBOB_KEY commit-reveal commit \
   --commitment 0xCOMMITMENT_HASH
 ```
 
@@ -304,7 +304,7 @@ After waiting at least one block, Bob reveals his data by calling `doObligation(
 
 ```bash
 # Reveal the fulfillment (must be in a later block than the commit)
-bun run cli/src/index.ts --private-key 0xBOB_KEY commit-reveal reveal \
+alkahest --private-key 0xBOB_KEY commit-reveal reveal \
   --payload 0xPAYLOAD_HEX \
   --salt 0xRANDOM_SALT_HEX \
   --schema 0x0000000000000000000000000000000000000000000000000000000000000000 \
@@ -360,13 +360,13 @@ The arbitration and claiming process is the same as in [pt 2](Escrow%20Flow%20(p
 
 ```bash
 # Charlie arbitrates the fulfillment (same as pt 2)
-bun run cli/src/index.ts --private-key 0xCHARLIE_KEY arbiter arbitrate \
+alkahest --private-key 0xCHARLIE_KEY arbiter arbitrate \
   --obligation 0xFULFILLMENT_UID \
   --demand 0xORACLE_DEMAND \
   --decision true
 
 # Bob collects the escrow
-bun run cli/src/index.ts --private-key 0xBOB_KEY escrow collect \
+alkahest --private-key 0xBOB_KEY escrow collect \
   --erc20 \
   --escrow-uid 0xESCROW_UID \
   --fulfillment-uid 0xFULFILLMENT_UID
@@ -505,7 +505,7 @@ After a successful reveal (and escrow collection), Bob can reclaim his bond. The
 **CLI**
 
 ```bash
-bun run cli/src/index.ts --private-key 0xBOB_KEY commit-reveal reclaim-bond \
+alkahest --private-key 0xBOB_KEY commit-reveal reclaim-bond \
   --uid 0xFULFILLMENT_UID
 ```
 
@@ -544,7 +544,7 @@ If a commitment goes unrevealed past the deadline, anyone can slash the bond. Th
 
 ```bash
 # Slash an unrevealed commitment's bond (anyone can call after deadline)
-bun run cli/src/index.ts --private-key 0xANY_KEY commit-reveal slash-bond \
+alkahest --private-key 0xANY_KEY commit-reveal slash-bond \
   --commitment 0xCOMMITMENT_HASH
 ```
 
@@ -607,7 +607,7 @@ You can query these via the CLI or SDK:
 **CLI**
 
 ```bash
-bun run cli/src/index.ts --private-key 0xKEY commit-reveal info
+alkahest --private-key 0xKEY commit-reveal info
 # → { "bondAmount": "...", "commitDeadline": "...", "slashedBondRecipient": "0x..." }
 ```
 

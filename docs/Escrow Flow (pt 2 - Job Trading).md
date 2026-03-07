@@ -19,14 +19,14 @@ You can use TrustedOracleArbiter when you want an off-chain judge to decide whet
 
 ```bash
 # Step 1: Encode the TrustedOracleArbiter demand
-bun run cli/src/index.ts arbiter encode-demand \
+alkahest arbiter encode-demand \
   --type trusted-oracle \
   --oracle 0xCHARLIE_ADDRESS \
   --data 0x   # extra data for the oracle (can embed the query)
 # Returns: { "success": true, "data": { "encoded": "0x..." } }
 
 # Step 2: Create the escrow with the encoded demand
-bun run cli/src/index.ts --private-key 0xALICE_KEY escrow create \
+alkahest --private-key 0xALICE_KEY escrow create \
   --erc20 \
   --token 0xERC20_TOKEN \
   --amount 100000000000000000000 \
@@ -167,13 +167,13 @@ Note that the fulfillment should contain a copy or reference to the demand it's 
 
 ```bash
 # Bob: Submit the result as a string fulfillment referencing the escrow
-bun run cli/src/index.ts --private-key 0xBOB_KEY string create \
+alkahest --private-key 0xBOB_KEY string create \
   --item "HELLO WORLD" \
   --ref-uid 0xESCROW_UID
 # Returns: { "success": true, "data": { "uid": "0xFULFILLMENT_UID", ... } }
 
 # Charlie (oracle): Arbitrate the fulfillment
-bun run cli/src/index.ts --private-key 0xCHARLIE_KEY arbiter arbitrate \
+alkahest --private-key 0xCHARLIE_KEY arbiter arbitrate \
   --obligation 0xFULFILLMENT_UID \
   --demand 0xDEMAND_HEX \
   --decision true
@@ -438,13 +438,13 @@ Bob can listen for the `ArbitrationMade` event from TrustedOracleArbiter, then c
 
 ```bash
 # Bob: Collect the escrow after successful arbitration
-bun run cli/src/index.ts --private-key 0xBOB_KEY escrow collect \
+alkahest --private-key 0xBOB_KEY escrow collect \
   --erc20 \
   --escrow-uid 0xESCROW_UID \
   --fulfillment-uid 0xFULFILLMENT_UID
 
 # Or wait for fulfillment (blocks until someone fulfills and collects)
-bun run cli/src/index.ts --private-key 0xALICE_KEY escrow wait \
+alkahest --private-key 0xALICE_KEY escrow wait \
   --erc20 --uid 0xESCROW_UID
 ```
 
@@ -560,7 +560,7 @@ If no valid fulfillment is made, Alice can reclaim the escrow after it expires.
 
 ```bash
 # Alice reclaims her expired escrow
-bun run cli/src/index.ts --private-key 0xALICE_KEY escrow reclaim \
+alkahest --private-key 0xALICE_KEY escrow reclaim \
   --erc20 --uid 0xESCROW_UID
 ```
 

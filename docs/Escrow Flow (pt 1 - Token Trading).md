@@ -231,7 +231,7 @@ The CLI's `barter create` command wraps the barter utility contracts to combine 
 ```bash
 # Alice: Create ERC20 escrow demanding an ERC721 token
 # First, get the ERC721PaymentObligation address for the demand arbiter
-bun run cli/src/index.ts config show --chain base-sepolia
+alkahest config show --chain base-sepolia
 # Use the erc721PaymentObligation address as --arbiter
 
 # The demand is the ABI-encoded ERC721PaymentObligation.ObligationData
@@ -239,7 +239,7 @@ bun run cli/src/index.ts config show --chain base-sepolia
 # You can construct this manually or use the SDK for encoding
 
 # Create the escrow
-bun run cli/src/index.ts --private-key 0xALICE_KEY escrow create \
+alkahest --private-key 0xALICE_KEY escrow create \
   --erc20 \
   --token 0xERC20_TOKEN \
   --amount 1000000000000000000000 \
@@ -253,14 +253,14 @@ Or use barter utilities for atomic swaps (recommended for simple token-for-token
 
 ```bash
 # Alice: Offer ERC20 for ERC20 (most common case)
-bun run cli/src/index.ts --private-key 0xALICE_KEY barter create \
+alkahest --private-key 0xALICE_KEY barter create \
   --bid-type erc20 --ask-type erc20 \
   --bid-token 0xUSDC --bid-amount 1000000000 \
   --ask-token 0xEURC --ask-amount 900000000 \
   --expiration 1735689600
 
 # Alice: Offer ERC20 for ERC721
-bun run cli/src/index.ts --private-key 0xALICE_KEY barter create \
+alkahest --private-key 0xALICE_KEY barter create \
   --bid-type erc20 --ask-type erc721 \
   --bid-token 0xUSDC --bid-amount 1000000000 \
   --ask-token 0xNFT --ask-amount 0 --ask-token-id 42 \
@@ -478,12 +478,12 @@ escrow_contract
 
 ```bash
 # Bob: Fulfill a barter escrow (counterparty pays)
-bun run cli/src/index.ts --private-key 0xBOB_KEY barter fulfill \
+alkahest --private-key 0xBOB_KEY barter fulfill \
   --uid 0xESCROW_UID \
   --bid-type erc20 --ask-type erc20
 
 # Or for manual escrow collection (after separately creating a payment):
-bun run cli/src/index.ts --private-key 0xBOB_KEY escrow collect \
+alkahest --private-key 0xBOB_KEY escrow collect \
   --erc20 \
   --escrow-uid 0xESCROW_UID \
   --fulfillment-uid 0xPAYMENT_UID
@@ -600,7 +600,7 @@ You can reclaim your escrow if nobody fulfills it before it expires.
 
 ```bash
 # Alice reclaims her expired escrow
-bun run cli/src/index.ts --private-key 0xALICE_KEY escrow reclaim \
+alkahest --private-key 0xALICE_KEY escrow reclaim \
   --erc20 --uid 0xESCROW_UID
 ```
 
@@ -653,7 +653,7 @@ The CLI wraps the barter utility contracts. Use `--permit` for gasless ERC-20 ap
 
 ```bash
 # Alice: Create barter (ERC20 for ERC20) with permit
-bun run cli/src/index.ts --private-key 0xALICE_KEY barter create \
+alkahest --private-key 0xALICE_KEY barter create \
   --bid-type erc20 --ask-type erc20 \
   --bid-token 0xUSDC --bid-amount 1000000000 \
   --ask-token 0xEURC --ask-amount 900000000 \
@@ -661,13 +661,13 @@ bun run cli/src/index.ts --private-key 0xALICE_KEY barter create \
   --permit
 
 # Bob: Fulfill the barter
-bun run cli/src/index.ts --private-key 0xBOB_KEY barter fulfill \
+alkahest --private-key 0xBOB_KEY barter fulfill \
   --uid 0xBARTER_UID \
   --bid-type erc20 --ask-type erc20 \
   --permit
 
 # Or use escrow create with --approve for non-barter escrows
-bun run cli/src/index.ts --private-key 0xALICE_KEY escrow create \
+alkahest --private-key 0xALICE_KEY escrow create \
   --erc20 \
   --token 0xUSDC --amount 1000000000 \
   --arbiter 0xARBITER --demand 0xDEMAND \
