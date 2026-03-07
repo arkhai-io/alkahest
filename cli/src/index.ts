@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 import { Command } from "commander";
 import { makeEscrowCommand } from "./commands/escrow.ts";
 import { makePaymentCommand } from "./commands/payment.ts";

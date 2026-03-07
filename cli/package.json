@@ -5,9 +5,13 @@
   "bin": {
     "alkahest": "./dist/index.js"
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "build": "tsup src/index.ts --format esm --dts --clean",
-    "dev": "bun run src/index.ts"
+    "build": "tsup",
+    "dev": "bun run src/index.ts",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "commander": "^13.1.0",
