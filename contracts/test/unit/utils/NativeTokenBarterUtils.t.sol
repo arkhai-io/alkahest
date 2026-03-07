@@ -5,7 +5,7 @@ import "forge-std/Test.sol";
 import {IEAS} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {Attestation} from "@eas/Common.sol";
-import {NativeTokenBarterUtils} from "../../../src/utils/NativeTokenBarterUtils.sol";
+import {NativeTokenBarterUtils} from "../../../src/utils/barter/NativeTokenBarterUtils.sol";
 import {NativeTokenEscrowObligation} from "../../../src/obligations/escrow/non-tierable/NativeTokenEscrowObligation.sol";
 import {NativeTokenPaymentObligation} from "../../../src/obligations/payment/NativeTokenPaymentObligation.sol";
 import {ERC20EscrowObligation} from "../../../src/obligations/escrow/non-tierable/ERC20EscrowObligation.sol";

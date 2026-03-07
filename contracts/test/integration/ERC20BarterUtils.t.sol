@@ -4,7 +4,7 @@ pragma solidity ^0.8.26;
 import "forge-std/Test.sol";
 import {ERC20EscrowObligation} from "@src/obligations/escrow/non-tierable/ERC20EscrowObligation.sol";
 import {ERC20PaymentObligation} from "@src/obligations/payment/ERC20PaymentObligation.sol";
-import {ERC20BarterUtils} from "@src/utils/ERC20BarterUtils.sol";
+import {ERC20BarterUtils} from "@src/utils/barter/ERC20BarterUtils.sol";
 import {IEAS} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {ERC721EscrowObligation} from "@src/obligations/escrow/non-tierable/ERC721EscrowObligation.sol";

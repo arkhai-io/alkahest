@@ -12,7 +12,7 @@ import {TokenBundleEscrowObligation} from "@src/obligations/escrow/non-tierable/
 import {TokenBundlePaymentObligation} from "@src/obligations/payment/TokenBundlePaymentObligation.sol";
 import {NativeTokenEscrowObligation} from "@src/obligations/escrow/non-tierable/NativeTokenEscrowObligation.sol";
 import {NativeTokenPaymentObligation} from "@src/obligations/payment/NativeTokenPaymentObligation.sol";
-import {ERC20BarterUtils} from "@src/utils/ERC20BarterUtils.sol";
+import {ERC20BarterUtils} from "@src/utils/barter/ERC20BarterUtils.sol";
 import {IEAS} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
