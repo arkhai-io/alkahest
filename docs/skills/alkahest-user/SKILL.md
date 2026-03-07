@@ -27,10 +27,10 @@ Supported chains: Base Sepolia, Sepolia, Filecoin Calibration, Ethereum mainnet.
 
 ## CLI Setup
 
-The CLI is at `cli/` in the repo root. Run commands with:
+Install globally via `npm install -g alkahest-cli`, then run commands with:
 
 ```bash
-bun run cli/src/index.ts [global-flags] <command> <subcommand> [options]
+alkahest [global-flags] <command> <subcommand> [options]
 ```
 
 ### Authentication
@@ -73,7 +73,7 @@ First, encode the demand data that specifies your release condition:
 
 ```bash
 # Trusted oracle demand — oracle must approve fulfillment
-bun run cli/src/index.ts arbiter encode-demand \
+alkahest arbiter encode-demand \
   --type trusted-oracle \
   --oracle 0xORACLE_ADDRESS \
   --data 0x
@@ -86,7 +86,7 @@ Use the `--arbiter` address and the encoded `--demand` hex from step 1:
 
 ```bash
 # ERC20 escrow with auto-approve
-bun run cli/src/index.ts --private-key 0xKEY escrow create \
+alkahest --private-key 0xKEY escrow create \
   --erc20 \
   --token 0xTOKEN_ADDRESS \
   --amount 1000000000000000000 \
@@ -96,7 +96,7 @@ bun run cli/src/index.ts --private-key 0xKEY escrow create \
   --approve
 
 # ERC721 escrow
-bun run cli/src/index.ts --private-key 0xKEY escrow create \
+alkahest --private-key 0xKEY escrow create \
   --erc721 \
   --token 0xNFT_ADDRESS \
   --token-id 42 \
@@ -107,7 +107,7 @@ bun run cli/src/index.ts --private-key 0xKEY escrow create \
   --approve
 
 # Native token (ETH) escrow — no approve needed
-bun run cli/src/index.ts --private-key 0xKEY escrow create \
+alkahest --private-key 0xKEY escrow create \
   --native \
   --token 0x0000000000000000000000000000000000000000 \
   --amount 500000000000000000 \
@@ -121,7 +121,7 @@ Returns `{ "success": true, "data": { "hash": "0x...", "uid": "0x...", ... } }`.
 ### 3. Wait for fulfillment
 
 ```bash
-bun run cli/src/index.ts --private-key 0xKEY escrow wait \
+alkahest --private-key 0xKEY escrow wait \
   --erc20 --uid 0xESCROW_UID
 # Blocks until fulfilled. Returns: { payment, fulfillment, fulfiller }
 ```
@@ -129,14 +129,14 @@ bun run cli/src/index.ts --private-key 0xKEY escrow wait \
 ### 4. Reclaim expired escrow (if unfulfilled)
 
 ```bash
-bun run cli/src/index.ts --private-key 0xKEY escrow reclaim \
+alkahest --private-key 0xKEY escrow reclaim \
   --erc20 --uid 0xESCROW_UID
 ```
 
 ### 5. Get escrow details
 
 ```bash
-bun run cli/src/index.ts --private-key 0xKEY escrow get \
+alkahest --private-key 0xKEY escrow get \
   --erc20 --uid 0xESCROW_UID
 ```
 
@@ -146,19 +146,19 @@ bun run cli/src/index.ts --private-key 0xKEY escrow get \
 
 ```bash
 # 1. Create fulfillment referencing the escrow
-bun run cli/src/index.ts --private-key 0xKEY string create \
+alkahest --private-key 0xKEY string create \
   --item "Here is my completed deliverable" \
   --ref-uid 0xESCROW_UID
 # Returns: { uid: "0xFULFILLMENT_UID", ... }
 
 # 2. If escrow uses TrustedOracleArbiter, oracle arbitrates
-bun run cli/src/index.ts --private-key 0xORACLE_KEY arbiter arbitrate \
+alkahest --private-key 0xORACLE_KEY arbiter arbitrate \
   --obligation 0xFULFILLMENT_UID \
   --demand 0xDEMAND_HEX \
   --decision true
 
 # 3. Collect the escrow
-bun run cli/src/index.ts --private-key 0xSELLER_KEY escrow collect \
+alkahest --private-key 0xSELLER_KEY escrow collect \
   --erc20 \
   --escrow-uid 0xESCROW_UID \
   --fulfillment-uid 0xFULFILLMENT_UID
@@ -168,14 +168,14 @@ bun run cli/src/index.ts --private-key 0xSELLER_KEY escrow collect \
 
 ```bash
 # Create a barter offer: bid ERC20 for ERC20
-bun run cli/src/index.ts --private-key 0xKEY barter create \
+alkahest --private-key 0xKEY barter create \
   --bid-type erc20 --ask-type erc20 \
   --bid-token 0xBID_TOKEN --bid-amount 1000000000000000000 \
   --ask-token 0xASK_TOKEN --ask-amount 2000000000000000000 \
   --expiration 1735689600
 
 # Counterparty fulfills the barter
-bun run cli/src/index.ts --private-key 0xCOUNTERPARTY_KEY barter fulfill \
+alkahest --private-key 0xCOUNTERPARTY_KEY barter fulfill \
   --uid 0xBARTER_UID \
   --bid-type erc20 --ask-type erc20
 ```
@@ -186,13 +186,13 @@ Supported barter pairs: `erc20/erc20`, `erc20/erc721`, `erc20/erc1155`. Use `--p
 
 ```bash
 # Approve a fulfillment
-bun run cli/src/index.ts --private-key 0xORACLE_KEY arbiter arbitrate \
+alkahest --private-key 0xORACLE_KEY arbiter arbitrate \
   --obligation 0xFULFILLMENT_UID \
   --demand 0xDEMAND_HEX \
   --decision true
 
 # Reject a fulfillment
-bun run cli/src/index.ts --private-key 0xORACLE_KEY arbiter arbitrate \
+alkahest --private-key 0xORACLE_KEY arbiter arbitrate \
   --obligation 0xFULFILLMENT_UID \
   --demand 0xDEMAND_HEX \
   --decision false
@@ -206,7 +206,7 @@ Use commit-reveal when fulfillment data is self-contained (e.g., a string answer
 
 ```bash
 # 1. Compute commitment hash
-bun run cli/src/index.ts --private-key 0xKEY commit-reveal compute-commitment \
+alkahest --private-key 0xKEY commit-reveal compute-commitment \
   --ref-uid 0xESCROW_UID \
   --claimer 0xSELLER_ADDRESS \
   --payload 0xPAYLOAD_HEX \
@@ -215,11 +215,11 @@ bun run cli/src/index.ts --private-key 0xKEY commit-reveal compute-commitment \
 # Returns: { commitment: "0x..." }
 
 # 2. Commit (sends bond as ETH)
-bun run cli/src/index.ts --private-key 0xKEY commit-reveal commit \
+alkahest --private-key 0xKEY commit-reveal commit \
   --commitment 0xCOMMITMENT_HASH
 
 # 3. Wait at least 1 block, then reveal
-bun run cli/src/index.ts --private-key 0xKEY commit-reveal reveal \
+alkahest --private-key 0xKEY commit-reveal reveal \
   --payload 0xPAYLOAD_HEX \
   --salt 0xSALT_HEX \
   --schema 0xSCHEMA_UID \
@@ -227,14 +227,14 @@ bun run cli/src/index.ts --private-key 0xKEY commit-reveal reveal \
 # Returns: { uid: "0xOBLIGATION_UID", ... }
 
 # 4. Reclaim bond after successful reveal
-bun run cli/src/index.ts --private-key 0xKEY commit-reveal reclaim-bond \
+alkahest --private-key 0xKEY commit-reveal reclaim-bond \
   --uid 0xOBLIGATION_UID
 
 # Check bond amount and deadline
-bun run cli/src/index.ts --private-key 0xKEY commit-reveal info
+alkahest --private-key 0xKEY commit-reveal info
 
 # Slash an unrevealed commitment's bond
-bun run cli/src/index.ts --private-key 0xKEY commit-reveal slash-bond \
+alkahest --private-key 0xKEY commit-reveal slash-bond \
   --commitment 0xCOMMITMENT_HASH
 ```
 
@@ -244,24 +244,24 @@ The `arbiter encode-demand` command encodes demand data for any arbiter type:
 
 ```bash
 # Trusted oracle
-bun run cli/src/index.ts arbiter encode-demand --type trusted-oracle \
+alkahest arbiter encode-demand --type trusted-oracle \
   --oracle 0xORACLE --data 0x
 
 # IntrinsicsArbiter2 (schema check)
-bun run cli/src/index.ts arbiter encode-demand --type intrinsics2 \
+alkahest arbiter encode-demand --type intrinsics2 \
   --schema 0xSCHEMA_UID
 
 # Attestation property arbiters
-bun run cli/src/index.ts arbiter encode-demand --type recipient --recipient 0xADDRESS
-bun run cli/src/index.ts arbiter encode-demand --type attester --attester 0xADDRESS
-bun run cli/src/index.ts arbiter encode-demand --type schema --schema 0xSCHEMA_UID
-bun run cli/src/index.ts arbiter encode-demand --type time-after --time 1735689600
+alkahest arbiter encode-demand --type recipient --recipient 0xADDRESS
+alkahest arbiter encode-demand --type attester --attester 0xADDRESS
+alkahest arbiter encode-demand --type schema --schema 0xSCHEMA_UID
+alkahest arbiter encode-demand --type time-after --time 1735689600
 
 # Logical composition (AllArbiter / AnyArbiter)
-bun run cli/src/index.ts arbiter encode-demand --type all \
+alkahest arbiter encode-demand --type all \
   --demands '[{"arbiter":"0xARB1","demand":"0xDEM1"},{"arbiter":"0xARB2","demand":"0xDEM2"}]'
 
-bun run cli/src/index.ts arbiter encode-demand --type any \
+alkahest arbiter encode-demand --type any \
   --demands '[{"arbiter":"0xARB1","demand":"0xDEM1"},{"arbiter":"0xARB2","demand":"0xDEM2"}]'
 ```
 
@@ -270,7 +270,7 @@ Available `--type` values: `trusted-oracle`, `intrinsics2`, `all`, `any`, `recip
 ### Decoding demands
 
 ```bash
-bun run cli/src/index.ts arbiter decode-demand \
+alkahest arbiter decode-demand \
   --arbiter 0xARBITER_ADDRESS \
   --demand 0xENCODED_HEX
 ```
@@ -281,13 +281,13 @@ For manual buyer-side approval of fulfillments:
 
 ```bash
 # Confirm a fulfillment
-bun run cli/src/index.ts --private-key 0xBUYER_KEY arbiter confirm \
+alkahest --private-key 0xBUYER_KEY arbiter confirm \
   --fulfillment 0xFULFILLMENT_UID \
   --escrow 0xESCROW_UID \
   --type exclusive-revocable
 
 # Revoke confirmation (revocable variants only)
-bun run cli/src/index.ts --private-key 0xBUYER_KEY arbiter revoke \
+alkahest --private-key 0xBUYER_KEY arbiter revoke \
   --fulfillment 0xFULFILLMENT_UID \
   --escrow 0xESCROW_UID \
   --type exclusive-revocable
@@ -299,31 +299,31 @@ Types: `exclusive-revocable`, `exclusive-unrevocable`, `nonexclusive-revocable`,
 
 ```bash
 # ERC20 payment with auto-approve
-bun run cli/src/index.ts --private-key 0xKEY payment pay \
+alkahest --private-key 0xKEY payment pay \
   --erc20 \
   --token 0xTOKEN --amount 1000000000000000000 \
   --payee 0xRECIPIENT \
   --approve
 
 # Native token payment
-bun run cli/src/index.ts --private-key 0xKEY payment pay \
+alkahest --private-key 0xKEY payment pay \
   --native \
   --token 0x0000000000000000000000000000000000000000 \
   --amount 500000000000000000 \
   --payee 0xRECIPIENT
 
 # Get payment details
-bun run cli/src/index.ts --private-key 0xKEY payment get --erc20 --uid 0xUID
+alkahest --private-key 0xKEY payment get --erc20 --uid 0xUID
 ```
 
 ## Attestations
 
 ```bash
 # Get raw attestation by UID
-bun run cli/src/index.ts --private-key 0xKEY attestation get --uid 0xUID
+alkahest --private-key 0xKEY attestation get --uid 0xUID
 
 # Decode attestation data by type
-bun run cli/src/index.ts --private-key 0xKEY attestation decode \
+alkahest --private-key 0xKEY attestation decode \
   --uid 0xUID --type erc20-escrow
 ```
 
@@ -333,10 +333,10 @@ Decode types: `erc20-escrow`, `erc20-payment`, `erc721-escrow`, `erc721-payment`
 
 ```bash
 # Show contract addresses for a chain
-bun run cli/src/index.ts config show --chain base-sepolia
+alkahest config show --chain base-sepolia
 
 # List supported chains
-bun run cli/src/index.ts config chains
+alkahest config chains
 ```
 
 ## Escrow Types
