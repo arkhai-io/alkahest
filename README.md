@@ -102,6 +102,30 @@ cd sdks/py && pip install -e .
 cd sdks/rs && cargo build
 ```
 
+## Agent Skills
+
+The `docs/skills/` directory contains agent skills for AI coding assistants ([Claude Code](https://docs.anthropic.com/en/docs/claude-code), [OpenClaw](https://github.com/AidenYuanDev/OpenClaw), etc.) that help developers and users interact with Alkahest conversationally.
+
+| Skill | Description |
+|-------|-------------|
+| `alkahest-developer` | Write code using the TypeScript, Rust, or Python SDK |
+| `alkahest-user` | Create escrows, fulfill obligations, arbitrate, and barter via the CLI |
+
+### Installation
+
+#### Claude Code (via plugin marketplace)
+
+```
+/plugin marketplace add arkhai-io/claude-plugins
+/plugin install alkahest-plugin@arkhai-plugins
+```
+
+See the [arkhai-plugins marketplace](https://github.com/arkhai-io/claude-plugins) for all available plugins.
+
+#### Manual
+
+Each skill is a directory under `docs/skills/` containing a `SKILL.md` file. Any agent that supports SKILL.md-based skill definitions (Claude Code, OpenClaw, etc.) can use them directly.
+
 ## Contributing
 
 Contributions are welcome! Please check the individual README files in each directory for specific contribution guidelines.
