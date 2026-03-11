@@ -122,9 +122,16 @@ The `docs/skills/` directory contains agent skills for AI coding assistants ([Cl
 
 See the [arkhai-plugins marketplace](https://github.com/arkhai-io/claude-plugins) for all available plugins.
 
+#### OpenClaw (via ClawHub)
+
+```bash
+clawhub install alkahest-developer
+clawhub install alkahest-user
+```
+
 #### Manual
 
-Each skill is a directory under `docs/skills/` containing a `SKILL.md` file. Any agent that supports SKILL.md-based skill definitions (Claude Code, OpenClaw, etc.) can use them directly.
+Each skill is a directory under `docs/skills/` containing a `SKILL.md` file. Any agent that supports SKILL.md-based skill definitions can use them directly.
 
 ## Contributing
 
