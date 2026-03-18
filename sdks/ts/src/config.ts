@@ -175,6 +175,64 @@ export const contractAddresses: Record<string, ChainAddresses> = {
     expirationTimeBeforeArbiter: "0xbcce130337f2d8029982a14471d8686afcef20ff",
     expirationTimeEqualArbiter: "0x98d5bc7593143e55e9949da97603126cae0bfd7f",
   },
+  "GenLayer Bradbury": {
+    eas: "0xaC18Fa0DE3123215404a0C5f6d02ed9B2D0D0d98",
+    easSchemaRegistry: "0xA1F9076932f6eEA0D90BBfA1D6E81D001012645D",
+
+    erc20BarterUtils: "0x52De4B30721b3E3660A79da7491a9B2F8a9cB1D5",
+    erc20EscrowObligation: "0x2A7df117e45D93d34a7893CC3aE8B105Ae0B561C",
+    erc20PaymentObligation: "0x59A9c929778Ad2cC4D5DB6151bDEf0F9Fa7A068C",
+
+    erc721BarterUtils: "0xA42032D8BFeE2302cC6F80ff51D283Ffc5a4081f",
+    erc721EscrowObligation: "0xf04d9CA943f57353A3A735494E503280C1cD5e77",
+    erc721PaymentObligation: "0x52748DD0E39eD6eA9f626179b5eb512302adA7D9",
+
+    erc1155BarterUtils: "0x6eb7792D821f32914Be75901F1b4269B13Efad2e",
+    erc1155EscrowObligation: "0x677Aa9e1CD9D05f57FbCa2327155EA7479ec7Ac3",
+    erc1155PaymentObligation: "0x36Fcf1Ddee838a94B1358285A11e8bbbb90eD9A1",
+
+    tokenBundleBarterUtils: "0xf60db64506E366a0A6c1f4cF9D849Adc7bB886D6",
+    tokenBundleEscrowObligation: "0xA7EacA68Bffc9443eA08fd58633Eeed3f5EE8A92",
+    tokenBundlePaymentObligation: "0x9bA50DB048d1E5db034377abf97F92496D027C71",
+
+    attestationBarterUtils: "0x5bf1EE1fEC1bC25d20C4537f74bD0909B195DEBd",
+    attestationEscrowObligation: "0x5E6602F080E9B37267aa52306c699ae54Cd71056",
+    attestationEscrowObligation2: "0x57D5165F9487F6E7bD6E6a24017FAdadc2b1D7D2",
+
+    stringObligation: "0xB2c808911E84E80156101983897Da7c80e13cB47",
+    commitRevealObligation: "0xb822aA07F55a8B75Ee133ede1f21C4E49DE7952f",
+
+    trivialArbiter: "0x847F69d27E4F1A8a115aCa3F4358B079706dc9CE",
+    trustedOracleArbiter: "0xe968dFA581B8aBb94eC5F24d0b56163DE69511fD",
+    allArbiter: "0xaabdDAa76651d20922d1F561f924a40F6fE7710c",
+    anyArbiter: "0xF486f9a62eeb085e99828e1D706bBA5dfC1bD1fD",
+    intrinsicsArbiter: "0xBE7fE4d7CEb2140eeBdf01e12D198AEBAdC1F54D",
+    intrinsicsArbiter2: "0x01666d869918aDDDED1B30eF2d36f3C990F09BDE",
+    erc8004Arbiter: "0xe483EDA58b5f9Eba06A1ad0151dA5e4a5fFC8300",
+    nativeTokenEscrowObligation: "0x5bf7c8b0d60d05af0a3De531EB876De271E80dbc",
+    nativeTokenPaymentObligation: "0xEB0C0c41F708B8b3556a6F44a1a015a6832C2d2C",
+    nativeTokenBarterUtils: "0x1A7c6F951e0a33F4910dbe56a200Eb413AEca17b",
+
+    // Confirmation arbiters (new naming convention)
+    exclusiveRevocableConfirmationArbiter: "0x309509db364526C7aE202eA9ED94a398a0819d38",
+    exclusiveUnrevocableConfirmationArbiter: "0x6CC4068d471E96A1669097918e18017f5764f72a",
+    nonexclusiveRevocableConfirmationArbiter: "0x941044D43F9d75dfA8Ad24880B9B9cAD6e116a66",
+    nonexclusiveUnrevocableConfirmationArbiter: "0x16aeE626D398B547eDD5fa4BdAA638524C92921d",
+
+    // Attestation Properties Arbiters
+    recipientArbiter: "0xeda25079f76ef93c54cC042116Be8D88E49D3439",
+    attesterArbiter: "0xFAf8a07709dB9f90d0A0415876CfE00D904cd40B",
+    schemaArbiter: "0x68A6e6022ab9984Ee1A9A6cee384FF2aE8be5264",
+    uidArbiter: "0x05d9Aa2A6AE38619b864Ff7f87A8f94301ecAB42",
+    refUidArbiter: "0x913eAdD13dcCdeD9CD5518075083b6C7A9574A8c",
+    revocableArbiter: "0x0ea9e144FfDc6456E5cE8d1f75c686112e8f29c5",
+    timeAfterArbiter: "0x208385Fb349c01af2CfA8C6b86F633F6642718e2",
+    timeBeforeArbiter: "0xae4fa2D5d7EDD6Aaf697dC0c98EDb921F0fEc058",
+    timeEqualArbiter: "0xC51C938f5497be8157DAf8CCc3Eb11Afb8b752C0",
+    expirationTimeAfterArbiter: "0x7c782ac7741BB78DB7491Ee222af0a04f7f2bc0b",
+    expirationTimeBeforeArbiter: "0xF1C9E20078A13816ACdDF3153e2eAaDd93Fd6E57",
+    expirationTimeEqualArbiter: "0xE9ee2c57B18283b66d342D33d63C55f1427f9e9B",
+  },
   "Ethereum": {
     eas: "0xA1207F3BBa224E2c9c3c6D5aF63D0eb1582Ce587",
     easSchemaRegistry: "0xA7b39296258348C78294F95B872b282326A97BDF",
@@ -235,4 +293,4 @@ export const contractAddresses: Record<string, ChainAddresses> = {
   },
 } as const;
 
-export const supportedChains = ["Base Sepolia", "Sepolia", "Filecoin Calibration", "Ethereum"];
+export const supportedChains = ["Base Sepolia", "Sepolia", "Filecoin Calibration", "GenLayer Bradbury", "Ethereum"];
