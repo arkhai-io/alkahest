@@ -18,6 +18,10 @@ contracts/deployments/*.txt
 contracts/.env
 contracts/script/.env
 
+# Python
+__pycache__/
+*.pyc
+
 # Dependencies
 node_modules/
 
