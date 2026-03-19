@@ -1,0 +1,6 @@
+contract_path: ./
+
+networks:
+  testnet_bradbury:
+    accounts:
+      - "27977b1aeb8d310bfa093537fbd4bebe69b742df5c3059f3c507fb452a94ba8e"
