@@ -12,6 +12,10 @@ contracts/target/
 .env
 contracts/.env
 
+# Python
+__pycache__/
+*.pyc
+
 # Dependencies
 node_modules/
 
