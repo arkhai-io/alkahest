@@ -12,7 +12,7 @@ import {TokenBundleEscrowObligation} from "@src/obligations/escrow/non-tierable/
 import {TokenBundlePaymentObligation} from "@src/obligations/payment/TokenBundlePaymentObligation.sol";
 import {NativeTokenEscrowObligation} from "@src/obligations/escrow/non-tierable/NativeTokenEscrowObligation.sol";
 import {NativeTokenPaymentObligation} from "@src/obligations/payment/NativeTokenPaymentObligation.sol";
-import {ERC721BarterUtils} from "@src/utils/ERC721BarterUtils.sol";
+import {ERC721BarterUtils} from "@src/utils/barter/ERC721BarterUtils.sol";
 import {IEAS} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {Attestation} from "@eas/Common.sol";

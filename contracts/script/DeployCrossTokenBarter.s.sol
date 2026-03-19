@@ -4,9 +4,9 @@ pragma solidity ^0.8.26;
 import "forge-std/Script.sol";
 import {IEAS} from "@eas/IEAS.sol";
 
-import {ERC20BarterUtils} from "@src/utils/ERC20BarterUtils.sol";
-import {ERC721BarterUtils} from "@src/utils/ERC721BarterUtils.sol";
-import {ERC1155BarterUtils} from "@src/utils/ERC1155BarterUtils.sol";
+import {ERC20BarterUtils} from "@src/utils/barter/ERC20BarterUtils.sol";
+import {ERC721BarterUtils} from "@src/utils/barter/ERC721BarterUtils.sol";
+import {ERC1155BarterUtils} from "@src/utils/barter/ERC1155BarterUtils.sol";
 
 import {ERC20EscrowObligation} from "@src/obligations/escrow/non-tierable/ERC20EscrowObligation.sol";
 import {ERC20PaymentObligation} from "@src/obligations/payment/ERC20PaymentObligation.sol";

@@ -9,32 +9,32 @@ import {EASDeployer} from "test/utils/EASDeployer.sol";
 // ERC20 Contracts
 import {ERC20EscrowObligation} from "@src/obligations/escrow/non-tierable/ERC20EscrowObligation.sol";
 import {ERC20PaymentObligation} from "@src/obligations/payment/ERC20PaymentObligation.sol";
-import {ERC20BarterUtils} from "@src/utils/ERC20BarterUtils.sol";
+import {ERC20BarterUtils} from "@src/utils/barter/ERC20BarterUtils.sol";
 
 // ERC721 Contracts
 import {ERC721EscrowObligation} from "@src/obligations/escrow/non-tierable/ERC721EscrowObligation.sol";
 import {ERC721PaymentObligation} from "@src/obligations/payment/ERC721PaymentObligation.sol";
-import {ERC721BarterUtils} from "@src/utils/ERC721BarterUtils.sol";
+import {ERC721BarterUtils} from "@src/utils/barter/ERC721BarterUtils.sol";
 
 // ERC1155 Contracts
 import {ERC1155EscrowObligation} from "@src/obligations/escrow/non-tierable/ERC1155EscrowObligation.sol";
 import {ERC1155PaymentObligation} from "@src/obligations/payment/ERC1155PaymentObligation.sol";
-import {ERC1155BarterUtils} from "@src/utils/ERC1155BarterUtils.sol";
+import {ERC1155BarterUtils} from "@src/utils/barter/ERC1155BarterUtils.sol";
 
 // TokenBundle Contracts
 import {TokenBundleEscrowObligation} from "@src/obligations/escrow/non-tierable/TokenBundleEscrowObligation.sol";
 import {TokenBundlePaymentObligation} from "@src/obligations/payment/TokenBundlePaymentObligation.sol";
-import {TokenBundleBarterUtils} from "@src/utils/TokenBundleBarterUtils.sol";
+import {TokenBundleBarterUtils} from "@src/utils/barter/TokenBundleBarterUtils.sol";
 
 // Native Token Contracts
 import {NativeTokenEscrowObligation} from "@src/obligations/escrow/non-tierable/NativeTokenEscrowObligation.sol";
 import {NativeTokenPaymentObligation} from "@src/obligations/payment/NativeTokenPaymentObligation.sol";
-import {NativeTokenBarterUtils} from "@src/utils/NativeTokenBarterUtils.sol";
+import {NativeTokenBarterUtils} from "@src/utils/barter/NativeTokenBarterUtils.sol";
 
 // Attestation Contracts
 import {AttestationEscrowObligation} from "@src/obligations/escrow/non-tierable/AttestationEscrowObligation.sol";
 import {AttestationEscrowObligation2} from "@src/obligations/escrow/non-tierable/AttestationEscrowObligation2.sol";
-import {AttestationBarterUtils} from "@src/utils/AttestationBarterUtils.sol";
+import {AttestationBarterUtils} from "@src/utils/barter/AttestationBarterUtils.sol";
 
 // Arbiter Contracts
 // import {SpecificAttestationArbiter} from "@src/arbiters/SpecificAttestationArbiter.sol";

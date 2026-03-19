@@ -5,21 +5,21 @@ import "forge-std/Test.sol";
 import {IEAS} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {Attestation} from "@eas/Common.sol";
-import {NativeTokenBarterUtils} from "../../../src/utils/NativeTokenBarterUtils.sol";
-import {NativeTokenEscrowObligation} from "../../../src/obligations/escrow/non-tierable/NativeTokenEscrowObligation.sol";
-import {NativeTokenPaymentObligation} from "../../../src/obligations/payment/NativeTokenPaymentObligation.sol";
-import {ERC20EscrowObligation} from "../../../src/obligations/escrow/non-tierable/ERC20EscrowObligation.sol";
-import {ERC20PaymentObligation} from "../../../src/obligations/payment/ERC20PaymentObligation.sol";
-import {ERC721EscrowObligation} from "../../../src/obligations/escrow/non-tierable/ERC721EscrowObligation.sol";
-import {ERC721PaymentObligation} from "../../../src/obligations/payment/ERC721PaymentObligation.sol";
-import {ERC1155EscrowObligation} from "../../../src/obligations/escrow/non-tierable/ERC1155EscrowObligation.sol";
-import {ERC1155PaymentObligation} from "../../../src/obligations/payment/ERC1155PaymentObligation.sol";
-import {TokenBundleEscrowObligation} from "../../../src/obligations/escrow/non-tierable/TokenBundleEscrowObligation.sol";
-import {TokenBundlePaymentObligation} from "../../../src/obligations/payment/TokenBundlePaymentObligation.sol";
+import {NativeTokenBarterUtils} from "../../../../src/utils/barter/NativeTokenBarterUtils.sol";
+import {NativeTokenEscrowObligation} from "../../../../src/obligations/escrow/non-tierable/NativeTokenEscrowObligation.sol";
+import {NativeTokenPaymentObligation} from "../../../../src/obligations/payment/NativeTokenPaymentObligation.sol";
+import {ERC20EscrowObligation} from "../../../../src/obligations/escrow/non-tierable/ERC20EscrowObligation.sol";
+import {ERC20PaymentObligation} from "../../../../src/obligations/payment/ERC20PaymentObligation.sol";
+import {ERC721EscrowObligation} from "../../../../src/obligations/escrow/non-tierable/ERC721EscrowObligation.sol";
+import {ERC721PaymentObligation} from "../../../../src/obligations/payment/ERC721PaymentObligation.sol";
+import {ERC1155EscrowObligation} from "../../../../src/obligations/escrow/non-tierable/ERC1155EscrowObligation.sol";
+import {ERC1155PaymentObligation} from "../../../../src/obligations/payment/ERC1155PaymentObligation.sol";
+import {TokenBundleEscrowObligation} from "../../../../src/obligations/escrow/non-tierable/TokenBundleEscrowObligation.sol";
+import {TokenBundlePaymentObligation} from "../../../../src/obligations/payment/TokenBundlePaymentObligation.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {ERC1155} from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
-import {EASDeployer} from "../../utils/EASDeployer.sol";
+import {EASDeployer} from "../../../utils/EASDeployer.sol";
 
 // Mock token contracts
 contract MockERC20 is ERC20 {
