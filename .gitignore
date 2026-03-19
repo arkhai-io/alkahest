@@ -18,6 +18,7 @@ node_modules/
 # Build artifacts
 *.rdb
 .DS_Store
+__pycache__/
 
 # Development tools
 .aider.tags.cache.v3
