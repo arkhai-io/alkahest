@@ -15,6 +15,11 @@
       "types": "./tests/utils/setup.ts"
     }
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/arkhai-io/alkahest",
+    "directory": "sdks/ts"
+  },
   "files": [
     "dist",
     "src",
