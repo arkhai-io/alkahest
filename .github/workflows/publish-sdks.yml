@@ -15,10 +15,8 @@ permissions:
   id-token: write
   attestations: write
 
-# Required secrets:
-#   NPM_TOKEN - npm access token for publishing alkahest-ts (no OIDC support)
-#
 # Trusted publishing (OIDC, no secrets needed):
+#   npm       - configure at https://www.npmjs.com/package/alkahest-ts → Settings → Trusted Publisher
 #   crates.io - configure at https://crates.io/crates/alkahest-rs/settings
 #   PyPI      - configure at https://pypi.org/manage/project/alkahest-py/settings/publishing/
 
@@ -54,6 +52,9 @@ jobs:
     needs: detect-changes
     if: needs.detect-changes.outputs.ts == 'true'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     defaults:
       run:
         working-directory: sdks/ts
@@ -62,7 +63,7 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
@@ -88,8 +89,6 @@ jobs:
       - name: Publish to npm
         if: steps.version.outputs.publish == 'true'
         run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   # ──────────────────────────────────────────────
   # Rust → crates.io
