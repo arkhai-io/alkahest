@@ -1,0 +1,25 @@
+{
+  "name": "alkahest-cli",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "alkahest": "dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "bun run src/index.ts",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "commander": "^13.1.0",
+    "viem": "^2.38.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsup": "^8.3.6",
+    "typescript": "^5.9.3"
+  }
+}
