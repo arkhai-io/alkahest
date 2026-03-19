@@ -16,9 +16,11 @@ permissions:
   attestations: write
 
 # Required secrets:
-#   NPM_TOKEN           - npm access token for publishing alkahest-ts
-#   CARGO_REGISTRY_TOKEN - crates.io API token for publishing alkahest-rs
-#   PYPI_API_TOKEN       - PyPI API token for publishing alkahest-py
+#   NPM_TOKEN - npm access token for publishing alkahest-ts (no OIDC support)
+#
+# Trusted publishing (OIDC, no secrets needed):
+#   crates.io - configure at https://crates.io/crates/alkahest-rs/settings
+#   PyPI      - configure at https://pypi.org/manage/project/alkahest-py/settings/publishing/
 
 jobs:
   # ──────────────────────────────────────────────
@@ -96,6 +98,9 @@ jobs:
     needs: detect-changes
     if: needs.detect-changes.outputs.rs == 'true'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     defaults:
       run:
         working-directory: sdks/rs
@@ -118,11 +123,21 @@ jobs:
             echo "::notice::alkahest-rs v$LOCAL → crates.io (current: v$REMOTE)"
           fi
 
+      - name: Get OIDC token
+        if: steps.version.outputs.publish == 'true'
+        id: oidc
+        run: |
+          resp=$(curl -sLS "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=https://crates.io" \
+            -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}")
+          token=$(echo "$resp" | jq -r '.value')
+          echo "::add-mask::${token}"
+          echo "token=${token}" >> "$GITHUB_OUTPUT"
+
       - name: Publish to crates.io
         if: steps.version.outputs.publish == 'true'
         run: cargo publish
         env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+          CARGO_REGISTRY_TOKEN: "oidc:${{ steps.oidc.outputs.token }}"
 
   # ──────────────────────────────────────────────
   # Python → PyPI  (maturin / PyO3 cross-platform wheels)
@@ -297,14 +312,15 @@ jobs:
       attestations: write
     steps:
       - uses: actions/download-artifact@v4
+      - name: Consolidate wheels
+        run: |
+          mkdir -p dist
+          cp wheels-*/* dist/
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v1
         with:
-          subject-path: 'wheels-*/*'
+          subject-path: 'dist/*'
       - name: Publish to PyPI
-        uses: PyO3/maturin-action@v1
-        env:
-          MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+        uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          command: upload
-          args: --non-interactive --skip-existing wheels-*/*
+          skip-existing: true
