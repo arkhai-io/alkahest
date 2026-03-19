@@ -122,21 +122,18 @@ jobs:
             echo "::notice::alkahest-rs v$LOCAL → crates.io (current: v$REMOTE)"
           fi
 
-      - name: Get OIDC token
+      - name: Get crates.io publish token (OIDC)
         if: steps.version.outputs.publish == 'true'
-        id: oidc
-        run: |
-          resp=$(curl -sLS "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=https://crates.io" \
-            -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}")
-          token=$(echo "$resp" | jq -r '.value')
-          echo "::add-mask::${token}"
-          echo "token=${token}" >> "$GITHUB_OUTPUT"
+        uses: rust-lang/crates-io-auth-action@v1
+        id: auth
+        with:
+          token-type: publish
 
       - name: Publish to crates.io
         if: steps.version.outputs.publish == 'true'
         run: cargo publish
         env:
-          CARGO_REGISTRY_TOKEN: "oidc:${{ steps.oidc.outputs.token }}"
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
 
   # ──────────────────────────────────────────────
   # Python → PyPI  (maturin / PyO3 cross-platform wheels)

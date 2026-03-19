@@ -1,4 +1,4 @@
-import { decodeAbiParameters, encodeAbiParameters, getAbiItem } from "viem";
+import { type Address, decodeAbiParameters, encodeAbiParameters, getAbiItem } from "viem";
 import { abi as nativeTokenEscrowAbi } from "../../../../contracts/obligations/escrow/tierable/NativeTokenEscrowObligation";
 import type { Demand } from "../../../../types";
 import { getAttestation, getAttestedEventFromTxHash, type ViemClient, writeContract } from "../../../../utils";
