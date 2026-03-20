@@ -2,6 +2,7 @@
 contracts/cache/
 contracts/out/
 contracts/target/
+**/target/
 
 # Ignores development broadcast logs
 !/contracts/broadcast
@@ -15,6 +16,7 @@ contracts/deployments/*.txt
 # Dotenv files
 .env
 contracts/.env
+contracts/script/.env
 
 # Dependencies
 node_modules/
@@ -23,11 +25,10 @@ node_modules/
 *.rdb
 .DS_Store
 __pycache__/
+.pytest_cache/
 
 # Development tools
-.aider.tags.cache.v3
-.aider.chat.history.md
-.aider.input.history
+.aider*
 summary.txt
 notes
 notes.md
