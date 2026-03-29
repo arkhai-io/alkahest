@@ -416,6 +416,67 @@ contract CommitRevealObligationTest is Test {
         obligation.slashBond(commitment);
     }
 
+    // ----------------------------------------------------------------
+    // doObligationFor (splitter integration)
+    // ----------------------------------------------------------------
+
+    function testDoObligationForWithDifferentRecipient() public {
+        bytes32 escrowUid = _makeEscrow();
+        CommitRevealObligation.ObligationData memory data = _obligationData();
+        address splitter = makeAddr("splitter");
+
+        // Commit using the splitter address as claimer
+        bytes32 commitment = obligation.computeCommitment(escrowUid, splitter, data);
+
+        vm.deal(claimer, BOND);
+        vm.prank(claimer);
+        obligation.commit{value: BOND}(commitment);
+
+        vm.roll(block.number + 1);
+
+        // Reveal with splitter as recipient — bond goes to committer (claimer)
+        uint256 claimerBalanceBefore = claimer.balance;
+        vm.prank(claimer);
+        bytes32 fulfillmentUid = obligation.doObligationFor(data, splitter, escrowUid);
+
+        // Bond returned to committer (claimer), not recipient (splitter)
+        assertEq(claimer.balance, claimerBalanceBefore + BOND, "bond returned to committer");
+
+        // Fulfillment attestation has splitter as recipient
+        Attestation memory fulfillment = eas.getAttestation(fulfillmentUid);
+        assertEq(fulfillment.recipient, splitter, "recipient should be splitter");
+
+        // checkObligation should pass
+        assertTrue(obligation.checkObligation(fulfillment, "", escrowUid));
+    }
+
+    function testDoObligationForRevertsWithWrongRecipientCommitment() public {
+        bytes32 escrowUid = _makeEscrow();
+        CommitRevealObligation.ObligationData memory data = _obligationData();
+        address splitter = makeAddr("splitter");
+
+        // Commit using claimer address (not splitter)
+        bytes32 commitment = obligation.computeCommitment(escrowUid, claimer, data);
+
+        vm.deal(claimer, BOND);
+        vm.prank(claimer);
+        obligation.commit{value: BOND}(commitment);
+
+        vm.roll(block.number + 1);
+
+        // Try to reveal with splitter as recipient — commitment mismatch
+        bytes32 expectedCommitment = obligation.computeCommitment(escrowUid, splitter, data);
+        vm.prank(claimer);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                CommitRevealObligation.CommitmentMissing.selector,
+                expectedCommitment,
+                splitter
+            )
+        );
+        obligation.doObligationFor(data, splitter, escrowUid);
+    }
+
     function testLateRevealCannotStealEscrow() public {
         bytes32 escrowUid = _makeEscrow();
         CommitRevealObligation.ObligationData memory data = _obligationData();

@@ -110,6 +110,23 @@ contract CommitRevealObligation is BaseObligation, IArbiter, Ownable {
         uid_ = _doObligationForRaw(encodedData, 0, msg.sender, refUID);
     }
 
+    /// @notice Creates a fulfillment attestation with a specified recipient.
+    ///         Use when the attestation recipient must differ from msg.sender,
+    ///         e.g. when the recipient is a splitter contract that needs to
+    ///         collect the escrow. The commitment must have been computed
+    ///         with the recipient address as the claimer.
+    /// @param data Revealed data (must match a prior commit) and salt.
+    /// @param recipient The address to set as the attestation recipient.
+    /// @param refUID Escrow attestation UID being fulfilled.
+    function doObligationFor(
+        ObligationData calldata data,
+        address recipient,
+        bytes32 refUID
+    ) external returns (bytes32 uid_) {
+        bytes memory encodedData = abi.encode(data);
+        uid_ = _doObligationForRaw(encodedData, 0, recipient, refUID);
+    }
+
     /// @dev After the attestation is created, validate the commitment, enforce
     ///      the deadline, and reclaim the bond atomically.
     function _afterAttest(
@@ -118,9 +135,6 @@ contract CommitRevealObligation is BaseObligation, IArbiter, Ownable {
         address /* payer */,
         address recipient
     ) internal override {
-        // Decode the obligation data to compute the commitment
-        ObligationData memory decoded = abi.decode(data, (ObligationData));
-
         // We need the refUID to compute the commitment. Get it from the attestation.
         Attestation memory attestation = eas.getAttestation(uid);
         bytes32 refUID = attestation.refUID;
