@@ -60,6 +60,7 @@ abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155H
 
     error UnauthorizedArbitrationRequest();
     error EmptySplits();
+    error TooManySplits(uint256 provided, uint256 max);
     error ZeroRecipient();
     error NativeTokenTransferFailed(address to, uint256 amount);
     error ERC20TransferFailed(address token, address to, uint256 amount);
@@ -72,6 +73,8 @@ abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155H
     mapping(address => mapping(bytes32 => bool)) public hasDecision;
     mapping(bytes32 => address) public fulfillers;
 
+    uint256 public constant MAX_SPLITS = 50;
+
     constructor(IEAS _eas) { eas = _eas; }
 
     // -----------------------------------------------------------------
@@ -82,6 +85,7 @@ abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155H
 
     function _storeDecision(address oracle, bytes32 decisionKey, BundleSplit[] calldata splits) internal {
         if (splits.length == 0) revert EmptySplits();
+        if (splits.length > MAX_SPLITS) revert TooManySplits(splits.length, MAX_SPLITS);
         delete decisions[oracle][decisionKey];
         for (uint256 i; i < splits.length; ++i) {
             if (splits[i].recipient == address(0)) revert ZeroRecipient();

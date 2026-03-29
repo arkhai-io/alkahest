@@ -35,6 +35,7 @@ contract ERC1155Splitter is IArbiter, ReentrancyGuard, ERC1155Holder {
     error UnauthorizedArbitrationRequest();
     error InvalidSplits(uint256 totalExpected, uint256 totalProvided);
     error EmptySplits();
+    error TooManySplits(uint256 provided, uint256 max);
     error ZeroRecipient();
     error ERC1155TransferFailed(address token, address to, uint256 tokenId, uint256 amount);
     error NoFulfillerRecorded(bytes32 fulfillment);
@@ -44,12 +45,15 @@ contract ERC1155Splitter is IArbiter, ReentrancyGuard, ERC1155Holder {
     mapping(address => mapping(bytes32 => bool)) public hasDecision;
     mapping(bytes32 => address) public fulfillers;
 
+    uint256 public constant MAX_SPLITS = 50;
+
     constructor(IEAS _eas) { eas = _eas; }
 
     function arbitrate(bytes32 fulfillment, bytes32 escrow, Split[] calldata splits) external {
         Attestation memory escrowAttestation = eas.getAttestation(escrow);
         EscrowObligationData memory escrowData = abi.decode(escrowAttestation.data, (EscrowObligationData));
         if (splits.length == 0) revert EmptySplits();
+        if (splits.length > MAX_SPLITS) revert TooManySplits(splits.length, MAX_SPLITS);
         uint256 total;
         for (uint256 i; i < splits.length; ++i) {
             if (splits[i].recipient == address(0)) revert ZeroRecipient();
