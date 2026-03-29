@@ -16,11 +16,20 @@ interface IERC20EscrowObligation {
     ) external returns (bool);
 }
 
+interface IObligation {
+    function doObligationRaw(
+        bytes calldata data,
+        uint64 expirationTime,
+        bytes32 refUID
+    ) external payable returns (bytes32);
+}
+
 contract ERC20Splitter is IArbiter, ReentrancyGuard {
     using ArbiterUtils for Attestation;
     using SafeERC20 for IERC20;
 
-    /// @notice Sentinel address meaning "the executor who triggered the action".
+    /// @notice Sentinel address meaning "the fulfiller who created the fulfillment".
+    ///         Only valid when the fulfillment was created via createFulfillment().
     address public constant EXECUTOR_SENTINEL = address(0xEEEE);
 
     struct Split {
@@ -58,16 +67,22 @@ contract ERC20Splitter is IArbiter, ReentrancyGuard {
     event EscrowCollectedAndDistributed(
         bytes32 indexed escrow,
         bytes32 indexed fulfillment,
-        address indexed executor,
+        address indexed fulfiller,
         address token,
         Split[] splits
+    );
+    event FulfillmentCreated(
+        bytes32 indexed fulfillmentUid,
+        address indexed fulfiller,
+        address indexed obligationContract
     );
 
     error UnauthorizedArbitrationRequest();
     error InvalidSplits(uint256 totalExpected, uint256 totalProvided);
     error EmptySplits();
     error ZeroRecipient();
-    error ExecuteFailed(address target, bytes data);
+    error FulfillmentFailed(address obligationContract);
+    error NoFulfillerRecorded(bytes32 fulfillment);
 
     IEAS public eas;
 
@@ -75,9 +90,8 @@ contract ERC20Splitter is IArbiter, ReentrancyGuard {
     mapping(address => mapping(bytes32 => Split[])) internal decisions;
     /// @notice Whether a decision has been made (distinguishes empty from nonexistent).
     mapping(address => mapping(bytes32 => bool)) public hasDecision;
-
-    /// @notice Transient storage for the current executor during execute/collectAndDistribute.
-    address private _currentExecutor;
+    /// @notice fulfillers[fulfillmentUid] => address of the actual fulfiller.
+    mapping(bytes32 => address) public fulfillers;
 
     constructor(IEAS _eas) {
         eas = _eas;
@@ -90,7 +104,7 @@ contract ERC20Splitter is IArbiter, ReentrancyGuard {
     /// @notice Oracle submits a split decision for a fulfillment to an escrow.
     /// @param fulfillment The fulfillment attestation UID that the oracle is approving.
     /// @param escrow The escrow attestation UID.
-    /// @param splits Array of (recipient, amount) tuples. Use EXECUTOR_SENTINEL for the executor.
+    /// @param splits Array of (recipient, amount) tuples. Use EXECUTOR_SENTINEL for the fulfiller.
     function arbitrate(
         bytes32 fulfillment,
         bytes32 escrow,
@@ -160,21 +174,28 @@ contract ERC20Splitter is IArbiter, ReentrancyGuard {
     }
 
     // -----------------------------------------------------------------
-    // Execute (proxy calls through the splitter)
+    // Fulfillment creation
     // -----------------------------------------------------------------
 
-    /// @notice Execute an arbitrary call as the splitter contract.
-    ///         Stores msg.sender as the executor so oracle splits can
-    ///         reference them via EXECUTOR_SENTINEL.
-    function execute(
-        address target,
-        bytes calldata data
-    ) external returns (bytes memory) {
-        _currentExecutor = msg.sender;
-        (bool success, bytes memory result) = target.call(data);
-        if (!success) revert ExecuteFailed(target, data);
-        _currentExecutor = address(0);
-        return result;
+    /// @notice Creates a fulfillment attestation via the splitter, recording msg.sender
+    ///         as the fulfiller. The splitter becomes the attestation recipient (needed
+    ///         for escrow collection). Calls doObligationRaw on the obligation contract.
+    /// @param obligationContract The obligation contract to create the fulfillment on.
+    /// @param data Obligation-specific data (passed to doObligationRaw).
+    /// @param expirationTime Attestation expiration (0 = none).
+    /// @param refUID The escrow attestation UID being fulfilled.
+    function createFulfillment(
+        address obligationContract,
+        bytes calldata data,
+        uint64 expirationTime,
+        bytes32 refUID
+    ) external payable returns (bytes32 fulfillmentUid) {
+        fulfillmentUid = IObligation(obligationContract).doObligationRaw{value: msg.value}(
+            data, expirationTime, refUID
+        );
+        fulfillers[fulfillmentUid] = msg.sender;
+
+        emit FulfillmentCreated(fulfillmentUid, msg.sender, obligationContract);
     }
 
     // -----------------------------------------------------------------
@@ -190,10 +211,6 @@ contract ERC20Splitter is IArbiter, ReentrancyGuard {
         bytes32 escrow,
         bytes32 fulfillment
     ) external nonReentrant {
-        // Preserve _currentExecutor if already set (e.g. called via execute())
-        bool setExecutor = _currentExecutor == address(0);
-        if (setExecutor) _currentExecutor = msg.sender;
-
         // Read escrow attestation to get demand, token, and amount
         Attestation memory escrowAttestation = eas.getAttestation(escrow);
         EscrowObligationData memory escrowData = abi.decode(
@@ -221,7 +238,8 @@ contract ERC20Splitter is IArbiter, ReentrancyGuard {
         for (uint256 i; i < splits.length; ++i) {
             address recipient = splits[i].recipient;
             if (recipient == EXECUTOR_SENTINEL) {
-                recipient = _currentExecutor;
+                recipient = fulfillers[fulfillment];
+                if (recipient == address(0)) revert NoFulfillerRecorded(fulfillment);
             }
             IERC20(escrowData.token).safeTransfer(
                 recipient,
@@ -232,12 +250,10 @@ contract ERC20Splitter is IArbiter, ReentrancyGuard {
         emit EscrowCollectedAndDistributed(
             escrow,
             fulfillment,
-            _currentExecutor,
+            fulfillers[fulfillment],
             escrowData.token,
             splits
         );
-
-        if (setExecutor) _currentExecutor = address(0);
     }
 
     // -----------------------------------------------------------------

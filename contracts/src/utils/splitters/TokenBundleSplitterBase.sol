@@ -19,18 +19,21 @@ interface ITokenBundleEscrowObligation {
     ) external returns (bool);
 }
 
+interface IObligation {
+    function doObligationRaw(
+        bytes calldata data,
+        uint64 expirationTime,
+        bytes32 refUID
+    ) external payable returns (bytes32);
+}
+
 abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155Holder {
     using ArbiterUtils for Attestation;
     using SafeERC20 for IERC20;
 
-    /// @notice Sentinel address meaning "the executor who triggered the action".
+    /// @notice Sentinel address meaning "the fulfiller who created the fulfillment".
     address public constant EXECUTOR_SENTINEL = address(0xEEEE);
 
-    /// @notice A per-recipient portion of the bundle.
-    ///         erc20Amounts and erc1155Amounts are parallel to the escrow's
-    ///         token arrays (same length, same order).
-    ///         erc721Indices lists which of the escrow's ERC721s go to this recipient
-    ///         (by index into the escrow's erc721Tokens/erc721TokenIds arrays).
     struct BundleSplit {
         address recipient;
         uint256 nativeAmount;
@@ -39,13 +42,11 @@ abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155H
         uint256[] erc1155Amounts;
     }
 
-    /// @notice Demand data embedded in the escrow obligation.
     struct DemandData {
         address oracle;
         bytes data;
     }
 
-    /// @dev Layout of TokenBundleEscrowObligation.ObligationData for decoding.
     struct EscrowObligationData {
         address arbiter;
         bytes demand;
@@ -73,24 +74,26 @@ abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155H
     event EscrowCollectedAndDistributed(
         bytes32 indexed escrow,
         bytes32 indexed fulfillment,
-        address indexed executor
+        address indexed fulfiller
+    );
+    event FulfillmentCreated(
+        bytes32 indexed fulfillmentUid,
+        address indexed fulfiller,
+        address indexed obligationContract
     );
 
     error UnauthorizedArbitrationRequest();
     error EmptySplits();
     error ZeroRecipient();
-    error ExecuteFailed(address target, bytes data);
+    error FulfillmentFailed(address obligationContract);
     error NativeTokenTransferFailed(address to, uint256 amount);
+    error NoFulfillerRecorded(bytes32 fulfillment);
 
     IEAS public eas;
 
-    /// @notice decisions[oracle][decisionKey] => splits array.
     mapping(address => mapping(bytes32 => BundleSplit[])) internal decisions;
-    /// @notice Whether a decision has been made (distinguishes empty from nonexistent).
     mapping(address => mapping(bytes32 => bool)) public hasDecision;
-
-    /// @notice Transient storage for the current executor during execute/collectAndDistribute.
-    address private _currentExecutor;
+    mapping(bytes32 => address) public fulfillers;
 
     constructor(IEAS _eas) {
         eas = _eas;
@@ -100,14 +103,12 @@ abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155H
     // Oracle arbitration
     // -----------------------------------------------------------------
 
-    /// @notice Oracle submits a split decision for a fulfillment to an escrow.
     function arbitrate(
         bytes32 fulfillment,
         bytes32 escrow,
         BundleSplit[] calldata splits
     ) external virtual;
 
-    /// @notice Stores a decision in storage.
     function _storeDecision(
         address oracle,
         bytes32 decisionKey,
@@ -138,7 +139,6 @@ abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155H
         hasDecision[oracle][decisionKey] = true;
     }
 
-    /// @notice Emits an event requesting the oracle to arbitrate.
     function requestArbitration(
         bytes32 _fulfillment,
         bytes32 _escrow,
@@ -158,7 +158,6 @@ abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155H
     // IArbiter
     // -----------------------------------------------------------------
 
-    /// @inheritdoc IArbiter
     function checkObligation(
         Attestation memory fulfillment,
         bytes memory demand,
@@ -172,38 +171,32 @@ abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155H
     }
 
     // -----------------------------------------------------------------
-    // Execute (proxy calls through the splitter)
+    // Fulfillment creation
     // -----------------------------------------------------------------
 
-    /// @notice Execute an arbitrary call as the splitter contract.
-    ///         Payable to allow forwarding ETH for native token operations.
-    function execute(
-        address target,
-        bytes calldata data
-    ) external payable returns (bytes memory) {
-        _currentExecutor = msg.sender;
-        (bool success, bytes memory result) = target.call{value: msg.value}(
-            data
+    function createFulfillment(
+        address obligationContract,
+        bytes calldata data,
+        uint64 expirationTime,
+        bytes32 refUID
+    ) external payable returns (bytes32 fulfillmentUid) {
+        fulfillmentUid = IObligation(obligationContract).doObligationRaw{value: msg.value}(
+            data, expirationTime, refUID
         );
-        if (!success) revert ExecuteFailed(target, data);
-        _currentExecutor = address(0);
-        return result;
+        fulfillers[fulfillmentUid] = msg.sender;
+
+        emit FulfillmentCreated(fulfillmentUid, msg.sender, obligationContract);
     }
 
     // -----------------------------------------------------------------
     // Atomic collect + distribute
     // -----------------------------------------------------------------
 
-    /// @notice Collects a token bundle escrow and distributes assets per oracle splits.
     function collectAndDistribute(
         address escrowContract,
         bytes32 escrow,
         bytes32 fulfillment
     ) external nonReentrant {
-        // Preserve _currentExecutor if already set (e.g. called via execute())
-        bool setExecutor = _currentExecutor == address(0);
-        if (setExecutor) _currentExecutor = msg.sender;
-
         Attestation memory escrowAttestation = eas.getAttestation(escrow);
         EscrowObligationData memory escrowData = abi.decode(
             escrowAttestation.data,
@@ -220,17 +213,16 @@ abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155H
 
         BundleSplit[] memory splits = decisions[demandData.oracle][decisionKey];
 
-        // Collect escrow — all assets transfer to this contract
         ITokenBundleEscrowObligation(escrowContract).collectEscrow(
             escrow,
             fulfillment
         );
 
-        // Distribute according to splits
         for (uint256 s; s < splits.length; ++s) {
             address recipient = splits[s].recipient;
             if (recipient == EXECUTOR_SENTINEL) {
-                recipient = _currentExecutor;
+                recipient = fulfillers[fulfillment];
+                if (recipient == address(0)) revert NoFulfillerRecorded(fulfillment);
             }
 
             // Native tokens
@@ -279,9 +271,7 @@ abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155H
             }
         }
 
-        emit EscrowCollectedAndDistributed(escrow, fulfillment, _currentExecutor);
-
-        if (setExecutor) _currentExecutor = address(0);
+        emit EscrowCollectedAndDistributed(escrow, fulfillment, fulfillers[fulfillment]);
     }
 
     // -----------------------------------------------------------------
