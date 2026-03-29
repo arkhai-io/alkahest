@@ -13,18 +13,11 @@ import {IArbiter} from "../../IArbiter.sol";
 import {ArbiterUtils} from "../../ArbiterUtils.sol";
 
 interface ITokenBundleEscrowObligation {
-    function collectEscrow(
-        bytes32 escrow,
-        bytes32 fulfillment
-    ) external returns (bool);
+    function collectEscrow(bytes32 escrow, bytes32 fulfillment) external returns (bool);
 }
 
 interface IObligation {
-    function doObligationRaw(
-        bytes calldata data,
-        uint64 expirationTime,
-        bytes32 refUID
-    ) external payable returns (bytes32);
+    function doObligationRaw(bytes calldata data, uint64 expirationTime, bytes32 refUID) external payable returns (bytes32);
 }
 
 abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155Holder {
@@ -41,10 +34,7 @@ abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155H
         uint256[] erc1155Amounts;
     }
 
-    struct DemandData {
-        address oracle;
-        bytes data;
-    }
+    struct DemandData { address oracle; bytes data; }
 
     struct EscrowObligationData {
         address arbiter;
@@ -63,35 +53,26 @@ abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155H
     event ArbitrationRequested(bytes32 indexed fulfillment, bytes32 indexed escrow, address indexed oracle, bytes demand);
     event EscrowCollectedAndDistributed(bytes32 indexed escrow, bytes32 indexed fulfillment, address indexed fulfiller);
     event FulfillmentCreated(bytes32 indexed fulfillmentUid, address indexed fulfiller, address indexed obligationContract);
-    event NativeDistributionFailed(address indexed recipient, uint256 amount);
-    event ERC20DistributionFailed(address indexed recipient, address indexed token, uint256 amount);
-    event ERC721DistributionFailed(address indexed recipient, address indexed token, uint256 tokenId);
-    event ERC1155DistributionFailed(address indexed recipient, address indexed token, uint256 tokenId, uint256 amount);
+    event NativeTransferFailedOnDistribute(address indexed recipient, uint256 amount);
+    event ERC20TransferFailedOnDistribute(address indexed recipient, address indexed token, uint256 amount);
+    event ERC721TransferFailedOnDistribute(address indexed recipient, address indexed token, uint256 tokenId);
+    event ERC1155TransferFailedOnDistribute(address indexed recipient, address indexed token, uint256 tokenId, uint256 amount);
 
     error UnauthorizedArbitrationRequest();
     error EmptySplits();
     error ZeroRecipient();
-    error FulfillmentFailed(address obligationContract);
     error NativeTokenTransferFailed(address to, uint256 amount);
+    error ERC20TransferFailed(address token, address to, uint256 amount);
+    error ERC721TransferFailed(address token, address to, uint256 tokenId);
+    error ERC1155TransferFailed(address token, address to, uint256 tokenId, uint256 amount);
     error NoFulfillerRecorded(bytes32 fulfillment);
-    error NothingToClaim();
 
     IEAS public eas;
-
     mapping(address => mapping(bytes32 => BundleSplit[])) internal decisions;
     mapping(address => mapping(bytes32 => bool)) public hasDecision;
     mapping(bytes32 => address) public fulfillers;
 
-    /// @notice Unclaimed balances for pull-based recovery.
-    mapping(address => uint256) public unclaimedETH;
-    mapping(address => mapping(address => uint256)) public unclaimedERC20;
-    /// @notice unclaimedERC721[token][tokenId] => recipient who should receive it.
-    mapping(address => mapping(uint256 => address)) public unclaimedERC721;
-    mapping(address => mapping(address => mapping(uint256 => uint256))) public unclaimedERC1155;
-
-    constructor(IEAS _eas) {
-        eas = _eas;
-    }
+    constructor(IEAS _eas) { eas = _eas; }
 
     // -----------------------------------------------------------------
     // Oracle arbitration
@@ -122,19 +103,10 @@ abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155H
         emit ArbitrationRequested(_fulfillment, _escrow, oracle, demand);
     }
 
-    // -----------------------------------------------------------------
-    // IArbiter
-    // -----------------------------------------------------------------
-
     function checkObligation(Attestation memory fulfillment, bytes memory demand, bytes32 escrow) public view override returns (bool) {
         DemandData memory demandData = abi.decode(demand, (DemandData));
-        bytes32 decisionKey = keccak256(abi.encodePacked(fulfillment.uid, escrow));
-        return hasDecision[demandData.oracle][decisionKey];
+        return hasDecision[demandData.oracle][keccak256(abi.encodePacked(fulfillment.uid, escrow))];
     }
-
-    // -----------------------------------------------------------------
-    // Fulfillment creation
-    // -----------------------------------------------------------------
 
     function createFulfillment(address obligationContract, bytes calldata data, uint64 expirationTime, bytes32 refUID) external payable returns (bytes32 fulfillmentUid) {
         fulfillmentUid = IObligation(obligationContract).doObligationRaw{value: msg.value}(data, expirationTime, refUID);
@@ -143,108 +115,103 @@ abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155H
     }
 
     // -----------------------------------------------------------------
-    // Atomic collect + distribute (with pull fallback)
+    // Collect + distribute
     // -----------------------------------------------------------------
 
-    function collectAndDistribute(
-        address escrowContract,
-        bytes32 escrow,
-        bytes32 fulfillment
-    ) external nonReentrant {
-        Attestation memory escrowAttestation = eas.getAttestation(escrow);
-        EscrowObligationData memory escrowData = abi.decode(escrowAttestation.data, (EscrowObligationData));
-        DemandData memory demandData = abi.decode(escrowData.demand, (DemandData));
-        bytes32 decisionKey = keccak256(abi.encodePacked(fulfillment, escrow));
-        BundleSplit[] memory splits = decisions[demandData.oracle][decisionKey];
-
-        ITokenBundleEscrowObligation(escrowContract).collectEscrow(escrow, fulfillment);
-
+    /// @notice Collects a token bundle escrow and distributes assets. Reverts if any transfer fails.
+    function collectAndDistribute(address escrowContract, bytes32 escrow, bytes32 fulfillment) external nonReentrant {
+        (BundleSplit[] memory splits, EscrowObligationData memory escrowData) = _collectAndDecode(escrowContract, escrow, fulfillment);
         for (uint256 s; s < splits.length; ++s) {
-            address recipient = splits[s].recipient;
-            if (recipient == EXECUTOR_SENTINEL) {
-                recipient = fulfillers[fulfillment];
-                if (recipient == address(0)) revert NoFulfillerRecorded(fulfillment);
-            }
-
-            // Native tokens
-            if (splits[s].nativeAmount > 0) {
-                (bool success, ) = payable(recipient).call{value: splits[s].nativeAmount}("");
-                if (!success) {
-                    unclaimedETH[recipient] += splits[s].nativeAmount;
-                    emit NativeDistributionFailed(recipient, splits[s].nativeAmount);
-                }
-            }
-
-            // ERC20s
-            for (uint256 i; i < splits[s].erc20Amounts.length; ++i) {
-                if (splits[s].erc20Amounts[i] > 0) {
-                    bool success = IERC20(escrowData.erc20Tokens[i]).trySafeTransfer(
-                        recipient, splits[s].erc20Amounts[i]
-                    );
-                    if (!success) {
-                        unclaimedERC20[recipient][escrowData.erc20Tokens[i]] += splits[s].erc20Amounts[i];
-                        emit ERC20DistributionFailed(recipient, escrowData.erc20Tokens[i], splits[s].erc20Amounts[i]);
-                    }
-                }
-            }
-
-            // ERC721s
-            for (uint256 i; i < splits[s].erc721Indices.length; ++i) {
-                uint256 idx = splits[s].erc721Indices[i];
-                try IERC721(escrowData.erc721Tokens[idx]).safeTransferFrom(
-                    address(this), recipient, escrowData.erc721TokenIds[idx]
-                ) {} catch {
-                    unclaimedERC721[escrowData.erc721Tokens[idx]][escrowData.erc721TokenIds[idx]] = recipient;
-                    emit ERC721DistributionFailed(recipient, escrowData.erc721Tokens[idx], escrowData.erc721TokenIds[idx]);
-                }
-            }
-
-            // ERC1155s
-            for (uint256 i; i < splits[s].erc1155Amounts.length; ++i) {
-                if (splits[s].erc1155Amounts[i] > 0) {
-                    try IERC1155(escrowData.erc1155Tokens[i]).safeTransferFrom(
-                        address(this), recipient, escrowData.erc1155TokenIds[i], splits[s].erc1155Amounts[i], ""
-                    ) {} catch {
-                        unclaimedERC1155[recipient][escrowData.erc1155Tokens[i]][escrowData.erc1155TokenIds[i]] += splits[s].erc1155Amounts[i];
-                        emit ERC1155DistributionFailed(recipient, escrowData.erc1155Tokens[i], escrowData.erc1155TokenIds[i], splits[s].erc1155Amounts[i]);
-                    }
-                }
-            }
+            address recipient = _resolveSentinel(splits[s].recipient, fulfillment);
+            _distributeAtomic(splits[s], escrowData, recipient);
         }
+        emit EscrowCollectedAndDistributed(escrow, fulfillment, fulfillers[fulfillment]);
+    }
 
+    /// @notice Unsafe partial distribution — continues on individual transfer failures.
+    /// @dev Use only as a last resort when collectAndDistribute is permanently blocked.
+    ///      Failed transfers emit events but do not revert. Stuck tokens remain in the splitter.
+    function unsafePartiallyCollectAndDistribute(address escrowContract, bytes32 escrow, bytes32 fulfillment) external nonReentrant {
+        (BundleSplit[] memory splits, EscrowObligationData memory escrowData) = _collectAndDecode(escrowContract, escrow, fulfillment);
+        for (uint256 s; s < splits.length; ++s) {
+            address recipient = _resolveSentinel(splits[s].recipient, fulfillment);
+            _distributePartial(splits[s], escrowData, recipient);
+        }
         emit EscrowCollectedAndDistributed(escrow, fulfillment, fulfillers[fulfillment]);
     }
 
     // -----------------------------------------------------------------
-    // Claim unclaimed assets
+    // Internal helpers
     // -----------------------------------------------------------------
 
-    function claimETH() external nonReentrant {
-        uint256 amount = unclaimedETH[msg.sender];
-        if (amount == 0) revert NothingToClaim();
-        unclaimedETH[msg.sender] = 0;
-        (bool success, ) = payable(msg.sender).call{value: amount}("");
-        if (!success) revert NativeTokenTransferFailed(msg.sender, amount);
+    function _collectAndDecode(address escrowContract, bytes32 escrow, bytes32 fulfillment)
+        internal returns (BundleSplit[] memory splits, EscrowObligationData memory escrowData)
+    {
+        Attestation memory escrowAttestation = eas.getAttestation(escrow);
+        escrowData = abi.decode(escrowAttestation.data, (EscrowObligationData));
+        DemandData memory demandData = abi.decode(escrowData.demand, (DemandData));
+        splits = decisions[demandData.oracle][keccak256(abi.encodePacked(fulfillment, escrow))];
+        ITokenBundleEscrowObligation(escrowContract).collectEscrow(escrow, fulfillment);
     }
 
-    function claimERC20(address token) external nonReentrant {
-        uint256 amount = unclaimedERC20[msg.sender][token];
-        if (amount == 0) revert NothingToClaim();
-        unclaimedERC20[msg.sender][token] = 0;
-        IERC20(token).safeTransfer(msg.sender, amount);
+    function _resolveSentinel(address recipient, bytes32 fulfillment) internal view returns (address) {
+        if (recipient == EXECUTOR_SENTINEL) {
+            recipient = fulfillers[fulfillment];
+            if (recipient == address(0)) revert NoFulfillerRecorded(fulfillment);
+        }
+        return recipient;
     }
 
-    function claimERC721(address token, uint256 tokenId) external nonReentrant {
-        if (unclaimedERC721[token][tokenId] != msg.sender) revert NothingToClaim();
-        delete unclaimedERC721[token][tokenId];
-        IERC721(token).safeTransferFrom(address(this), msg.sender, tokenId);
+    function _distributeAtomic(BundleSplit memory split, EscrowObligationData memory escrowData, address recipient) internal {
+        if (split.nativeAmount > 0) {
+            (bool success, ) = payable(recipient).call{value: split.nativeAmount}("");
+            if (!success) revert NativeTokenTransferFailed(recipient, split.nativeAmount);
+        }
+        for (uint256 i; i < split.erc20Amounts.length; ++i) {
+            if (split.erc20Amounts[i] > 0) {
+                bool success = IERC20(escrowData.erc20Tokens[i]).trySafeTransfer(recipient, split.erc20Amounts[i]);
+                if (!success) revert ERC20TransferFailed(escrowData.erc20Tokens[i], recipient, split.erc20Amounts[i]);
+            }
+        }
+        for (uint256 i; i < split.erc721Indices.length; ++i) {
+            uint256 idx = split.erc721Indices[i];
+            try IERC721(escrowData.erc721Tokens[idx]).safeTransferFrom(address(this), recipient, escrowData.erc721TokenIds[idx]) {} catch {
+                revert ERC721TransferFailed(escrowData.erc721Tokens[idx], recipient, escrowData.erc721TokenIds[idx]);
+            }
+        }
+        for (uint256 i; i < split.erc1155Amounts.length; ++i) {
+            if (split.erc1155Amounts[i] > 0) {
+                try IERC1155(escrowData.erc1155Tokens[i]).safeTransferFrom(address(this), recipient, escrowData.erc1155TokenIds[i], split.erc1155Amounts[i], "") {} catch {
+                    revert ERC1155TransferFailed(escrowData.erc1155Tokens[i], recipient, escrowData.erc1155TokenIds[i], split.erc1155Amounts[i]);
+                }
+            }
+        }
     }
 
-    function claimERC1155(address token, uint256 tokenId) external nonReentrant {
-        uint256 amount = unclaimedERC1155[msg.sender][token][tokenId];
-        if (amount == 0) revert NothingToClaim();
-        unclaimedERC1155[msg.sender][token][tokenId] = 0;
-        IERC1155(token).safeTransferFrom(address(this), msg.sender, tokenId, amount, "");
+    function _distributePartial(BundleSplit memory split, EscrowObligationData memory escrowData, address recipient) internal {
+        if (split.nativeAmount > 0) {
+            (bool success, ) = payable(recipient).call{value: split.nativeAmount}("");
+            if (!success) emit NativeTransferFailedOnDistribute(recipient, split.nativeAmount);
+        }
+        for (uint256 i; i < split.erc20Amounts.length; ++i) {
+            if (split.erc20Amounts[i] > 0) {
+                bool success = IERC20(escrowData.erc20Tokens[i]).trySafeTransfer(recipient, split.erc20Amounts[i]);
+                if (!success) emit ERC20TransferFailedOnDistribute(recipient, escrowData.erc20Tokens[i], split.erc20Amounts[i]);
+            }
+        }
+        for (uint256 i; i < split.erc721Indices.length; ++i) {
+            uint256 idx = split.erc721Indices[i];
+            try IERC721(escrowData.erc721Tokens[idx]).safeTransferFrom(address(this), recipient, escrowData.erc721TokenIds[idx]) {} catch {
+                emit ERC721TransferFailedOnDistribute(recipient, escrowData.erc721Tokens[idx], escrowData.erc721TokenIds[idx]);
+            }
+        }
+        for (uint256 i; i < split.erc1155Amounts.length; ++i) {
+            if (split.erc1155Amounts[i] > 0) {
+                try IERC1155(escrowData.erc1155Tokens[i]).safeTransferFrom(address(this), recipient, escrowData.erc1155TokenIds[i], split.erc1155Amounts[i], "") {} catch {
+                    emit ERC1155TransferFailedOnDistribute(recipient, escrowData.erc1155Tokens[i], escrowData.erc1155TokenIds[i], split.erc1155Amounts[i]);
+                }
+            }
+        }
     }
 
     // -----------------------------------------------------------------
@@ -252,8 +219,7 @@ abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155H
     // -----------------------------------------------------------------
 
     function getSplits(address oracle, bytes32 fulfillment, bytes32 escrow) external view returns (BundleSplit[] memory) {
-        bytes32 decisionKey = keccak256(abi.encodePacked(fulfillment, escrow));
-        return decisions[oracle][decisionKey];
+        return decisions[oracle][keccak256(abi.encodePacked(fulfillment, escrow))];
     }
 
     function decodeDemandData(bytes calldata data) external pure returns (DemandData memory) {
