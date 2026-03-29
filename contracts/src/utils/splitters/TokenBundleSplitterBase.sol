@@ -250,7 +250,7 @@ abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155H
             // ERC721s
             for (uint256 i; i < splits[s].erc721Indices.length; ++i) {
                 uint256 idx = splits[s].erc721Indices[i];
-                IERC721(escrowData.erc721Tokens[idx]).transferFrom(
+                IERC721(escrowData.erc721Tokens[idx]).safeTransferFrom(
                     address(this),
                     recipient,
                     escrowData.erc721TokenIds[idx]
