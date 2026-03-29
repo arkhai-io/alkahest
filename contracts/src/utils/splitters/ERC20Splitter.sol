@@ -29,7 +29,6 @@ contract ERC20Splitter is IArbiter, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     /// @notice Sentinel address meaning "the fulfiller who created the fulfillment".
-    ///         Only valid when the fulfillment was created via createFulfillment().
     address public constant EXECUTOR_SENTINEL = address(0xEEEE);
 
     struct Split {
@@ -37,14 +36,11 @@ contract ERC20Splitter is IArbiter, ReentrancyGuard {
         uint256 amount;
     }
 
-    /// @notice Demand data embedded in the escrow obligation.
-    ///         Token and amount are read from the escrow's ObligationData directly.
     struct DemandData {
         address oracle;
         bytes data;
     }
 
-    /// @dev Layout of ERC20EscrowObligation.ObligationData for decoding.
     struct EscrowObligationData {
         address arbiter;
         bytes demand;
@@ -76,6 +72,11 @@ contract ERC20Splitter is IArbiter, ReentrancyGuard {
         address indexed fulfiller,
         address indexed obligationContract
     );
+    event DistributionFailed(
+        address indexed recipient,
+        address indexed token,
+        uint256 amount
+    );
 
     error UnauthorizedArbitrationRequest();
     error InvalidSplits(uint256 totalExpected, uint256 totalProvided);
@@ -83,15 +84,15 @@ contract ERC20Splitter is IArbiter, ReentrancyGuard {
     error ZeroRecipient();
     error FulfillmentFailed(address obligationContract);
     error NoFulfillerRecorded(bytes32 fulfillment);
+    error NothingToClaim();
 
     IEAS public eas;
 
-    /// @notice decisions[oracle][decisionKey] => splits array.
     mapping(address => mapping(bytes32 => Split[])) internal decisions;
-    /// @notice Whether a decision has been made (distinguishes empty from nonexistent).
     mapping(address => mapping(bytes32 => bool)) public hasDecision;
-    /// @notice fulfillers[fulfillmentUid] => address of the actual fulfiller.
     mapping(bytes32 => address) public fulfillers;
+    /// @notice Unclaimed ERC20 balances: recipient => token => amount.
+    mapping(address => mapping(address => uint256)) public unclaimedERC20;
 
     constructor(IEAS _eas) {
         eas = _eas;
@@ -101,16 +102,11 @@ contract ERC20Splitter is IArbiter, ReentrancyGuard {
     // Oracle arbitration
     // -----------------------------------------------------------------
 
-    /// @notice Oracle submits a split decision for a fulfillment to an escrow.
-    /// @param fulfillment The fulfillment attestation UID that the oracle is approving.
-    /// @param escrow The escrow attestation UID.
-    /// @param splits Array of (recipient, amount) tuples. Use EXECUTOR_SENTINEL for the fulfiller.
     function arbitrate(
         bytes32 fulfillment,
         bytes32 escrow,
         Split[] calldata splits
     ) external {
-        // Read escrow attestation to get token and total amount
         Attestation memory escrowAttestation = eas.getAttestation(escrow);
         EscrowObligationData memory escrowData = abi.decode(
             escrowAttestation.data,
@@ -140,7 +136,6 @@ contract ERC20Splitter is IArbiter, ReentrancyGuard {
         emit ArbitrationMade(decisionKey, escrow, msg.sender, splits);
     }
 
-    /// @notice Emits an event requesting the oracle to arbitrate.
     function requestArbitration(
         bytes32 _fulfillment,
         bytes32 _escrow,
@@ -160,7 +155,6 @@ contract ERC20Splitter is IArbiter, ReentrancyGuard {
     // IArbiter
     // -----------------------------------------------------------------
 
-    /// @inheritdoc IArbiter
     function checkObligation(
         Attestation memory fulfillment,
         bytes memory demand,
@@ -177,13 +171,6 @@ contract ERC20Splitter is IArbiter, ReentrancyGuard {
     // Fulfillment creation
     // -----------------------------------------------------------------
 
-    /// @notice Creates a fulfillment attestation via the splitter, recording msg.sender
-    ///         as the fulfiller. The splitter becomes the attestation recipient (needed
-    ///         for escrow collection). Calls doObligationRaw on the obligation contract.
-    /// @param obligationContract The obligation contract to create the fulfillment on.
-    /// @param data Obligation-specific data (passed to doObligationRaw).
-    /// @param expirationTime Attestation expiration (0 = none).
-    /// @param refUID The escrow attestation UID being fulfilled.
     function createFulfillment(
         address obligationContract,
         bytes calldata data,
@@ -194,24 +181,18 @@ contract ERC20Splitter is IArbiter, ReentrancyGuard {
             data, expirationTime, refUID
         );
         fulfillers[fulfillmentUid] = msg.sender;
-
         emit FulfillmentCreated(fulfillmentUid, msg.sender, obligationContract);
     }
 
     // -----------------------------------------------------------------
-    // Atomic collect + distribute
+    // Atomic collect + distribute (with pull fallback)
     // -----------------------------------------------------------------
 
-    /// @notice Collects an ERC20 escrow and distributes tokens per oracle splits.
-    /// @param escrowContract The ERC20EscrowObligation contract address.
-    /// @param escrow The escrow attestation UID.
-    /// @param fulfillment The fulfillment attestation UID.
     function collectAndDistribute(
         address escrowContract,
         bytes32 escrow,
         bytes32 fulfillment
     ) external nonReentrant {
-        // Read escrow attestation to get demand, token, and amount
         Attestation memory escrowAttestation = eas.getAttestation(escrow);
         EscrowObligationData memory escrowData = abi.decode(
             escrowAttestation.data,
@@ -228,32 +209,42 @@ contract ERC20Splitter is IArbiter, ReentrancyGuard {
 
         Split[] memory splits = decisions[demandData.oracle][decisionKey];
 
-        // Collect escrow — tokens transfer to this contract
         IERC20EscrowObligation(escrowContract).collectEscrow(
             escrow,
             fulfillment
         );
 
-        // Distribute tokens according to splits
         for (uint256 i; i < splits.length; ++i) {
             address recipient = splits[i].recipient;
             if (recipient == EXECUTOR_SENTINEL) {
                 recipient = fulfillers[fulfillment];
                 if (recipient == address(0)) revert NoFulfillerRecorded(fulfillment);
             }
-            IERC20(escrowData.token).safeTransfer(
+            bool success = IERC20(escrowData.token).trySafeTransfer(
                 recipient,
                 splits[i].amount
             );
+            if (!success) {
+                unclaimedERC20[recipient][escrowData.token] += splits[i].amount;
+                emit DistributionFailed(recipient, escrowData.token, splits[i].amount);
+            }
         }
 
         emit EscrowCollectedAndDistributed(
-            escrow,
-            fulfillment,
-            fulfillers[fulfillment],
-            escrowData.token,
-            splits
+            escrow, fulfillment, fulfillers[fulfillment], escrowData.token, splits
         );
+    }
+
+    // -----------------------------------------------------------------
+    // Claim unclaimed assets
+    // -----------------------------------------------------------------
+
+    /// @notice Claim ERC20 tokens that failed to transfer during distribution.
+    function claimERC20(address token) external nonReentrant {
+        uint256 amount = unclaimedERC20[msg.sender][token];
+        if (amount == 0) revert NothingToClaim();
+        unclaimedERC20[msg.sender][token] = 0;
+        IERC20(token).safeTransfer(msg.sender, amount);
     }
 
     // -----------------------------------------------------------------
