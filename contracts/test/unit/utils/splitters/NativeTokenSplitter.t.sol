@@ -93,11 +93,8 @@ contract NativeTokenSplitterTest is Test {
         return abi.decode(result, (bytes32));
     }
 
-    function _decisionKey(bytes32 escrowUid) internal view returns (bytes32) {
-        Attestation memory escrow = eas.getAttestation(escrowUid);
-        NativeTokenSplitter.EscrowObligationData memory escrowData = abi
-            .decode(escrow.data, (NativeTokenSplitter.EscrowObligationData));
-        return keccak256(abi.encodePacked(escrowUid, escrowData.demand));
+    function _decisionKey(bytes32 fulfillmentUid, bytes32 escrowUid) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked(fulfillmentUid, escrowUid));
     }
 
     // -----------------------------------------------------------------
@@ -109,6 +106,11 @@ contract NativeTokenSplitterTest is Test {
             buyer,
             AMOUNT,
             uint64(block.timestamp + EXPIRATION)
+        );
+
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
         );
 
         NativeTokenSplitter.Split[]
@@ -123,10 +125,10 @@ contract NativeTokenSplitterTest is Test {
         });
 
         vm.prank(oracle);
-        splitter.arbitrate(escrowUid, splits);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
 
         assertTrue(
-            splitter.hasDecision(oracle, _decisionKey(escrowUid)),
+            splitter.hasDecision(oracle, _decisionKey(fulfillmentUid, escrowUid)),
             "Decision should be recorded"
         );
     }
@@ -136,6 +138,11 @@ contract NativeTokenSplitterTest is Test {
             buyer,
             AMOUNT,
             uint64(block.timestamp + EXPIRATION)
+        );
+
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
         );
 
         NativeTokenSplitter.Split[]
@@ -150,10 +157,10 @@ contract NativeTokenSplitterTest is Test {
         });
 
         vm.prank(oracle);
-        splitter.arbitrate(escrowUid, splits);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
 
         assertTrue(
-            splitter.hasDecision(oracle, _decisionKey(escrowUid)),
+            splitter.hasDecision(oracle, _decisionKey(fulfillmentUid, escrowUid)),
             "Decision with sentinel should be recorded"
         );
     }
@@ -165,12 +172,17 @@ contract NativeTokenSplitterTest is Test {
             uint64(block.timestamp + EXPIRATION)
         );
 
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
+        );
+
         NativeTokenSplitter.Split[]
             memory splits = new NativeTokenSplitter.Split[](0);
 
         vm.prank(oracle);
         vm.expectRevert(NativeTokenSplitter.EmptySplits.selector);
-        splitter.arbitrate(escrowUid, splits);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
     }
 
     function testArbitrateRevertsZeroRecipient() public {
@@ -178,6 +190,11 @@ contract NativeTokenSplitterTest is Test {
             buyer,
             AMOUNT,
             uint64(block.timestamp + EXPIRATION)
+        );
+
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
         );
 
         NativeTokenSplitter.Split[]
@@ -189,7 +206,7 @@ contract NativeTokenSplitterTest is Test {
 
         vm.prank(oracle);
         vm.expectRevert(NativeTokenSplitter.ZeroRecipient.selector);
-        splitter.arbitrate(escrowUid, splits);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
     }
 
     function testArbitrateRevertsInvalidTotal() public {
@@ -197,6 +214,11 @@ contract NativeTokenSplitterTest is Test {
             buyer,
             AMOUNT,
             uint64(block.timestamp + EXPIRATION)
+        );
+
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
         );
 
         NativeTokenSplitter.Split[]
@@ -214,7 +236,7 @@ contract NativeTokenSplitterTest is Test {
                 0.5 ether
             )
         );
-        splitter.arbitrate(escrowUid, splits);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
     }
 
     function testArbitrateOverwritesPreviousDecision() public {
@@ -222,6 +244,11 @@ contract NativeTokenSplitterTest is Test {
             buyer,
             AMOUNT,
             uint64(block.timestamp + EXPIRATION)
+        );
+
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
         );
 
         NativeTokenSplitter.Split[]
@@ -232,7 +259,7 @@ contract NativeTokenSplitterTest is Test {
         });
 
         vm.prank(oracle);
-        splitter.arbitrate(escrowUid, splits1);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits1);
 
         NativeTokenSplitter.Split[]
             memory splits2 = new NativeTokenSplitter.Split[](1);
@@ -242,10 +269,11 @@ contract NativeTokenSplitterTest is Test {
         });
 
         vm.prank(oracle);
-        splitter.arbitrate(escrowUid, splits2);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits2);
 
         NativeTokenSplitter.Split[] memory stored = splitter.getSplits(
             oracle,
+            fulfillmentUid,
             escrowUid
         );
         assertEq(stored.length, 1);
@@ -264,6 +292,11 @@ contract NativeTokenSplitterTest is Test {
             uint64(block.timestamp + EXPIRATION)
         );
 
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
+        );
+
         NativeTokenSplitter.Split[]
             memory splits = new NativeTokenSplitter.Split[](1);
         splits[0] = NativeTokenSplitter.Split({
@@ -272,15 +305,15 @@ contract NativeTokenSplitterTest is Test {
         });
 
         vm.prank(oracle);
-        splitter.arbitrate(escrowUid, splits);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
 
         bytes memory demand = abi.encode(
             NativeTokenSplitter.DemandData({oracle: oracle, data: bytes("")})
         );
 
-        Attestation memory dummyAttestation;
+        Attestation memory fulfillmentAttestation = eas.getAttestation(fulfillmentUid);
         assertTrue(
-            splitter.checkObligation(dummyAttestation, demand, escrowUid)
+            splitter.checkObligation(fulfillmentAttestation, demand, escrowUid)
         );
     }
 
@@ -291,13 +324,18 @@ contract NativeTokenSplitterTest is Test {
             uint64(block.timestamp + EXPIRATION)
         );
 
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
+        );
+
         bytes memory demand = abi.encode(
             NativeTokenSplitter.DemandData({oracle: oracle, data: bytes("")})
         );
 
-        Attestation memory dummyAttestation;
+        Attestation memory fulfillmentAttestation = eas.getAttestation(fulfillmentUid);
         assertFalse(
-            splitter.checkObligation(dummyAttestation, demand, escrowUid)
+            splitter.checkObligation(fulfillmentAttestation, demand, escrowUid)
         );
     }
 
@@ -308,6 +346,11 @@ contract NativeTokenSplitterTest is Test {
             uint64(block.timestamp + EXPIRATION)
         );
 
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
+        );
+
         NativeTokenSplitter.Split[]
             memory splits = new NativeTokenSplitter.Split[](1);
         splits[0] = NativeTokenSplitter.Split({
@@ -316,19 +359,64 @@ contract NativeTokenSplitterTest is Test {
         });
 
         vm.prank(oracle);
-        splitter.arbitrate(escrowUid, splits);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
 
         bytes memory demandWithDifferentOracle = abi.encode(
             NativeTokenSplitter.DemandData({oracle: alice, data: bytes("")})
         );
 
-        Attestation memory dummyAttestation;
+        Attestation memory fulfillmentAttestation = eas.getAttestation(fulfillmentUid);
         assertFalse(
             splitter.checkObligation(
-                dummyAttestation,
+                fulfillmentAttestation,
                 demandWithDifferentOracle,
                 escrowUid
             )
+        );
+    }
+
+    function testCheckObligationRejectsDifferentFulfillment() public {
+        bytes32 escrowUid = _createEscrow(
+            buyer,
+            AMOUNT,
+            uint64(block.timestamp + EXPIRATION)
+        );
+
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
+        );
+
+        NativeTokenSplitter.Split[]
+            memory splits = new NativeTokenSplitter.Split[](1);
+        splits[0] = NativeTokenSplitter.Split({
+            recipient: alice,
+            amount: AMOUNT
+        });
+
+        vm.prank(oracle);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
+
+        // Create a different fulfillment (e.g. attacker's)
+        bytes32 attackerFulfillmentUid = _createFulfillmentViaSplitter(
+            alice,
+            escrowUid
+        );
+
+        bytes memory demand = abi.encode(
+            NativeTokenSplitter.DemandData({oracle: oracle, data: bytes("")})
+        );
+
+        Attestation memory attackerFulfillment = eas.getAttestation(attackerFulfillmentUid);
+        assertFalse(
+            splitter.checkObligation(attackerFulfillment, demand, escrowUid),
+            "Different fulfillment should not be accepted"
+        );
+
+        Attestation memory fulfillmentAttestation = eas.getAttestation(fulfillmentUid);
+        assertTrue(
+            splitter.checkObligation(fulfillmentAttestation, demand, escrowUid),
+            "Original fulfillment should be accepted"
         );
     }
 
@@ -403,7 +491,7 @@ contract NativeTokenSplitterTest is Test {
         });
 
         vm.prank(oracle);
-        splitter.arbitrate(escrowUid, splits);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
 
         vm.prank(executor);
         splitter.collectAndDistribute(
@@ -456,7 +544,7 @@ contract NativeTokenSplitterTest is Test {
         });
 
         vm.prank(oracle);
-        splitter.arbitrate(escrowUid, splits);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
 
         vm.prank(executor);
         splitter.collectAndDistribute(
@@ -494,7 +582,7 @@ contract NativeTokenSplitterTest is Test {
         });
 
         vm.prank(oracle);
-        splitter.arbitrate(escrowUid, splits);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
 
         vm.prank(executor);
         splitter.collectAndDistribute(
@@ -526,7 +614,7 @@ contract NativeTokenSplitterTest is Test {
         });
 
         vm.prank(oracle);
-        splitter.arbitrate(escrowUid, splits);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
 
         vm.expectEmit(true, true, true, true);
         emit NativeTokenSplitter.EscrowCollectedAndDistributed(
@@ -555,16 +643,22 @@ contract NativeTokenSplitterTest is Test {
             uint64(block.timestamp + EXPIRATION)
         );
 
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
+        );
+
         bytes memory demand = bytes("some demand");
 
         vm.prank(buyer);
-        vm.expectEmit(true, true, false, true);
+        vm.expectEmit(true, true, true, true);
         emit NativeTokenSplitter.ArbitrationRequested(
+            fulfillmentUid,
             escrowUid,
             oracle,
             demand
         );
-        splitter.requestArbitration(escrowUid, oracle, demand);
+        splitter.requestArbitration(fulfillmentUid, escrowUid, oracle, demand);
     }
 
     function testRequestArbitrationUnauthorized() public {
@@ -574,11 +668,16 @@ contract NativeTokenSplitterTest is Test {
             uint64(block.timestamp + EXPIRATION)
         );
 
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
+        );
+
         vm.prank(carol);
         vm.expectRevert(
             NativeTokenSplitter.UnauthorizedArbitrationRequest.selector
         );
-        splitter.requestArbitration(escrowUid, oracle, bytes("demand"));
+        splitter.requestArbitration(fulfillmentUid, escrowUid, oracle, bytes("demand"));
     }
 
     // -----------------------------------------------------------------
@@ -590,6 +689,11 @@ contract NativeTokenSplitterTest is Test {
             buyer,
             AMOUNT,
             uint64(block.timestamp + EXPIRATION)
+        );
+
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
         );
 
         NativeTokenSplitter.Split[]
@@ -608,10 +712,11 @@ contract NativeTokenSplitterTest is Test {
         });
 
         vm.prank(oracle);
-        splitter.arbitrate(escrowUid, splits);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
 
         NativeTokenSplitter.Split[] memory stored = splitter.getSplits(
             oracle,
+            fulfillmentUid,
             escrowUid
         );
 
@@ -631,8 +736,14 @@ contract NativeTokenSplitterTest is Test {
             uint64(block.timestamp + EXPIRATION)
         );
 
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
+        );
+
         NativeTokenSplitter.Split[] memory stored = splitter.getSplits(
             oracle,
+            fulfillmentUid,
             escrowUid
         );
 

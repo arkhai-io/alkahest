@@ -187,14 +187,8 @@ contract TokenBundleSplitterTest is Test {
         return abi.decode(result, (bytes32));
     }
 
-    function _decisionKey(bytes32 escrowUid) internal view returns (bytes32) {
-        Attestation memory escrow = eas.getAttestation(escrowUid);
-        TokenBundleSplitterBase.EscrowObligationData memory escrowData = abi
-            .decode(
-                escrow.data,
-                (TokenBundleSplitterBase.EscrowObligationData)
-            );
-        return keccak256(abi.encodePacked(escrowUid, escrowData.demand));
+    function _decisionKey(bytes32 fulfillmentUid, bytes32 escrowUid) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked(fulfillmentUid, escrowUid));
     }
 
     /// @dev Build a valid 2-way split: alice gets 60/40 of fungibles + NFT_ID_1,
@@ -250,42 +244,58 @@ contract TokenBundleSplitterTest is Test {
 
     function testArbitrateValid() public {
         bytes32 escrowUid = _createEscrow();
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
+        );
 
         TokenBundleSplitterBase.BundleSplit[] memory splits = _twoWaySplit();
 
         vm.prank(oracle);
-        splitter.arbitrate(escrowUid, splits);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
 
         assertTrue(
-            splitter.hasDecision(oracle, _decisionKey(escrowUid)),
+            splitter.hasDecision(oracle, _decisionKey(fulfillmentUid, escrowUid)),
             "Decision should be recorded"
         );
     }
 
     function testArbitrateRevertsEmptySplits() public {
         bytes32 escrowUid = _createEscrow();
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
+        );
 
         TokenBundleSplitterBase.BundleSplit[]
             memory splits = new TokenBundleSplitterBase.BundleSplit[](0);
 
         vm.prank(oracle);
         vm.expectRevert(TokenBundleSplitterBase.EmptySplits.selector);
-        splitter.arbitrate(escrowUid, splits);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
     }
 
     function testArbitrateRevertsZeroRecipient() public {
         bytes32 escrowUid = _createEscrow();
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
+        );
 
         TokenBundleSplitterBase.BundleSplit[] memory splits = _twoWaySplit();
         splits[0].recipient = address(0);
 
         vm.prank(oracle);
         vm.expectRevert(TokenBundleSplitterBase.ZeroRecipient.selector);
-        splitter.arbitrate(escrowUid, splits);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
     }
 
     function testArbitrateRevertsInvalidNativeTotal() public {
         bytes32 escrowUid = _createEscrow();
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
+        );
 
         TokenBundleSplitterBase.BundleSplit[] memory splits = _twoWaySplit();
         splits[0].nativeAmount = 0.5 ether; // total becomes 0.9 ether != 1 ether
@@ -298,11 +308,15 @@ contract TokenBundleSplitterTest is Test {
                 0.9 ether
             )
         );
-        splitter.arbitrate(escrowUid, splits);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
     }
 
     function testArbitrateRevertsInvalidERC20Total() public {
         bytes32 escrowUid = _createEscrow();
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
+        );
 
         TokenBundleSplitterBase.BundleSplit[] memory splits = _twoWaySplit();
         splits[0].erc20Amounts[0] = 50e18; // total becomes 90e18 != 100e18
@@ -316,11 +330,15 @@ contract TokenBundleSplitterTest is Test {
                 90e18
             )
         );
-        splitter.arbitrate(escrowUid, splits);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
     }
 
     function testArbitrateRevertsInvalidERC20ArrayLength() public {
         bytes32 escrowUid = _createEscrow();
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
+        );
 
         TokenBundleSplitterBase.BundleSplit[] memory splits = _twoWaySplit();
         // Give alice only 1 ERC20 amount instead of 2
@@ -337,11 +355,15 @@ contract TokenBundleSplitterTest is Test {
                 1
             )
         );
-        splitter.arbitrate(escrowUid, splits);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
     }
 
     function testArbitrateRevertsDuplicateERC721() public {
         bytes32 escrowUid = _createEscrow();
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
+        );
 
         TokenBundleSplitterBase.BundleSplit[] memory splits = _twoWaySplit();
         // Both claim index 0
@@ -354,20 +376,17 @@ contract TokenBundleSplitterTest is Test {
                 0
             )
         );
-        splitter.arbitrate(escrowUid, splits);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
     }
 
     function testArbitrateRevertsMissingERC721() public {
         bytes32 escrowUid = _createEscrow();
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
+        );
 
         TokenBundleSplitterBase.BundleSplit[] memory splits = _twoWaySplit();
-        // Alice claims both, bob claims none — but index 1 is not assigned by anyone
-        splits[0].erc721Indices = new uint256[](2);
-        splits[0].erc721Indices[0] = 0;
-        splits[0].erc721Indices[1] = 1;
-        splits[1].erc721Indices = new uint256[](0);
-
-        // This is actually valid (all assigned). Let's make it invalid:
         // only assign index 0, leave index 1 unassigned
         splits[0].erc721Indices = new uint256[](1);
         splits[0].erc721Indices[0] = 0;
@@ -380,11 +399,15 @@ contract TokenBundleSplitterTest is Test {
                 1
             )
         );
-        splitter.arbitrate(escrowUid, splits);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
     }
 
     function testArbitrateRevertsInvalidERC721Index() public {
         bytes32 escrowUid = _createEscrow();
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
+        );
 
         TokenBundleSplitterBase.BundleSplit[] memory splits = _twoWaySplit();
         splits[0].erc721Indices[0] = 99; // out of bounds
@@ -397,11 +420,15 @@ contract TokenBundleSplitterTest is Test {
                 2
             )
         );
-        splitter.arbitrate(escrowUid, splits);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
     }
 
     function testArbitrateRevertsInvalidERC1155Total() public {
         bytes32 escrowUid = _createEscrow();
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
+        );
 
         TokenBundleSplitterBase.BundleSplit[] memory splits = _twoWaySplit();
         splits[0].erc1155Amounts[0] = 50; // total becomes 90 != 100
@@ -415,11 +442,15 @@ contract TokenBundleSplitterTest is Test {
                 90
             )
         );
-        splitter.arbitrate(escrowUid, splits);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
     }
 
     function testArbitrateRevertsInvalidERC1155ArrayLength() public {
         bytes32 escrowUid = _createEscrow();
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
+        );
 
         TokenBundleSplitterBase.BundleSplit[] memory splits = _twoWaySplit();
         splits[1].erc1155Amounts = new uint256[](0);
@@ -433,16 +464,20 @@ contract TokenBundleSplitterTest is Test {
                 0
             )
         );
-        splitter.arbitrate(escrowUid, splits);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
     }
 
     function testArbitrateOverwritesPreviousDecision() public {
         bytes32 escrowUid = _createEscrow();
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
+        );
 
         TokenBundleSplitterBase.BundleSplit[] memory splits1 = _twoWaySplit();
 
         vm.prank(oracle);
-        splitter.arbitrate(escrowUid, splits1);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits1);
 
         // Overwrite: give all to carol
         TokenBundleSplitterBase.BundleSplit[]
@@ -465,10 +500,10 @@ contract TokenBundleSplitterTest is Test {
         });
 
         vm.prank(oracle);
-        splitter.arbitrate(escrowUid, splits2);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits2);
 
         TokenBundleSplitterBase.BundleSplit[] memory stored = splitter
-            .getSplits(oracle, escrowUid);
+            .getSplits(oracle, fulfillmentUid, escrowUid);
         assertEq(stored.length, 1);
         assertEq(stored[0].recipient, carol);
         assertEq(stored[0].nativeAmount, NATIVE_AMOUNT);
@@ -476,14 +511,18 @@ contract TokenBundleSplitterTest is Test {
 
     function testArbitrateWithExecutorSentinel() public {
         bytes32 escrowUid = _createEscrow();
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
+        );
 
         TokenBundleSplitterBase.BundleSplit[] memory splits = _twoWaySplit();
         splits[0].recipient = splitter.EXECUTOR_SENTINEL();
 
         vm.prank(oracle);
-        splitter.arbitrate(escrowUid, splits);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
 
-        assertTrue(splitter.hasDecision(oracle, _decisionKey(escrowUid)));
+        assertTrue(splitter.hasDecision(oracle, _decisionKey(fulfillmentUid, escrowUid)));
     }
 
     // -----------------------------------------------------------------
@@ -492,9 +531,13 @@ contract TokenBundleSplitterTest is Test {
 
     function testCheckObligationReturnsTrueWhenDecisionExists() public {
         bytes32 escrowUid = _createEscrow();
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
+        );
 
         vm.prank(oracle);
-        splitter.arbitrate(escrowUid, _twoWaySplit());
+        splitter.arbitrate(fulfillmentUid, escrowUid, _twoWaySplit());
 
         bytes memory demand = abi.encode(
             TokenBundleSplitterBase.DemandData({
@@ -503,14 +546,18 @@ contract TokenBundleSplitterTest is Test {
             })
         );
 
-        Attestation memory dummyAttestation;
+        Attestation memory fulfillmentAttestation = eas.getAttestation(fulfillmentUid);
         assertTrue(
-            splitter.checkObligation(dummyAttestation, demand, escrowUid)
+            splitter.checkObligation(fulfillmentAttestation, demand, escrowUid)
         );
     }
 
     function testCheckObligationReturnsFalseWhenNoDecision() public {
         bytes32 escrowUid = _createEscrow();
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
+        );
 
         bytes memory demand = abi.encode(
             TokenBundleSplitterBase.DemandData({
@@ -519,17 +566,21 @@ contract TokenBundleSplitterTest is Test {
             })
         );
 
-        Attestation memory dummyAttestation;
+        Attestation memory fulfillmentAttestation = eas.getAttestation(fulfillmentUid);
         assertFalse(
-            splitter.checkObligation(dummyAttestation, demand, escrowUid)
+            splitter.checkObligation(fulfillmentAttestation, demand, escrowUid)
         );
     }
 
     function testCheckObligationScopedByOracle() public {
         bytes32 escrowUid = _createEscrow();
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
+        );
 
         vm.prank(oracle);
-        splitter.arbitrate(escrowUid, _twoWaySplit());
+        splitter.arbitrate(fulfillmentUid, escrowUid, _twoWaySplit());
 
         bytes memory demandWithDifferentOracle = abi.encode(
             TokenBundleSplitterBase.DemandData({
@@ -538,13 +589,49 @@ contract TokenBundleSplitterTest is Test {
             })
         );
 
-        Attestation memory dummyAttestation;
+        Attestation memory fulfillmentAttestation = eas.getAttestation(fulfillmentUid);
         assertFalse(
             splitter.checkObligation(
-                dummyAttestation,
+                fulfillmentAttestation,
                 demandWithDifferentOracle,
                 escrowUid
             )
+        );
+    }
+
+    function testCheckObligationRejectsDifferentFulfillment() public {
+        bytes32 escrowUid = _createEscrow();
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
+        );
+
+        vm.prank(oracle);
+        splitter.arbitrate(fulfillmentUid, escrowUid, _twoWaySplit());
+
+        // Create a different fulfillment (e.g. attacker's)
+        bytes32 attackerFulfillmentUid = _createFulfillmentViaSplitter(
+            alice,
+            escrowUid
+        );
+
+        bytes memory demand = abi.encode(
+            TokenBundleSplitterBase.DemandData({
+                oracle: oracle,
+                data: bytes("")
+            })
+        );
+
+        Attestation memory attackerFulfillment = eas.getAttestation(attackerFulfillmentUid);
+        assertFalse(
+            splitter.checkObligation(attackerFulfillment, demand, escrowUid),
+            "Different fulfillment should not be accepted"
+        );
+
+        Attestation memory fulfillmentAttestation = eas.getAttestation(fulfillmentUid);
+        assertTrue(
+            splitter.checkObligation(fulfillmentAttestation, demand, escrowUid),
+            "Original fulfillment should be accepted"
         );
     }
 
@@ -591,7 +678,7 @@ contract TokenBundleSplitterTest is Test {
         );
 
         vm.prank(oracle);
-        splitter.arbitrate(escrowUid, _twoWaySplit());
+        splitter.arbitrate(fulfillmentUid, escrowUid, _twoWaySplit());
 
         vm.prank(executor);
         splitter.collectAndDistribute(
@@ -640,7 +727,7 @@ contract TokenBundleSplitterTest is Test {
         splits[0].recipient = splitter.EXECUTOR_SENTINEL();
 
         vm.prank(oracle);
-        splitter.arbitrate(escrowUid, splits);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
 
         uint256 executorBalBefore = executor.balance;
 
@@ -694,7 +781,7 @@ contract TokenBundleSplitterTest is Test {
         });
 
         vm.prank(oracle);
-        splitter.arbitrate(escrowUid, splits);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
 
         vm.prank(executor);
         splitter.collectAndDistribute(
@@ -719,7 +806,7 @@ contract TokenBundleSplitterTest is Test {
         );
 
         vm.prank(oracle);
-        splitter.arbitrate(escrowUid, _twoWaySplit());
+        splitter.arbitrate(fulfillmentUid, escrowUid, _twoWaySplit());
 
         vm.expectEmit(true, true, true, true);
         emit TokenBundleSplitterBase.EscrowCollectedAndDistributed(
@@ -742,27 +829,36 @@ contract TokenBundleSplitterTest is Test {
 
     function testRequestArbitrationAsRecipient() public {
         bytes32 escrowUid = _createEscrow();
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
+        );
 
         bytes memory demand = bytes("some demand");
 
         vm.prank(buyer);
-        vm.expectEmit(true, true, false, true);
+        vm.expectEmit(true, true, true, true);
         emit TokenBundleSplitterBase.ArbitrationRequested(
+            fulfillmentUid,
             escrowUid,
             oracle,
             demand
         );
-        splitter.requestArbitration(escrowUid, oracle, demand);
+        splitter.requestArbitration(fulfillmentUid, escrowUid, oracle, demand);
     }
 
     function testRequestArbitrationUnauthorized() public {
         bytes32 escrowUid = _createEscrow();
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
+        );
 
         vm.prank(carol);
         vm.expectRevert(
             TokenBundleSplitterBase.UnauthorizedArbitrationRequest.selector
         );
-        splitter.requestArbitration(escrowUid, oracle, bytes("demand"));
+        splitter.requestArbitration(fulfillmentUid, escrowUid, oracle, bytes("demand"));
     }
 
     // -----------------------------------------------------------------
@@ -771,14 +867,18 @@ contract TokenBundleSplitterTest is Test {
 
     function testGetSplits() public {
         bytes32 escrowUid = _createEscrow();
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
+        );
 
         TokenBundleSplitterBase.BundleSplit[] memory splits = _twoWaySplit();
 
         vm.prank(oracle);
-        splitter.arbitrate(escrowUid, splits);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
 
         TokenBundleSplitterBase.BundleSplit[] memory stored = splitter
-            .getSplits(oracle, escrowUid);
+            .getSplits(oracle, fulfillmentUid, escrowUid);
 
         assertEq(stored.length, 2);
         assertEq(stored[0].recipient, alice);
@@ -796,9 +896,13 @@ contract TokenBundleSplitterTest is Test {
 
     function testGetSplitsReturnsEmptyWhenNoDecision() public {
         bytes32 escrowUid = _createEscrow();
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
+        );
 
         TokenBundleSplitterBase.BundleSplit[] memory stored = splitter
-            .getSplits(oracle, escrowUid);
+            .getSplits(oracle, fulfillmentUid, escrowUid);
 
         assertEq(stored.length, 0);
     }

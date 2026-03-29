@@ -65,7 +65,8 @@ abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155H
         address indexed oracle
     );
     event ArbitrationRequested(
-        bytes32 indexed obligation,
+        bytes32 indexed fulfillment,
+        bytes32 indexed escrow,
         address indexed oracle,
         bytes demand
     );
@@ -99,9 +100,10 @@ abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155H
     // Oracle arbitration
     // -----------------------------------------------------------------
 
-    /// @notice Oracle submits a split decision for an obligation.
+    /// @notice Oracle submits a split decision for a fulfillment to an escrow.
     function arbitrate(
-        bytes32 obligation,
+        bytes32 fulfillment,
+        bytes32 escrow,
         BundleSplit[] calldata splits
     ) external virtual;
 
@@ -138,17 +140,18 @@ abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155H
 
     /// @notice Emits an event requesting the oracle to arbitrate.
     function requestArbitration(
-        bytes32 _obligation,
+        bytes32 _fulfillment,
+        bytes32 _escrow,
         address oracle,
         bytes memory demand
     ) external {
-        Attestation memory obligation = eas.getAttestation(_obligation);
+        Attestation memory escrowAttestation = eas.getAttestation(_escrow);
         if (
-            obligation.attester != msg.sender &&
-            obligation.recipient != msg.sender
+            escrowAttestation.attester != msg.sender &&
+            escrowAttestation.recipient != msg.sender
         ) revert UnauthorizedArbitrationRequest();
 
-        emit ArbitrationRequested(_obligation, oracle, demand);
+        emit ArbitrationRequested(_fulfillment, _escrow, oracle, demand);
     }
 
     // -----------------------------------------------------------------
@@ -157,13 +160,13 @@ abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155H
 
     /// @inheritdoc IArbiter
     function checkObligation(
-        Attestation memory,
+        Attestation memory fulfillment,
         bytes memory demand,
-        bytes32 fulfilling
+        bytes32 escrow
     ) public view override returns (bool) {
         DemandData memory demandData = abi.decode(demand, (DemandData));
         bytes32 decisionKey = keccak256(
-            abi.encodePacked(fulfilling, demand)
+            abi.encodePacked(fulfillment.uid, escrow)
         );
         return hasDecision[demandData.oracle][decisionKey];
     }
@@ -210,7 +213,7 @@ abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155H
         );
 
         bytes32 decisionKey = keccak256(
-            abi.encodePacked(escrow, escrowData.demand)
+            abi.encodePacked(fulfillment, escrow)
         );
 
         BundleSplit[] memory splits = decisions[demandData.oracle][decisionKey];
@@ -285,15 +288,11 @@ abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155H
 
     function getSplits(
         address oracle,
-        bytes32 obligation
+        bytes32 fulfillment,
+        bytes32 escrow
     ) external view returns (BundleSplit[] memory) {
-        Attestation memory escrow = eas.getAttestation(obligation);
-        EscrowObligationData memory escrowData = abi.decode(
-            escrow.data,
-            (EscrowObligationData)
-        );
         bytes32 decisionKey = keccak256(
-            abi.encodePacked(obligation, escrowData.demand)
+            abi.encodePacked(fulfillment, escrow)
         );
         return decisions[oracle][decisionKey];
     }

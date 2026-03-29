@@ -107,13 +107,8 @@ contract ERC1155SplitterTest is Test {
         return abi.decode(result, (bytes32));
     }
 
-    function _decisionKey(bytes32 escrowUid) internal view returns (bytes32) {
-        Attestation memory escrow = eas.getAttestation(escrowUid);
-        ERC1155Splitter.EscrowObligationData memory escrowData = abi.decode(
-            escrow.data,
-            (ERC1155Splitter.EscrowObligationData)
-        );
-        return keccak256(abi.encodePacked(escrowUid, escrowData.demand));
+    function _decisionKey(bytes32 fulfillmentUid, bytes32 escrowUid) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked(fulfillmentUid, escrowUid));
     }
 
     // -----------------------------------------------------------------
@@ -128,16 +123,21 @@ contract ERC1155SplitterTest is Test {
             uint64(block.timestamp + EXPIRATION)
         );
 
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
+        );
+
         ERC1155Splitter.Split[]
             memory splits = new ERC1155Splitter.Split[](2);
         splits[0] = ERC1155Splitter.Split({recipient: alice, amount: 60});
         splits[1] = ERC1155Splitter.Split({recipient: bob, amount: 40});
 
         vm.prank(oracle);
-        splitter.arbitrate(escrowUid, splits);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
 
         assertTrue(
-            splitter.hasDecision(oracle, _decisionKey(escrowUid)),
+            splitter.hasDecision(oracle, _decisionKey(fulfillmentUid, escrowUid)),
             "Decision should be recorded"
         );
     }
@@ -150,6 +150,11 @@ contract ERC1155SplitterTest is Test {
             uint64(block.timestamp + EXPIRATION)
         );
 
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
+        );
+
         ERC1155Splitter.Split[]
             memory splits = new ERC1155Splitter.Split[](2);
         splits[0] = ERC1155Splitter.Split({
@@ -159,10 +164,10 @@ contract ERC1155SplitterTest is Test {
         splits[1] = ERC1155Splitter.Split({recipient: bob, amount: 30});
 
         vm.prank(oracle);
-        splitter.arbitrate(escrowUid, splits);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
 
         assertTrue(
-            splitter.hasDecision(oracle, _decisionKey(escrowUid)),
+            splitter.hasDecision(oracle, _decisionKey(fulfillmentUid, escrowUid)),
             "Decision with sentinel should be recorded"
         );
     }
@@ -175,12 +180,17 @@ contract ERC1155SplitterTest is Test {
             uint64(block.timestamp + EXPIRATION)
         );
 
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
+        );
+
         ERC1155Splitter.Split[]
             memory splits = new ERC1155Splitter.Split[](0);
 
         vm.prank(oracle);
         vm.expectRevert(ERC1155Splitter.EmptySplits.selector);
-        splitter.arbitrate(escrowUid, splits);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
     }
 
     function testArbitrateRevertsZeroRecipient() public {
@@ -189,6 +199,11 @@ contract ERC1155SplitterTest is Test {
             TOKEN_ID,
             AMOUNT,
             uint64(block.timestamp + EXPIRATION)
+        );
+
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
         );
 
         ERC1155Splitter.Split[]
@@ -200,7 +215,7 @@ contract ERC1155SplitterTest is Test {
 
         vm.prank(oracle);
         vm.expectRevert(ERC1155Splitter.ZeroRecipient.selector);
-        splitter.arbitrate(escrowUid, splits);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
     }
 
     function testArbitrateRevertsInvalidTotal() public {
@@ -209,6 +224,11 @@ contract ERC1155SplitterTest is Test {
             TOKEN_ID,
             AMOUNT,
             uint64(block.timestamp + EXPIRATION)
+        );
+
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
         );
 
         ERC1155Splitter.Split[]
@@ -223,7 +243,7 @@ contract ERC1155SplitterTest is Test {
                 50
             )
         );
-        splitter.arbitrate(escrowUid, splits);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
     }
 
     function testArbitrateOverwritesPreviousDecision() public {
@@ -234,6 +254,11 @@ contract ERC1155SplitterTest is Test {
             uint64(block.timestamp + EXPIRATION)
         );
 
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
+        );
+
         ERC1155Splitter.Split[]
             memory splits1 = new ERC1155Splitter.Split[](1);
         splits1[0] = ERC1155Splitter.Split({
@@ -242,7 +267,7 @@ contract ERC1155SplitterTest is Test {
         });
 
         vm.prank(oracle);
-        splitter.arbitrate(escrowUid, splits1);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits1);
 
         ERC1155Splitter.Split[]
             memory splits2 = new ERC1155Splitter.Split[](1);
@@ -252,10 +277,11 @@ contract ERC1155SplitterTest is Test {
         });
 
         vm.prank(oracle);
-        splitter.arbitrate(escrowUid, splits2);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits2);
 
         ERC1155Splitter.Split[] memory stored = splitter.getSplits(
             oracle,
+            fulfillmentUid,
             escrowUid
         );
         assertEq(stored.length, 1);
@@ -275,6 +301,11 @@ contract ERC1155SplitterTest is Test {
             uint64(block.timestamp + EXPIRATION)
         );
 
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
+        );
+
         ERC1155Splitter.Split[]
             memory splits = new ERC1155Splitter.Split[](1);
         splits[0] = ERC1155Splitter.Split({
@@ -283,15 +314,15 @@ contract ERC1155SplitterTest is Test {
         });
 
         vm.prank(oracle);
-        splitter.arbitrate(escrowUid, splits);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
 
         bytes memory demand = abi.encode(
             ERC1155Splitter.DemandData({oracle: oracle, data: bytes("")})
         );
 
-        Attestation memory dummyAttestation;
+        Attestation memory fulfillmentAttestation = eas.getAttestation(fulfillmentUid);
         assertTrue(
-            splitter.checkObligation(dummyAttestation, demand, escrowUid)
+            splitter.checkObligation(fulfillmentAttestation, demand, escrowUid)
         );
     }
 
@@ -303,13 +334,18 @@ contract ERC1155SplitterTest is Test {
             uint64(block.timestamp + EXPIRATION)
         );
 
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
+        );
+
         bytes memory demand = abi.encode(
             ERC1155Splitter.DemandData({oracle: oracle, data: bytes("")})
         );
 
-        Attestation memory dummyAttestation;
+        Attestation memory fulfillmentAttestation = eas.getAttestation(fulfillmentUid);
         assertFalse(
-            splitter.checkObligation(dummyAttestation, demand, escrowUid)
+            splitter.checkObligation(fulfillmentAttestation, demand, escrowUid)
         );
     }
 
@@ -321,6 +357,11 @@ contract ERC1155SplitterTest is Test {
             uint64(block.timestamp + EXPIRATION)
         );
 
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
+        );
+
         ERC1155Splitter.Split[]
             memory splits = new ERC1155Splitter.Split[](1);
         splits[0] = ERC1155Splitter.Split({
@@ -329,19 +370,65 @@ contract ERC1155SplitterTest is Test {
         });
 
         vm.prank(oracle);
-        splitter.arbitrate(escrowUid, splits);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
 
         bytes memory demandWithDifferentOracle = abi.encode(
             ERC1155Splitter.DemandData({oracle: alice, data: bytes("")})
         );
 
-        Attestation memory dummyAttestation;
+        Attestation memory fulfillmentAttestation = eas.getAttestation(fulfillmentUid);
         assertFalse(
             splitter.checkObligation(
-                dummyAttestation,
+                fulfillmentAttestation,
                 demandWithDifferentOracle,
                 escrowUid
             )
+        );
+    }
+
+    function testCheckObligationRejectsDifferentFulfillment() public {
+        bytes32 escrowUid = _createEscrow(
+            buyer,
+            TOKEN_ID,
+            AMOUNT,
+            uint64(block.timestamp + EXPIRATION)
+        );
+
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
+        );
+
+        ERC1155Splitter.Split[]
+            memory splits = new ERC1155Splitter.Split[](1);
+        splits[0] = ERC1155Splitter.Split({
+            recipient: alice,
+            amount: AMOUNT
+        });
+
+        vm.prank(oracle);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
+
+        // Create a different fulfillment (e.g. attacker's)
+        bytes32 attackerFulfillmentUid = _createFulfillmentViaSplitter(
+            alice,
+            escrowUid
+        );
+
+        bytes memory demand = abi.encode(
+            ERC1155Splitter.DemandData({oracle: oracle, data: bytes("")})
+        );
+
+        Attestation memory attackerFulfillment = eas.getAttestation(attackerFulfillmentUid);
+        assertFalse(
+            splitter.checkObligation(attackerFulfillment, demand, escrowUid),
+            "Different fulfillment should not be accepted"
+        );
+
+        Attestation memory fulfillmentAttestation = eas.getAttestation(fulfillmentUid);
+        assertTrue(
+            splitter.checkObligation(fulfillmentAttestation, demand, escrowUid),
+            "Original fulfillment should be accepted"
         );
     }
 
@@ -412,7 +499,7 @@ contract ERC1155SplitterTest is Test {
         splits[1] = ERC1155Splitter.Split({recipient: bob, amount: 40});
 
         vm.prank(oracle);
-        splitter.arbitrate(escrowUid, splits);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
 
         vm.prank(executor);
         splitter.collectAndDistribute(
@@ -466,7 +553,7 @@ contract ERC1155SplitterTest is Test {
         splits[2] = ERC1155Splitter.Split({recipient: bob, amount: 20});
 
         vm.prank(oracle);
-        splitter.arbitrate(escrowUid, splits);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
 
         vm.prank(executor);
         splitter.collectAndDistribute(
@@ -513,7 +600,7 @@ contract ERC1155SplitterTest is Test {
         });
 
         vm.prank(oracle);
-        splitter.arbitrate(escrowUid, splits);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
 
         vm.prank(executor);
         splitter.collectAndDistribute(
@@ -550,7 +637,7 @@ contract ERC1155SplitterTest is Test {
         });
 
         vm.prank(oracle);
-        splitter.arbitrate(escrowUid, splits);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
 
         vm.expectEmit(true, true, true, true);
         emit ERC1155Splitter.EscrowCollectedAndDistributed(
@@ -582,12 +669,17 @@ contract ERC1155SplitterTest is Test {
             uint64(block.timestamp + EXPIRATION)
         );
 
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
+        );
+
         bytes memory demand = bytes("some demand");
 
         vm.prank(buyer);
-        vm.expectEmit(true, true, false, true);
-        emit ERC1155Splitter.ArbitrationRequested(escrowUid, oracle, demand);
-        splitter.requestArbitration(escrowUid, oracle, demand);
+        vm.expectEmit(true, true, true, true);
+        emit ERC1155Splitter.ArbitrationRequested(fulfillmentUid, escrowUid, oracle, demand);
+        splitter.requestArbitration(fulfillmentUid, escrowUid, oracle, demand);
     }
 
     function testRequestArbitrationUnauthorized() public {
@@ -598,11 +690,16 @@ contract ERC1155SplitterTest is Test {
             uint64(block.timestamp + EXPIRATION)
         );
 
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
+        );
+
         vm.prank(carol);
         vm.expectRevert(
             ERC1155Splitter.UnauthorizedArbitrationRequest.selector
         );
-        splitter.requestArbitration(escrowUid, oracle, bytes("demand"));
+        splitter.requestArbitration(fulfillmentUid, escrowUid, oracle, bytes("demand"));
     }
 
     // -----------------------------------------------------------------
@@ -617,6 +714,11 @@ contract ERC1155SplitterTest is Test {
             uint64(block.timestamp + EXPIRATION)
         );
 
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
+        );
+
         ERC1155Splitter.Split[]
             memory splits = new ERC1155Splitter.Split[](3);
         splits[0] = ERC1155Splitter.Split({recipient: alice, amount: 50});
@@ -624,10 +726,11 @@ contract ERC1155SplitterTest is Test {
         splits[2] = ERC1155Splitter.Split({recipient: carol, amount: 20});
 
         vm.prank(oracle);
-        splitter.arbitrate(escrowUid, splits);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
 
         ERC1155Splitter.Split[] memory stored = splitter.getSplits(
             oracle,
+            fulfillmentUid,
             escrowUid
         );
 
@@ -648,8 +751,14 @@ contract ERC1155SplitterTest is Test {
             uint64(block.timestamp + EXPIRATION)
         );
 
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
+        );
+
         ERC1155Splitter.Split[] memory stored = splitter.getSplits(
             oracle,
+            fulfillmentUid,
             escrowUid
         );
 
