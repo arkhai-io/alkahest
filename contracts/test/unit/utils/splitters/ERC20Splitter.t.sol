@@ -530,6 +530,55 @@ contract ERC20SplitterTest is Test {
         assertEq(token.balanceOf(bob), 20 * 10 ** 18, "Bob should receive 20");
     }
 
+    function testCollectAndDistributeWithSentinelViaExecute() public {
+        bytes32 escrowUid = _createEscrow(
+            buyer,
+            AMOUNT,
+            uint64(block.timestamp + EXPIRATION)
+        );
+
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
+        );
+
+        // Oracle uses EXECUTOR_SENTINEL for the executor's share
+        ERC20Splitter.Split[] memory splits = new ERC20Splitter.Split[](3);
+        splits[0] = ERC20Splitter.Split({
+            recipient: splitter.EXECUTOR_SENTINEL(),
+            amount: 50 * 10 ** 18
+        });
+        splits[1] = ERC20Splitter.Split({recipient: alice, amount: 30 * 10 ** 18});
+        splits[2] = ERC20Splitter.Split({recipient: bob, amount: 20 * 10 ** 18});
+
+        vm.prank(oracle);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
+
+        // Call collectAndDistribute via execute() — sentinel should resolve
+        // to the external executor, NOT the splitter contract
+        bytes memory callData = abi.encodeCall(
+            splitter.collectAndDistribute,
+            (address(escrowObligation), escrowUid, fulfillmentUid)
+        );
+
+        vm.prank(executor);
+        splitter.execute(address(splitter), callData);
+
+        // EXECUTOR_SENTINEL should resolve to executor, not the splitter
+        assertEq(
+            token.balanceOf(executor),
+            50 * 10 ** 18,
+            "Executor should receive sentinel share via execute"
+        );
+        assertEq(
+            token.balanceOf(address(splitter)),
+            0,
+            "Splitter should have no tokens"
+        );
+        assertEq(token.balanceOf(alice), 30 * 10 ** 18, "Alice should receive 30");
+        assertEq(token.balanceOf(bob), 20 * 10 ** 18, "Bob should receive 20");
+    }
+
     function testCollectAndDistributeSingleRecipient() public {
         bytes32 escrowUid = _createEscrow(
             buyer,

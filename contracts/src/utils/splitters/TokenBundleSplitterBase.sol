@@ -200,7 +200,9 @@ abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155H
         bytes32 escrow,
         bytes32 fulfillment
     ) external nonReentrant {
-        _currentExecutor = msg.sender;
+        // Preserve _currentExecutor if already set (e.g. called via execute())
+        bool setExecutor = _currentExecutor == address(0);
+        if (setExecutor) _currentExecutor = msg.sender;
 
         Attestation memory escrowAttestation = eas.getAttestation(escrow);
         EscrowObligationData memory escrowData = abi.decode(
@@ -228,7 +230,7 @@ abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155H
         for (uint256 s; s < splits.length; ++s) {
             address recipient = splits[s].recipient;
             if (recipient == EXECUTOR_SENTINEL) {
-                recipient = msg.sender;
+                recipient = _currentExecutor;
             }
 
             // Native tokens
@@ -277,9 +279,9 @@ abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155H
             }
         }
 
-        emit EscrowCollectedAndDistributed(escrow, fulfillment, msg.sender);
+        emit EscrowCollectedAndDistributed(escrow, fulfillment, _currentExecutor);
 
-        _currentExecutor = address(0);
+        if (setExecutor) _currentExecutor = address(0);
     }
 
     // -----------------------------------------------------------------

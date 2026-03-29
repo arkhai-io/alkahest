@@ -190,7 +190,9 @@ contract ERC1155Splitter is IArbiter, ReentrancyGuard, ERC1155Holder {
         bytes32 escrow,
         bytes32 fulfillment
     ) external nonReentrant {
-        _currentExecutor = msg.sender;
+        // Preserve _currentExecutor if already set (e.g. called via execute())
+        bool setExecutor = _currentExecutor == address(0);
+        if (setExecutor) _currentExecutor = msg.sender;
 
         Attestation memory escrowAttestation = eas.getAttestation(escrow);
         EscrowObligationData memory escrowData = abi.decode(
@@ -218,7 +220,7 @@ contract ERC1155Splitter is IArbiter, ReentrancyGuard, ERC1155Holder {
         for (uint256 i; i < splits.length; ++i) {
             address recipient = splits[i].recipient;
             if (recipient == EXECUTOR_SENTINEL) {
-                recipient = msg.sender;
+                recipient = _currentExecutor;
             }
             IERC1155(escrowData.token).safeTransferFrom(
                 address(this),
@@ -232,13 +234,13 @@ contract ERC1155Splitter is IArbiter, ReentrancyGuard, ERC1155Holder {
         emit EscrowCollectedAndDistributed(
             escrow,
             fulfillment,
-            msg.sender,
+            _currentExecutor,
             escrowData.token,
             escrowData.tokenId,
             splits
         );
 
-        _currentExecutor = address(0);
+        if (setExecutor) _currentExecutor = address(0);
     }
 
     // -----------------------------------------------------------------

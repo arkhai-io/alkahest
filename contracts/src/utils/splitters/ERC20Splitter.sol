@@ -190,7 +190,9 @@ contract ERC20Splitter is IArbiter, ReentrancyGuard {
         bytes32 escrow,
         bytes32 fulfillment
     ) external nonReentrant {
-        _currentExecutor = msg.sender;
+        // Preserve _currentExecutor if already set (e.g. called via execute())
+        bool setExecutor = _currentExecutor == address(0);
+        if (setExecutor) _currentExecutor = msg.sender;
 
         // Read escrow attestation to get demand, token, and amount
         Attestation memory escrowAttestation = eas.getAttestation(escrow);
@@ -219,7 +221,7 @@ contract ERC20Splitter is IArbiter, ReentrancyGuard {
         for (uint256 i; i < splits.length; ++i) {
             address recipient = splits[i].recipient;
             if (recipient == EXECUTOR_SENTINEL) {
-                recipient = msg.sender;
+                recipient = _currentExecutor;
             }
             IERC20(escrowData.token).safeTransfer(
                 recipient,
@@ -230,12 +232,12 @@ contract ERC20Splitter is IArbiter, ReentrancyGuard {
         emit EscrowCollectedAndDistributed(
             escrow,
             fulfillment,
-            msg.sender,
+            _currentExecutor,
             escrowData.token,
             splits
         );
 
-        _currentExecutor = address(0);
+        if (setExecutor) _currentExecutor = address(0);
     }
 
     // -----------------------------------------------------------------
