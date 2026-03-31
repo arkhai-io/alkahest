@@ -97,9 +97,13 @@ pub struct EnvTestManager {
     #[pyo3(get)]
     pub bob: String,
     #[pyo3(get)]
+    pub charlie: String,
+    #[pyo3(get)]
     pub alice_private_key: String,
     #[pyo3(get)]
     pub bob_private_key: String,
+    #[pyo3(get)]
+    pub charlie_private_key: String,
     #[pyo3(get)]
     pub addresses: PyDefaultExtensionConfig,
     #[pyo3(get)]
@@ -120,6 +124,7 @@ impl EnvTestManager {
         // Extract private keys as hex strings (with 0x prefix)
         let alice_private_key = format!("0x{}", hex::encode(ctx.alice.to_bytes()));
         let bob_private_key = format!("0x{}", hex::encode(ctx.bob.to_bytes()));
+        let charlie_private_key = format!("0x{}", hex::encode(ctx.charlie.to_bytes()));
 
         Ok(Self {
             runtime: rt,
@@ -127,8 +132,10 @@ impl EnvTestManager {
             god: ctx.god.address().to_string(),
             alice: ctx.alice.address().to_string(),
             bob: ctx.bob.address().to_string(),
+            charlie: ctx.charlie.address().to_string(),
             alice_private_key,
             bob_private_key,
+            charlie_private_key,
             addresses: PyDefaultExtensionConfig::from(&ctx.addresses),
             mock_addresses: PyMockAddresses::from(&ctx.mock_addresses),
             god_wallet_provider: PyWalletProvider {
