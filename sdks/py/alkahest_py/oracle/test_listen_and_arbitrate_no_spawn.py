@@ -13,9 +13,8 @@ from alkahest_py import (
 )
 
 @pytest.mark.asyncio
-async def test_arbitrate_many_all(env, alice_client, bob_client):
+async def test_arbitrate_many_all(env, alice_client, bob_client, charlie_client):
     """Test arbitrate_many with All mode: processes past arbitrations and waits for new ones"""
-    # Setup test environment
 
     # Setup escrow
     mock_erc20 = MockERC20(env.mock_addresses.erc20_a, env.god_wallet_provider)
@@ -28,7 +27,7 @@ async def test_arbitrate_many_all(env, alice_client, bob_client):
     inner_demand_data = b""  # Empty bytes for this simple test
 
     # The full encoded DemandData - this is what gets stored in the escrow
-    demand_data = TrustedOracleArbiterDemandData(env.bob, inner_demand_data)
+    demand_data = TrustedOracleArbiterDemandData(env.charlie, inner_demand_data)
     demand_bytes = demand_data.encode_self()
 
     arbiter = {
@@ -48,12 +47,14 @@ async def test_arbitrate_many_all(env, alice_client, bob_client):
 
     # Request arbitration with inner demand data (not the full encoded DemandData)
     # because TrustedOracleArbiter.checkObligation() uses only demand_.data for the decisionKey
-    oracle_client = bob_client.oracle
-    await oracle_client.request_arbitration(fulfillment_uid, env.bob, inner_demand_data)
+    # Bob (fulfiller) requests Charlie (oracle) to arbitrate
+    await bob_client.oracle.request_arbitration(fulfillment_uid, env.charlie, inner_demand_data)
+
+    oracle_client = charlie_client.oracle
 
     # Decision function
     def decision_function(attestation, demand):
-        obligation_str = bob_client.extract_obligation_data(attestation)
+        obligation_str = charlie_client.extract_obligation_data(attestation)
         print(f"Arbitrating obligation: {obligation_str}")
         return obligation_str == "good"
 

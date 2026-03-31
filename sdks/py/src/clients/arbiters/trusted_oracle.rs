@@ -330,6 +330,10 @@ impl OracleClient {
                     let py_attestation = PyOracleAttestation::from(&awd.attestation);
                     let py_demand: Vec<u8> = awd.demand.to_vec();
                     let result = decision_func.call1(py, (py_attestation, py_demand)).ok()?;
+                    // If Python returned None, defer the decision (return Rust None)
+                    if result.is_none(py) {
+                        return None;
+                    }
                     result
                         .extract::<bool>(py)
                         .or_else(|_| result.is_truthy(py))
@@ -438,8 +442,11 @@ impl OracleClient {
                         Err(_) => return None,
                     };
 
-                    // Extract boolean
+                    // Extract boolean, treating Python None as Rust None (defer)
                     Python::with_gil(|py| {
+                        if result.is_none(py) {
+                            return None;
+                        }
                         result.extract::<bool>(py)
                             .or_else(|_| result.is_truthy(py))
                             .ok()

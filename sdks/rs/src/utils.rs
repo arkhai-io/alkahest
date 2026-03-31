@@ -264,6 +264,7 @@ pub async fn setup_test_environment() -> eyre::Result<TestContext> {
 
     let alice: PrivateKeySigner = anvil.keys()[1].clone().into();
     let bob: PrivateKeySigner = anvil.keys()[2].clone().into();
+    let charlie: PrivateKeySigner = anvil.keys()[3].clone().into();
 
     let addresses = DefaultExtensionConfig {
         arbiters_addresses: ArbitersAddresses {
@@ -360,15 +361,23 @@ pub async fn setup_test_environment() -> eyre::Result<TestContext> {
         Some(addresses.clone()),
     )
     .await?;
+    let charlie_client = AlkahestClient::with_base_extensions(
+        charlie.clone(),
+        anvil.ws_endpoint_url(),
+        Some(addresses.clone()),
+    )
+    .await?;
 
     Ok(TestContext {
         anvil,
         alice,
         bob,
+        charlie,
         god,
         god_provider: god_provider_,
         alice_client,
         bob_client,
+        charlie_client,
         addresses,
         mock_addresses: MockAddresses {
             erc20_a: mock_erc20_a.address().clone(),
@@ -385,10 +394,12 @@ pub struct TestContext {
     pub anvil: AnvilInstance,
     pub alice: PrivateKeySigner,
     pub bob: PrivateKeySigner,
+    pub charlie: PrivateKeySigner,
     pub god: PrivateKeySigner,
     pub god_provider: WalletProvider,
     pub alice_client: AlkahestClient<crate::extensions::BaseExtensions>,
     pub bob_client: AlkahestClient<crate::extensions::BaseExtensions>,
+    pub charlie_client: AlkahestClient<crate::extensions::BaseExtensions>,
     pub addresses: DefaultExtensionConfig,
     pub mock_addresses: MockAddresses,
 }

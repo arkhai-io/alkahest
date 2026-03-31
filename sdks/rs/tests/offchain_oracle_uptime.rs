@@ -8,7 +8,7 @@ use std::{
 };
 
 use alkahest_rs::{
-    AlkahestClient, DefaultAlkahestClient,
+    DefaultAlkahestClient,
     clients::oracle::ArbitrationMode,
     contracts::{self, obligations::StringObligation},
     extensions::{HasArbiters, HasErc20, HasOracle, HasStringObligation},
@@ -16,10 +16,7 @@ use alkahest_rs::{
     types::{ArbiterData, Erc20Data},
     utils::{TestContext, setup_test_environment},
 };
-use alloy::{
-    primitives::{Bytes, FixedBytes},
-    signers::local::PrivateKeySigner,
-};
+use alloy::primitives::{Bytes, FixedBytes};
 use eyre::{Result, WrapErr, eyre};
 use serde::{Deserialize, Serialize};
 use tokio::sync::{Mutex, Notify};
@@ -178,14 +175,7 @@ async fn setup_escrow_with_uptime_demand(
 }
 
 async fn run_async_uptime_oracle_example(test: &TestContext) -> eyre::Result<()> {
-    let charlie_signer: PrivateKeySigner = test.anvil.keys()[3].clone().into();
-    let charlie_client = AlkahestClient::with_base_extensions(
-        charlie_signer.clone(),
-        test.anvil.ws_endpoint_url(),
-        Some(test.addresses.clone()),
-    )
-    .await
-    .wrap_err("failed to construct Charlie's client")?;
+    let charlie_client = &test.charlie_client;
 
     let charlie_oracle = charlie_client.oracle().clone();
     let charlie_arbiters = charlie_client.arbiters().clone();

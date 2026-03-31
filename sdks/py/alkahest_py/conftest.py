@@ -55,3 +55,21 @@ def bob_client(env):
         rpc_url=env.rpc_url,
         address_config=env.addresses,
     )
+
+
+@pytest.fixture
+def charlie_client(env):
+    """
+    Create an AlkahestClient for Charlie using the user-facing constructor.
+
+    This ensures tests exercise the same initialization path that real users hit,
+    catching any bugs in the Python SDK client construction.
+
+    Returns:
+        AlkahestClient: A fully initialized client for Charlie's account.
+    """
+    return AlkahestClient(
+        private_key=env.charlie_private_key,
+        rpc_url=env.rpc_url,
+        address_config=env.addresses,
+    )

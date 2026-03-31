@@ -98,16 +98,16 @@ async def create_identity_payload(account: Account, nonce: int, data: str = "pro
     })
 
 @pytest.mark.asyncio
-async def test_contextless_offchain_identity_oracle_flow(env, bob_client):
+async def test_contextless_offchain_identity_oracle_flow(env, bob_client, charlie_client):
     """
     Test a contextless identity verification oracle
     Uses signature verification and nonce tracking without requiring escrow.
+    Bob submits identity proofs. Charlie (the oracle) verifies them.
     Tests both successful verification and replay attack prevention.
     """
 
-    # Simplification: Bob acts as the oracle
-    oracle_address = env.bob
-    oracle_client = bob_client
+    oracle_address = env.charlie
+    oracle_client = charlie_client
 
     # Clear and setup identity registry
     identity_registry.clear()
