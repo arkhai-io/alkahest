@@ -14,9 +14,8 @@ from alkahest_py import (
 )
 
 @pytest.mark.asyncio
-async def test_arbitrate_past_sync(env, alice_client, bob_client):
+async def test_arbitrate_past_sync(env, alice_client, bob_client, charlie_client):
     """Test trivial arbitrate_many: escrow -> fulfillment -> arbitration -> collection"""
-    # Setup test environment
 
     # Setup escrow with proper oracle demand data
     mock_erc20 = MockERC20(env.mock_addresses.erc20_a, env.god_wallet_provider)
@@ -29,7 +28,7 @@ async def test_arbitrate_past_sync(env, alice_client, bob_client):
     inner_demand_data = b""  # Empty bytes for this simple test
 
     # The full encoded DemandData - this is what gets stored in the escrow
-    demand_data = TrustedOracleArbiterDemandData(env.bob, inner_demand_data)
+    demand_data = TrustedOracleArbiterDemandData(env.charlie, inner_demand_data)
     demand_bytes = demand_data.encode_self()
 
     arbiter = {
@@ -47,19 +46,18 @@ async def test_arbitrate_past_sync(env, alice_client, bob_client):
     string_client = bob_client.string_obligation
     fulfillment_uid = await string_client.do_obligation("good", escrow_uid)
 
-    # Request arbitration with inner demand data (not the full encoded DemandData)
-    # because TrustedOracleArbiter.checkObligation() uses only demand_.data for the decisionKey
-    oracle_client = bob_client.oracle
-    await oracle_client.request_arbitration(fulfillment_uid, env.bob, inner_demand_data)
+    # Bob (fulfiller) requests Charlie (oracle) to arbitrate
+    await bob_client.oracle.request_arbitration(fulfillment_uid, env.charlie, inner_demand_data)
 
     # Decision function that approves "good" obligations
     def decision_function(attestation, demand):
         """Decision function receives attestation and demand as separate arguments"""
-        obligation_str = bob_client.extract_obligation_data(attestation)
+        obligation_str = charlie_client.extract_obligation_data(attestation)
         print(f"Decision function called with obligation: {obligation_str}, demand: {len(demand)} bytes")
         return obligation_str == "good"
 
-    # Call arbitrate_many with simplified API
+    # Charlie (oracle) arbitrates
+    oracle_client = charlie_client.oracle
     decisions = await oracle_client.arbitrate_many(decision_function, None, ArbitrationMode.Past)
 
     # Verify arbitration found decisions
@@ -76,9 +74,8 @@ async def test_arbitrate_past_sync(env, alice_client, bob_client):
     print(f"Arbitrate decision passed. Tx: {collection_receipt}")
 
 @pytest.mark.asyncio
-async def test_conditional_arbitrate_past(env, alice_client, bob_client):
+async def test_conditional_arbitrate_past(env, alice_client, bob_client, charlie_client):
     """Test conditional arbitrate_many: approve only 'good' obligations"""
-    # Setup test environment
 
     # Setup escrow
     mock_erc20 = MockERC20(env.mock_addresses.erc20_a, env.god_wallet_provider)
@@ -91,7 +88,7 @@ async def test_conditional_arbitrate_past(env, alice_client, bob_client):
     inner_demand_data = b""  # Empty bytes for this simple test
 
     # The full encoded DemandData - this is what gets stored in the escrow
-    demand_data = TrustedOracleArbiterDemandData(env.bob, inner_demand_data)
+    demand_data = TrustedOracleArbiterDemandData(env.charlie, inner_demand_data)
     demand_bytes = demand_data.encode_self()
 
     arbiter = {
@@ -110,18 +107,17 @@ async def test_conditional_arbitrate_past(env, alice_client, bob_client):
     good_fulfillment = await string_client.do_obligation("good", escrow_uid)
     bad_fulfillment = await string_client.do_obligation("bad", escrow_uid)
 
-    # Request arbitration for both with inner demand data (not the full encoded DemandData)
-    # because TrustedOracleArbiter.checkObligation() uses only demand_.data for the decisionKey
-    oracle_client = bob_client.oracle
-    await oracle_client.request_arbitration(good_fulfillment, env.bob, inner_demand_data)
-    await oracle_client.request_arbitration(bad_fulfillment, env.bob, inner_demand_data)
+    # Bob (fulfiller) requests Charlie (oracle) to arbitrate both
+    await bob_client.oracle.request_arbitration(good_fulfillment, env.charlie, inner_demand_data)
+    await bob_client.oracle.request_arbitration(bad_fulfillment, env.charlie, inner_demand_data)
 
     # Decision function that approves only "good" obligations
     def decision_function(attestation, demand):
-        obligation_str = bob_client.extract_obligation_data(attestation)
+        obligation_str = charlie_client.extract_obligation_data(attestation)
         return obligation_str == "good"
 
-    # Arbitrate both
+    # Charlie (oracle) arbitrates both
+    oracle_client = charlie_client.oracle
     decisions = await oracle_client.arbitrate_many(decision_function, None, ArbitrationMode.Past)
 
     # Verify we got 2 decisions, only 1 approved
@@ -132,9 +128,8 @@ async def test_conditional_arbitrate_past(env, alice_client, bob_client):
     print(f"Conditional arbitration passed: {len(approved)}/2 approved")
 
 @pytest.mark.asyncio
-async def test_skip_arbitrated(env, alice_client, bob_client):
+async def test_skip_arbitrated(env, alice_client, bob_client, charlie_client):
     """Test PastUnarbitrated mode prevents re-arbitrating"""
-    # Setup test environment
 
     # Setup escrow
     mock_erc20 = MockERC20(env.mock_addresses.erc20_a, env.god_wallet_provider)
@@ -147,7 +142,7 @@ async def test_skip_arbitrated(env, alice_client, bob_client):
     inner_demand_data = b""  # Empty bytes for this simple test
 
     # The full encoded DemandData - this is what gets stored in the escrow
-    demand_data = TrustedOracleArbiterDemandData(env.bob, inner_demand_data)
+    demand_data = TrustedOracleArbiterDemandData(env.charlie, inner_demand_data)
     demand_bytes = demand_data.encode_self()
 
     arbiter = {
@@ -165,17 +160,16 @@ async def test_skip_arbitrated(env, alice_client, bob_client):
     string_client = bob_client.string_obligation
     fulfillment_uid = await string_client.do_obligation("good", escrow_uid)
 
-    # Request arbitration with inner demand data (not the full encoded DemandData)
-    # because TrustedOracleArbiter.checkObligation() uses only demand_.data for the decisionKey
-    oracle_client = bob_client.oracle
-    await oracle_client.request_arbitration(fulfillment_uid, env.bob, inner_demand_data)
+    # Bob (fulfiller) requests Charlie (oracle) to arbitrate
+    await bob_client.oracle.request_arbitration(fulfillment_uid, env.charlie, inner_demand_data)
 
     # Decision function
     def decision_function(attestation, demand):
-        obligation_str = bob_client.extract_obligation_data(attestation)
+        obligation_str = charlie_client.extract_obligation_data(attestation)
         return obligation_str == "good"
 
-    # First arbitration
+    # Charlie (oracle) arbitrates
+    oracle_client = charlie_client.oracle
     decisions = await oracle_client.arbitrate_many(decision_function, None, ArbitrationMode.Past)
     assert len(decisions) == 1, "First arbitration should find 1 decision"
 

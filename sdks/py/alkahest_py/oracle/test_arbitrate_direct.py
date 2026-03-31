@@ -13,7 +13,7 @@ from alkahest_py import (
 )
 
 @pytest.mark.asyncio
-async def test_arbitrate_direct(env, alice_client, bob_client):
+async def test_arbitrate_direct(env, alice_client, bob_client, charlie_client):
     """Test direct arbitration using oracle_client.arbitrate()"""
 
     # Setup escrow
@@ -27,7 +27,7 @@ async def test_arbitrate_direct(env, alice_client, bob_client):
     inner_demand_data = b""
 
     # Full encoded DemandData
-    demand_data = TrustedOracleArbiterDemandData(env.bob, inner_demand_data)
+    demand_data = TrustedOracleArbiterDemandData(env.charlie, inner_demand_data)
     demand_bytes = demand_data.encode_self()
 
     arbiter = {
@@ -45,11 +45,11 @@ async def test_arbitrate_direct(env, alice_client, bob_client):
     string_client = bob_client.string_obligation
     fulfillment_uid = await string_client.do_obligation("good", escrow_uid)
 
-    # Request arbitration
-    oracle_client = bob_client.oracle
-    await oracle_client.request_arbitration(fulfillment_uid, env.bob, inner_demand_data)
+    # Bob (fulfiller) requests Charlie (oracle) to arbitrate
+    await bob_client.oracle.request_arbitration(fulfillment_uid, env.charlie, inner_demand_data)
 
-    # Direct arbitration call
+    # Charlie (oracle) arbitrates directly
+    oracle_client = charlie_client.oracle
     tx_hash = await oracle_client.arbitrate(fulfillment_uid, inner_demand_data, True)
     assert tx_hash is not None, "Arbitration should return a transaction hash"
     assert tx_hash.startswith("0x"), f"Transaction hash should start with 0x, got {tx_hash}"
@@ -57,7 +57,7 @@ async def test_arbitrate_direct(env, alice_client, bob_client):
     print(f"Direct arbitration succeeded with tx: {tx_hash}")
 
 @pytest.mark.asyncio
-async def test_wait_for_arbitration(env, alice_client, bob_client):
+async def test_wait_for_arbitration(env, alice_client, bob_client, charlie_client):
     """Test waiting for arbitration event using oracle_client.wait_for_arbitration()"""
 
     # Setup escrow
@@ -68,7 +68,7 @@ async def test_wait_for_arbitration(env, alice_client, bob_client):
     trusted_oracle_arbiter = env.addresses.arbiters_addresses.trusted_oracle_arbiter
 
     inner_demand_data = b""
-    demand_data = TrustedOracleArbiterDemandData(env.bob, inner_demand_data)
+    demand_data = TrustedOracleArbiterDemandData(env.charlie, inner_demand_data)
     demand_bytes = demand_data.encode_self()
 
     arbiter = {
@@ -86,27 +86,29 @@ async def test_wait_for_arbitration(env, alice_client, bob_client):
     string_client = bob_client.string_obligation
     fulfillment_uid = await string_client.do_obligation("good", escrow_uid)
 
-    # Request and perform arbitration
-    oracle_client = bob_client.oracle
-    await oracle_client.request_arbitration(fulfillment_uid, env.bob, inner_demand_data)
+    # Bob (fulfiller) requests Charlie (oracle) to arbitrate
+    await bob_client.oracle.request_arbitration(fulfillment_uid, env.charlie, inner_demand_data)
+
+    # Charlie (oracle) arbitrates
+    oracle_client = charlie_client.oracle
     await oracle_client.arbitrate(fulfillment_uid, inner_demand_data, True)
 
     # Wait for arbitration event (should find it immediately since it's already done)
     event = await oracle_client.wait_for_arbitration(
         fulfillment_uid,
         inner_demand_data,
-        env.bob,
+        env.charlie,
         0  # from_block
     )
 
     assert event is not None, "Should find arbitration event"
     assert event.decision == True, f"Expected decision=True, got {event.decision}"
-    assert event.oracle.lower() == env.bob.lower(), "Oracle address should match"
+    assert event.oracle.lower() == env.charlie.lower(), "Oracle address should match"
 
     print(f"Found arbitration event: decision={event.decision}")
 
 @pytest.mark.asyncio
-async def test_get_escrow_attestation(env, alice_client, bob_client):
+async def test_get_escrow_attestation(env, alice_client, bob_client, charlie_client):
     """Test getting escrow attestation from a fulfillment attestation"""
 
     # Setup escrow
@@ -117,7 +119,7 @@ async def test_get_escrow_attestation(env, alice_client, bob_client):
     trusted_oracle_arbiter = env.addresses.arbiters_addresses.trusted_oracle_arbiter
 
     inner_demand_data = b""
-    demand_data = TrustedOracleArbiterDemandData(env.bob, inner_demand_data)
+    demand_data = TrustedOracleArbiterDemandData(env.charlie, inner_demand_data)
     demand_bytes = demand_data.encode_self()
 
     arbiter = {
@@ -135,9 +137,10 @@ async def test_get_escrow_attestation(env, alice_client, bob_client):
     string_client = bob_client.string_obligation
     fulfillment_uid = await string_client.do_obligation("test_data", escrow_uid)
 
-    # Request arbitration
-    oracle_client = bob_client.oracle
-    await oracle_client.request_arbitration(fulfillment_uid, env.bob, inner_demand_data)
+    # Bob (fulfiller) requests Charlie (oracle) to arbitrate
+    await bob_client.oracle.request_arbitration(fulfillment_uid, env.charlie, inner_demand_data)
+
+    oracle_client = charlie_client.oracle
 
     # Get a fulfillment attestation (we need to construct one with the ref_uid)
     from alkahest_py import OracleAttestation
@@ -163,7 +166,7 @@ async def test_get_escrow_attestation(env, alice_client, bob_client):
     print(f"Got escrow attestation: {escrow_attestation.uid}")
 
 @pytest.mark.asyncio
-async def test_get_escrow_and_demand(env, alice_client, bob_client):
+async def test_get_escrow_and_demand(env, alice_client, bob_client, charlie_client):
     """Test getting escrow attestation and demand data in one call"""
 
     # Setup escrow
@@ -174,7 +177,7 @@ async def test_get_escrow_and_demand(env, alice_client, bob_client):
     trusted_oracle_arbiter = env.addresses.arbiters_addresses.trusted_oracle_arbiter
 
     inner_demand_data = b"test_demand"
-    demand_data = TrustedOracleArbiterDemandData(env.bob, inner_demand_data)
+    demand_data = TrustedOracleArbiterDemandData(env.charlie, inner_demand_data)
     demand_bytes = demand_data.encode_self()
 
     arbiter = {
@@ -208,13 +211,13 @@ async def test_get_escrow_and_demand(env, alice_client, bob_client):
     )
 
     # Get escrow and demand in one call
-    oracle_client = bob_client.oracle
+    oracle_client = charlie_client.oracle
     escrow_attestation, extracted_demand = await oracle_client.get_escrow_and_demand(fulfillment_attestation)
 
     assert escrow_attestation is not None, "Should get escrow attestation"
     assert escrow_attestation.uid == escrow_uid, f"Escrow UID should match"
     assert extracted_demand is not None, "Should get demand data"
-    assert extracted_demand.oracle.lower() == env.bob.lower(), f"Oracle should match: {extracted_demand.oracle} vs {env.bob}"
+    assert extracted_demand.oracle.lower() == env.charlie.lower(), f"Oracle should match: {extracted_demand.oracle} vs {env.charlie}"
     assert bytes(extracted_demand.data) == inner_demand_data, f"Demand data should match: {bytes(extracted_demand.data)} vs {inner_demand_data}"
 
     print(f"Got escrow and demand: oracle={extracted_demand.oracle}, data={bytes(extracted_demand.data)}")

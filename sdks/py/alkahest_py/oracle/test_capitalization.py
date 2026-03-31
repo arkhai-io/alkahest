@@ -26,7 +26,7 @@ class ShellOracleDemand:
     test_cases: List[ShellTestCase]
 
 @pytest.mark.asyncio
-async def test_synchronous_offchain_oracle_capitalization_flow(env, alice_client, bob_client):
+async def test_synchronous_offchain_oracle_capitalization_flow(env, alice_client, bob_client, charlie_client):
     """
     Test a synchronous offchain oracle that verifies shell commands
     Alice escrows ERC20 collateral guarded by Charlie's oracle.
@@ -35,9 +35,8 @@ async def test_synchronous_offchain_oracle_capitalization_flow(env, alice_client
     Bob collects the escrowed payment upon successful arbitration.
     """
 
-    # Bob acts as the oracle for this test
-    oracle_address = env.bob
-    oracle_client = bob_client
+    oracle_address = env.charlie
+    oracle_client = charlie_client
 
     # Step 1: Alice escrows ERC20 collateral guarded by Charlie's oracle suite
     mock_erc20 = MockERC20(env.mock_addresses.erc20_a, env.god_wallet_provider)

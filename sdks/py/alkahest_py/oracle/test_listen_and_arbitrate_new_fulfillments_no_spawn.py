@@ -13,7 +13,7 @@ from alkahest_py import (
 )
 
 @pytest.mark.asyncio
-async def test_arbitrate_many_future(env, alice_client, bob_client):
+async def test_arbitrate_many_future(env, alice_client, bob_client, charlie_client):
     """Test arbitrate_many with Future mode: only processes new fulfillments"""
     # Setup test environment
 
@@ -24,7 +24,7 @@ async def test_arbitrate_many_future(env, alice_client, bob_client):
     price = {"address": env.mock_addresses.erc20_a, "value": 100}
     trusted_oracle_arbiter = env.addresses.arbiters_addresses.trusted_oracle_arbiter
 
-    demand_data = TrustedOracleArbiterDemandData(env.bob, [])
+    demand_data = TrustedOracleArbiterDemandData(env.charlie, [])
     demand_bytes = demand_data.encode_self()
 
     arbiter = {
@@ -40,7 +40,7 @@ async def test_arbitrate_many_future(env, alice_client, bob_client):
 
     # Decision function
     def decision_function(attestation, demand):
-        obligation_str = bob_client.extract_obligation_data(attestation)
+        obligation_str = charlie_client.extract_obligation_data(attestation)
         print(f"Arbitrating obligation: {obligation_str}")
         return obligation_str == "good"
 
@@ -52,7 +52,7 @@ async def test_arbitrate_many_future(env, alice_client, bob_client):
 
     # Start listening with Future mode (should not process past arbitrations)
     # Note: This test is timing-dependent and may be flaky
-    oracle_client = bob_client.oracle
+    oracle_client = charlie_client.oracle
 
     # With Future mode and short timeout, should process 0 past decisions
     decisions = await oracle_client.arbitrate_many(

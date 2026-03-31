@@ -90,7 +90,7 @@ async def run_worker(ctx: SchedulerContext, oracle_client) -> None:
 
 
 @pytest.mark.asyncio
-async def test_asynchronous_offchain_oracle_uptime_flow(env, alice_client, bob_client):
+async def test_asynchronous_offchain_oracle_uptime_flow(env, alice_client, bob_client, charlie_client):
     """
     Test an asynchronous offchain oracle that monitors service uptime.
 
@@ -101,13 +101,12 @@ async def test_asynchronous_offchain_oracle_uptime_flow(env, alice_client, bob_c
 
     Alice escrows payment for uptime monitoring service.
     Bob claims to provide the service at a URL.
-    The oracle (Bob, simplified) monitors the service asynchronously and arbitrates.
+    Charlie (the oracle) monitors the service asynchronously and arbitrates.
     Bob collects payment if uptime meets the threshold.
     """
 
-    # Simplification: Bob acts as the oracle
-    oracle_address = env.bob
-    oracle_client = bob_client
+    oracle_address = env.charlie
+    oracle_client = charlie_client
 
     # Step 1: Alice escrows ERC20 with uptime demand
     mock_erc20 = MockERC20(env.mock_addresses.erc20_a, env.god_wallet_provider)
