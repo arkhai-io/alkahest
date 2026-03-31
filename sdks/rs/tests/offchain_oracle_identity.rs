@@ -3,7 +3,7 @@ use std::{
 };
 
 use alkahest_rs::{
-    AlkahestClient, DefaultAlkahestClient,
+    DefaultAlkahestClient,
     clients::oracle::ArbitrationMode,
     contracts::obligations::StringObligation,
     extensions::{HasArbiters, HasOracle, HasStringObligation},
@@ -84,14 +84,7 @@ fn verify_identity(
 }
 
 async fn run_contextless_identity_example(test: &TestContext) -> eyre::Result<()> {
-    let charlie_signer: PrivateKeySigner = test.anvil.keys()[3].clone().into();
-    let charlie_client = AlkahestClient::with_base_extensions(
-        charlie_signer.clone(),
-        test.anvil.ws_endpoint_url(),
-        Some(test.addresses.clone()),
-    )
-    .await
-    .wrap_err("failed to build Charlie client")?;
+    let charlie_client = &test.charlie_client;
 
     let charlie_oracle = charlie_client.oracle().clone();
     let charlie_arbiters = charlie_client.arbiters().clone();

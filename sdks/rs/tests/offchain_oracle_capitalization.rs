@@ -3,7 +3,7 @@ use std::{
 };
 
 use alkahest_rs::{
-    AlkahestClient, DefaultAlkahestClient,
+    DefaultAlkahestClient,
     clients::oracle::ArbitrationMode,
     contracts::{self, obligations::StringObligation},
     extensions::{HasErc20, HasOracle, HasStringObligation},
@@ -11,7 +11,7 @@ use alkahest_rs::{
     types::{ArbiterData, Erc20Data},
     utils::{TestContext, setup_test_environment},
 };
-use alloy::{primitives::Bytes, signers::local::PrivateKeySigner};
+use alloy::primitives::Bytes;
 use eyre::{Result, WrapErr, eyre};
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -28,14 +28,7 @@ struct ShellOracleDemand {
 
 async fn run_synchronous_oracle_capitalization_example(test: &TestContext) -> eyre::Result<()> {
     // Charlie is the off-chain oracle Alice requests in her escrow demand.
-    let charlie_signer: PrivateKeySigner = test.anvil.keys()[3].clone().into();
-    let charlie_client = AlkahestClient::with_base_extensions(
-        charlie_signer.clone(),
-        test.anvil.ws_endpoint_url(),
-        Some(test.addresses.clone()),
-    )
-    .await
-    .wrap_err("failed to construct Charlie's client")?;
+    let charlie_client = &test.charlie_client;
     let charlie_oracle = charlie_client.oracle().clone();
     println!("step1: charlie oracle client set up");
     // Step 1. Alice escrows ERC20 collateral guarded by Charlie's oracle suite.
