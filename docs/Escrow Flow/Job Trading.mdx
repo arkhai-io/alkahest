@@ -1,3 +1,8 @@
+---
+title: 'pt 2 - Job Trading'
+slug: 'job-trading'
+---
+
 # Escrow Flow (pt 2 - Job Trading)
 
 Here's how Alice buys a compute job from Bob with her ERC-20 token, where the validity of the job result is decided by a mutually trusted third party Charlie:
@@ -9,13 +14,15 @@ Here's how Alice buys a compute job from Bob with her ERC-20 token, where the va
    1. If Charlie decides the fulfillment is valid, Bob can now use his result attestation from StringResultObligation to claim Alice's escrow.
    2. If not valid, Alice can wait for her escrow to expire and reclaim it.
 
-> **Note on frontrunning:** In the flow below, Bob's fulfillment data (the capitalized string) is visible in his transaction. Since the result is self-contained — anyone could copy "HELLO WORLD" and submit it as their own fulfillment — a frontrunner watching the mempool could steal Bob's work. If your fulfillment data has this property, see [Escrow Flow (pt 2b - Frontrunning Protection)](Escrow%20Flow%20(pt%202b%20-%20Frontrunning%20Protection).md) for how to prevent this using a commit-reveal mechanism.
-
 ## Depositing escrow using TrustedOracleArbiter
 
 You can use TrustedOracleArbiter when you want an off-chain judge to decide whether a deal has been validly fulfilled. The judge could be a real person or an automated program. In this example, we'll demand that Bob capitalize a string for us, and Charlie will verify off-chain whether Bob did so correctly. In practice, this might represent Bob doing a complex computation, and Charlie verifying if it meets Alice's criteria.
 
-**Solidity**
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+<Tabs groupId="language">
+<TabItem value="solidity" label="Solidity">
 
 ```solidity
 // Encode the demand with TrustedOracleArbiter
@@ -40,7 +47,8 @@ bytes32 escrowUid = erc20EscrowObligation.doObligation(
 );
 ```
 
-**TypeScript**
+</TabItem>
+<TabItem value="typescript" label="TypeScript">
 
 ```typescript
 import { encodeAbiParameters, parseAbiParameters } from "viem";
@@ -53,22 +61,40 @@ const demand = aliceClient.arbiters.encodeTrustedOracleDemand({
   ]),
 });
 
-// Deposit ERC-20 into escrow with permit (gasless approval - single step)
-const { attested: escrow } = await aliceClient.erc20.escrow.nonTierable.permitAndCreate(
-  { address: erc20Token, value: parseEther("100") },
-  { arbiter: trustedOracleArbiter, demand: demand },
+// Deposit ERC-20 into escrow with permit (gasless approval)
+const { attested: escrow } = await aliceClient.erc20.permitAndBuyWithErc20(
+  {
+    address: erc20Token,
+    value: parseEther("100"),
+  },
+  {
+    arbiter: trustedOracleArbiter,
+    demand: demand,
+  },
   BigInt(Math.floor(Date.now() / 1000) + 86400), // 24 hour expiration
 );
 
-// Or with approveAndCreate (combines approval + deposit in one SDK call)
-const { attested: escrow } = await aliceClient.erc20.escrow.nonTierable.approveAndCreate(
+// Or with traditional approve + deposit
+await aliceClient.erc20.approve(
   { address: erc20Token, value: parseEther("100") },
-  { arbiter: trustedOracleArbiter, demand: demand },
+  "escrow",
+);
+
+const { attested: escrow } = await aliceClient.erc20.buyWithErc20(
+  {
+    address: erc20Token,
+    value: parseEther("100"),
+  },
+  {
+    arbiter: trustedOracleArbiter,
+    demand: demand,
+  },
   BigInt(Math.floor(Date.now() / 1000) + 86400),
 );
 ```
 
-**Rust**
+</TabItem>
+<TabItem value="rust" label="Rust">
 
 ```rust
 use alloy::sol_types::SolValue;
@@ -81,34 +107,52 @@ let demand_data = ArbiterDemand {
 };
 let demand = demand_data.abi_encode().into();
 
-let price = Erc20Data {
-    address: erc20_token,
-    value: U256::from(100e18),
-};
-let item = ArbiterData {
-    arbiter: trusted_oracle_arbiter,
-    demand: demand,
-};
-
-// Deposit ERC-20 into escrow with permit (gasless approval - single step)
+// Deposit ERC-20 into escrow with permit (gasless approval)
 let escrow_receipt = alice_client
     .erc20()
-    .escrow()
-    .non_tierable()
-    .permit_and_create(&price, &item, expiration_time)
+    .permit_and_buy_with_erc20(
+        &Erc20Data {
+            address: erc20_token,
+            value: U256::from(100e18),
+        },
+        &ArbiterData {
+            arbiter: trusted_oracle_arbiter,
+            demand: demand,
+        },
+        expiration_time,
+    )
     .await?;
-let escrow_uid = DefaultAlkahestClient::get_attested_event(escrow_receipt)?.uid;
 
-// Or with approve_and_create (combines approval + deposit in one SDK call)
+// Or with traditional approve + deposit
+alice_client
+    .erc20()
+    .approve(
+        &Erc20Data {
+            address: erc20_token,
+            value: U256::from(100e18),
+        },
+        "escrow",
+    )
+    .await?;
+
 let escrow_receipt = alice_client
     .erc20()
-    .escrow()
-    .non_tierable()
-    .approve_and_create(&price, &item, expiration_time)
+    .buy_with_erc20(
+        &Erc20Data {
+            address: erc20_token,
+            value: U256::from(100e18),
+        },
+        &ArbiterData {
+            arbiter: trusted_oracle_arbiter,
+            demand: demand,
+        },
+        expiration_time,
+    )
     .await?;
 ```
 
-**Python**
+</TabItem>
+<TabItem value="python" label="Python">
 
 ```python
 from eth_abi import encode
@@ -119,43 +163,30 @@ from alkahest_py import TrustedOracleArbiterDemandData
 inner = encode(['string'], ['capitalize hello world'])
 demand = TrustedOracleArbiterDemandData(charlie, inner).encode_self()
 
-price = {"address": erc20_token, "value": 100}
-item = {"arbiter": trusted_oracle_arbiter, "demand": demand}
-
-# Deposit ERC-20 into escrow with permit (gasless approval - single step)
-escrow_receipt = await alice_client.erc20.escrow.non_tierable.permit_and_create(
-    price, item, int(time.time()) + 86400  # 24 hour expiration
+# Deposit ERC-20 into escrow with permit (gasless approval)
+escrow_receipt = await alice_client.erc20.permit_and_buy_with_erc20(
+    {"address": erc20_token, "value": 100},
+    {"arbiter": trusted_oracle_arbiter, "demand": demand},
+    int(time.time()) + 86400,  # 24 hour expiration
 )
 escrow_uid = escrow_receipt["log"]["uid"]
 
-# Or with approve_and_create (combines approval + deposit in one SDK call)
-escrow_receipt = await alice_client.erc20.escrow.non_tierable.approve_and_create(
-    price, item, int(time.time()) + 86400
+# Or with traditional approve + deposit
+await alice_client.erc20.approve(
+    {"address": erc20_token, "value": 100},
+    "escrow",
+)
+
+escrow_receipt = await alice_client.erc20.buy_with_erc20(
+    {"address": erc20_token, "value": 100},
+    {"arbiter": trusted_oracle_arbiter, "demand": demand},
+    int(time.time()) + 86400,
 )
 escrow_uid = escrow_receipt["log"]["uid"]
 ```
 
-**CLI**
-
-```bash
-# Step 1: Encode the TrustedOracleArbiter demand
-alkahest arbiter encode-demand \
-  --type trusted-oracle \
-  --oracle 0xCHARLIE_ADDRESS \
-  --data 0x   # extra data for the oracle (can embed the query)
-# Returns: { "success": true, "data": { "encoded": "0x..." } }
-
-# Step 2: Create the escrow with the encoded demand
-alkahest --private-key 0xALICE_KEY escrow create \
-  --erc20 \
-  --token 0xERC20_TOKEN \
-  --amount 100000000000000000000 \
-  --arbiter 0xTRUSTED_ORACLE_ARBITER \
-  --demand 0xENCODED_DEMAND \
-  --expiration 1735689600 \
-  --approve
-# Returns: { "success": true, "data": { "uid": "0xESCROW_UID", ... } }
-```
+</TabItem>
+</Tabs>
 
 ## Fulfilling a job and requesting arbitration
 
@@ -163,7 +194,8 @@ The `data` field of TrustedOracleArbiter doesn't enforce any kind of schema, so 
 
 Note that the fulfillment should contain a copy or reference to the demand it's intended to fulfill. This is needed to prevent a fulfillment that's valid for one query being used to claim another escrow demanding the same judge, but with a different query. Usually, this is done by setting the escrow attestation as the refUID of the fulfillment.
 
-**Solidity**
+<Tabs groupId="language">
+<TabItem value="solidity" label="Solidity">
 
 ```solidity
 // Bob fulfills the job with the result
@@ -176,7 +208,8 @@ bytes32 fulfillmentUid = stringObligation.doObligation(
 trustedOracleArbiter.requestArbitration(fulfillmentUid, charlie);
 ```
 
-**TypeScript**
+</TabItem>
+<TabItem value="typescript" label="TypeScript">
 
 ```typescript
 // Bob fulfills the job with the result
@@ -189,7 +222,8 @@ const { attested: fulfillment } = await bobClient.stringObligation.doObligation(
 await bobClient.oracle.requestArbitration(fulfillment.uid, charlie);
 ```
 
-**Rust**
+</TabItem>
+<TabItem value="rust" label="Rust">
 
 ```rust
 // Bob fulfills the job with the result
@@ -209,7 +243,8 @@ bob_client
     .await?;
 ```
 
-**Python**
+</TabItem>
+<TabItem value="python" label="Python">
 
 ```python
 # Bob fulfills the job with the result
@@ -219,27 +254,15 @@ fulfillment_uid = await bob_client.string_obligation.do_obligation(
 )
 ```
 
-**CLI**
-
-```bash
-# Bob: Submit the result as a string fulfillment referencing the escrow
-alkahest --private-key 0xBOB_KEY string create \
-  --item "HELLO WORLD" \
-  --ref-uid 0xESCROW_UID
-# Returns: { "success": true, "data": { "uid": "0xFULFILLMENT_UID", ... } }
-
-# Charlie (oracle): Arbitrate the fulfillment
-alkahest --private-key 0xCHARLIE_KEY arbiter arbitrate \
-  --obligation 0xFULFILLMENT_UID \
-  --demand 0xDEMAND_HEX \
-  --decision true
-```
+</TabItem>
+</Tabs>
 
 Charlie should listen for `ArbitrationRequested` events demanding him as the oracle. Then he can retrieve the attestation from EAS, decide if it's valid, and use the arbitrate function on TrustedOracleArbiter to submit his decision on-chain.
 
 Note that the `ArbitrationRequested` event doesn't have a reference to an escrow/demand. As explained above, the demand should be retrieved from the fulfillment attestation. If it's an escrow attestation referenced by refUID, you can get the attestation from EAS and parse the demand.
 
-**Solidity**
+<Tabs groupId="language">
+<TabItem value="solidity" label="Solidity">
 
 ```solidity
 // Charlie listens for ArbitrationRequested events (off-chain)
@@ -271,7 +294,8 @@ if (bytes(query).length > 10 && keccak256(bytes(substring(query, 0, 10))) == kec
 trustedOracleArbiter.arbitrate(fulfillmentUid, isValid);
 ```
 
-**TypeScript**
+</TabItem>
+<TabItem value="typescript" label="TypeScript">
 
 ```typescript
 // Charlie sets up an automatic validator
@@ -308,7 +332,8 @@ const { unwatch } = await charlieClient.oracle.listenAndArbitrateForEscrow({
 });
 ```
 
-**Rust**
+</TabItem>
+<TabItem value="rust" label="Rust">
 
 ```rust
 use alkahest_rs::oracle::{ArbitrateOptions, EscrowParams, FulfillmentParams};
@@ -360,7 +385,8 @@ let result = charlie_client
     .await?;
 ```
 
-**Python**
+</TabItem>
+<TabItem value="python" label="Python">
 
 ```python
 # Charlie sets up an automatic validator using the Python SDK
@@ -430,11 +456,15 @@ unwatch = await charlie_client.oracle.listen_and_arbitrate_for_escrow_no_spawn(
 )
 ```
 
+</TabItem>
+</Tabs>
+
 ## Waiting for arbitration and claiming escrow
 
 Bob can listen for the `ArbitrationMade` event from TrustedOracleArbiter, then claim the escrow if the decision was positive, or retry if not.
 
-**Solidity**
+<Tabs groupId="language">
+<TabItem value="solidity" label="Solidity">
 
 ```solidity
 // Bob listens for ArbitrationMade events (off-chain)
@@ -445,7 +475,8 @@ Bob can listen for the `ArbitrationMade` event from TrustedOracleArbiter, then c
 erc20EscrowObligation.collectEscrow(escrowUid, fulfillmentUid);
 ```
 
-**TypeScript**
+</TabItem>
+<TabItem value="typescript" label="TypeScript">
 
 ```typescript
 // Bob listens for arbitration decision
@@ -463,7 +494,7 @@ const checkArbitration = async () => {
   const logs = await publicClient.getFilterLogs({ filter });
   if (logs.length > 0 && logs[0].args.decision) {
     // Positive decision - Bob claims the escrow
-    await bobClient.erc20.escrow.nonTierable.collect(escrow.uid, fulfillment.uid);
+    await bobClient.erc20.collectEscrow(escrow.uid, fulfillment.uid);
     return true;
   }
   return false;
@@ -476,7 +507,8 @@ if (!result) {
 }
 ```
 
-**Rust**
+</TabItem>
+<TabItem value="rust" label="Rust">
 
 ```rust
 use alloy::rpc::types::Filter;
@@ -497,9 +529,7 @@ for log in logs {
         // Positive decision - Bob claims the escrow
         bob_client
             .erc20()
-            .escrow()
-            .non_tierable()
-            .collect(escrow_uid, fulfillment_uid)
+            .collect_escrow(escrow_uid, fulfillment_uid)
             .await?;
         println!("Successfully claimed escrow!");
     } else {
@@ -508,7 +538,8 @@ for log in logs {
 }
 ```
 
-**Python**
+</TabItem>
+<TabItem value="python" label="Python">
 
 ```python
 # Bob listens for arbitration decision
@@ -525,7 +556,7 @@ async def check_arbitration():
         decision = decode_log(logs[0], "ArbitrationMade")["decision"]
         if decision:
             # Positive decision - Bob claims the escrow
-            tx_hash = await bob_client.erc20.escrow.non_tierable.collect(
+            tx_hash = await bob_client.erc20.collect_escrow(
                 escrow_uid,
                 fulfillment_uid,
             )
@@ -540,68 +571,55 @@ async def check_arbitration():
 result = await check_arbitration()
 ```
 
-**CLI**
-
-```bash
-# Bob: Collect the escrow after successful arbitration
-alkahest --private-key 0xBOB_KEY escrow collect \
-  --erc20 \
-  --escrow-uid 0xESCROW_UID \
-  --fulfillment-uid 0xFULFILLMENT_UID
-
-# Or wait for fulfillment (blocks until someone fulfills and collects)
-alkahest --private-key 0xALICE_KEY escrow wait \
-  --erc20 --uid 0xESCROW_UID
-```
+</TabItem>
+</Tabs>
 
 If no valid fulfillment is made, Alice can reclaim the escrow after it expires.
 
-**Solidity**
+<Tabs groupId="language">
+<TabItem value="solidity" label="Solidity">
 
 ```solidity
 // Alice reclaims her expired escrow
 erc20EscrowObligation.reclaimExpired(escrowUid);
 ```
 
-**TypeScript**
+</TabItem>
+<TabItem value="typescript" label="TypeScript">
 
 ```typescript
 // Alice reclaims her expired escrow
-await aliceClient.erc20.escrow.nonTierable.reclaimExpired(escrow.uid);
+await aliceClient.erc20.reclaimExpired(escrow.uid);
 ```
 
-**Rust**
+</TabItem>
+<TabItem value="rust" label="Rust">
 
 ```rust
 // Alice reclaims her expired escrow
 alice_client
     .erc20()
-    .escrow()
-    .non_tierable()
     .reclaim_expired(escrow_uid)
     .await?;
 ```
 
-**Python**
+</TabItem>
+<TabItem value="python" label="Python">
 
 ```python
 # Alice reclaims her expired escrow
-await alice_client.erc20.escrow.non_tierable.reclaim_expired(escrow_uid)
+await alice_client.erc20.reclaim_expired(escrow_uid)
 ```
 
-**CLI**
-
-```bash
-# Alice reclaims her expired escrow
-alkahest --private-key 0xALICE_KEY escrow reclaim \
-  --erc20 --uid 0xESCROW_UID
-```
+</TabItem>
+</Tabs>
 
 ## SDK utilities
 
 The SDK provides functions to make it easier to set up an automatic validator server that interacts with TrustedOracleArbiter.
 
-**TypeScript**
+<Tabs groupId="language">
+<TabItem value="typescript" label="TypeScript">
 
 ```typescript
 // Set up an automatic oracle that validates string capitalization
@@ -672,7 +690,8 @@ const decisions = await charlieClient.oracle.arbitratePast({
 });
 ```
 
-**Rust**
+</TabItem>
+<TabItem value="rust" label="Rust">
 
 ```rust
 use alloy::dyn_abi::SolType;
@@ -780,7 +799,8 @@ let decisions = charlie_client
     .await?;
 ```
 
-**Python**
+</TabItem>
+<TabItem value="python" label="Python">
 
 ```python
 # Set up an automatic oracle that validates string capitalization
@@ -876,9 +896,13 @@ decisions = await charlie_client.oracle.arbitrate_past_sync(
 )
 ```
 
+</TabItem>
+</Tabs>
+
 It also provides functions for waiting for an escrow to be fulfilled (claimed), and for listening for the ArbitrationMade event.
 
-**TypeScript**
+<Tabs groupId="language">
+<TabItem value="typescript" label="TypeScript">
 
 ```typescript
 // Alice waits for her escrow to be fulfilled
@@ -906,7 +930,7 @@ const waitForArbitrationAndClaim = async () => {
       onLogs: async (logs) => {
         if (logs[0].args.decision) {
           // Positive decision - claim the escrow
-          await bobClient.erc20.escrow.nonTierable.collect(escrow.uid, fulfillment.uid);
+          await bobClient.erc20.collectEscrow(escrow.uid, fulfillment.uid);
           resolve({ success: true });
         } else {
           resolve({ success: false });
@@ -921,7 +945,8 @@ const waitForArbitrationAndClaim = async () => {
 const result = await waitForArbitrationAndClaim();
 ```
 
-**Rust**
+</TabItem>
+<TabItem value="rust" label="Rust">
 
 ```rust
 // Alice waits for her escrow to be fulfilled
@@ -962,9 +987,7 @@ while let Some(log) = stream.next().await {
         // Positive decision - claim the escrow
         bob_client
             .erc20()
-            .escrow()
-            .non_tierable()
-            .collect(escrow_uid, fulfillment_uid)
+            .collect_escrow(escrow_uid, fulfillment_uid)
             .await?;
         println!("Successfully claimed escrow!");
         break;
@@ -975,7 +998,8 @@ while let Some(log) = stream.next().await {
 }
 ```
 
-**Python**
+</TabItem>
+<TabItem value="python" label="Python">
 
 ```python
 import asyncio
@@ -1035,7 +1059,7 @@ async def wait_for_arbitration_and_claim(fulfillment_uid, escrow_uid, timeout=60
             decision = decode_log(logs[0], "ArbitrationMade")["decision"]
             if decision:
                 # Positive decision - claim the escrow
-                tx_hash = await bob_client.erc20.escrow.non_tierable.collect(escrow_uid, fulfillment_uid)
+                tx_hash = await bob_client.erc20.collect_escrow(escrow_uid, fulfillment_uid)
                 return {"success": True, "tx_hash": tx_hash}
             else:
                 return {"success": False, "reason": "Negative arbitration"}
@@ -1054,3 +1078,6 @@ if result["success"]:
 else:
     print(f"Failed to claim: {result['reason']}")
 ```
+
+</TabItem>
+</Tabs>
