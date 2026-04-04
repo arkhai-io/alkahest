@@ -1,3 +1,8 @@
+---
+title: 'Writing Fulfillment Contracts'
+slug: 'writing-fulfillment-contracts'
+---
+
 # Writing Fulfillment Contracts
 
 Fulfillment contracts are specialized obligation contracts that create attestations representing completed work, delivered results, or fulfilled conditions. These contracts work in tandem with arbiters to enable conditional release of escrowed assets or execution of on-chain actions.
@@ -240,8 +245,8 @@ contract CryptoSignatureObligation is BaseObligation, IArbiter {
     function checkObligation(
         Attestation memory obligation,
         bytes memory demand,
-        bytes32 fulfilling
-    ) external view override returns (bool) {
+        bytes32 counteroffer
+    ) external pure override returns (bool) {
         DemandData memory demandData = abi.decode(demand, (DemandData));
         ObligationData memory obligationData = decodeObligationData(
             obligation.data
