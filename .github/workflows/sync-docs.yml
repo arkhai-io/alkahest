@@ -1,0 +1,44 @@
+name: Sync docs to website
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/website/**'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout alkahest
+        uses: actions/checkout@v4
+        with:
+          path: alkahest
+
+      - name: Checkout website
+        uses: actions/checkout@v4
+        with:
+          repository: arkhai-io/website
+          token: ${{ secrets.DOCS_SYNC_TOKEN }}
+          path: website
+
+      - name: Sync docs
+        run: |
+          # Sync docs/website/ → website docs/, preserving website-only files (index.mdx)
+          rsync -av --delete \
+            --exclude='index.mdx' \
+            alkahest/docs/website/ website/docs/
+
+      - name: Create PR
+        uses: peter-evans/create-pull-request@v7
+        with:
+          path: website
+          token: ${{ secrets.DOCS_SYNC_TOKEN }}
+          commit-message: 'docs: sync from alkahest repo'
+          title: 'docs: sync from alkahest repo'
+          body: |
+            Auto-generated PR syncing docs from [arkhai-io/alkahest](https://github.com/arkhai-io/alkahest).
+
+            Triggered by ${{ github.event.head_commit.url }}
+          branch: docs-sync
+          delete-branch: true
