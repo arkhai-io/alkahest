@@ -714,21 +714,20 @@ move |awd: &AttestationWithDemand| {
 ### Step 3: Understanding the data flow
 
 ```text
-Fulfillment Attestation
-  └─ data: StringObligation { item: "tr '[:lower:]' '[:upper:]'" }
-  └─ refUID: points to escrow ──┐
-                                 │
-                                 ▼
-                         Escrow Attestation
-                           └─ data: ERC20EscrowObligation {
-                                arbiter: TrustedOracleArbiter address,
-                                demand: TrustedOracleArbiter::DemandData {
-                                  oracle: charlie_address,
-                                  data: CommandTestDemand (JSON) {
-                                    test_cases: [...]
-                                  }
-                                }
-                              }
+ArbitrationRequested Event
+  └─ obligation: fulfillment UID
+  └─ oracle: charlie_address
+  └─ demand: bytes (your custom demand format)
+        │
+        ▼
+  Callback receives (attestation, demand)
+        │
+        ├─ attestation: Fulfillment Attestation
+        │    └─ data: StringObligation { item: "tr '[:lower:]' '[:upper:]'" }
+        │    └─ refUID: points to escrow
+        │
+        └─ demand: bytes (passed directly from event)
+             └─ Your custom format (e.g., JSON with test_cases)
 ```
 
 The demand data is passed directly to your callback via the `ArbitrationRequested` event, so you don't need to fetch the escrow attestation from chain.

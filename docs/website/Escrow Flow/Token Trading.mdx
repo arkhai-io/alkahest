@@ -17,7 +17,6 @@ Here's the process for Alice to buy an ERC-721 token from Bob with her ERC-20 to
 ## Depositing escrow
 
 First, make your demand with ERC721PaymentObligation.ObligationData.
-
 <Tabs groupId="language">
 <TabItem value="solidity" label="Solidity">
 
@@ -33,35 +32,35 @@ bytes memory demand = abi.encode(
 ```
 
 </TabItem>
-<TabItem value="typescript" label="Viem">
+<TabItem value="viem" label="Viem">
 
 ```typescript
-import { encodeAbiParameters, parseAbiParameters } from 'viem';
+import { encodeAbiParameters, parseAbiParameters } from "viem";
 
 // Encode the demand for the ERC-721 token Alice wants
 const demand = encodeAbiParameters(
-  parseAbiParameters('(address token, uint256 tokenId, address payee)'),
+  parseAbiParameters("(address token, uint256 tokenId, address payee)"),
   [
     {
-      token: '0x1234...', // ERC-721 token address
+      token: "0x1234...", // ERC-721 token address
       tokenId: 42n, // Token ID Alice wants
       payee: alice, // Alice's address
     },
-  ]
+  ],
 );
 ```
 
 </TabItem>
-<TabItem value="rust" label="Alloy">
+<TabItem value="alloy" label="Alloy">
 
 ```rust
 use alloy::sol_types::SolValue;
 
 // Define the demand struct
 let demand_data = contracts::ERC721PaymentObligation::ObligationData {
-token: token_address,
-tokenId: U256::from(42),
-payee: alice_address,
+    token: token_address,
+    tokenId: U256::from(42),
+    payee: alice_address,
 };
 
 // Encode the demand
@@ -72,7 +71,6 @@ let demand = demand_data.abi_encode().into();
 </Tabs>
 
 Then, approve the ERC20EscrowObligation contract to spend the token you're paying with, and deposit it into escrow using ERC20EscrowObligation.doObligation.
-
 <Tabs groupId="language">
 <TabItem value="solidity" label="Solidity">
 
@@ -82,37 +80,37 @@ IERC20(erc20Token).approve(address(erc20EscrowObligation), 1000 * 10**18);
 
 // Deposit into escrow with the demand
 bytes32 escrowUid = erc20EscrowObligation.doObligation(
-  ERC20EscrowObligation.ObligationData({
-      token: erc20Token,
-      amount: 1000 * 10**18,
-      arbiter: address(erc721PaymentObligation),
-      demand: demand
-  }),
-  block.timestamp + 86400 // 24 hour expiration
+    ERC20EscrowObligation.ObligationData({
+        token: erc20Token,
+        amount: 1000 * 10**18,
+        arbiter: address(erc721PaymentObligation),
+        demand: demand
+    }),
+    block.timestamp + 86400 // 24 hour expiration
 );
 ```
 
 </TabItem>
-<TabItem value="typescript" label="Viem">
+<TabItem value="viem" label="Viem">
 
 ```typescript
 // Approve the escrow contract to spend Alice's ERC-20 tokens
 await walletClient.writeContract({
   address: erc20Token,
   abi: erc20Abi,
-  functionName: 'approve',
-  args: [erc20EscrowObligation, parseEther('1000')],
+  functionName: "approve",
+  args: [erc20EscrowObligation, parseEther("1000")],
 });
 
 // Deposit into escrow with the demand
 const hash = await walletClient.writeContract({
   address: erc20EscrowObligation,
   abi: erc20EscrowAbi,
-  functionName: 'doObligation',
+  functionName: "doObligation",
   args: [
     {
       token: erc20Token,
-      amount: parseEther('1000'),
+      amount: parseEther("1000"),
       arbiter: erc721PaymentObligation,
       demand: demand,
     },
@@ -122,7 +120,7 @@ const hash = await walletClient.writeContract({
 ```
 
 </TabItem>
-<TabItem value="rust" label="Alloy">
+<TabItem value="alloy" label="Alloy">
 
 ```rust
 // Approve the escrow contract to spend Alice's ERC-20 tokens
@@ -159,7 +157,6 @@ let receipt = escrow_contract
 </Tabs>
 
 If you want to buy a different kind of token, use the ObligationData struct from the corresponding PaymentObligation contract instead (e.g. ERC20PaymentObligation for buying an ERC-20 token, or TokenBundlePaymentObligation for a bundle of many token types).
-
 <Tabs groupId="language">
 <TabItem value="solidity" label="Solidity">
 
@@ -189,25 +186,25 @@ bytes memory bundleDemand = abi.encode(
 ```
 
 </TabItem>
-<TabItem value="typescript" label="Viem">
+<TabItem value="viem" label="Viem">
 
 ```typescript
 // Example: Demanding ERC-20 payment instead
 const erc20Demand = encodeAbiParameters(
-  parseAbiParameters('(address token, uint256 amount, address payee)'),
+  parseAbiParameters("(address token, uint256 amount, address payee)"),
   [
     {
-      token: '0x5678...',
-      amount: parseEther('500'),
+      token: "0x5678...",
+      amount: parseEther("500"),
       payee: alice,
     },
-  ]
+  ],
 );
 
 // Example: Demanding a token bundle
 const bundleDemand = encodeAbiParameters(
   parseAbiParameters(
-    '(address[] erc20Tokens, uint256[] erc20Amounts, address[] erc721Tokens, uint256[] erc721TokenIds, address[] erc1155Tokens, uint256[] erc1155TokenIds, uint256[] erc1155Amounts, address payee)'
+    "(address[] erc20Tokens, uint256[] erc20Amounts, address[] erc721Tokens, uint256[] erc721TokenIds, address[] erc1155Tokens, uint256[] erc1155TokenIds, uint256[] erc1155Amounts, address payee)",
   ),
   [
     {
@@ -220,12 +217,12 @@ const bundleDemand = encodeAbiParameters(
       erc1155Amounts: [5n],
       payee: alice,
     },
-  ]
+  ],
 );
 ```
 
 </TabItem>
-<TabItem value="rust" label="Alloy">
+<TabItem value="alloy" label="Alloy">
 
 ```rust
 // Example: Demanding ERC-20 payment instead
@@ -251,10 +248,54 @@ let bundle_demand = bundle_demand_data.abi_encode().into();
 ```
 
 </TabItem>
+<TabItem value="cli" label="CLI">
+
+The CLI's `barter create` command wraps the barter utility contracts to combine escrow + demand in one step. For manual escrow creation, use `escrow create`.
+
+```bash
+# Alice: Create ERC20 escrow demanding an ERC721 token
+# First, get the ERC721PaymentObligation address for the demand arbiter
+alkahest config show --chain base-sepolia
+# Use the erc721PaymentObligation address as --arbiter
+
+# The demand is the ABI-encoded ERC721PaymentObligation.ObligationData
+# (token address, tokenId, payee=Alice)
+# You can construct this manually or use the SDK for encoding
+
+# Create the escrow
+alkahest --private-key 0xALICE_KEY escrow create \
+  --erc20 \
+  --token 0xERC20_TOKEN \
+  --amount 1000000000000000000000 \
+  --arbiter 0xERC721_PAYMENT_OBLIGATION \
+  --demand 0xENCODED_DEMAND \
+  --expiration 1735689600 \
+  --approve
+```
+
+Or use barter utilities for atomic swaps (recommended for simple token-for-token trades):
+
+
+```bash
+# Alice: Offer ERC20 for ERC20 (most common case)
+alkahest --private-key 0xALICE_KEY barter create \
+  --bid-type erc20 --ask-type erc20 \
+  --bid-token 0xUSDC --bid-amount 1000000000 \
+  --ask-token 0xEURC --ask-amount 900000000 \
+  --expiration 1735689600
+
+# Alice: Offer ERC20 for ERC721
+alkahest --private-key 0xALICE_KEY barter create \
+  --bid-type erc20 --ask-type erc721 \
+  --bid-token 0xUSDC --bid-amount 1000000000 \
+  --ask-token 0xNFT --ask-amount 0 --ask-token-id 42 \
+  --expiration 1735689600
+```
+
+</TabItem>
 </Tabs>
 
 If you want to pay with a different kind of token, use the corresponding EscrowObligation contract instead when calling doObligation. Remember to approve the EscrowObligation contract to spend the token you're paying with (via setApprovalForAll for ERC-1155), and to approve all tokens in the bundle if you're using TokenBundleEscrowObligation.
-
 <Tabs groupId="language">
 <TabItem value="solidity" label="Solidity">
 
@@ -286,20 +327,20 @@ bytes32 escrowUid = erc1155EscrowObligation.doObligation(
 ```
 
 </TabItem>
-<TabItem value="typescript" label="Viem">
+<TabItem value="viem" label="Viem">
 
 ```typescript
 // Example: Escrowing an ERC-721 token
 await walletClient.writeContract({
   address: erc721Token,
   abi: erc721Abi,
-  functionName: 'approve',
+  functionName: "approve",
   args: [erc721EscrowObligation, tokenId],
 });
 const hash = await walletClient.writeContract({
   address: erc721EscrowObligation,
   abi: erc721EscrowAbi,
-  functionName: 'doObligation',
+  functionName: "doObligation",
   args: [
     {
       token: erc721Token,
@@ -315,13 +356,13 @@ const hash = await walletClient.writeContract({
 await walletClient.writeContract({
   address: erc1155Token,
   abi: erc1155Abi,
-  functionName: 'setApprovalForAll',
+  functionName: "setApprovalForAll",
   args: [erc1155EscrowObligation, true],
 });
 ```
 
 </TabItem>
-<TabItem value="rust" label="Alloy">
+<TabItem value="alloy" label="Alloy">
 
 ```rust
 // Example: Escrowing an ERC-721 token
@@ -368,7 +409,6 @@ erc1155_contract
 ## Fulfilling and claiming escrow
 
 You can fulfill demands for ERC-721 payments with ERC721PaymentObligation.doObligation. Remember to approve the contract to use your token first. Calling doObligation will return an attestation UID that you can use to claim the escrow.
-
 <Tabs groupId="language">
 <TabItem value="solidity" label="Solidity">
 
@@ -390,14 +430,14 @@ erc20EscrowObligation.collectEscrow(escrowUid, paymentUid);
 ```
 
 </TabItem>
-<TabItem value="typescript" label="Viem">
+<TabItem value="viem" label="Viem">
 
 ```typescript
 // Bob approves the payment contract to transfer his ERC-721
 await walletClient.writeContract({
   address: erc721Token,
   abi: erc721Abi,
-  functionName: 'approve',
+  functionName: "approve",
   args: [erc721PaymentObligation, tokenId],
 });
 
@@ -405,7 +445,7 @@ await walletClient.writeContract({
 const paymentTx = await walletClient.writeContract({
   address: erc721PaymentObligation,
   abi: erc721PaymentAbi,
-  functionName: 'doObligation',
+  functionName: "doObligation",
   args: [
     {
       token: erc721Token,
@@ -423,13 +463,13 @@ const paymentUid = getAttestedEventFromReceipt(paymentReceipt).uid;
 await walletClient.writeContract({
   address: erc20EscrowObligation,
   abi: erc20EscrowAbi,
-  functionName: 'collectEscrow',
+  functionName: "collectEscrow",
   args: [escrowUid, paymentUid],
 });
 ```
 
 </TabItem>
-<TabItem value="rust" label="Alloy">
+<TabItem value="alloy" label="Alloy">
 
 ```rust
 // Bob approves the payment contract to transfer his ERC-721
@@ -472,10 +512,25 @@ escrow_contract
 ```
 
 </TabItem>
+<TabItem value="cli" label="CLI">
+
+```bash
+# Bob: Fulfill a barter escrow (counterparty pays)
+alkahest --private-key 0xBOB_KEY barter fulfill \
+  --uid 0xESCROW_UID \
+  --bid-type erc20 --ask-type erc20
+
+# Or for manual escrow collection (after separately creating a payment):
+alkahest --private-key 0xBOB_KEY escrow collect \
+  --erc20 \
+  --escrow-uid 0xESCROW_UID \
+  --fulfillment-uid 0xPAYMENT_UID
+```
+
+</TabItem>
 </Tabs>
 
 Use the corresponding PaymentObligation contract to fulfill demands for other tokens.
-
 <Tabs groupId="language">
 <TabItem value="solidity" label="Solidity">
 
@@ -503,20 +558,20 @@ bytes32 paymentUid = bundlePaymentObligation.doObligation(bundleData);
 ```
 
 </TabItem>
-<TabItem value="typescript" label="Viem">
+<TabItem value="viem" label="Viem">
 
 ```typescript
 // Example: Fulfilling ERC-20 payment demand
 await walletClient.writeContract({
   address: erc20Token,
   abi: erc20Abi,
-  functionName: 'approve',
+  functionName: "approve",
   args: [erc20PaymentObligation, amount],
 });
 const paymentTx = await walletClient.writeContract({
   address: erc20PaymentObligation,
   abi: erc20PaymentAbi,
-  functionName: 'doObligation',
+  functionName: "doObligation",
   args: [
     {
       token: erc20Token,
@@ -532,7 +587,7 @@ for (const token of bundleData.erc20Tokens) {
   await walletClient.writeContract({
     address: token.address,
     abi: erc20Abi,
-    functionName: 'approve',
+    functionName: "approve",
     args: [bundlePaymentObligation, token.amount],
   });
 }
@@ -540,7 +595,7 @@ for (const token of bundleData.erc20Tokens) {
 ```
 
 </TabItem>
-<TabItem value="rust" label="Alloy">
+<TabItem value="alloy" label="Alloy">
 
 ```rust
 // Example: Fulfilling ERC-20 payment demand
@@ -597,20 +652,20 @@ erc20EscrowObligation.reclaimExpired(escrowUid);
 ```
 
 </TabItem>
-<TabItem value="typescript" label="Viem">
+<TabItem value="viem" label="Viem">
 
 ```typescript
 // Alice reclaims her expired escrow
 await walletClient.writeContract({
   address: erc20EscrowObligation,
   abi: erc20EscrowAbi,
-  functionName: 'reclaimExpired',
+  functionName: "reclaimExpired",
   args: [escrowUid],
 });
 ```
 
 </TabItem>
-<TabItem value="rust" label="Alloy">
+<TabItem value="alloy" label="Alloy">
 
 ```rust
 // Alice reclaims her expired escrow
@@ -627,13 +682,24 @@ escrow_contract
 ```
 
 </TabItem>
+<TabItem value="cli" label="CLI">
+
+```bash
+# Alice reclaims her expired escrow
+alkahest --private-key 0xALICE_KEY escrow reclaim \
+  --erc20 --uid 0xESCROW_UID
+```
+
+</TabItem>
 </Tabs>
 
 ## Utility contracts and SDK functions
 
 There are utility contracts that provide a convenient interface for doing token trades atomically, and SDKs in TypeScript, Rust, and Python that wrap these. The SDKs additionally have functions that generate ERC-20 permits to enable easy approval and escrow/payment in one transaction.
 
-The functions to escrow one type of token, demanding any other type (buyYforX), and to fulfill any type of escrow demanding that token type (payXforY), are available in \[TokenType]BarterUtils.sol, or the corresponding module of each SDK (e.g. client.erc20, client.tokenBundle...). Available token types are native tokens (ETH), ERC-20, ERC-721, ERC-1155, and bundles of all of these together.
+The functions to escrow one type of token, demanding any other type (buyYforX), and to fulfill any type of escrow demanding that token type (payXforY), are available in \[TokenType]BarterUtils.sol, or the corresponding barter module of each SDK (e.g. `client.erc20.barter`, `client.tokenBundle.barter`...). Available token types are native tokens (ETH), ERC-20, ERC-721, ERC-1155, and bundles of all of these together.
+
+For ERC-20 tokens, `permit_and_*` functions combine approval and action in a single gasless step. For escrow and payment modules, `approve_and_create` and `approve_and_pay` functions combine approval and action in two transactions but a single SDK call.
 
 <Tabs groupId="language">
 <TabItem value="solidity" label="Solidity">
@@ -664,28 +730,22 @@ bytes32 escrowUid = erc20BarterUtils.permitAndBuyErc721WithErc20(
 <TabItem value="typescript" label="TypeScript">
 
 ```typescript
-// Alice: Create escrow offering ERC-20 for ERC-721
-const escrow = await aliceClient.erc20.buyErc721WithErc20(
+// Alice: Create escrow offering ERC-20 for ERC-721 (using permit for gasless approval)
+const { hash, attested } = await aliceClient.erc20.barter.permitAndBuyErc721WithErc20(
   { address: usdcToken, value: 1000000000n }, // bid
   { address: erc721Token, id: 42n }, // ask
-  0n // no expiration
+  0n, // no expiration
 );
 
-// Bob: Fulfill escrow offering ERC-721 for ERC-20
-const payment = await bobClient.erc721.payErc721ForErc20(escrow.attested.uid);
+// Bob: Approve and fulfill escrow offering ERC-721 for ERC-20
+await bobClient.erc721.util.approve({ address: erc721Token, id: 42n }, "barter");
+const payment = await bobClient.erc721.barter.payErc721ForErc20(attested.uid);
 
-// Or use permit for gasless approval (ERC-20 only)
-const escrow = await aliceClient.erc20.permitAndBuyErc721WithErc20(
-  { address: usdcToken, value: 1000000000n },
-  { address: erc721Token, id: 42n },
-  0n
-);
-
-// Can also use direct escrow/payment for custom demands
-const escrow = await aliceClient.erc20.buyWithErc20(
+// Can also use direct escrow/payment for custom demands (approveAndCreate combines both steps)
+const escrow = await aliceClient.erc20.escrow.nonTierable.approveAndCreate(
   { address: usdcToken, value: 1000000000n },
   { arbiter: customArbiter, demand: customDemand },
-  0n
+  0n,
 );
 ```
 
@@ -693,52 +753,38 @@ const escrow = await aliceClient.erc20.buyWithErc20(
 <TabItem value="rust" label="Rust">
 
 ```rust
-// Alice: Create escrow offering ERC-20 for ERC-721
+// Alice: Create escrow offering ERC-20 for ERC-721 (using permit for gasless approval)
+let bid = Erc20Data {
+    address: usdc_token,
+    value: U256::from(1000000000),
+};
+let ask = Erc721Data {
+    address: erc721_token,
+    id: U256::from(42),
+};
+
 let escrow_receipt = alice_client
     .erc20()
-    .buy_erc721_for_erc20(
-        &Erc20Data {
-            address: usdc_token,
-            value: U256::from(1000000000),
-        },
-        &Erc721Data {
-            address: erc721_token,
-            id: U256::from(42),
-        },
-        0,  // no expiration
-    )
+    .barter()
+    .permit_and_buy_erc721_for_erc20(&bid, &ask, 0)
     .await?;
+let escrow_uid = DefaultAlkahestClient::get_attested_event(escrow_receipt)?.uid;
 
-// Bob: Fulfill escrow offering ERC-721 for ERC-20
+// Bob: Approve and fulfill escrow offering ERC-721 for ERC-20
+bob_client.erc721().approve(&ask, ApprovalPurpose::BarterUtils).await?;
 let payment_receipt = bob_client
     .erc721()
+    .barter()
     .pay_erc721_for_erc20(escrow_uid)
     .await?;
 
-// Or use permit for gasless approval (ERC-20 only)
+// Can also use direct escrow/payment for custom demands (approve_and_create combines both steps)
 let escrow_receipt = alice_client
     .erc20()
-    .permit_and_buy_erc721_for_erc20(
-        &Erc20Data {
-            address: usdc_token,
-            value: U256::from(1000000000),
-        },
-        &Erc721Data {
-            address: erc721_token,
-            id: U256::from(42),
-        },
-        0,
-    )
-    .await?;
-
-// Can also use direct escrow/payment for custom demands
-let escrow_receipt = alice_client
-    .erc20()
-    .buy_with_erc20(
-        &Erc20Data {
-            address: usdc_token,
-            value: U256::from(1000000000),
-        },
+    .escrow()
+    .non_tierable()
+    .approve_and_create(
+        &bid,
         &ArbiterData {
             arbiter: custom_arbiter,
             demand: custom_demand,
@@ -752,40 +798,61 @@ let escrow_receipt = alice_client
 <TabItem value="python" label="Python">
 
 ```python
-# Alice: Create escrow offering ERC-20 for ERC-721
-escrow = await alice_client.erc20.buy_erc721_for_erc20(
-    {"address": usdc_token, "value": 1000000000},  # bid
-    {"address": erc721_token, "id": 42},           # ask
-    0                                               # no expiration
-)
+# Alice: Create escrow offering ERC-20 for ERC-721 (using permit for gasless approval)
+bid = {"address": usdc_token, "value": 1000000000}
+ask = {"address": erc721_token, "id": 42}
 
-# Bob: Fulfill escrow offering ERC-721 for ERC-20
-payment = await bob_client.erc721.pay_erc721_for_erc20(escrow["log"]["uid"])
+escrow = await alice_client.erc20.barter.permit_and_buy_erc721_for_erc20(bid, ask, 0)
 
-# Or use permit for gasless approval (ERC-20 only)
-escrow = await alice_client.erc20.permit_and_buy_erc721_for_erc20(
-    {"address": usdc_token, "value": 1000000000},
-    {"address": erc721_token, "id": 42},
-    0
-)
+# Bob: Approve and fulfill escrow offering ERC-721 for ERC-20
+await bob_client.erc721.util.approve(ask, "barter")
+payment = await bob_client.erc721.barter.pay_erc721_for_erc20(escrow["log"]["uid"])
 
-# Can also use direct escrow/payment for custom demands
-escrow = await alice_client.erc20.buy_with_erc20(
+# Example of a complete ERC20-for-ERC20 trade using permit functions
+bid = {"address": usdc_token, "value": 1000}
+ask = {"address": eurc_token, "value": 900}
+
+# Alice creates escrow (permit handles approval)
+escrow = await alice_client.erc20.barter.permit_and_buy_erc20_for_erc20(bid, ask, 0)
+
+# Bob fulfills escrow (permit handles approval)
+payment = await bob_client.erc20.barter.permit_and_pay_erc20_for_erc20(escrow["log"]["uid"])
+
+# Can also use direct escrow/payment for custom demands (approve_and_create combines both steps)
+escrow = await alice_client.erc20.escrow.non_tierable.approve_and_create(
     {"address": usdc_token, "value": 1000000000},
     {"arbiter": custom_arbiter, "demand": custom_demand},
     0
 )
+```
 
-# Example of a complete ERC20-for-ERC20 trade
-# Alice creates escrow
-escrow = await alice_client.erc20.buy_erc20_for_erc20(
-    {"address": usdc_token, "value": 1000},
-    {"address": eurc_token, "value": 900},
-    0
-)
+</TabItem>
+<TabItem value="cli" label="CLI">
 
-# Bob fulfills escrow
-payment = await bob_client.erc20.pay_erc20_for_erc20(escrow["log"]["uid"])
+The CLI wraps the barter utility contracts. Use `--permit` for gasless ERC-20 approval:
+
+```bash
+# Alice: Create barter (ERC20 for ERC20) with permit
+alkahest --private-key 0xALICE_KEY barter create \
+  --bid-type erc20 --ask-type erc20 \
+  --bid-token 0xUSDC --bid-amount 1000000000 \
+  --ask-token 0xEURC --ask-amount 900000000 \
+  --expiration 1735689600 \
+  --permit
+
+# Bob: Fulfill the barter
+alkahest --private-key 0xBOB_KEY barter fulfill \
+  --uid 0xBARTER_UID \
+  --bid-type erc20 --ask-type erc20 \
+  --permit
+
+# Or use escrow create with --approve for non-barter escrows
+alkahest --private-key 0xALICE_KEY escrow create \
+  --erc20 \
+  --token 0xUSDC --amount 1000000000 \
+  --arbiter 0xARBITER --demand 0xDEMAND \
+  --expiration 1735689600 \
+  --approve
 ```
 
 </TabItem>
