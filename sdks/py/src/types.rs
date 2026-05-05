@@ -322,6 +322,7 @@ impl TryFrom<Erc20Data> for alkahest_rs::types::Erc20Data {
 }
 
 use pyo3::prelude::*;
+use pyo3::types::PyType;
 
 #[pyclass]
 #[derive(Clone)]
@@ -565,6 +566,65 @@ impl From<&alkahest_rs::DefaultExtensionConfig> for PyDefaultExtensionConfig {
             string_obligation_addresses: Some(PyStringObligationAddresses::from(&data.string_obligation_addresses)),
             commit_reveal_obligation_addresses: Some(PyCommitRevealObligationAddresses::from(&data.commit_reveal_obligation_addresses)),
         }
+    }
+}
+
+#[pymethods]
+impl PyDefaultExtensionConfig {
+    /// Return the address config for one of the SDK's known chains.
+    ///
+    /// Mirrors the TS SDK's chain-name-keyed lookup. Accepted names:
+    ///   "base_sepolia"        — default; matches the Rust `Default` impl
+    ///   "ethereum_sepolia"
+    ///   "ethereum_mainnet"
+    ///   "filecoin_calibration"
+    ///   "genlayer_bradbury"
+    ///
+    /// For local anvil or any chain not in this list, construct a
+    /// `DefaultExtensionConfig` manually from the address sub-types.
+    #[classmethod]
+    fn for_chain(_cls: &Bound<'_, PyType>, name: &str) -> PyResult<Self> {
+        let normalized = name.trim().to_ascii_lowercase();
+        let cfg: &alkahest_rs::DefaultExtensionConfig = match normalized.as_str() {
+            "base_sepolia" => &alkahest_rs::addresses::BASE_SEPOLIA_ADDRESSES,
+            "ethereum_sepolia" => &alkahest_rs::addresses::ETHEREUM_SEPOLIA_ADDRESSES,
+            "ethereum_mainnet" | "ethereum" | "mainnet" => &alkahest_rs::addresses::ETHEREUM_ADDRESSES,
+            "filecoin_calibration" => &alkahest_rs::addresses::FILECOIN_CALIBRATION_ADDRESSES,
+            "genlayer_bradbury" => &alkahest_rs::addresses::GENLAYER_BRADBURY_ADDRESSES,
+            other => {
+                return Err(PyValueError::new_err(format!(
+                    "Unknown chain '{}'. Supported: {:?}",
+                    other,
+                    Self::supported_chains_inner(),
+                )));
+            }
+        };
+        Ok(Self::from(cfg))
+    }
+
+    /// Return the list of chain names accepted by `for_chain`.
+    #[classmethod]
+    fn supported_chains(_cls: &Bound<'_, PyType>) -> Vec<String> {
+        Self::supported_chains_inner()
+    }
+
+    /// Return the SDK default config (Base Sepolia). Equivalent to passing
+    /// `None` as `address_config` to `AlkahestClient`, but explicit.
+    #[classmethod]
+    fn default_config(_cls: &Bound<'_, PyType>) -> Self {
+        Self::from(&alkahest_rs::addresses::BASE_SEPOLIA_ADDRESSES)
+    }
+}
+
+impl PyDefaultExtensionConfig {
+    fn supported_chains_inner() -> Vec<String> {
+        vec![
+            "base_sepolia".to_string(),
+            "ethereum_sepolia".to_string(),
+            "ethereum_mainnet".to_string(),
+            "filecoin_calibration".to_string(),
+            "genlayer_bradbury".to_string(),
+        ]
     }
 }
 
