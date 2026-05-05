@@ -53,6 +53,7 @@ from .alkahest_py import (
     PyStringObligationAddresses as StringObligationAddresses,
     PyCommitRevealObligationAddresses as CommitRevealObligationAddresses,
     PyArbitersAddresses as ArbitersAddresses,
+    PyDefaultExtensionConfig as DefaultExtensionConfig,
     # IEAS Types
     PyAttestation as Attestation,
     PyAttestationRequest as AttestationRequest,
@@ -116,6 +117,7 @@ __all__ = [
     "StringObligationAddresses",
     "CommitRevealObligationAddresses",
     "ArbitersAddresses",
+    "DefaultExtensionConfig",
     # IEAS Types
     "Attestation",
     "AttestationRequest",
