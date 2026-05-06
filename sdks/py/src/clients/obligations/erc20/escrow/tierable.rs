@@ -3,9 +3,12 @@
 //! Tierable escrows support multiple fulfillments per escrow (1:many relationship).
 
 use alkahest_rs::extensions::Erc20Module;
+use alloy::primitives::FixedBytes;
 use pyo3::{pyclass, pymethods, PyResult};
 
 use crate::{
+    clients::obligations::erc20::PyERC20EscrowObligationData,
+    contract::PyDecodedAttestation,
     error_handling::{map_eyre_to_pyerr, map_parse_to_pyerr},
     get_attested_event,
     types::{ArbiterData, AttestedLog, Erc20Data, LogWithHash},
@@ -26,6 +29,27 @@ impl Tierable {
 
 #[pymethods]
 impl Tierable {
+    /// Gets an escrow obligation by its attestation UID.
+    pub fn get_obligation<'py>(
+        &self,
+        py: pyo3::Python<'py>,
+        uid: String,
+    ) -> PyResult<pyo3::Bound<'py, pyo3::PyAny>> {
+        let inner = self.inner.clone();
+        pyo3_async_runtimes::tokio::future_into_py(py, async move {
+            let uid: FixedBytes<32> = uid.parse().map_err(map_parse_to_pyerr)?;
+            let obligation = inner
+                .escrow()
+                .tierable()
+                .get_obligation(uid)
+                .await
+                .map_err(map_eyre_to_pyerr)?;
+            Ok(PyDecodedAttestation::<PyERC20EscrowObligationData>::from(
+                obligation,
+            ))
+        })
+    }
+
     /// Creates an escrow arrangement with ERC20 tokens for a custom demand.
     ///
     /// Args:

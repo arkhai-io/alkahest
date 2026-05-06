@@ -3,9 +3,12 @@
 //! Non-tierable escrows have a 1:1 relationship between escrow and fulfillment.
 
 use alkahest_rs::extensions::NativeTokenModule;
+use alloy::primitives::FixedBytes;
 use pyo3::{pyclass, pymethods, PyResult};
 
 use crate::{
+    clients::obligations::native_token::PyNativeTokenEscrowObligationData,
+    contract::PyDecodedAttestation,
     error_handling::{map_eyre_to_pyerr, map_parse_to_pyerr},
     get_attested_event,
     types::{ArbiterData, AttestedLog, LogWithHash, NativeTokenData},
@@ -26,6 +29,25 @@ impl NonTierable {
 
 #[pymethods]
 impl NonTierable {
+    /// Gets an escrow obligation by its attestation UID.
+    pub fn get_obligation<'py>(
+        &self,
+        py: pyo3::Python<'py>,
+        uid: String,
+    ) -> PyResult<pyo3::Bound<'py, pyo3::PyAny>> {
+        let inner = self.inner.clone();
+        pyo3_async_runtimes::tokio::future_into_py(py, async move {
+            let uid: FixedBytes<32> = uid.parse().map_err(map_parse_to_pyerr)?;
+            let obligation = inner
+                .escrow()
+                .non_tierable()
+                .get_obligation(uid)
+                .await
+                .map_err(map_eyre_to_pyerr)?;
+            Ok(PyDecodedAttestation::<PyNativeTokenEscrowObligationData>::from(obligation))
+        })
+    }
+
     /// Creates an escrow arrangement with native tokens for a custom demand.
     pub fn create<'py>(
         &self,

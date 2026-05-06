@@ -146,6 +146,20 @@ impl From<alkahest_rs::contracts::obligations::escrow::non_tierable::ERC1155Escr
     }
 }
 
+impl From<alkahest_rs::contracts::obligations::escrow::tierable::ERC1155EscrowObligation::ObligationData>
+    for PyERC1155EscrowObligationData
+{
+    fn from(data: alkahest_rs::contracts::obligations::escrow::tierable::ERC1155EscrowObligation::ObligationData) -> Self {
+        Self {
+            token: format!("{:?}", data.token),
+            token_id: data.tokenId.to_string(),
+            amount: data.amount.to_string(),
+            arbiter: format!("{:?}", data.arbiter),
+            demand: data.demand.to_vec(),
+        }
+    }
+}
+
 #[pyclass]
 #[derive(Clone)]
 pub struct PyERC1155PaymentObligationData {

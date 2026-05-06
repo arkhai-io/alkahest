@@ -492,3 +492,307 @@ impl
         }
     }
 }
+
+// --- ERC20 escrow ---
+
+impl
+    From<
+        alkahest_rs::types::DecodedAttestation<
+            alkahest_rs::contracts::obligations::escrow::non_tierable::ERC20EscrowObligation::ObligationData,
+        >,
+    > for PyDecodedAttestation<crate::clients::obligations::erc20::PyERC20EscrowObligationData>
+{
+    fn from(
+        decoded: alkahest_rs::types::DecodedAttestation<
+            alkahest_rs::contracts::obligations::escrow::non_tierable::ERC20EscrowObligation::ObligationData,
+        >,
+    ) -> Self {
+        Self {
+            attestation: PyAttestation::from(decoded.attestation),
+            data: decoded.data.into(),
+        }
+    }
+}
+
+impl
+    From<
+        alkahest_rs::types::DecodedAttestation<
+            alkahest_rs::contracts::obligations::escrow::tierable::ERC20EscrowObligation::ObligationData,
+        >,
+    > for PyDecodedAttestation<crate::clients::obligations::erc20::PyERC20EscrowObligationData>
+{
+    fn from(
+        decoded: alkahest_rs::types::DecodedAttestation<
+            alkahest_rs::contracts::obligations::escrow::tierable::ERC20EscrowObligation::ObligationData,
+        >,
+    ) -> Self {
+        Self {
+            attestation: PyAttestation::from(decoded.attestation),
+            data: decoded.data.into(),
+        }
+    }
+}
+
+// --- ERC721 escrow ---
+
+impl
+    From<
+        alkahest_rs::types::DecodedAttestation<
+            alkahest_rs::contracts::obligations::escrow::non_tierable::ERC721EscrowObligation::ObligationData,
+        >,
+    > for PyDecodedAttestation<crate::clients::obligations::erc721::PyERC721EscrowObligationData>
+{
+    fn from(
+        decoded: alkahest_rs::types::DecodedAttestation<
+            alkahest_rs::contracts::obligations::escrow::non_tierable::ERC721EscrowObligation::ObligationData,
+        >,
+    ) -> Self {
+        Self {
+            attestation: PyAttestation::from(decoded.attestation),
+            data: decoded.data.into(),
+        }
+    }
+}
+
+impl
+    From<
+        alkahest_rs::types::DecodedAttestation<
+            alkahest_rs::contracts::obligations::escrow::tierable::ERC721EscrowObligation::ObligationData,
+        >,
+    > for PyDecodedAttestation<crate::clients::obligations::erc721::PyERC721EscrowObligationData>
+{
+    fn from(
+        decoded: alkahest_rs::types::DecodedAttestation<
+            alkahest_rs::contracts::obligations::escrow::tierable::ERC721EscrowObligation::ObligationData,
+        >,
+    ) -> Self {
+        Self {
+            attestation: PyAttestation::from(decoded.attestation),
+            data: decoded.data.into(),
+        }
+    }
+}
+
+// --- ERC1155 escrow ---
+
+impl
+    From<
+        alkahest_rs::types::DecodedAttestation<
+            alkahest_rs::contracts::obligations::escrow::non_tierable::ERC1155EscrowObligation::ObligationData,
+        >,
+    > for PyDecodedAttestation<crate::clients::obligations::erc1155::PyERC1155EscrowObligationData>
+{
+    fn from(
+        decoded: alkahest_rs::types::DecodedAttestation<
+            alkahest_rs::contracts::obligations::escrow::non_tierable::ERC1155EscrowObligation::ObligationData,
+        >,
+    ) -> Self {
+        Self {
+            attestation: PyAttestation::from(decoded.attestation),
+            data: decoded.data.into(),
+        }
+    }
+}
+
+impl
+    From<
+        alkahest_rs::types::DecodedAttestation<
+            alkahest_rs::contracts::obligations::escrow::tierable::ERC1155EscrowObligation::ObligationData,
+        >,
+    > for PyDecodedAttestation<crate::clients::obligations::erc1155::PyERC1155EscrowObligationData>
+{
+    fn from(
+        decoded: alkahest_rs::types::DecodedAttestation<
+            alkahest_rs::contracts::obligations::escrow::tierable::ERC1155EscrowObligation::ObligationData,
+        >,
+    ) -> Self {
+        Self {
+            attestation: PyAttestation::from(decoded.attestation),
+            data: decoded.data.into(),
+        }
+    }
+}
+
+// --- NativeToken escrow ---
+
+impl
+    From<
+        alkahest_rs::types::DecodedAttestation<
+            alkahest_rs::contracts::obligations::escrow::non_tierable::NativeTokenEscrowObligation::ObligationData,
+        >,
+    >
+    for PyDecodedAttestation<
+        crate::clients::obligations::native_token::PyNativeTokenEscrowObligationData,
+    >
+{
+    fn from(
+        decoded: alkahest_rs::types::DecodedAttestation<
+            alkahest_rs::contracts::obligations::escrow::non_tierable::NativeTokenEscrowObligation::ObligationData,
+        >,
+    ) -> Self {
+        Self {
+            attestation: PyAttestation::from(decoded.attestation),
+            data: decoded.data.into(),
+        }
+    }
+}
+
+impl
+    From<
+        alkahest_rs::types::DecodedAttestation<
+            alkahest_rs::contracts::obligations::escrow::tierable::NativeTokenEscrowObligation::ObligationData,
+        >,
+    >
+    for PyDecodedAttestation<
+        crate::clients::obligations::native_token::PyNativeTokenEscrowObligationData,
+    >
+{
+    fn from(
+        decoded: alkahest_rs::types::DecodedAttestation<
+            alkahest_rs::contracts::obligations::escrow::tierable::NativeTokenEscrowObligation::ObligationData,
+        >,
+    ) -> Self {
+        Self {
+            attestation: PyAttestation::from(decoded.attestation),
+            data: decoded.data.into(),
+        }
+    }
+}
+
+// --- TokenBundle escrow ---
+
+impl
+    From<
+        alkahest_rs::types::DecodedAttestation<
+            alkahest_rs::contracts::obligations::escrow::non_tierable::TokenBundleEscrowObligation::ObligationData,
+        >,
+    >
+    for PyDecodedAttestation<
+        crate::clients::obligations::token_bundle::PyTokenBundleEscrowObligationData,
+    >
+{
+    fn from(
+        decoded: alkahest_rs::types::DecodedAttestation<
+            alkahest_rs::contracts::obligations::escrow::non_tierable::TokenBundleEscrowObligation::ObligationData,
+        >,
+    ) -> Self {
+        Self {
+            attestation: PyAttestation::from(decoded.attestation),
+            data: decoded.data.into(),
+        }
+    }
+}
+
+impl
+    From<
+        alkahest_rs::types::DecodedAttestation<
+            alkahest_rs::contracts::obligations::escrow::tierable::TokenBundleEscrowObligation::ObligationData,
+        >,
+    >
+    for PyDecodedAttestation<
+        crate::clients::obligations::token_bundle::PyTokenBundleEscrowObligationData,
+    >
+{
+    fn from(
+        decoded: alkahest_rs::types::DecodedAttestation<
+            alkahest_rs::contracts::obligations::escrow::tierable::TokenBundleEscrowObligation::ObligationData,
+        >,
+    ) -> Self {
+        Self {
+            attestation: PyAttestation::from(decoded.attestation),
+            data: decoded.data.into(),
+        }
+    }
+}
+
+// --- AttestationEscrow V1 ---
+
+impl
+    From<
+        alkahest_rs::types::DecodedAttestation<
+            alkahest_rs::contracts::obligations::escrow::non_tierable::AttestationEscrowObligation::ObligationData,
+        >,
+    >
+    for PyDecodedAttestation<
+        crate::clients::obligations::attestation::PyAttestationEscrowV1ObligationData,
+    >
+{
+    fn from(
+        decoded: alkahest_rs::types::DecodedAttestation<
+            alkahest_rs::contracts::obligations::escrow::non_tierable::AttestationEscrowObligation::ObligationData,
+        >,
+    ) -> Self {
+        Self {
+            attestation: PyAttestation::from(decoded.attestation),
+            data: decoded.data.into(),
+        }
+    }
+}
+
+impl
+    From<
+        alkahest_rs::types::DecodedAttestation<
+            alkahest_rs::contracts::obligations::escrow::tierable::AttestationEscrowObligation::ObligationData,
+        >,
+    >
+    for PyDecodedAttestation<
+        crate::clients::obligations::attestation::PyAttestationEscrowV1ObligationData,
+    >
+{
+    fn from(
+        decoded: alkahest_rs::types::DecodedAttestation<
+            alkahest_rs::contracts::obligations::escrow::tierable::AttestationEscrowObligation::ObligationData,
+        >,
+    ) -> Self {
+        Self {
+            attestation: PyAttestation::from(decoded.attestation),
+            data: decoded.data.into(),
+        }
+    }
+}
+
+// --- AttestationEscrow V2 ---
+
+impl
+    From<
+        alkahest_rs::types::DecodedAttestation<
+            alkahest_rs::contracts::obligations::escrow::non_tierable::AttestationEscrowObligation2::ObligationData,
+        >,
+    >
+    for PyDecodedAttestation<
+        crate::clients::obligations::attestation::PyAttestationEscrowV2ObligationData,
+    >
+{
+    fn from(
+        decoded: alkahest_rs::types::DecodedAttestation<
+            alkahest_rs::contracts::obligations::escrow::non_tierable::AttestationEscrowObligation2::ObligationData,
+        >,
+    ) -> Self {
+        Self {
+            attestation: PyAttestation::from(decoded.attestation),
+            data: decoded.data.into(),
+        }
+    }
+}
+
+impl
+    From<
+        alkahest_rs::types::DecodedAttestation<
+            alkahest_rs::contracts::obligations::escrow::tierable::AttestationEscrowObligation2::ObligationData,
+        >,
+    >
+    for PyDecodedAttestation<
+        crate::clients::obligations::attestation::PyAttestationEscrowV2ObligationData,
+    >
+{
+    fn from(
+        decoded: alkahest_rs::types::DecodedAttestation<
+            alkahest_rs::contracts::obligations::escrow::tierable::AttestationEscrowObligation2::ObligationData,
+        >,
+    ) -> Self {
+        Self {
+            attestation: PyAttestation::from(decoded.attestation),
+            data: decoded.data.into(),
+        }
+    }
+}
