@@ -4,9 +4,12 @@
 //! V2 references the attestation by UID instead of storing the full data.
 
 use alkahest_rs::extensions::AttestationModule;
+use alloy::primitives::FixedBytes;
 use pyo3::{pyclass, pymethods, PyResult};
 
 use crate::{
+    clients::obligations::attestation::PyAttestationEscrowV2ObligationData,
+    contract::PyDecodedAttestation,
     error_handling::{map_eyre_to_pyerr, map_parse_to_pyerr},
     get_attested_event,
     types::{ArbiterData, AttestedLog, LogWithHash},
@@ -27,6 +30,26 @@ impl NonTierable {
 
 #[pymethods]
 impl NonTierable {
+    /// Gets an escrow obligation by its attestation UID.
+    pub fn get_obligation<'py>(
+        &self,
+        py: pyo3::Python<'py>,
+        uid: String,
+    ) -> PyResult<pyo3::Bound<'py, pyo3::PyAny>> {
+        let inner = self.inner.clone();
+        pyo3_async_runtimes::tokio::future_into_py(py, async move {
+            let uid: FixedBytes<32> = uid.parse().map_err(map_parse_to_pyerr)?;
+            let obligation = inner
+                .escrow()
+                .v2()
+                .non_tierable()
+                .get_obligation(uid)
+                .await
+                .map_err(map_eyre_to_pyerr)?;
+            Ok(PyDecodedAttestation::<PyAttestationEscrowV2ObligationData>::from(obligation))
+        })
+    }
+
     /// Creates an escrow using an attestation UID as reference.
     /// This function uses AttestationEscrowObligation2 which references the attestation by UID
     /// instead of storing the full attestation data, making it more gas efficient.

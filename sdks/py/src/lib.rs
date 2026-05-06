@@ -46,11 +46,16 @@ use crate::{
             PyOracleAddresses, PyOracleAttestation, PyTrustedOracleArbiterDemandData,
         },
         obligations::{
+            attestation::{
+                PyAttestationEscrowV1ObligationData, PyAttestationEscrowV2ObligationData,
+            },
             erc1155::{PyERC1155EscrowObligationData, PyERC1155PaymentObligationData},
             erc20::{PyERC20EscrowObligationData, PyERC20PaymentObligationData},
             erc721::{PyERC721EscrowObligationData, PyERC721PaymentObligationData},
             commit_reveal::PyCommitRevealObligationData,
+            native_token::PyNativeTokenEscrowObligationData,
             string::PyStringObligationData,
+            token_bundle::PyTokenBundleEscrowObligationData,
         },
     },
     contract::{
@@ -531,6 +536,10 @@ fn alkahest_py(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyERC721PaymentObligationData>()?;
     m.add_class::<PyERC1155EscrowObligationData>()?;
     m.add_class::<PyERC1155PaymentObligationData>()?;
+    m.add_class::<PyNativeTokenEscrowObligationData>()?;
+    m.add_class::<PyTokenBundleEscrowObligationData>()?;
+    m.add_class::<PyAttestationEscrowV1ObligationData>()?;
+    m.add_class::<PyAttestationEscrowV2ObligationData>()?;
     m.add_class::<PyStringObligationData>()?;
     m.add_class::<CommitRevealObligationClient>()?;
     m.add_class::<PyCommitRevealObligationData>()?;

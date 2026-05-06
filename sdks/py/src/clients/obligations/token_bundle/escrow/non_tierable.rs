@@ -1,9 +1,12 @@
 //! TokenBundle non-tierable escrow obligation client
 
 use alkahest_rs::extensions::TokenBundleModule;
+use alloy::primitives::FixedBytes;
 use pyo3::{pyclass, pymethods, PyResult};
 
 use crate::{
+    clients::obligations::token_bundle::PyTokenBundleEscrowObligationData,
+    contract::PyDecodedAttestation,
     error_handling::{map_eyre_to_pyerr, map_parse_to_pyerr},
     get_attested_event,
     types::{ArbiterData, AttestedLog, LogWithHash, TokenBundleData},
@@ -24,6 +27,25 @@ impl NonTierable {
 
 #[pymethods]
 impl NonTierable {
+    /// Gets an escrow obligation by its attestation UID.
+    pub fn get_obligation<'py>(
+        &self,
+        py: pyo3::Python<'py>,
+        uid: String,
+    ) -> PyResult<pyo3::Bound<'py, pyo3::PyAny>> {
+        let inner = self.inner.clone();
+        pyo3_async_runtimes::tokio::future_into_py(py, async move {
+            let uid: FixedBytes<32> = uid.parse().map_err(map_parse_to_pyerr)?;
+            let obligation = inner
+                .escrow()
+                .non_tierable()
+                .get_obligation(uid)
+                .await
+                .map_err(map_eyre_to_pyerr)?;
+            Ok(PyDecodedAttestation::<PyTokenBundleEscrowObligationData>::from(obligation))
+        })
+    }
+
     /// Creates an escrow arrangement with a token bundle.
     pub fn create<'py>(
         &self,
