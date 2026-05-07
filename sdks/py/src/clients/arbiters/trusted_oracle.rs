@@ -270,6 +270,10 @@ impl OracleClient {
         })
     }
 
+    /// Manually release a pubsub subscription by its local id.
+    ///
+    /// Note: This is only meaningful for ws/wss transports. HTTP transports
+    /// emulate subscriptions via polling and ignore this call (no-op).
     pub fn unsubscribe<'py>(
         &self,
         py: Python<'py>,

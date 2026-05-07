@@ -4,11 +4,9 @@
 
 use alloy::{
     primitives::{Address, FixedBytes, Log},
-    providers::Provider as _,
     rpc::types::{Filter, TransactionReceipt},
     sol_types::SolEvent as _,
 };
-use futures_util::StreamExt as _;
 
 use crate::{clients::arbiters::ArbitersModule, contracts};
 
@@ -117,22 +115,14 @@ impl<'a> ExclusiveRevocable<'a> {
             .topic1(fulfillment)
             .topic2(escrow);
 
-        let logs = self.module.public_provider.get_logs(&filter).await?;
-        if let Some(log) = logs.iter().collect::<Vec<_>>().first().map(|log| {
-            log.log_decode::<contracts::arbiters::confirmation::ExclusiveRevocableConfirmationArbiter::ConfirmationMade>()
-        }) {
-            return Ok(log?.inner);
-        }
-
-        let sub = self.module.public_provider.subscribe_logs(&filter).await?;
-        let mut stream = sub.into_stream();
-
-        if let Some(log) = stream.next().await {
-            let log = log.log_decode::<contracts::arbiters::confirmation::ExclusiveRevocableConfirmationArbiter::ConfirmationMade>()?;
-            return Ok(log.inner);
-        }
-
-        Err(eyre::eyre!("No ConfirmationMade event found"))
+        let log = crate::utils::wait_for_first_log(
+            &*self.module.public_provider,
+            &filter,
+            self.module.poll_interval,
+        )
+        .await?;
+        let decoded = log.log_decode::<contracts::arbiters::confirmation::ExclusiveRevocableConfirmationArbiter::ConfirmationMade>()?;
+        Ok(decoded.inner)
     }
 
     /// Wait for a confirmation request event
@@ -153,22 +143,14 @@ impl<'a> ExclusiveRevocable<'a> {
             .topic1(fulfillment)
             .topic2(confirmer.into_word());
 
-        let logs = self.module.public_provider.get_logs(&filter).await?;
-        if let Some(log) = logs.iter().collect::<Vec<_>>().first().map(|log| {
-            log.log_decode::<contracts::arbiters::confirmation::ExclusiveRevocableConfirmationArbiter::ConfirmationRequested>()
-        }) {
-            return Ok(log?.inner);
-        }
-
-        let sub = self.module.public_provider.subscribe_logs(&filter).await?;
-        let mut stream = sub.into_stream();
-
-        if let Some(log) = stream.next().await {
-            let log = log.log_decode::<contracts::arbiters::confirmation::ExclusiveRevocableConfirmationArbiter::ConfirmationRequested>()?;
-            return Ok(log.inner);
-        }
-
-        Err(eyre::eyre!("No ConfirmationRequested event found"))
+        let log = crate::utils::wait_for_first_log(
+            &*self.module.public_provider,
+            &filter,
+            self.module.poll_interval,
+        )
+        .await?;
+        let decoded = log.log_decode::<contracts::arbiters::confirmation::ExclusiveRevocableConfirmationArbiter::ConfirmationRequested>()?;
+        Ok(decoded.inner)
     }
 
     /// Check if a fulfillment is confirmed for an escrow

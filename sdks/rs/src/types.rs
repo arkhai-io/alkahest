@@ -93,6 +93,11 @@ pub struct ProviderContext {
     pub wallet: SharedWalletProvider,
     pub public: SharedPublicProvider,
     pub signer: PrivateKeySigner,
+    /// Polling interval used by event-watching helpers when the transport
+    /// is HTTP. Inherited from the parent ``AlkahestClient`` and threaded
+    /// through to every extension module so per-test or per-deployment
+    /// overrides actually reach the call sites that use ``watch_logs``.
+    pub poll_interval: std::time::Duration,
 }
 
 #[derive(Debug, Clone)]

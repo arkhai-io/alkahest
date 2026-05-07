@@ -173,8 +173,10 @@ async fn run_synchronous_oracle_capitalization_example(test: &TestContext) -> ey
         "oracle rejected fulfillment",
     );
 
-    charlie_oracle
-        .unsubscribe(listen_result.subscription_id.unwrap())
+    listen_result
+        .subscription
+        .unwrap()
+        .unsubscribe(&charlie_client.public_provider)
         .await?;
     println!("step5: charlie arbitrate completed");
     sleep(std::time::Duration::from_secs(1));

@@ -163,11 +163,12 @@ impl PyAlkahestClient {
 #[pymethods]
 impl PyAlkahestClient {
     #[new]
-    #[pyo3(signature = (private_key, rpc_url, address_config=None))]
+    #[pyo3(signature = (private_key, rpc_url, address_config=None, poll_interval_seconds=None))]
     pub fn __new__(
         private_key: String,
         rpc_url: String,
         address_config: Option<DefaultExtensionConfig>,
+        poll_interval_seconds: Option<f64>,
     ) -> PyResult<Self> {
         let address_config = address_config.map(|x| x.try_into()).transpose()?;
 
@@ -178,9 +179,18 @@ impl PyAlkahestClient {
         // Create a shared runtime
         let runtime = std::sync::Arc::new(Runtime::new()?);
 
+        // Optional poll interval (only meaningful for HTTP transports).
+        let poll_interval = poll_interval_seconds.map(std::time::Duration::from_secs_f64);
+
         // Since new is async, we must block_on it
         let client: alkahest_rs::DefaultAlkahestClient = runtime.clone().block_on(async {
-            alkahest_rs::AlkahestClient::with_base_extensions(signer.clone(), rpc_url.clone(), address_config).await
+            alkahest_rs::AlkahestClient::with_base_extensions_with_poll_interval(
+                signer.clone(),
+                rpc_url.clone(),
+                address_config,
+                poll_interval,
+            )
+            .await
         })?;
 
         let client = Self {
