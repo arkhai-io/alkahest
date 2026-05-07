@@ -8,7 +8,7 @@ use alloy::{
     sol_types::SolEvent as _,
 };
 
-use crate::{clients::arbiters::ArbitersModule, contracts, utils::DEFAULT_POLL_INTERVAL};
+use crate::{clients::arbiters::ArbitersModule, contracts};
 
 /// NonexclusiveRevocableConfirmationArbiter API
 pub struct NonexclusiveRevocable<'a> {
@@ -118,7 +118,7 @@ impl<'a> NonexclusiveRevocable<'a> {
         let log = crate::utils::wait_for_first_log(
             &*self.module.public_provider,
             &filter,
-            DEFAULT_POLL_INTERVAL,
+            self.module.poll_interval,
         )
         .await?;
         let decoded = log.log_decode::<contracts::arbiters::confirmation::NonexclusiveRevocableConfirmationArbiter::ConfirmationMade>()?;
@@ -146,7 +146,7 @@ impl<'a> NonexclusiveRevocable<'a> {
         let log = crate::utils::wait_for_first_log(
             &*self.module.public_provider,
             &filter,
-            DEFAULT_POLL_INTERVAL,
+            self.module.poll_interval,
         )
         .await?;
         let decoded = log.log_decode::<contracts::arbiters::confirmation::NonexclusiveRevocableConfirmationArbiter::ConfirmationRequested>()?;

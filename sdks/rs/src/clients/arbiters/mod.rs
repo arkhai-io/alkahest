@@ -78,6 +78,10 @@ pub struct ArbitersModule {
     signer: PrivateKeySigner,
     pub(crate) public_provider: SharedPublicProvider,
     pub(crate) wallet_provider: SharedWalletProvider,
+    /// Inherited from the parent ``AlkahestClient``. Threaded through to
+    /// confirmation arbiter ``wait_for_*`` methods so HTTP polling honors
+    /// the client's configured interval.
+    pub(crate) poll_interval: std::time::Duration,
 
     pub addresses: ArbitersAddresses,
 }
@@ -144,6 +148,7 @@ impl AlkahestExtension for ArbitersModule {
             _signer,
             providers.public.clone(),
             providers.wallet.clone(),
+            providers.poll_interval,
             config,
         )
     }
@@ -154,12 +159,14 @@ impl ArbitersModule {
         signer: PrivateKeySigner,
         public_provider: SharedPublicProvider,
         wallet_provider: SharedWalletProvider,
+        poll_interval: std::time::Duration,
         addresses: Option<ArbitersAddresses>,
     ) -> eyre::Result<Self> {
         Ok(ArbitersModule {
             signer,
             public_provider,
             wallet_provider,
+            poll_interval,
             addresses: addresses.unwrap_or_default(),
         })
     }

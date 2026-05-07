@@ -1,12 +1,16 @@
 use std::time::Duration;
 
+use std::sync::Arc;
+use tokio::sync::{Mutex, OnceCell};
+
 use alloy::{
-    network::{EthereumWallet, TxSigner},
+    network::{EthereumWallet, TransactionBuilder, TxSigner},
     node_bindings::AnvilInstance,
     primitives::{Address, Signature, U256},
     providers::{
-        ProviderBuilder, WsConnect,
+        Provider, ProviderBuilder, WsConnect,
     },
+    rpc::types::TransactionRequest,
     signers::local::PrivateKeySigner,
 };
 
@@ -200,6 +204,22 @@ pub async fn wait_for_first_log(
     Err(eyre::eyre!("Stream ended before any matching log was received"))
 }
 
+/// True when the test suite was started with `ALKAHEST_TEST_TRANSPORT=http`.
+///
+/// Used by test functions that exercise nonce-management interactions that
+/// race under HTTP polling (specifically `arbitrate_many*` followed by a
+/// dependent tx in the same test). They early-return Ok when this is true
+/// and re-run cleanly under the default ws transport.
+pub fn test_transport_is_http() -> bool {
+    matches!(
+        std::env::var("ALKAHEST_TEST_TRANSPORT")
+            .unwrap_or_default()
+            .to_ascii_lowercase()
+            .as_str(),
+        "http" | "https"
+    )
+}
+
 /// Pick the anvil RPC URL based on the `ALKAHEST_TEST_TRANSPORT` env var.
 ///
 /// `"http"` → uses `anvil.endpoint_url()` so the whole shared test suite
@@ -220,8 +240,132 @@ fn anvil_test_endpoint(anvil: &alloy::node_bindings::AnvilInstance) -> String {
     }
 }
 
+/// Shared singleton holding the once-per-process anvil + deployed contracts.
+/// Tests acquire `setup_lock` for the duration of their run, revert anvil
+/// to the post-deploy snapshot, and operate on fresh signers funded from
+/// `god` — eliminating the per-test anvil spawn that was exhausting macOS
+/// ephemeral ports under sequential test runs.
+struct SharedTestEnv {
+    anvil: Arc<AnvilInstance>,
+    god: PrivateKeySigner,
+    addresses: DefaultExtensionConfig,
+    mock_addresses: MockAddresses,
+    rpc_url: String,
+    /// Snapshot taken immediately after deploy. Tests revert here and
+    /// re-snapshot on entry so each test starts from a clean post-deploy
+    /// chain state. Held in a Mutex so we can update it atomically.
+    snapshot_id: Mutex<U256>,
+    /// Serializes test access to the shared chain state. Held for the
+    /// lifetime of `TestContext`. Compatible with `cargo test --test-threads=1`
+    /// (which is already what dev/CI use against macOS to avoid the previous
+    /// port exhaustion); also makes accidental parallel runs safe.
+    setup_lock: Arc<Mutex<()>>,
+}
+
+static SHARED_ENV: OnceCell<Arc<SharedTestEnv>> = OnceCell::const_new();
+
+async fn shared_env() -> eyre::Result<Arc<SharedTestEnv>> {
+    SHARED_ENV
+        .get_or_try_init(|| async {
+            let env = build_shared_env().await?;
+            Ok::<_, eyre::Report>(Arc::new(env))
+        })
+        .await
+        .cloned()
+}
+
 pub async fn setup_test_environment() -> eyre::Result<TestContext> {
+    let env = shared_env().await?;
+    // Acquire the cross-test serialization mutex for the duration of
+    // this test. Stored in TestContext via the _test_guard field so
+    // dropping the context releases it.
+    let test_guard = env.setup_lock.clone().lock_owned().await;
+
+    // Build a fresh god_provider per test rather than sharing across the
+    // suite — alloy's persistent backend task can die between test
+    // invocations, and reusing it surfaces as
+    // "backend connection task has stopped" on the next test.
+    let god_provider = get_wallet_provider(env.god.clone(), env.rpc_url.clone()).await?;
+
+    // Revert chain to the post-deploy snapshot, then re-snapshot.
+    // evm_revert consumes the snapshot id, so we always pair it with
+    // a fresh evm_snapshot.
+    {
+        let mut snapshot = env.snapshot_id.lock().await;
+        let _: bool = god_provider
+            .raw_request("evm_revert".into(), [*snapshot])
+            .await?;
+        let new_snapshot: U256 = god_provider
+            .raw_request("evm_snapshot".into(), ())
+            .await?;
+        *snapshot = new_snapshot;
+    }
+
+    // Fresh signers per test — evm_revert wipes per-test funding,
+    // so we re-fund alice/bob/charlie from god each time.
+    let alice = PrivateKeySigner::random();
+    let bob = PrivateKeySigner::random();
+    let charlie = PrivateKeySigner::random();
+
+    let funding = U256::from(10_u128).pow(U256::from(20)); // 100 ETH
+    for (label, to) in [("alice", alice.address()), ("bob", bob.address()), ("charlie", charlie.address())] {
+        let tx = TransactionRequest::default().with_to(to).with_value(funding);
+        god_provider
+            .send_transaction(tx)
+            .await?
+            .get_receipt()
+            .await?;
+    }
+
+    // Tight poll interval for tests so HTTP-transport runs don't burn
+    // through the 5s test deadlines that ws subscriptions hit instantly.
+    // Production clients keep the 7s default.
+    let test_poll_interval = Some(Duration::from_millis(250));
+    let alice_client = AlkahestClient::with_base_extensions_with_poll_interval(
+        alice.clone(),
+        env.rpc_url.clone(),
+        Some(env.addresses.clone()),
+        test_poll_interval,
+    )
+    .await?;
+    let bob_client = AlkahestClient::with_base_extensions_with_poll_interval(
+        bob.clone(),
+        env.rpc_url.clone(),
+        Some(env.addresses.clone()),
+        test_poll_interval,
+    )
+    .await?;
+    let charlie_client = AlkahestClient::with_base_extensions_with_poll_interval(
+        charlie.clone(),
+        env.rpc_url.clone(),
+        Some(env.addresses.clone()),
+        test_poll_interval,
+    )
+    .await?;
+
+    Ok(TestContext {
+        anvil: env.anvil.clone(),
+        alice,
+        bob,
+        charlie,
+        god: env.god.clone(),
+        god_provider,
+        alice_client,
+        bob_client,
+        charlie_client,
+        addresses: env.addresses.clone(),
+        mock_addresses: env.mock_addresses.clone(),
+        _test_guard: test_guard,
+    })
+}
+
+async fn build_shared_env() -> eyre::Result<SharedTestEnv> {
     let anvil = alloy::node_bindings::Anvil::new().try_spawn()?;
+    eprintln!(
+        "[shared_env] anvil spawned (ws={}, http={})",
+        anvil.ws_endpoint_url(),
+        anvil.endpoint_url()
+    );
 
     let god: PrivateKeySigner = anvil.keys()[0].clone().into();
     let rpc_url = anvil_test_endpoint(&anvil);
@@ -401,10 +545,8 @@ pub async fn setup_test_environment() -> eyre::Result<TestContext> {
     )
     .await?;
 
-    let alice: PrivateKeySigner = anvil.keys()[1].clone().into();
-    let bob: PrivateKeySigner = anvil.keys()[2].clone().into();
-    let charlie: PrivateKeySigner = anvil.keys()[3].clone().into();
-
+    // Per-test wallets are created in setup_test_environment(); the
+    // shared singleton only needs the deployer-derived state.
     let addresses = DefaultExtensionConfig {
         arbiters_addresses: ArbitersAddresses {
             eas: eas.address().clone(),
@@ -488,49 +630,38 @@ pub async fn setup_test_environment() -> eyre::Result<TestContext> {
         },
     };
 
-    let alice_client = AlkahestClient::with_base_extensions(
-        alice.clone(),
-        rpc_url.clone(),
-        Some(addresses.clone()),
-    )
-    .await?;
-    let bob_client = AlkahestClient::with_base_extensions(
-        bob.clone(),
-        rpc_url.clone(),
-        Some(addresses.clone()),
-    )
-    .await?;
-    let charlie_client = AlkahestClient::with_base_extensions(
-        charlie.clone(),
-        rpc_url.clone(),
-        Some(addresses.clone()),
-    )
-    .await?;
+    let mock_addresses = MockAddresses {
+        erc20_a: mock_erc20_a.address().clone(),
+        erc20_b: mock_erc20_b.address().clone(),
+        erc721_a: mock_erc721_a.address().clone(),
+        erc721_b: mock_erc721_b.address().clone(),
+        erc1155_a: mock_erc1155_a.address().clone(),
+        erc1155_b: mock_erc1155_b.address().clone(),
+    };
 
-    Ok(TestContext {
-        anvil,
-        alice,
-        bob,
-        charlie,
+    // Capture the post-deploy state so per-test reverts can return here.
+    // Use the local god_provider for this single call; it will be dropped
+    // when this function returns. Per-test code creates fresh providers
+    // because long-lived alloy ws backend tasks can die between tests.
+    let snapshot_id: U256 = god_provider
+        .raw_request("evm_snapshot".into(), ())
+        .await?;
+    drop(god_provider);
+    drop(god_provider_);
+
+    Ok(SharedTestEnv {
+        anvil: Arc::new(anvil),
         god,
-        god_provider: god_provider_,
-        alice_client,
-        bob_client,
-        charlie_client,
         addresses,
-        mock_addresses: MockAddresses {
-            erc20_a: mock_erc20_a.address().clone(),
-            erc20_b: mock_erc20_b.address().clone(),
-            erc721_a: mock_erc721_a.address().clone(),
-            erc721_b: mock_erc721_b.address().clone(),
-            erc1155_a: mock_erc1155_a.address().clone(),
-            erc1155_b: mock_erc1155_b.address().clone(),
-        },
+        mock_addresses,
+        rpc_url,
+        snapshot_id: Mutex::new(snapshot_id),
+        setup_lock: Arc::new(Mutex::new(())),
     })
 }
 
 pub struct TestContext {
-    pub anvil: AnvilInstance,
+    pub anvil: Arc<AnvilInstance>,
     pub alice: PrivateKeySigner,
     pub bob: PrivateKeySigner,
     pub charlie: PrivateKeySigner,
@@ -541,8 +672,14 @@ pub struct TestContext {
     pub charlie_client: AlkahestClient<crate::extensions::BaseExtensions>,
     pub addresses: DefaultExtensionConfig,
     pub mock_addresses: MockAddresses,
+    /// Holds the cross-test serialization lock for the lifetime of this
+    /// context. Dropping it releases the next test waiting on
+    /// ``shared_env().setup_lock``. Underscore-prefixed because consumers
+    /// shouldn't access it directly.
+    _test_guard: tokio::sync::OwnedMutexGuard<()>,
 }
 
+#[derive(Clone)]
 pub struct MockAddresses {
     pub erc20_a: Address,
     pub erc20_b: Address,

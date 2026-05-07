@@ -25,7 +25,7 @@ use crate::{
     },
     extensions::AlkahestExtension,
     types::{SharedPublicProvider, SharedWalletProvider},
-    utils::{provider_supports_pubsub, DEFAULT_POLL_INTERVAL},
+    utils::provider_supports_pubsub,
 };
 
 /// Type-erased stream of `alloy::rpc::types::Log` items.
@@ -81,6 +81,10 @@ pub struct TrustedOracleModule {
     public_provider: SharedPublicProvider,
     wallet_provider: SharedWalletProvider,
     signer_address: Address,
+    /// Inherited from the parent ``AlkahestClient``. Used by HTTP transports
+    /// for the polling fallback inside ``wait_for_first_log``; ws transports
+    /// ignore it.
+    poll_interval: std::time::Duration,
 
     pub addresses: TrustedOracleAddresses,
 }
@@ -131,6 +135,7 @@ impl AlkahestExtension for TrustedOracleModule {
             providers.public.clone(),
             providers.wallet.clone(),
             signer.address(),
+            providers.poll_interval,
             config,
         )
     }
@@ -159,12 +164,14 @@ impl TrustedOracleModule {
         public_provider: SharedPublicProvider,
         wallet_provider: SharedWalletProvider,
         signer_address: Address,
+        poll_interval: std::time::Duration,
         addresses: Option<TrustedOracleAddresses>,
     ) -> eyre::Result<Self> {
         Ok(TrustedOracleModule {
             public_provider,
             wallet_provider,
             signer_address,
+            poll_interval,
             addresses: addresses.unwrap_or_default(),
         })
     }
@@ -202,7 +209,7 @@ impl TrustedOracleModule {
         let log = crate::utils::wait_for_first_log(
             &*self.public_provider,
             &filter,
-            DEFAULT_POLL_INTERVAL,
+            self.poll_interval,
         )
         .await?;
         let decoded_log = log.log_decode::<TrustedOracleArbiter::ArbitrationMade>()?;
@@ -561,7 +568,7 @@ impl TrustedOracleModule {
         // Set up future listener if needed
         let subscription = if include_future {
             let filter = self.make_arbitration_requested_filter();
-            let (stream, handle) = self.open_log_stream(&filter, DEFAULT_POLL_INTERVAL).await?;
+            let (stream, handle) = self.open_log_stream(&filter, self.poll_interval).await?;
 
             self.spawn_stream_handler(stream, arbitrate, on_decision, skip_arbitrated);
 
@@ -616,7 +623,7 @@ impl TrustedOracleModule {
         // Set up future listener if needed
         let subscription = if include_future {
             let filter = self.make_arbitration_requested_filter();
-            let (stream, handle) = self.open_log_stream(&filter, DEFAULT_POLL_INTERVAL).await?;
+            let (stream, handle) = self.open_log_stream(&filter, self.poll_interval).await?;
 
             self.spawn_stream_handler_async(stream, arbitrate, on_decision, skip_arbitrated);
 
@@ -672,7 +679,7 @@ impl TrustedOracleModule {
         // Process future events in blocking mode if needed
         let subscription = if include_future {
             let filter = self.make_arbitration_requested_filter();
-            let (stream, handle) = self.open_log_stream(&filter, DEFAULT_POLL_INTERVAL).await?;
+            let (stream, handle) = self.open_log_stream(&filter, self.poll_interval).await?;
 
             self.handle_stream_blocking_sync(stream, &arbitrate, &on_decision, skip_arbitrated, timeout)
                 .await;
@@ -732,7 +739,7 @@ impl TrustedOracleModule {
         // Process future events in blocking mode if needed
         let subscription = if include_future {
             let filter = self.make_arbitration_requested_filter();
-            let (stream, handle) = self.open_log_stream(&filter, DEFAULT_POLL_INTERVAL).await?;
+            let (stream, handle) = self.open_log_stream(&filter, self.poll_interval).await?;
 
             self.handle_stream_blocking_async(stream, &arbitrate, &on_decision, skip_arbitrated, timeout)
                 .await;
@@ -1245,7 +1252,7 @@ impl<'a> TrustedOracle<'a> {
         let log = crate::utils::wait_for_first_log(
             &*self.module.public_provider,
             &filter,
-            DEFAULT_POLL_INTERVAL,
+            self.module.poll_interval,
         )
         .await?;
         let decoded = log.log_decode::<TrustedOracleArbiter::ArbitrationMade>()?;

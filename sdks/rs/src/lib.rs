@@ -184,10 +184,12 @@ impl AlkahestClient<BaseExtensions> {
             Arc::new(utils::get_wallet_provider(private_key.clone(), rpc_url.clone()).await?);
         let public_provider = Arc::new(utils::get_public_provider(rpc_url.clone()).await?);
 
+        let resolved_poll_interval = poll_interval.unwrap_or(utils::DEFAULT_POLL_INTERVAL);
         let providers = crate::types::ProviderContext {
             wallet: wallet_provider.clone(),
             public: public_provider.clone(),
             signer: private_key.clone(),
+            poll_interval: resolved_poll_interval,
         };
         let extensions = BaseExtensions::init(private_key.clone(), providers, config).await?;
 
@@ -196,7 +198,7 @@ impl AlkahestClient<BaseExtensions> {
             public_provider,
             address: private_key.address(),
             extensions,
-            poll_interval: poll_interval.unwrap_or(utils::DEFAULT_POLL_INTERVAL),
+            poll_interval: resolved_poll_interval,
             private_key,
             rpc_url: rpc_url.to_string(),
         })
@@ -213,6 +215,7 @@ impl<Extensions: AlkahestExtension> AlkahestClient<Extensions> {
             wallet: self.wallet_provider.clone(),
             public: self.public_provider.clone(),
             signer: self.private_key.clone(),
+            poll_interval: self.poll_interval,
         };
         let new_extension = NewExt::init(self.private_key.clone(), providers, config).await?;
 
