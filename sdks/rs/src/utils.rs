@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use alloy::{
     network::{EthereumWallet, TxSigner},
     node_bindings::AnvilInstance,
@@ -58,35 +60,172 @@ use crate::{
     types::{PublicProvider, WalletProvider},
 };
 
+/// Default polling interval for HTTP transports, matching Alloy's
+/// [`RpcClient::poll_interval`] default of 7 seconds.
+pub const DEFAULT_POLL_INTERVAL: Duration = Duration::from_secs(7);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum TransportScheme {
+    Ws,
+    Http,
+}
+
+fn classify_transport(rpc_url: &str) -> eyre::Result<TransportScheme> {
+    let lower = rpc_url.trim().to_ascii_lowercase();
+    if lower.starts_with("ws://") || lower.starts_with("wss://") {
+        Ok(TransportScheme::Ws)
+    } else if lower.starts_with("http://") || lower.starts_with("https://") {
+        Ok(TransportScheme::Http)
+    } else {
+        Err(eyre::eyre!(
+            "Unsupported RPC URL scheme in '{}': only ws://, wss://, http://, https:// are supported",
+            rpc_url
+        ))
+    }
+}
+
+/// Create a `WalletProvider` connected to the given RPC URL.
+///
+/// Accepts both pubsub (`ws://`, `wss://`) and HTTP (`http://`, `https://`) URLs.
+/// The provider type is the same in both cases — the transport difference is
+/// hidden inside the boxed `RpcClient`. Operations that require pubsub
+/// (e.g. `subscribe_logs`) will fail at runtime when the transport is HTTP;
+/// use the helpers in this module that branch on `pubsub_frontend` to stay
+/// transport-agnostic.
 pub async fn get_wallet_provider<T: TxSigner<Signature> + Sync + Send + 'static>(
     private_key: T,
     rpc_url: impl ToString,
 ) -> eyre::Result<WalletProvider> {
+    let rpc_url = rpc_url.to_string();
     let wallet = EthereumWallet::from(private_key);
-    let ws = WsConnect::new(rpc_url.to_string());
 
-    let provider = ProviderBuilder::new()
-        .with_simple_nonce_management()
-        .wallet(wallet.clone())
-        .connect_ws(ws)
-        .await?;
+    let provider = match classify_transport(&rpc_url)? {
+        TransportScheme::Ws => {
+            let ws = WsConnect::new(rpc_url);
+            ProviderBuilder::new()
+                .with_simple_nonce_management()
+                .wallet(wallet)
+                .connect_ws(ws)
+                .await?
+        }
+        TransportScheme::Http => {
+            let url = rpc_url.parse::<url::Url>().map_err(|e| {
+                eyre::eyre!("Failed to parse HTTP RPC URL '{}': {}", rpc_url, e)
+            })?;
+            ProviderBuilder::new()
+                .with_simple_nonce_management()
+                .wallet(wallet)
+                .connect_http(url)
+        }
+    };
 
     Ok(provider)
 }
 
+/// Create a `PublicProvider` connected to the given RPC URL.
+///
+/// See [`get_wallet_provider`] for the transport semantics.
 pub async fn get_public_provider(rpc_url: impl ToString) -> eyre::Result<PublicProvider> {
-    let ws = WsConnect::new(rpc_url.to_string());
+    let rpc_url = rpc_url.to_string();
 
-    let provider = ProviderBuilder::new().connect_ws(ws).await?;
+    let provider = match classify_transport(&rpc_url)? {
+        TransportScheme::Ws => {
+            let ws = WsConnect::new(rpc_url);
+            ProviderBuilder::new().connect_ws(ws).await?
+        }
+        TransportScheme::Http => {
+            let url = rpc_url.parse::<url::Url>().map_err(|e| {
+                eyre::eyre!("Failed to parse HTTP RPC URL '{}': {}", rpc_url, e)
+            })?;
+            ProviderBuilder::new().connect_http(url)
+        }
+    };
 
     Ok(provider)
+}
+
+/// Returns true if the provider's transport supports `eth_subscribe`
+/// (i.e. a pubsub frontend is available).
+pub fn provider_supports_pubsub<P>(provider: &P) -> bool
+where
+    P: alloy::providers::Provider,
+{
+    provider.client().pubsub_frontend().is_some()
+}
+
+/// Wait for the first log matching `filter`, returning historical matches first
+/// or otherwise tailing the live event stream.
+///
+/// This helper unifies the WS/HTTP code paths:
+/// - On pubsub transports, it uses `eth_subscribe` (low-latency push).
+/// - On HTTP transports, it uses `eth_getFilterChanges` polling with the
+///   provided `poll_interval` (push semantics emulated via polling).
+///
+/// The resulting `Log` is the raw `alloy::rpc::types::Log` — callers should
+/// `log_decode::<EventType>()` it.
+pub async fn wait_for_first_log(
+    provider: &PublicProvider,
+    filter: &alloy::rpc::types::Filter,
+    poll_interval: Duration,
+) -> eyre::Result<alloy::rpc::types::Log> {
+    use alloy::providers::Provider as _;
+    use futures::StreamExt as _;
+
+    // Historical: try get_logs first to short-circuit if the event already happened.
+    let logs = provider.get_logs(filter).await?;
+    if let Some(log) = logs.into_iter().next() {
+        return Ok(log);
+    }
+
+    // Live: branch on transport capability.
+    if provider_supports_pubsub(provider) {
+        let sub = provider.subscribe_logs(filter).await?;
+        let mut stream = sub.into_stream();
+        if let Some(log) = stream.next().await {
+            return Ok(log);
+        }
+    } else {
+        let poller = provider
+            .watch_logs(filter)
+            .await?
+            .with_poll_interval(poll_interval);
+        // FilterPollerBuilder::into_stream yields Vec<Log> per poll cycle;
+        // flatten into a single Log stream.
+        let mut stream = poller.into_stream().flat_map(futures::stream::iter);
+        if let Some(log) = stream.next().await {
+            return Ok(log);
+        }
+    }
+
+    Err(eyre::eyre!("Stream ended before any matching log was received"))
+}
+
+/// Pick the anvil RPC URL based on the `ALKAHEST_TEST_TRANSPORT` env var.
+///
+/// `"http"` → uses `anvil.endpoint_url()` so the whole shared test suite
+/// runs against the HTTP / polling code path. Anything else (or unset) →
+/// `anvil.ws_endpoint_url()`, the long-standing default.
+///
+/// CI should run `cargo test` twice — once with the env var unset (ws),
+/// once with `ALKAHEST_TEST_TRANSPORT=http` — to confirm transport
+/// parity for every test that flows through `setup_test_environment`.
+fn anvil_test_endpoint(anvil: &alloy::node_bindings::AnvilInstance) -> String {
+    match std::env::var("ALKAHEST_TEST_TRANSPORT")
+        .unwrap_or_default()
+        .to_ascii_lowercase()
+        .as_str()
+    {
+        "http" | "https" => anvil.endpoint_url().to_string(),
+        _ => anvil.ws_endpoint_url().to_string(),
+    }
 }
 
 pub async fn setup_test_environment() -> eyre::Result<TestContext> {
     let anvil = alloy::node_bindings::Anvil::new().try_spawn()?;
 
     let god: PrivateKeySigner = anvil.keys()[0].clone().into();
-    let god_provider = get_wallet_provider(god.clone(), anvil.ws_endpoint_url()).await?;
+    let rpc_url = anvil_test_endpoint(&anvil);
+    let god_provider = get_wallet_provider(god.clone(), rpc_url.clone()).await?;
     let god_provider_ = god_provider.clone();
 
     let schema_registry = SchemaRegistry::deploy(&god_provider).await?;
@@ -351,19 +490,19 @@ pub async fn setup_test_environment() -> eyre::Result<TestContext> {
 
     let alice_client = AlkahestClient::with_base_extensions(
         alice.clone(),
-        anvil.ws_endpoint_url(),
+        rpc_url.clone(),
         Some(addresses.clone()),
     )
     .await?;
     let bob_client = AlkahestClient::with_base_extensions(
         bob.clone(),
-        anvil.ws_endpoint_url(),
+        rpc_url.clone(),
         Some(addresses.clone()),
     )
     .await?;
     let charlie_client = AlkahestClient::with_base_extensions(
         charlie.clone(),
-        anvil.ws_endpoint_url(),
+        rpc_url.clone(),
         Some(addresses.clone()),
     )
     .await?;

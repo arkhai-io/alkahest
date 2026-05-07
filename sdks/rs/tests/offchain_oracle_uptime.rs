@@ -303,8 +303,10 @@ async fn run_async_uptime_oracle_example(test: &TestContext) -> eyre::Result<()>
     .await
     .wrap_err("timed out waiting to collect escrow")?;
 
-    charlie_oracle
-        .unsubscribe(listen_result.subscription_id.unwrap())
+    listen_result
+        .subscription
+        .unwrap()
+        .unsubscribe(&test.charlie_client.public_provider)
         .await?;
 
     worker.await.unwrap();

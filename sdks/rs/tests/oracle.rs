@@ -101,7 +101,7 @@ mod tests {
 
         assert_eq!(result.past_decisions.len(), 1);
         assert_eq!(result.past_decisions[0].decision, true);
-        assert!(result.subscription_id.is_none());
+        assert!(result.subscription.is_none());
 
         let collection = test
             .bob_client
@@ -285,9 +285,10 @@ mod tests {
         assert_eq!(result.past_decisions.len(), 1);
         assert_eq!(result.past_decisions[0].decision, true);
 
-        test.bob_client
-            .oracle()
-            .unsubscribe(result.subscription_id.unwrap())
+        result
+            .subscription
+            .unwrap()
+            .unsubscribe(&test.bob_client.public_provider)
             .await?;
 
         Ok(())
@@ -338,9 +339,10 @@ mod tests {
 
         println!("✅ Arbitrate decision passed. Tx: {:?}", collection);
 
-        test.bob_client
-            .oracle()
-            .unsubscribe(result.subscription_id.unwrap())
+        result
+            .subscription
+            .unwrap()
+            .unsubscribe(&test.bob_client.public_provider)
             .await?;
         Ok(())
     }
@@ -396,9 +398,10 @@ mod tests {
 
         println!("✅ Arbitrate decision passed. Tx: {:?}", collection);
 
-        test.bob_client
-            .oracle()
-            .unsubscribe(result.subscription_id.unwrap())
+        result
+            .subscription
+            .unwrap()
+            .unsubscribe(&test.bob_client.public_provider)
             .await?;
 
         Ok(())
@@ -458,9 +461,10 @@ mod tests {
 
         println!("✅ Arbitrate decision passed. Tx: {:?}", collection);
 
-        test.bob_client
-            .oracle()
-            .unsubscribe(result.subscription_id.unwrap())
+        result
+            .subscription
+            .unwrap()
+            .unsubscribe(&test.bob_client.public_provider)
             .await?;
 
         Ok(())

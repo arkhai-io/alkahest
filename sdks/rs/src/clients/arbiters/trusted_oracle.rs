@@ -1,17 +1,20 @@
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::{
+    pin::Pin,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 use alloy::{
     dyn_abi::SolType,
     eips::BlockNumberOrTag,
     primitives::{Address, Bytes, FixedBytes},
     providers::Provider,
-    pubsub::SubscriptionStream,
     rpc::types::{Filter, Log, TransactionReceipt},
     sol,
     sol_types::SolEvent,
 };
-use futures::{future::try_join_all, StreamExt as _};
+use futures::{future::try_join_all, Stream, StreamExt as _};
 use tokio::time::Duration;
+use tokio_util::sync::CancellationToken;
 use tracing;
 
 use crate::{
@@ -22,7 +25,50 @@ use crate::{
     },
     extensions::AlkahestExtension,
     types::{SharedPublicProvider, SharedWalletProvider},
+    utils::{provider_supports_pubsub, DEFAULT_POLL_INTERVAL},
 };
+
+/// Type-erased stream of `alloy::rpc::types::Log` items.
+///
+/// Used internally to unify the WS (`SubscriptionStream<Log>`) and HTTP
+/// (`PollerStream<Vec<Log>>` flattened) code paths inside the trusted oracle
+/// listener.
+type BoxedLogStream = Pin<Box<dyn Stream<Item = alloy::rpc::types::Log> + Send>>;
+
+/// Transport-agnostic handle to a long-running event subscription opened by
+/// `arbitrate_many*` methods.
+///
+/// Internally this is either a pubsub subscription identifier (for ws/wss/ipc
+/// transports) or a `CancellationToken` that signals the polling loop to stop
+/// (for HTTP transports). Use [`SubscriptionHandle::unsubscribe`] to release
+/// the underlying resource.
+pub struct SubscriptionHandle {
+    inner: SubscriptionHandleInner,
+}
+
+enum SubscriptionHandleInner {
+    Pubsub { local_id: FixedBytes<32> },
+    Polling { cancel: CancellationToken },
+}
+
+impl SubscriptionHandle {
+    /// Unsubscribe from the underlying stream.
+    ///
+    /// For pubsub transports this calls `eth_unsubscribe` on the provider.
+    /// For HTTP transports this signals the polling task to exit on its next
+    /// iteration; the `provider` argument is unused but kept for API symmetry.
+    pub async fn unsubscribe(self, provider: &SharedPublicProvider) -> eyre::Result<()> {
+        match self.inner {
+            SubscriptionHandleInner::Pubsub { local_id } => {
+                provider.unsubscribe(local_id).await.map_err(Into::into)
+            }
+            SubscriptionHandleInner::Polling { cancel } => {
+                cancel.cancel();
+                Ok(())
+            }
+        }
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct TrustedOracleAddresses {
@@ -100,8 +146,12 @@ pub struct Decision {
 pub struct ArbitrateManyResult {
     /// Decisions made for past attestations (empty for `Future` mode)
     pub past_decisions: Vec<Decision>,
-    /// Subscription ID for future events (None for `Past`/`PastUnarbitrated` modes)
-    pub subscription_id: Option<FixedBytes<32>>,
+    /// Handle to the future-event listener (None for `Past`/`PastUnarbitrated` modes).
+    ///
+    /// This handle is transport-agnostic: it wraps either a pubsub subscription
+    /// id (ws/wss) or a cancellation token (http/https). Use
+    /// [`SubscriptionHandle::unsubscribe`] to release the listener.
+    pub subscription: Option<SubscriptionHandle>,
 }
 
 impl TrustedOracleModule {
@@ -149,28 +199,14 @@ impl TrustedOracleModule {
             filter = filter.topic3(oracle);
         }
 
-        let logs = self.public_provider.get_logs(&filter).await?;
-        if let Some(log) = logs.first() {
-            let decoded_log = log.log_decode::<TrustedOracleArbiter::ArbitrationMade>()?;
-            return Ok(decoded_log);
-        }
-
-        let sub = self.public_provider.subscribe_logs(&filter).await?;
-        let mut stream = sub.into_stream();
-
-        if let Some(log) = stream.next().await {
-            let decoded_log = log.log_decode::<TrustedOracleArbiter::ArbitrationMade>()?;
-            return Ok(decoded_log);
-        }
-
-        Err(eyre::eyre!("No ArbitrationMade event found"))
-    }
-
-    pub async fn unsubscribe(&self, local_id: FixedBytes<32>) -> eyre::Result<()> {
-        self.public_provider
-            .unsubscribe(local_id)
-            .await
-            .map_err(Into::into)
+        let log = crate::utils::wait_for_first_log(
+            &*self.public_provider,
+            &filter,
+            DEFAULT_POLL_INTERVAL,
+        )
+        .await?;
+        let decoded_log = log.log_decode::<TrustedOracleArbiter::ArbitrationMade>()?;
+        Ok(decoded_log)
     }
 
     /// Extract obligation data from a fulfillment attestation
@@ -223,6 +259,73 @@ impl TrustedOracleModule {
         let escrow = self.get_escrow_attestation(fulfillment).await?;
         let demand = self.extract_demand_data::<DemandData>(&escrow)?;
         Ok((escrow, demand))
+    }
+
+    /// Manually release a pubsub subscription by its local id.
+    ///
+    /// This is only meaningful when the underlying transport supports pubsub
+    /// (`ws`/`wss`/`ipc`). For HTTP transports the call is a no-op — polling
+    /// subscriptions are tracked via [`SubscriptionHandle`] and cancelled
+    /// through that handle instead.
+    ///
+    /// New code should prefer [`SubscriptionHandle::unsubscribe`] returned
+    /// from `arbitrate_many*`. This method is retained for backwards
+    /// compatibility with callers that hold raw `local_id` values.
+    pub async fn unsubscribe(&self, local_id: FixedBytes<32>) -> eyre::Result<()> {
+        if provider_supports_pubsub(&*self.public_provider) {
+            self.public_provider
+                .unsubscribe(local_id)
+                .await
+                .map_err(Into::into)
+        } else {
+            // Polling-based "subscriptions" don't have a remote-side state to
+            // release; the cancellation is local to the spawned task and is
+            // handled by `SubscriptionHandle` instead.
+            Ok(())
+        }
+    }
+
+    /// Open a transport-agnostic log stream, returning the stream alongside a
+    /// [`SubscriptionHandle`] used to release the underlying resource.
+    ///
+    /// Internally this picks pubsub (`subscribe_logs` -> `SubscriptionStream`)
+    /// or polling (`watch_logs` with `poll_interval` -> `PollerStream` flattened)
+    /// based on the provider's pubsub capability.
+    async fn open_log_stream(
+        &self,
+        filter: &Filter,
+        poll_interval: Duration,
+    ) -> eyre::Result<(BoxedLogStream, SubscriptionHandle)> {
+        if provider_supports_pubsub(&*self.public_provider) {
+            let sub = self.public_provider.subscribe_logs(filter).await?;
+            let local_id = *sub.local_id();
+            let stream: BoxedLogStream = Box::pin(sub.into_stream());
+            Ok((
+                stream,
+                SubscriptionHandle {
+                    inner: SubscriptionHandleInner::Pubsub { local_id },
+                },
+            ))
+        } else {
+            let cancel = CancellationToken::new();
+            let poller = self
+                .public_provider
+                .watch_logs(filter)
+                .await?
+                .with_poll_interval(poll_interval);
+            let stream = poller.into_stream().flat_map(futures::stream::iter);
+            // Wrap the stream so it terminates when `cancel` is fired.
+            let cancel_clone = cancel.clone();
+            let stream: BoxedLogStream = Box::pin(stream.take_until(async move {
+                cancel_clone.cancelled().await;
+            }));
+            Ok((
+                stream,
+                SubscriptionHandle {
+                    inner: SubscriptionHandleInner::Polling { cancel },
+                },
+            ))
+        }
     }
 
     pub async fn request_arbitration(
@@ -456,22 +559,20 @@ impl TrustedOracleModule {
         };
 
         // Set up future listener if needed
-        let subscription_id = if include_future {
+        let subscription = if include_future {
             let filter = self.make_arbitration_requested_filter();
-            let sub = self.public_provider.subscribe_logs(&filter).await?;
-            let local_id = *sub.local_id();
-            let stream = sub.into_stream();
+            let (stream, handle) = self.open_log_stream(&filter, DEFAULT_POLL_INTERVAL).await?;
 
             self.spawn_stream_handler(stream, arbitrate, on_decision, skip_arbitrated);
 
-            Some(local_id)
+            Some(handle)
         } else {
             None
         };
 
         Ok(ArbitrateManyResult {
             past_decisions,
-            subscription_id,
+            subscription,
         })
     }
 
@@ -513,22 +614,20 @@ impl TrustedOracleModule {
         };
 
         // Set up future listener if needed
-        let subscription_id = if include_future {
+        let subscription = if include_future {
             let filter = self.make_arbitration_requested_filter();
-            let sub = self.public_provider.subscribe_logs(&filter).await?;
-            let local_id = *sub.local_id();
-            let stream = sub.into_stream();
+            let (stream, handle) = self.open_log_stream(&filter, DEFAULT_POLL_INTERVAL).await?;
 
             self.spawn_stream_handler_async(stream, arbitrate, on_decision, skip_arbitrated);
 
-            Some(local_id)
+            Some(handle)
         } else {
             None
         };
 
         Ok(ArbitrateManyResult {
             past_decisions,
-            subscription_id,
+            subscription,
         })
     }
 
@@ -571,23 +670,21 @@ impl TrustedOracleModule {
         };
 
         // Process future events in blocking mode if needed
-        let subscription_id = if include_future {
+        let subscription = if include_future {
             let filter = self.make_arbitration_requested_filter();
-            let sub = self.public_provider.subscribe_logs(&filter).await?;
-            let local_id = *sub.local_id();
-            let stream = sub.into_stream();
+            let (stream, handle) = self.open_log_stream(&filter, DEFAULT_POLL_INTERVAL).await?;
 
             self.handle_stream_blocking_sync(stream, &arbitrate, &on_decision, skip_arbitrated, timeout)
                 .await;
 
-            Some(local_id)
+            Some(handle)
         } else {
             None
         };
 
         Ok(ArbitrateManyResult {
             past_decisions,
-            subscription_id,
+            subscription,
         })
     }
 
@@ -633,23 +730,21 @@ impl TrustedOracleModule {
         };
 
         // Process future events in blocking mode if needed
-        let subscription_id = if include_future {
+        let subscription = if include_future {
             let filter = self.make_arbitration_requested_filter();
-            let sub = self.public_provider.subscribe_logs(&filter).await?;
-            let local_id = *sub.local_id();
-            let stream = sub.into_stream();
+            let (stream, handle) = self.open_log_stream(&filter, DEFAULT_POLL_INTERVAL).await?;
 
             self.handle_stream_blocking_async(stream, &arbitrate, &on_decision, skip_arbitrated, timeout)
                 .await;
 
-            Some(local_id)
+            Some(handle)
         } else {
             None
         };
 
         Ok(ArbitrateManyResult {
             past_decisions,
-            subscription_id,
+            subscription,
         })
     }
 
@@ -659,7 +754,7 @@ impl TrustedOracleModule {
         OnDecision: Fn(&Decision) -> OnDecisionFut,
     >(
         &self,
-        mut stream: SubscriptionStream<alloy::rpc::types::Log>,
+        mut stream: BoxedLogStream,
         arbitrate: &Arbitrate,
         on_decision: &OnDecision,
         skip_arbitrated: bool,
@@ -770,7 +865,7 @@ impl TrustedOracleModule {
         OnDecision: Fn(&Decision) -> OnDecisionFut,
     >(
         &self,
-        mut stream: SubscriptionStream<alloy::rpc::types::Log>,
+        mut stream: BoxedLogStream,
         arbitrate: &Arbitrate,
         on_decision: &OnDecision,
         skip_arbitrated: bool,
@@ -880,7 +975,7 @@ impl TrustedOracleModule {
         OnDecision: Fn(&Decision) -> OnDecisionFut + Send + Sync + 'static,
     >(
         &self,
-        stream: SubscriptionStream<alloy::rpc::types::Log>,
+        stream: BoxedLogStream,
         arbitrate: Arbitrate,
         on_decision: OnDecision,
         skip_arbitrated: bool,
@@ -981,7 +1076,7 @@ impl TrustedOracleModule {
         OnDecision: Fn(&Decision) -> OnDecisionFut + Send + Sync + 'static,
     >(
         &self,
-        stream: SubscriptionStream<alloy::rpc::types::Log>,
+        stream: BoxedLogStream,
         arbitrate: Arbitrate,
         on_decision: OnDecision,
         skip_arbitrated: bool,
@@ -1147,24 +1242,13 @@ impl<'a> TrustedOracle<'a> {
             .topic2(obligation)
             .topic3(oracle.into_word());
 
-        let logs = self.module.public_provider.get_logs(&filter).await?;
-        if let Some(log) = logs
-            .iter()
-            .collect::<Vec<_>>()
-            .first()
-            .map(|log| log.log_decode::<TrustedOracleArbiter::ArbitrationMade>())
-        {
-            return Ok(log?.inner.data);
-        }
-
-        let sub = self.module.public_provider.subscribe_logs(&filter).await?;
-        let mut stream = sub.into_stream();
-
-        if let Some(log) = stream.next().await {
-            let log = log.log_decode::<TrustedOracleArbiter::ArbitrationMade>()?;
-            return Ok(log.inner.data);
-        }
-
-        Err(eyre::eyre!("No ArbitrationMade event found"))
+        let log = crate::utils::wait_for_first_log(
+            &*self.module.public_provider,
+            &filter,
+            DEFAULT_POLL_INTERVAL,
+        )
+        .await?;
+        let decoded = log.log_decode::<TrustedOracleArbiter::ArbitrationMade>()?;
+        Ok(decoded.inner.data)
     }
 }

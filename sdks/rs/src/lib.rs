@@ -1,7 +1,6 @@
 use alloy::{
     dyn_abi::SolType,
     primitives::{Address, FixedBytes, Log},
-    providers::Provider,
     rpc::types::{Filter, TransactionReceipt},
     signers::local::PrivateKeySigner,
     sol_types::SolEvent,
@@ -10,10 +9,9 @@ use extensions::{
     AlkahestExtension, BaseExtensions, HasArbiters, HasAttestation, HasCommitReveal, HasErc20,
     HasErc721, HasErc1155, HasStringObligation, HasTokenBundle,
 };
-use futures_util::StreamExt;
 use serde::{Deserialize, Serialize};
+use std::{sync::Arc, time::Duration};
 use types::EscrowClaimed;
-use std::sync::Arc;
 use types::{SharedPublicProvider, SharedWalletProvider};
 
 use crate::clients::{
@@ -114,15 +112,33 @@ pub struct AlkahestClient<Extensions: AlkahestExtension = extensions::NoExtensio
     pub public_provider: SharedPublicProvider,
     pub address: Address,
     pub extensions: Extensions,
+    /// Poll interval used for HTTP transports when emulating event subscriptions.
+    /// Ignored when the underlying transport supports pubsub (ws/wss/ipc).
+    pub poll_interval: Duration,
     private_key: PrivateKeySigner,
     rpc_url: String,
 }
 
 impl AlkahestClient<extensions::NoExtension> {
-    /// Create a new client with no extensions
+    /// Create a new client with no extensions.
+    ///
+    /// Accepts both pubsub (`ws://`, `wss://`) and HTTP (`http://`, `https://`)
+    /// RPC URLs. For HTTP transports, the default poll interval
+    /// ([`utils::DEFAULT_POLL_INTERVAL`]) is used. To override, use
+    /// [`AlkahestClient::new_with_poll_interval`].
     pub async fn new(
         private_key: PrivateKeySigner,
         rpc_url: impl ToString + Clone + Send,
+    ) -> eyre::Result<Self> {
+        Self::new_with_poll_interval(private_key, rpc_url, None).await
+    }
+
+    /// Create a new client with no extensions and an optional custom poll interval
+    /// (only used for HTTP transports).
+    pub async fn new_with_poll_interval(
+        private_key: PrivateKeySigner,
+        rpc_url: impl ToString + Clone + Send,
+        poll_interval: Option<Duration>,
     ) -> eyre::Result<Self> {
         let wallet_provider =
             Arc::new(utils::get_wallet_provider(private_key.clone(), rpc_url.clone()).await?);
@@ -133,6 +149,7 @@ impl AlkahestClient<extensions::NoExtension> {
             public_provider,
             address: private_key.address(),
             extensions: extensions::NoExtension,
+            poll_interval: poll_interval.unwrap_or(utils::DEFAULT_POLL_INTERVAL),
             private_key,
             rpc_url: rpc_url.to_string(),
         })
@@ -140,12 +157,28 @@ impl AlkahestClient<extensions::NoExtension> {
 }
 
 impl AlkahestClient<BaseExtensions> {
-    /// Create a client with all base extensions using DefaultExtensionConfig
-    /// This is a convenience method for the common case
+    /// Create a client with all base extensions using DefaultExtensionConfig.
+    ///
+    /// Accepts both pubsub (`ws://`, `wss://`) and HTTP (`http://`, `https://`)
+    /// RPC URLs. For HTTP transports, the default poll interval
+    /// ([`utils::DEFAULT_POLL_INTERVAL`]) is used. To override, use
+    /// [`AlkahestClient::with_base_extensions_with_poll_interval`].
     pub async fn with_base_extensions(
         private_key: PrivateKeySigner,
         rpc_url: impl ToString + Clone + Send,
         config: Option<DefaultExtensionConfig>,
+    ) -> eyre::Result<Self> {
+        Self::with_base_extensions_with_poll_interval(private_key, rpc_url, config, None).await
+    }
+
+    /// Create a client with all base extensions and an optional custom poll
+    /// interval. The poll interval is only used when the transport is HTTP —
+    /// pubsub (ws/wss) transports ignore it.
+    pub async fn with_base_extensions_with_poll_interval(
+        private_key: PrivateKeySigner,
+        rpc_url: impl ToString + Clone + Send,
+        config: Option<DefaultExtensionConfig>,
+        poll_interval: Option<Duration>,
     ) -> eyre::Result<Self> {
         let wallet_provider =
             Arc::new(utils::get_wallet_provider(private_key.clone(), rpc_url.clone()).await?);
@@ -163,6 +196,7 @@ impl AlkahestClient<BaseExtensions> {
             public_provider,
             address: private_key.address(),
             extensions,
+            poll_interval: poll_interval.unwrap_or(utils::DEFAULT_POLL_INTERVAL),
             private_key,
             rpc_url: rpc_url.to_string(),
         })
@@ -192,6 +226,7 @@ impl<Extensions: AlkahestExtension> AlkahestClient<Extensions> {
             public_provider: self.public_provider,
             address: self.address,
             extensions: joined_extensions,
+            poll_interval: self.poll_interval,
             private_key: self.private_key,
             rpc_url: self.rpc_url,
         })
@@ -384,26 +419,10 @@ impl<Extensions: AlkahestExtension> AlkahestClient<Extensions> {
             .event_signature(EscrowClaimed::SIGNATURE_HASH)
             .topic1(buy_attestation);
 
-        let logs = self.public_provider.get_logs(&filter).await?;
-        println!("initial logs: {:?}", logs);
-        if let Some(log) = logs
-            .iter()
-            .collect::<Vec<_>>()
-            .first()
-            .map(|log| log.log_decode::<EscrowClaimed>())
-        {
-            return Ok(log?.inner);
-        }
-
-        let sub = self.public_provider.subscribe_logs(&filter).await?;
-        let mut stream = sub.into_stream();
-
-        if let Some(log) = stream.next().await {
-            let log = log.log_decode::<EscrowClaimed>()?;
-            return Ok(log.inner);
-        }
-
-        Err(eyre::eyre!("No EscrowClaimed event found"))
+        let log =
+            utils::wait_for_first_log(&*self.public_provider, &filter, self.poll_interval).await?;
+        let decoded = log.log_decode::<EscrowClaimed>()?;
+        Ok(decoded.inner)
     }
 
     /// Extract obligation data from a fulfillment attestation

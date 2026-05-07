@@ -182,8 +182,10 @@ async fn run_contextless_identity_example(test: &TestContext) -> eyre::Result<()
 
     assert!(!second_log.decision);
 
-    charlie_oracle
-        .unsubscribe(listen_result.subscription_id.unwrap())
+    listen_result
+        .subscription
+        .unwrap()
+        .unsubscribe(&test.charlie_client.public_provider)
         .await?;
 
     identity_registry().lock().await.clear();
