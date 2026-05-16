@@ -409,6 +409,29 @@ contract TokenBundleBarterUtilsUnitTest is Test {
         );
     }
 
+    function testRevert_BuyBundleForBundleRequiresCallerNativeValue() public {
+        uint64 expiration = uint64(block.timestamp + 1 days);
+
+        TokenBundleEscrowObligation.ObligationData memory aliceBundle = createAliceBundle();
+        TokenBundlePaymentObligation.ObligationData memory bobBundle = createBobBundle();
+        aliceBundle.nativeAmount = 1 ether;
+
+        vm.deal(address(barterUtils), 1 ether);
+        uint256 helperBalanceBefore = address(barterUtils).balance;
+
+        vm.prank(alice);
+        vm.expectRevert(TokenBundleBarterUtils.MsgValueMismatch.selector);
+        barterUtils.buyBundleForBundle(aliceBundle, bobBundle, expiration);
+
+        assertEq(address(barterUtils).balance, helperBalanceBefore);
+        assertEq(erc20TokenA.balanceOf(alice), erc20AmountA);
+        assertEq(erc721TokenA.ownerOf(aliceErc721Id), alice);
+        assertEq(
+            erc1155TokenA.balanceOf(alice, erc1155TokenIdA),
+            erc1155TokenAmountA
+        );
+    }
+
     function testPermitAndEscrowBundle() public {
         uint64 expiration = uint64(block.timestamp + 1 days);
         uint256 deadline = block.timestamp + 1 days;

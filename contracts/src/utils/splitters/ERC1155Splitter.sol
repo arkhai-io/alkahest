@@ -68,6 +68,9 @@ contract ERC1155Splitter is IArbiter, ReentrancyGuard, ERC1155Holder {
     error EmptySplits();
     error ZeroRecipient();
     error ExecuteFailed(address target, bytes data);
+    error EscrowCollectionFailed();
+    error InvalidEscrowContract(address expected, address provided);
+    error InvalidCollectionAmount(uint256 expected, uint256 received);
 
     IEAS public eas;
 
@@ -78,6 +81,8 @@ contract ERC1155Splitter is IArbiter, ReentrancyGuard, ERC1155Holder {
 
     /// @notice Transient storage for the current executor during execute/collectAndDistribute.
     address private _currentExecutor;
+    /// @notice Set only while collectAndDistribute is collecting escrow into this splitter.
+    bool private _collectingEscrow;
 
     constructor(IEAS _eas) {
         eas = _eas;
@@ -144,10 +149,14 @@ contract ERC1155Splitter is IArbiter, ReentrancyGuard, ERC1155Holder {
 
     /// @inheritdoc IArbiter
     function checkObligation(
-        Attestation memory,
+        Attestation memory obligation,
         bytes memory demand,
         bytes32 fulfilling
     ) public view override returns (bool) {
+        if (!_collectingEscrow || obligation.recipient != address(this)) {
+            return false;
+        }
+
         DemandData memory demandData = abi.decode(demand, (DemandData));
         bytes32 decisionKey = keccak256(
             abi.encodePacked(fulfilling, demand)
@@ -204,11 +213,34 @@ contract ERC1155Splitter is IArbiter, ReentrancyGuard, ERC1155Holder {
 
         Split[] memory splits = decisions[demandData.oracle][decisionKey];
 
+        if (escrowAttestation.attester != escrowContract) {
+            revert InvalidEscrowContract(
+                escrowAttestation.attester,
+                escrowContract
+            );
+        }
+
+        uint256 balanceBefore = IERC1155(escrowData.token).balanceOf(
+            address(this),
+            escrowData.tokenId
+        );
+
         // Collect escrow — tokens transfer to this contract
-        IERC1155EscrowObligation(escrowContract).collectEscrow(
+        _collectingEscrow = true;
+        bool collected = IERC1155EscrowObligation(escrowContract).collectEscrow(
             escrow,
             fulfillment
         );
+        _collectingEscrow = false;
+        if (!collected) revert EscrowCollectionFailed();
+
+        uint256 received = IERC1155(escrowData.token).balanceOf(
+            address(this),
+            escrowData.tokenId
+        ) - balanceBefore;
+        if (received != escrowData.amount) {
+            revert InvalidCollectionAmount(escrowData.amount, received);
+        }
 
         // Distribute tokens according to splits
         for (uint256 i; i < splits.length; ++i) {

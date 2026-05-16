@@ -80,6 +80,23 @@ abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155H
     error ZeroRecipient();
     error ExecuteFailed(address target, bytes data);
     error NativeTokenTransferFailed(address to, uint256 amount);
+    error EscrowCollectionFailed();
+    error InvalidEscrowContract(address expected, address provided);
+    error InvalidNativeCollectionAmount(uint256 expected, uint256 received);
+    error InvalidERC20CollectionAmount(
+        uint256 tokenIndex,
+        address token,
+        uint256 expected,
+        uint256 received
+    );
+    error InvalidERC721Collection(address token, uint256 tokenId);
+    error InvalidERC1155CollectionAmount(
+        uint256 tokenIndex,
+        address token,
+        uint256 tokenId,
+        uint256 expected,
+        uint256 received
+    );
 
     IEAS public eas;
 
@@ -90,6 +107,8 @@ abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155H
 
     /// @notice Transient storage for the current executor during execute/collectAndDistribute.
     address private _currentExecutor;
+    /// @notice Set only while collectAndDistribute is collecting escrow into this splitter.
+    bool private _collectingEscrow;
 
     constructor(IEAS _eas) {
         eas = _eas;
@@ -157,10 +176,14 @@ abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155H
 
     /// @inheritdoc IArbiter
     function checkObligation(
-        Attestation memory,
+        Attestation memory obligation,
         bytes memory demand,
         bytes32 fulfilling
     ) public view override returns (bool) {
+        if (!_collectingEscrow || obligation.recipient != address(this)) {
+            return false;
+        }
+
         DemandData memory demandData = abi.decode(demand, (DemandData));
         bytes32 decisionKey = keccak256(
             abi.encodePacked(fulfilling, demand)
@@ -215,10 +238,33 @@ abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155H
 
         BundleSplit[] memory splits = decisions[demandData.oracle][decisionKey];
 
+        if (escrowAttestation.attester != escrowContract) {
+            revert InvalidEscrowContract(
+                escrowAttestation.attester,
+                escrowContract
+            );
+        }
+
+        uint256 nativeBalanceBefore = address(this).balance;
+        uint256[] memory erc20BalancesBefore = _erc20Balances(escrowData);
+        bool[] memory erc721HeldBefore = _erc721HeldBySplitter(escrowData);
+        uint256[] memory erc1155BalancesBefore = _erc1155Balances(escrowData);
+
         // Collect escrow — all assets transfer to this contract
-        ITokenBundleEscrowObligation(escrowContract).collectEscrow(
+        _collectingEscrow = true;
+        bool collected = ITokenBundleEscrowObligation(escrowContract).collectEscrow(
             escrow,
             fulfillment
+        );
+        _collectingEscrow = false;
+        if (!collected) revert EscrowCollectionFailed();
+
+        _validateCollectedBundle(
+            escrowData,
+            nativeBalanceBefore,
+            erc20BalancesBefore,
+            erc721HeldBefore,
+            erc1155BalancesBefore
         );
 
         // Distribute according to splits
@@ -302,6 +348,186 @@ abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155H
         bytes calldata data
     ) external pure returns (DemandData memory) {
         return abi.decode(data, (DemandData));
+    }
+
+    function _erc20Balances(
+        EscrowObligationData memory escrowData
+    ) internal view returns (uint256[] memory balances) {
+        balances = new uint256[](escrowData.erc20Tokens.length);
+        for (uint256 i; i < escrowData.erc20Tokens.length; ++i) {
+            balances[i] = IERC20(escrowData.erc20Tokens[i]).balanceOf(
+                address(this)
+            );
+        }
+    }
+
+    function _erc721HeldBySplitter(
+        EscrowObligationData memory escrowData
+    ) internal view returns (bool[] memory held) {
+        held = new bool[](escrowData.erc721Tokens.length);
+        for (uint256 i; i < escrowData.erc721Tokens.length; ++i) {
+            held[i] =
+                IERC721(escrowData.erc721Tokens[i]).ownerOf(
+                    escrowData.erc721TokenIds[i]
+                ) ==
+                address(this);
+        }
+    }
+
+    function _erc1155Balances(
+        EscrowObligationData memory escrowData
+    ) internal view returns (uint256[] memory balances) {
+        balances = new uint256[](escrowData.erc1155Tokens.length);
+        for (uint256 i; i < escrowData.erc1155Tokens.length; ++i) {
+            balances[i] = IERC1155(escrowData.erc1155Tokens[i]).balanceOf(
+                address(this),
+                escrowData.erc1155TokenIds[i]
+            );
+        }
+    }
+
+    function _validateCollectedBundle(
+        EscrowObligationData memory escrowData,
+        uint256 nativeBalanceBefore,
+        uint256[] memory erc20BalancesBefore,
+        bool[] memory erc721HeldBefore,
+        uint256[] memory erc1155BalancesBefore
+    ) internal view {
+        uint256 nativeReceived = address(this).balance - nativeBalanceBefore;
+        if (nativeReceived != escrowData.nativeAmount) {
+            revert InvalidNativeCollectionAmount(
+                escrowData.nativeAmount,
+                nativeReceived
+            );
+        }
+
+        _validateERC20Collection(escrowData, erc20BalancesBefore);
+        _validateERC721Collection(escrowData, erc721HeldBefore);
+        _validateERC1155Collection(escrowData, erc1155BalancesBefore);
+    }
+
+    function _validateERC20Collection(
+        EscrowObligationData memory escrowData,
+        uint256[] memory balancesBefore
+    ) internal view {
+        for (uint256 i; i < escrowData.erc20Tokens.length; ++i) {
+            if (!_isFirstERC20Token(escrowData, i)) continue;
+
+            uint256 expected = _expectedERC20Amount(escrowData, i);
+            uint256 received = IERC20(escrowData.erc20Tokens[i]).balanceOf(
+                address(this)
+            ) - balancesBefore[i];
+
+            if (received != expected) {
+                revert InvalidERC20CollectionAmount(
+                    i,
+                    escrowData.erc20Tokens[i],
+                    expected,
+                    received
+                );
+            }
+        }
+    }
+
+    function _validateERC721Collection(
+        EscrowObligationData memory escrowData,
+        bool[] memory heldBefore
+    ) internal view {
+        for (uint256 i; i < escrowData.erc721Tokens.length; ++i) {
+            if (
+                heldBefore[i] ||
+                IERC721(escrowData.erc721Tokens[i]).ownerOf(
+                    escrowData.erc721TokenIds[i]
+                ) !=
+                address(this)
+            ) {
+                revert InvalidERC721Collection(
+                    escrowData.erc721Tokens[i],
+                    escrowData.erc721TokenIds[i]
+                );
+            }
+        }
+    }
+
+    function _validateERC1155Collection(
+        EscrowObligationData memory escrowData,
+        uint256[] memory balancesBefore
+    ) internal view {
+        for (uint256 i; i < escrowData.erc1155Tokens.length; ++i) {
+            if (!_isFirstERC1155Token(escrowData, i)) continue;
+
+            uint256 expected = _expectedERC1155Amount(escrowData, i);
+            uint256 received = IERC1155(escrowData.erc1155Tokens[i]).balanceOf(
+                address(this),
+                escrowData.erc1155TokenIds[i]
+            ) - balancesBefore[i];
+
+            if (received != expected) {
+                revert InvalidERC1155CollectionAmount(
+                    i,
+                    escrowData.erc1155Tokens[i],
+                    escrowData.erc1155TokenIds[i],
+                    expected,
+                    received
+                );
+            }
+        }
+    }
+
+    function _isFirstERC20Token(
+        EscrowObligationData memory escrowData,
+        uint256 index
+    ) internal pure returns (bool) {
+        for (uint256 i; i < index; ++i) {
+            if (escrowData.erc20Tokens[i] == escrowData.erc20Tokens[index]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function _expectedERC20Amount(
+        EscrowObligationData memory escrowData,
+        uint256 index
+    ) internal pure returns (uint256 total) {
+        for (uint256 i; i < escrowData.erc20Tokens.length; ++i) {
+            if (escrowData.erc20Tokens[i] == escrowData.erc20Tokens[index]) {
+                total += escrowData.erc20Amounts[i];
+            }
+        }
+    }
+
+    function _isFirstERC1155Token(
+        EscrowObligationData memory escrowData,
+        uint256 index
+    ) internal pure returns (bool) {
+        for (uint256 i; i < index; ++i) {
+            if (
+                escrowData.erc1155Tokens[i] ==
+                escrowData.erc1155Tokens[index] &&
+                escrowData.erc1155TokenIds[i] ==
+                escrowData.erc1155TokenIds[index]
+            ) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function _expectedERC1155Amount(
+        EscrowObligationData memory escrowData,
+        uint256 index
+    ) internal pure returns (uint256 total) {
+        for (uint256 i; i < escrowData.erc1155Tokens.length; ++i) {
+            if (
+                escrowData.erc1155Tokens[i] ==
+                escrowData.erc1155Tokens[index] &&
+                escrowData.erc1155TokenIds[i] ==
+                escrowData.erc1155TokenIds[index]
+            ) {
+                total += escrowData.erc1155Amounts[i];
+            }
+        }
     }
 
     /// @notice Allow contract to receive ETH from escrow collection.

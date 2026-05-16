@@ -63,6 +63,9 @@ contract NativeTokenSplitter is IArbiter, ReentrancyGuard {
     error ZeroRecipient();
     error ExecuteFailed(address target, bytes data);
     error NativeTokenTransferFailed(address to, uint256 amount);
+    error EscrowCollectionFailed();
+    error InvalidEscrowContract(address expected, address provided);
+    error InvalidCollectionAmount(uint256 expected, uint256 received);
 
     IEAS public eas;
 
@@ -73,6 +76,8 @@ contract NativeTokenSplitter is IArbiter, ReentrancyGuard {
 
     /// @notice Transient storage for the current executor during execute/collectAndDistribute.
     address private _currentExecutor;
+    /// @notice Set only while collectAndDistribute is collecting escrow into this splitter.
+    bool private _collectingEscrow;
 
     constructor(IEAS _eas) {
         eas = _eas;
@@ -139,10 +144,14 @@ contract NativeTokenSplitter is IArbiter, ReentrancyGuard {
 
     /// @inheritdoc IArbiter
     function checkObligation(
-        Attestation memory,
+        Attestation memory obligation,
         bytes memory demand,
         bytes32 fulfilling
     ) public view override returns (bool) {
+        if (!_collectingEscrow || obligation.recipient != address(this)) {
+            return false;
+        }
+
         DemandData memory demandData = abi.decode(demand, (DemandData));
         bytes32 decisionKey = keccak256(
             abi.encodePacked(fulfilling, demand)
@@ -202,11 +211,28 @@ contract NativeTokenSplitter is IArbiter, ReentrancyGuard {
 
         Split[] memory splits = decisions[demandData.oracle][decisionKey];
 
+        if (escrowAttestation.attester != escrowContract) {
+            revert InvalidEscrowContract(
+                escrowAttestation.attester,
+                escrowContract
+            );
+        }
+
+        uint256 balanceBefore = address(this).balance;
+
         // Collect escrow — ETH transfers to this contract
-        INativeTokenEscrowObligation(escrowContract).collectEscrow(
+        _collectingEscrow = true;
+        bool collected = INativeTokenEscrowObligation(escrowContract).collectEscrow(
             escrow,
             fulfillment
         );
+        _collectingEscrow = false;
+        if (!collected) revert EscrowCollectionFailed();
+
+        uint256 received = address(this).balance - balanceBefore;
+        if (received != escrowData.amount) {
+            revert InvalidCollectionAmount(escrowData.amount, received);
+        }
 
         // Distribute ETH according to splits
         for (uint256 i; i < splits.length; ++i) {

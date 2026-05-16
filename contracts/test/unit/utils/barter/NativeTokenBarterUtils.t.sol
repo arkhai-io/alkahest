@@ -239,6 +239,38 @@ contract NativeTokenBarterUtilsTest is Test {
         );
     }
 
+    function testRevert_PayEthForErc20RequiresCallerValue() public {
+        vm.startPrank(bob);
+        testERC20.approve(address(erc20Escrow), 100 * 10 ** 18);
+        bytes32 buyAttestation = erc20Escrow.doObligationFor(
+            ERC20EscrowObligation.ObligationData({
+                token: address(testERC20),
+                amount: 100 * 10 ** 18,
+                arbiter: address(nativePayment),
+                demand: abi.encode(
+                    NativeTokenPaymentObligation.ObligationData({
+                        amount: BID_AMOUNT,
+                        payee: bob
+                    })
+                )
+            }),
+            EXPIRATION,
+            bob
+        );
+        vm.stopPrank();
+
+        vm.deal(address(barterUtils), BID_AMOUNT);
+        uint256 helperBalanceBefore = address(barterUtils).balance;
+        uint256 bobBalanceBefore = bob.balance;
+
+        vm.prank(alice);
+        vm.expectRevert(NativeTokenBarterUtils.MsgValueMismatch.selector);
+        barterUtils.payEthForErc20(buyAttestation);
+
+        assertEq(address(barterUtils).balance, helperBalanceBefore);
+        assertEq(bob.balance, bobBalanceBefore);
+    }
+
     // ============ Native Token to ERC721 Tests ============
 
     function testBuyErc721WithEth() public {

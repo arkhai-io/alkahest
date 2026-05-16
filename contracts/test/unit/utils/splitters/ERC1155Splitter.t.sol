@@ -267,7 +267,7 @@ contract ERC1155SplitterTest is Test {
     // checkObligation
     // -----------------------------------------------------------------
 
-    function testCheckObligationReturnsTrueWhenDecisionExists() public {
+    function testCheckObligationReturnsFalseOutsideCollectionWhenDecisionExists() public {
         bytes32 escrowUid = _createEscrow(
             buyer,
             TOKEN_ID,
@@ -290,7 +290,7 @@ contract ERC1155SplitterTest is Test {
         );
 
         Attestation memory dummyAttestation;
-        assertTrue(
+        assertFalse(
             splitter.checkObligation(dummyAttestation, demand, escrowUid)
         );
     }

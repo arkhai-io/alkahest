@@ -89,6 +89,55 @@ contract CommitRevealObligationTest is Test {
         obligation.reclaimBond(fulfillmentUid);
     }
 
+    function testReclaimUsesCommittedBondAmountAfterBondAmountChange() public {
+        bytes32 escrowUid = _makeEscrow();
+        CommitRevealObligation.ObligationData memory data = _obligationData();
+        bytes32 commitment = obligation.computeCommitment(escrowUid, claimer, data);
+
+        vm.deal(claimer, BOND);
+        vm.prank(claimer);
+        obligation.commit{value: BOND}(commitment);
+
+        uint256 updatedBond = 1 ether;
+        vm.deal(address(obligation), updatedBond);
+        obligation.setBondAmount(updatedBond);
+
+        vm.roll(block.number + 1);
+
+        vm.prank(claimer);
+        bytes32 fulfillmentUid = obligation.doObligation(data, escrowUid);
+
+        uint256 claimerBalanceBefore = claimer.balance;
+        uint256 returned = obligation.reclaimBond(fulfillmentUid);
+
+        assertEq(returned, BOND, "returns original committed bond");
+        assertEq(claimer.balance, claimerBalanceBefore + BOND, "claimer received original bond");
+    }
+
+    function testSlashUsesCommittedDeadlineAndRecipientAfterTermChanges() public {
+        bytes32 escrowUid = _makeEscrow();
+        CommitRevealObligation.ObligationData memory data = _obligationData();
+        bytes32 commitment = obligation.computeCommitment(escrowUid, claimer, data);
+
+        vm.deal(claimer, BOND);
+        vm.prank(claimer);
+        obligation.commit{value: BOND}(commitment);
+
+        address newTreasury = makeAddr("newTreasury");
+        obligation.setCommitDeadline(COMMIT_DEADLINE * 10);
+        obligation.setSlashedBondRecipient(newTreasury);
+
+        vm.warp(block.timestamp + COMMIT_DEADLINE + 1);
+
+        uint256 treasuryBefore = treasury.balance;
+        uint256 newTreasuryBefore = newTreasury.balance;
+        uint256 slashed = obligation.slashBond(commitment);
+
+        assertEq(slashed, BOND, "slashes original committed bond");
+        assertEq(treasury.balance, treasuryBefore + BOND, "uses original slash recipient");
+        assertEq(newTreasury.balance, newTreasuryBefore, "does not use updated recipient");
+    }
+
     function testCheckObligationRevertsWithoutCommit() public {
         bytes32 escrowUid = _makeEscrow();
         CommitRevealObligation.ObligationData memory data = _obligationData();

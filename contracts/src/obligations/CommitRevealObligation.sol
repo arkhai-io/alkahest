@@ -28,6 +28,9 @@ contract CommitRevealObligation is BaseObligation, IArbiter, Ownable {
         uint64 commitBlock;
         uint64 commitTimestamp;
         address committer;
+        uint256 bondAmount;
+        uint256 commitDeadline;
+        address slashedBondRecipient;
     }
 
     /// @notice commitments[commitment] => commit information.
@@ -117,7 +120,10 @@ contract CommitRevealObligation is BaseObligation, IArbiter, Ownable {
         commitments[commitment] = CommitInfo({
             commitBlock: uint64(block.number),
             commitTimestamp: uint64(block.timestamp),
-            committer: msg.sender
+            committer: msg.sender,
+            bondAmount: bondAmount,
+            commitDeadline: commitDeadline,
+            slashedBondRecipient: slashedBondRecipient
         });
 
         emit Committed(commitment, msg.sender);
@@ -182,7 +188,7 @@ contract CommitRevealObligation is BaseObligation, IArbiter, Ownable {
         }
         if (commitmentClaimed[revealedCommitment]) revert BondAlreadyClaimed(revealedCommitment);
 
-        amount = bondAmount;
+        amount = info.bondAmount;
 
         commitmentClaimed[revealedCommitment] = true;
 
@@ -201,18 +207,18 @@ contract CommitRevealObligation is BaseObligation, IArbiter, Ownable {
     function slashBond(bytes32 commitment) external nonReentrant returns (uint256 amount) {
         CommitInfo memory info = commitments[commitment];
         if (info.committer == address(0)) revert CommitmentMissing(commitment, address(0));
-        if (block.timestamp <= info.commitTimestamp + commitDeadline) {
+        if (block.timestamp <= info.commitTimestamp + info.commitDeadline) {
             revert CommitDeadlineNotReached(commitment);
         }
         if (commitmentClaimed[commitment]) revert BondAlreadyClaimed(commitment);
 
-        amount = bondAmount;
+        amount = info.bondAmount;
         commitmentClaimed[commitment] = true;
 
-        (bool success,) = slashedBondRecipient.call{value: amount}("");
-        if (!success) revert SlashTransferFailed(slashedBondRecipient, amount);
+        (bool success,) = info.slashedBondRecipient.call{value: amount}("");
+        if (!success) revert SlashTransferFailed(info.slashedBondRecipient, amount);
 
-        emit BondSlashed(commitment, slashedBondRecipient, amount);
+        emit BondSlashed(commitment, info.slashedBondRecipient, amount);
     }
 
     // ---------------------------------------------------------------------
