@@ -31,6 +31,7 @@ contract ERC1155BarterUtils is IERC1155Receiver {
 
     error CouldntCollectEscrow();
     error AttestationNotFound(bytes32 attestationId);
+    error MsgValueMismatch();
 
     constructor(
         IEAS _eas,
@@ -501,6 +502,8 @@ contract ERC1155BarterUtils is IERC1155Receiver {
             escrowData.demand,
             (NativeTokenPaymentObligation.ObligationData)
         );
+
+        if (msg.value != demand.amount) revert MsgValueMismatch();
 
         bytes32 sellAttestation = nativePayment.doObligationFor{
             value: demand.amount
