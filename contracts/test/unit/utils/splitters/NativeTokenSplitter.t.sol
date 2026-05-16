@@ -11,6 +11,12 @@ import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 
 import {EASDeployer} from "@test/utils/EASDeployer.sol";
 
+contract FakeNativeTokenEscrow {
+    function collectEscrow(bytes32, bytes32) external pure returns (bool) {
+        return true;
+    }
+}
+
 contract NativeTokenSplitterTest is Test {
     NativeTokenSplitter public splitter;
     NativeTokenEscrowObligation public escrowObligation;
@@ -257,7 +263,7 @@ contract NativeTokenSplitterTest is Test {
     // checkObligation
     // -----------------------------------------------------------------
 
-    function testCheckObligationReturnsTrueWhenDecisionExists() public {
+    function testCheckObligationReturnsFalseOutsideCollectionWhenDecisionExists() public {
         bytes32 escrowUid = _createEscrow(
             buyer,
             AMOUNT,
@@ -279,7 +285,7 @@ contract NativeTokenSplitterTest is Test {
         );
 
         Attestation memory dummyAttestation;
-        assertTrue(
+        assertFalse(
             splitter.checkObligation(dummyAttestation, demand, escrowUid)
         );
     }
@@ -424,6 +430,80 @@ contract NativeTokenSplitterTest is Test {
             0,
             "Escrow should have no remaining ETH"
         );
+    }
+
+    function testRevert_DirectEscrowCollectionCannotBypassSplitterDistribution() public {
+        bytes32 escrowUid = _createEscrow(
+            buyer,
+            AMOUNT,
+            uint64(block.timestamp + EXPIRATION)
+        );
+
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
+        );
+
+        NativeTokenSplitter.Split[]
+            memory splits = new NativeTokenSplitter.Split[](1);
+        splits[0] = NativeTokenSplitter.Split({
+            recipient: alice,
+            amount: AMOUNT
+        });
+
+        vm.prank(oracle);
+        splitter.arbitrate(escrowUid, splits);
+
+        vm.prank(executor);
+        vm.expectRevert(BaseEscrowObligation.InvalidFulfillment.selector);
+        escrowObligation.collectEscrow(escrowUid, fulfillmentUid);
+
+        assertEq(address(escrowObligation).balance, AMOUNT);
+        assertEq(address(splitter).balance, 0);
+        assertEq(alice.balance, 0);
+    }
+
+    function testRevert_CollectAndDistributeRejectsNonAttesterEscrowContract() public {
+        bytes32 escrowUid = _createEscrow(
+            buyer,
+            AMOUNT,
+            uint64(block.timestamp + EXPIRATION)
+        );
+
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
+            executor,
+            escrowUid
+        );
+
+        NativeTokenSplitter.Split[]
+            memory splits = new NativeTokenSplitter.Split[](1);
+        splits[0] = NativeTokenSplitter.Split({
+            recipient: alice,
+            amount: AMOUNT
+        });
+
+        vm.prank(oracle);
+        splitter.arbitrate(escrowUid, splits);
+
+        FakeNativeTokenEscrow fakeEscrow = new FakeNativeTokenEscrow();
+
+        vm.prank(executor);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                NativeTokenSplitter.InvalidEscrowContract.selector,
+                address(escrowObligation),
+                address(fakeEscrow)
+            )
+        );
+        splitter.collectAndDistribute(
+            address(fakeEscrow),
+            escrowUid,
+            fulfillmentUid
+        );
+
+        assertEq(address(escrowObligation).balance, AMOUNT);
+        assertEq(address(splitter).balance, 0);
+        assertEq(alice.balance, 0);
     }
 
     function testCollectAndDistributeWithSentinel() public {
