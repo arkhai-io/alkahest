@@ -279,6 +279,50 @@ contract CommitRevealObligationTest is Test {
         assertTrue(obligation.checkObligation(fulfillment, "", escrowUid));
     }
 
+    function testRevealUsesCommittedBondAmountAndDeadline() public {
+        bytes32 escrowUid = _makeEscrow();
+        CommitRevealObligation.ObligationData memory data = _obligationData();
+        bytes32 commitment = obligation.computeCommitment(escrowUid, claimer, data);
+
+        vm.deal(claimer, BOND);
+        vm.prank(claimer);
+        obligation.commit{value: BOND}(commitment);
+
+        obligation.setBondAmount(2 * BOND);
+        obligation.setCommitDeadline(1);
+
+        vm.warp(block.timestamp + 2);
+        vm.roll(block.number + 1);
+
+        uint256 claimerBalanceBefore = claimer.balance;
+        vm.prank(claimer);
+        obligation.doObligation(data, escrowUid);
+
+        assertEq(claimer.balance, claimerBalanceBefore + BOND, "original bond refunded");
+        assertEq(address(obligation).balance, 0, "no excess bond paid");
+    }
+
+    function testCheckObligationUsesCommittedDeadline() public {
+        bytes32 escrowUid = _makeEscrow();
+        CommitRevealObligation.ObligationData memory data = _obligationData();
+        bytes32 commitment = obligation.computeCommitment(escrowUid, claimer, data);
+
+        vm.deal(claimer, BOND);
+        vm.prank(claimer);
+        obligation.commit{value: BOND}(commitment);
+
+        vm.warp(block.timestamp + 10);
+        vm.roll(block.number + 1);
+
+        vm.prank(claimer);
+        bytes32 fulfillmentUid = obligation.doObligation(data, escrowUid);
+
+        obligation.setCommitDeadline(1);
+
+        Attestation memory fulfillment = eas.getAttestation(fulfillmentUid);
+        assertTrue(obligation.checkObligation(fulfillment, "", escrowUid));
+    }
+
     // ----------------------------------------------------------------
     // Slashing
     // ----------------------------------------------------------------
@@ -300,6 +344,31 @@ contract CommitRevealObligationTest is Test {
 
         assertEq(slashed, BOND, "slashed amount");
         assertEq(treasury.balance, treasuryBefore + BOND, "treasury received slashed bond");
+    }
+
+    function testSlashUsesCommittedBondAmountDeadlineAndRecipient() public {
+        bytes32 escrowUid = _makeEscrow();
+        CommitRevealObligation.ObligationData memory data = _obligationData();
+        bytes32 commitment = obligation.computeCommitment(escrowUid, claimer, data);
+        address newTreasury = makeAddr("newTreasury");
+
+        vm.deal(claimer, BOND);
+        vm.prank(claimer);
+        obligation.commit{value: BOND}(commitment);
+
+        obligation.setBondAmount(2 * BOND);
+        obligation.setCommitDeadline(COMMIT_DEADLINE * 10);
+        obligation.setSlashedBondRecipient(newTreasury);
+
+        vm.warp(block.timestamp + COMMIT_DEADLINE + 1);
+
+        uint256 treasuryBefore = treasury.balance;
+        uint256 newTreasuryBefore = newTreasury.balance;
+        uint256 slashed = obligation.slashBond(commitment);
+
+        assertEq(slashed, BOND, "original bond slashed");
+        assertEq(treasury.balance, treasuryBefore + BOND, "original treasury paid");
+        assertEq(newTreasury.balance, newTreasuryBefore, "new treasury untouched");
     }
 
     function testSlashBondRevertsBeforeDeadline() public {
