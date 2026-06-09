@@ -5,6 +5,7 @@ import "forge-std/Test.sol";
 import {NativeTokenSplitter} from "@src/utils/splitters/NativeTokenSplitter.sol";
 import {NativeTokenEscrowObligation} from "@src/obligations/escrow/non-tierable/NativeTokenEscrowObligation.sol";
 import {StringObligation} from "@src/obligations/StringObligation.sol";
+import {BaseEscrowObligation} from "@src/BaseEscrowObligation.sol";
 import {IEAS, Attestation} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 
@@ -52,6 +53,14 @@ contract NativeTokenSplitterTest is Test {
         );
         vm.prank(_executor);
         return splitter.createFulfillment(address(stringObligation), obligationData, 0, escrowUid);
+    }
+
+    function _createDirectFulfillment(address recipient, bytes32 escrowUid) internal returns (bytes32) {
+        bytes memory obligationData = abi.encode(
+            StringObligation.ObligationData({item: "fulfillment", schema: bytes32(0)})
+        );
+        vm.prank(recipient);
+        return stringObligation.doObligationRaw(obligationData, 0, escrowUid);
     }
 
     function testCreateFulfillmentRecordsFulfiller() public {
@@ -116,6 +125,27 @@ contract NativeTokenSplitterTest is Test {
 
         Attestation memory attackerF = eas.getAttestation(attackerFulfillmentUid);
         assertFalse(splitter.checkObligation(attackerF, demand, escrowUid));
+    }
+
+    function testCollectEscrowRejectsApprovedNonSplitterRecipient() public {
+        bytes32 escrowUid = _createEscrow(buyer, AMOUNT, uint64(block.timestamp + EXPIRATION));
+        bytes32 fulfillmentUid = _createDirectFulfillment(alice, escrowUid);
+
+        NativeTokenSplitter.Split[] memory splits = new NativeTokenSplitter.Split[](1);
+        splits[0] = NativeTokenSplitter.Split({recipient: bob, amount: AMOUNT});
+        vm.prank(oracle);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
+
+        bytes memory demand = abi.encode(NativeTokenSplitter.DemandData({oracle: oracle, data: bytes("")}));
+        Attestation memory fulfillment = eas.getAttestation(fulfillmentUid);
+        assertEq(fulfillment.recipient, alice);
+        assertFalse(splitter.checkObligation(fulfillment, demand, escrowUid));
+
+        vm.expectRevert(BaseEscrowObligation.InvalidFulfillment.selector);
+        escrowObligation.collectEscrow(escrowUid, fulfillmentUid);
+
+        assertEq(alice.balance, 0);
+        assertEq(address(escrowObligation).balance, AMOUNT);
     }
 
     function testRequestArbitrationAsRecipient() public {

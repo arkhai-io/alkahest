@@ -101,6 +101,21 @@ contract ERC20SplitterTest is Test {
         );
     }
 
+    function _createDirectFulfillment(
+        address recipient,
+        bytes32 escrowUid
+    ) internal returns (bytes32) {
+        bytes memory obligationData = abi.encode(
+            StringObligation.ObligationData({
+                item: "fulfillment",
+                schema: bytes32(0)
+            })
+        );
+
+        vm.prank(recipient);
+        return stringObligation.doObligationRaw(obligationData, 0, escrowUid);
+    }
+
     // -----------------------------------------------------------------
     // arbitrate
     // -----------------------------------------------------------------
@@ -234,6 +249,27 @@ contract ERC20SplitterTest is Test {
         bytes memory demand = abi.encode(ERC20Splitter.DemandData({oracle: oracle, data: bytes("")}));
         Attestation memory attackerFulfillment = eas.getAttestation(attackerFulfillmentUid);
         assertFalse(splitter.checkObligation(attackerFulfillment, demand, escrowUid));
+    }
+
+    function testCollectEscrowRejectsApprovedNonSplitterRecipient() public {
+        bytes32 escrowUid = _createEscrow(buyer, AMOUNT, uint64(block.timestamp + EXPIRATION));
+        bytes32 fulfillmentUid = _createDirectFulfillment(alice, escrowUid);
+
+        ERC20Splitter.Split[] memory splits = new ERC20Splitter.Split[](1);
+        splits[0] = ERC20Splitter.Split({recipient: bob, amount: AMOUNT});
+        vm.prank(oracle);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
+
+        bytes memory demand = abi.encode(ERC20Splitter.DemandData({oracle: oracle, data: bytes("")}));
+        Attestation memory fulfillment = eas.getAttestation(fulfillmentUid);
+        assertEq(fulfillment.recipient, alice);
+        assertFalse(splitter.checkObligation(fulfillment, demand, escrowUid));
+
+        vm.expectRevert(BaseEscrowObligation.InvalidFulfillment.selector);
+        escrowObligation.collectEscrow(escrowUid, fulfillmentUid);
+
+        assertEq(token.balanceOf(alice), 0);
+        assertEq(token.balanceOf(address(escrowObligation)), AMOUNT);
     }
 
     // -----------------------------------------------------------------

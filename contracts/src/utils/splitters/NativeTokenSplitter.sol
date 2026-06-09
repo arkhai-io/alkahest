@@ -73,6 +73,7 @@ contract NativeTokenSplitter is IArbiter, ReentrancyGuard {
     }
 
     function checkObligation(Attestation memory fulfillment, bytes memory demand, bytes32 escrow) public view override returns (bool) {
+        if (fulfillment.recipient != address(this)) return false;
         DemandData memory demandData = abi.decode(demand, (DemandData));
         return hasDecision[demandData.oracle][keccak256(abi.encodePacked(fulfillment.uid, escrow))];
     }
