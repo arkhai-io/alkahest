@@ -11,6 +11,12 @@ import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 
 import {EASDeployer} from "@test/utils/EASDeployer.sol";
 
+contract NoopNativeTokenEscrow {
+    function collectEscrow(bytes32, bytes32) external pure returns (bool) {
+        return true;
+    }
+}
+
 contract NativeTokenSplitterTest is Test {
     NativeTokenSplitter public splitter;
     NativeTokenEscrowObligation public escrowObligation;
@@ -109,6 +115,24 @@ contract NativeTokenSplitterTest is Test {
 
         assertEq(executor.balance, executorBalBefore + 0.6 ether, "Executor gets sentinel share");
         assertEq(bob.balance, 0.4 ether);
+    }
+
+    function testCollectAndDistributeRejectsWrongEscrowContract() public {
+        bytes32 escrowUid = _createEscrow(buyer, AMOUNT, uint64(block.timestamp + EXPIRATION));
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(executor, escrowUid);
+
+        NativeTokenSplitter.Split[] memory splits = new NativeTokenSplitter.Split[](1);
+        splits[0] = NativeTokenSplitter.Split({recipient: alice, amount: AMOUNT});
+        vm.prank(oracle);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
+
+        vm.deal(address(splitter), AMOUNT);
+        NoopNativeTokenEscrow fakeEscrow = new NoopNativeTokenEscrow();
+        vm.expectRevert(NativeTokenSplitter.InvalidEscrowContract.selector);
+        splitter.collectAndDistribute(address(fakeEscrow), escrowUid, fulfillmentUid);
+
+        assertEq(alice.balance, 0);
+        assertEq(address(splitter).balance, AMOUNT);
     }
 
     function testCheckObligationRejectsDifferentFulfillment() public {

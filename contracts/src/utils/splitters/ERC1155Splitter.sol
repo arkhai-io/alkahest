@@ -39,6 +39,9 @@ contract ERC1155Splitter is IArbiter, ReentrancyGuard, ERC1155Holder {
     error ZeroRecipient();
     error ERC1155TransferFailed(address token, address to, uint256 tokenId, uint256 amount);
     error NoFulfillerRecorded(bytes32 fulfillment);
+    error InvalidEscrowContract();
+    error EscrowCollectionFailed();
+    error EscrowBalanceMismatch();
 
     IEAS public eas;
     mapping(address => mapping(bytes32 => Split[])) internal decisions;
@@ -114,12 +117,19 @@ contract ERC1155Splitter is IArbiter, ReentrancyGuard, ERC1155Holder {
         internal returns (Split[] memory splits, address token, uint256 tokenId)
     {
         Attestation memory escrowAttestation = eas.getAttestation(escrow);
+        if (escrowAttestation.attester != escrowContract) revert InvalidEscrowContract();
         EscrowObligationData memory escrowData = abi.decode(escrowAttestation.data, (EscrowObligationData));
         DemandData memory demandData = abi.decode(escrowData.demand, (DemandData));
         splits = decisions[demandData.oracle][keccak256(abi.encodePacked(fulfillment, escrow))];
         token = escrowData.token;
         tokenId = escrowData.tokenId;
-        IERC1155EscrowObligation(escrowContract).collectEscrow(escrow, fulfillment);
+        uint256 balanceBefore = IERC1155(token).balanceOf(address(this), tokenId);
+        if (!IERC1155EscrowObligation(escrowContract).collectEscrow(escrow, fulfillment)) {
+            revert EscrowCollectionFailed();
+        }
+        if (IERC1155(token).balanceOf(address(this), tokenId) != balanceBefore + escrowData.amount) {
+            revert EscrowBalanceMismatch();
+        }
     }
 
     function _resolveSentinel(address recipient, bytes32 fulfillment) internal view returns (address) {

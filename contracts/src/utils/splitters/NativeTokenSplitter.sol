@@ -37,6 +37,9 @@ contract NativeTokenSplitter is IArbiter, ReentrancyGuard {
     error ZeroRecipient();
     error NativeTokenTransferFailed(address to, uint256 amount);
     error NoFulfillerRecorded(bytes32 fulfillment);
+    error InvalidEscrowContract();
+    error EscrowCollectionFailed();
+    error EscrowBalanceMismatch();
 
     IEAS public eas;
     mapping(address => mapping(bytes32 => Split[])) internal decisions;
@@ -112,10 +115,17 @@ contract NativeTokenSplitter is IArbiter, ReentrancyGuard {
         internal returns (Split[] memory splits)
     {
         Attestation memory escrowAttestation = eas.getAttestation(escrow);
+        if (escrowAttestation.attester != escrowContract) revert InvalidEscrowContract();
         EscrowObligationData memory escrowData = abi.decode(escrowAttestation.data, (EscrowObligationData));
         DemandData memory demandData = abi.decode(escrowData.demand, (DemandData));
         splits = decisions[demandData.oracle][keccak256(abi.encodePacked(fulfillment, escrow))];
-        INativeTokenEscrowObligation(escrowContract).collectEscrow(escrow, fulfillment);
+        uint256 balanceBefore = address(this).balance;
+        if (!INativeTokenEscrowObligation(escrowContract).collectEscrow(escrow, fulfillment)) {
+            revert EscrowCollectionFailed();
+        }
+        if (address(this).balance != balanceBefore + escrowData.amount) {
+            revert EscrowBalanceMismatch();
+        }
     }
 
     function _resolveSentinel(address recipient, bytes32 fulfillment) internal view returns (address) {

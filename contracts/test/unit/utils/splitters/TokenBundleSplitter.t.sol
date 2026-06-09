@@ -15,6 +15,12 @@ import {ERC1155} from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 
 import {EASDeployer} from "@test/utils/EASDeployer.sol";
 
+contract NoopTokenBundleEscrow {
+    function collectEscrow(bytes32, bytes32) external pure returns (bool) {
+        return true;
+    }
+}
+
 contract MockERC20T is ERC20 {
     constructor() ERC20("Mock Token", "MCK") {}
     function mint(address to, uint256 amount) public { _mint(to, amount); }
@@ -193,6 +199,25 @@ contract TokenBundleSplitterTest is Test {
         assertEq(executor.balance, executorBalBefore + 0.6 ether, "Executor gets sentinel share");
         assertEq(token1.balanceOf(executor), 60e18);
         assertEq(nft.ownerOf(NFT_ID_1), executor);
+    }
+
+    function testCollectAndDistributeRejectsWrongEscrowContract() public {
+        bytes32 escrowUid = _createEscrow();
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(executor, escrowUid);
+        vm.prank(oracle);
+        splitter.arbitrate(fulfillmentUid, escrowUid, _twoWaySplit());
+
+        vm.deal(address(splitter), NATIVE_AMOUNT);
+        token1.mint(address(splitter), TOKEN1_AMOUNT);
+
+        NoopTokenBundleEscrow fakeEscrow = new NoopTokenBundleEscrow();
+        vm.expectRevert(TokenBundleSplitterBase.InvalidEscrowContract.selector);
+        splitter.collectAndDistribute(address(fakeEscrow), escrowUid, fulfillmentUid);
+
+        assertEq(alice.balance, 0);
+        assertEq(token1.balanceOf(alice), 0);
+        assertEq(address(splitter).balance, NATIVE_AMOUNT);
+        assertEq(token1.balanceOf(address(splitter)), TOKEN1_AMOUNT);
     }
 
     function testCheckObligationRejectsDifferentFulfillment() public {

@@ -67,6 +67,9 @@ abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155H
     error ERC721TransferFailed(address token, address to, uint256 tokenId);
     error ERC1155TransferFailed(address token, address to, uint256 tokenId, uint256 amount);
     error NoFulfillerRecorded(bytes32 fulfillment);
+    error InvalidEscrowContract();
+    error EscrowCollectionFailed();
+    error EscrowBalanceMismatch();
 
     IEAS public eas;
     mapping(address => mapping(bytes32 => BundleSplit[])) internal decisions;
@@ -153,10 +156,94 @@ abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155H
         internal returns (BundleSplit[] memory splits, EscrowObligationData memory escrowData)
     {
         Attestation memory escrowAttestation = eas.getAttestation(escrow);
+        if (escrowAttestation.attester != escrowContract) revert InvalidEscrowContract();
         escrowData = abi.decode(escrowAttestation.data, (EscrowObligationData));
         DemandData memory demandData = abi.decode(escrowData.demand, (DemandData));
         splits = decisions[demandData.oracle][keccak256(abi.encodePacked(fulfillment, escrow))];
-        ITokenBundleEscrowObligation(escrowContract).collectEscrow(escrow, fulfillment);
+        uint256 nativeBalanceBefore = address(this).balance;
+        uint256[] memory erc20BalancesBefore = new uint256[](escrowData.erc20Tokens.length);
+        address[] memory erc721OwnersBefore = new address[](escrowData.erc721Tokens.length);
+        uint256[] memory erc1155BalancesBefore = new uint256[](escrowData.erc1155Tokens.length);
+
+        for (uint256 i; i < escrowData.erc20Tokens.length; ++i) {
+            erc20BalancesBefore[i] = IERC20(escrowData.erc20Tokens[i]).balanceOf(address(this));
+        }
+        for (uint256 i; i < escrowData.erc721Tokens.length; ++i) {
+            erc721OwnersBefore[i] = IERC721(escrowData.erc721Tokens[i]).ownerOf(escrowData.erc721TokenIds[i]);
+        }
+        for (uint256 i; i < escrowData.erc1155Tokens.length; ++i) {
+            erc1155BalancesBefore[i] =
+                IERC1155(escrowData.erc1155Tokens[i]).balanceOf(address(this), escrowData.erc1155TokenIds[i]);
+        }
+
+        if (!ITokenBundleEscrowObligation(escrowContract).collectEscrow(escrow, fulfillment)) {
+            revert EscrowCollectionFailed();
+        }
+        _checkCollectionDelta(escrowData, nativeBalanceBefore, erc20BalancesBefore, erc721OwnersBefore, erc1155BalancesBefore);
+    }
+
+    function _checkCollectionDelta(
+        EscrowObligationData memory escrowData,
+        uint256 nativeBalanceBefore,
+        uint256[] memory erc20BalancesBefore,
+        address[] memory erc721OwnersBefore,
+        uint256[] memory erc1155BalancesBefore
+    ) internal view {
+        if (address(this).balance != nativeBalanceBefore + escrowData.nativeAmount) {
+            revert EscrowBalanceMismatch();
+        }
+
+        for (uint256 i; i < escrowData.erc20Tokens.length; ++i) {
+            bool seen;
+            for (uint256 j; j < i; ++j) {
+                if (escrowData.erc20Tokens[j] == escrowData.erc20Tokens[i]) seen = true;
+            }
+            if (seen) continue;
+
+            uint256 expected;
+            for (uint256 j = i; j < escrowData.erc20Tokens.length; ++j) {
+                if (escrowData.erc20Tokens[j] == escrowData.erc20Tokens[i]) expected += escrowData.erc20Amounts[j];
+            }
+            if (IERC20(escrowData.erc20Tokens[i]).balanceOf(address(this)) != erc20BalancesBefore[i] + expected) {
+                revert EscrowBalanceMismatch();
+            }
+        }
+
+        for (uint256 i; i < escrowData.erc721Tokens.length; ++i) {
+            if (erc721OwnersBefore[i] == address(this)) revert EscrowBalanceMismatch();
+            if (IERC721(escrowData.erc721Tokens[i]).ownerOf(escrowData.erc721TokenIds[i]) != address(this)) {
+                revert EscrowBalanceMismatch();
+            }
+        }
+
+        for (uint256 i; i < escrowData.erc1155Tokens.length; ++i) {
+            bool seen;
+            for (uint256 j; j < i; ++j) {
+                if (
+                    escrowData.erc1155Tokens[j] == escrowData.erc1155Tokens[i]
+                        && escrowData.erc1155TokenIds[j] == escrowData.erc1155TokenIds[i]
+                ) {
+                    seen = true;
+                }
+            }
+            if (seen) continue;
+
+            uint256 expected;
+            for (uint256 j = i; j < escrowData.erc1155Tokens.length; ++j) {
+                if (
+                    escrowData.erc1155Tokens[j] == escrowData.erc1155Tokens[i]
+                        && escrowData.erc1155TokenIds[j] == escrowData.erc1155TokenIds[i]
+                ) {
+                    expected += escrowData.erc1155Amounts[j];
+                }
+            }
+            if (
+                IERC1155(escrowData.erc1155Tokens[i]).balanceOf(address(this), escrowData.erc1155TokenIds[i])
+                    != erc1155BalancesBefore[i] + expected
+            ) {
+                revert EscrowBalanceMismatch();
+            }
+        }
     }
 
     function _resolveSentinel(address recipient, bytes32 fulfillment) internal view returns (address) {
