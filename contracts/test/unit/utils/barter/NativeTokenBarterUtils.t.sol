@@ -180,6 +180,25 @@ contract NativeTokenBarterUtilsTest is Test {
         assertEq(bob.balance, bobBalanceBefore - ASK_AMOUNT + BID_AMOUNT);
     }
 
+    function testRevert_PayEthForEthMismatchedValueWithPrefundedHelper() public {
+        vm.prank(alice);
+        bytes32 buyAttestation = barterUtils.buyEthForEth{value: BID_AMOUNT}(
+            BID_AMOUNT,
+            ASK_AMOUNT,
+            EXPIRATION
+        );
+
+        vm.deal(address(barterUtils), 5 ether);
+        uint256 helperBalanceBefore = address(barterUtils).balance;
+
+        vm.prank(bob);
+        vm.expectRevert(NativeTokenBarterUtils.MsgValueMismatch.selector);
+        barterUtils.payEthForEth{value: 0.1 ether}(buyAttestation);
+
+        assertEq(address(barterUtils).balance, helperBalanceBefore);
+        assertEq(address(nativeEscrow).balance, BID_AMOUNT);
+    }
+
     // ============ Native Token to ERC20 Tests ============
 
     function testBuyErc20WithEth() public {

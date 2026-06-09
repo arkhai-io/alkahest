@@ -85,6 +85,7 @@ contract NativeTokenBarterUtils {
         bytes32 buyAttestation,
         NativeTokenPaymentObligation.ObligationData memory demand
     ) internal returns (bytes32) {
+        if (msg.value != demand.amount) revert MsgValueMismatch();
         bytes32 sellAttestation = nativePayment.doObligationFor{
             value: demand.amount
         }(demand,
@@ -166,6 +167,7 @@ contract NativeTokenBarterUtils {
             escrowData.demand,
             (NativeTokenPaymentObligation.ObligationData)
         );
+        if (msg.value != demand.amount) revert MsgValueMismatch();
 
         bytes32 sellAttestation = nativePayment.doObligationFor{
             value: demand.amount
@@ -223,6 +225,7 @@ contract NativeTokenBarterUtils {
             escrowData.demand,
             (NativeTokenPaymentObligation.ObligationData)
         );
+        if (msg.value != demand.amount) revert MsgValueMismatch();
 
         bytes32 sellAttestation = nativePayment.doObligationFor{
             value: demand.amount
@@ -282,6 +285,7 @@ contract NativeTokenBarterUtils {
             escrowData.demand,
             (NativeTokenPaymentObligation.ObligationData)
         );
+        if (msg.value != demand.amount) revert MsgValueMismatch();
 
         bytes32 sellAttestation = nativePayment.doObligationFor{
             value: demand.amount
@@ -327,6 +331,7 @@ contract NativeTokenBarterUtils {
             escrowData.demand,
             (NativeTokenPaymentObligation.ObligationData)
         );
+        if (msg.value != demand.amount) revert MsgValueMismatch();
 
         bytes32 sellAttestation = nativePayment.doObligationFor{
             value: demand.amount
