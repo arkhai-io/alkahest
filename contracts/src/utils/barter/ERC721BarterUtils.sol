@@ -30,6 +30,7 @@ contract ERC721BarterUtils {
 
     error CouldntCollectEscrow();
     error AttestationNotFound(bytes32 attestationId);
+    error MsgValueMismatch();
 
     constructor(
         IEAS _eas,
@@ -448,6 +449,7 @@ contract ERC721BarterUtils {
             escrowData.demand,
             (NativeTokenPaymentObligation.ObligationData)
         );
+        if (msg.value != demand.amount) revert MsgValueMismatch();
 
         bytes32 sellAttestation = nativePayment.doObligationFor{
             value: demand.amount

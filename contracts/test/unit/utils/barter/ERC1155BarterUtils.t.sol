@@ -969,7 +969,7 @@ contract ERC1155BarterUtilsUnitTest is Test {
         assertEq(sellAtt.recipient, alice);
     }
 
-    function test_RevertWhen_InsufficientEthPayment() public {
+    function test_RevertWhen_EthPaymentValueMismatch() public {
         uint256 erc1155TokenId = 1;
         uint256 erc1155Amount = 10;
         uint256 askAmount = 1 ether;
@@ -989,12 +989,20 @@ contract ERC1155BarterUtilsUnitTest is Test {
         );
         vm.stopPrank();
 
-        // Bob tries to fulfill with insufficient ETH
+        vm.deal(address(barterUtils), 5 ether);
+        uint256 helperBalanceBefore = address(barterUtils).balance;
+
         vm.deal(bob, 0.5 ether);
         vm.startPrank(bob);
 
-        vm.expectRevert();
+        vm.expectRevert(ERC1155BarterUtils.MsgValueMismatch.selector);
         barterUtils.payEthForErc1155{value: 0.5 ether}(buyAttestation);
         vm.stopPrank();
+
+        assertEq(address(barterUtils).balance, helperBalanceBefore);
+        assertEq(
+            erc1155TokenA.balanceOf(address(escrowObligation), erc1155TokenId),
+            erc1155Amount
+        );
     }
 }

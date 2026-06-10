@@ -870,7 +870,7 @@ contract ERC721BarterUtilsUnitTest is Test {
         assertEq(sellAtt.recipient, alice);
     }
 
-    function test_RevertWhen_InsufficientEthPayment() public {
+    function test_RevertWhen_EthPaymentValueMismatch() public {
         uint256 askAmount = 1 ether;
         uint64 expiration = uint64(block.timestamp + 1 days);
 
@@ -887,12 +887,17 @@ contract ERC721BarterUtilsUnitTest is Test {
         );
         vm.stopPrank();
 
-        // Bob tries to fulfill with insufficient ETH
+        vm.deal(address(barterUtils), 5 ether);
+        uint256 helperBalanceBefore = address(barterUtils).balance;
+
         vm.deal(bob, 0.5 ether);
         vm.startPrank(bob);
 
-        vm.expectRevert();
+        vm.expectRevert(ERC721BarterUtils.MsgValueMismatch.selector);
         barterUtils.payEthForErc721{value: 0.5 ether}(buyAttestation);
         vm.stopPrank();
+
+        assertEq(address(barterUtils).balance, helperBalanceBefore);
+        assertEq(erc721TokenA.ownerOf(erc721Id), address(escrowObligation));
     }
 }

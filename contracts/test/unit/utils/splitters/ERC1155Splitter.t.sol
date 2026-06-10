@@ -5,11 +5,18 @@ import "forge-std/Test.sol";
 import {ERC1155Splitter} from "@src/utils/splitters/ERC1155Splitter.sol";
 import {ERC1155EscrowObligation} from "@src/obligations/escrow/non-tierable/ERC1155EscrowObligation.sol";
 import {StringObligation} from "@src/obligations/StringObligation.sol";
+import {BaseEscrowObligation} from "@src/BaseEscrowObligation.sol";
 import {IEAS, Attestation} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {ERC1155} from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 
 import {EASDeployer} from "@test/utils/EASDeployer.sol";
+
+contract NoopERC1155Escrow {
+    function collectEscrow(bytes32, bytes32) external pure returns (bool) {
+        return true;
+    }
+}
 
 contract MockERC1155 is ERC1155 {
     constructor() ERC1155("https://example.com/token/{id}.json") {}
@@ -66,6 +73,14 @@ contract ERC1155SplitterTest is Test {
         return splitter.createFulfillment(address(stringObligation), obligationData, 0, escrowUid);
     }
 
+    function _createDirectFulfillment(address recipient, bytes32 escrowUid) internal returns (bytes32) {
+        bytes memory obligationData = abi.encode(
+            StringObligation.ObligationData({item: "fulfillment", schema: bytes32(0)})
+        );
+        vm.prank(recipient);
+        return stringObligation.doObligationRaw(obligationData, 0, escrowUid);
+    }
+
     function testCreateFulfillmentRecordsFulfiller() public {
         bytes32 escrowUid = _createEscrow(buyer, TOKEN_ID, AMOUNT, uint64(block.timestamp + EXPIRATION));
         bytes32 fulfillmentUid = _createFulfillmentViaSplitter(executor, escrowUid);
@@ -113,6 +128,25 @@ contract ERC1155SplitterTest is Test {
         assertEq(token.balanceOf(bob, TOKEN_ID), 40);
     }
 
+    function testCollectAndDistributeRejectsWrongEscrowContract() public {
+        bytes32 escrowUid = _createEscrow(buyer, TOKEN_ID, AMOUNT, uint64(block.timestamp + EXPIRATION));
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(executor, escrowUid);
+
+        ERC1155Splitter.Split[] memory splits = new ERC1155Splitter.Split[](1);
+        splits[0] = ERC1155Splitter.Split({recipient: alice, amount: AMOUNT});
+        vm.prank(oracle);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
+
+        token.mint(address(splitter), TOKEN_ID, AMOUNT);
+
+        NoopERC1155Escrow fakeEscrow = new NoopERC1155Escrow();
+        vm.expectRevert(ERC1155Splitter.InvalidEscrowContract.selector);
+        splitter.collectAndDistribute(address(fakeEscrow), escrowUid, fulfillmentUid);
+
+        assertEq(token.balanceOf(alice, TOKEN_ID), 0);
+        assertEq(token.balanceOf(address(splitter), TOKEN_ID), AMOUNT);
+    }
+
     function testCheckObligationRejectsDifferentFulfillment() public {
         bytes32 escrowUid = _createEscrow(buyer, TOKEN_ID, AMOUNT, uint64(block.timestamp + EXPIRATION));
         bytes32 fulfillmentUid = _createFulfillmentViaSplitter(executor, escrowUid);
@@ -130,6 +164,27 @@ contract ERC1155SplitterTest is Test {
 
         Attestation memory f = eas.getAttestation(fulfillmentUid);
         assertTrue(splitter.checkObligation(f, demand, escrowUid));
+    }
+
+    function testCollectEscrowRejectsApprovedNonSplitterRecipient() public {
+        bytes32 escrowUid = _createEscrow(buyer, TOKEN_ID, AMOUNT, uint64(block.timestamp + EXPIRATION));
+        bytes32 fulfillmentUid = _createDirectFulfillment(alice, escrowUid);
+
+        ERC1155Splitter.Split[] memory splits = new ERC1155Splitter.Split[](1);
+        splits[0] = ERC1155Splitter.Split({recipient: bob, amount: AMOUNT});
+        vm.prank(oracle);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
+
+        bytes memory demand = abi.encode(ERC1155Splitter.DemandData({oracle: oracle, data: bytes("")}));
+        Attestation memory fulfillment = eas.getAttestation(fulfillmentUid);
+        assertEq(fulfillment.recipient, alice);
+        assertFalse(splitter.checkObligation(fulfillment, demand, escrowUid));
+
+        vm.expectRevert(BaseEscrowObligation.InvalidFulfillment.selector);
+        escrowObligation.collectEscrow(escrowUid, fulfillmentUid);
+
+        assertEq(token.balanceOf(alice, TOKEN_ID), 0);
+        assertEq(token.balanceOf(address(escrowObligation), TOKEN_ID), AMOUNT);
     }
 
     function testRequestArbitrationAsRecipient() public {

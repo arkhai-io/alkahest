@@ -18,6 +18,7 @@ contract TokenBundleBarterUtils is IERC1155Receiver {
 
     error CouldntCollectEscrow();
     error InvalidSignatureLength();
+    error MsgValueMismatch();
 
     struct ERC20PermitSignature {
         uint8 v;
@@ -43,6 +44,7 @@ contract TokenBundleBarterUtils is IERC1155Receiver {
     ) external payable returns (bytes32) {
         if (permits.length != data.erc20Tokens.length)
             revert InvalidSignatureLength();
+        if (msg.value != data.nativeAmount) revert MsgValueMismatch();
 
         // Handle ERC20 permits - approve BarterUtils
         for (uint i = 0; i < data.erc20Tokens.length; i++) {
@@ -78,6 +80,7 @@ contract TokenBundleBarterUtils is IERC1155Receiver {
     ) external payable returns (bytes32) {
         if (permits.length != data.erc20Tokens.length)
             revert InvalidSignatureLength();
+        if (msg.value != data.nativeAmount) revert MsgValueMismatch();
 
         // Handle ERC20 permits - approve BarterUtils
         for (uint i = 0; i < data.erc20Tokens.length; i++) {
@@ -110,6 +113,8 @@ contract TokenBundleBarterUtils is IERC1155Receiver {
         TokenBundlePaymentObligation.ObligationData memory askBundle,
         uint64 expiration
     ) internal returns (bytes32) {
+        if (msg.value != bidBundle.nativeAmount) revert MsgValueMismatch();
+
         // Pull all tokens from user to BarterUtils
         _pullBundleTokens(bidBundle);
 
@@ -139,6 +144,8 @@ contract TokenBundleBarterUtils is IERC1155Receiver {
         bytes32 buyAttestation,
         TokenBundlePaymentObligation.ObligationData memory demand
     ) internal returns (bytes32) {
+        if (msg.value != demand.nativeAmount) revert MsgValueMismatch();
+
         // Pull all tokens from user to BarterUtils
         _pullPaymentBundleTokens(demand);
 

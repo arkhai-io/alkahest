@@ -749,6 +749,47 @@ contract TokenBundleBarterUtilsUnitTest is Test {
         vm.stopPrank();
     }
 
+    function test_RevertWhen_BundlePaymentValueMismatch() public {
+        uint64 expiration = uint64(block.timestamp + 1 days);
+
+        TokenBundleEscrowObligation.ObligationData
+            memory aliceBundle = createAliceBundle();
+        TokenBundlePaymentObligation.ObligationData
+            memory bobBundle = TokenBundlePaymentObligation.ObligationData({
+                nativeAmount: 1 ether,
+                erc20Tokens: new address[](0),
+                erc20Amounts: new uint256[](0),
+                erc721Tokens: new address[](0),
+                erc721TokenIds: new uint256[](0),
+                erc1155Tokens: new address[](0),
+                erc1155TokenIds: new uint256[](0),
+                erc1155Amounts: new uint256[](0),
+                payee: alice
+            });
+
+        vm.startPrank(alice);
+        erc20TokenA.approve(address(barterUtils), erc20AmountA);
+        erc721TokenA.approve(address(barterUtils), aliceErc721Id);
+        erc1155TokenA.setApprovalForAll(address(barterUtils), true);
+        bytes32 buyAttestation = barterUtils.buyBundleForBundle(
+            aliceBundle,
+            bobBundle,
+            expiration
+        );
+        vm.stopPrank();
+
+        vm.deal(address(barterUtils), 5 ether);
+        uint256 helperBalanceBefore = address(barterUtils).balance;
+
+        vm.deal(bob, 0.5 ether);
+        vm.prank(bob);
+        vm.expectRevert(TokenBundleBarterUtils.MsgValueMismatch.selector);
+        barterUtils.payBundleForBundle{value: 0.5 ether}(buyAttestation);
+
+        assertEq(address(barterUtils).balance, helperBalanceBefore);
+        assertEq(erc721TokenA.ownerOf(aliceErc721Id), address(bundleEscrow));
+    }
+
     function test_RevertWhen_InvalidPermitSignatureLength() public {
         uint64 expiration = uint64(block.timestamp + 1 days);
         uint256 deadline = block.timestamp + 1 days;

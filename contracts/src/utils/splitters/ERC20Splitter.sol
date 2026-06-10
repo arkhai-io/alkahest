@@ -61,6 +61,9 @@ contract ERC20Splitter is IArbiter, ReentrancyGuard {
     error ZeroRecipient();
     error ERC20TransferFailed(address token, address to, uint256 amount);
     error NoFulfillerRecorded(bytes32 fulfillment);
+    error InvalidEscrowContract();
+    error EscrowCollectionFailed();
+    error EscrowBalanceMismatch();
 
     IEAS public eas;
 
@@ -111,6 +114,7 @@ contract ERC20Splitter is IArbiter, ReentrancyGuard {
     // -----------------------------------------------------------------
 
     function checkObligation(Attestation memory fulfillment, bytes memory demand, bytes32 escrow) public view override returns (bool) {
+        if (fulfillment.recipient != address(this)) return false;
         DemandData memory demandData = abi.decode(demand, (DemandData));
         bytes32 decisionKey = keccak256(abi.encodePacked(fulfillment.uid, escrow));
         return hasDecision[demandData.oracle][decisionKey];
@@ -163,12 +167,19 @@ contract ERC20Splitter is IArbiter, ReentrancyGuard {
         internal returns (Split[] memory splits, address token)
     {
         Attestation memory escrowAttestation = eas.getAttestation(escrow);
+        if (escrowAttestation.attester != escrowContract) revert InvalidEscrowContract();
         EscrowObligationData memory escrowData = abi.decode(escrowAttestation.data, (EscrowObligationData));
         DemandData memory demandData = abi.decode(escrowData.demand, (DemandData));
         bytes32 decisionKey = keccak256(abi.encodePacked(fulfillment, escrow));
         splits = decisions[demandData.oracle][decisionKey];
         token = escrowData.token;
-        IERC20EscrowObligation(escrowContract).collectEscrow(escrow, fulfillment);
+        uint256 balanceBefore = IERC20(token).balanceOf(address(this));
+        if (!IERC20EscrowObligation(escrowContract).collectEscrow(escrow, fulfillment)) {
+            revert EscrowCollectionFailed();
+        }
+        if (IERC20(token).balanceOf(address(this)) != balanceBefore + escrowData.amount) {
+            revert EscrowBalanceMismatch();
+        }
     }
 
     function _resolveSentinel(address recipient, bytes32 fulfillment) internal view returns (address) {

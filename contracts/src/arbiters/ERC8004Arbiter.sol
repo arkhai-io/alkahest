@@ -55,6 +55,8 @@ contract ERC8004Arbiter is IArbiter {
         bytes memory demand,
         bytes32 fulfilling
     ) public view override returns (bool) {
+        obligation._checkIntrinsic();
+
         DemandData memory demand_ = abi.decode(demand, (DemandData));
 
         // Ensure obligation references what it's fulfilling

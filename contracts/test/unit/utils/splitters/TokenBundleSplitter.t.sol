@@ -6,6 +6,7 @@ import {TokenBundleSplitter} from "@src/utils/splitters/TokenBundleSplitter.sol"
 import {TokenBundleSplitterBase} from "@src/utils/splitters/TokenBundleSplitterBase.sol";
 import {TokenBundleEscrowObligation} from "@src/obligations/escrow/non-tierable/TokenBundleEscrowObligation.sol";
 import {StringObligation} from "@src/obligations/StringObligation.sol";
+import {BaseEscrowObligation} from "@src/BaseEscrowObligation.sol";
 import {IEAS, Attestation} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -13,6 +14,12 @@ import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {ERC1155} from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 
 import {EASDeployer} from "@test/utils/EASDeployer.sol";
+
+contract NoopTokenBundleEscrow {
+    function collectEscrow(bytes32, bytes32) external pure returns (bool) {
+        return true;
+    }
+}
 
 contract MockERC20T is ERC20 {
     constructor() ERC20("Mock Token", "MCK") {}
@@ -119,6 +126,14 @@ contract TokenBundleSplitterTest is Test {
         return splitter.createFulfillment(address(stringObligation), obligationData, 0, escrowUid);
     }
 
+    function _createDirectFulfillment(address recipient, bytes32 escrowUid) internal returns (bytes32) {
+        bytes memory obligationData = abi.encode(
+            StringObligation.ObligationData({item: "fulfillment", schema: bytes32(0)})
+        );
+        vm.prank(recipient);
+        return stringObligation.doObligationRaw(obligationData, 0, escrowUid);
+    }
+
     function _twoWaySplit() internal view returns (TokenBundleSplitterBase.BundleSplit[] memory) {
         TokenBundleSplitterBase.BundleSplit[] memory splits = new TokenBundleSplitterBase.BundleSplit[](2);
         uint256[] memory aliceErc20 = new uint256[](2); aliceErc20[0] = 60e18; aliceErc20[1] = 20e18;
@@ -186,6 +201,25 @@ contract TokenBundleSplitterTest is Test {
         assertEq(nft.ownerOf(NFT_ID_1), executor);
     }
 
+    function testCollectAndDistributeRejectsWrongEscrowContract() public {
+        bytes32 escrowUid = _createEscrow();
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(executor, escrowUid);
+        vm.prank(oracle);
+        splitter.arbitrate(fulfillmentUid, escrowUid, _twoWaySplit());
+
+        vm.deal(address(splitter), NATIVE_AMOUNT);
+        token1.mint(address(splitter), TOKEN1_AMOUNT);
+
+        NoopTokenBundleEscrow fakeEscrow = new NoopTokenBundleEscrow();
+        vm.expectRevert(TokenBundleSplitterBase.InvalidEscrowContract.selector);
+        splitter.collectAndDistribute(address(fakeEscrow), escrowUid, fulfillmentUid);
+
+        assertEq(alice.balance, 0);
+        assertEq(token1.balanceOf(alice), 0);
+        assertEq(address(splitter).balance, NATIVE_AMOUNT);
+        assertEq(token1.balanceOf(address(splitter)), TOKEN1_AMOUNT);
+    }
+
     function testCheckObligationRejectsDifferentFulfillment() public {
         bytes32 escrowUid = _createEscrow();
         bytes32 fulfillmentUid = _createFulfillmentViaSplitter(executor, escrowUid);
@@ -200,6 +234,28 @@ contract TokenBundleSplitterTest is Test {
 
         Attestation memory f = eas.getAttestation(fulfillmentUid);
         assertTrue(splitter.checkObligation(f, demand, escrowUid));
+    }
+
+    function testCollectEscrowRejectsApprovedNonSplitterRecipient() public {
+        bytes32 escrowUid = _createEscrow();
+        bytes32 fulfillmentUid = _createDirectFulfillment(alice, escrowUid);
+
+        vm.prank(oracle);
+        splitter.arbitrate(fulfillmentUid, escrowUid, _twoWaySplit());
+
+        bytes memory demand = abi.encode(TokenBundleSplitterBase.DemandData({oracle: oracle, data: bytes("")}));
+        Attestation memory fulfillment = eas.getAttestation(fulfillmentUid);
+        assertEq(fulfillment.recipient, alice);
+        assertFalse(splitter.checkObligation(fulfillment, demand, escrowUid));
+
+        vm.expectRevert(BaseEscrowObligation.InvalidFulfillment.selector);
+        escrowObligation.collectEscrow(escrowUid, fulfillmentUid);
+
+        assertEq(alice.balance, 0);
+        assertEq(token1.balanceOf(alice), 0);
+        assertEq(address(escrowObligation).balance, NATIVE_AMOUNT);
+        assertEq(token1.balanceOf(address(escrowObligation)), TOKEN1_AMOUNT);
+        assertEq(nft.ownerOf(NFT_ID_1), address(escrowObligation));
     }
 
     function testRequestArbitrationAsRecipient() public {

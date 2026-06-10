@@ -7,6 +7,7 @@ import {IEAS} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {ISchemaResolver} from "@eas/resolver/ISchemaResolver.sol";
 import {IArbiter} from "@src/IArbiter.sol";
+import {ArbiterUtils} from "@src/ArbiterUtils.sol";
 import {TrustedOracleArbiter} from "@src/arbiters/TrustedOracleArbiter.sol";
 import {EASDeployer} from "@test/utils/EASDeployer.sol";
 
@@ -236,6 +237,70 @@ contract TrustedOracleArbiterTest is Test {
                 ),
                 bytes32(0)
             )
+        );
+    }
+
+    function testCheckObligationRejectsExpiredApprovedObligation() public {
+        vm.warp(1 days);
+
+        bytes memory demandData = bytes("approved demand");
+        vm.prank(oracle);
+        arbiter.arbitrate(obligationUid, demandData, true);
+
+        Attestation memory attestation = Attestation({
+            uid: obligationUid,
+            schema: bytes32(0),
+            time: uint64(block.timestamp - 2),
+            expirationTime: uint64(block.timestamp - 1),
+            revocationTime: uint64(0),
+            refUID: bytes32(0),
+            recipient: address(0),
+            attester: address(0),
+            revocable: true,
+            data: bytes("")
+        });
+
+        vm.expectRevert(ArbiterUtils.DeadlineExpired.selector);
+        arbiter.checkObligation(
+            attestation,
+            abi.encode(
+                TrustedOracleArbiter.DemandData({
+                    oracle: oracle,
+                    data: demandData
+                })
+            ),
+            bytes32(0)
+        );
+    }
+
+    function testCheckObligationRejectsRevokedApprovedObligation() public {
+        bytes memory demandData = bytes("approved demand");
+        vm.prank(oracle);
+        arbiter.arbitrate(obligationUid, demandData, true);
+
+        Attestation memory attestation = Attestation({
+            uid: obligationUid,
+            schema: bytes32(0),
+            time: uint64(block.timestamp),
+            expirationTime: uint64(0),
+            revocationTime: uint64(block.timestamp),
+            refUID: bytes32(0),
+            recipient: address(0),
+            attester: address(0),
+            revocable: true,
+            data: bytes("")
+        });
+
+        vm.expectRevert(ArbiterUtils.AttestationRevoked.selector);
+        arbiter.checkObligation(
+            attestation,
+            abi.encode(
+                TrustedOracleArbiter.DemandData({
+                    oracle: oracle,
+                    data: demandData
+                })
+            ),
+            bytes32(0)
         );
     }
 
