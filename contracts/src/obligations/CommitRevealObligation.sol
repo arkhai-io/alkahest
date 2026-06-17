@@ -57,6 +57,7 @@ contract CommitRevealObligation is BaseObligation, IArbiter, Ownable {
     error IncorrectBondAmount(uint256 provided, uint256 required);
     error CommitDeadlineNotReached(bytes32 commitment);
     error RevealTooLate(bytes32 commitment);
+    error EscrowCollectionFailed(address escrowContract, bytes32 escrowUid, bytes32 fulfillmentUid, bytes result);
 
     /// @notice Fixed bond amount required for each commit.
     uint256 public bondAmount;
@@ -125,6 +126,25 @@ contract CommitRevealObligation is BaseObligation, IArbiter, Ownable {
     ) external returns (bytes32 uid_) {
         bytes memory encodedData = abi.encode(data);
         uid_ = _doObligationForRaw(encodedData, 0, recipient, refUID);
+    }
+
+    /// @notice Reveals a fulfillment and immediately collects the target escrow.
+    /// @dev Uses a low-level call so it can support escrow contracts with
+    ///      different collectEscrow return types.
+    function revealAndCollect(
+        ObligationData calldata data,
+        address recipient,
+        address escrowContract,
+        bytes32 escrowUid
+    ) external returns (bytes32 fulfillmentUid, bytes memory collectResult) {
+        bytes memory encodedData = abi.encode(data);
+        fulfillmentUid = _doObligationForRaw(encodedData, 0, recipient, escrowUid);
+
+        (bool success, bytes memory result) =
+            escrowContract.call(abi.encodeWithSignature("collectEscrow(bytes32,bytes32)", escrowUid, fulfillmentUid));
+        if (!success) revert EscrowCollectionFailed(escrowContract, escrowUid, fulfillmentUid, result);
+
+        collectResult = result;
     }
 
     /// @dev After the attestation is created, validate the commitment, enforce

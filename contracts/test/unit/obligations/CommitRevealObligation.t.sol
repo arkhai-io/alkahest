@@ -87,6 +87,56 @@ contract CommitRevealObligationTest is Test {
         obligation.slashBond(commitment);
     }
 
+    function testRevealAndCollectAtomicallyCollectsEscrow() public {
+        NativeTokenEscrowObligation.ObligationData memory escrowData =
+            NativeTokenEscrowObligation.ObligationData({arbiter: address(obligation), demand: "", amount: 1 ether});
+        bytes32 escrowUid = nativeEscrow.doObligation{value: 1 ether}(escrowData, 0);
+        CommitRevealObligation.ObligationData memory data = _obligationData();
+        bytes32 commitment = obligation.computeCommitment(escrowUid, claimer, data);
+
+        vm.deal(claimer, BOND);
+        vm.prank(claimer);
+        obligation.commit{value: BOND}(commitment);
+
+        vm.roll(block.number + 1);
+
+        uint256 claimerBalanceBefore = claimer.balance;
+        vm.prank(claimer);
+        (bytes32 fulfillmentUid, bytes memory collectResult) =
+            obligation.revealAndCollect(data, claimer, address(nativeEscrow), escrowUid);
+
+        assertEq(abi.decode(collectResult, (bool)), true);
+        assertEq(claimer.balance, claimerBalanceBefore + BOND + 1 ether);
+
+        Attestation memory fulfillment = eas.getAttestation(fulfillmentUid);
+        assertEq(fulfillment.recipient, claimer);
+        assertEq(fulfillment.refUID, escrowUid);
+
+        Attestation memory escrow = eas.getAttestation(escrowUid);
+        assertGt(escrow.revocationTime, 0, "escrow should be revoked after atomic collect");
+    }
+
+    function testRevealAndCollectRevertsAtomicallyWhenCollectFails() public {
+        bytes32 escrowUid = _makeEscrow();
+        CommitRevealObligation.ObligationData memory data = _obligationData();
+        bytes32 commitment = obligation.computeCommitment(escrowUid, claimer, data);
+
+        vm.deal(claimer, BOND);
+        vm.prank(claimer);
+        obligation.commit{value: BOND}(commitment);
+
+        vm.roll(block.number + 1);
+
+        uint256 claimerBalanceBefore = claimer.balance;
+        vm.prank(claimer);
+        vm.expectRevert();
+        obligation.revealAndCollect(data, claimer, address(obligation), escrowUid);
+
+        assertEq(claimer.balance, claimerBalanceBefore);
+        assertFalse(obligation.commitmentClaimed(commitment));
+        assertEq(address(obligation).balance, BOND);
+    }
+
     function testCheckObligationRevertsWithoutCommit() public {
         bytes32 escrowUid = _makeEscrow();
         CommitRevealObligation.ObligationData memory data = _obligationData();
