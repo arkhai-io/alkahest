@@ -251,24 +251,11 @@ contract TokenBundleEscrowObligation is BaseEscrowObligationTierable, IArbiter, 
 
         // Transfer ERC1155s - revert on failure
         for (uint256 i = 0; i < data.erc1155Tokens.length; i++) {
-            // Check balance before transfer
-            uint256 balanceBefore = IERC1155(data.erc1155Tokens[i]).balanceOf(to, data.erc1155TokenIds[i]);
-
             try IERC1155(data.erc1155Tokens[i])
                 .safeTransferFrom(address(this), to, data.erc1155TokenIds[i], data.erc1155Amounts[i], "") {
             // Transfer succeeded
             }
             catch {
-                revert ERC1155TransferFailed(
-                    data.erc1155Tokens[i], address(this), to, data.erc1155TokenIds[i], data.erc1155Amounts[i]
-                );
-            }
-
-            // Check balance after transfer
-            uint256 balanceAfter = IERC1155(data.erc1155Tokens[i]).balanceOf(to, data.erc1155TokenIds[i]);
-
-            // Verify the actual amount transferred
-            if (balanceAfter < balanceBefore + data.erc1155Amounts[i]) {
                 revert ERC1155TransferFailed(
                     data.erc1155Tokens[i], address(this), to, data.erc1155TokenIds[i], data.erc1155Amounts[i]
                 );

@@ -17,6 +17,8 @@ import {ISchemaRegistry, SchemaRecord} from "@eas/ISchemaRegistry.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {ERC1155} from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 
 import {EASDeployer} from "@test/utils/EASDeployer.sol";
 
@@ -47,6 +49,38 @@ contract MockERC1155HookAsset is ERC1155 {
 
     function mint(address to, uint256 tokenId, uint256 amount) external {
         _mint(to, tokenId, amount, "");
+    }
+}
+
+contract ForwardingERC1155HookReceiver is IERC1155Receiver {
+    address public immutable target;
+
+    constructor(address _target) {
+        target = _target;
+    }
+
+    function onERC1155Received(address, address, uint256 id, uint256 value, bytes calldata)
+        external
+        override
+        returns (bytes4)
+    {
+        IERC1155(msg.sender).safeTransferFrom(address(this), target, id, value, "");
+        return this.onERC1155Received.selector;
+    }
+
+    function onERC1155BatchReceived(address, address, uint256[] calldata ids, uint256[] calldata values, bytes calldata)
+        external
+        override
+        returns (bytes4)
+    {
+        for (uint256 i; i < ids.length; ++i) {
+            IERC1155(msg.sender).safeTransferFrom(address(this), target, ids[i], values[i], "");
+        }
+        return this.onERC1155BatchReceived.selector;
+    }
+
+    function supportsInterface(bytes4 interfaceId) external pure override returns (bool) {
+        return interfaceId == type(IERC1155Receiver).interfaceId || interfaceId == 0x01ffc9a7;
     }
 }
 
@@ -229,6 +263,29 @@ contract HookEscrowObligationTest is Test {
         assertEq(address(erc20Hook).balance, 0);
         assertEq(address(erc721Hook).balance, 0);
         assertEq(address(erc1155Hook).balance, 0);
+    }
+
+    function testERC1155HookReleaseAllowsReceiverToForwardInCallback() public {
+        ERC1155EscrowHook hook = new ERC1155EscrowHook();
+        MockERC1155HookAsset erc1155 = new MockERC1155HookAsset();
+        address target = makeAddr("forwardTarget");
+        ForwardingERC1155HookReceiver receiver = new ForwardingERC1155HookReceiver(target);
+
+        erc1155.mint(buyer, 1, 10);
+        bytes memory data = abi.encode(ERC1155EscrowHook.HookData({token: address(erc1155), tokenId: 1, amount: 10}));
+
+        vm.prank(buyer);
+        erc1155.setApprovalForAll(address(hook), true);
+
+        vm.prank(address(escrow));
+        hook.onLock(data, buyer, address(escrow));
+
+        vm.prank(address(escrow));
+        hook.onRelease(data, address(receiver), address(escrow));
+
+        assertEq(erc1155.balanceOf(target, 1), 10);
+        assertEq(erc1155.balanceOf(address(receiver), 1), 0);
+        assertEq(hook.deposits(address(escrow), address(erc1155), 1), 0);
     }
 
     function testHookEscrowDoesNotStrandNativeValueInERC20Hook() public {

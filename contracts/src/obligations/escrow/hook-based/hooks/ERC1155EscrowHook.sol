@@ -19,24 +19,11 @@ contract ERC1155EscrowHook is IEscrowHook, ERC1155Holder {
     }
 
     /// @notice Tracks deposits: caller → token → tokenId → amount held.
-    mapping(address => mapping(address => mapping(uint256 => uint256)))
-        public deposits;
+    mapping(address => mapping(address => mapping(uint256 => uint256))) public deposits;
 
-    error ERC1155TransferFailed(
-        address token,
-        address from,
-        address to,
-        uint256 tokenId,
-        uint256 amount
-    );
+    error ERC1155TransferFailed(address token, address from, address to, uint256 tokenId, uint256 amount);
     error NoDeposit(address caller, address token, uint256 tokenId);
-    error InsufficientDeposit(
-        address caller,
-        address token,
-        uint256 tokenId,
-        uint256 requested,
-        uint256 available
-    );
+    error InsufficientDeposit(address caller, address token, uint256 tokenId, uint256 requested, uint256 available);
 
     // ──────────────────────────────────────────────
 
@@ -44,47 +31,26 @@ contract ERC1155EscrowHook is IEscrowHook, ERC1155Holder {
         bytes calldata data,
         address from,
         address /* escrow */
-    ) external payable override {
+    )
+        external
+        payable
+        override
+    {
         if (msg.value != 0) revert IEscrowHook.UnexpectedNativeValue();
 
         HookData memory decoded = abi.decode(data, (HookData));
 
-        uint256 balanceBefore = IERC1155(decoded.token).balanceOf(
-            address(this),
-            decoded.tokenId
-        );
+        uint256 balanceBefore = IERC1155(decoded.token).balanceOf(address(this), decoded.tokenId);
 
-        try
-            IERC1155(decoded.token).safeTransferFrom(
-                from,
-                address(this),
-                decoded.tokenId,
-                decoded.amount,
-                ""
-            )
-        {} catch {
-            revert ERC1155TransferFailed(
-                decoded.token,
-                from,
-                address(this),
-                decoded.tokenId,
-                decoded.amount
-            );
+        try IERC1155(decoded.token).safeTransferFrom(from, address(this), decoded.tokenId, decoded.amount, "") {}
+        catch {
+            revert ERC1155TransferFailed(decoded.token, from, address(this), decoded.tokenId, decoded.amount);
         }
 
-        uint256 balanceAfter = IERC1155(decoded.token).balanceOf(
-            address(this),
-            decoded.tokenId
-        );
+        uint256 balanceAfter = IERC1155(decoded.token).balanceOf(address(this), decoded.tokenId);
 
         if (balanceAfter < balanceBefore + decoded.amount) {
-            revert ERC1155TransferFailed(
-                decoded.token,
-                from,
-                address(this),
-                decoded.tokenId,
-                decoded.amount
-            );
+            revert ERC1155TransferFailed(decoded.token, from, address(this), decoded.tokenId, decoded.amount);
         }
 
         deposits[msg.sender][decoded.token][decoded.tokenId] += decoded.amount;
@@ -94,7 +60,10 @@ contract ERC1155EscrowHook is IEscrowHook, ERC1155Holder {
         bytes calldata data,
         address to,
         address /* escrow */
-    ) external override {
+    )
+        external
+        override
+    {
         _transferOut(data, to);
     }
 
@@ -102,7 +71,10 @@ contract ERC1155EscrowHook is IEscrowHook, ERC1155Holder {
         bytes calldata data,
         address to,
         address /* escrow */
-    ) external override {
+    )
+        external
+        override
+    {
         _transferOut(data, to);
     }
 
@@ -111,62 +83,19 @@ contract ERC1155EscrowHook is IEscrowHook, ERC1155Holder {
     function _transferOut(bytes calldata data, address to) internal {
         HookData memory decoded = abi.decode(data, (HookData));
 
-        uint256 available = deposits[msg.sender][decoded.token][
-            decoded.tokenId
-        ];
+        uint256 available = deposits[msg.sender][decoded.token][decoded.tokenId];
         if (available == 0) {
             revert NoDeposit(msg.sender, decoded.token, decoded.tokenId);
         }
         if (available < decoded.amount) {
-            revert InsufficientDeposit(
-                msg.sender,
-                decoded.token,
-                decoded.tokenId,
-                decoded.amount,
-                available
-            );
+            revert InsufficientDeposit(msg.sender, decoded.token, decoded.tokenId, decoded.amount, available);
         }
 
-        deposits[msg.sender][decoded.token][decoded.tokenId] =
-            available -
-            decoded.amount;
+        deposits[msg.sender][decoded.token][decoded.tokenId] = available - decoded.amount;
 
-        uint256 balanceBefore = IERC1155(decoded.token).balanceOf(
-            to,
-            decoded.tokenId
-        );
-
-        try
-            IERC1155(decoded.token).safeTransferFrom(
-                address(this),
-                to,
-                decoded.tokenId,
-                decoded.amount,
-                ""
-            )
-        {} catch {
-            revert ERC1155TransferFailed(
-                decoded.token,
-                address(this),
-                to,
-                decoded.tokenId,
-                decoded.amount
-            );
-        }
-
-        uint256 balanceAfter = IERC1155(decoded.token).balanceOf(
-            to,
-            decoded.tokenId
-        );
-
-        if (balanceAfter < balanceBefore + decoded.amount) {
-            revert ERC1155TransferFailed(
-                decoded.token,
-                address(this),
-                to,
-                decoded.tokenId,
-                decoded.amount
-            );
+        try IERC1155(decoded.token).safeTransferFrom(address(this), to, decoded.tokenId, decoded.amount, "") {}
+        catch {
+            revert ERC1155TransferFailed(decoded.token, address(this), to, decoded.tokenId, decoded.amount);
         }
     }
 
@@ -174,15 +103,11 @@ contract ERC1155EscrowHook is IEscrowHook, ERC1155Holder {
     // Encoding helpers
     // ──────────────────────────────────────────────
 
-    function encodeHookData(
-        HookData calldata hookData
-    ) external pure returns (bytes memory) {
+    function encodeHookData(HookData calldata hookData) external pure returns (bytes memory) {
         return abi.encode(hookData);
     }
 
-    function decodeHookData(
-        bytes calldata data
-    ) external pure returns (HookData memory) {
+    function decodeHookData(bytes calldata data) external pure returns (HookData memory) {
         return abi.decode(data, (HookData));
     }
 }
