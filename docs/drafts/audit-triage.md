@@ -5,31 +5,31 @@ Tracking notes for `arkhai-io-alkahest-2026-04-13-analysis.md`.
 ## Addressed
 
 - #2 AllEscrowHook authorization / multi-hook pattern: addressed by removing `AllEscrowHook` and adding `HooksEscrowObligation`.
-  Commit: `d8c76d4 fix(hooks): replace AllEscrowHook with multi-hook obligation`
+  Commit: `592f9d5505e4a3bed27416857d8954ace531e84a fix(hooks): replace AllEscrowHook with multi-hook obligation`
 - #3 Splitter fulfiller mapping / sentinel overwrite: addressed by set-once fulfiller recording and create-fulfillment validation.
-  Commit: `0bb2586 fix(splitters): harden fulfillment tracking`
+  Commit: `e8527db30850b95b5f9b9a62f11b30b4e1bdbfe8 fix(splitters): harden fulfillment tracking`
 - #4 Splitter zero-UID / fulfillment validation: addressed with zero-UID guards, intrinsic checks, and created-fulfillment validation.
-  Commits: `268404c Add fulfillment reference arbiter`, `0bb2586 fix(splitters): harden fulfillment tracking`
+  Commits: `afe03c465d2f73aa94e63dcb37720c971e3f1250 Add fulfillment reference arbiter`, `e8527db30850b95b5f9b9a62f11b30b4e1bdbfe8 fix(splitters): harden fulfillment tracking`
 - #5 Shared pending-bit keying in attestation hooks: addressed by replacing boolean pending state with counters.
-  Commit: `583efac fix(hooks): count pending attestations`
+  Commit: `2a1d31233104839760a8501232e9479f3daad678 fix(hooks): count pending attestations`
 - #5 related: open validation schema and ignored recipient in `AttestationEscrowHook2`: addressed by resolver-gating validation attestations to `attester == address(this)` and using encoded hook recipient.
-  Commit: `06cf7a9 fix(hooks): bind validation attestations`
+  Commit: `ced931cd74d3a5fd35d82a1b40cd75c6f3ef3e28 fix(hooks): bind validation attestations`
 - #5 related: non-ETH hooks accepting native value: addressed by rejecting nonzero `msg.value` in ERC20/ERC721/ERC1155/attestation hooks.
-  Commit: `dbee7c1 fix(hooks): reject native value in non-native hooks`
+  Commit: `836b39b52e6f78b77fdfe837a18ae84a674668cc fix(hooks): reject native value in non-native hooks`
 - #6 EAS schema registration squatting: addressed by verified register-or-reuse behavior for constructor-registered schemas.
-  Commit: `9391891 fix(schema): reuse existing EAS schemas`
+  Commit: `ebe3abcf1b7ada0910ca61da8b641fd939d8757f fix(schema): reuse existing EAS schemas`
 - #8 Splitter `collectAndDistribute` attestation/receipt binding: addressed by verifying escrow attester/schema, requiring fulfillment recipient to be the splitter, and checking asset receipt deltas before distribution.
-  Commit: `41ba79c fix(splitters): verify escrow collection receipts`
+  Commit: `ef5c192410a134c2315251e838da1035df3fa5d1 fix(splitters): verify escrow collection receipts`
 - #9 Missing ETH forwarding for paid attestations in `AttestationEscrowHook.onRelease`: addressed by escrowing exact EAS resolver payments on lock/create, forwarding them on release/collection, and refunding them on return/expiry across the hook and standalone attestation escrow obligations.
-  Commit: `f7f55ee fix(attestations): support paid escrow attestations`
+  Commit: `a8439519c5a4b6083776e3b1e8cc73e44c5434ec fix(attestations): support paid escrow attestations`
 - #12 CommitReveal prior-block / front-running: addressed with a generic `revealAndCollect` helper on `CommitRevealObligation` so integrations can reveal and collect in one transaction without exposing a standalone public reveal window.
-  Commit: `a0eddcc feat(commit-reveal): add atomic reveal and collect`
+  Commit: `a11f8b568b48bfa80d0aae5da99aa514d7e47c87 feat(commit-reveal): add atomic reveal and collect`
 - #13 Unbounded distribution / validation loops in splitters and related stored-array paths: addressed by adding caps to total token-bundle escrow assets, multi-hook escrow hooks, and logical-arbiter operand arrays. Existing splitter recipient caps remain in place.
-  Commit: `ba652f76e2c8da51a0eedb76a495da8813c499c0 fix(escrow): bound stored settlement arrays`
+  Commit: `b723c646a9baa88c7131d88f3d62b06eab100de4 fix(escrow): bound stored settlement arrays`
 - #14 AllEscrowHook unbounded iteration: superseded by removal of `AllEscrowHook`; the replacement `HooksEscrowObligation` now caps the stored hook array.
-  Commits: `d8c76d4 fix(hooks): replace AllEscrowHook with multi-hook obligation`, `ba652f76e2c8da51a0eedb76a495da8813c499c0 fix(escrow): bound stored settlement arrays`
+  Commits: `592f9d5505e4a3bed27416857d8954ace531e84a fix(hooks): replace AllEscrowHook with multi-hook obligation`, `b723c646a9baa88c7131d88f3d62b06eab100de4 fix(escrow): bound stored settlement arrays`
 - #16 ERC1155 post-transfer recipient balance checks: addressed by removing recipient-side post-transfer balance assertions after ERC1155 `safeTransferFrom` in hook, standalone escrow, and token-bundle atomic release paths. Custody-side lock checks remain.
-  Commit: `5211635c855f12ce422e5451d40712dc508c0299 fix(escrow): allow ERC1155 receiver forwarding`
+  Commit: `5c03d3a3f00fe9dbcd06175806de80bf726c3b3e fix(escrow): allow ERC1155 receiver forwarding`
 - Default escrow checks follow-up: documented proposed default/unconditional escrow split before implementation.
   Doc: `docs/drafts/escrow-default-checks-plan.md`
 
