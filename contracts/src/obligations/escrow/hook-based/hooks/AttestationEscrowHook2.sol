@@ -51,6 +51,8 @@ contract AttestationEscrowHook2 is IEscrowHook, SchemaResolver {
         payable
         override
     {
+        if (msg.value != 0) revert IEscrowHook.UnexpectedNativeValue();
+
         bytes32 dataHash = keccak256(data);
         pending[msg.sender][dataHash]++;
     }

@@ -11,6 +11,8 @@ pragma solidity ^0.8.26;
 ///      (msg.sender). No authorization mapping is needed — the caller's
 ///      deposit balance is the implicit permission to release.
 interface IEscrowHook {
+    error UnexpectedNativeValue();
+
     /// @notice Lock assets into escrow on behalf of `from`.
     /// @param data   Hook-specific parameters (e.g. token address, amount).
     /// @param from   The address providing the assets.

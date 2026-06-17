@@ -3,6 +3,7 @@ pragma solidity ^0.8.26;
 
 import "forge-std/Test.sol";
 import "forge-std/Vm.sol";
+import {IEscrowHook} from "@src/obligations/escrow/hook-based/IEscrowHook.sol";
 import {AttestationEscrowHook} from "@src/obligations/escrow/hook-based/hooks/AttestationEscrowHook.sol";
 import {AttestationEscrowHook2} from "@src/obligations/escrow/hook-based/hooks/AttestationEscrowHook2.sol";
 import {IEAS, AttestationRequest, AttestationRequestData} from "@eas/IEAS.sol";
@@ -79,6 +80,31 @@ contract AttestationEscrowHookTest is Test {
         vm.stopPrank();
     }
 
+    function testAttestationHookRejectsNativeValueOnLock() public {
+        bytes memory data = abi.encode(
+            AttestationEscrowHook.HookData({
+                attestation: AttestationRequest({
+                    schema: testSchema,
+                    data: AttestationRequestData({
+                        recipient: recipient,
+                        expirationTime: 0,
+                        revocable: true,
+                        refUID: bytes32(0),
+                        data: abi.encode("release"),
+                        value: 0
+                    })
+                })
+            })
+        );
+
+        vm.deal(caller, 1 ether);
+        vm.prank(caller);
+        vm.expectRevert(IEscrowHook.UnexpectedNativeValue.selector);
+        hook.onLock{value: 1 wei}(data, caller, address(this));
+
+        assertEq(address(hook).balance, 0);
+    }
+
     function testAttestationHookReturnDecrementsOnePendingLock() public {
         bytes memory data = abi.encode(
             AttestationEscrowHook.HookData({
@@ -126,6 +152,18 @@ contract AttestationEscrowHookTest is Test {
         vm.expectRevert(abi.encodeWithSelector(AttestationEscrowHook2.NoPendingValidation.selector, caller, dataHash));
         hook2.onRelease(data, recipient, address(this));
         vm.stopPrank();
+    }
+
+    function testAttestationHook2RejectsNativeValueOnLock() public {
+        bytes memory data =
+            abi.encode(AttestationEscrowHook2.HookData({attestationUid: existingAttestation, recipient: recipient}));
+
+        vm.deal(caller, 1 ether);
+        vm.prank(caller);
+        vm.expectRevert(IEscrowHook.UnexpectedNativeValue.selector);
+        hook2.onLock{value: 1 wei}(data, caller, address(this));
+
+        assertEq(address(hook2).balance, 0);
     }
 
     function testAttestationHook2ReturnDecrementsOnePendingLock() public {

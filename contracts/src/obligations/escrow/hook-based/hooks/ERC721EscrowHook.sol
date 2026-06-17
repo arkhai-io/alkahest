@@ -35,6 +35,8 @@ contract ERC721EscrowHook is IEscrowHook {
         address from,
         address /* escrow */
     ) external payable override {
+        if (msg.value != 0) revert IEscrowHook.UnexpectedNativeValue();
+
         HookData memory decoded = abi.decode(data, (HookData));
 
         // Verify ownership

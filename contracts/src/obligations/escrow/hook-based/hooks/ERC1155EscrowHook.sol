@@ -45,6 +45,8 @@ contract ERC1155EscrowHook is IEscrowHook, ERC1155Holder {
         address from,
         address /* escrow */
     ) external payable override {
+        if (msg.value != 0) revert IEscrowHook.UnexpectedNativeValue();
+
         HookData memory decoded = abi.decode(data, (HookData));
 
         uint256 balanceBefore = IERC1155(decoded.token).balanceOf(

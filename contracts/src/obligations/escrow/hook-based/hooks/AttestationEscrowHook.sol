@@ -47,6 +47,8 @@ contract AttestationEscrowHook is IEscrowHook {
         payable
         override
     {
+        if (msg.value != 0) revert IEscrowHook.UnexpectedNativeValue();
+
         // Mark as pending so onRelease can verify it was locked via a
         // legitimate obligation flow.
         bytes32 dataHash = keccak256(data);

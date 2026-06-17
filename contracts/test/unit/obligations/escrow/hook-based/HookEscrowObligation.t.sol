@@ -6,6 +6,8 @@ import {HookEscrowObligation} from "@src/obligations/escrow/hook-based/HookEscro
 import {HooksEscrowObligation} from "@src/obligations/escrow/hook-based/HooksEscrowObligation.sol";
 import {IEscrowHook} from "@src/obligations/escrow/hook-based/IEscrowHook.sol";
 import {ERC20EscrowHook} from "@src/obligations/escrow/hook-based/hooks/ERC20EscrowHook.sol";
+import {ERC721EscrowHook} from "@src/obligations/escrow/hook-based/hooks/ERC721EscrowHook.sol";
+import {ERC1155EscrowHook} from "@src/obligations/escrow/hook-based/hooks/ERC1155EscrowHook.sol";
 import {BaseEscrowObligation} from "@src/BaseEscrowObligation.sol";
 import {StringObligation} from "@src/obligations/StringObligation.sol";
 import {IArbiter} from "@src/IArbiter.sol";
@@ -13,6 +15,8 @@ import {MockArbiter} from "../../../../unit/obligations/fixtures/MockArbiter.sol
 import {IEAS, Attestation} from "@eas/IEAS.sol";
 import {ISchemaRegistry, SchemaRecord} from "@eas/ISchemaRegistry.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {ERC1155} from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 
 import {EASDeployer} from "@test/utils/EASDeployer.sol";
 
@@ -27,6 +31,22 @@ contract MockERC20 is ERC20 {
 
     function mint(address to, uint256 amount) public {
         _mint(to, amount);
+    }
+}
+
+contract MockERC721HookAsset is ERC721 {
+    constructor() ERC721("Mock NFT", "MNFT") {}
+
+    function mint(address to, uint256 tokenId) external {
+        _mint(to, tokenId);
+    }
+}
+
+contract MockERC1155HookAsset is ERC1155 {
+    constructor() ERC1155("") {}
+
+    function mint(address to, uint256 tokenId, uint256 amount) external {
+        _mint(to, tokenId, amount, "");
     }
 }
 
@@ -175,6 +195,56 @@ contract HookEscrowObligationTest is Test {
         Attestation memory att = eas.getAttestation(uid);
         assertEq(att.recipient, recipient);
         assertEq(token.balanceOf(address(erc20Hook)), AMOUNT);
+    }
+
+    function testNonNativeHooksRejectNativeValueOnLock() public {
+        ERC721EscrowHook erc721Hook = new ERC721EscrowHook();
+        ERC1155EscrowHook erc1155Hook = new ERC1155EscrowHook();
+        MockERC721HookAsset erc721 = new MockERC721HookAsset();
+        MockERC1155HookAsset erc1155 = new MockERC1155HookAsset();
+
+        erc721.mint(buyer, 1);
+        erc1155.mint(buyer, 1, 10);
+
+        vm.deal(buyer, 1 ether);
+        vm.startPrank(buyer);
+
+        vm.expectRevert(IEscrowHook.UnexpectedNativeValue.selector);
+        erc20Hook.onLock{value: 1 wei}(_hookData(AMOUNT), buyer, address(escrow));
+
+        vm.expectRevert(IEscrowHook.UnexpectedNativeValue.selector);
+        erc721Hook.onLock{value: 1 wei}(
+            abi.encode(ERC721EscrowHook.HookData({token: address(erc721), tokenId: 1})), buyer, address(escrow)
+        );
+
+        vm.expectRevert(IEscrowHook.UnexpectedNativeValue.selector);
+        erc1155Hook.onLock{value: 1 wei}(
+            abi.encode(ERC1155EscrowHook.HookData({token: address(erc1155), tokenId: 1, amount: 10})),
+            buyer,
+            address(escrow)
+        );
+
+        vm.stopPrank();
+
+        assertEq(address(erc20Hook).balance, 0);
+        assertEq(address(erc721Hook).balance, 0);
+        assertEq(address(erc1155Hook).balance, 0);
+    }
+
+    function testHookEscrowDoesNotStrandNativeValueInERC20Hook() public {
+        vm.deal(buyer, 1 ether);
+
+        vm.startPrank(buyer);
+        token.approve(address(erc20Hook), AMOUNT);
+        vm.expectRevert(IEscrowHook.UnexpectedNativeValue.selector);
+        escrow.doObligation{value: 1 wei}(
+            _obligationData(AMOUNT, address(acceptArbiter)), uint64(block.timestamp + EXPIRATION)
+        );
+        vm.stopPrank();
+
+        assertEq(address(erc20Hook).balance, 0);
+        assertEq(erc20Hook.deposits(address(escrow), address(token)), 0);
+        assertEq(token.balanceOf(address(erc20Hook)), 0);
     }
 
     function testCollectEscrow() public {
