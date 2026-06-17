@@ -24,6 +24,10 @@ Tracking notes for `arkhai-io-alkahest-2026-04-13-analysis.md`.
   Commit: `f7f55ee fix(attestations): support paid escrow attestations`
 - #12 CommitReveal prior-block / front-running: addressed with a generic `revealAndCollect` helper on `CommitRevealObligation` so integrations can reveal and collect in one transaction without exposing a standalone public reveal window.
   Commit: `a0eddcc feat(commit-reveal): add atomic reveal and collect`
+- #13 Unbounded distribution / validation loops in splitters and related stored-array paths: addressed by adding caps to total token-bundle escrow assets, multi-hook escrow hooks, and logical-arbiter operand arrays. Existing splitter recipient caps remain in place.
+  Commit: `ba652f76e2c8da51a0eedb76a495da8813c499c0 fix(escrow): bound stored settlement arrays`
+- #14 AllEscrowHook unbounded iteration: superseded by removal of `AllEscrowHook`; the replacement `HooksEscrowObligation` now caps the stored hook array.
+  Commits: `d8c76d4 fix(hooks): replace AllEscrowHook with multi-hook obligation`, `ba652f76e2c8da51a0eedb76a495da8813c499c0 fix(escrow): bound stored settlement arrays`
 - Default escrow checks follow-up: documented proposed default/unconditional escrow split before implementation.
   Doc: `docs/drafts/escrow-default-checks-plan.md`
 
@@ -42,8 +46,6 @@ Tracking notes for `arkhai-io-alkahest-2026-04-13-analysis.md`.
 
 ## Remaining Untriaged
 
-- #13 Unbounded distribution loops in splitters.
-- #14 AllEscrowHook unbounded iteration: likely superseded by removal of `AllEscrowHook`, but confirm related multi-hook DoS expectations for `HooksEscrowObligation`.
 - #15 Splitter unconditional collection after third-party pre-collection.
 - #16 ERC1155EscrowHook post-transfer balance check.
 - #17 TokenBundleSplitter nested array clearing / bounds issues.
