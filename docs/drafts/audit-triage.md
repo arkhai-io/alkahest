@@ -18,6 +18,8 @@ Tracking notes for `arkhai-io-alkahest-2026-04-13-analysis.md`.
   Commit: `dbee7c1 fix(hooks): reject native value in non-native hooks`
 - #6 EAS schema registration squatting: addressed by verified register-or-reuse behavior for constructor-registered schemas.
   Commit: `9391891 fix(schema): reuse existing EAS schemas`
+- #8 Splitter `collectAndDistribute` attestation/receipt binding: addressed by verifying escrow attester/schema, requiring fulfillment recipient to be the splitter, and checking asset receipt deltas before distribution.
+  Commit: this checkpoint, `fix(splitters): verify escrow collection receipts`
 - Default escrow checks follow-up: documented proposed default/unconditional escrow split before implementation.
   Doc: `docs/drafts/escrow-default-checks-plan.md`
 
@@ -27,11 +29,6 @@ Tracking notes for `arkhai-io-alkahest-2026-04-13-analysis.md`.
 - #5 related: unrestricted `AttestationEscrowHook` / `AttestationEscrowHook2` calls are not considered protocol authority. Hook-issued attestations are not proof of escrow provenance unless the attestation content/schema or consumer checks establish that.
 - #7 HookEscrowObligation self-recipient sink: not treated as a special-case vulnerability. A claimant choosing the wrong recipient, including the obligation itself, is equivalent to choosing any other unrecoverable/wrong recipient.
 - #7 related: recipient binding in `HookEscrowObligation.checkObligation`: not addressed by default because open-claim semantics are intentional. If an escrow creator wants only a specific recipient to claim, compose a recipient/identity arbiter such as `RecipientArbiter`.
-
-## Current / Next
-
-- #8 Splitter `collectAndDistribute` attestation/receipt binding: under review.
-  Open question: whether `collectAndDistribute` should require canonical escrow attestation binding, fulfillment recipient to be the splitter, and asset balance deltas from `collectEscrow`, since `collectAndDistribute` is externally callable and not limited to fulfillments created through splitter `createFulfillment`.
 
 ## Remaining Untriaged
 

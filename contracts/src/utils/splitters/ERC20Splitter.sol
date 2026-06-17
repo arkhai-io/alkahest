@@ -8,6 +8,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {IArbiter} from "../../IArbiter.sol";
 import {ArbiterUtils} from "../../ArbiterUtils.sol";
+import {SplitterVerification} from "./SplitterVerification.sol";
 
 interface IERC20EscrowObligation {
     function collectEscrow(bytes32 escrow, bytes32 fulfillment) external returns (bool);
@@ -22,6 +23,7 @@ interface IObligation {
 
 contract ERC20Splitter is IArbiter, ReentrancyGuard {
     using ArbiterUtils for Attestation;
+    using SplitterVerification for Attestation;
     using SafeERC20 for IERC20;
 
     /// @notice Sentinel address meaning "the fulfiller who created the fulfillment".
@@ -126,6 +128,7 @@ contract ERC20Splitter is IArbiter, ReentrancyGuard {
         returns (bool)
     {
         fulfillment._checkIntrinsic();
+        fulfillment.verifyFulfillmentRecipient();
         DemandData memory demandData = abi.decode(demand, (DemandData));
         bytes32 decisionKey = keccak256(abi.encodePacked(fulfillment.uid, escrow));
         return hasDecision[demandData.oracle][decisionKey];
@@ -189,12 +192,18 @@ contract ERC20Splitter is IArbiter, ReentrancyGuard {
         returns (Split[] memory splits, address token)
     {
         Attestation memory escrowAttestation = eas.getAttestation(escrow);
+        escrowAttestation.verifyEscrowAttestation(escrowContract);
+        Attestation memory fulfillmentAttestation = eas.getAttestation(fulfillment);
+        fulfillmentAttestation.verifyFulfillmentRecipient();
+
         EscrowObligationData memory escrowData = abi.decode(escrowAttestation.data, (EscrowObligationData));
         DemandData memory demandData = abi.decode(escrowData.demand, (DemandData));
         bytes32 decisionKey = keccak256(abi.encodePacked(fulfillment, escrow));
         splits = decisions[demandData.oracle][decisionKey];
         token = escrowData.token;
+        uint256 balanceBefore = IERC20(token).balanceOf(address(this));
         IERC20EscrowObligation(escrowContract).collectEscrow(escrow, fulfillment);
+        SplitterVerification.verifyDelta(balanceBefore, IERC20(token).balanceOf(address(this)), escrowData.amount);
     }
 
     function _recordedFulfiller(bytes32 fulfillment) internal view returns (address fulfiller) {

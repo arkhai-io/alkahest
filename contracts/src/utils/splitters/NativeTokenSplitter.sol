@@ -6,6 +6,7 @@ import {IEAS} from "@eas/IEAS.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {IArbiter} from "../../IArbiter.sol";
 import {ArbiterUtils} from "../../ArbiterUtils.sol";
+import {SplitterVerification} from "./SplitterVerification.sol";
 
 interface INativeTokenEscrowObligation {
     function collectEscrow(bytes32 escrow, bytes32 fulfillment) external returns (bool);
@@ -20,6 +21,7 @@ interface IObligation {
 
 contract NativeTokenSplitter is IArbiter, ReentrancyGuard {
     using ArbiterUtils for Attestation;
+    using SplitterVerification for Attestation;
 
     address public constant EXECUTOR_SENTINEL = address(0xEEEE);
 
@@ -111,6 +113,7 @@ contract NativeTokenSplitter is IArbiter, ReentrancyGuard {
         returns (bool)
     {
         fulfillment._checkIntrinsic();
+        fulfillment.verifyFulfillmentRecipient();
         DemandData memory demandData = abi.decode(demand, (DemandData));
         return hasDecision[demandData.oracle][keccak256(abi.encodePacked(fulfillment.uid, escrow))];
     }
@@ -162,10 +165,16 @@ contract NativeTokenSplitter is IArbiter, ReentrancyGuard {
         returns (Split[] memory splits)
     {
         Attestation memory escrowAttestation = eas.getAttestation(escrow);
+        escrowAttestation.verifyEscrowAttestation(escrowContract);
+        Attestation memory fulfillmentAttestation = eas.getAttestation(fulfillment);
+        fulfillmentAttestation.verifyFulfillmentRecipient();
+
         EscrowObligationData memory escrowData = abi.decode(escrowAttestation.data, (EscrowObligationData));
         DemandData memory demandData = abi.decode(escrowData.demand, (DemandData));
         splits = decisions[demandData.oracle][keccak256(abi.encodePacked(fulfillment, escrow))];
+        uint256 balanceBefore = address(this).balance;
         INativeTokenEscrowObligation(escrowContract).collectEscrow(escrow, fulfillment);
+        SplitterVerification.verifyDelta(balanceBefore, address(this).balance, escrowData.amount);
     }
 
     function _recordedFulfiller(bytes32 fulfillment) internal view returns (address fulfiller) {

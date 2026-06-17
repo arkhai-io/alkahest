@@ -11,6 +11,7 @@ import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {IArbiter} from "../../IArbiter.sol";
 import {ArbiterUtils} from "../../ArbiterUtils.sol";
+import {SplitterVerification} from "./SplitterVerification.sol";
 
 interface ITokenBundleEscrowObligation {
     function collectEscrow(bytes32 escrow, bytes32 fulfillment) external returns (bool);
@@ -25,6 +26,7 @@ interface IObligation {
 
 abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155Holder {
     using ArbiterUtils for Attestation;
+    using SplitterVerification for Attestation;
     using SafeERC20 for IERC20;
 
     address public constant EXECUTOR_SENTINEL = address(0xEEEE);
@@ -138,6 +140,7 @@ abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155H
         returns (bool)
     {
         fulfillment._checkIntrinsic();
+        fulfillment.verifyFulfillmentRecipient();
         DemandData memory demandData = abi.decode(demand, (DemandData));
         return hasDecision[demandData.oracle][keccak256(abi.encodePacked(fulfillment.uid, escrow))];
     }
@@ -197,10 +200,19 @@ abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155H
         returns (BundleSplit[] memory splits, EscrowObligationData memory escrowData)
     {
         Attestation memory escrowAttestation = eas.getAttestation(escrow);
+        escrowAttestation.verifyEscrowAttestation(escrowContract);
+        Attestation memory fulfillmentAttestation = eas.getAttestation(fulfillment);
+        fulfillmentAttestation.verifyFulfillmentRecipient();
+
         escrowData = abi.decode(escrowAttestation.data, (EscrowObligationData));
         DemandData memory demandData = abi.decode(escrowData.demand, (DemandData));
         splits = decisions[demandData.oracle][keccak256(abi.encodePacked(fulfillment, escrow))];
+        _verifyERC721NotAlreadyHeld(escrowData);
+        uint256 nativeBefore = address(this).balance;
+        uint256[] memory erc20Before = _erc20Balances(escrowData);
+        uint256[] memory erc1155Before = _erc1155Balances(escrowData);
         ITokenBundleEscrowObligation(escrowContract).collectEscrow(escrow, fulfillment);
+        _verifyCollectedDeltas(escrowData, nativeBefore, erc20Before, erc1155Before);
     }
 
     function _recordedFulfiller(bytes32 fulfillment) internal view returns (address fulfiller) {
@@ -235,6 +247,65 @@ abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155H
                 || fulfillment.refUID != refUID || keccak256(fulfillment.data) != keccak256(data)
         ) {
             revert InvalidCreatedFulfillment(fulfillmentUid);
+        }
+    }
+
+    function _erc20Balances(EscrowObligationData memory escrowData) internal view returns (uint256[] memory balances) {
+        balances = new uint256[](escrowData.erc20Tokens.length);
+        for (uint256 i; i < escrowData.erc20Tokens.length; ++i) {
+            balances[i] = IERC20(escrowData.erc20Tokens[i]).balanceOf(address(this));
+        }
+    }
+
+    function _erc1155Balances(EscrowObligationData memory escrowData)
+        internal
+        view
+        returns (uint256[] memory balances)
+    {
+        balances = new uint256[](escrowData.erc1155Tokens.length);
+        for (uint256 i; i < escrowData.erc1155Tokens.length; ++i) {
+            balances[i] = IERC1155(escrowData.erc1155Tokens[i]).balanceOf(address(this), escrowData.erc1155TokenIds[i]);
+        }
+    }
+
+    function _verifyERC721NotAlreadyHeld(EscrowObligationData memory escrowData) internal view {
+        for (uint256 i; i < escrowData.erc721Tokens.length; ++i) {
+            if (IERC721(escrowData.erc721Tokens[i]).ownerOf(escrowData.erc721TokenIds[i]) == address(this)) {
+                revert SplitterVerification.InvalidERC721Receipt(
+                    escrowData.erc721Tokens[i], escrowData.erc721TokenIds[i]
+                );
+            }
+        }
+    }
+
+    function _verifyCollectedDeltas(
+        EscrowObligationData memory escrowData,
+        uint256 nativeBefore,
+        uint256[] memory erc20Before,
+        uint256[] memory erc1155Before
+    ) internal view {
+        SplitterVerification.verifyDelta(nativeBefore, address(this).balance, escrowData.nativeAmount);
+
+        for (uint256 i; i < escrowData.erc20Tokens.length; ++i) {
+            SplitterVerification.verifyDelta(
+                erc20Before[i], IERC20(escrowData.erc20Tokens[i]).balanceOf(address(this)), escrowData.erc20Amounts[i]
+            );
+        }
+
+        for (uint256 i; i < escrowData.erc721Tokens.length; ++i) {
+            if (IERC721(escrowData.erc721Tokens[i]).ownerOf(escrowData.erc721TokenIds[i]) != address(this)) {
+                revert SplitterVerification.InvalidERC721Receipt(
+                    escrowData.erc721Tokens[i], escrowData.erc721TokenIds[i]
+                );
+            }
+        }
+
+        for (uint256 i; i < escrowData.erc1155Tokens.length; ++i) {
+            SplitterVerification.verifyDelta(
+                erc1155Before[i],
+                IERC1155(escrowData.erc1155Tokens[i]).balanceOf(address(this), escrowData.erc1155TokenIds[i]),
+                escrowData.erc1155Amounts[i]
+            );
         }
     }
 
