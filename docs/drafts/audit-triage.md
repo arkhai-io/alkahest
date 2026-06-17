@@ -22,6 +22,8 @@ Tracking notes for `arkhai-io-alkahest-2026-04-13-analysis.md`.
   Commit: `41ba79c fix(splitters): verify escrow collection receipts`
 - #9 Missing ETH forwarding for paid attestations in `AttestationEscrowHook.onRelease`: addressed by escrowing exact EAS resolver payments on lock/create, forwarding them on release/collection, and refunding them on return/expiry across the hook and standalone attestation escrow obligations.
   Commit: `f7f55ee fix(attestations): support paid escrow attestations`
+- #12 CommitReveal prior-block / front-running: addressed with a generic `revealAndCollect` helper on `CommitRevealObligation` so integrations can reveal and collect in one transaction without exposing a standalone public reveal window.
+  Commit: `a0eddcc feat(commit-reveal): add atomic reveal and collect`
 - Default escrow checks follow-up: documented proposed default/unconditional escrow split before implementation.
   Doc: `docs/drafts/escrow-default-checks-plan.md`
 
@@ -31,6 +33,7 @@ Tracking notes for `arkhai-io-alkahest-2026-04-13-analysis.md`.
 - #5 related: unrestricted `AttestationEscrowHook` / `AttestationEscrowHook2` calls are not considered protocol authority. Hook-issued attestations are not proof of escrow provenance unless the attestation content/schema or consumer checks establish that.
 - #7 HookEscrowObligation self-recipient sink: not treated as a special-case vulnerability. A claimant choosing the wrong recipient, including the obligation itself, is equivalent to choosing any other unrecoverable/wrong recipient.
 - #7 related: recipient binding in `HookEscrowObligation.checkObligation`: not addressed by default because open-claim semantics are intentional. If an escrow creator wants only a specific recipient to claim, compose a recipient/identity arbiter such as `RecipientArbiter`.
+- #11 `TokenBundleSplitterUnvalidated` split-total / output-bounds issues: accepted behavior for the explicitly unvalidated splitter. The over-allocation path can only drain balances already stranded in the splitter, not assets still held by other escrow contracts, and there is no recovery mechanism for those stranded balances.
 
 ## Deferred
 
@@ -39,8 +42,6 @@ Tracking notes for `arkhai-io-alkahest-2026-04-13-analysis.md`.
 
 ## Remaining Untriaged
 
-- #11 TokenBundleSplitterUnvalidated split-total / output-bounds issues.
-- #12 CommitReveal prior-block / front-running issues.
 - #13 Unbounded distribution loops in splitters.
 - #14 AllEscrowHook unbounded iteration: likely superseded by removal of `AllEscrowHook`, but confirm related multi-hook DoS expectations for `HooksEscrowObligation`.
 - #15 Splitter unconditional collection after third-party pre-collection.
