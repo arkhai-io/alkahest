@@ -170,6 +170,26 @@ contract TokenBundleSplitterTest is Test {
         return splits;
     }
 
+    function _oneWaySplit() internal view returns (TokenBundleSplitterBase.BundleSplit[] memory) {
+        TokenBundleSplitterBase.BundleSplit[] memory splits = new TokenBundleSplitterBase.BundleSplit[](1);
+        uint256[] memory erc20Amounts = new uint256[](2);
+        erc20Amounts[0] = TOKEN1_AMOUNT;
+        erc20Amounts[1] = TOKEN2_AMOUNT;
+        uint256[] memory erc721Indices = new uint256[](2);
+        erc721Indices[0] = 0;
+        erc721Indices[1] = 1;
+        uint256[] memory erc1155Amounts = new uint256[](1);
+        erc1155Amounts[0] = MULTI_AMOUNT;
+        splits[0] = TokenBundleSplitterBase.BundleSplit({
+            recipient: carol,
+            nativeAmount: NATIVE_AMOUNT,
+            erc20Amounts: erc20Amounts,
+            erc721Indices: erc721Indices,
+            erc1155Amounts: erc1155Amounts
+        });
+        return splits;
+    }
+
     function testArbitrateValid() public {
         bytes32 escrowUid = _createEscrow();
         bytes32 fulfillmentUid = _createFulfillmentViaSplitter(executor, escrowUid);
@@ -269,5 +289,28 @@ contract TokenBundleSplitterTest is Test {
         assertEq(stored.length, 2);
         assertEq(stored[0].recipient, alice);
         assertEq(stored[0].nativeAmount, 0.6 ether);
+    }
+
+    function testRearbitrateClearsNestedSplitArrays() public {
+        bytes32 escrowUid = _createEscrow();
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(executor, escrowUid);
+
+        vm.startPrank(oracle);
+        splitter.arbitrate(fulfillmentUid, escrowUid, _twoWaySplit());
+        splitter.arbitrate(fulfillmentUid, escrowUid, _oneWaySplit());
+        vm.stopPrank();
+
+        TokenBundleSplitterBase.BundleSplit[] memory stored = splitter.getSplits(oracle, fulfillmentUid, escrowUid);
+        assertEq(stored.length, 1);
+        assertEq(stored[0].recipient, carol);
+        assertEq(stored[0].nativeAmount, NATIVE_AMOUNT);
+        assertEq(stored[0].erc20Amounts.length, 2);
+        assertEq(stored[0].erc20Amounts[0], TOKEN1_AMOUNT);
+        assertEq(stored[0].erc20Amounts[1], TOKEN2_AMOUNT);
+        assertEq(stored[0].erc721Indices.length, 2);
+        assertEq(stored[0].erc721Indices[0], 0);
+        assertEq(stored[0].erc721Indices[1], 1);
+        assertEq(stored[0].erc1155Amounts.length, 1);
+        assertEq(stored[0].erc1155Amounts[0], MULTI_AMOUNT);
     }
 }

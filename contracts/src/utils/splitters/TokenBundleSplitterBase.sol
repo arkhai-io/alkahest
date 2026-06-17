@@ -112,6 +112,9 @@ abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155H
             BundleSplit storage stored = decisions[oracle][decisionKey][i];
             stored.recipient = splits[i].recipient;
             stored.nativeAmount = splits[i].nativeAmount;
+            delete stored.erc20Amounts;
+            delete stored.erc721Indices;
+            delete stored.erc1155Amounts;
             for (uint256 j; j < splits[i].erc20Amounts.length; ++j) {
                 stored.erc20Amounts.push(splits[i].erc20Amounts[j]);
             }
