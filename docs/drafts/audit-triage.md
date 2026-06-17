@@ -28,6 +28,8 @@ Tracking notes for `arkhai-io-alkahest-2026-04-13-analysis.md`.
   Commit: `ba652f76e2c8da51a0eedb76a495da8813c499c0 fix(escrow): bound stored settlement arrays`
 - #14 AllEscrowHook unbounded iteration: superseded by removal of `AllEscrowHook`; the replacement `HooksEscrowObligation` now caps the stored hook array.
   Commits: `d8c76d4 fix(hooks): replace AllEscrowHook with multi-hook obligation`, `ba652f76e2c8da51a0eedb76a495da8813c499c0 fix(escrow): bound stored settlement arrays`
+- #16 ERC1155 post-transfer recipient balance checks: addressed by removing recipient-side post-transfer balance assertions after ERC1155 `safeTransferFrom` in hook, standalone escrow, and token-bundle atomic release paths. Custody-side lock checks remain.
+  Commit: `5211635c855f12ce422e5451d40712dc508c0299 fix(escrow): allow ERC1155 receiver forwarding`
 - Default escrow checks follow-up: documented proposed default/unconditional escrow split before implementation.
   Doc: `docs/drafts/escrow-default-checks-plan.md`
 
@@ -38,6 +40,7 @@ Tracking notes for `arkhai-io-alkahest-2026-04-13-analysis.md`.
 - #7 HookEscrowObligation self-recipient sink: not treated as a special-case vulnerability. A claimant choosing the wrong recipient, including the obligation itself, is equivalent to choosing any other unrecoverable/wrong recipient.
 - #7 related: recipient binding in `HookEscrowObligation.checkObligation`: not addressed by default because open-claim semantics are intentional. If an escrow creator wants only a specific recipient to claim, compose a recipient/identity arbiter such as `RecipientArbiter`.
 - #11 `TokenBundleSplitterUnvalidated` split-total / output-bounds issues: accepted behavior for the explicitly unvalidated splitter. The over-allocation path can only drain balances already stranded in the splitter, not assets still held by other escrow contracts, and there is no recovery mechanism for those stranded balances.
+- #15 Splitter unconditional collection after third-party pre-collection: accepted as a low-incentive liveness edge case rather than a security issue. A third party needs an already-valid splitter-recipient fulfillment and posted oracle decision, and can only race the intended flow to move funds to the splitter, not to themselves. Adding distribute-only fallback semantics would require custody/accounting complexity or risk paying from commingled balances.
 
 ## Deferred
 
@@ -46,8 +49,6 @@ Tracking notes for `arkhai-io-alkahest-2026-04-13-analysis.md`.
 
 ## Remaining Untriaged
 
-- #15 Splitter unconditional collection after third-party pre-collection.
-- #16 ERC1155EscrowHook post-transfer balance check.
 - #17 TokenBundleSplitter nested array clearing / bounds issues.
 - #18 CommitReveal bond accounting.
 - #19 NativeTokenSplitter payer misdirection during `createFulfillment`.
