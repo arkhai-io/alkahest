@@ -30,6 +30,8 @@ Tracking notes for `arkhai-io-alkahest-2026-04-13-analysis.md`.
   Commits: `592f9d5505e4a3bed27416857d8954ace531e84a fix(hooks): replace AllEscrowHook with multi-hook obligation`, `b723c646a9baa88c7131d88f3d62b06eab100de4 fix(escrow): bound stored settlement arrays`
 - #16 ERC1155 post-transfer recipient balance checks: addressed by removing recipient-side post-transfer balance assertions after ERC1155 `safeTransferFrom` in hook, standalone escrow, and token-bundle atomic release paths. Custody-side lock checks remain.
   Commit: `5c03d3a3f00fe9dbcd06175806de80bf726c3b3e fix(escrow): allow ERC1155 receiver forwarding`
+- #17 TokenBundleSplitter nested dynamic array clearing: addressed by clearing nested split arrays before rewriting a decision slot for the same oracle and `(fulfillment, escrow)` key.
+  Commit: `eae63e650bf424fd2b98b2876959a2e57b992bfb fix(splitters): clear bundle decision arrays`
 - Default escrow checks follow-up: documented proposed default/unconditional escrow split before implementation.
   Doc: `docs/drafts/escrow-default-checks-plan.md`
 
@@ -49,7 +51,6 @@ Tracking notes for `arkhai-io-alkahest-2026-04-13-analysis.md`.
 
 ## Remaining Untriaged
 
-- #17 TokenBundleSplitter nested array clearing / bounds issues.
 - #18 CommitReveal bond accounting.
 - #19 NativeTokenSplitter payer misdirection during `createFulfillment`.
 - #20 Not-found handling / error classification.
