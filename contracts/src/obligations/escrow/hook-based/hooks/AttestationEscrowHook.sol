@@ -25,8 +25,8 @@ contract AttestationEscrowHook is IEscrowHook {
 
     IEAS public immutable eas;
 
-    /// @notice Tracks pending releases: caller → hookDataHash → pending.
-    mapping(address => mapping(bytes32 => bool)) public pending;
+    /// @notice Tracks pending releases: caller → hookDataHash → count.
+    mapping(address => mapping(bytes32 => uint256)) public pending;
 
     error AttestationCreationFailed();
     error NoPendingAttestation(address caller, bytes32 hookDataHash);
@@ -39,42 +39,56 @@ contract AttestationEscrowHook is IEscrowHook {
 
     function onLock(
         bytes calldata data,
-        address /* from */,
+        address,
+        /* from */
         address /* escrow */
-    ) external payable override {
+    )
+        external
+        payable
+        override
+    {
         // Mark as pending so onRelease can verify it was locked via a
         // legitimate obligation flow.
         bytes32 dataHash = keccak256(data);
-        pending[msg.sender][dataHash] = true;
+        pending[msg.sender][dataHash]++;
     }
 
     function onRelease(
         bytes calldata data,
-        address /* to */,
+        address,
+        /* to */
         address /* escrow */
-    ) external override {
+    )
+        external
+        override
+    {
         bytes32 dataHash = keccak256(data);
-        if (!pending[msg.sender][dataHash]) {
+        if (pending[msg.sender][dataHash] == 0) {
             revert NoPendingAttestation(msg.sender, dataHash);
         }
 
-        pending[msg.sender][dataHash] = false;
+        pending[msg.sender][dataHash]--;
 
         HookData memory decoded = abi.decode(data, (HookData));
-        try eas.attest(decoded.attestation) {} catch {
+        try eas.attest(decoded.attestation) {}
+        catch {
             revert AttestationCreationFailed();
         }
     }
 
     function onReturn(
         bytes calldata data,
-        address /* to */,
+        address,
+        /* to */
         address /* escrow */
-    ) external override {
+    )
+        external
+        override
+    {
         // Clear the pending state — the attestation won't be created.
         bytes32 dataHash = keccak256(data);
-        if (pending[msg.sender][dataHash]) {
-            pending[msg.sender][dataHash] = false;
+        if (pending[msg.sender][dataHash] > 0) {
+            pending[msg.sender][dataHash]--;
         }
     }
 
@@ -82,15 +96,11 @@ contract AttestationEscrowHook is IEscrowHook {
     // Encoding helpers
     // ──────────────────────────────────────────────
 
-    function encodeHookData(
-        HookData calldata hookData
-    ) external pure returns (bytes memory) {
+    function encodeHookData(HookData calldata hookData) external pure returns (bytes memory) {
         return abi.encode(hookData);
     }
 
-    function decodeHookData(
-        bytes calldata data
-    ) external pure returns (HookData memory) {
+    function decodeHookData(bytes calldata data) external pure returns (HookData memory) {
         return abi.decode(data, (HookData));
     }
 }

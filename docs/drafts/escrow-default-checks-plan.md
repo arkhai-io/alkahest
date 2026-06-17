@@ -42,3 +42,21 @@ Manual composition can then restore individual default checks when needed:
 This touches contract names, generated docs, and SDK surfaces, so it should be
 handled as a separate compatibility-aware change after the remaining audit items
 are triaged.
+
+## UID-Aware Hook Lifecycle
+
+Hook-based escrows currently call `onLock` from `_beforeAttest`, before EAS
+creates the escrow attestation UID. Nothing returned or mutated by `_beforeAttest`
+is passed into EAS; the attestation data is the original obligation data supplied
+by the caller.
+
+Longer term, it may be cleaner for hook-based escrows to expose the escrow UID to
+hooks. Two possible approaches:
+
+- Move lock execution to `_afterAttest` so `_lockEscrow` can receive the UID.
+- Keep lock execution before EAS, but add UID-aware release/return hook calls and
+  an optional post-attest hook for hook types that truly need the UID after
+  attestation creation.
+
+This should be handled as a separate lifecycle/API change because it affects the
+meaning of `_beforeAttest`/`_afterAttest`, hook interfaces, docs, and SDKs.
