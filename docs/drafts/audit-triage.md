@@ -32,9 +32,13 @@ Tracking notes for `arkhai-io-alkahest-2026-04-13-analysis.md`.
 - #7 HookEscrowObligation self-recipient sink: not treated as a special-case vulnerability. A claimant choosing the wrong recipient, including the obligation itself, is equivalent to choosing any other unrecoverable/wrong recipient.
 - #7 related: recipient binding in `HookEscrowObligation.checkObligation`: not addressed by default because open-claim semantics are intentional. If an escrow creator wants only a specific recipient to claim, compose a recipient/identity arbiter such as `RecipientArbiter`.
 
+## Deferred
+
+- #10 Missing fulfillment validation in tierable escrow collect paths: deferred to the default/unconditional escrow split. Tierable escrows intentionally do not require `fulfillment.refUID == escrow.uid`; default fulfillment intrinsic checks should be added as part of the broader default-checks API change rather than patched ad hoc here.
+  Doc: `docs/drafts/escrow-default-checks-plan.md`
+
 ## Remaining Untriaged
 
-- #10 Missing fulfillment validation in tierable escrow collect paths.
 - #11 TokenBundleSplitterUnvalidated split-total / output-bounds issues.
 - #12 CommitReveal prior-block / front-running issues.
 - #13 Unbounded distribution loops in splitters.
