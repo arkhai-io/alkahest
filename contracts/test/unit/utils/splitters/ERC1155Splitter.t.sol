@@ -13,6 +13,7 @@ import {EASDeployer} from "@test/utils/EASDeployer.sol";
 
 contract MockERC1155 is ERC1155 {
     constructor() ERC1155("https://example.com/token/{id}.json") {}
+
     function mint(address to, uint256 id, uint256 amount) public {
         _mint(to, id, amount, "");
     }
@@ -49,7 +50,10 @@ contract ERC1155SplitterTest is Test {
         token.setApprovalForAll(address(escrowObligation), true);
     }
 
-    function _createEscrow(address _buyer, uint256 tokenId, uint256 amount, uint64 expiration) internal returns (bytes32) {
+    function _createEscrow(address _buyer, uint256 tokenId, uint256 amount, uint64 expiration)
+        internal
+        returns (bytes32)
+    {
         bytes memory demand = abi.encode(ERC1155Splitter.DemandData({oracle: oracle, data: bytes("")}));
         ERC1155EscrowObligation.ObligationData memory data = ERC1155EscrowObligation.ObligationData({
             token: address(token), tokenId: tokenId, amount: amount, arbiter: address(splitter), demand: demand
@@ -59,9 +63,8 @@ contract ERC1155SplitterTest is Test {
     }
 
     function _createFulfillmentViaSplitter(address _executor, bytes32 escrowUid) internal returns (bytes32) {
-        bytes memory obligationData = abi.encode(
-            StringObligation.ObligationData({item: "fulfillment", schema: bytes32(0)})
-        );
+        bytes memory obligationData =
+            abi.encode(StringObligation.ObligationData({item: "fulfillment", schema: bytes32(0)}));
         vm.prank(_executor);
         return splitter.createFulfillment(address(stringObligation), obligationData, 0, escrowUid);
     }
@@ -130,6 +133,17 @@ contract ERC1155SplitterTest is Test {
 
         Attestation memory f = eas.getAttestation(fulfillmentUid);
         assertTrue(splitter.checkObligation(f, demand, escrowUid));
+    }
+
+    function testArbitrateRejectsZeroFulfillment() public {
+        bytes32 escrowUid = _createEscrow(buyer, TOKEN_ID, AMOUNT, uint64(block.timestamp + EXPIRATION));
+
+        ERC1155Splitter.Split[] memory splits = new ERC1155Splitter.Split[](1);
+        splits[0] = ERC1155Splitter.Split({recipient: alice, amount: AMOUNT});
+
+        vm.prank(oracle);
+        vm.expectRevert(ERC1155Splitter.InvalidFulfillmentUid.selector);
+        splitter.arbitrate(bytes32(0), escrowUid, splits);
     }
 
     function testRequestArbitrationAsRecipient() public {

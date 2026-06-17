@@ -12,7 +12,10 @@ interface INativeTokenEscrowObligation {
 }
 
 interface IObligation {
-    function doObligationRaw(bytes calldata data, uint64 expirationTime, bytes32 refUID) external payable returns (bytes32);
+    function doObligationRaw(bytes calldata data, uint64 expirationTime, bytes32 refUID)
+        external
+        payable
+        returns (bytes32);
 }
 
 contract NativeTokenSplitter is IArbiter, ReentrancyGuard {
@@ -20,14 +23,34 @@ contract NativeTokenSplitter is IArbiter, ReentrancyGuard {
 
     address public constant EXECUTOR_SENTINEL = address(0xEEEE);
 
-    struct Split { address recipient; uint256 amount; }
-    struct DemandData { address oracle; bytes data; }
-    struct EscrowObligationData { address arbiter; bytes demand; uint256 amount; }
+    struct Split {
+        address recipient;
+        uint256 amount;
+    }
 
-    event ArbitrationMade(bytes32 indexed decisionKey, bytes32 indexed obligation, address indexed oracle, Split[] splits);
-    event ArbitrationRequested(bytes32 indexed fulfillment, bytes32 indexed escrow, address indexed oracle, bytes demand);
-    event EscrowCollectedAndDistributed(bytes32 indexed escrow, bytes32 indexed fulfillment, address indexed fulfiller, Split[] splits);
-    event FulfillmentCreated(bytes32 indexed fulfillmentUid, address indexed fulfiller, address indexed obligationContract);
+    struct DemandData {
+        address oracle;
+        bytes data;
+    }
+
+    struct EscrowObligationData {
+        address arbiter;
+        bytes demand;
+        uint256 amount;
+    }
+
+    event ArbitrationMade(
+        bytes32 indexed decisionKey, bytes32 indexed obligation, address indexed oracle, Split[] splits
+    );
+    event ArbitrationRequested(
+        bytes32 indexed fulfillment, bytes32 indexed escrow, address indexed oracle, bytes demand
+    );
+    event EscrowCollectedAndDistributed(
+        bytes32 indexed escrow, bytes32 indexed fulfillment, address indexed fulfiller, Split[] splits
+    );
+    event FulfillmentCreated(
+        bytes32 indexed fulfillmentUid, address indexed fulfiller, address indexed obligationContract
+    );
     event NativeTransferFailedOnDistribute(address indexed recipient, uint256 amount);
 
     error UnauthorizedArbitrationRequest();
@@ -37,6 +60,9 @@ contract NativeTokenSplitter is IArbiter, ReentrancyGuard {
     error ZeroRecipient();
     error NativeTokenTransferFailed(address to, uint256 amount);
     error NoFulfillerRecorded(bytes32 fulfillment);
+    error InvalidFulfillmentUid();
+    error FulfillerAlreadyRecorded(bytes32 fulfillment);
+    error InvalidCreatedFulfillment(bytes32 fulfillment);
 
     IEAS public eas;
     mapping(address => mapping(bytes32 => Split[])) internal decisions;
@@ -45,9 +71,12 @@ contract NativeTokenSplitter is IArbiter, ReentrancyGuard {
 
     uint256 public constant MAX_SPLITS = 50;
 
-    constructor(IEAS _eas) { eas = _eas; }
+    constructor(IEAS _eas) {
+        eas = _eas;
+    }
 
     function arbitrate(bytes32 fulfillment, bytes32 escrow, Split[] calldata splits) external {
+        if (fulfillment == bytes32(0)) revert InvalidFulfillmentUid();
         Attestation memory escrowAttestation = eas.getAttestation(escrow);
         EscrowObligationData memory escrowData = abi.decode(escrowAttestation.data, (EscrowObligationData));
         if (splits.length == 0) revert EmptySplits();
@@ -60,25 +89,41 @@ contract NativeTokenSplitter is IArbiter, ReentrancyGuard {
         if (total != escrowData.amount) revert InvalidSplits(escrowData.amount, total);
         bytes32 decisionKey = keccak256(abi.encodePacked(fulfillment, escrow));
         delete decisions[msg.sender][decisionKey];
-        for (uint256 i; i < splits.length; ++i) decisions[msg.sender][decisionKey].push(splits[i]);
+        for (uint256 i; i < splits.length; ++i) {
+            decisions[msg.sender][decisionKey].push(splits[i]);
+        }
         hasDecision[msg.sender][decisionKey] = true;
         emit ArbitrationMade(decisionKey, escrow, msg.sender, splits);
     }
 
     function requestArbitration(bytes32 _fulfillment, bytes32 _escrow, address oracle, bytes memory demand) external {
         Attestation memory escrowAttestation = eas.getAttestation(_escrow);
-        if (escrowAttestation.attester != msg.sender && escrowAttestation.recipient != msg.sender)
+        if (escrowAttestation.attester != msg.sender && escrowAttestation.recipient != msg.sender) {
             revert UnauthorizedArbitrationRequest();
+        }
         emit ArbitrationRequested(_fulfillment, _escrow, oracle, demand);
     }
 
-    function checkObligation(Attestation memory fulfillment, bytes memory demand, bytes32 escrow) public view override returns (bool) {
+    function checkObligation(Attestation memory fulfillment, bytes memory demand, bytes32 escrow)
+        public
+        view
+        override
+        returns (bool)
+    {
+        fulfillment._checkIntrinsic();
         DemandData memory demandData = abi.decode(demand, (DemandData));
         return hasDecision[demandData.oracle][keccak256(abi.encodePacked(fulfillment.uid, escrow))];
     }
 
-    function createFulfillment(address obligationContract, bytes calldata data, uint64 expirationTime, bytes32 refUID) external payable returns (bytes32 fulfillmentUid) {
+    function createFulfillment(address obligationContract, bytes calldata data, uint64 expirationTime, bytes32 refUID)
+        external
+        payable
+        nonReentrant
+        returns (bytes32 fulfillmentUid)
+    {
         fulfillmentUid = IObligation(obligationContract).doObligationRaw{value: msg.value}(data, expirationTime, refUID);
+        _validateCreatedFulfillment(fulfillmentUid, obligationContract, data, expirationTime, refUID);
+        if (fulfillers[fulfillmentUid] != address(0)) revert FulfillerAlreadyRecorded(fulfillmentUid);
         fulfillers[fulfillmentUid] = msg.sender;
         emit FulfillmentCreated(fulfillmentUid, msg.sender, obligationContract);
     }
@@ -86,29 +131,35 @@ contract NativeTokenSplitter is IArbiter, ReentrancyGuard {
     /// @notice Collects a native token escrow and distributes ETH. Reverts if any transfer fails.
     function collectAndDistribute(address escrowContract, bytes32 escrow, bytes32 fulfillment) external nonReentrant {
         Split[] memory splits = _collectAndDecode(escrowContract, escrow, fulfillment);
+        address fulfiller = _recordedFulfiller(fulfillment);
         for (uint256 i; i < splits.length; ++i) {
-            address recipient = _resolveSentinel(splits[i].recipient, fulfillment);
-            (bool success, ) = payable(recipient).call{value: splits[i].amount}("");
+            address recipient = _resolveSentinel(splits[i].recipient, fulfillment, fulfiller);
+            (bool success,) = payable(recipient).call{value: splits[i].amount}("");
             if (!success) revert NativeTokenTransferFailed(recipient, splits[i].amount);
         }
-        emit EscrowCollectedAndDistributed(escrow, fulfillment, fulfillers[fulfillment], splits);
+        emit EscrowCollectedAndDistributed(escrow, fulfillment, fulfiller, splits);
     }
 
     /// @notice Unsafe partial distribution — continues on individual transfer failures.
-    function unsafePartiallyCollectAndDistribute(address escrowContract, bytes32 escrow, bytes32 fulfillment) external nonReentrant {
+    function unsafePartiallyCollectAndDistribute(address escrowContract, bytes32 escrow, bytes32 fulfillment)
+        external
+        nonReentrant
+    {
         Split[] memory splits = _collectAndDecode(escrowContract, escrow, fulfillment);
+        address fulfiller = _recordedFulfiller(fulfillment);
         for (uint256 i; i < splits.length; ++i) {
-            address recipient = _resolveSentinel(splits[i].recipient, fulfillment);
-            (bool success, ) = payable(recipient).call{value: splits[i].amount}("");
+            address recipient = _resolveSentinel(splits[i].recipient, fulfillment, fulfiller);
+            (bool success,) = payable(recipient).call{value: splits[i].amount}("");
             if (!success) {
                 emit NativeTransferFailedOnDistribute(recipient, splits[i].amount);
             }
         }
-        emit EscrowCollectedAndDistributed(escrow, fulfillment, fulfillers[fulfillment], splits);
+        emit EscrowCollectedAndDistributed(escrow, fulfillment, fulfiller, splits);
     }
 
     function _collectAndDecode(address escrowContract, bytes32 escrow, bytes32 fulfillment)
-        internal returns (Split[] memory splits)
+        internal
+        returns (Split[] memory splits)
     {
         Attestation memory escrowAttestation = eas.getAttestation(escrow);
         EscrowObligationData memory escrowData = abi.decode(escrowAttestation.data, (EscrowObligationData));
@@ -117,12 +168,39 @@ contract NativeTokenSplitter is IArbiter, ReentrancyGuard {
         INativeTokenEscrowObligation(escrowContract).collectEscrow(escrow, fulfillment);
     }
 
-    function _resolveSentinel(address recipient, bytes32 fulfillment) internal view returns (address) {
+    function _recordedFulfiller(bytes32 fulfillment) internal view returns (address fulfiller) {
+        fulfiller = fulfillers[fulfillment];
+    }
+
+    function _resolveSentinel(address recipient, bytes32 fulfillment, address fulfiller)
+        internal
+        pure
+        returns (address)
+    {
         if (recipient == EXECUTOR_SENTINEL) {
-            recipient = fulfillers[fulfillment];
-            if (recipient == address(0)) revert NoFulfillerRecorded(fulfillment);
+            if (fulfiller == address(0)) revert NoFulfillerRecorded(fulfillment);
+            recipient = fulfiller;
         }
         return recipient;
+    }
+
+    function _validateCreatedFulfillment(
+        bytes32 fulfillmentUid,
+        address obligationContract,
+        bytes calldata data,
+        uint64 expirationTime,
+        bytes32 refUID
+    ) internal view {
+        if (fulfillmentUid == bytes32(0)) revert InvalidFulfillmentUid();
+
+        Attestation memory fulfillment = eas.getAttestation(fulfillmentUid);
+        if (
+            fulfillment.uid != fulfillmentUid || fulfillment.attester != obligationContract
+                || fulfillment.recipient != address(this) || fulfillment.expirationTime != expirationTime
+                || fulfillment.refUID != refUID || keccak256(fulfillment.data) != keccak256(data)
+        ) {
+            revert InvalidCreatedFulfillment(fulfillmentUid);
+        }
     }
 
     function getSplits(address oracle, bytes32 fulfillment, bytes32 escrow) external view returns (Split[] memory) {

@@ -14,14 +14,10 @@ contract TokenBundleSplitterUnvalidated is TokenBundleSplitterBase {
 
     /// @notice Oracle submits a split decision without validation.
     ///         Only checks for empty splits and zero-address recipients.
-    function arbitrate(
-        bytes32 fulfillment,
-        bytes32 escrow,
-        BundleSplit[] calldata splits
-    ) external override {
-        bytes32 decisionKey = keccak256(
-            abi.encodePacked(fulfillment, escrow)
-        );
+    function arbitrate(bytes32 fulfillment, bytes32 escrow, BundleSplit[] calldata splits) external override {
+        if (fulfillment == bytes32(0)) revert InvalidFulfillmentUid();
+
+        bytes32 decisionKey = keccak256(abi.encodePacked(fulfillment, escrow));
 
         _storeDecision(msg.sender, decisionKey, splits);
 

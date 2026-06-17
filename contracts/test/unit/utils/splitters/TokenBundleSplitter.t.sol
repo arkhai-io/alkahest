@@ -16,17 +16,26 @@ import {EASDeployer} from "@test/utils/EASDeployer.sol";
 
 contract MockERC20T is ERC20 {
     constructor() ERC20("Mock Token", "MCK") {}
-    function mint(address to, uint256 amount) public { _mint(to, amount); }
+
+    function mint(address to, uint256 amount) public {
+        _mint(to, amount);
+    }
 }
 
 contract MockERC721T is ERC721 {
     constructor() ERC721("Mock NFT", "MNFT") {}
-    function mint(address to, uint256 tokenId) public { _mint(to, tokenId); }
+
+    function mint(address to, uint256 tokenId) public {
+        _mint(to, tokenId);
+    }
 }
 
 contract MockERC1155T is ERC1155 {
     constructor() ERC1155("https://example.com/{id}.json") {}
-    function mint(address to, uint256 id, uint256 amount) public { _mint(to, id, amount, ""); }
+
+    function mint(address to, uint256 id, uint256 amount) public {
+        _mint(to, id, amount, "");
+    }
 }
 
 contract TokenBundleSplitterTest is Test {
@@ -85,13 +94,17 @@ contract TokenBundleSplitterTest is Test {
     function _bundleData() internal view returns (TokenBundleEscrowObligation.ObligationData memory) {
         bytes memory demand = abi.encode(TokenBundleSplitterBase.DemandData({oracle: oracle, data: bytes("")}));
         address[] memory erc20Tokens = new address[](2);
-        erc20Tokens[0] = address(token1); erc20Tokens[1] = address(token2);
+        erc20Tokens[0] = address(token1);
+        erc20Tokens[1] = address(token2);
         uint256[] memory erc20Amounts = new uint256[](2);
-        erc20Amounts[0] = TOKEN1_AMOUNT; erc20Amounts[1] = TOKEN2_AMOUNT;
+        erc20Amounts[0] = TOKEN1_AMOUNT;
+        erc20Amounts[1] = TOKEN2_AMOUNT;
         address[] memory erc721Tokens = new address[](2);
-        erc721Tokens[0] = address(nft); erc721Tokens[1] = address(nft);
+        erc721Tokens[0] = address(nft);
+        erc721Tokens[1] = address(nft);
         uint256[] memory erc721TokenIds = new uint256[](2);
-        erc721TokenIds[0] = NFT_ID_1; erc721TokenIds[1] = NFT_ID_2;
+        erc721TokenIds[0] = NFT_ID_1;
+        erc721TokenIds[1] = NFT_ID_2;
         address[] memory erc1155Tokens = new address[](1);
         erc1155Tokens[0] = address(multiToken);
         uint256[] memory erc1155TokenIds = new uint256[](1);
@@ -99,10 +112,16 @@ contract TokenBundleSplitterTest is Test {
         uint256[] memory erc1155Amounts = new uint256[](1);
         erc1155Amounts[0] = MULTI_AMOUNT;
         return TokenBundleEscrowObligation.ObligationData({
-            arbiter: address(splitter), demand: demand, nativeAmount: NATIVE_AMOUNT,
-            erc20Tokens: erc20Tokens, erc20Amounts: erc20Amounts,
-            erc721Tokens: erc721Tokens, erc721TokenIds: erc721TokenIds,
-            erc1155Tokens: erc1155Tokens, erc1155TokenIds: erc1155TokenIds, erc1155Amounts: erc1155Amounts
+            arbiter: address(splitter),
+            demand: demand,
+            nativeAmount: NATIVE_AMOUNT,
+            erc20Tokens: erc20Tokens,
+            erc20Amounts: erc20Amounts,
+            erc721Tokens: erc721Tokens,
+            erc721TokenIds: erc721TokenIds,
+            erc1155Tokens: erc1155Tokens,
+            erc1155TokenIds: erc1155TokenIds,
+            erc1155Amounts: erc1155Amounts
         });
     }
 
@@ -112,28 +131,41 @@ contract TokenBundleSplitterTest is Test {
     }
 
     function _createFulfillmentViaSplitter(address _executor, bytes32 escrowUid) internal returns (bytes32) {
-        bytes memory obligationData = abi.encode(
-            StringObligation.ObligationData({item: "fulfillment", schema: bytes32(0)})
-        );
+        bytes memory obligationData =
+            abi.encode(StringObligation.ObligationData({item: "fulfillment", schema: bytes32(0)}));
         vm.prank(_executor);
         return splitter.createFulfillment(address(stringObligation), obligationData, 0, escrowUid);
     }
 
     function _twoWaySplit() internal view returns (TokenBundleSplitterBase.BundleSplit[] memory) {
         TokenBundleSplitterBase.BundleSplit[] memory splits = new TokenBundleSplitterBase.BundleSplit[](2);
-        uint256[] memory aliceErc20 = new uint256[](2); aliceErc20[0] = 60e18; aliceErc20[1] = 20e18;
-        uint256[] memory aliceErc721 = new uint256[](1); aliceErc721[0] = 0;
-        uint256[] memory aliceErc1155 = new uint256[](1); aliceErc1155[0] = 60;
+        uint256[] memory aliceErc20 = new uint256[](2);
+        aliceErc20[0] = 60e18;
+        aliceErc20[1] = 20e18;
+        uint256[] memory aliceErc721 = new uint256[](1);
+        aliceErc721[0] = 0;
+        uint256[] memory aliceErc1155 = new uint256[](1);
+        aliceErc1155[0] = 60;
         splits[0] = TokenBundleSplitterBase.BundleSplit({
-            recipient: alice, nativeAmount: 0.6 ether, erc20Amounts: aliceErc20,
-            erc721Indices: aliceErc721, erc1155Amounts: aliceErc1155
+            recipient: alice,
+            nativeAmount: 0.6 ether,
+            erc20Amounts: aliceErc20,
+            erc721Indices: aliceErc721,
+            erc1155Amounts: aliceErc1155
         });
-        uint256[] memory bobErc20 = new uint256[](2); bobErc20[0] = 40e18; bobErc20[1] = 30e18;
-        uint256[] memory bobErc721 = new uint256[](1); bobErc721[0] = 1;
-        uint256[] memory bobErc1155 = new uint256[](1); bobErc1155[0] = 40;
+        uint256[] memory bobErc20 = new uint256[](2);
+        bobErc20[0] = 40e18;
+        bobErc20[1] = 30e18;
+        uint256[] memory bobErc721 = new uint256[](1);
+        bobErc721[0] = 1;
+        uint256[] memory bobErc1155 = new uint256[](1);
+        bobErc1155[0] = 40;
         splits[1] = TokenBundleSplitterBase.BundleSplit({
-            recipient: bob, nativeAmount: 0.4 ether, erc20Amounts: bobErc20,
-            erc721Indices: bobErc721, erc1155Amounts: bobErc1155
+            recipient: bob,
+            nativeAmount: 0.4 ether,
+            erc20Amounts: bobErc20,
+            erc721Indices: bobErc721,
+            erc1155Amounts: bobErc1155
         });
         return splits;
     }
@@ -145,6 +177,14 @@ contract TokenBundleSplitterTest is Test {
         splitter.arbitrate(fulfillmentUid, escrowUid, _twoWaySplit());
         bytes32 key = keccak256(abi.encodePacked(fulfillmentUid, escrowUid));
         assertTrue(splitter.hasDecision(oracle, key));
+    }
+
+    function testArbitrateRejectsZeroFulfillment() public {
+        bytes32 escrowUid = _createEscrow();
+
+        vm.prank(oracle);
+        vm.expectRevert(TokenBundleSplitterBase.InvalidFulfillmentUid.selector);
+        splitter.arbitrate(bytes32(0), escrowUid, _twoWaySplit());
     }
 
     function testCollectAndDistribute() public {

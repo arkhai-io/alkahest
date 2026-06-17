@@ -39,17 +39,15 @@ contract NativeTokenSplitterTest is Test {
 
     function _createEscrow(address _buyer, uint256 amount, uint64 expiration) internal returns (bytes32) {
         bytes memory demand = abi.encode(NativeTokenSplitter.DemandData({oracle: oracle, data: bytes("")}));
-        NativeTokenEscrowObligation.ObligationData memory data = NativeTokenEscrowObligation.ObligationData({
-            amount: amount, arbiter: address(splitter), demand: demand
-        });
+        NativeTokenEscrowObligation.ObligationData memory data =
+            NativeTokenEscrowObligation.ObligationData({amount: amount, arbiter: address(splitter), demand: demand});
         vm.prank(_buyer);
         return escrowObligation.doObligation{value: amount}(data, expiration);
     }
 
     function _createFulfillmentViaSplitter(address _executor, bytes32 escrowUid) internal returns (bytes32) {
-        bytes memory obligationData = abi.encode(
-            StringObligation.ObligationData({item: "fulfillment", schema: bytes32(0)})
-        );
+        bytes memory obligationData =
+            abi.encode(StringObligation.ObligationData({item: "fulfillment", schema: bytes32(0)}));
         vm.prank(_executor);
         return splitter.createFulfillment(address(stringObligation), obligationData, 0, escrowUid);
     }
@@ -118,6 +116,17 @@ contract NativeTokenSplitterTest is Test {
         assertFalse(splitter.checkObligation(attackerF, demand, escrowUid));
     }
 
+    function testArbitrateRejectsZeroFulfillment() public {
+        bytes32 escrowUid = _createEscrow(buyer, AMOUNT, uint64(block.timestamp + EXPIRATION));
+
+        NativeTokenSplitter.Split[] memory splits = new NativeTokenSplitter.Split[](1);
+        splits[0] = NativeTokenSplitter.Split({recipient: alice, amount: AMOUNT});
+
+        vm.prank(oracle);
+        vm.expectRevert(NativeTokenSplitter.InvalidFulfillmentUid.selector);
+        splitter.arbitrate(bytes32(0), escrowUid, splits);
+    }
+
     function testRequestArbitrationAsRecipient() public {
         bytes32 escrowUid = _createEscrow(buyer, AMOUNT, uint64(block.timestamp + EXPIRATION));
         bytes32 fulfillmentUid = _createFulfillmentViaSplitter(executor, escrowUid);
@@ -139,7 +148,7 @@ contract NativeTokenSplitterTest is Test {
 
     function testReceiveETH() public {
         vm.deal(address(this), 1 ether);
-        (bool success, ) = address(splitter).call{value: 0.5 ether}("");
+        (bool success,) = address(splitter).call{value: 0.5 ether}("");
         assertTrue(success);
         assertEq(address(splitter).balance, 0.5 ether);
     }
