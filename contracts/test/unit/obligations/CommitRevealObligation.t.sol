@@ -31,19 +31,13 @@ contract CommitRevealObligationTest is Test {
 
     function _obligationData() internal pure returns (CommitRevealObligation.ObligationData memory) {
         return CommitRevealObligation.ObligationData({
-            payload: bytes("payload"),
-            salt: bytes32("salt"),
-            schema: bytes32("schema-tag")
+            payload: bytes("payload"), salt: bytes32("salt"), schema: bytes32("schema-tag")
         });
     }
 
     function _makeEscrow() internal returns (bytes32 escrowUid) {
-        NativeTokenEscrowObligation.ObligationData memory escrowData = NativeTokenEscrowObligation
-            .ObligationData({
-                arbiter: address(obligation),
-                demand: "",
-                amount: 0
-            });
+        NativeTokenEscrowObligation.ObligationData memory escrowData =
+            NativeTokenEscrowObligation.ObligationData({arbiter: address(obligation), demand: "", amount: 0});
         escrowUid = nativeEscrow.doObligation{value: 0}(escrowData, 0);
     }
 
@@ -78,12 +72,7 @@ contract CommitRevealObligationTest is Test {
 
         // Bond is already claimed — slashing should fail
         vm.warp(block.timestamp + COMMIT_DEADLINE + 1);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                CommitRevealObligation.BondAlreadyClaimed.selector,
-                commitment
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(CommitRevealObligation.BondAlreadyClaimed.selector, commitment));
         obligation.slashBond(commitment);
     }
 
@@ -145,13 +134,7 @@ contract CommitRevealObligationTest is Test {
 
         // Attempting to reveal without a commit should revert
         vm.prank(claimer);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                CommitRevealObligation.CommitmentMissing.selector,
-                commitment,
-                claimer
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(CommitRevealObligation.CommitmentMissing.selector, commitment, claimer));
         obligation.doObligation(data, escrowUid);
     }
 
@@ -168,11 +151,7 @@ contract CommitRevealObligationTest is Test {
         // Reveal in the same block (no vm.roll)
         vm.prank(claimer);
         vm.expectRevert(
-            abi.encodeWithSelector(
-                CommitRevealObligation.CommitmentTooRecent.selector,
-                commitment,
-                claimer
-            )
+            abi.encodeWithSelector(CommitRevealObligation.CommitmentTooRecent.selector, commitment, claimer)
         );
         obligation.doObligation(data, escrowUid);
     }
@@ -217,12 +196,7 @@ contract CommitRevealObligationTest is Test {
 
         // Second reveal with same commitment reverts (bond already claimed)
         vm.prank(claimer);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                CommitRevealObligation.BondAlreadyClaimed.selector,
-                commitment
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(CommitRevealObligation.BondAlreadyClaimed.selector, commitment));
         obligation.doObligation(data, escrowUid);
     }
 
@@ -230,14 +204,10 @@ contract CommitRevealObligationTest is Test {
         bytes32 escrowUid = _makeEscrow();
 
         CommitRevealObligation.ObligationData memory dataOld = CommitRevealObligation.ObligationData({
-            payload: bytes("old"),
-            salt: bytes32("salt-old"),
-            schema: bytes32("schema-tag")
+            payload: bytes("old"), salt: bytes32("salt-old"), schema: bytes32("schema-tag")
         });
         CommitRevealObligation.ObligationData memory dataNew = CommitRevealObligation.ObligationData({
-            payload: bytes("new"),
-            salt: bytes32("salt-new"),
-            schema: bytes32("schema-tag")
+            payload: bytes("new"), salt: bytes32("salt-new"), schema: bytes32("schema-tag")
         });
 
         bytes32 commitmentOld = obligation.computeCommitment(escrowUid, claimer, dataOld);
@@ -261,6 +231,69 @@ contract CommitRevealObligationTest is Test {
         assertEq(claimer.balance, claimerBalanceBefore + 2 * BOND, "both bonds reclaimed");
     }
 
+    function testBondIncreaseDoesNotOverRefundPriorCommit() public {
+        bytes32 escrowUid = _makeEscrow();
+        CommitRevealObligation.ObligationData memory data = _obligationData();
+        bytes32 commitment = obligation.computeCommitment(escrowUid, claimer, data);
+
+        vm.deal(claimer, BOND);
+        vm.prank(claimer);
+        obligation.commit{value: BOND}(commitment);
+
+        obligation.setBondAmount(2 * BOND);
+        vm.roll(block.number + 1);
+
+        uint256 claimerBalanceBefore = claimer.balance;
+        vm.prank(claimer);
+        obligation.doObligation(data, escrowUid);
+
+        assertEq(claimer.balance, claimerBalanceBefore + BOND, "prior commit refunded original bond");
+    }
+
+    function testBondDecreaseDoesNotUnderRefundPriorCommit() public {
+        bytes32 escrowUid = _makeEscrow();
+        CommitRevealObligation.ObligationData memory data = _obligationData();
+        bytes32 commitment = obligation.computeCommitment(escrowUid, claimer, data);
+
+        vm.deal(claimer, BOND);
+        vm.prank(claimer);
+        obligation.commit{value: BOND}(commitment);
+
+        obligation.setBondAmount(BOND / 2);
+        vm.roll(block.number + 1);
+
+        uint256 claimerBalanceBefore = claimer.balance;
+        vm.prank(claimer);
+        obligation.doObligation(data, escrowUid);
+
+        assertEq(claimer.balance, claimerBalanceBefore + BOND, "prior commit refunded original bond");
+    }
+
+    function testBondAmountUpdateTakesEffectNextBlock() public {
+        bytes32 escrowUid = _makeEscrow();
+        CommitRevealObligation.ObligationData memory data = _obligationData();
+        bytes32 oldCommitment = obligation.computeCommitment(escrowUid, claimer, data);
+
+        obligation.setBondAmount(2 * BOND);
+        assertEq(obligation.bondAmount(), BOND, "current block still uses previous bond amount");
+
+        vm.deal(claimer, BOND);
+        vm.prank(claimer);
+        obligation.commit{value: BOND}(oldCommitment);
+
+        vm.roll(block.number + 1);
+        assertEq(obligation.bondAmount(), 2 * BOND, "next block uses updated bond amount");
+
+        CommitRevealObligation.ObligationData memory otherData = CommitRevealObligation.ObligationData({
+            payload: bytes("other payload"), salt: bytes32("other salt"), schema: bytes32("schema-tag")
+        });
+        bytes32 newCommitment = obligation.computeCommitment(escrowUid, claimer, otherData);
+
+        vm.deal(claimer, 2 * BOND);
+        vm.prank(claimer);
+        obligation.commit{value: 2 * BOND}(newCommitment);
+    }
+
     // ----------------------------------------------------------------
     // Deadline enforcement
     // ----------------------------------------------------------------
@@ -279,12 +312,7 @@ contract CommitRevealObligationTest is Test {
         vm.roll(block.number + 1);
 
         vm.prank(claimer);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                CommitRevealObligation.RevealTooLate.selector,
-                commitment
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(CommitRevealObligation.RevealTooLate.selector, commitment));
         obligation.doObligation(data, escrowUid);
     }
 
@@ -364,9 +392,7 @@ contract CommitRevealObligationTest is Test {
         // Still within deadline
         vm.warp(block.timestamp + COMMIT_DEADLINE);
 
-        vm.expectRevert(
-            abi.encodeWithSelector(CommitRevealObligation.CommitDeadlineNotReached.selector, commitment)
-        );
+        vm.expectRevert(abi.encodeWithSelector(CommitRevealObligation.CommitDeadlineNotReached.selector, commitment));
         obligation.slashBond(commitment);
     }
 
@@ -388,9 +414,7 @@ contract CommitRevealObligationTest is Test {
         // Warp past deadline and try to slash
         vm.warp(block.timestamp + COMMIT_DEADLINE + 1);
 
-        vm.expectRevert(
-            abi.encodeWithSelector(CommitRevealObligation.BondAlreadyClaimed.selector, commitment)
-        );
+        vm.expectRevert(abi.encodeWithSelector(CommitRevealObligation.BondAlreadyClaimed.selector, commitment));
         obligation.slashBond(commitment);
     }
 
@@ -411,9 +435,7 @@ contract CommitRevealObligationTest is Test {
         // Now try to reveal — should fail because bond already claimed (slashed)
         // and also because reveal is past deadline
         vm.prank(claimer);
-        vm.expectRevert(
-            abi.encodeWithSelector(CommitRevealObligation.RevealTooLate.selector, commitment)
-        );
+        vm.expectRevert(abi.encodeWithSelector(CommitRevealObligation.RevealTooLate.selector, commitment));
         obligation.doObligation(data, escrowUid);
     }
 
@@ -460,9 +482,7 @@ contract CommitRevealObligationTest is Test {
 
         // Even after deadline, slashing fails because bond was already reclaimed
         vm.warp(block.timestamp + COMMIT_DEADLINE + 1);
-        vm.expectRevert(
-            abi.encodeWithSelector(CommitRevealObligation.BondAlreadyClaimed.selector, commitment)
-        );
+        vm.expectRevert(abi.encodeWithSelector(CommitRevealObligation.BondAlreadyClaimed.selector, commitment));
         obligation.slashBond(commitment);
     }
 
@@ -518,11 +538,7 @@ contract CommitRevealObligationTest is Test {
         bytes32 expectedCommitment = obligation.computeCommitment(escrowUid, splitter, data);
         vm.prank(claimer);
         vm.expectRevert(
-            abi.encodeWithSelector(
-                CommitRevealObligation.CommitmentMissing.selector,
-                expectedCommitment,
-                splitter
-            )
+            abi.encodeWithSelector(CommitRevealObligation.CommitmentMissing.selector, expectedCommitment, splitter)
         );
         obligation.doObligationFor(data, splitter, escrowUid);
     }
@@ -542,9 +558,7 @@ contract CommitRevealObligationTest is Test {
 
         // Late reveal should revert
         vm.prank(claimer);
-        vm.expectRevert(
-            abi.encodeWithSelector(CommitRevealObligation.RevealTooLate.selector, commitment)
-        );
+        vm.expectRevert(abi.encodeWithSelector(CommitRevealObligation.RevealTooLate.selector, commitment));
         obligation.doObligation(data, escrowUid);
     }
 }

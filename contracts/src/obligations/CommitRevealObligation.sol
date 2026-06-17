@@ -27,7 +27,7 @@ contract CommitRevealObligation is BaseObligation, IArbiter, Ownable {
     /// @dev Data stored inside the fulfillment attestation.
     struct ObligationData {
         bytes payload; // arbitrary self-contained data the fulfiller reveals
-        bytes32 salt;  // fulfiller-chosen salt to harden the commitment
+        bytes32 salt; // fulfiller-chosen salt to harden the commitment
         bytes32 schema; // arbitrary tag describing the payload format
     }
 
@@ -36,6 +36,11 @@ contract CommitRevealObligation is BaseObligation, IArbiter, Ownable {
         uint64 commitBlock;
         uint64 commitTimestamp;
         address committer;
+    }
+
+    struct BondEpoch {
+        uint64 startBlock;
+        uint256 amount;
     }
 
     /// @notice commitments[commitment] => commit information.
@@ -59,8 +64,8 @@ contract CommitRevealObligation is BaseObligation, IArbiter, Ownable {
     error RevealTooLate(bytes32 commitment);
     error EscrowCollectionFailed(address escrowContract, bytes32 escrowUid, bytes32 fulfillmentUid, bytes result);
 
-    /// @notice Fixed bond amount required for each commit.
-    uint256 public bondAmount;
+    /// @notice Bond amount epochs. Updates take effect starting the next block.
+    BondEpoch[] public bondEpochs;
     /// @notice Seconds after commit within which the reveal must occur to avoid slashing.
     uint256 public commitDeadline;
     /// @notice Recipient of slashed bonds (address(0) = burn).
@@ -72,11 +77,8 @@ contract CommitRevealObligation is BaseObligation, IArbiter, Ownable {
         uint256 _bondAmount,
         uint256 _commitDeadline,
         address _slashedBondRecipient
-    )
-        BaseObligation(_eas, _schemaRegistry, "bytes payload, bytes32 salt, bytes32 schema", true)
-        Ownable(msg.sender)
-    {
-        bondAmount = _bondAmount;
+    ) BaseObligation(_eas, _schemaRegistry, "bytes payload, bytes32 salt, bytes32 schema", true) Ownable(msg.sender) {
+        bondEpochs.push(BondEpoch({startBlock: 0, amount: _bondAmount}));
         commitDeadline = _commitDeadline;
         slashedBondRecipient = _slashedBondRecipient;
     }
@@ -86,7 +88,13 @@ contract CommitRevealObligation is BaseObligation, IArbiter, Ownable {
     // ---------------------------------------------------------------------
 
     function setBondAmount(uint256 _bondAmount) external onlyOwner {
-        bondAmount = _bondAmount;
+        uint64 startBlock = uint64(block.number + 1);
+        uint256 lastIndex = bondEpochs.length - 1;
+        if (bondEpochs[lastIndex].startBlock == startBlock) {
+            bondEpochs[lastIndex].amount = _bondAmount;
+        } else {
+            bondEpochs.push(BondEpoch({startBlock: startBlock, amount: _bondAmount}));
+        }
     }
 
     function setCommitDeadline(uint256 _commitDeadline) external onlyOwner {
@@ -119,11 +127,10 @@ contract CommitRevealObligation is BaseObligation, IArbiter, Ownable {
     /// @param data Revealed data (must match a prior commit) and salt.
     /// @param recipient The address to set as the attestation recipient.
     /// @param refUID Escrow attestation UID being fulfilled.
-    function doObligationFor(
-        ObligationData calldata data,
-        address recipient,
-        bytes32 refUID
-    ) external returns (bytes32 uid_) {
+    function doObligationFor(ObligationData calldata data, address recipient, bytes32 refUID)
+        external
+        returns (bytes32 uid_)
+    {
         bytes memory encodedData = abi.encode(data);
         uid_ = _doObligationForRaw(encodedData, 0, recipient, refUID);
     }
@@ -152,16 +159,18 @@ contract CommitRevealObligation is BaseObligation, IArbiter, Ownable {
     function _afterAttest(
         bytes32 uid,
         bytes memory data,
-        address /* payer */,
+        address,
+        /* payer */
         address recipient
-    ) internal override {
+    )
+        internal
+        override
+    {
         // We need the refUID to compute the commitment. Get it from the attestation.
         Attestation memory attestation = eas.getAttestation(uid);
         bytes32 refUID = attestation.refUID;
 
-        bytes32 revealedCommitment = keccak256(
-            abi.encode(refUID, recipient, keccak256(data))
-        );
+        bytes32 revealedCommitment = keccak256(abi.encode(refUID, recipient, keccak256(data)));
 
         CommitInfo memory info = commitments[revealedCommitment];
 
@@ -186,10 +195,10 @@ contract CommitRevealObligation is BaseObligation, IArbiter, Ownable {
         }
 
         // Atomically reclaim bond
-        uint256 amount = bondAmount;
+        uint256 amount = _bondAmountAtBlock(info.commitBlock);
         commitmentClaimed[revealedCommitment] = true;
 
-        (bool success, ) = info.committer.call{value: amount}("");
+        (bool success,) = info.committer.call{value: amount}("");
         if (!success) revert BondTransferFailed(info.committer, amount);
 
         emit BondReclaimed(uid, info.committer, amount);
@@ -201,19 +210,18 @@ contract CommitRevealObligation is BaseObligation, IArbiter, Ownable {
 
     /// @notice Records a commitment hash, locking the fixed bond.
     /// @param commitment keccak256(abi.encode(refUID, claimer, keccak256(abi.encode(data)))).
-    /// @dev msg.value must equal `bondAmount` and is held as a bond reclaimable after a valid reveal.
+    /// @dev msg.value must equal the active `bondAmount()` and is held as a bond reclaimable after a valid reveal.
     function commit(bytes32 commitment) external payable {
         if (commitment == bytes32(0)) revert EmptyCommitment();
-        if (msg.value != bondAmount) revert IncorrectBondAmount(msg.value, bondAmount);
+        uint256 activeBondAmount = bondAmount();
+        if (msg.value != activeBondAmount) revert IncorrectBondAmount(msg.value, activeBondAmount);
 
         if (commitments[commitment].committer != address(0)) {
             revert CommitmentAlreadyExists(commitment);
         }
 
         commitments[commitment] = CommitInfo({
-            commitBlock: uint64(block.number),
-            commitTimestamp: uint64(block.timestamp),
-            committer: msg.sender
+            commitBlock: uint64(block.number), commitTimestamp: uint64(block.timestamp), committer: msg.sender
         });
 
         emit Committed(commitment, msg.sender);
@@ -235,16 +243,21 @@ contract CommitRevealObligation is BaseObligation, IArbiter, Ownable {
     /// @inheritdoc IArbiter
     function checkObligation(
         Attestation memory obligation,
-        bytes memory /* demand (unused) */,
+        bytes memory,
+        /* demand (unused) */
         bytes32 /* fulfilling (unused) */
-    ) public view override returns (bool) {
+    )
+        public
+        view
+        override
+        returns (bool)
+    {
         // Basic attestation sanity checks (schema + expiry + revocation)
         obligation._checkIntrinsic(ATTESTATION_SCHEMA);
 
         // Lookup the prior commitment for the fulfiller
-        bytes32 revealedCommitment = keccak256(
-            abi.encode(obligation.refUID, obligation.recipient, keccak256(obligation.data))
-        );
+        bytes32 revealedCommitment =
+            keccak256(abi.encode(obligation.refUID, obligation.recipient, keccak256(obligation.data)));
         CommitInfo memory info = commitments[revealedCommitment];
         if (info.committer == address(0)) {
             revert CommitmentMissing(revealedCommitment, obligation.recipient);
@@ -278,7 +291,7 @@ contract CommitRevealObligation is BaseObligation, IArbiter, Ownable {
         }
         if (commitmentClaimed[commitment]) revert BondAlreadyClaimed(commitment);
 
-        amount = bondAmount;
+        amount = _bondAmountAtBlock(info.commitBlock);
         commitmentClaimed[commitment] = true;
 
         (bool success,) = slashedBondRecipient.call{value: amount}("");
@@ -298,5 +311,23 @@ contract CommitRevealObligation is BaseObligation, IArbiter, Ownable {
 
     function decodeObligationData(bytes calldata data) external pure returns (ObligationData memory) {
         return abi.decode(data, (ObligationData));
+    }
+
+    function bondAmount() public view returns (uint256) {
+        return _bondAmountAtBlock(block.number);
+    }
+
+    function bondEpochCount() external view returns (uint256) {
+        return bondEpochs.length;
+    }
+
+    function _bondAmountAtBlock(uint256 targetBlock) internal view returns (uint256) {
+        for (uint256 i = bondEpochs.length; i > 0; --i) {
+            BondEpoch memory epoch = bondEpochs[i - 1];
+            if (targetBlock >= epoch.startBlock) {
+                return epoch.amount;
+            }
+        }
+        revert();
     }
 }
