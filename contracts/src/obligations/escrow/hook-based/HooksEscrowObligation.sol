@@ -9,37 +9,31 @@ import {Attestation} from "@eas/Common.sol";
 import {IEAS} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 
-/// @title HookEscrowObligation
-/// @notice A generic escrow obligation that delegates lock/release/return to
-///         an IEscrowHook contract. The hook is specified per-escrow, so
-///         different escrow instances can use different hooks (ERC20, ERC721,
-///         or entirely custom logic). Use HooksEscrowObligation for multi-hook
-///         escrows.
-///
-///         Assets are held by the hook contracts, not by this obligation.
-///         Hooks track deposits per-caller (msg.sender = this contract), so
-///         no explicit authorization is required.
-contract HookEscrowObligation is BaseEscrowObligation, IArbiter {
+/// @title HooksEscrowObligation
+/// @notice A multi-hook escrow obligation that calls each IEscrowHook directly
+///         during lock, release, and return.
+contract HooksEscrowObligation is BaseEscrowObligation, IArbiter {
     using ArbiterUtils for Attestation;
 
-    /// @param arbiter  The arbiter that judges fulfillment.
-    /// @param demand   Arbiter-specific demand data.
-    /// @param hook     The IEscrowHook implementation to call.
-    /// @param hookData Opaque data forwarded to the hook on lock/release/return.
     struct ObligationData {
         address arbiter;
         bytes demand;
-        address hook;
-        bytes hookData;
+        address[] hooks;
+        bytes[] hookDatas;
+        uint256[] values;
     }
 
-    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry)
-        BaseEscrowObligation(_eas, _schemaRegistry, "address arbiter, bytes demand, address hook, bytes hookData", true)
-    {}
+    error ArrayLengthMismatch();
+    error ValueMismatch(uint256 expected, uint256 received);
 
-    // ──────────────────────────────────────────────
-    // BaseEscrowObligation overrides
-    // ──────────────────────────────────────────────
+    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry)
+        BaseEscrowObligation(
+            _eas,
+            _schemaRegistry,
+            "address arbiter, bytes demand, address[] hooks, bytes[] hookDatas, uint256[] values",
+            true
+        )
+    {}
 
     function extractArbiterAndDemand(bytes memory data)
         public
@@ -53,7 +47,17 @@ contract HookEscrowObligation is BaseEscrowObligation, IArbiter {
 
     function _lockEscrow(bytes memory data, address from) internal override {
         ObligationData memory decoded = abi.decode(data, (ObligationData));
-        IEscrowHook(decoded.hook).onLock{value: msg.value}(decoded.hookData, from, address(this));
+        _validateLengths(decoded);
+
+        uint256 totalValue;
+        for (uint256 i; i < decoded.values.length; ++i) {
+            totalValue += decoded.values[i];
+        }
+        if (msg.value != totalValue) revert ValueMismatch(totalValue, msg.value);
+
+        for (uint256 i; i < decoded.hooks.length; ++i) {
+            IEscrowHook(decoded.hooks[i]).onLock{value: decoded.values[i]}(decoded.hookDatas[i], from, address(this));
+        }
     }
 
     function _releaseEscrow(
@@ -66,18 +70,22 @@ contract HookEscrowObligation is BaseEscrowObligation, IArbiter {
         returns (bytes memory)
     {
         ObligationData memory decoded = abi.decode(escrowData, (ObligationData));
-        IEscrowHook(decoded.hook).onRelease(decoded.hookData, to, address(this));
+        _validateLengths(decoded);
+
+        for (uint256 i; i < decoded.hooks.length; ++i) {
+            IEscrowHook(decoded.hooks[i]).onRelease(decoded.hookDatas[i], to, address(this));
+        }
         return "";
     }
 
     function _returnEscrow(bytes memory data, address to) internal override {
         ObligationData memory decoded = abi.decode(data, (ObligationData));
-        IEscrowHook(decoded.hook).onReturn(decoded.hookData, to, address(this));
-    }
+        _validateLengths(decoded);
 
-    // ──────────────────────────────────────────────
-    // IArbiter – allows demanding a HookEscrow
-    // ──────────────────────────────────────────────
+        for (uint256 i; i < decoded.hooks.length; ++i) {
+            IEscrowHook(decoded.hooks[i]).onReturn(decoded.hookDatas[i], to, address(this));
+        }
+    }
 
     function checkObligation(
         Attestation memory obligation,
@@ -94,13 +102,11 @@ contract HookEscrowObligation is BaseEscrowObligation, IArbiter {
         ObligationData memory payment = abi.decode(obligation.data, (ObligationData));
         ObligationData memory demandData = abi.decode(demand, (ObligationData));
 
-        return payment.hook == demandData.hook && keccak256(payment.hookData) == keccak256(demandData.hookData)
-            && payment.arbiter == demandData.arbiter && keccak256(payment.demand) == keccak256(demandData.demand);
+        return payment.arbiter == demandData.arbiter && keccak256(payment.demand) == keccak256(demandData.demand)
+            && keccak256(abi.encode(payment.hooks)) == keccak256(abi.encode(demandData.hooks))
+            && keccak256(abi.encode(payment.hookDatas)) == keccak256(abi.encode(demandData.hookDatas))
+            && keccak256(abi.encode(payment.values)) == keccak256(abi.encode(demandData.values));
     }
-
-    // ──────────────────────────────────────────────
-    // Convenience methods
-    // ──────────────────────────────────────────────
 
     function doObligation(ObligationData calldata data, uint64 expirationTime) external payable returns (bytes32) {
         return _doObligationForRaw(abi.encode(data), expirationTime, msg.sender, bytes32(0));
@@ -128,6 +134,11 @@ contract HookEscrowObligation is BaseEscrowObligation, IArbiter {
         return abi.decode(data, (ObligationData));
     }
 
-    // Allow contract to receive native tokens (for hooks that deal with ETH)
+    function _validateLengths(ObligationData memory decoded) internal pure {
+        if (decoded.hooks.length != decoded.hookDatas.length || decoded.hooks.length != decoded.values.length) {
+            revert ArrayLengthMismatch();
+        }
+    }
+
     receive() external payable override {}
 }

@@ -3,9 +3,9 @@ pragma solidity ^0.8.26;
 
 import "forge-std/Test.sol";
 import {HookEscrowObligation} from "@src/obligations/escrow/hook-based/HookEscrowObligation.sol";
+import {HooksEscrowObligation} from "@src/obligations/escrow/hook-based/HooksEscrowObligation.sol";
 import {IEscrowHook} from "@src/obligations/escrow/hook-based/IEscrowHook.sol";
 import {ERC20EscrowHook} from "@src/obligations/escrow/hook-based/hooks/ERC20EscrowHook.sol";
-import {AllEscrowHook} from "@src/obligations/escrow/hook-based/hooks/AllEscrowHook.sol";
 import {BaseEscrowObligation} from "@src/BaseEscrowObligation.sol";
 import {StringObligation} from "@src/obligations/StringObligation.sol";
 import {IArbiter} from "@src/IArbiter.sol";
@@ -32,25 +32,13 @@ contract MockERC20 is ERC20 {
 
 /// @dev A contract that tries to call hooks directly to steal funds.
 contract HookThief {
-    function stealViaRelease(
-        ERC20EscrowHook hook,
-        address token,
-        uint256 amount
-    ) external {
-        bytes memory hookData = abi.encode(
-            ERC20EscrowHook.HookData({token: token, amount: amount})
-        );
+    function stealViaRelease(ERC20EscrowHook hook, address token, uint256 amount) external {
+        bytes memory hookData = abi.encode(ERC20EscrowHook.HookData({token: token, amount: amount}));
         hook.onRelease(hookData, msg.sender, address(this));
     }
 
-    function stealViaReturn(
-        ERC20EscrowHook hook,
-        address token,
-        uint256 amount
-    ) external {
-        bytes memory hookData = abi.encode(
-            ERC20EscrowHook.HookData({token: token, amount: amount})
-        );
+    function stealViaReturn(ERC20EscrowHook hook, address token, uint256 amount) external {
+        bytes memory hookData = abi.encode(ERC20EscrowHook.HookData({token: token, amount: amount}));
         hook.onReturn(hookData, msg.sender, address(this));
     }
 }
@@ -65,41 +53,12 @@ contract OverdrawAttacker {
         address recipient
     ) external {
         // Lock some tokens
-        bytes memory lockData = abi.encode(
-            ERC20EscrowHook.HookData({token: token, amount: depositAmount})
-        );
+        bytes memory lockData = abi.encode(ERC20EscrowHook.HookData({token: token, amount: depositAmount}));
         hook.onLock(lockData, address(this), address(this));
 
         // Try to release more than deposited
-        bytes memory releaseData = abi.encode(
-            ERC20EscrowHook.HookData({token: token, amount: withdrawAmount})
-        );
+        bytes memory releaseData = abi.encode(ERC20EscrowHook.HookData({token: token, amount: withdrawAmount}));
         hook.onRelease(releaseData, recipient, address(this));
-    }
-}
-
-/// @dev A contract that tries to drain via AllEscrowHook by spoofing escrow address.
-contract AllHookThief {
-    function stealViaAll(
-        AllEscrowHook allHook,
-        ERC20EscrowHook erc20Hook,
-        address token,
-        uint256 amount
-    ) external {
-        address[] memory hooks = new address[](1);
-        hooks[0] = address(erc20Hook);
-        bytes[] memory hookDatas = new bytes[](1);
-        hookDatas[0] = abi.encode(
-            ERC20EscrowHook.HookData({token: token, amount: amount})
-        );
-        uint256[] memory values = new uint256[](1);
-        values[0] = 0;
-        bytes memory data = abi.encode(
-            AllEscrowHook.HookData({hooks: hooks, hookDatas: hookDatas, values: values})
-        );
-        // AllEscrowHook calls erc20Hook.onRelease with msg.sender = allHook
-        // but deposits are keyed to the obligation, not allHook
-        allHook.onRelease(data, msg.sender, address(this));
     }
 }
 
@@ -143,58 +102,33 @@ contract HookEscrowObligationTest is Test {
     // Helpers
     // ──────────────────────────────────────────────
 
-    function _hookData(
-        uint256 amount
-    ) internal view returns (bytes memory) {
-        return
-            abi.encode(
-                ERC20EscrowHook.HookData({
-                    token: address(token),
-                    amount: amount
-                })
-            );
+    function _hookData(uint256 amount) internal view returns (bytes memory) {
+        return abi.encode(ERC20EscrowHook.HookData({token: address(token), amount: amount}));
     }
 
-    function _obligationData(
-        uint256 amount,
-        address arbiter
-    ) internal view returns (HookEscrowObligation.ObligationData memory) {
-        return
-            HookEscrowObligation.ObligationData({
-                arbiter: arbiter,
-                demand: abi.encode("test"),
-                hook: address(erc20Hook),
-                hookData: _hookData(amount)
-            });
+    function _obligationData(uint256 amount, address arbiter)
+        internal
+        view
+        returns (HookEscrowObligation.ObligationData memory)
+    {
+        return HookEscrowObligation.ObligationData({
+            arbiter: arbiter, demand: abi.encode("test"), hook: address(erc20Hook), hookData: _hookData(amount)
+        });
     }
 
-    function _createEscrow(
-        uint256 amount,
-        address arbiter,
-        uint64 expiration
-    ) internal returns (bytes32) {
+    function _createEscrow(uint256 amount, address arbiter, uint64 expiration) internal returns (bytes32) {
         vm.startPrank(buyer);
         token.approve(address(erc20Hook), amount);
-        bytes32 uid = escrow.doObligation(
-            _obligationData(amount, arbiter),
-            uint64(block.timestamp + expiration)
-        );
+        bytes32 uid = escrow.doObligation(_obligationData(amount, arbiter), uint64(block.timestamp + expiration));
         vm.stopPrank();
         return uid;
     }
 
-    function _createFulfillment(
-        bytes32 escrowUid
-    ) internal returns (bytes32) {
+    function _createFulfillment(bytes32 escrowUid) internal returns (bytes32) {
         vm.prank(seller);
-        return
-            stringObligation.doObligation(
-                StringObligation.ObligationData({
-                    item: "fulfilled",
-                    schema: bytes32(0)
-                }),
-                escrowUid
-            );
+        return stringObligation.doObligation(
+            StringObligation.ObligationData({item: "fulfilled", schema: bytes32(0)}), escrowUid
+        );
     }
 
     // ──────────────────────────────────────────────
@@ -207,10 +141,7 @@ contract HookEscrowObligationTest is Test {
 
         SchemaRecord memory schema = escrow.getSchema();
         assertEq(schema.uid, schemaId);
-        assertEq(
-            schema.schema,
-            "address arbiter, bytes demand, address hook, bytes hookData"
-        );
+        assertEq(schema.schema, "address arbiter, bytes demand, address hook, bytes hookData");
     }
 
     function testDoObligation() public {
@@ -224,10 +155,7 @@ contract HookEscrowObligationTest is Test {
         assertEq(token.balanceOf(buyer), 900 * 10 ** 18);
 
         // Hook tracks deposits keyed by the obligation contract
-        assertEq(
-            erc20Hook.deposits(address(escrow), address(token)),
-            AMOUNT
-        );
+        assertEq(erc20Hook.deposits(address(escrow), address(token)), AMOUNT);
 
         // Attestation recipient is the buyer
         Attestation memory att = eas.getAttestation(uid);
@@ -240,9 +168,7 @@ contract HookEscrowObligationTest is Test {
         vm.startPrank(buyer);
         token.approve(address(erc20Hook), AMOUNT);
         bytes32 uid = escrow.doObligationFor(
-            _obligationData(AMOUNT, address(acceptArbiter)),
-            uint64(block.timestamp + EXPIRATION),
-            recipient
+            _obligationData(AMOUNT, address(acceptArbiter)), uint64(block.timestamp + EXPIRATION), recipient
         );
         vm.stopPrank();
 
@@ -252,11 +178,7 @@ contract HookEscrowObligationTest is Test {
     }
 
     function testCollectEscrow() public {
-        bytes32 escrowUid = _createEscrow(
-            AMOUNT,
-            address(acceptArbiter),
-            EXPIRATION
-        );
+        bytes32 escrowUid = _createEscrow(AMOUNT, address(acceptArbiter), EXPIRATION);
         bytes32 fulfillmentUid = _createFulfillment(escrowUid);
 
         vm.prank(seller);
@@ -266,18 +188,11 @@ contract HookEscrowObligationTest is Test {
         // Tokens released to seller
         assertEq(token.balanceOf(seller), AMOUNT);
         assertEq(token.balanceOf(address(erc20Hook)), 0);
-        assertEq(
-            erc20Hook.deposits(address(escrow), address(token)),
-            0
-        );
+        assertEq(erc20Hook.deposits(address(escrow), address(token)), 0);
     }
 
     function testCollectEscrowRejected() public {
-        bytes32 escrowUid = _createEscrow(
-            AMOUNT,
-            address(rejectArbiter),
-            EXPIRATION
-        );
+        bytes32 escrowUid = _createEscrow(AMOUNT, address(rejectArbiter), EXPIRATION);
         bytes32 fulfillmentUid = _createFulfillment(escrowUid);
 
         vm.prank(seller);
@@ -290,11 +205,7 @@ contract HookEscrowObligationTest is Test {
 
     function testReclaimExpired() public {
         uint64 shortExpiry = 100;
-        bytes32 escrowUid = _createEscrow(
-            AMOUNT,
-            address(acceptArbiter),
-            shortExpiry
-        );
+        bytes32 escrowUid = _createEscrow(AMOUNT, address(acceptArbiter), shortExpiry);
 
         // Can't reclaim before expiry
         vm.expectRevert(BaseEscrowObligation.UnauthorizedCall.selector);
@@ -313,22 +224,11 @@ contract HookEscrowObligationTest is Test {
 
     function testMultipleEscrowsIndependent() public {
         // Two independent escrows from the same buyer
-        bytes32 uid1 = _createEscrow(
-            AMOUNT,
-            address(acceptArbiter),
-            EXPIRATION
-        );
-        bytes32 uid2 = _createEscrow(
-            AMOUNT,
-            address(acceptArbiter),
-            EXPIRATION
-        );
+        bytes32 uid1 = _createEscrow(AMOUNT, address(acceptArbiter), EXPIRATION);
+        bytes32 uid2 = _createEscrow(AMOUNT, address(acceptArbiter), EXPIRATION);
 
         assertEq(token.balanceOf(address(erc20Hook)), 2 * AMOUNT);
-        assertEq(
-            erc20Hook.deposits(address(escrow), address(token)),
-            2 * AMOUNT
-        );
+        assertEq(erc20Hook.deposits(address(escrow), address(token)), 2 * AMOUNT);
 
         // Collect only the first
         bytes32 ful1 = _createFulfillment(uid1);
@@ -337,10 +237,7 @@ contract HookEscrowObligationTest is Test {
 
         assertEq(token.balanceOf(seller), AMOUNT);
         assertEq(token.balanceOf(address(erc20Hook)), AMOUNT);
-        assertEq(
-            erc20Hook.deposits(address(escrow), address(token)),
-            AMOUNT
-        );
+        assertEq(erc20Hook.deposits(address(escrow), address(token)), AMOUNT);
 
         // Collect the second
         bytes32 ful2 = _createFulfillment(uid2);
@@ -356,68 +253,42 @@ contract HookEscrowObligationTest is Test {
     // ──────────────────────────────────────────────
 
     function testCheckObligationExactMatch() public {
-        bytes32 uid = _createEscrow(
-            AMOUNT,
-            address(acceptArbiter),
-            EXPIRATION
-        );
+        bytes32 uid = _createEscrow(AMOUNT, address(acceptArbiter), EXPIRATION);
         Attestation memory att = eas.getAttestation(uid);
 
-        bool ok = escrow.checkObligation(
-            att,
-            abi.encode(_obligationData(AMOUNT, address(acceptArbiter))),
-            bytes32(0)
-        );
+        bool ok = escrow.checkObligation(att, abi.encode(_obligationData(AMOUNT, address(acceptArbiter))), bytes32(0));
         assertTrue(ok);
     }
 
     function testCheckObligationDifferentHookData() public {
-        bytes32 uid = _createEscrow(
-            AMOUNT,
-            address(acceptArbiter),
-            EXPIRATION
-        );
+        bytes32 uid = _createEscrow(AMOUNT, address(acceptArbiter), EXPIRATION);
         Attestation memory att = eas.getAttestation(uid);
 
         // Different amount in hookData → should fail
-        HookEscrowObligation.ObligationData memory demand = HookEscrowObligation
-            .ObligationData({
-                arbiter: address(acceptArbiter),
-                demand: abi.encode("test"),
-                hook: address(erc20Hook),
-                hookData: _hookData(AMOUNT + 1)
-            });
+        HookEscrowObligation.ObligationData memory demand = HookEscrowObligation.ObligationData({
+            arbiter: address(acceptArbiter),
+            demand: abi.encode("test"),
+            hook: address(erc20Hook),
+            hookData: _hookData(AMOUNT + 1)
+        });
 
-        bool ok = escrow.checkObligation(
-            att,
-            abi.encode(demand),
-            bytes32(0)
-        );
+        bool ok = escrow.checkObligation(att, abi.encode(demand), bytes32(0));
         assertFalse(ok);
     }
 
     function testCheckObligationDifferentHook() public {
-        bytes32 uid = _createEscrow(
-            AMOUNT,
-            address(acceptArbiter),
-            EXPIRATION
-        );
+        bytes32 uid = _createEscrow(AMOUNT, address(acceptArbiter), EXPIRATION);
         Attestation memory att = eas.getAttestation(uid);
 
         ERC20EscrowHook otherHook = new ERC20EscrowHook();
-        HookEscrowObligation.ObligationData memory demand = HookEscrowObligation
-            .ObligationData({
-                arbiter: address(acceptArbiter),
-                demand: abi.encode("test"),
-                hook: address(otherHook),
-                hookData: _hookData(AMOUNT)
-            });
+        HookEscrowObligation.ObligationData memory demand = HookEscrowObligation.ObligationData({
+            arbiter: address(acceptArbiter),
+            demand: abi.encode("test"),
+            hook: address(otherHook),
+            hookData: _hookData(AMOUNT)
+        });
 
-        bool ok = escrow.checkObligation(
-            att,
-            abi.encode(demand),
-            bytes32(0)
-        );
+        bool ok = escrow.checkObligation(att, abi.encode(demand), bytes32(0));
         assertFalse(ok);
     }
 
@@ -429,10 +300,7 @@ contract HookEscrowObligationTest is Test {
         vm.prank(buyer);
         // No approval given to the hook
         vm.expectRevert();
-        escrow.doObligation(
-            _obligationData(AMOUNT, address(acceptArbiter)),
-            uint64(block.timestamp + EXPIRATION)
-        );
+        escrow.doObligation(_obligationData(AMOUNT, address(acceptArbiter)), uint64(block.timestamp + EXPIRATION));
     }
 
     function testLockFailsInsufficientBalance() public {
@@ -442,22 +310,18 @@ contract HookEscrowObligationTest is Test {
         vm.startPrank(poorUser);
         token.approve(address(erc20Hook), AMOUNT);
         vm.expectRevert();
-        escrow.doObligation(
-            _obligationData(AMOUNT, address(acceptArbiter)),
-            uint64(block.timestamp + EXPIRATION)
-        );
+        escrow.doObligation(_obligationData(AMOUNT, address(acceptArbiter)), uint64(block.timestamp + EXPIRATION));
         vm.stopPrank();
     }
 }
 
 // ──────────────────────────────────────────────
-// AllEscrowHook composition tests
+// HooksEscrowObligation composition tests
 // ──────────────────────────────────────────────
 
-contract AllEscrowHookTest is Test {
-    HookEscrowObligation public escrow;
+contract HooksEscrowObligationTest is Test {
+    HooksEscrowObligation public escrow;
     ERC20EscrowHook public erc20Hook;
-    AllEscrowHook public allHook;
     MockArbiter public acceptArbiter;
     StringObligation public stringObligation;
     IEAS public eas;
@@ -475,9 +339,8 @@ contract AllEscrowHookTest is Test {
         EASDeployer easDeployer = new EASDeployer();
         (eas, schemaRegistry) = easDeployer.deployEAS();
 
-        escrow = new HookEscrowObligation(eas, schemaRegistry);
+        escrow = new HooksEscrowObligation(eas, schemaRegistry);
         erc20Hook = new ERC20EscrowHook();
-        allHook = new AllEscrowHook();
         acceptArbiter = new MockArbiter(true);
         stringObligation = new StringObligation(eas, schemaRegistry);
         tokenA = new MockERC20();
@@ -490,78 +353,49 @@ contract AllEscrowHookTest is Test {
         tokenB.transfer(buyer, 1000 * 10 ** 18);
     }
 
-    function _bundleHookData() internal view returns (bytes memory) {
+    function _bundleData() internal view returns (HooksEscrowObligation.ObligationData memory) {
         address[] memory hooks = new address[](2);
         hooks[0] = address(erc20Hook);
         hooks[1] = address(erc20Hook);
 
         bytes[] memory hookDatas = new bytes[](2);
-        hookDatas[0] = abi.encode(
-            ERC20EscrowHook.HookData({
-                token: address(tokenA),
-                amount: AMOUNT_A
-            })
-        );
-        hookDatas[1] = abi.encode(
-            ERC20EscrowHook.HookData({
-                token: address(tokenB),
-                amount: AMOUNT_B
-            })
-        );
+        hookDatas[0] = abi.encode(ERC20EscrowHook.HookData({token: address(tokenA), amount: AMOUNT_A}));
+        hookDatas[1] = abi.encode(ERC20EscrowHook.HookData({token: address(tokenB), amount: AMOUNT_B}));
 
         uint256[] memory values = new uint256[](2);
         values[0] = 0;
         values[1] = 0;
 
-        return
-            abi.encode(
-                AllEscrowHook.HookData({hooks: hooks, hookDatas: hookDatas, values: values})
-            );
+        return HooksEscrowObligation.ObligationData({
+            arbiter: address(acceptArbiter),
+            demand: abi.encode("bundle test"),
+            hooks: hooks,
+            hookDatas: hookDatas,
+            values: values
+        });
     }
 
     function testBundleLockAndCollect() public {
-        bytes memory bundleData = _bundleHookData();
+        HooksEscrowObligation.ObligationData memory data = _bundleData();
 
-        HookEscrowObligation.ObligationData memory data = HookEscrowObligation
-            .ObligationData({
-                arbiter: address(acceptArbiter),
-                demand: abi.encode("bundle test"),
-                hook: address(allHook),
-                hookData: bundleData
-            });
-
-        // Buyer approves the hook (not the obligation, not AllEscrowHook)
         vm.startPrank(buyer);
         tokenA.approve(address(erc20Hook), AMOUNT_A);
         tokenB.approve(address(erc20Hook), AMOUNT_B);
-        bytes32 escrowUid = escrow.doObligation(
-            data,
-            uint64(block.timestamp + EXPIRATION)
-        );
+        bytes32 escrowUid = escrow.doObligation(data, uint64(block.timestamp + EXPIRATION));
         vm.stopPrank();
 
         // Both tokens held by the leaf hook
         assertEq(tokenA.balanceOf(address(erc20Hook)), AMOUNT_A);
         assertEq(tokenB.balanceOf(address(erc20Hook)), AMOUNT_B);
 
-        // Deposits keyed by allHook (the direct caller of erc20Hook)
-        assertEq(
-            erc20Hook.deposits(address(allHook), address(tokenA)),
-            AMOUNT_A
-        );
-        assertEq(
-            erc20Hook.deposits(address(allHook), address(tokenB)),
-            AMOUNT_B
-        );
+        // Deposits are keyed by the escrow obligation, not a public intermediary.
+        assertEq(erc20Hook.deposits(address(escrow), address(tokenA)), AMOUNT_A);
+        assertEq(erc20Hook.deposits(address(escrow), address(tokenB)), AMOUNT_B);
 
         // Collect
         vm.prank(seller);
         bytes32 fulUid = stringObligation.doObligation(
-            StringObligation.ObligationData({
-                item: "done",
-                schema: bytes32(0)
-            }),
-            escrowUid
+            StringObligation.ObligationData({item: "done", schema: bytes32(0)}), escrowUid
         );
 
         vm.prank(seller);
@@ -574,23 +408,12 @@ contract AllEscrowHookTest is Test {
     }
 
     function testBundleReclaimExpired() public {
-        bytes memory bundleData = _bundleHookData();
-
-        HookEscrowObligation.ObligationData memory data = HookEscrowObligation
-            .ObligationData({
-                arbiter: address(acceptArbiter),
-                demand: abi.encode("bundle test"),
-                hook: address(allHook),
-                hookData: bundleData
-            });
+        HooksEscrowObligation.ObligationData memory data = _bundleData();
 
         vm.startPrank(buyer);
         tokenA.approve(address(erc20Hook), AMOUNT_A);
         tokenB.approve(address(erc20Hook), AMOUNT_B);
-        bytes32 escrowUid = escrow.doObligation(
-            data,
-            uint64(block.timestamp + 100)
-        );
+        bytes32 escrowUid = escrow.doObligation(data, uint64(block.timestamp + 100));
         vm.stopPrank();
 
         vm.warp(block.timestamp + 101);
@@ -606,32 +429,23 @@ contract AllEscrowHookTest is Test {
         hooks[1] = address(erc20Hook);
 
         bytes[] memory hookDatas = new bytes[](1); // mismatched!
-        hookDatas[0] = abi.encode(
-            ERC20EscrowHook.HookData({
-                token: address(tokenA),
-                amount: AMOUNT_A
-            })
-        );
+        hookDatas[0] = abi.encode(ERC20EscrowHook.HookData({token: address(tokenA), amount: AMOUNT_A}));
 
         uint256[] memory values = new uint256[](2);
         values[0] = 0;
         values[1] = 0;
 
-        bytes memory bundleData = abi.encode(
-            AllEscrowHook.HookData({hooks: hooks, hookDatas: hookDatas, values: values})
-        );
-
-        HookEscrowObligation.ObligationData memory data = HookEscrowObligation
-            .ObligationData({
-                arbiter: address(acceptArbiter),
-                demand: abi.encode("test"),
-                hook: address(allHook),
-                hookData: bundleData
-            });
+        HooksEscrowObligation.ObligationData memory data = HooksEscrowObligation.ObligationData({
+            arbiter: address(acceptArbiter),
+            demand: abi.encode("test"),
+            hooks: hooks,
+            hookDatas: hookDatas,
+            values: values
+        });
 
         vm.startPrank(buyer);
         tokenA.approve(address(erc20Hook), AMOUNT_A);
-        vm.expectRevert(AllEscrowHook.ArrayLengthMismatch.selector);
+        vm.expectRevert(HooksEscrowObligation.ArrayLengthMismatch.selector);
         escrow.doObligation(data, uint64(block.timestamp + EXPIRATION));
         vm.stopPrank();
     }
@@ -644,7 +458,6 @@ contract AllEscrowHookTest is Test {
 contract HookEscrowAttackTest is Test {
     HookEscrowObligation public escrow;
     ERC20EscrowHook public erc20Hook;
-    AllEscrowHook public allHook;
     MockArbiter public acceptArbiter;
     StringObligation public stringObligation;
     IEAS public eas;
@@ -662,7 +475,6 @@ contract HookEscrowAttackTest is Test {
 
         escrow = new HookEscrowObligation(eas, schemaRegistry);
         erc20Hook = new ERC20EscrowHook();
-        allHook = new AllEscrowHook();
         acceptArbiter = new MockArbiter(true);
         stringObligation = new StringObligation(eas, schemaRegistry);
         token = new MockERC20();
@@ -674,26 +486,14 @@ contract HookEscrowAttackTest is Test {
     }
 
     function _createLegitEscrow() internal returns (bytes32) {
-        bytes memory hookData = abi.encode(
-            ERC20EscrowHook.HookData({
-                token: address(token),
-                amount: AMOUNT
-            })
-        );
-        HookEscrowObligation.ObligationData memory data = HookEscrowObligation
-            .ObligationData({
-                arbiter: address(acceptArbiter),
-                demand: abi.encode("test"),
-                hook: address(erc20Hook),
-                hookData: hookData
-            });
+        bytes memory hookData = abi.encode(ERC20EscrowHook.HookData({token: address(token), amount: AMOUNT}));
+        HookEscrowObligation.ObligationData memory data = HookEscrowObligation.ObligationData({
+            arbiter: address(acceptArbiter), demand: abi.encode("test"), hook: address(erc20Hook), hookData: hookData
+        });
 
         vm.startPrank(buyer);
         token.approve(address(erc20Hook), AMOUNT);
-        bytes32 uid = escrow.doObligation(
-            data,
-            uint64(block.timestamp + EXPIRATION)
-        );
+        bytes32 uid = escrow.doObligation(data, uint64(block.timestamp + EXPIRATION));
         vm.stopPrank();
         return uid;
     }
@@ -708,13 +508,7 @@ contract HookEscrowAttackTest is Test {
         // Attacker tries to call onRelease directly
         HookThief thief = new HookThief();
 
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                ERC20EscrowHook.NoDeposit.selector,
-                address(thief),
-                address(token)
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(ERC20EscrowHook.NoDeposit.selector, address(thief), address(token)));
         thief.stealViaRelease(erc20Hook, address(token), AMOUNT);
 
         // Tokens still safe
@@ -729,13 +523,7 @@ contract HookEscrowAttackTest is Test {
 
         HookThief thief = new HookThief();
 
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                ERC20EscrowHook.NoDeposit.selector,
-                address(thief),
-                address(token)
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(ERC20EscrowHook.NoDeposit.selector, address(thief), address(token)));
         thief.stealViaReturn(erc20Hook, address(token), AMOUNT);
 
         assertEq(token.balanceOf(address(erc20Hook)), AMOUNT);
@@ -761,77 +549,42 @@ contract HookEscrowAttackTest is Test {
         // Attacker deposits 1 token, tries to withdraw 100
         vm.expectRevert(
             abi.encodeWithSelector(
-                ERC20EscrowHook.InsufficientDeposit.selector,
-                address(overdrawer),
-                address(token),
-                AMOUNT,
-                smallAmount
+                ERC20EscrowHook.InsufficientDeposit.selector, address(overdrawer), address(token), AMOUNT, smallAmount
             )
         );
-        overdrawer.depositAndOverdraw(
-            erc20Hook,
-            address(token),
-            smallAmount,
-            AMOUNT,
-            attacker
-        );
+        overdrawer.depositAndOverdraw(erc20Hook, address(token), smallAmount, AMOUNT, attacker);
     }
 
-    /// @notice POC: Attacker tries to steal through AllEscrowHook as an
-    ///         intermediary. Fails because deposits are keyed to allHook's
-    ///         address (the legitimate intermediary), and the attacker's
-    ///         AllHookThief is a different msg.sender.
-    function testAttackViaAllHookIndirection() public {
-        // Set up a bundle escrow so tokens are in erc20Hook
-        // keyed under allHook's address
+    /// @notice POC: Multi-hook deposits are keyed to HooksEscrowObligation,
+    ///         so direct external hook calls cannot release them.
+    function testAttackCannotDirectlyReleaseMultiHookDeposit() public {
+        HooksEscrowObligation hooksEscrow = new HooksEscrowObligation(eas, schemaRegistry);
+
         address[] memory hooks = new address[](1);
         hooks[0] = address(erc20Hook);
         bytes[] memory hookDatas = new bytes[](1);
-        hookDatas[0] = abi.encode(
-            ERC20EscrowHook.HookData({
-                token: address(token),
-                amount: AMOUNT
-            })
-        );
+        hookDatas[0] = abi.encode(ERC20EscrowHook.HookData({token: address(token), amount: AMOUNT}));
         uint256[] memory values = new uint256[](1);
         values[0] = 0;
-        bytes memory bundleData = abi.encode(
-            AllEscrowHook.HookData({hooks: hooks, hookDatas: hookDatas, values: values})
-        );
 
-        HookEscrowObligation.ObligationData memory data = HookEscrowObligation
-            .ObligationData({
-                arbiter: address(acceptArbiter),
-                demand: abi.encode("test"),
-                hook: address(allHook),
-                hookData: bundleData
-            });
+        HooksEscrowObligation.ObligationData memory data = HooksEscrowObligation.ObligationData({
+            arbiter: address(acceptArbiter),
+            demand: abi.encode("test"),
+            hooks: hooks,
+            hookDatas: hookDatas,
+            values: values
+        });
 
         vm.startPrank(buyer);
         token.approve(address(erc20Hook), AMOUNT);
-        escrow.doObligation(data, uint64(block.timestamp + EXPIRATION));
+        hooksEscrow.doObligation(data, uint64(block.timestamp + EXPIRATION));
         vm.stopPrank();
 
-        // deposits[allHook][token] == AMOUNT
-        assertEq(
-            erc20Hook.deposits(address(allHook), address(token)),
-            AMOUNT
-        );
+        assertEq(erc20Hook.deposits(address(hooksEscrow), address(token)), AMOUNT);
 
-        // Attacker deploys their OWN AllEscrowHook and tries to release
-        // through it. The leaf hook sees msg.sender = attackerAllHook,
-        // which has zero deposits.
-        AllEscrowHook attackerAllHook = new AllEscrowHook();
-        AllHookThief thief = new AllHookThief();
-
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                ERC20EscrowHook.NoDeposit.selector,
-                address(attackerAllHook),
-                address(token)
-            )
-        );
-        thief.stealViaAll(attackerAllHook, erc20Hook, address(token), AMOUNT);
+        vm.prank(attacker);
+        vm.expectRevert(abi.encodeWithSelector(ERC20EscrowHook.NoDeposit.selector, attacker, address(token)));
+        erc20Hook.onRelease(hookDatas[0], attacker, attacker);
 
         assertEq(token.balanceOf(address(erc20Hook)), AMOUNT);
     }
@@ -841,21 +594,10 @@ contract HookEscrowAttackTest is Test {
     function testAttackEOADirectCall() public {
         _createLegitEscrow();
 
-        bytes memory hookData = abi.encode(
-            ERC20EscrowHook.HookData({
-                token: address(token),
-                amount: AMOUNT
-            })
-        );
+        bytes memory hookData = abi.encode(ERC20EscrowHook.HookData({token: address(token), amount: AMOUNT}));
 
         vm.prank(attacker);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                ERC20EscrowHook.NoDeposit.selector,
-                attacker,
-                address(token)
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(ERC20EscrowHook.NoDeposit.selector, attacker, address(token)));
         erc20Hook.onRelease(hookData, attacker, attacker);
     }
 
@@ -866,36 +608,17 @@ contract HookEscrowAttackTest is Test {
         _createLegitEscrow();
 
         // Deploy a second obligation contract
-        HookEscrowObligation escrow2 = new HookEscrowObligation(
-            eas,
-            schemaRegistry
-        );
+        HookEscrowObligation escrow2 = new HookEscrowObligation(eas, schemaRegistry);
 
         // escrow2 has zero deposits in erc20Hook
-        assertEq(
-            erc20Hook.deposits(address(escrow2), address(token)),
-            0
-        );
+        assertEq(erc20Hook.deposits(address(escrow2), address(token)), 0);
 
         // Even if attacker could somehow get escrow2 to call onRelease,
         // the deposit check would fail. Simulate the internal call:
         vm.prank(address(escrow2));
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                ERC20EscrowHook.NoDeposit.selector,
-                address(escrow2),
-                address(token)
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(ERC20EscrowHook.NoDeposit.selector, address(escrow2), address(token)));
         erc20Hook.onRelease(
-            abi.encode(
-                ERC20EscrowHook.HookData({
-                    token: address(token),
-                    amount: AMOUNT
-                })
-            ),
-            attacker,
-            address(escrow2)
+            abi.encode(ERC20EscrowHook.HookData({token: address(token), amount: AMOUNT})), attacker, address(escrow2)
         );
 
         // Original deposits untouched
@@ -914,25 +637,14 @@ contract HookEscrowAttackTest is Test {
         vm.prank(attacker);
         vm.expectRevert();
         erc20Hook.onRelease(
-            abi.encode(
-                ERC20EscrowHook.HookData({
-                    token: address(token),
-                    amount: AMOUNT
-                })
-            ),
-            attacker,
-            attacker
+            abi.encode(ERC20EscrowHook.HookData({token: address(token), amount: AMOUNT})), attacker, attacker
         );
 
         // Legitimate collection still works
         address seller_ = makeAddr("seller");
         vm.prank(seller_);
         bytes32 fulUid = stringObligation.doObligation(
-            StringObligation.ObligationData({
-                item: "done",
-                schema: bytes32(0)
-            }),
-            escrowUid
+            StringObligation.ObligationData({item: "done", schema: bytes32(0)}), escrowUid
         );
 
         vm.prank(seller_);
