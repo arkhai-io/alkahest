@@ -22,6 +22,7 @@ contract MockERC20 is ERC20 {
 contract MockERC721 is ERC721 {
     uint256 private _nextTokenId;
     constructor() ERC721("Mock721", "M721") {}
+
     function mint(address to) public returns (uint256) {
         uint256 tokenId = _nextTokenId++;
         _mint(to, tokenId);
@@ -31,6 +32,7 @@ contract MockERC721 is ERC721 {
 
 contract MockERC1155 is ERC1155 {
     constructor() ERC1155("") {}
+
     function mint(address to, uint256 id, uint256 amount) public {
         _mint(to, id, amount, "");
     }
@@ -146,8 +148,7 @@ contract TokenBundleEscrowObligationTierableTest is Test {
         StringObligation stringObligation = new StringObligation(eas, schemaRegistry);
         vm.prank(seller);
         bytes32 fulfillmentUid = stringObligation.doObligation(
-            StringObligation.ObligationData({item: "fulfillment", schema: bytes32(0)}),
-            bytes32(0)
+            StringObligation.ObligationData({item: "fulfillment", schema: bytes32(0)}), bytes32(0)
         );
 
         uint256 sellerEthBefore = seller.balance;
@@ -164,5 +165,22 @@ contract TokenBundleEscrowObligationTierableTest is Test {
         assertEq(erc721.ownerOf(nft1), seller, "Seller should own first NFT");
         assertEq(erc721.ownerOf(nft2), seller, "Seller should own second NFT");
         assertEq(erc1155.balanceOf(seller, 1), 100, "Seller should have ERC1155");
+    }
+
+    function testTooManyBundleItemsReverts() public {
+        TokenBundleEscrowObligation.ObligationData memory data;
+        data.arbiter = address(mockArbiter);
+        data.demand = "";
+        uint256 provided = escrowObligation.MAX_BUNDLE_ITEMS() + 1;
+        data.erc20Tokens = new address[](provided);
+        data.erc20Amounts = new uint256[](provided);
+
+        vm.prank(buyer1);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                TokenBundleEscrowObligation.TooManyBundleItems.selector, provided, escrowObligation.MAX_BUNDLE_ITEMS()
+            )
+        );
+        escrowObligation.doObligation(data, uint64(block.timestamp + EXPIRATION_TIME));
     }
 }

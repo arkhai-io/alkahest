@@ -25,6 +25,9 @@ contract HooksEscrowObligation is BaseEscrowObligation, IArbiter {
 
     error ArrayLengthMismatch();
     error ValueMismatch(uint256 expected, uint256 received);
+    error TooManyHooks(uint256 provided, uint256 max);
+
+    uint256 public constant MAX_HOOKS = 50;
 
     constructor(IEAS _eas, ISchemaRegistry _schemaRegistry)
         BaseEscrowObligation(
@@ -138,6 +141,7 @@ contract HooksEscrowObligation is BaseEscrowObligation, IArbiter {
         if (decoded.hooks.length != decoded.hookDatas.length || decoded.hooks.length != decoded.values.length) {
             revert ArrayLengthMismatch();
         }
+        if (decoded.hooks.length > MAX_HOOKS) revert TooManyHooks(decoded.hooks.length, MAX_HOOKS);
     }
 
     receive() external payable override {}

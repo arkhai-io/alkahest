@@ -333,4 +333,22 @@ contract AnyArbiterTest is Test {
         vm.expectRevert(AnyArbiter.MismatchedArrayLengths.selector);
         anyArbiter.checkObligation(attestation, demandData, bytes32(0));
     }
+
+    function testTooManyArbitersReverts() public {
+        uint256 provided = anyArbiter.MAX_ARBITERS() + 1;
+        address[] memory arbiters = new address[](provided);
+        bytes[] memory demands = new bytes[](provided);
+        for (uint256 i; i < provided; ++i) {
+            arbiters[i] = address(successArbiter);
+            demands[i] = bytes("");
+        }
+
+        Attestation memory attestation = createValidAttestation();
+        bytes memory demandData = createDemandData(arbiters, demands);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(AnyArbiter.TooManyArbiters.selector, provided, anyArbiter.MAX_ARBITERS())
+        );
+        anyArbiter.checkObligation(attestation, demandData, bytes32(0));
+    }
 }

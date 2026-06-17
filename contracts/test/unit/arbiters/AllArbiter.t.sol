@@ -244,6 +244,24 @@ contract AllArbiterTest is Test {
         allArbiter.checkObligation(attestation, demandData, bytes32(0));
     }
 
+    function testTooManyArbitersReverts() public {
+        uint256 provided = allArbiter.MAX_ARBITERS() + 1;
+        address[] memory arbiters = new address[](provided);
+        bytes[] memory demands = new bytes[](provided);
+        for (uint256 i; i < provided; ++i) {
+            arbiters[i] = address(successArbiter);
+            demands[i] = bytes("");
+        }
+
+        Attestation memory attestation = createValidAttestation();
+        bytes memory demandData = createDemandData(arbiters, demands);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(AllArbiter.TooManyArbiters.selector, provided, allArbiter.MAX_ARBITERS())
+        );
+        allArbiter.checkObligation(attestation, demandData, bytes32(0));
+    }
+
     function testArbitersWithSpecificDemands() public view {
         // To further test integration with real arbiters, we could create specific
         // demand data for each arbiter if they require it

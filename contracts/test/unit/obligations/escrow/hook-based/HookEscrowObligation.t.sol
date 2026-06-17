@@ -519,6 +519,31 @@ contract HooksEscrowObligationTest is Test {
         escrow.doObligation(data, uint64(block.timestamp + EXPIRATION));
         vm.stopPrank();
     }
+
+    function testBundleTooManyHooksReverts() public {
+        uint256 provided = escrow.MAX_HOOKS() + 1;
+        address[] memory hooks = new address[](provided);
+        bytes[] memory hookDatas = new bytes[](provided);
+        uint256[] memory values = new uint256[](provided);
+        for (uint256 i; i < provided; ++i) {
+            hooks[i] = address(erc20Hook);
+            hookDatas[i] = abi.encode(ERC20EscrowHook.HookData({token: address(tokenA), amount: 0}));
+        }
+
+        HooksEscrowObligation.ObligationData memory data = HooksEscrowObligation.ObligationData({
+            arbiter: address(acceptArbiter),
+            demand: abi.encode("test"),
+            hooks: hooks,
+            hookDatas: hookDatas,
+            values: values
+        });
+
+        vm.prank(buyer);
+        vm.expectRevert(
+            abi.encodeWithSelector(HooksEscrowObligation.TooManyHooks.selector, provided, escrow.MAX_HOOKS())
+        );
+        escrow.doObligation(data, uint64(block.timestamp + EXPIRATION));
+    }
 }
 
 // ──────────────────────────────────────────────
