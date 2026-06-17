@@ -20,6 +20,8 @@ Tracking notes for `arkhai-io-alkahest-2026-04-13-analysis.md`.
   Commit: `9391891 fix(schema): reuse existing EAS schemas`
 - #8 Splitter `collectAndDistribute` attestation/receipt binding: addressed by verifying escrow attester/schema, requiring fulfillment recipient to be the splitter, and checking asset receipt deltas before distribution.
   Commit: `41ba79c fix(splitters): verify escrow collection receipts`
+- #9 Missing ETH forwarding for paid attestations in `AttestationEscrowHook.onRelease`: addressed by escrowing exact EAS resolver payments on lock/create, forwarding them on release/collection, and refunding them on return/expiry across the hook and standalone attestation escrow obligations.
+  Commit: `f7f55ee fix(attestations): support paid escrow attestations`
 - Default escrow checks follow-up: documented proposed default/unconditional escrow split before implementation.
   Doc: `docs/drafts/escrow-default-checks-plan.md`
 
@@ -32,7 +34,6 @@ Tracking notes for `arkhai-io-alkahest-2026-04-13-analysis.md`.
 
 ## Remaining Untriaged
 
-- #9 Missing ETH forwarding for paid attestations in `AttestationEscrowHook.onRelease`.
 - #10 Missing fulfillment validation in tierable escrow collect paths.
 - #11 TokenBundleSplitterUnvalidated split-total / output-bounds issues.
 - #12 CommitReveal prior-block / front-running issues.
