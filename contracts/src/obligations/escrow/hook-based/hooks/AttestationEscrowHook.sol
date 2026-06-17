@@ -27,9 +27,12 @@ contract AttestationEscrowHook is IEscrowHook {
 
     /// @notice Tracks pending releases: caller → hookDataHash → count.
     mapping(address => mapping(bytes32 => uint256)) public pending;
+    mapping(address => mapping(bytes32 => uint256)) public pendingValue;
 
     error AttestationCreationFailed();
     error NoPendingAttestation(address caller, bytes32 hookDataHash);
+    error IncorrectPayment(uint256 expected, uint256 received);
+    error NativeTokenTransferFailed(address to, uint256 amount);
 
     constructor(IEAS _eas) {
         eas = _eas;
@@ -47,12 +50,15 @@ contract AttestationEscrowHook is IEscrowHook {
         payable
         override
     {
-        if (msg.value != 0) revert IEscrowHook.UnexpectedNativeValue();
+        HookData memory decoded = abi.decode(data, (HookData));
+        uint256 requiredValue = decoded.attestation.data.value;
+        if (msg.value != requiredValue) revert IncorrectPayment(requiredValue, msg.value);
 
         // Mark as pending so onRelease can verify it was locked via a
         // legitimate obligation flow.
         bytes32 dataHash = keccak256(data);
         pending[msg.sender][dataHash]++;
+        pendingValue[msg.sender][dataHash] += requiredValue;
     }
 
     function onRelease(
@@ -72,7 +78,10 @@ contract AttestationEscrowHook is IEscrowHook {
         pending[msg.sender][dataHash]--;
 
         HookData memory decoded = abi.decode(data, (HookData));
-        try eas.attest(decoded.attestation) {}
+        uint256 requiredValue = decoded.attestation.data.value;
+        pendingValue[msg.sender][dataHash] -= requiredValue;
+
+        try eas.attest{value: requiredValue}(decoded.attestation) {}
         catch {
             revert AttestationCreationFailed();
         }
@@ -80,8 +89,7 @@ contract AttestationEscrowHook is IEscrowHook {
 
     function onReturn(
         bytes calldata data,
-        address,
-        /* to */
+        address to,
         address /* escrow */
     )
         external
@@ -91,6 +99,13 @@ contract AttestationEscrowHook is IEscrowHook {
         bytes32 dataHash = keccak256(data);
         if (pending[msg.sender][dataHash] > 0) {
             pending[msg.sender][dataHash]--;
+            HookData memory decoded = abi.decode(data, (HookData));
+            uint256 requiredValue = decoded.attestation.data.value;
+            pendingValue[msg.sender][dataHash] -= requiredValue;
+            if (requiredValue != 0) {
+                (bool success,) = payable(to).call{value: requiredValue}("");
+                if (!success) revert NativeTokenTransferFailed(to, requiredValue);
+            }
         }
     }
 

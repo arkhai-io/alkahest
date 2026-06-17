@@ -11,6 +11,7 @@ import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {ISchemaResolver} from "@eas/resolver/ISchemaResolver.sol";
 import {SchemaRegistryUtils} from "@src/SchemaRegistryUtils.sol";
 import {EASDeployer} from "@test/utils/EASDeployer.sol";
+import {PayableResolver} from "../../fixtures/PayableResolver.sol";
 
 contract AttestationEscrowHookTest is Test {
     IEAS public eas;
@@ -22,7 +23,9 @@ contract AttestationEscrowHookTest is Test {
     address internal recipient = makeAddr("recipient");
     address internal otherRecipient = makeAddr("otherRecipient");
     bytes32 internal testSchema;
+    bytes32 internal paidSchema;
     bytes32 internal existingAttestation;
+    PayableResolver internal payableResolver;
 
     function setUp() public {
         EASDeployer easDeployer = new EASDeployer();
@@ -32,6 +35,8 @@ contract AttestationEscrowHookTest is Test {
         hook2 = new AttestationEscrowHook2(eas, schemaRegistry);
 
         testSchema = schemaRegistry.register("string testData", ISchemaResolver(address(0)), true);
+        payableResolver = new PayableResolver(eas);
+        paidSchema = schemaRegistry.register("string testData", payableResolver, true);
         existingAttestation = eas.attest(
             AttestationRequest({
                 schema: testSchema,
@@ -81,18 +86,18 @@ contract AttestationEscrowHookTest is Test {
         vm.stopPrank();
     }
 
-    function testAttestationHookRejectsNativeValueOnLock() public {
+    function testAttestationHookRequiresExactNativeValueOnLock() public {
         bytes memory data = abi.encode(
             AttestationEscrowHook.HookData({
                 attestation: AttestationRequest({
-                    schema: testSchema,
+                    schema: paidSchema,
                     data: AttestationRequestData({
                         recipient: recipient,
                         expirationTime: 0,
                         revocable: true,
                         refUID: bytes32(0),
                         data: abi.encode("release"),
-                        value: 0
+                        value: 1 wei
                     })
                 })
             })
@@ -100,9 +105,73 @@ contract AttestationEscrowHookTest is Test {
 
         vm.deal(caller, 1 ether);
         vm.prank(caller);
-        vm.expectRevert(IEscrowHook.UnexpectedNativeValue.selector);
-        hook.onLock{value: 1 wei}(data, caller, address(this));
+        vm.expectRevert(abi.encodeWithSelector(AttestationEscrowHook.IncorrectPayment.selector, 1 wei, 0));
+        hook.onLock(data, caller, address(this));
 
+        assertEq(address(hook).balance, 0);
+    }
+
+    function testAttestationHookForwardsPaidAttestationValueOnRelease() public {
+        bytes memory data = abi.encode(
+            AttestationEscrowHook.HookData({
+                attestation: AttestationRequest({
+                    schema: paidSchema,
+                    data: AttestationRequestData({
+                        recipient: recipient,
+                        expirationTime: 0,
+                        revocable: true,
+                        refUID: bytes32(0),
+                        data: abi.encode("paid release"),
+                        value: 1 wei
+                    })
+                })
+            })
+        );
+        bytes32 dataHash = keccak256(data);
+
+        vm.deal(caller, 1 ether);
+        vm.startPrank(caller);
+        hook.onLock{value: 1 wei}(data, caller, address(this));
+        assertEq(hook.pending(caller, dataHash), 1);
+        assertEq(hook.pendingValue(caller, dataHash), 1 wei);
+        assertEq(address(hook).balance, 1 wei);
+
+        hook.onRelease(data, recipient, address(this));
+        assertEq(hook.pending(caller, dataHash), 0);
+        assertEq(hook.pendingValue(caller, dataHash), 0);
+        vm.stopPrank();
+
+        assertEq(payableResolver.attestValue(), 1 wei);
+        assertEq(address(hook).balance, 0);
+    }
+
+    function testAttestationHookRefundsPaidAttestationValueOnReturn() public {
+        bytes memory data = abi.encode(
+            AttestationEscrowHook.HookData({
+                attestation: AttestationRequest({
+                    schema: paidSchema,
+                    data: AttestationRequestData({
+                        recipient: recipient,
+                        expirationTime: 0,
+                        revocable: true,
+                        refUID: bytes32(0),
+                        data: abi.encode("paid return"),
+                        value: 1 wei
+                    })
+                })
+            })
+        );
+
+        vm.deal(caller, 1 ether);
+        uint256 balanceBefore = caller.balance;
+
+        vm.startPrank(caller);
+        hook.onLock{value: 1 wei}(data, caller, address(this));
+        hook.onReturn(data, caller, address(this));
+        vm.stopPrank();
+
+        assertEq(caller.balance, balanceBefore);
+        assertEq(payableResolver.attestValue(), 0);
         assertEq(address(hook).balance, 0);
     }
 
@@ -169,17 +238,11 @@ contract AttestationEscrowHookTest is Test {
 
     function testAttestationHook2ConstructorReusesExistingValidationSchema() public {
         address predicted = vm.computeCreateAddress(address(this), vm.getNonce(address(this)));
-        bytes32 expectedSchema = SchemaRegistryUtils.getUID(
-            "bytes32 validatedAttestationUid",
-            ISchemaResolver(predicted),
-            true
-        );
+        bytes32 expectedSchema =
+            SchemaRegistryUtils.getUID("bytes32 validatedAttestationUid", ISchemaResolver(predicted), true);
 
-        bytes32 registeredSchema = schemaRegistry.register(
-            "bytes32 validatedAttestationUid",
-            ISchemaResolver(predicted),
-            true
-        );
+        bytes32 registeredSchema =
+            schemaRegistry.register("bytes32 validatedAttestationUid", ISchemaResolver(predicted), true);
         assertEq(registeredSchema, expectedSchema);
 
         AttestationEscrowHook2 reusedSchemaHook = new AttestationEscrowHook2(eas, schemaRegistry);
