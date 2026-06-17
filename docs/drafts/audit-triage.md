@@ -32,6 +32,8 @@ Tracking notes for `arkhai-io-alkahest-2026-04-13-analysis.md`.
   Commit: `5c03d3a3f00fe9dbcd06175806de80bf726c3b3e fix(escrow): allow ERC1155 receiver forwarding`
 - #17 TokenBundleSplitter nested dynamic array clearing: addressed by clearing nested split arrays before rewriting a decision slot for the same oracle and `(fulfillment, escrow)` key.
   Commit: `eae63e650bf424fd2b98b2876959a2e57b992bfb fix(splitters): clear bundle decision arrays`
+- #18 CommitReveal bond accounting: addressed by replacing current-global bond refunds/slashes with block-based bond amount epochs. Bond amount changes take effect on the next block, and each commitment refunds or slashes the amount active at its commit block.
+  Commit: `b38ac88a97ec3f68a5f506175100fec6aba10978 fix(commit-reveal): snapshot bond amount epochs`
 - Default escrow checks follow-up: documented proposed default/unconditional escrow split before implementation.
   Doc: `docs/drafts/escrow-default-checks-plan.md`
 
@@ -51,7 +53,6 @@ Tracking notes for `arkhai-io-alkahest-2026-04-13-analysis.md`.
 
 ## Remaining Untriaged
 
-- #18 CommitReveal bond accounting.
 - #19 NativeTokenSplitter payer misdirection during `createFulfillment`.
 - #20 Not-found handling / error classification.
 - Second report section #1 NativeTokenEscrowHook empty `receive`.

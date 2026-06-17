@@ -60,3 +60,17 @@ hooks. Two possible approaches:
 
 This should be handled as a separate lifecycle/API change because it affects the
 meaning of `_beforeAttest`/`_afterAttest`, hook interfaces, docs, and SDKs.
+
+## Per-Demand Commit-Reveal Bonds
+
+`CommitRevealObligation` currently uses a contract-level bond amount for the
+hash-only `commit(bytes32)` flow. The audit fix snapshots contract-level bond
+amounts by block epoch so historical commitments refund or slash the amount that
+was active when they were committed.
+
+A future variant could make bond policy part of the escrow demand instead. That
+would let each escrow specify the required commit bond rather than relying on a
+global contract setting. This is a larger API change because `commit(bytes32)`
+does not reveal the escrow UID, recipient, data hash, or demand terms at commit
+time. A per-demand version should add typed commit context or otherwise bind the
+committed bond terms into the commitment and verify them during reveal.
