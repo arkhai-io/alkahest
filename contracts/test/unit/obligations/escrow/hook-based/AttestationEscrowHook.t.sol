@@ -9,6 +9,7 @@ import {AttestationEscrowHook2} from "@src/obligations/escrow/hook-based/hooks/A
 import {IEAS, AttestationRequest, AttestationRequestData} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {ISchemaResolver} from "@eas/resolver/ISchemaResolver.sol";
+import {SchemaRegistryUtils} from "@src/SchemaRegistryUtils.sol";
 import {EASDeployer} from "@test/utils/EASDeployer.sol";
 
 contract AttestationEscrowHookTest is Test {
@@ -164,6 +165,26 @@ contract AttestationEscrowHookTest is Test {
         hook2.onLock{value: 1 wei}(data, caller, address(this));
 
         assertEq(address(hook2).balance, 0);
+    }
+
+    function testAttestationHook2ConstructorReusesExistingValidationSchema() public {
+        address predicted = vm.computeCreateAddress(address(this), vm.getNonce(address(this)));
+        bytes32 expectedSchema = SchemaRegistryUtils.getUID(
+            "bytes32 validatedAttestationUid",
+            ISchemaResolver(predicted),
+            true
+        );
+
+        bytes32 registeredSchema = schemaRegistry.register(
+            "bytes32 validatedAttestationUid",
+            ISchemaResolver(predicted),
+            true
+        );
+        assertEq(registeredSchema, expectedSchema);
+
+        AttestationEscrowHook2 reusedSchemaHook = new AttestationEscrowHook2(eas, schemaRegistry);
+        assertEq(reusedSchemaHook.VALIDATION_SCHEMA(), expectedSchema);
+        assertEq(schemaRegistry.getSchema(expectedSchema).uid, expectedSchema);
     }
 
     function testAttestationHook2ReturnDecrementsOnePendingLock() public {

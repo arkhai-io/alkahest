@@ -5,10 +5,14 @@ import {IArbiter} from "./IArbiter.sol";
 import {IEAS} from "@eas/IEAS.sol";
 import {ISchemaRegistry, SchemaRecord} from "@eas/ISchemaRegistry.sol";
 import {SchemaResolver} from "@eas/resolver/SchemaResolver.sol";
+import {ISchemaResolver} from "@eas/resolver/ISchemaResolver.sol";
 import {Attestation} from "@eas/Common.sol";
 import {AttestationRequest, AttestationRequestData} from "@eas/IEAS.sol";
+import {SchemaRegistryUtils} from "./SchemaRegistryUtils.sol";
 
 abstract contract BaseAttester is SchemaResolver {
+    using SchemaRegistryUtils for ISchemaRegistry;
+
     ISchemaRegistry internal immutable schemaRegistry;
     IEAS internal immutable eas;
     bytes32 public immutable ATTESTATION_SCHEMA;
@@ -23,7 +27,8 @@ abstract contract BaseAttester is SchemaResolver {
     ) SchemaResolver(_eas) {
         eas = _eas;
         schemaRegistry = _schemaRegistry;
-        ATTESTATION_SCHEMA = schemaRegistry.register(schema, this, revocable);
+        ATTESTATION_SCHEMA =
+            schemaRegistry.registerOrReuse(schema, ISchemaResolver(address(this)), revocable);
     }
 
     function onAttest(

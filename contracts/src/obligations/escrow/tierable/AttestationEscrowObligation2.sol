@@ -7,9 +7,12 @@ import {ArbiterUtils} from "../../../ArbiterUtils.sol";
 import {Attestation} from "@eas/Common.sol";
 import {IEAS, AttestationRequest, AttestationRequestData} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
+import {ISchemaResolver} from "@eas/resolver/ISchemaResolver.sol";
+import {SchemaRegistryUtils} from "../../../SchemaRegistryUtils.sol";
 
 contract AttestationEscrowObligation2 is BaseEscrowObligationTierable, IArbiter {
     using ArbiterUtils for Attestation;
+    using SchemaRegistryUtils for ISchemaRegistry;
 
     bytes32 public immutable VALIDATION_SCHEMA;
 
@@ -31,9 +34,9 @@ contract AttestationEscrowObligation2 is BaseEscrowObligationTierable, IArbiter 
         )
     {
         // Register the validation schema
-        VALIDATION_SCHEMA = _schemaRegistry.register(
+        VALIDATION_SCHEMA = _schemaRegistry.registerOrReuse(
             "bytes32 validatedAttestationUid",
-            this,
+            ISchemaResolver(address(this)),
             true
         );
     }

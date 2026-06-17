@@ -7,6 +7,7 @@ import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {ISchemaResolver} from "@eas/resolver/ISchemaResolver.sol";
 import {SchemaResolver} from "@eas/resolver/SchemaResolver.sol";
 import {Attestation} from "@eas/Common.sol";
+import {SchemaRegistryUtils} from "../../../../SchemaRegistryUtils.sol";
 
 /// @title AttestationEscrowHook2
 /// @notice An IEscrowHook that creates a validation attestation referencing
@@ -19,6 +20,8 @@ import {Attestation} from "@eas/Common.sol";
 ///      The validation schema is registered at deploy time. The attester
 ///      of the validation attestation is this hook contract.
 contract AttestationEscrowHook2 is IEscrowHook, SchemaResolver {
+    using SchemaRegistryUtils for ISchemaRegistry;
+
     struct HookData {
         bytes32 attestationUid;
         address recipient; // recipient of the validation attestation
@@ -36,7 +39,7 @@ contract AttestationEscrowHook2 is IEscrowHook, SchemaResolver {
     constructor(IEAS _eas, ISchemaRegistry _schemaRegistry) SchemaResolver(_eas) {
         eas = _eas;
         VALIDATION_SCHEMA =
-            _schemaRegistry.register("bytes32 validatedAttestationUid", ISchemaResolver(address(this)), true);
+            _schemaRegistry.registerOrReuse("bytes32 validatedAttestationUid", ISchemaResolver(address(this)), true);
     }
 
     // ──────────────────────────────────────────────
