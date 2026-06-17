@@ -5,6 +5,8 @@ import {IEscrowHook} from "../IEscrowHook.sol";
 import {IEAS, AttestationRequest, AttestationRequestData} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {ISchemaResolver} from "@eas/resolver/ISchemaResolver.sol";
+import {SchemaResolver} from "@eas/resolver/SchemaResolver.sol";
+import {Attestation} from "@eas/Common.sol";
 
 /// @title AttestationEscrowHook2
 /// @notice An IEscrowHook that creates a validation attestation referencing
@@ -16,7 +18,7 @@ import {ISchemaResolver} from "@eas/resolver/ISchemaResolver.sol";
 ///
 ///      The validation schema is registered at deploy time. The attester
 ///      of the validation attestation is this hook contract.
-contract AttestationEscrowHook2 is IEscrowHook {
+contract AttestationEscrowHook2 is IEscrowHook, SchemaResolver {
     struct HookData {
         bytes32 attestationUid;
         address recipient; // recipient of the validation attestation
@@ -31,10 +33,10 @@ contract AttestationEscrowHook2 is IEscrowHook {
     error AttestationCreationFailed();
     error NoPendingValidation(address caller, bytes32 hookDataHash);
 
-    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry) {
+    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry) SchemaResolver(_eas) {
         eas = _eas;
         VALIDATION_SCHEMA =
-            _schemaRegistry.register("bytes32 validatedAttestationUid", ISchemaResolver(address(0)), true);
+            _schemaRegistry.register("bytes32 validatedAttestationUid", ISchemaResolver(address(this)), true);
     }
 
     // ──────────────────────────────────────────────
@@ -55,7 +57,8 @@ contract AttestationEscrowHook2 is IEscrowHook {
 
     function onRelease(
         bytes calldata data,
-        address to,
+        address,
+        /* to */
         address /* escrow */
     )
         external
@@ -69,16 +72,17 @@ contract AttestationEscrowHook2 is IEscrowHook {
         pending[msg.sender][dataHash]--;
 
         HookData memory decoded = abi.decode(data, (HookData));
+        bytes memory validationData = abi.encode(decoded.attestationUid);
 
         try eas.attest(
             AttestationRequest({
                 schema: VALIDATION_SCHEMA,
                 data: AttestationRequestData({
-                    recipient: to,
+                    recipient: decoded.recipient,
                     expirationTime: 0,
                     revocable: false,
                     refUID: decoded.attestationUid,
-                    data: abi.encode(decoded.attestationUid),
+                    data: validationData,
                     value: 0
                 })
             })
@@ -101,6 +105,30 @@ contract AttestationEscrowHook2 is IEscrowHook {
         if (pending[msg.sender][dataHash] > 0) {
             pending[msg.sender][dataHash]--;
         }
+    }
+
+    function onAttest(
+        Attestation calldata attestation,
+        uint256 /* value */
+    )
+        internal
+        view
+        override
+        returns (bool)
+    {
+        return attestation.attester == address(this);
+    }
+
+    function onRevoke(
+        Attestation calldata attestation,
+        uint256 /* value */
+    )
+        internal
+        view
+        override
+        returns (bool)
+    {
+        return attestation.attester == address(this);
     }
 
     // ──────────────────────────────────────────────

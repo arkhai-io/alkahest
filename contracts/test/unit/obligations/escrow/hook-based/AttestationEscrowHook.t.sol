@@ -2,6 +2,7 @@
 pragma solidity ^0.8.26;
 
 import "forge-std/Test.sol";
+import "forge-std/Vm.sol";
 import {AttestationEscrowHook} from "@src/obligations/escrow/hook-based/hooks/AttestationEscrowHook.sol";
 import {AttestationEscrowHook2} from "@src/obligations/escrow/hook-based/hooks/AttestationEscrowHook2.sol";
 import {IEAS, AttestationRequest, AttestationRequestData} from "@eas/IEAS.sol";
@@ -17,6 +18,7 @@ contract AttestationEscrowHookTest is Test {
 
     address internal caller = makeAddr("caller");
     address internal recipient = makeAddr("recipient");
+    address internal otherRecipient = makeAddr("otherRecipient");
     bytes32 internal testSchema;
     bytes32 internal existingAttestation;
 
@@ -139,5 +141,79 @@ contract AttestationEscrowHookTest is Test {
         hook2.onRelease(data, recipient, address(this));
         assertEq(hook2.pending(caller, dataHash), 0);
         vm.stopPrank();
+    }
+
+    function testAttestationHook2RejectsForgedValidationAttestation() public {
+        bytes32 validationSchema = hook2.VALIDATION_SCHEMA();
+
+        vm.expectRevert();
+        vm.prank(caller);
+        eas.attest(
+            AttestationRequest({
+                schema: validationSchema,
+                data: AttestationRequestData({
+                    recipient: recipient,
+                    expirationTime: 0,
+                    revocable: false,
+                    refUID: existingAttestation,
+                    data: abi.encode(existingAttestation),
+                    value: 0
+                })
+            })
+        );
+    }
+
+    function testAttestationHook2UsesEncodedRecipient() public {
+        bytes memory data =
+            abi.encode(AttestationEscrowHook2.HookData({attestationUid: existingAttestation, recipient: recipient}));
+
+        vm.startPrank(caller);
+        hook2.onLock(data, caller, address(this));
+
+        vm.recordLogs();
+        hook2.onRelease(data, otherRecipient, address(this));
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+        vm.stopPrank();
+
+        bytes32 uid = _findValidationUid(logs);
+        assertNotEq(uid, bytes32(0));
+
+        (, address attester, bytes32 schema) = _readAttestedTopics(logs, uid);
+        assertEq(attester, address(hook2));
+        assertEq(schema, hook2.VALIDATION_SCHEMA());
+
+        assertEq(eas.getAttestation(uid).recipient, recipient);
+        assertEq(eas.getAttestation(uid).refUID, existingAttestation);
+    }
+
+    function _findValidationUid(Vm.Log[] memory logs) internal view returns (bytes32 uid) {
+        for (uint256 i; i < logs.length; ++i) {
+            if (
+                logs[i].topics.length == 4
+                    && logs[i].topics[0] == keccak256("Attested(address,address,bytes32,bytes32)")
+                    && logs[i].topics[3] == hook2.VALIDATION_SCHEMA()
+            ) {
+                return abi.decode(logs[i].data, (bytes32));
+            }
+        }
+    }
+
+    function _readAttestedTopics(Vm.Log[] memory logs, bytes32 uid)
+        internal
+        pure
+        returns (address recipient_, address attester, bytes32 schema)
+    {
+        for (uint256 i; i < logs.length; ++i) {
+            if (
+                logs[i].topics.length == 4
+                    && logs[i].topics[0] == keccak256("Attested(address,address,bytes32,bytes32)")
+                    && abi.decode(logs[i].data, (bytes32)) == uid
+            ) {
+                recipient_ = address(uint160(uint256(logs[i].topics[1])));
+                attester = address(uint160(uint256(logs[i].topics[2])));
+                schema = logs[i].topics[3];
+                return (recipient_, attester, schema);
+            }
+        }
     }
 }
