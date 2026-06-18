@@ -71,23 +71,21 @@ contract TokenBundleSplitter is TokenBundleSplitterBase {
 
         // --- ERC721 assignments (each must appear exactly once) ---
         uint256 numErc721 = escrowData.erc721Tokens.length;
-        if (numErc721 > 0) {
-            bool[] memory assigned = new bool[](numErc721);
-            for (uint256 s; s < numSplits; ++s) {
-                for (uint256 i; i < splits[s].erc721Indices.length; ++i) {
-                    uint256 idx = splits[s].erc721Indices[i];
-                    if (idx >= numErc721) {
-                        revert InvalidERC721Index(idx, numErc721);
-                    }
-                    if (assigned[idx]) {
-                        revert DuplicateERC721Assignment(idx);
-                    }
-                    assigned[idx] = true;
+        bool[] memory assigned = new bool[](numErc721);
+        for (uint256 s; s < numSplits; ++s) {
+            for (uint256 i; i < splits[s].erc721Indices.length; ++i) {
+                uint256 idx = splits[s].erc721Indices[i];
+                if (idx >= numErc721) {
+                    revert InvalidERC721Index(idx, numErc721);
                 }
+                if (assigned[idx]) {
+                    revert DuplicateERC721Assignment(idx);
+                }
+                assigned[idx] = true;
             }
-            for (uint256 t; t < numErc721; ++t) {
-                if (!assigned[t]) revert MissingERC721Assignment(t);
-            }
+        }
+        for (uint256 t; t < numErc721; ++t) {
+            if (!assigned[t]) revert MissingERC721Assignment(t);
         }
 
         // --- ERC1155 totals ---

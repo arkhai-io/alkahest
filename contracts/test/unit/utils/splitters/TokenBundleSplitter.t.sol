@@ -140,9 +140,23 @@ contract TokenBundleSplitterTest is Test {
         });
     }
 
+    function _bundleDataWithoutERC721() internal view returns (TokenBundleEscrowObligation.ObligationData memory) {
+        TokenBundleEscrowObligation.ObligationData memory data = _bundleData();
+        data.erc721Tokens = new address[](0);
+        data.erc721TokenIds = new uint256[](0);
+        return data;
+    }
+
     function _createEscrow() internal returns (bytes32) {
         vm.prank(buyer);
         return escrowObligation.doObligation{value: NATIVE_AMOUNT}(_bundleData(), uint64(block.timestamp + EXPIRATION));
+    }
+
+    function _createEscrowWithoutERC721() internal returns (bytes32) {
+        vm.prank(buyer);
+        return escrowObligation.doObligation{value: NATIVE_AMOUNT}(
+            _bundleDataWithoutERC721(), uint64(block.timestamp + EXPIRATION)
+        );
     }
 
     function _createFulfillmentViaSplitter(address _executor, bytes32 escrowUid) internal returns (bytes32) {
@@ -240,6 +254,20 @@ contract TokenBundleSplitterTest is Test {
         vm.prank(oracle);
         vm.expectRevert(TokenBundleSplitterBase.InvalidFulfillmentUid.selector);
         splitter.arbitrate(bytes32(0), escrowUid, _twoWaySplit());
+    }
+
+    function testArbitrateRejectsERC721IndexWhenEscrowHasNoERC721s() public {
+        bytes32 escrowUid = _createEscrowWithoutERC721();
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(executor, escrowUid);
+
+        TokenBundleSplitterBase.BundleSplit[] memory splits = _twoWaySplit();
+        splits[0].erc721Indices = new uint256[](1);
+        splits[0].erc721Indices[0] = 0;
+        splits[1].erc721Indices = new uint256[](0);
+
+        vm.prank(oracle);
+        vm.expectRevert(abi.encodeWithSelector(TokenBundleSplitter.InvalidERC721Index.selector, 0, 0));
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
     }
 
     function testCollectAndDistribute() public {
