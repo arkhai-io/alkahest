@@ -2,6 +2,7 @@
 pragma solidity ^0.8.26;
 
 import "forge-std/Test.sol";
+import {BaseSplitter} from "@src/utils/splitters/BaseSplitter.sol";
 import {ERC1155Splitter} from "@src/utils/splitters/ERC1155Splitter.sol";
 import {ERC1155EscrowObligation} from "@src/obligations/escrow/default/ERC1155EscrowObligation.sol";
 import {StringObligation} from "@src/obligations/StringObligation.sol";
@@ -179,7 +180,7 @@ contract ERC1155SplitterTest is Test {
         splits[0] = ERC1155Splitter.Split({recipient: alice, amount: AMOUNT});
 
         vm.prank(oracle);
-        vm.expectRevert(ERC1155Splitter.InvalidFulfillmentUid.selector);
+        vm.expectRevert(BaseSplitter.InvalidFulfillmentUid.selector);
         splitter.arbitrate(bytes32(0), escrowUid, splits);
     }
 
@@ -189,7 +190,7 @@ contract ERC1155SplitterTest is Test {
 
         vm.prank(buyer);
         vm.expectEmit(true, true, true, true);
-        emit ERC1155Splitter.ArbitrationRequested(fulfillmentUid, escrowUid, oracle, bytes("demand"));
+        emit BaseSplitter.ArbitrationRequested(fulfillmentUid, escrowUid, oracle, bytes("demand"));
         splitter.requestArbitration(fulfillmentUid, escrowUid, oracle, bytes("demand"));
     }
 
@@ -198,7 +199,7 @@ contract ERC1155SplitterTest is Test {
         bytes32 fulfillmentUid = _createFulfillmentViaSplitter(executor, escrowUid);
 
         vm.prank(carol);
-        vm.expectRevert(ERC1155Splitter.UnauthorizedArbitrationRequest.selector);
+        vm.expectRevert(BaseSplitter.UnauthorizedArbitrationRequest.selector);
         splitter.requestArbitration(fulfillmentUid, escrowUid, oracle, bytes("demand"));
     }
 

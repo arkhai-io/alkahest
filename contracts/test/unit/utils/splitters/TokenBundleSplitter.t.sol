@@ -2,6 +2,7 @@
 pragma solidity ^0.8.26;
 
 import "forge-std/Test.sol";
+import {BaseSplitter} from "@src/utils/splitters/BaseSplitter.sol";
 import {TokenBundleSplitter} from "@src/utils/splitters/TokenBundleSplitter.sol";
 import {TokenBundleSplitterBase} from "@src/utils/splitters/TokenBundleSplitterBase.sol";
 import {TokenBundleEscrowObligation} from "@src/obligations/escrow/default/TokenBundleEscrowObligation.sol";
@@ -252,7 +253,7 @@ contract TokenBundleSplitterTest is Test {
         bytes32 escrowUid = _createEscrow();
 
         vm.prank(oracle);
-        vm.expectRevert(TokenBundleSplitterBase.InvalidFulfillmentUid.selector);
+        vm.expectRevert(BaseSplitter.InvalidFulfillmentUid.selector);
         splitter.arbitrate(bytes32(0), escrowUid, _twoWaySplit());
     }
 
@@ -330,7 +331,7 @@ contract TokenBundleSplitterTest is Test {
         bytes32 fulfillmentUid = _createFulfillmentViaSplitter(executor, escrowUid);
         vm.prank(buyer);
         vm.expectEmit(true, true, true, true);
-        emit TokenBundleSplitterBase.ArbitrationRequested(fulfillmentUid, escrowUid, oracle, bytes("demand"));
+        emit BaseSplitter.ArbitrationRequested(fulfillmentUid, escrowUid, oracle, bytes("demand"));
         splitter.requestArbitration(fulfillmentUid, escrowUid, oracle, bytes("demand"));
     }
 
@@ -338,7 +339,7 @@ contract TokenBundleSplitterTest is Test {
         bytes32 escrowUid = _createEscrow();
         bytes32 fulfillmentUid = _createFulfillmentViaSplitter(executor, escrowUid);
         vm.prank(carol);
-        vm.expectRevert(TokenBundleSplitterBase.UnauthorizedArbitrationRequest.selector);
+        vm.expectRevert(BaseSplitter.UnauthorizedArbitrationRequest.selector);
         splitter.requestArbitration(fulfillmentUid, escrowUid, oracle, bytes("demand"));
     }
 

@@ -2,6 +2,7 @@
 pragma solidity ^0.8.26;
 
 import "forge-std/Test.sol";
+import {BaseSplitter} from "@src/utils/splitters/BaseSplitter.sol";
 import {ERC20Splitter} from "@src/utils/splitters/ERC20Splitter.sol";
 import {SplitterVerification} from "@src/utils/splitters/SplitterVerification.sol";
 import {ERC20EscrowObligation} from "@src/obligations/escrow/default/ERC20EscrowObligation.sol";
@@ -160,7 +161,7 @@ contract ERC20SplitterTest is Test {
         splits[0] = ERC20Splitter.Split({recipient: alice, amount: AMOUNT});
 
         vm.prank(oracle);
-        vm.expectRevert(ERC20Splitter.InvalidFulfillmentUid.selector);
+        vm.expectRevert(BaseSplitter.InvalidFulfillmentUid.selector);
         splitter.arbitrate(bytes32(0), escrowUid, splits);
     }
 
@@ -171,7 +172,7 @@ contract ERC20SplitterTest is Test {
         ERC20Splitter.Split[] memory splits = new ERC20Splitter.Split[](0);
 
         vm.prank(oracle);
-        vm.expectRevert(ERC20Splitter.EmptySplits.selector);
+        vm.expectRevert(BaseSplitter.EmptySplits.selector);
         splitter.arbitrate(fulfillmentUid, escrowUid, splits);
     }
 
@@ -330,7 +331,7 @@ contract ERC20SplitterTest is Test {
         returningObligation.setUid(fulfillmentUid);
 
         vm.prank(alice);
-        vm.expectRevert(abi.encodeWithSelector(ERC20Splitter.InvalidCreatedFulfillment.selector, fulfillmentUid));
+        vm.expectRevert(abi.encodeWithSelector(BaseSplitter.InvalidCreatedFulfillment.selector, fulfillmentUid));
         splitter.createFulfillment(address(returningObligation), bytes(""), 0, escrowUid);
     }
 
@@ -350,7 +351,7 @@ contract ERC20SplitterTest is Test {
         );
 
         vm.prank(alice);
-        vm.expectRevert(abi.encodeWithSelector(ERC20Splitter.FulfillerAlreadyRecorded.selector, fulfillmentUid));
+        vm.expectRevert(abi.encodeWithSelector(BaseSplitter.FulfillerAlreadyRecorded.selector, fulfillmentUid));
         splitter.createFulfillment(address(stringObligation), obligationData, 0, escrowUid);
     }
 
@@ -417,7 +418,7 @@ contract ERC20SplitterTest is Test {
         vm.prank(oracle);
         splitter.arbitrate(fulfillmentUid, escrowUid, splits);
 
-        vm.expectRevert(abi.encodeWithSelector(ERC20Splitter.NoFulfillerRecorded.selector, fulfillmentUid));
+        vm.expectRevert(abi.encodeWithSelector(BaseSplitter.NoFulfillerRecorded.selector, fulfillmentUid));
         splitter.collectAndDistribute(address(escrowObligation), escrowUid, fulfillmentUid);
     }
 
@@ -510,7 +511,7 @@ contract ERC20SplitterTest is Test {
         bytes memory demand = bytes("some demand");
         vm.prank(buyer);
         vm.expectEmit(true, true, true, true);
-        emit ERC20Splitter.ArbitrationRequested(fulfillmentUid, escrowUid, oracle, demand);
+        emit BaseSplitter.ArbitrationRequested(fulfillmentUid, escrowUid, oracle, demand);
         splitter.requestArbitration(fulfillmentUid, escrowUid, oracle, demand);
     }
 
@@ -519,7 +520,7 @@ contract ERC20SplitterTest is Test {
         bytes32 fulfillmentUid = _createFulfillmentViaSplitter(executor, escrowUid);
 
         vm.prank(carol);
-        vm.expectRevert(ERC20Splitter.UnauthorizedArbitrationRequest.selector);
+        vm.expectRevert(BaseSplitter.UnauthorizedArbitrationRequest.selector);
         splitter.requestArbitration(fulfillmentUid, escrowUid, oracle, bytes("demand"));
     }
 

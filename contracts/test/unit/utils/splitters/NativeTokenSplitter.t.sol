@@ -2,6 +2,7 @@
 pragma solidity ^0.8.26;
 
 import "forge-std/Test.sol";
+import {BaseSplitter} from "@src/utils/splitters/BaseSplitter.sol";
 import {NativeTokenSplitter} from "@src/utils/splitters/NativeTokenSplitter.sol";
 import {NativeTokenEscrowObligation} from "@src/obligations/escrow/default/NativeTokenEscrowObligation.sol";
 import {StringObligation} from "@src/obligations/StringObligation.sol";
@@ -158,7 +159,7 @@ contract NativeTokenSplitterTest is Test {
         splits[0] = NativeTokenSplitter.Split({recipient: alice, amount: AMOUNT});
 
         vm.prank(oracle);
-        vm.expectRevert(NativeTokenSplitter.InvalidFulfillmentUid.selector);
+        vm.expectRevert(BaseSplitter.InvalidFulfillmentUid.selector);
         splitter.arbitrate(bytes32(0), escrowUid, splits);
     }
 
@@ -168,7 +169,7 @@ contract NativeTokenSplitterTest is Test {
 
         vm.prank(buyer);
         vm.expectEmit(true, true, true, true);
-        emit NativeTokenSplitter.ArbitrationRequested(fulfillmentUid, escrowUid, oracle, bytes("demand"));
+        emit BaseSplitter.ArbitrationRequested(fulfillmentUid, escrowUid, oracle, bytes("demand"));
         splitter.requestArbitration(fulfillmentUid, escrowUid, oracle, bytes("demand"));
     }
 
@@ -177,7 +178,7 @@ contract NativeTokenSplitterTest is Test {
         bytes32 fulfillmentUid = _createFulfillmentViaSplitter(executor, escrowUid);
 
         vm.prank(carol);
-        vm.expectRevert(NativeTokenSplitter.UnauthorizedArbitrationRequest.selector);
+        vm.expectRevert(BaseSplitter.UnauthorizedArbitrationRequest.selector);
         splitter.requestArbitration(fulfillmentUid, escrowUid, oracle, bytes("demand"));
     }
 

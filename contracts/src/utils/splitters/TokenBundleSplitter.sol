@@ -31,7 +31,7 @@ contract TokenBundleSplitter is TokenBundleSplitterBase {
 
         _validateSplits(splits, escrowData);
 
-        bytes32 decisionKey = keccak256(abi.encodePacked(fulfillment, escrow));
+        bytes32 decisionKey = _decisionKey(fulfillment, escrow);
 
         _storeDecision(msg.sender, decisionKey, splits);
 
