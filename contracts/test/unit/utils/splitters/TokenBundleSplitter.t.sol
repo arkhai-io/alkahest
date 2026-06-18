@@ -38,6 +38,21 @@ contract MockERC1155T is ERC1155 {
     }
 }
 
+contract BundleSplitterRefundingStringObligation is StringObligation {
+    uint256 public immutable refundAmount;
+
+    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, uint256 _refundAmount)
+        StringObligation(_eas, _schemaRegistry)
+    {
+        refundAmount = _refundAmount;
+    }
+
+    function _afterAttest(bytes32, bytes memory, address payer, address) internal override {
+        (bool success,) = payable(payer).call{value: refundAmount}("");
+        require(success, "refund failed");
+    }
+}
+
 contract TokenBundleSplitterTest is Test {
     TokenBundleSplitter public splitter;
     TokenBundleEscrowObligation public escrowObligation;
@@ -197,6 +212,26 @@ contract TokenBundleSplitterTest is Test {
         splitter.arbitrate(fulfillmentUid, escrowUid, _twoWaySplit());
         bytes32 key = keccak256(abi.encodePacked(fulfillmentUid, escrowUid));
         assertTrue(splitter.hasDecision(oracle, key));
+    }
+
+    function testCreateFulfillmentRefundsNativeBalanceIncreaseToFulfiller() public {
+        bytes32 escrowUid = _createEscrow();
+        uint256 refundAmount = 0.3 ether;
+        uint256 spentAmount = 0.2 ether;
+        BundleSplitterRefundingStringObligation refundingObligation =
+            new BundleSplitterRefundingStringObligation(eas, schemaRegistry, refundAmount);
+        bytes memory obligationData =
+            abi.encode(StringObligation.ObligationData({item: "fulfillment", schema: bytes32(0)}));
+
+        uint256 executorBalanceBefore = executor.balance;
+        vm.prank(executor);
+        bytes32 fulfillmentUid = splitter.createFulfillment{value: refundAmount + spentAmount}(
+            address(refundingObligation), obligationData, 0, escrowUid
+        );
+
+        assertEq(splitter.fulfillers(fulfillmentUid), executor);
+        assertEq(executor.balance, executorBalanceBefore - spentAmount, "executor only pays non-refunded value");
+        assertEq(address(splitter).balance, 0, "refund is not stranded in splitter");
     }
 
     function testArbitrateRejectsZeroFulfillment() public {

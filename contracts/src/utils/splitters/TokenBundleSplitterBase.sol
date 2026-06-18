@@ -84,6 +84,7 @@ abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155H
     error InvalidFulfillmentUid();
     error FulfillerAlreadyRecorded(bytes32 fulfillment);
     error InvalidCreatedFulfillment(bytes32 fulfillment);
+    error NativeTokenRefundFailed(address to, uint256 amount);
 
     IEAS public eas;
     mapping(address => mapping(bytes32 => BundleSplit[])) internal decisions;
@@ -154,10 +155,12 @@ abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155H
         nonReentrant
         returns (bytes32 fulfillmentUid)
     {
+        uint256 retainedBalance = address(this).balance - msg.value;
         fulfillmentUid = IObligation(obligationContract).doObligationRaw{value: msg.value}(data, expirationTime, refUID);
         _validateCreatedFulfillment(fulfillmentUid, obligationContract, data, expirationTime, refUID);
         if (fulfillers[fulfillmentUid] != address(0)) revert FulfillerAlreadyRecorded(fulfillmentUid);
         fulfillers[fulfillmentUid] = msg.sender;
+        _refundNativeBalanceIncrease(retainedBalance, msg.sender);
         emit FulfillmentCreated(fulfillmentUid, msg.sender, obligationContract);
     }
 
@@ -251,6 +254,15 @@ abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155H
         ) {
             revert InvalidCreatedFulfillment(fulfillmentUid);
         }
+    }
+
+    function _refundNativeBalanceIncrease(uint256 retainedBalance, address recipient) internal {
+        uint256 currentBalance = address(this).balance;
+        if (currentBalance <= retainedBalance) return;
+
+        uint256 refundAmount = currentBalance - retainedBalance;
+        (bool success,) = payable(recipient).call{value: refundAmount}("");
+        if (!success) revert NativeTokenRefundFailed(recipient, refundAmount);
     }
 
     function _erc20Balances(EscrowObligationData memory escrowData) internal view returns (uint256[] memory balances) {
