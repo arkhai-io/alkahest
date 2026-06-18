@@ -114,7 +114,7 @@ contract RedisProvisionObligation is BaseObligation, IArbiter {
         bytes memory demand,
         bytes32 /* fulfilling */
     ) public view override returns (bool) {
-        if (!obligation._checkIntrinsic(ATTESTATION_SCHEMA)) return false;
+        if (obligation.schema != ATTESTATION_SCHEMA) return false;
 
         DemandData memory demandData = abi.decode(demand, (DemandData));
         ObligationData memory obligationData = abi.decode(

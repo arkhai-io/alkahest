@@ -118,7 +118,7 @@ client
 │   │   ├── getPermitSignature(spender, token, deadline)
 │   │   └── getPermitDeadline()
 │   ├── escrow
-│   │   ├── nonTierable
+│   │   ├── default
 │   │   │   ├── address
 │   │   │   ├── getSchema()
 │   │   │   ├── encodeObligation(token: Erc20, demand: Demand)
@@ -128,7 +128,7 @@ client
 │   │   │   ├── doObligation(encodedData, refUID?)
 │   │   │   ├── collectObligation(escrowUid, fulfillmentUid)
 │   │   │   └── arbitrate(escrowUid, fulfillmentUid, decision)
-│   │   └── tierable                       // (same API with tier support)
+│   │   └── unconditional                  // (no default fulfillment checks)
 │   ├── payment
 │   │   ├── address
 │   │   ├── getSchema()
@@ -150,24 +150,24 @@ client
 │
 ├── erc721                                 // Same structure as erc20
 │   ├── util (.approve)
-│   ├── escrow.nonTierable / .tierable
+│   ├── escrow.default / .unconditional
 │   ├── payment
 │   └── barter
 │
 ├── erc1155                                // Same structure
 │   ├── util (.approveAll)
-│   ├── escrow.nonTierable / .tierable
+│   ├── escrow.default / .unconditional
 │   ├── payment
 │   └── barter
 │
 ├── nativeToken                            // No util (no approvals needed)
-│   ├── escrow.nonTierable / .tierable
+│   ├── escrow.default / .unconditional
 │   ├── payment
 │   └── barter
 │
 ├── bundle
 │   ├── util (.approve)
-│   ├── escrow.nonTierable / .tierable
+│   ├── escrow.default / .unconditional
 │   ├── payment
 │   └── barter
 │

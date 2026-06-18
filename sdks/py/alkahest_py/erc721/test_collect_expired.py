@@ -45,7 +45,7 @@ async def test_reclaim_expired(env, alice_client):
     
     # Verify token is in escrow
     current_owner = mock_erc721_a.owner_of(token_id)
-    escrow_address = env.addresses.erc721_addresses.escrow_obligation_nontierable
+    escrow_address = env.addresses.erc721_addresses.escrow_obligation_default
     print(f"ERC721 token {token_id} in escrow at: {current_owner}")
     
     assert current_owner.lower() == escrow_address.lower(), "Token should be in escrow at {escrow_address}, but owned by {current_owner}"
@@ -53,7 +53,7 @@ async def test_reclaim_expired(env, alice_client):
     await env.god_wallet_provider.anvil_increase_time(20)
     
     # Alice collects expired funds
-    collect_result = await alice_client.erc721.escrow.non_tierable.reclaim_expired(buy_attestation_uid)
+    collect_result = await alice_client.erc721.escrow.default.reclaim_expired(buy_attestation_uid)
     print(f"Collected expired escrow, transaction: {collect_result}")
     
     # Verify token returned to Alice

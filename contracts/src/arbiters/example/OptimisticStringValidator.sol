@@ -101,7 +101,6 @@ contract OptimisticStringValidator is BaseObligation, IArbiter {
         bytes memory demand,
         bytes32 fulfilling
     ) public view override returns (bool) {
-        if (!obligation._checkIntrinsic()) return false;
 
         ValidationData memory demandData = abi.decode(demand, (ValidationData));
         ValidationData memory obligationData = abi.decode(

@@ -76,7 +76,7 @@ impl PyAttestationEscrowV1ObligationData {
 
     #[staticmethod]
     pub fn decode(obligation_data: Vec<u8>) -> PyResult<PyAttestationEscrowV1ObligationData> {
-        use alkahest_rs::contracts::obligations::escrow::non_tierable::AttestationEscrowObligation;
+        use alkahest_rs::contracts::obligations::escrow::default_escrow::AttestationEscrowObligation;
         use alloy::sol_types::SolValue;
         let decoded =
             AttestationEscrowObligation::ObligationData::abi_decode(&obligation_data)
@@ -86,7 +86,7 @@ impl PyAttestationEscrowV1ObligationData {
 
     #[staticmethod]
     pub fn encode(obligation: &PyAttestationEscrowV1ObligationData) -> PyResult<Vec<u8>> {
-        use alkahest_rs::contracts::obligations::escrow::non_tierable::AttestationEscrowObligation;
+        use alkahest_rs::contracts::obligations::escrow::default_escrow::AttestationEscrowObligation;
         use alloy::{
             primitives::{Address, Bytes, FixedBytes},
             sol_types::SolValue,
@@ -142,11 +142,11 @@ impl PyAttestationEscrowV1ObligationData {
     }
 }
 
-impl From<alkahest_rs::contracts::obligations::escrow::non_tierable::AttestationEscrowObligation::ObligationData>
+impl From<alkahest_rs::contracts::obligations::escrow::default_escrow::AttestationEscrowObligation::ObligationData>
     for PyAttestationEscrowV1ObligationData
 {
     fn from(
-        data: alkahest_rs::contracts::obligations::escrow::non_tierable::AttestationEscrowObligation::ObligationData,
+        data: alkahest_rs::contracts::obligations::escrow::default_escrow::AttestationEscrowObligation::ObligationData,
     ) -> Self {
         Self {
             arbiter: format!("{:?}", data.arbiter),
@@ -166,11 +166,11 @@ impl From<alkahest_rs::contracts::obligations::escrow::non_tierable::Attestation
     }
 }
 
-impl From<alkahest_rs::contracts::obligations::escrow::tierable::AttestationEscrowObligation::ObligationData>
+impl From<alkahest_rs::contracts::obligations::escrow::unconditional::UnconditionalAttestationEscrowObligation::ObligationData>
     for PyAttestationEscrowV1ObligationData
 {
     fn from(
-        data: alkahest_rs::contracts::obligations::escrow::tierable::AttestationEscrowObligation::ObligationData,
+        data: alkahest_rs::contracts::obligations::escrow::unconditional::UnconditionalAttestationEscrowObligation::ObligationData,
     ) -> Self {
         Self {
             arbiter: format!("{:?}", data.arbiter),
@@ -225,7 +225,7 @@ impl PyAttestationEscrowV2ObligationData {
 
     #[staticmethod]
     pub fn decode(obligation_data: Vec<u8>) -> PyResult<PyAttestationEscrowV2ObligationData> {
-        use alkahest_rs::contracts::obligations::escrow::non_tierable::AttestationEscrowObligation2;
+        use alkahest_rs::contracts::obligations::escrow::default_escrow::AttestationEscrowObligation2;
         use alloy::sol_types::SolValue;
         let decoded =
             AttestationEscrowObligation2::ObligationData::abi_decode(&obligation_data)
@@ -235,7 +235,7 @@ impl PyAttestationEscrowV2ObligationData {
 
     #[staticmethod]
     pub fn encode(obligation: &PyAttestationEscrowV2ObligationData) -> PyResult<Vec<u8>> {
-        use alkahest_rs::contracts::obligations::escrow::non_tierable::AttestationEscrowObligation2;
+        use alkahest_rs::contracts::obligations::escrow::default_escrow::AttestationEscrowObligation2;
         use alloy::{
             primitives::{Address, Bytes, FixedBytes},
             sol_types::SolValue,
@@ -262,11 +262,11 @@ impl PyAttestationEscrowV2ObligationData {
     }
 }
 
-impl From<alkahest_rs::contracts::obligations::escrow::non_tierable::AttestationEscrowObligation2::ObligationData>
+impl From<alkahest_rs::contracts::obligations::escrow::default_escrow::AttestationEscrowObligation2::ObligationData>
     for PyAttestationEscrowV2ObligationData
 {
     fn from(
-        data: alkahest_rs::contracts::obligations::escrow::non_tierable::AttestationEscrowObligation2::ObligationData,
+        data: alkahest_rs::contracts::obligations::escrow::default_escrow::AttestationEscrowObligation2::ObligationData,
     ) -> Self {
         Self {
             arbiter: format!("{:?}", data.arbiter),
@@ -276,11 +276,11 @@ impl From<alkahest_rs::contracts::obligations::escrow::non_tierable::Attestation
     }
 }
 
-impl From<alkahest_rs::contracts::obligations::escrow::tierable::AttestationEscrowObligation2::ObligationData>
+impl From<alkahest_rs::contracts::obligations::escrow::unconditional::UnconditionalAttestationEscrowObligation2::ObligationData>
     for PyAttestationEscrowV2ObligationData
 {
     fn from(
-        data: alkahest_rs::contracts::obligations::escrow::tierable::AttestationEscrowObligation2::ObligationData,
+        data: alkahest_rs::contracts::obligations::escrow::unconditional::UnconditionalAttestationEscrowObligation2::ObligationData,
     ) -> Self {
         Self {
             arbiter: format!("{:?}", data.arbiter),

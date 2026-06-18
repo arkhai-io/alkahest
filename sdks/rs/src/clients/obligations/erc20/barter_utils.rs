@@ -153,7 +153,7 @@ impl<'a> BarterUtils<'a> {
 
         let buy_attestation_data = eas_contract.getAttestation(buy_attestation).call().await?;
         let buy_attestation_data =
-            contracts::obligations::escrow::non_tierable::ERC20EscrowObligation::ObligationData::abi_decode(
+            contracts::obligations::escrow::default_escrow::ERC20EscrowObligation::ObligationData::abi_decode(
                 buy_attestation_data.data.as_ref(),
             )?;
         let demand_data =
@@ -320,7 +320,7 @@ impl<'a> BarterUtils<'a> {
 
         let buy_attestation_data = eas_contract.getAttestation(buy_attestation).call().await?;
         let buy_attestation_data =
-            contracts::obligations::escrow::non_tierable::ERC721EscrowObligation::ObligationData::abi_decode(
+            contracts::obligations::escrow::default_escrow::ERC721EscrowObligation::ObligationData::abi_decode(
                 buy_attestation_data.data.as_ref(),
             )?;
         let demand_data =
@@ -495,7 +495,7 @@ impl<'a> BarterUtils<'a> {
 
         let buy_attestation_data = eas_contract.getAttestation(buy_attestation).call().await?;
         let buy_attestation_data =
-            contracts::obligations::escrow::non_tierable::ERC1155EscrowObligation::ObligationData::abi_decode(
+            contracts::obligations::escrow::default_escrow::ERC1155EscrowObligation::ObligationData::abi_decode(
                 buy_attestation_data.data.as_ref(),
             )?;
         let demand_data =
@@ -666,7 +666,7 @@ impl<'a> BarterUtils<'a> {
 
         let buy_attestation_data = eas_contract.getAttestation(buy_attestation).call().await?;
         let buy_attestation_data =
-            contracts::obligations::escrow::non_tierable::TokenBundleEscrowObligation::ObligationData::abi_decode(
+            contracts::obligations::escrow::default_escrow::TokenBundleEscrowObligation::ObligationData::abi_decode(
                 buy_attestation_data.data.as_ref(),
             )?;
         let demand_data =
@@ -753,7 +753,7 @@ impl<'a> BarterUtils<'a> {
 
         let buy_attestation_data = eas_contract.getAttestation(buy_attestation).call().await?;
         let buy_attestation_data =
-            contracts::obligations::escrow::non_tierable::NativeTokenEscrowObligation::ObligationData::abi_decode(
+            contracts::obligations::escrow::default_escrow::NativeTokenEscrowObligation::ObligationData::abi_decode(
                 buy_attestation_data.data.as_ref(),
             )?;
         let demand_data =

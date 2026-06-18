@@ -51,46 +51,46 @@ pub const BASE_SEPOLIA_ADDRESSES: DefaultExtensionConfig = DefaultExtensionConfi
     erc20_addresses: Erc20Addresses {
         eas: address!("0x4200000000000000000000000000000000000021"),
         barter_utils: address!("0x946Ef4E912897B4A24b9250513dfeE3fc4303Dde"),
-        escrow_obligation_nontierable: address!("0x1Fe964348Ec42D9Bb1A072503ce8b4744266FF43"),
-        escrow_obligation_tierable: Address::ZERO, // TODO: Add actual address when deployed
+        escrow_obligation_default: address!("0x1Fe964348Ec42D9Bb1A072503ce8b4744266FF43"),
+        escrow_obligation_unconditional: Address::ZERO, // TODO: Add actual address when deployed
         payment_obligation: address!("0x8d13d7542E64D9Da29AB66B6E9b4a6583C64b3F6"),
     },
     erc721_addresses: Erc721Addresses {
         eas: address!("0x4200000000000000000000000000000000000021"),
         barter_utils: address!("0x707f280Fa738b4cc175A369d450f2f603094cbAf"),
-        escrow_obligation_nontierable: address!("0x7675a56b2880EF059cFC725E715E1139D689c07B"),
-        escrow_obligation_tierable: Address::ZERO, // TODO: Add actual address when deployed
+        escrow_obligation_default: address!("0x7675a56b2880EF059cFC725E715E1139D689c07B"),
+        escrow_obligation_unconditional: Address::ZERO, // TODO: Add actual address when deployed
         payment_obligation: address!("0x9Daf829f183cA46ad2146F489E7d14335C9B59a9"),
     },
     erc1155_addresses: Erc1155Addresses {
         eas: address!("0x4200000000000000000000000000000000000021"),
         barter_utils: address!("0x4E4F0F883B1fEC20F219E0c8D2ec0061FE3c1328"),
-        escrow_obligation_nontierable: address!("0xB8A3107DA5428a34f818ea4229233fBAe59C16F2"),
-        escrow_obligation_tierable: Address::ZERO, // TODO: Add actual address when deployed
+        escrow_obligation_default: address!("0xB8A3107DA5428a34f818ea4229233fBAe59C16F2"),
+        escrow_obligation_unconditional: Address::ZERO, // TODO: Add actual address when deployed
         payment_obligation: address!("0x6f71429bD940Bf3345780a8E5F5cf3BcdffE80C1"),
     },
     native_token_addresses: NativeTokenAddresses {
         eas: address!("0x4200000000000000000000000000000000000021"),
         barter_utils: address!("0xaaB70Cfc37C5E73e185E2976609A82Ba22A4310d"),
-        escrow_obligation_nontierable: address!("0x8a1172D32B8cEf14094cF1E7d6F3d1A36D949FDe"),
-        escrow_obligation_tierable: Address::ZERO, // TODO: Add actual address when deployed
+        escrow_obligation_default: address!("0x8a1172D32B8cEf14094cF1E7d6F3d1A36D949FDe"),
+        escrow_obligation_unconditional: Address::ZERO, // TODO: Add actual address when deployed
         payment_obligation: address!("0xAB1E9714fbD4f9B5546e891B7Ba392b08c44c37A"),
     },
     token_bundle_addresses: TokenBundleAddresses {
         eas: address!("0x4200000000000000000000000000000000000021"),
         barter_utils: address!("0x47C033F49D5A1559AC48f27571204a29b8E728b8"),
-        escrow_obligation_nontierable: address!("0x38e8E5684aFB24A88cD9B276032bCBD19C4b9d6e"),
-        escrow_obligation_tierable: Address::ZERO, // TODO: Add actual address when deployed
+        escrow_obligation_default: address!("0x38e8E5684aFB24A88cD9B276032bCBD19C4b9d6e"),
+        escrow_obligation_unconditional: Address::ZERO, // TODO: Add actual address when deployed
         payment_obligation: address!("0xFa5446475De31fa3c6457E2b62EA5a8F8172Cd29"),
     },
     attestation_addresses: AttestationAddresses {
         eas: address!("0x4200000000000000000000000000000000000021"),
         eas_schema_registry: address!("0x4200000000000000000000000000000000000020"),
         barter_utils: address!("0x84D390BCd90d5f65D14ff66f6860DCa45e776666"),
-        escrow_obligation_nontierable: address!("0x9D133Cbd51270a2A410465F82dAFFD6c1C87322D"),
-        escrow_obligation_tierable: Address::ZERO, // TODO: Add actual address when deployed
-        escrow_obligation_2_nontierable: address!("0xa076e9ca47f192E6AfB67817608E382074CF0Dcf"),
-        escrow_obligation_2_tierable: Address::ZERO, // TODO: Add actual address when deployed
+        escrow_obligation_default: address!("0x9D133Cbd51270a2A410465F82dAFFD6c1C87322D"),
+        escrow_obligation_unconditional: Address::ZERO, // TODO: Add actual address when deployed
+        escrow_obligation_2_default: address!("0xa076e9ca47f192E6AfB67817608E382074CF0Dcf"),
+        escrow_obligation_2_unconditional: Address::ZERO, // TODO: Add actual address when deployed
     },
 };
 
@@ -135,46 +135,46 @@ pub const ETHEREUM_SEPOLIA_ADDRESSES: DefaultExtensionConfig = DefaultExtensionC
     erc20_addresses: Erc20Addresses {
         eas: address!("0xC2679fBD37d54388Ce493F1DB75320D236e1815e"),
         barter_utils: address!("0x5bf7c8b0d60d05af0a3De531EB876De271E80dbc"),
-        escrow_obligation_nontierable: address!("0xB2c808911E84E80156101983897Da7c80e13cB47"),
-        escrow_obligation_tierable: Address::ZERO, // TODO: Add actual address when deployed
+        escrow_obligation_default: address!("0xB2c808911E84E80156101983897Da7c80e13cB47"),
+        escrow_obligation_unconditional: Address::ZERO, // TODO: Add actual address when deployed
         payment_obligation: address!("0xb822aA07F55a8B75Ee133ede1f21C4E49DE7952f"),
     },
     erc721_addresses: Erc721Addresses {
         eas: address!("0xC2679fBD37d54388Ce493F1DB75320D236e1815e"),
         barter_utils: address!("0xEB0C0c41F708B8b3556a6F44a1a015a6832C2d2C"),
-        escrow_obligation_nontierable: address!("0x2A7df117e45D93d34a7893CC3aE8B105Ae0B561C"),
-        escrow_obligation_tierable: Address::ZERO, // TODO: Add actual address when deployed
+        escrow_obligation_default: address!("0x2A7df117e45D93d34a7893CC3aE8B105Ae0B561C"),
+        escrow_obligation_unconditional: Address::ZERO, // TODO: Add actual address when deployed
         payment_obligation: address!("0x59A9c929778Ad2cC4D5DB6151bDEf0F9Fa7A068C"),
     },
     erc1155_addresses: Erc1155Addresses {
         eas: address!("0xC2679fBD37d54388Ce493F1DB75320D236e1815e"),
         barter_utils: address!("0x52De4B30721b3E3660A79da7491a9B2F8a9cB1D5"),
-        escrow_obligation_nontierable: address!("0xf04d9CA943f57353A3A735494E503280C1cD5e77"),
-        escrow_obligation_tierable: Address::ZERO, // TODO: Add actual address when deployed
+        escrow_obligation_default: address!("0xf04d9CA943f57353A3A735494E503280C1cD5e77"),
+        escrow_obligation_unconditional: Address::ZERO, // TODO: Add actual address when deployed
         payment_obligation: address!("0x52748DD0E39eD6eA9f626179b5eb512302adA7D9"),
     },
     native_token_addresses: NativeTokenAddresses {
         eas: address!("0xC2679fBD37d54388Ce493F1DB75320D236e1815e"),
         barter_utils: address!("0xA42032D8BFeE2302cC6F80ff51D283Ffc5a4081f"),
-        escrow_obligation_nontierable: address!("0x9bA50DB048d1E5db034377abf97F92496D027C71"),
-        escrow_obligation_tierable: Address::ZERO, // TODO: Add actual address when deployed
+        escrow_obligation_default: address!("0x9bA50DB048d1E5db034377abf97F92496D027C71"),
+        escrow_obligation_unconditional: Address::ZERO, // TODO: Add actual address when deployed
         payment_obligation: address!("0xf60db64506E366a0A6c1f4cF9D849Adc7bB886D6"),
     },
     token_bundle_addresses: TokenBundleAddresses {
         eas: address!("0xC2679fBD37d54388Ce493F1DB75320D236e1815e"),
         barter_utils: address!("0xA7EacA68Bffc9443eA08fd58633Eeed3f5EE8A92"),
-        escrow_obligation_nontierable: address!("0x677Aa9e1CD9D05f57FbCa2327155EA7479ec7Ac3"),
-        escrow_obligation_tierable: Address::ZERO, // TODO: Add actual address when deployed
+        escrow_obligation_default: address!("0x677Aa9e1CD9D05f57FbCa2327155EA7479ec7Ac3"),
+        escrow_obligation_unconditional: Address::ZERO, // TODO: Add actual address when deployed
         payment_obligation: address!("0x36Fcf1Ddee838a94B1358285A11e8bbbb90eD9A1"),
     },
     attestation_addresses: AttestationAddresses {
         eas: address!("0xC2679fBD37d54388Ce493F1DB75320D236e1815e"),
         eas_schema_registry: address!("0x0a7E2Ff54e76B8E6659aedc9103FB21c038050D0"),
         barter_utils: address!("0x5E6602F080E9B37267aa52306c699ae54Cd71056"),
-        escrow_obligation_nontierable: address!("0x6eb7792D821f32914Be75901F1b4269B13Efad2e"),
-        escrow_obligation_tierable: Address::ZERO, // TODO: Add actual address when deployed
-        escrow_obligation_2_nontierable: address!("0x1A7c6F951e0a33F4910dbe56a200Eb413AEca17b"),
-        escrow_obligation_2_tierable: Address::ZERO, // TODO: Add actual address when deployed
+        escrow_obligation_default: address!("0x6eb7792D821f32914Be75901F1b4269B13Efad2e"),
+        escrow_obligation_unconditional: Address::ZERO, // TODO: Add actual address when deployed
+        escrow_obligation_2_default: address!("0x1A7c6F951e0a33F4910dbe56a200Eb413AEca17b"),
+        escrow_obligation_2_unconditional: Address::ZERO, // TODO: Add actual address when deployed
     },
 };
 
@@ -219,46 +219,46 @@ pub const FILECOIN_CALIBRATION_ADDRESSES: DefaultExtensionConfig = DefaultExtens
     erc20_addresses: Erc20Addresses {
         eas: address!("0x3c79a0225380fB6F3CB990FfC4E3D5aF4546b524"),
         barter_utils: address!("0xb5800e34602154ce92c5eb0e7cb455306d7d590e"),
-        escrow_obligation_nontierable: address!("0x6bcec91a89a63d50368bce54cb9ed0399992c18b"),
-        escrow_obligation_tierable: Address::ZERO, // TODO: Add actual address when deployed
+        escrow_obligation_default: address!("0x6bcec91a89a63d50368bce54cb9ed0399992c18b"),
+        escrow_obligation_unconditional: Address::ZERO, // TODO: Add actual address when deployed
         payment_obligation: address!("0x33f6f558c1fcac597f2b635bc50554055ff98165"),
     },
     erc721_addresses: Erc721Addresses {
         eas: address!("0x3c79a0225380fB6F3CB990FfC4E3D5aF4546b524"),
         barter_utils: address!("0x797a737defb8cae0a30324ecfa52eaab9c0a5fd6"),
-        escrow_obligation_nontierable: address!("0x99f5335b95e1c0be4c218a59aae26efc50d5673f"),
-        escrow_obligation_tierable: Address::ZERO, // TODO: Add actual address when deployed
+        escrow_obligation_default: address!("0x99f5335b95e1c0be4c218a59aae26efc50d5673f"),
+        escrow_obligation_unconditional: Address::ZERO, // TODO: Add actual address when deployed
         payment_obligation: address!("0x5b6bff4dc108c58b97721330666f56c8028c097c"),
     },
     erc1155_addresses: Erc1155Addresses {
         eas: address!("0x3c79a0225380fB6F3CB990FfC4E3D5aF4546b524"),
         barter_utils: address!("0x850d8df3ff0149bd5a9191a958b287b25564716b"),
-        escrow_obligation_nontierable: address!("0xf9dbc74553faecac775201113198085c4d572805"),
-        escrow_obligation_tierable: Address::ZERO, // TODO: Add actual address when deployed
+        escrow_obligation_default: address!("0xf9dbc74553faecac775201113198085c4d572805"),
+        escrow_obligation_unconditional: Address::ZERO, // TODO: Add actual address when deployed
         payment_obligation: address!("0x4cb076af47f0f3909ebafd88cbc0c4cc8dee17dd"),
     },
     native_token_addresses: NativeTokenAddresses {
         eas: address!("0x3c79a0225380fB6F3CB990FfC4E3D5aF4546b524"),
         barter_utils: address!("0x3c07027874650794eae300c603f066af182ea86a"),
-        escrow_obligation_nontierable: address!("0x7490102a8b821c70679508426823f26c9bab4714"),
-        escrow_obligation_tierable: Address::ZERO, // TODO: Add actual address when deployed
+        escrow_obligation_default: address!("0x7490102a8b821c70679508426823f26c9bab4714"),
+        escrow_obligation_unconditional: Address::ZERO, // TODO: Add actual address when deployed
         payment_obligation: address!("0xd511278d5b9e5f8f9b99d01ea326b8232c133be5"),
     },
     token_bundle_addresses: TokenBundleAddresses {
         eas: address!("0x3c79a0225380fB6F3CB990FfC4E3D5aF4546b524"),
         barter_utils: address!("0xfca2c2df4023a0a418bf354b5bfff1ebfe0520a9"),
-        escrow_obligation_nontierable: address!("0x902ac1997bd29a037263e0d80952c80d69d9afd4"),
-        escrow_obligation_tierable: Address::ZERO, // TODO: Add actual address when deployed
+        escrow_obligation_default: address!("0x902ac1997bd29a037263e0d80952c80d69d9afd4"),
+        escrow_obligation_unconditional: Address::ZERO, // TODO: Add actual address when deployed
         payment_obligation: address!("0xc1b02efec19a171ecbb7c8ad54b9617e80fdf40f"),
     },
     attestation_addresses: AttestationAddresses {
         eas: address!("0x3c79a0225380fB6F3CB990FfC4E3D5aF4546b524"),
         eas_schema_registry: address!("0x2BB94a4E6eC0D81dE7f81007b572Ac09A5BE37b4"),
         barter_utils: address!("0xcda1e1ea425e31a789feffc8e3d90f839ff49c9f"),
-        escrow_obligation_nontierable: address!("0xd59c6c6cb025e76a0a1e706c62a9df38b04694e2"),
-        escrow_obligation_tierable: Address::ZERO, // TODO: Add actual address when deployed
-        escrow_obligation_2_nontierable: address!("0xa22b4d9fe7a746d44be1e724bb1a26593bca2c1b"),
-        escrow_obligation_2_tierable: Address::ZERO, // TODO: Add actual address when deployed
+        escrow_obligation_default: address!("0xd59c6c6cb025e76a0a1e706c62a9df38b04694e2"),
+        escrow_obligation_unconditional: Address::ZERO, // TODO: Add actual address when deployed
+        escrow_obligation_2_default: address!("0xa22b4d9fe7a746d44be1e724bb1a26593bca2c1b"),
+        escrow_obligation_2_unconditional: Address::ZERO, // TODO: Add actual address when deployed
     },
 };
 
@@ -303,46 +303,46 @@ pub const GENLAYER_BRADBURY_ADDRESSES: DefaultExtensionConfig = DefaultExtension
     erc20_addresses: Erc20Addresses {
         eas: address!("0xaC18Fa0DE3123215404a0C5f6d02ed9B2D0D0d98"),
         barter_utils: address!("0x52De4B30721b3E3660A79da7491a9B2F8a9cB1D5"),
-        escrow_obligation_nontierable: address!("0x2A7df117e45D93d34a7893CC3aE8B105Ae0B561C"),
-        escrow_obligation_tierable: Address::ZERO, // TODO: Add actual address when deployed
+        escrow_obligation_default: address!("0x2A7df117e45D93d34a7893CC3aE8B105Ae0B561C"),
+        escrow_obligation_unconditional: Address::ZERO, // TODO: Add actual address when deployed
         payment_obligation: address!("0x59A9c929778Ad2cC4D5DB6151bDEf0F9Fa7A068C"),
     },
     erc721_addresses: Erc721Addresses {
         eas: address!("0xaC18Fa0DE3123215404a0C5f6d02ed9B2D0D0d98"),
         barter_utils: address!("0xA42032D8BFeE2302cC6F80ff51D283Ffc5a4081f"),
-        escrow_obligation_nontierable: address!("0xf04d9CA943f57353A3A735494E503280C1cD5e77"),
-        escrow_obligation_tierable: Address::ZERO, // TODO: Add actual address when deployed
+        escrow_obligation_default: address!("0xf04d9CA943f57353A3A735494E503280C1cD5e77"),
+        escrow_obligation_unconditional: Address::ZERO, // TODO: Add actual address when deployed
         payment_obligation: address!("0x52748DD0E39eD6eA9f626179b5eb512302adA7D9"),
     },
     erc1155_addresses: Erc1155Addresses {
         eas: address!("0xaC18Fa0DE3123215404a0C5f6d02ed9B2D0D0d98"),
         barter_utils: address!("0x6eb7792D821f32914Be75901F1b4269B13Efad2e"),
-        escrow_obligation_nontierable: address!("0x677Aa9e1CD9D05f57FbCa2327155EA7479ec7Ac3"),
-        escrow_obligation_tierable: Address::ZERO, // TODO: Add actual address when deployed
+        escrow_obligation_default: address!("0x677Aa9e1CD9D05f57FbCa2327155EA7479ec7Ac3"),
+        escrow_obligation_unconditional: Address::ZERO, // TODO: Add actual address when deployed
         payment_obligation: address!("0x36Fcf1Ddee838a94B1358285A11e8bbbb90eD9A1"),
     },
     native_token_addresses: NativeTokenAddresses {
         eas: address!("0xaC18Fa0DE3123215404a0C5f6d02ed9B2D0D0d98"),
         barter_utils: address!("0x1A7c6F951e0a33F4910dbe56a200Eb413AEca17b"),
-        escrow_obligation_nontierable: address!("0x5bf7c8b0d60d05af0a3De531EB876De271E80dbc"),
-        escrow_obligation_tierable: Address::ZERO, // TODO: Add actual address when deployed
+        escrow_obligation_default: address!("0x5bf7c8b0d60d05af0a3De531EB876De271E80dbc"),
+        escrow_obligation_unconditional: Address::ZERO, // TODO: Add actual address when deployed
         payment_obligation: address!("0xEB0C0c41F708B8b3556a6F44a1a015a6832C2d2C"),
     },
     token_bundle_addresses: TokenBundleAddresses {
         eas: address!("0xaC18Fa0DE3123215404a0C5f6d02ed9B2D0D0d98"),
         barter_utils: address!("0xf60db64506E366a0A6c1f4cF9D849Adc7bB886D6"),
-        escrow_obligation_nontierable: address!("0xA7EacA68Bffc9443eA08fd58633Eeed3f5EE8A92"),
-        escrow_obligation_tierable: Address::ZERO, // TODO: Add actual address when deployed
+        escrow_obligation_default: address!("0xA7EacA68Bffc9443eA08fd58633Eeed3f5EE8A92"),
+        escrow_obligation_unconditional: Address::ZERO, // TODO: Add actual address when deployed
         payment_obligation: address!("0x9bA50DB048d1E5db034377abf97F92496D027C71"),
     },
     attestation_addresses: AttestationAddresses {
         eas: address!("0xaC18Fa0DE3123215404a0C5f6d02ed9B2D0D0d98"),
         eas_schema_registry: address!("0xA1F9076932f6eEA0D90BBfA1D6E81D001012645D"),
         barter_utils: address!("0x5bf1EE1fEC1bC25d20C4537f74bD0909B195DEBd"),
-        escrow_obligation_nontierable: address!("0x5E6602F080E9B37267aa52306c699ae54Cd71056"),
-        escrow_obligation_tierable: Address::ZERO, // TODO: Add actual address when deployed
-        escrow_obligation_2_nontierable: address!("0x57D5165F9487F6E7bD6E6a24017FAdadc2b1D7D2"),
-        escrow_obligation_2_tierable: Address::ZERO, // TODO: Add actual address when deployed
+        escrow_obligation_default: address!("0x5E6602F080E9B37267aa52306c699ae54Cd71056"),
+        escrow_obligation_unconditional: Address::ZERO, // TODO: Add actual address when deployed
+        escrow_obligation_2_default: address!("0x57D5165F9487F6E7bD6E6a24017FAdadc2b1D7D2"),
+        escrow_obligation_2_unconditional: Address::ZERO, // TODO: Add actual address when deployed
     },
 };
 
@@ -387,45 +387,45 @@ pub const ETHEREUM_ADDRESSES: DefaultExtensionConfig = DefaultExtensionConfig {
     erc20_addresses: Erc20Addresses {
         eas: address!("0xA1207F3BBa224E2c9c3c6D5aF63D0eb1582Ce587"),
         barter_utils: address!("0x5bf7c8b0d60d05af0a3De531EB876De271E80dbc"),
-        escrow_obligation_nontierable: address!("0xB2c808911E84E80156101983897Da7c80e13cB47"),
-        escrow_obligation_tierable: Address::ZERO, // TODO: Add actual address when deployed
+        escrow_obligation_default: address!("0xB2c808911E84E80156101983897Da7c80e13cB47"),
+        escrow_obligation_unconditional: Address::ZERO, // TODO: Add actual address when deployed
         payment_obligation: address!("0xb822aA07F55a8B75Ee133ede1f21C4E49DE7952f"),
     },
     erc721_addresses: Erc721Addresses {
         eas: address!("0xA1207F3BBa224E2c9c3c6D5aF63D0eb1582Ce587"),
         barter_utils: address!("0xEB0C0c41F708B8b3556a6F44a1a015a6832C2d2C"),
-        escrow_obligation_nontierable: address!("0x2A7df117e45D93d34a7893CC3aE8B105Ae0B561C"),
-        escrow_obligation_tierable: Address::ZERO, // TODO: Add actual address when deployed
+        escrow_obligation_default: address!("0x2A7df117e45D93d34a7893CC3aE8B105Ae0B561C"),
+        escrow_obligation_unconditional: Address::ZERO, // TODO: Add actual address when deployed
         payment_obligation: address!("0x59A9c929778Ad2cC4D5DB6151bDEf0F9Fa7A068C"),
     },
     erc1155_addresses: Erc1155Addresses {
         eas: address!("0xA1207F3BBa224E2c9c3c6D5aF63D0eb1582Ce587"),
         barter_utils: address!("0x52De4B30721b3E3660A79da7491a9B2F8a9cB1D5"),
-        escrow_obligation_nontierable: address!("0xf04d9CA943f57353A3A735494E503280C1cD5e77"),
-        escrow_obligation_tierable: Address::ZERO, // TODO: Add actual address when deployed
+        escrow_obligation_default: address!("0xf04d9CA943f57353A3A735494E503280C1cD5e77"),
+        escrow_obligation_unconditional: Address::ZERO, // TODO: Add actual address when deployed
         payment_obligation: address!("0x52748DD0E39eD6eA9f626179b5eb512302adA7D9"),
     },
     native_token_addresses: NativeTokenAddresses {
         eas: address!("0xA1207F3BBa224E2c9c3c6D5aF63D0eb1582Ce587"),
         barter_utils: address!("0xA42032D8BFeE2302cC6F80ff51D283Ffc5a4081f"),
-        escrow_obligation_nontierable: address!("0x9bA50DB048d1E5db034377abf97F92496D027C71"),
-        escrow_obligation_tierable: Address::ZERO, // TODO: Add actual address when deployed
+        escrow_obligation_default: address!("0x9bA50DB048d1E5db034377abf97F92496D027C71"),
+        escrow_obligation_unconditional: Address::ZERO, // TODO: Add actual address when deployed
         payment_obligation: address!("0xf60db64506E366a0A6c1f4cF9D849Adc7bB886D6"),
     },
     token_bundle_addresses: TokenBundleAddresses {
         eas: address!("0xA1207F3BBa224E2c9c3c6D5aF63D0eb1582Ce587"),
         barter_utils: address!("0xA7EacA68Bffc9443eA08fd58633Eeed3f5EE8A92"),
-        escrow_obligation_nontierable: address!("0x677Aa9e1CD9D05f57FbCa2327155EA7479ec7Ac3"),
-        escrow_obligation_tierable: Address::ZERO, // TODO: Add actual address when deployed
+        escrow_obligation_default: address!("0x677Aa9e1CD9D05f57FbCa2327155EA7479ec7Ac3"),
+        escrow_obligation_unconditional: Address::ZERO, // TODO: Add actual address when deployed
         payment_obligation: address!("0x36Fcf1Ddee838a94B1358285A11e8bbbb90eD9A1"),
     },
     attestation_addresses: AttestationAddresses {
         eas: address!("0xA1207F3BBa224E2c9c3c6D5aF63D0eb1582Ce587"),
         eas_schema_registry: address!("0xA7b39296258348C78294F95B872b282326A97BDF"),
         barter_utils: address!("0x5E6602F080E9B37267aa52306c699ae54Cd71056"),
-        escrow_obligation_nontierable: address!("0x6eb7792D821f32914Be75901F1b4269B13Efad2e"),
-        escrow_obligation_tierable: Address::ZERO, // TODO: Add actual address when deployed
-        escrow_obligation_2_nontierable: address!("0x1A7c6F951e0a33F4910dbe56a200Eb413AEca17b"),
-        escrow_obligation_2_tierable: Address::ZERO, // TODO: Add actual address when deployed
+        escrow_obligation_default: address!("0x6eb7792D821f32914Be75901F1b4269B13Efad2e"),
+        escrow_obligation_unconditional: Address::ZERO, // TODO: Add actual address when deployed
+        escrow_obligation_2_default: address!("0x1A7c6F951e0a33F4910dbe56a200Eb413AEca17b"),
+        escrow_obligation_2_unconditional: Address::ZERO, // TODO: Add actual address when deployed
     },
 };

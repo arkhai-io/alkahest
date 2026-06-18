@@ -42,7 +42,7 @@ async def test_buy_with_erc1155(env, alice_client):
     await alice_client.erc1155.util.approve_all(env.mock_addresses.erc1155_a, "escrow")
     
     # Alice creates escrow with custom demand
-    buy_result = await alice_client.erc1155.escrow.non_tierable.create(price_data, arbiter_data, 0)
+    buy_result = await alice_client.erc1155.escrow.default.create(price_data, arbiter_data, 0)
     
     assert buy_result['log']['uid'] and buy_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid buy attestation UID"
     
@@ -53,7 +53,7 @@ async def test_buy_with_erc1155(env, alice_client):
     assert alice_balance_after == expected_remaining, "Alice should have {expected_remaining} tokens remaining, got {alice_balance_after}"
     
     # Check escrow contract's balance increased
-    escrow_balance = mock_erc1155_a.balance_of(env.addresses.erc1155_addresses.escrow_obligation_nontierable, 1)
+    escrow_balance = mock_erc1155_a.balance_of(env.addresses.erc1155_addresses.escrow_obligation_default, 1)
     
     assert escrow_balance == 5, "Escrow should have 5 tokens, got {escrow_balance}"
     

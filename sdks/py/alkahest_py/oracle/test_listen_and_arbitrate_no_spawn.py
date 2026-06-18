@@ -36,7 +36,7 @@ async def test_arbitrate_many_all(env, alice_client, bob_client, charlie_client)
     }
 
     expiration = int(time.time()) + 3600
-    escrow_receipt = await alice_client.erc20.escrow.non_tierable.permit_and_create(
+    escrow_receipt = await alice_client.erc20.escrow.default.permit_and_create(
         price, arbiter, expiration
     )
     escrow_uid = escrow_receipt['log']['uid']

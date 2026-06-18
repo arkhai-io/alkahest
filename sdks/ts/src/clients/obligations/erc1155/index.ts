@@ -7,8 +7,8 @@ import { type Erc1155UtilClient, makeErc1155UtilClient } from "./util";
 
 export { type Erc1155BarterUtilsClient, makeErc1155BarterUtilsClient } from "./barterUtils";
 export { type Erc1155EscrowClient, makeErc1155EscrowClient } from "./escrow";
-export { type Erc1155NonTierableEscrowClient, makeErc1155NonTierableEscrowClient } from "./escrow/nonTierable";
-export { type Erc1155TierableEscrowClient, makeErc1155TierableEscrowClient } from "./escrow/tierable";
+export { type Erc1155DefaultEscrowClient, makeErc1155DefaultEscrowClient } from "./escrow/default";
+export { type Erc1155UnconditionalEscrowClient, makeErc1155UnconditionalEscrowClient } from "./escrow/unconditional";
 export { type Erc1155PaymentClient, makeErc1155PaymentClient } from "./payment";
 export { type Erc1155UtilClient, makeErc1155UtilClient } from "./util";
 
@@ -17,7 +17,7 @@ export type Erc1155Addresses = {
   barterUtils: `0x${string}`;
   nativeTokenBarterUtils: `0x${string}`;
   escrowObligation: `0x${string}`;
-  escrowObligationTierable: `0x${string}`;
+  escrowObligationUnconditional: `0x${string}`;
   paymentObligation: `0x${string}`;
 };
 
@@ -26,7 +26,7 @@ export const pickErc1155Addresses = (addresses: ChainAddresses): Erc1155Addresse
   barterUtils: addresses.erc1155BarterUtils,
   nativeTokenBarterUtils: addresses.nativeTokenBarterUtils,
   escrowObligation: addresses.erc1155EscrowObligation,
-  escrowObligationTierable: addresses.erc1155EscrowObligation, // TODO: Add tierable address when available
+  escrowObligationUnconditional: addresses.erc1155EscrowObligation, // TODO: Add unconditional address when available
   paymentObligation: addresses.erc1155PaymentObligation,
 });
 

@@ -42,7 +42,7 @@ async def test_buy_erc721_with_erc1155(env, alice_client):
     assert buy_result['log']['uid'] and buy_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid buy attestation UID"
     
     # Verify escrow happened
-    escrow_balance = mock_erc1155_a.balance_of(env.addresses.erc1155_addresses.escrow_obligation_nontierable, 1)
+    escrow_balance = mock_erc1155_a.balance_of(env.addresses.erc1155_addresses.escrow_obligation_default, 1)
     alice_balance_after = mock_erc1155_a.balance_of(env.alice, 1)
     
     assert escrow_balance == 5, "5 tokens should be in escrow, got {escrow_balance}"

@@ -1,7 +1,7 @@
 use alkahest_rs::{
     contracts::obligations::{
         NativeTokenPaymentObligation,
-        escrow::non_tierable::NativeTokenEscrowObligation,
+        escrow::default_escrow::NativeTokenEscrowObligation,
     },
 };
 use alloy::{

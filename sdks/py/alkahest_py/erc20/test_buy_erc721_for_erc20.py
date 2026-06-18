@@ -31,7 +31,7 @@ async def test_buy_erc721_for_erc20(env, alice_client):
     
     # Verify Alice's ERC20 tokens are in escrow
     alice_balance_after_escrow = mock_erc20.balance_of(env.alice)
-    escrow_balance = mock_erc20.balance_of(env.addresses.erc20_addresses.escrow_obligation_nontierable)
+    escrow_balance = mock_erc20.balance_of(env.addresses.erc20_addresses.escrow_obligation_default)
     
     expected_alice_balance = alice_initial_erc20 + 100 - 50  # initial + transfer - escrowed
     assert alice_balance_after_escrow == expected_alice_balance, "Alice should have {expected_alice_balance} ERC20 after escrow, got {alice_balance_after_escrow}"

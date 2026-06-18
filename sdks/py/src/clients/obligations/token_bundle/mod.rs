@@ -123,7 +123,7 @@ impl PyTokenBundleEscrowObligationData {
 
     #[staticmethod]
     pub fn decode(obligation_data: Vec<u8>) -> PyResult<PyTokenBundleEscrowObligationData> {
-        use alkahest_rs::contracts::obligations::escrow::non_tierable::TokenBundleEscrowObligation;
+        use alkahest_rs::contracts::obligations::escrow::default_escrow::TokenBundleEscrowObligation;
         use alloy::sol_types::SolValue;
         let decoded = TokenBundleEscrowObligation::ObligationData::abi_decode(&obligation_data)
             .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
@@ -132,7 +132,7 @@ impl PyTokenBundleEscrowObligationData {
 
     #[staticmethod]
     pub fn encode(obligation: &PyTokenBundleEscrowObligationData) -> PyResult<Vec<u8>> {
-        use alkahest_rs::contracts::obligations::escrow::non_tierable::TokenBundleEscrowObligation;
+        use alkahest_rs::contracts::obligations::escrow::default_escrow::TokenBundleEscrowObligation;
         use alloy::{
             primitives::{Address, Bytes, U256},
             sol_types::SolValue,
@@ -209,11 +209,11 @@ impl PyTokenBundleEscrowObligationData {
     }
 }
 
-impl From<alkahest_rs::contracts::obligations::escrow::non_tierable::TokenBundleEscrowObligation::ObligationData>
+impl From<alkahest_rs::contracts::obligations::escrow::default_escrow::TokenBundleEscrowObligation::ObligationData>
     for PyTokenBundleEscrowObligationData
 {
     fn from(
-        data: alkahest_rs::contracts::obligations::escrow::non_tierable::TokenBundleEscrowObligation::ObligationData,
+        data: alkahest_rs::contracts::obligations::escrow::default_escrow::TokenBundleEscrowObligation::ObligationData,
     ) -> Self {
         Self {
             arbiter: format!("{:?}", data.arbiter),
@@ -230,11 +230,11 @@ impl From<alkahest_rs::contracts::obligations::escrow::non_tierable::TokenBundle
     }
 }
 
-impl From<alkahest_rs::contracts::obligations::escrow::tierable::TokenBundleEscrowObligation::ObligationData>
+impl From<alkahest_rs::contracts::obligations::escrow::unconditional::UnconditionalTokenBundleEscrowObligation::ObligationData>
     for PyTokenBundleEscrowObligationData
 {
     fn from(
-        data: alkahest_rs::contracts::obligations::escrow::tierable::TokenBundleEscrowObligation::ObligationData,
+        data: alkahest_rs::contracts::obligations::escrow::unconditional::UnconditionalTokenBundleEscrowObligation::ObligationData,
     ) -> Self {
         Self {
             arbiter: format!("{:?}", data.arbiter),

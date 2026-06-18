@@ -68,7 +68,16 @@ function categorizeContract(
   // Obligations
   if (relativePath.startsWith("obligations/")) {
     if (relativePath.includes("escrow/")) {
-      return { category: "escrow", subcategory: relativePath.includes("tierable/") ? "tierable" : "non-tierable" };
+      if (relativePath.includes("escrow/default/")) {
+        return { category: "escrow", subcategory: "default" };
+      }
+      if (relativePath.includes("escrow/unconditional/")) {
+        return { category: "escrow", subcategory: "unconditional" };
+      }
+      if (relativePath.includes("escrow/hook-based/")) {
+        return { category: "escrow", subcategory: "hook-based" };
+      }
+      return { category: "escrow" };
     }
     if (relativePath.includes("payment/")) {
       return { category: "payment" };

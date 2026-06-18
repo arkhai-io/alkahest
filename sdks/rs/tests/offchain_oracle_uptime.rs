@@ -157,7 +157,7 @@ async fn setup_escrow_with_uptime_demand(
         .alice_client
         .erc20()
         .escrow()
-        .non_tierable()
+        .default()
         .permit_and_create(&price, &arbiter_item, expiration)
         .await?;
     let escrow_uid = DefaultAlkahestClient::get_attested_event(escrow_receipt)?.uid;
@@ -292,7 +292,7 @@ async fn run_async_uptime_oracle_example(test: &TestContext) -> eyre::Result<()>
             match test
                 .bob_client
                 .erc20()
-                .escrow().non_tierable().collect(escrow_uid, fulfillment_uid)
+                .escrow().default().collect(escrow_uid, fulfillment_uid)
                 .await
             {
                 Ok(receipt) => break receipt,

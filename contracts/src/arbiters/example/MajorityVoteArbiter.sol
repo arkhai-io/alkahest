@@ -169,7 +169,6 @@ contract MajorityVoteArbiter is IArbiter {
         bytes32 /* fulfilling */
     ) public view override returns (bool) {
         // Validate attestation integrity
-        if (!obligation._checkIntrinsic()) return false;
 
         DemandData memory demandData = abi.decode(demand, (DemandData));
 

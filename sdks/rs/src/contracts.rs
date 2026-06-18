@@ -328,7 +328,7 @@ pub mod obligations {
 
     // Escrow obligations submodule
     pub mod escrow {
-        pub mod non_tierable {
+        pub mod default_escrow {
             use alloy::sol;
 
             sol!(
@@ -336,7 +336,7 @@ pub mod obligations {
                 #[sol(rpc)]
                 #[derive(Debug)]
                 ERC20EscrowObligation,
-                "src/contracts/obligations/escrow/non-tierable/ERC20EscrowObligation.json"
+                "src/contracts/obligations/escrow/default/ERC20EscrowObligation.json"
             );
 
             sol!(
@@ -344,7 +344,7 @@ pub mod obligations {
                 #[sol(rpc)]
                 #[derive(Debug)]
                 ERC721EscrowObligation,
-                "src/contracts/obligations/escrow/non-tierable/ERC721EscrowObligation.json"
+                "src/contracts/obligations/escrow/default/ERC721EscrowObligation.json"
             );
 
             sol!(
@@ -352,7 +352,7 @@ pub mod obligations {
                 #[sol(rpc)]
                 #[derive(Debug)]
                 ERC1155EscrowObligation,
-                "src/contracts/obligations/escrow/non-tierable/ERC1155EscrowObligation.json"
+                "src/contracts/obligations/escrow/default/ERC1155EscrowObligation.json"
             );
 
             sol!(
@@ -360,7 +360,7 @@ pub mod obligations {
                 #[sol(rpc)]
                 #[derive(Debug)]
                 TokenBundleEscrowObligation,
-                "src/contracts/obligations/escrow/non-tierable/TokenBundleEscrowObligation.json"
+                "src/contracts/obligations/escrow/default/TokenBundleEscrowObligation.json"
             );
 
             sol!(
@@ -368,7 +368,7 @@ pub mod obligations {
                 #[sol(rpc)]
                 #[derive(Debug)]
                 NativeTokenEscrowObligation,
-                "src/contracts/obligations/escrow/non-tierable/NativeTokenEscrowObligation.json"
+                "src/contracts/obligations/escrow/default/NativeTokenEscrowObligation.json"
             );
 
             sol!(
@@ -376,7 +376,7 @@ pub mod obligations {
                 #[sol(rpc)]
                 #[derive(Debug)]
                 AttestationEscrowObligation,
-                "src/contracts/obligations/escrow/non-tierable/AttestationEscrowObligation.json"
+                "src/contracts/obligations/escrow/default/AttestationEscrowObligation.json"
             );
 
             sol!(
@@ -384,67 +384,67 @@ pub mod obligations {
                 #[sol(rpc)]
                 #[derive(Debug)]
                 AttestationEscrowObligation2,
-                "src/contracts/obligations/escrow/non-tierable/AttestationEscrowObligation2.json"
+                "src/contracts/obligations/escrow/default/AttestationEscrowObligation2.json"
             );
         }
 
-        pub mod tierable {
+        pub mod unconditional {
             use alloy::sol;
 
             sol!(
                 #[allow(missing_docs)]
                 #[sol(rpc)]
                 #[derive(Debug)]
-                ERC20EscrowObligation,
-                "src/contracts/obligations/escrow/tierable/ERC20EscrowObligation.json"
+                UnconditionalERC20EscrowObligation,
+                "src/contracts/obligations/escrow/unconditional/UnconditionalERC20EscrowObligation.json"
             );
 
             sol!(
                 #[allow(missing_docs)]
                 #[sol(rpc)]
                 #[derive(Debug)]
-                ERC721EscrowObligation,
-                "src/contracts/obligations/escrow/tierable/ERC721EscrowObligation.json"
+                UnconditionalERC721EscrowObligation,
+                "src/contracts/obligations/escrow/unconditional/UnconditionalERC721EscrowObligation.json"
             );
 
             sol!(
                 #[allow(missing_docs)]
                 #[sol(rpc)]
                 #[derive(Debug)]
-                ERC1155EscrowObligation,
-                "src/contracts/obligations/escrow/tierable/ERC1155EscrowObligation.json"
+                UnconditionalERC1155EscrowObligation,
+                "src/contracts/obligations/escrow/unconditional/UnconditionalERC1155EscrowObligation.json"
             );
 
             sol!(
                 #[allow(missing_docs)]
                 #[sol(rpc)]
                 #[derive(Debug)]
-                TokenBundleEscrowObligation,
-                "src/contracts/obligations/escrow/tierable/TokenBundleEscrowObligation.json"
+                UnconditionalTokenBundleEscrowObligation,
+                "src/contracts/obligations/escrow/unconditional/UnconditionalTokenBundleEscrowObligation.json"
             );
 
             sol!(
                 #[allow(missing_docs)]
                 #[sol(rpc)]
                 #[derive(Debug)]
-                NativeTokenEscrowObligation,
-                "src/contracts/obligations/escrow/tierable/NativeTokenEscrowObligation.json"
+                UnconditionalNativeTokenEscrowObligation,
+                "src/contracts/obligations/escrow/unconditional/UnconditionalNativeTokenEscrowObligation.json"
             );
 
             sol!(
                 #[allow(missing_docs)]
                 #[sol(rpc)]
                 #[derive(Debug)]
-                AttestationEscrowObligation,
-                "src/contracts/obligations/escrow/tierable/AttestationEscrowObligation.json"
+                UnconditionalAttestationEscrowObligation,
+                "src/contracts/obligations/escrow/unconditional/UnconditionalAttestationEscrowObligation.json"
             );
 
             sol!(
                 #[allow(missing_docs)]
                 #[sol(rpc)]
                 #[derive(Debug)]
-                AttestationEscrowObligation2,
-                "src/contracts/obligations/escrow/tierable/AttestationEscrowObligation2.json"
+                UnconditionalAttestationEscrowObligation2,
+                "src/contracts/obligations/escrow/unconditional/UnconditionalAttestationEscrowObligation2.json"
             );
         }
     }

@@ -742,7 +742,7 @@ await bobClient.erc721.util.approve({ address: erc721Token, id: 42n }, "barter")
 const payment = await bobClient.erc721.barter.payErc721ForErc20(attested.uid);
 
 // Can also use direct escrow/payment for custom demands (approveAndCreate combines both steps)
-const escrow = await aliceClient.erc20.escrow.nonTierable.approveAndCreate(
+const escrow = await aliceClient.erc20.escrow.default.approveAndCreate(
   { address: usdcToken, value: 1000000000n },
   { arbiter: customArbiter, demand: customDemand },
   0n,
@@ -782,7 +782,7 @@ let payment_receipt = bob_client
 let escrow_receipt = alice_client
     .erc20()
     .escrow()
-    .non_tierable()
+    .default()
     .approve_and_create(
         &bid,
         &ArbiterData {
@@ -819,7 +819,7 @@ escrow = await alice_client.erc20.barter.permit_and_buy_erc20_for_erc20(bid, ask
 payment = await bob_client.erc20.barter.permit_and_pay_erc20_for_erc20(escrow["log"]["uid"])
 
 # Can also use direct escrow/payment for custom demands (approve_and_create combines both steps)
-escrow = await alice_client.erc20.escrow.non_tierable.approve_and_create(
+escrow = await alice_client.erc20.escrow.default.approve_and_create(
     {"address": usdc_token, "value": 1000000000},
     {"arbiter": custom_arbiter, "demand": custom_demand},
     0

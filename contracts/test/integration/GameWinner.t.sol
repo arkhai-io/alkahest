@@ -529,7 +529,7 @@ contract GameWinnerTest is Test {
         assertTrue(bobResult, "Bob should be able to claim");
     }
 
-    function testExpiredAttestation() public {
+    function testCheckObligationIgnoresExpiredAttestation() public {
         // Warp to a future time so we can create expired attestations
         vm.warp(3 days);
 
@@ -560,17 +560,16 @@ contract GameWinnerTest is Test {
             validAfter: 0
         });
 
-        // The arbiter should revert when checking expired attestations
-        // due to the ArbiterUtils._checkIntrinsic() function
-        vm.expectRevert(abi.encodeWithSignature("DeadlineExpired()"));
-        gameWinnerArbiter.checkObligation(
+        bool result = gameWinnerArbiter.checkObligation(
             expiredAttestation,
             abi.encode(demand),
             bytes32(0)
         );
+
+        assertTrue(result, "Semantic arbiter should ignore expiration");
     }
 
-    function testRevokedAttestation() public {
+    function testCheckObligationIgnoresRevokedAttestation() public {
         // Create revoked attestation
         Attestation memory revokedAttestation = Attestation({
             uid: bytes32(uint256(1)),
@@ -598,13 +597,12 @@ contract GameWinnerTest is Test {
             validAfter: 0
         });
 
-        // The arbiter should revert when checking revoked attestations
-        // due to the ArbiterUtils._checkIntrinsic() function
-        vm.expectRevert(abi.encodeWithSignature("AttestationRevoked()"));
-        gameWinnerArbiter.checkObligation(
+        bool result = gameWinnerArbiter.checkObligation(
             revokedAttestation,
             abi.encode(demand),
             bytes32(0)
         );
+
+        assertTrue(result, "Semantic arbiter should ignore revocation");
     }
 }

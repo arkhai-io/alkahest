@@ -87,7 +87,7 @@ async fn run_synchronous_oracle_capitalization_example(test: &TestContext) -> ey
         .alice_client
         .erc20()
         .escrow()
-        .non_tierable()
+        .default()
         .permit_and_create(&price, &arbiter_item, expiration)
         .await?;
     let escrow_uid = DefaultAlkahestClient::get_attested_event(escrow_receipt)?.uid;
@@ -183,7 +183,7 @@ async fn run_synchronous_oracle_capitalization_example(test: &TestContext) -> ey
     // Step 5. The successful arbitration lets Bob claim the escrowed payment.
     test.bob_client
         .erc20()
-        .escrow().non_tierable().collect(escrow_uid, fulfillment_uid)
+        .escrow().default().collect(escrow_uid, fulfillment_uid)
         .await?;
 
     Ok(())

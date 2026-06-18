@@ -66,7 +66,7 @@ async def test_pay_erc721_for_bundle(env, alice_client, bob_client):
         "demand": demand_bytes
     }
     
-    buy_result = await bob_client.token_bundle.escrow.non_tierable.create(bundle_data, arbiter_data, 0)
+    buy_result = await bob_client.token_bundle.escrow.default.create(bundle_data, arbiter_data, 0)
     
     assert buy_result['log']['uid'] and buy_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid buy attestation UID"
     

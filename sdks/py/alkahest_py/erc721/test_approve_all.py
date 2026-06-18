@@ -48,7 +48,7 @@ async def test_approve_all(env, alice_client):
     # Verify approval for escrow obligation using isApprovedForAll
     escrow_approved = mock_erc721_a.is_approved_for_all(
         env.alice, 
-        env.addresses.erc721_addresses.escrow_obligation_nontierable
+        env.addresses.erc721_addresses.escrow_obligation_default
     )
     
     assert escrow_approved, "Escrow approval for all should be set correctly"

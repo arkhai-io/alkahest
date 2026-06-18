@@ -8,15 +8,15 @@ import {ERC20BarterUtils} from "@src/utils/barter/ERC20BarterUtils.sol";
 import {ERC721BarterUtils} from "@src/utils/barter/ERC721BarterUtils.sol";
 import {ERC1155BarterUtils} from "@src/utils/barter/ERC1155BarterUtils.sol";
 
-import {ERC20EscrowObligation} from "@src/obligations/escrow/non-tierable/ERC20EscrowObligation.sol";
+import {ERC20EscrowObligation} from "@src/obligations/escrow/default/ERC20EscrowObligation.sol";
 import {ERC20PaymentObligation} from "@src/obligations/payment/ERC20PaymentObligation.sol";
-import {ERC721EscrowObligation} from "@src/obligations/escrow/non-tierable/ERC721EscrowObligation.sol";
+import {ERC721EscrowObligation} from "@src/obligations/escrow/default/ERC721EscrowObligation.sol";
 import {ERC721PaymentObligation} from "@src/obligations/payment/ERC721PaymentObligation.sol";
-import {ERC1155EscrowObligation} from "@src/obligations/escrow/non-tierable/ERC1155EscrowObligation.sol";
+import {ERC1155EscrowObligation} from "@src/obligations/escrow/default/ERC1155EscrowObligation.sol";
 import {ERC1155PaymentObligation} from "@src/obligations/payment/ERC1155PaymentObligation.sol";
-import {TokenBundleEscrowObligation} from "@src/obligations/escrow/non-tierable/TokenBundleEscrowObligation.sol";
+import {TokenBundleEscrowObligation} from "@src/obligations/escrow/default/TokenBundleEscrowObligation.sol";
 import {TokenBundlePaymentObligation} from "@src/obligations/payment/TokenBundlePaymentObligation.sol";
-import {NativeTokenEscrowObligation} from "@src/obligations/escrow/non-tierable/NativeTokenEscrowObligation.sol";
+import {NativeTokenEscrowObligation} from "@src/obligations/escrow/default/NativeTokenEscrowObligation.sol";
 import {NativeTokenPaymentObligation} from "@src/obligations/payment/NativeTokenPaymentObligation.sol";
 
 contract DeployCrossTokenBarter is Script {

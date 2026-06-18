@@ -7,8 +7,8 @@ import { type Erc20UtilClient, makeErc20UtilClient } from "./util";
 
 export { type Erc20BarterUtilsClient, makeErc20BarterUtilsClient } from "./barterUtils";
 export { type Erc20EscrowClient, makeErc20EscrowClient } from "./escrow";
-export { type Erc20NonTierableEscrowClient, makeErc20NonTierableEscrowClient } from "./escrow/nonTierable";
-export { type Erc20TierableEscrowClient, makeErc20TierableEscrowClient } from "./escrow/tierable";
+export { type Erc20DefaultEscrowClient, makeErc20DefaultEscrowClient } from "./escrow/default";
+export { type Erc20UnconditionalEscrowClient, makeErc20UnconditionalEscrowClient } from "./escrow/unconditional";
 export { type Erc20PaymentClient, makeErc20PaymentClient } from "./payment";
 export { type Erc20UtilClient, makeErc20UtilClient } from "./util";
 
@@ -16,7 +16,7 @@ export type Erc20Addresses = {
   eas: `0x${string}`;
   barterUtils: `0x${string}`;
   escrowObligation: `0x${string}`;
-  escrowObligationTierable: `0x${string}`;
+  escrowObligationUnconditional: `0x${string}`;
   paymentObligation: `0x${string}`;
 };
 
@@ -24,7 +24,7 @@ export const pickErc20Addresses = (addresses: ChainAddresses): Erc20Addresses =>
   eas: addresses.eas,
   barterUtils: addresses.erc20BarterUtils,
   escrowObligation: addresses.erc20EscrowObligation,
-  escrowObligationTierable: addresses.erc20EscrowObligation, // TODO: Add tierable address when available
+  escrowObligationUnconditional: addresses.erc20EscrowObligation, // TODO: Add unconditional address when available
   paymentObligation: addresses.erc20PaymentObligation,
 });
 

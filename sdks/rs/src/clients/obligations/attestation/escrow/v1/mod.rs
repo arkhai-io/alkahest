@@ -2,11 +2,11 @@
 //!
 //! V1 stores the full attestation data in the escrow obligation.
 
-pub mod non_tierable;
-pub mod tierable;
+pub mod default_escrow;
+pub mod unconditional;
 
-pub use non_tierable::NonTierable;
-pub use tierable::Tierable;
+pub use default_escrow::Default;
+pub use unconditional::Unconditional;
 
 use super::super::AttestationModule;
 
@@ -20,13 +20,13 @@ impl<'a> V1<'a> {
         Self { module }
     }
 
-    /// Access non-tierable escrow operations (1:1 escrow:fulfillment)
-    pub fn non_tierable(&self) -> NonTierable<'a> {
-        NonTierable::new(self.module)
+    /// Access default escrow operations (1:1 escrow:fulfillment)
+    pub fn default(&self) -> Default<'a> {
+        Default::new(self.module)
     }
 
-    /// Access tierable escrow operations (1:many escrow:fulfillment)
-    pub fn tierable(&self) -> Tierable<'a> {
-        Tierable::new(self.module)
+    /// Access unconditional escrow operations (no default fulfillment checks)
+    pub fn unconditional(&self) -> Unconditional<'a> {
+        Unconditional::new(self.module)
     }
 }

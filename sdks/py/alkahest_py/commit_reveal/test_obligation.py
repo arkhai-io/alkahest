@@ -297,7 +297,7 @@ async def test_full_lifecycle_escrow_commit_reveal_collect(env, alice_client, bo
     escrow_amount = 2_000_000_000_000_000_000  # 2 ETH in wei
     expiration = int(time.time()) + 3600
 
-    escrow_result = await alice_client.native_token.escrow.non_tierable.create(
+    escrow_result = await alice_client.native_token.escrow.default.create(
         {"value": escrow_amount},
         {"arbiter": cr_obligation_address, "demand": b""},
         expiration,
@@ -337,7 +337,7 @@ async def test_full_lifecycle_escrow_commit_reveal_collect(env, alice_client, bo
     assert claimed is True
 
     # 4. Bob collects the escrowed native tokens
-    collect_tx = await bob_client.native_token.escrow.non_tierable.collect(
+    collect_tx = await bob_client.native_token.escrow.default.collect(
         escrow_uid, fulfillment_uid
     )
     assert collect_tx.startswith("0x")
@@ -358,7 +358,7 @@ async def test_bond_slash_after_deadline(env, alice_client, bob_client):
     escrow_amount = 2_000_000_000_000_000_000  # 2 ETH in wei
     expiration = int(time.time()) + 7200
 
-    escrow_result = await alice_client.native_token.escrow.non_tierable.create(
+    escrow_result = await alice_client.native_token.escrow.default.create(
         {"value": escrow_amount},
         {"arbiter": cr_obligation_address, "demand": b""},
         expiration,

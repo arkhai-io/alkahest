@@ -86,7 +86,7 @@ impl PyERC721EscrowObligationData {
 
     #[staticmethod]
     pub fn decode(obligation_data: Vec<u8>) -> PyResult<PyERC721EscrowObligationData> {
-        use alkahest_rs::contracts::obligations::escrow::non_tierable::ERC721EscrowObligation;
+        use alkahest_rs::contracts::obligations::escrow::default_escrow::ERC721EscrowObligation;
         use alloy::sol_types::SolValue;
         let decoded = ERC721EscrowObligation::ObligationData::abi_decode(&obligation_data)
             .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
@@ -95,7 +95,7 @@ impl PyERC721EscrowObligationData {
 
     #[staticmethod]
     pub fn encode(obligation: &PyERC721EscrowObligationData) -> PyResult<Vec<u8>> {
-        use alkahest_rs::contracts::obligations::escrow::non_tierable::ERC721EscrowObligation;
+        use alkahest_rs::contracts::obligations::escrow::default_escrow::ERC721EscrowObligation;
         use alloy::{
             primitives::{Address, Bytes, U256},
             sol_types::SolValue,
@@ -121,10 +121,10 @@ impl PyERC721EscrowObligationData {
     }
 }
 
-impl From<alkahest_rs::contracts::obligations::escrow::non_tierable::ERC721EscrowObligation::ObligationData>
+impl From<alkahest_rs::contracts::obligations::escrow::default_escrow::ERC721EscrowObligation::ObligationData>
     for PyERC721EscrowObligationData
 {
-    fn from(data: alkahest_rs::contracts::obligations::escrow::non_tierable::ERC721EscrowObligation::ObligationData) -> Self {
+    fn from(data: alkahest_rs::contracts::obligations::escrow::default_escrow::ERC721EscrowObligation::ObligationData) -> Self {
         Self {
             token: format!("{:?}", data.token),
             token_id: data.tokenId.to_string(),
@@ -134,10 +134,10 @@ impl From<alkahest_rs::contracts::obligations::escrow::non_tierable::ERC721Escro
     }
 }
 
-impl From<alkahest_rs::contracts::obligations::escrow::tierable::ERC721EscrowObligation::ObligationData>
+impl From<alkahest_rs::contracts::obligations::escrow::unconditional::UnconditionalERC721EscrowObligation::ObligationData>
     for PyERC721EscrowObligationData
 {
-    fn from(data: alkahest_rs::contracts::obligations::escrow::tierable::ERC721EscrowObligation::ObligationData) -> Self {
+    fn from(data: alkahest_rs::contracts::obligations::escrow::unconditional::UnconditionalERC721EscrowObligation::ObligationData) -> Self {
         Self {
             token: format!("{:?}", data.token),
             token_id: data.tokenId.to_string(),

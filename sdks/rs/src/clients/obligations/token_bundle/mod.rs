@@ -1,7 +1,7 @@
 //! Token Bundle obligations module
 //!
 //! This module provides functionality for token bundle operations including:
-//! - Escrow obligations (tierable and non-tierable)
+//! - Escrow obligations (unconditional and default)
 //! - Payment obligations
 //! - Barter utilities for cross-token trading
 //! - Utility functions for approvals
@@ -114,14 +114,14 @@ macro_rules! impl_token_bundle_escrow_obligation {
 // TokenBundle-specific conversions (for contracts::obligations and contracts::utils::token_bundle)
 impl_token_bundle_payment_obligation!(contracts::obligations::TokenBundlePaymentObligation::ObligationData);
 impl_token_bundle_payment_obligation!(contracts::utils::token_bundle::TokenBundlePaymentObligation::ObligationData);
-impl_token_bundle_escrow_obligation!(contracts::obligations::escrow::non_tierable::TokenBundleEscrowObligation::ObligationData);
-impl_token_bundle_escrow_obligation!(contracts::obligations::escrow::tierable::TokenBundleEscrowObligation::ObligationData);
+impl_token_bundle_escrow_obligation!(contracts::obligations::escrow::default_escrow::TokenBundleEscrowObligation::ObligationData);
+impl_token_bundle_escrow_obligation!(contracts::obligations::escrow::unconditional::UnconditionalTokenBundleEscrowObligation::ObligationData);
 impl_token_bundle_escrow_obligation!(contracts::utils::token_bundle::TokenBundleEscrowObligation::ObligationData);
 
 // --- ABI conversions for TokenBundle obligation types ---
 impl_abi_conversions!(contracts::obligations::TokenBundlePaymentObligation::ObligationData);
-impl_abi_conversions!(contracts::obligations::escrow::non_tierable::TokenBundleEscrowObligation::ObligationData);
-impl_abi_conversions!(contracts::obligations::escrow::tierable::TokenBundleEscrowObligation::ObligationData);
+impl_abi_conversions!(contracts::obligations::escrow::default_escrow::TokenBundleEscrowObligation::ObligationData);
+impl_abi_conversions!(contracts::obligations::escrow::unconditional::UnconditionalTokenBundleEscrowObligation::ObligationData);
 
 use crate::addresses::BASE_SEPOLIA_ADDRESSES;
 use crate::extensions::{AlkahestExtension, ContractModule};
@@ -131,8 +131,8 @@ use crate::types::{ApprovalPurpose, ProviderContext, SharedWalletProvider};
 pub struct TokenBundleAddresses {
     pub eas: Address,
     pub barter_utils: Address,
-    pub escrow_obligation_nontierable: Address,
-    pub escrow_obligation_tierable: Address,
+    pub escrow_obligation_default: Address,
+    pub escrow_obligation_unconditional: Address,
     pub payment_obligation: Address,
 }
 
@@ -176,7 +176,7 @@ impl ContractModule for TokenBundleModule {
         match contract {
             TokenBundleContract::Eas => self.addresses.eas,
             TokenBundleContract::BarterUtils => self.addresses.barter_utils,
-            TokenBundleContract::EscrowObligation => self.addresses.escrow_obligation_nontierable,
+            TokenBundleContract::EscrowObligation => self.addresses.escrow_obligation_default,
             TokenBundleContract::PaymentObligation => self.addresses.payment_obligation,
         }
     }
@@ -200,11 +200,11 @@ impl TokenBundleModule {
     ///
     /// # Example
     /// ```rust,ignore
-    /// // Non-tierable escrow (1:1 escrow:fulfillment)
-    /// client.token_bundle().escrow().non_tierable().create(&price, &item, expiration).await?;
+    /// // Non-unconditional escrow (1:1 escrow:fulfillment)
+    /// client.token_bundle().escrow().default().create(&price, &item, expiration).await?;
     ///
-    /// // Tierable escrow (1:many escrow:fulfillment)
-    /// client.token_bundle().escrow().tierable().create(&price, &item, expiration).await?;
+    /// // Unconditional escrow (1:many escrow:fulfillment)
+    /// client.token_bundle().escrow().unconditional().create(&price, &item, expiration).await?;
     /// ```
     pub fn escrow(&self) -> escrow::Escrow<'_> {
         escrow::Escrow::new(self)
@@ -277,7 +277,7 @@ mod tests {
         DefaultAlkahestClient,
         contracts::obligations::{
             TokenBundlePaymentObligation,
-            escrow::non_tierable::TokenBundleEscrowObligation,
+            escrow::default_escrow::TokenBundleEscrowObligation,
         },
         extensions::HasTokenBundle,
         fixtures::{MockERC20Permit, MockERC721, MockERC1155},
@@ -402,7 +402,7 @@ mod tests {
                 test.addresses
                     .clone()
                     .token_bundle_addresses
-                    .escrow_obligation_nontierable,
+                    .escrow_obligation_default,
             )
             .call()
             .await?;
@@ -414,7 +414,7 @@ mod tests {
                 test.addresses
                     .clone()
                     .token_bundle_addresses
-                    .escrow_obligation_nontierable,
+                    .escrow_obligation_default,
                 U256::from(1),
             )
             .call()
@@ -451,7 +451,7 @@ mod tests {
                 test.addresses
                     .clone()
                     .token_bundle_addresses
-                    .escrow_obligation_nontierable,
+                    .escrow_obligation_default,
             )
             .call()
             .await?;
@@ -463,7 +463,7 @@ mod tests {
                 test.addresses
                     .clone()
                     .token_bundle_addresses
-                    .escrow_obligation_nontierable,
+                    .escrow_obligation_default,
                 U256::from(1),
             )
             .call()
@@ -477,7 +477,7 @@ mod tests {
         );
 
         assert_eq!(
-            final_erc721_a_owner, test.addresses.token_bundle_addresses.escrow_obligation_nontierable,
+            final_erc721_a_owner, test.addresses.token_bundle_addresses.escrow_obligation_default,
             "ERC721 token should be in escrow"
         );
 
@@ -569,7 +569,7 @@ mod tests {
             .bob_client
             .token_bundle()
             .escrow()
-            .non_tierable()
+            .default()
             .create(
                 &bob_bundle,
                 &ArbiterData {
@@ -753,7 +753,7 @@ mod tests {
 
         // Verify tokens are in escrow
         assert_eq!(
-            escrow_erc721_owner, test.addresses.token_bundle_addresses.escrow_obligation_nontierable,
+            escrow_erc721_owner, test.addresses.token_bundle_addresses.escrow_obligation_default,
             "ERC721 token should be in escrow before collection"
         );
 
@@ -761,7 +761,7 @@ mod tests {
         test.alice_client
             .token_bundle()
             .escrow()
-            .non_tierable()
+            .default()
             .reclaim_expired(buy_attestation)
             .await?;
 
@@ -966,7 +966,7 @@ mod tests {
                 test.addresses
                     .clone()
                     .token_bundle_addresses
-                    .escrow_obligation_nontierable,
+                    .escrow_obligation_default,
             )
             .call()
             .await?;
@@ -983,7 +983,7 @@ mod tests {
                 test.addresses
                     .clone()
                     .token_bundle_addresses
-                    .escrow_obligation_nontierable,
+                    .escrow_obligation_default,
             )
             .call()
             .await?;
@@ -997,7 +997,7 @@ mod tests {
         let erc1155_escrow_approved = mock_erc1155_a
             .isApprovedForAll(
                 test.alice.address(),
-                test.addresses.token_bundle_addresses.escrow_obligation_nontierable,
+                test.addresses.token_bundle_addresses.escrow_obligation_default,
             )
             .call()
             .await?;
@@ -1066,7 +1066,7 @@ mod tests {
             .alice_client
             .token_bundle()
             .escrow()
-            .non_tierable()
+            .default()
             .create(&alice_bundle, &item, 0)
             .await?;
 
@@ -1079,7 +1079,7 @@ mod tests {
                 test.addresses
                     .clone()
                     .token_bundle_addresses
-                    .escrow_obligation_nontierable,
+                    .escrow_obligation_default,
             )
             .call()
             .await?;
@@ -1089,7 +1089,7 @@ mod tests {
                 test.addresses
                     .clone()
                     .token_bundle_addresses
-                    .escrow_obligation_nontierable,
+                    .escrow_obligation_default,
                 U256::from(1),
             )
             .call()
@@ -1097,7 +1097,7 @@ mod tests {
 
         // Verify tokens are in escrow
         assert_eq!(
-            erc721_owner, test.addresses.token_bundle_addresses.escrow_obligation_nontierable,
+            erc721_owner, test.addresses.token_bundle_addresses.escrow_obligation_default,
             "ERC721 token should be owned by escrow contract"
         );
 
@@ -1396,7 +1396,7 @@ mod tests {
                 test.addresses
                     .clone()
                     .token_bundle_addresses
-                    .escrow_obligation_nontierable,
+                    .escrow_obligation_default,
             )
             .call()
             .await?;
@@ -1408,7 +1408,7 @@ mod tests {
             .alice_client
             .token_bundle()
             .escrow()
-            .non_tierable()
+            .default()
             .approve_and_create(&alice_bundle, &item, 0)
             .await?;
 
@@ -1435,7 +1435,7 @@ mod tests {
                 test.addresses
                     .clone()
                     .token_bundle_addresses
-                    .escrow_obligation_nontierable,
+                    .escrow_obligation_default,
             )
             .call()
             .await?;
@@ -1445,7 +1445,7 @@ mod tests {
                 test.addresses
                     .clone()
                     .token_bundle_addresses
-                    .escrow_obligation_nontierable,
+                    .escrow_obligation_default,
                 U256::from(1),
             )
             .call()
@@ -1453,7 +1453,7 @@ mod tests {
 
         // Verify tokens are in escrow
         assert_eq!(
-            erc721_owner, test.addresses.token_bundle_addresses.escrow_obligation_nontierable,
+            erc721_owner, test.addresses.token_bundle_addresses.escrow_obligation_default,
             "ERC721 token should be owned by escrow contract"
         );
 
@@ -1471,7 +1471,7 @@ mod tests {
         let final_approval = mock_erc1155_a
             .isApprovedForAll(
                 test.alice.address(),
-                test.addresses.token_bundle_addresses.escrow_obligation_nontierable,
+                test.addresses.token_bundle_addresses.escrow_obligation_default,
             )
             .call()
             .await?;

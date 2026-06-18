@@ -27,11 +27,11 @@ async def test_buy_with_erc20(env, alice_client):
     }
     expiration = 0
 
-    result = await alice_client.erc20.escrow.non_tierable.create(
+    result = await alice_client.erc20.escrow.default.create(
     price_data, arbiter_data, expiration
     )
     
     alice_final_balance = mock_erc20.balance_of(env.alice)
-    escrow_balance = mock_erc20.balance_of(env.addresses.erc20_addresses.escrow_obligation_nontierable)
+    escrow_balance = mock_erc20.balance_of(env.addresses.erc20_addresses.escrow_obligation_default)
     
     assert alice_final_balance == 0 and escrow_balance == 100

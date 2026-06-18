@@ -12,15 +12,15 @@ import {
 } from "../../src/clients/obligations/attestation/escrow/v2";
 // ERC20 codecs
 import {
-  decodeObligation as decodeErc20NonTierableEscrow,
-  type Erc20NonTierableEscrowObligationData,
-  encodeObligation as encodeErc20NonTierableEscrow,
-} from "../../src/clients/obligations/erc20/escrow/nonTierable";
+  decodeObligation as decodeErc20DefaultEscrow,
+  type Erc20DefaultEscrowObligationData,
+  encodeObligation as encodeErc20DefaultEscrow,
+} from "../../src/clients/obligations/erc20/escrow/default";
 import {
-  decodeObligation as decodeErc20TierableEscrow,
-  type Erc20TierableEscrowObligationData,
-  encodeObligation as encodeErc20TierableEscrow,
-} from "../../src/clients/obligations/erc20/escrow/tierable";
+  decodeObligation as decodeErc20UnconditionalEscrow,
+  type Erc20UnconditionalEscrowObligationData,
+  encodeObligation as encodeErc20UnconditionalEscrow,
+} from "../../src/clients/obligations/erc20/escrow/unconditional";
 import {
   decodeObligation as decodeErc20Payment,
   type Erc20PaymentObligationData,
@@ -28,15 +28,15 @@ import {
 } from "../../src/clients/obligations/erc20/payment";
 // ERC721 codecs
 import {
-  decodeObligation as decodeErc721NonTierableEscrow,
-  type Erc721NonTierableEscrowObligationData,
-  encodeObligation as encodeErc721NonTierableEscrow,
-} from "../../src/clients/obligations/erc721/escrow/nonTierable";
+  decodeObligation as decodeErc721DefaultEscrow,
+  type Erc721DefaultEscrowObligationData,
+  encodeObligation as encodeErc721DefaultEscrow,
+} from "../../src/clients/obligations/erc721/escrow/default";
 import {
-  decodeObligation as decodeErc721TierableEscrow,
-  type Erc721TierableEscrowObligationData,
-  encodeObligation as encodeErc721TierableEscrow,
-} from "../../src/clients/obligations/erc721/escrow/tierable";
+  decodeObligation as decodeErc721UnconditionalEscrow,
+  type Erc721UnconditionalEscrowObligationData,
+  encodeObligation as encodeErc721UnconditionalEscrow,
+} from "../../src/clients/obligations/erc721/escrow/unconditional";
 import {
   decodeObligation as decodeErc721Payment,
   type Erc721PaymentObligationData,
@@ -44,15 +44,15 @@ import {
 } from "../../src/clients/obligations/erc721/payment";
 // ERC1155 codecs
 import {
-  decodeObligation as decodeErc1155NonTierableEscrow,
-  type Erc1155NonTierableEscrowObligationData,
-  encodeObligation as encodeErc1155NonTierableEscrow,
-} from "../../src/clients/obligations/erc1155/escrow/nonTierable";
+  decodeObligation as decodeErc1155DefaultEscrow,
+  type Erc1155DefaultEscrowObligationData,
+  encodeObligation as encodeErc1155DefaultEscrow,
+} from "../../src/clients/obligations/erc1155/escrow/default";
 import {
-  decodeObligation as decodeErc1155TierableEscrow,
-  type Erc1155TierableEscrowObligationData,
-  encodeObligation as encodeErc1155TierableEscrow,
-} from "../../src/clients/obligations/erc1155/escrow/tierable";
+  decodeObligation as decodeErc1155UnconditionalEscrow,
+  type Erc1155UnconditionalEscrowObligationData,
+  encodeObligation as encodeErc1155UnconditionalEscrow,
+} from "../../src/clients/obligations/erc1155/escrow/unconditional";
 import {
   decodeObligation as decodeErc1155Payment,
   type Erc1155PaymentObligationData,
@@ -60,15 +60,15 @@ import {
 } from "../../src/clients/obligations/erc1155/payment";
 // NativeToken codecs
 import {
-  decodeObligation as decodeNativeTokenNonTierableEscrow,
-  encodeObligation as encodeNativeTokenNonTierableEscrow,
-  type NativeTokenNonTierableEscrowObligationData,
-} from "../../src/clients/obligations/nativeToken/escrow/nonTierable";
+  decodeObligation as decodeNativeTokenDefaultEscrow,
+  encodeObligation as encodeNativeTokenDefaultEscrow,
+  type NativeTokenDefaultEscrowObligationData,
+} from "../../src/clients/obligations/nativeToken/escrow/default";
 import {
-  decodeObligation as decodeNativeTokenTierableEscrow,
-  encodeObligation as encodeNativeTokenTierableEscrow,
-  type NativeTokenTierableEscrowObligationData,
-} from "../../src/clients/obligations/nativeToken/escrow/tierable";
+  decodeObligation as decodeNativeTokenUnconditionalEscrow,
+  encodeObligation as encodeNativeTokenUnconditionalEscrow,
+  type NativeTokenUnconditionalEscrowObligationData,
+} from "../../src/clients/obligations/nativeToken/escrow/unconditional";
 import {
   decodeObligation as decodeNativeTokenPayment,
   encodeObligation as encodeNativeTokenPayment,
@@ -82,15 +82,15 @@ import {
 } from "../../src/clients/obligations/string";
 // TokenBundle codecs
 import {
-  decodeObligation as decodeTokenBundleNonTierableEscrow,
-  encodeObligation as encodeTokenBundleNonTierableEscrow,
-  type TokenBundleNonTierableEscrowObligationData,
-} from "../../src/clients/obligations/tokenBundle/escrow/nonTierable";
+  decodeObligation as decodeTokenBundleDefaultEscrow,
+  encodeObligation as encodeTokenBundleDefaultEscrow,
+  type TokenBundleDefaultEscrowObligationData,
+} from "../../src/clients/obligations/tokenBundle/escrow/default";
 import {
-  decodeObligation as decodeTokenBundleTierableEscrow,
-  encodeObligation as encodeTokenBundleTierableEscrow,
-  type TokenBundleTierableEscrowObligationData,
-} from "../../src/clients/obligations/tokenBundle/escrow/tierable";
+  decodeObligation as decodeTokenBundleUnconditionalEscrow,
+  encodeObligation as encodeTokenBundleUnconditionalEscrow,
+  type TokenBundleUnconditionalEscrowObligationData,
+} from "../../src/clients/obligations/tokenBundle/escrow/unconditional";
 import {
   decodeObligation as decodeTokenBundlePayment,
   encodeObligation as encodeTokenBundlePayment,
@@ -107,53 +107,53 @@ const mockRefUID = "0x0000000000000000000000000000000000000000000000000000000000
 
 describe("Obligation Codec Static Functions", () => {
   describe("ERC20 Codecs", () => {
-    describe("Non-Tierable Escrow", () => {
-      test("should encode and decode ERC20 non-tierable escrow obligation", () => {
-        const data: Erc20NonTierableEscrowObligationData = {
+    describe("Default Escrow", () => {
+      test("should encode and decode ERC20 default escrow obligation", () => {
+        const data: Erc20DefaultEscrowObligationData = {
           token: mockAddress,
           amount: 1000000n,
           arbiter: mockArbiter,
           demand: mockDemand,
         };
 
-        const encoded = encodeErc20NonTierableEscrow(data);
+        const encoded = encodeErc20DefaultEscrow(data);
         expect(encoded).toMatch(/^0x[0-9a-fA-F]+$/);
 
-        const decoded = decodeErc20NonTierableEscrow(encoded);
+        const decoded = decodeErc20DefaultEscrow(encoded);
         expect(decoded.token.toLowerCase()).toBe(data.token.toLowerCase());
         expect(decoded.amount).toBe(data.amount);
         expect(decoded.arbiter.toLowerCase()).toBe(data.arbiter.toLowerCase());
         expect(decoded.demand).toBe(data.demand);
       });
 
-      test("should handle edge cases for ERC20 non-tierable escrow", () => {
-        const data: Erc20NonTierableEscrowObligationData = {
+      test("should handle edge cases for ERC20 default escrow", () => {
+        const data: Erc20DefaultEscrowObligationData = {
           token: mockAddress,
           amount: 0n,
           arbiter: mockArbiter,
           demand: "0x",
         };
 
-        const encoded = encodeErc20NonTierableEscrow(data);
-        const decoded = decodeErc20NonTierableEscrow(encoded);
+        const encoded = encodeErc20DefaultEscrow(data);
+        const decoded = decodeErc20DefaultEscrow(encoded);
         expect(decoded.amount).toBe(0n);
         expect(decoded.demand).toBe("0x");
       });
     });
 
-    describe("Tierable Escrow", () => {
-      test("should encode and decode ERC20 tierable escrow obligation", () => {
-        const data: Erc20TierableEscrowObligationData = {
+    describe("Unconditional Escrow", () => {
+      test("should encode and decode ERC20 unconditional escrow obligation", () => {
+        const data: Erc20UnconditionalEscrowObligationData = {
           token: mockAddress,
           amount: 5000000n,
           arbiter: mockArbiter,
           demand: mockDemand,
         };
 
-        const encoded = encodeErc20TierableEscrow(data);
+        const encoded = encodeErc20UnconditionalEscrow(data);
         expect(encoded).toMatch(/^0x[0-9a-fA-F]+$/);
 
-        const decoded = decodeErc20TierableEscrow(encoded);
+        const decoded = decodeErc20UnconditionalEscrow(encoded);
         expect(decoded.token.toLowerCase()).toBe(data.token.toLowerCase());
         expect(decoded.amount).toBe(data.amount);
         expect(decoded.arbiter.toLowerCase()).toBe(data.arbiter.toLowerCase());
@@ -181,19 +181,19 @@ describe("Obligation Codec Static Functions", () => {
   });
 
   describe("ERC721 Codecs", () => {
-    describe("Non-Tierable Escrow", () => {
-      test("should encode and decode ERC721 non-tierable escrow obligation", () => {
-        const data: Erc721NonTierableEscrowObligationData = {
+    describe("Default Escrow", () => {
+      test("should encode and decode ERC721 default escrow obligation", () => {
+        const data: Erc721DefaultEscrowObligationData = {
           token: mockAddress,
           tokenId: 42n,
           arbiter: mockArbiter,
           demand: mockDemand,
         };
 
-        const encoded = encodeErc721NonTierableEscrow(data);
+        const encoded = encodeErc721DefaultEscrow(data);
         expect(encoded).toMatch(/^0x[0-9a-fA-F]+$/);
 
-        const decoded = decodeErc721NonTierableEscrow(encoded);
+        const decoded = decodeErc721DefaultEscrow(encoded);
         expect(decoded.token.toLowerCase()).toBe(data.token.toLowerCase());
         expect(decoded.tokenId).toBe(data.tokenId);
         expect(decoded.arbiter.toLowerCase()).toBe(data.arbiter.toLowerCase());
@@ -201,19 +201,19 @@ describe("Obligation Codec Static Functions", () => {
       });
     });
 
-    describe("Tierable Escrow", () => {
-      test("should encode and decode ERC721 tierable escrow obligation", () => {
-        const data: Erc721TierableEscrowObligationData = {
+    describe("Unconditional Escrow", () => {
+      test("should encode and decode ERC721 unconditional escrow obligation", () => {
+        const data: Erc721UnconditionalEscrowObligationData = {
           token: mockAddress,
           tokenId: 123n,
           arbiter: mockArbiter,
           demand: mockDemand,
         };
 
-        const encoded = encodeErc721TierableEscrow(data);
+        const encoded = encodeErc721UnconditionalEscrow(data);
         expect(encoded).toMatch(/^0x[0-9a-fA-F]+$/);
 
-        const decoded = decodeErc721TierableEscrow(encoded);
+        const decoded = decodeErc721UnconditionalEscrow(encoded);
         expect(decoded.token.toLowerCase()).toBe(data.token.toLowerCase());
         expect(decoded.tokenId).toBe(data.tokenId);
         expect(decoded.arbiter.toLowerCase()).toBe(data.arbiter.toLowerCase());
@@ -241,9 +241,9 @@ describe("Obligation Codec Static Functions", () => {
   });
 
   describe("ERC1155 Codecs", () => {
-    describe("Non-Tierable Escrow", () => {
-      test("should encode and decode ERC1155 non-tierable escrow obligation", () => {
-        const data: Erc1155NonTierableEscrowObligationData = {
+    describe("Default Escrow", () => {
+      test("should encode and decode ERC1155 default escrow obligation", () => {
+        const data: Erc1155DefaultEscrowObligationData = {
           token: mockAddress,
           tokenId: 1n,
           amount: 100n,
@@ -251,10 +251,10 @@ describe("Obligation Codec Static Functions", () => {
           demand: mockDemand,
         };
 
-        const encoded = encodeErc1155NonTierableEscrow(data);
+        const encoded = encodeErc1155DefaultEscrow(data);
         expect(encoded).toMatch(/^0x[0-9a-fA-F]+$/);
 
-        const decoded = decodeErc1155NonTierableEscrow(encoded);
+        const decoded = decodeErc1155DefaultEscrow(encoded);
         expect(decoded.token.toLowerCase()).toBe(data.token.toLowerCase());
         expect(decoded.tokenId).toBe(data.tokenId);
         expect(decoded.amount).toBe(data.amount);
@@ -263,9 +263,9 @@ describe("Obligation Codec Static Functions", () => {
       });
     });
 
-    describe("Tierable Escrow", () => {
-      test("should encode and decode ERC1155 tierable escrow obligation", () => {
-        const data: Erc1155TierableEscrowObligationData = {
+    describe("Unconditional Escrow", () => {
+      test("should encode and decode ERC1155 unconditional escrow obligation", () => {
+        const data: Erc1155UnconditionalEscrowObligationData = {
           token: mockAddress,
           tokenId: 5n,
           amount: 500n,
@@ -273,10 +273,10 @@ describe("Obligation Codec Static Functions", () => {
           demand: mockDemand,
         };
 
-        const encoded = encodeErc1155TierableEscrow(data);
+        const encoded = encodeErc1155UnconditionalEscrow(data);
         expect(encoded).toMatch(/^0x[0-9a-fA-F]+$/);
 
-        const decoded = decodeErc1155TierableEscrow(encoded);
+        const decoded = decodeErc1155UnconditionalEscrow(encoded);
         expect(decoded.token.toLowerCase()).toBe(data.token.toLowerCase());
         expect(decoded.tokenId).toBe(data.tokenId);
         expect(decoded.amount).toBe(data.amount);
@@ -307,36 +307,36 @@ describe("Obligation Codec Static Functions", () => {
   });
 
   describe("NativeToken Codecs", () => {
-    describe("Non-Tierable Escrow", () => {
-      test("should encode and decode NativeToken non-tierable escrow obligation", () => {
-        const data: NativeTokenNonTierableEscrowObligationData = {
+    describe("Default Escrow", () => {
+      test("should encode and decode NativeToken default escrow obligation", () => {
+        const data: NativeTokenDefaultEscrowObligationData = {
           arbiter: mockArbiter,
           demand: mockDemand,
           amount: 1000000000000000000n, // 1 ETH
         };
 
-        const encoded = encodeNativeTokenNonTierableEscrow(data);
+        const encoded = encodeNativeTokenDefaultEscrow(data);
         expect(encoded).toMatch(/^0x[0-9a-fA-F]+$/);
 
-        const decoded = decodeNativeTokenNonTierableEscrow(encoded);
+        const decoded = decodeNativeTokenDefaultEscrow(encoded);
         expect(decoded.arbiter.toLowerCase()).toBe(data.arbiter.toLowerCase());
         expect(decoded.demand).toBe(data.demand);
         expect(decoded.amount).toBe(data.amount);
       });
     });
 
-    describe("Tierable Escrow", () => {
-      test("should encode and decode NativeToken tierable escrow obligation", () => {
-        const data: NativeTokenTierableEscrowObligationData = {
+    describe("Unconditional Escrow", () => {
+      test("should encode and decode NativeToken unconditional escrow obligation", () => {
+        const data: NativeTokenUnconditionalEscrowObligationData = {
           arbiter: mockArbiter,
           demand: mockDemand,
           amount: 500000000000000000n, // 0.5 ETH
         };
 
-        const encoded = encodeNativeTokenTierableEscrow(data);
+        const encoded = encodeNativeTokenUnconditionalEscrow(data);
         expect(encoded).toMatch(/^0x[0-9a-fA-F]+$/);
 
-        const decoded = decodeNativeTokenTierableEscrow(encoded);
+        const decoded = decodeNativeTokenUnconditionalEscrow(encoded);
         expect(decoded.arbiter.toLowerCase()).toBe(data.arbiter.toLowerCase());
         expect(decoded.demand).toBe(data.demand);
         expect(decoded.amount).toBe(data.amount);
@@ -361,9 +361,9 @@ describe("Obligation Codec Static Functions", () => {
   });
 
   describe("TokenBundle Codecs", () => {
-    describe("Non-Tierable Escrow", () => {
-      test("should encode and decode TokenBundle non-tierable escrow obligation", () => {
-        const data: TokenBundleNonTierableEscrowObligationData = {
+    describe("Default Escrow", () => {
+      test("should encode and decode TokenBundle default escrow obligation", () => {
+        const data: TokenBundleDefaultEscrowObligationData = {
           nativeAmount: 1000000000000000000n,
           erc20Tokens: [mockAddress],
           erc20Amounts: [5000000n],
@@ -376,10 +376,10 @@ describe("Obligation Codec Static Functions", () => {
           demand: mockDemand,
         };
 
-        const encoded = encodeTokenBundleNonTierableEscrow(data);
+        const encoded = encodeTokenBundleDefaultEscrow(data);
         expect(encoded).toMatch(/^0x[0-9a-fA-F]+$/);
 
-        const decoded = decodeTokenBundleNonTierableEscrow(encoded);
+        const decoded = decodeTokenBundleDefaultEscrow(encoded);
         expect(decoded.nativeAmount).toBe(data.nativeAmount);
         expect(decoded.erc20Tokens.length).toBe(1);
         expect(decoded.erc20Tokens[0]!.toLowerCase()).toBe(data.erc20Tokens[0]!.toLowerCase());
@@ -389,7 +389,7 @@ describe("Obligation Codec Static Functions", () => {
       });
 
       test("should handle empty token bundle", () => {
-        const data: TokenBundleNonTierableEscrowObligationData = {
+        const data: TokenBundleDefaultEscrowObligationData = {
           nativeAmount: 0n,
           erc20Tokens: [],
           erc20Amounts: [],
@@ -402,16 +402,16 @@ describe("Obligation Codec Static Functions", () => {
           demand: "0x",
         };
 
-        const encoded = encodeTokenBundleNonTierableEscrow(data);
-        const decoded = decodeTokenBundleNonTierableEscrow(encoded);
+        const encoded = encodeTokenBundleDefaultEscrow(data);
+        const decoded = decodeTokenBundleDefaultEscrow(encoded);
         expect(decoded.nativeAmount).toBe(0n);
         expect(decoded.erc20Tokens.length).toBe(0);
       });
     });
 
-    describe("Tierable Escrow", () => {
-      test("should encode and decode TokenBundle tierable escrow obligation", () => {
-        const data: TokenBundleTierableEscrowObligationData = {
+    describe("Unconditional Escrow", () => {
+      test("should encode and decode TokenBundle unconditional escrow obligation", () => {
+        const data: TokenBundleUnconditionalEscrowObligationData = {
           nativeAmount: 2000000000000000000n,
           erc20Tokens: [mockAddress, mockAddress2],
           erc20Amounts: [1000000n, 2000000n],
@@ -424,10 +424,10 @@ describe("Obligation Codec Static Functions", () => {
           demand: mockDemand,
         };
 
-        const encoded = encodeTokenBundleTierableEscrow(data);
+        const encoded = encodeTokenBundleUnconditionalEscrow(data);
         expect(encoded).toMatch(/^0x[0-9a-fA-F]+$/);
 
-        const decoded = decodeTokenBundleTierableEscrow(encoded);
+        const decoded = decodeTokenBundleUnconditionalEscrow(encoded);
         expect(decoded.nativeAmount).toBe(data.nativeAmount);
         expect(decoded.erc20Tokens.length).toBe(2);
         expect(decoded.erc1155Tokens.length).toBe(1);
@@ -563,30 +563,30 @@ describe("Obligation Codec Static Functions", () => {
 
   describe("Round-trip consistency", () => {
     test("multiple encodes of same data should produce identical output", () => {
-      const data: Erc20NonTierableEscrowObligationData = {
+      const data: Erc20DefaultEscrowObligationData = {
         token: mockAddress,
         amount: 1000000n,
         arbiter: mockArbiter,
         demand: mockDemand,
       };
 
-      const encoded1 = encodeErc20NonTierableEscrow(data);
-      const encoded2 = encodeErc20NonTierableEscrow(data);
+      const encoded1 = encodeErc20DefaultEscrow(data);
+      const encoded2 = encodeErc20DefaultEscrow(data);
       expect(encoded1).toBe(encoded2);
     });
 
     test("decode-encode-decode should preserve data", () => {
-      const originalData: Erc721NonTierableEscrowObligationData = {
+      const originalData: Erc721DefaultEscrowObligationData = {
         token: mockAddress,
         tokenId: 12345n,
         arbiter: mockArbiter,
         demand: mockDemand,
       };
 
-      const encoded1 = encodeErc721NonTierableEscrow(originalData);
-      const decoded1 = decodeErc721NonTierableEscrow(encoded1);
-      const encoded2 = encodeErc721NonTierableEscrow(decoded1);
-      const decoded2 = decodeErc721NonTierableEscrow(encoded2);
+      const encoded1 = encodeErc721DefaultEscrow(originalData);
+      const decoded1 = decodeErc721DefaultEscrow(encoded1);
+      const encoded2 = encodeErc721DefaultEscrow(decoded1);
+      const decoded2 = decodeErc721DefaultEscrow(encoded2);
 
       expect(decoded2.token.toLowerCase()).toBe(originalData.token.toLowerCase());
       expect(decoded2.tokenId).toBe(originalData.tokenId);
@@ -597,28 +597,28 @@ describe("Obligation Codec Static Functions", () => {
 
   describe("Large values", () => {
     test("should handle large bigint values", () => {
-      const data: Erc20NonTierableEscrowObligationData = {
+      const data: Erc20DefaultEscrowObligationData = {
         token: mockAddress,
         amount: 2n ** 128n - 1n, // Large but valid uint256 value
         arbiter: mockArbiter,
         demand: mockDemand,
       };
 
-      const encoded = encodeErc20NonTierableEscrow(data);
-      const decoded = decodeErc20NonTierableEscrow(encoded);
+      const encoded = encodeErc20DefaultEscrow(data);
+      const decoded = decodeErc20DefaultEscrow(encoded);
       expect(decoded.amount).toBe(data.amount);
     });
 
     test("should handle max uint256 for token IDs", () => {
-      const data: Erc721NonTierableEscrowObligationData = {
+      const data: Erc721DefaultEscrowObligationData = {
         token: mockAddress,
         tokenId: 2n ** 256n - 1n,
         arbiter: mockArbiter,
         demand: mockDemand,
       };
 
-      const encoded = encodeErc721NonTierableEscrow(data);
-      const decoded = decodeErc721NonTierableEscrow(encoded);
+      const encoded = encodeErc721DefaultEscrow(data);
+      const decoded = decodeErc721DefaultEscrow(encoded);
       expect(decoded.tokenId).toBe(data.tokenId);
     });
   });

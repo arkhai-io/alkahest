@@ -71,7 +71,7 @@ async def test_synchronous_offchain_oracle_capitalization_flow(env, alice_client
     price = {"address": env.mock_addresses.erc20_a, "value": 100}
     expiration = int(time.time()) + 3600
 
-    escrow_receipt = await alice_client.erc20.escrow.non_tierable.permit_and_create(
+    escrow_receipt = await alice_client.erc20.escrow.default.permit_and_create(
         price, arbiter, expiration
     )
     escrow_uid = escrow_receipt['log']['uid']
@@ -142,6 +142,6 @@ async def test_synchronous_offchain_oracle_capitalization_flow(env, alice_client
     assert all(d.decision for d in decisions), "Oracle rejected fulfillment"
 
     # Step 5: The successful arbitration lets Bob claim the escrowed payment
-    await bob_client.erc20.escrow.non_tierable.collect(escrow_uid, fulfillment_uid)
+    await bob_client.erc20.escrow.default.collect(escrow_uid, fulfillment_uid)
 
     print("Synchronous offchain oracle capitalization test passed")

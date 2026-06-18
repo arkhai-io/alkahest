@@ -46,7 +46,7 @@ test("synchronous offchain oracle capitalization flow", async () => {
     data: demandBytes,
   });
 
-  const { attested: escrow } = await testContext.alice.client.erc20.escrow.nonTierable.permitAndCreate(
+  const { attested: escrow } = await testContext.alice.client.erc20.escrow.default.permitAndCreate(
     {
       address: testContext.mockAddresses.erc20A,
       value: parseEther("100"),
@@ -133,7 +133,7 @@ test("synchronous offchain oracle capitalization flow", async () => {
     expect(decision?.decision).toBe(true);
   });
 
-  const collectionHash = await testContext.bob.client.erc20.escrow.nonTierable.collect(escrow.uid, fulfillment.uid);
+  const collectionHash = await testContext.bob.client.erc20.escrow.default.collect(escrow.uid, fulfillment.uid);
 
   expect(collectionHash).toBeTruthy();
 });

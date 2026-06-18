@@ -15,8 +15,8 @@ use serde::{Deserialize, Serialize};
 use crate::addresses::BASE_SEPOLIA_ADDRESSES;
 use crate::contracts::{
     self, IEAS,
-    obligations::escrow::non_tierable::AttestationEscrowObligation,
-    obligations::escrow::tierable::AttestationEscrowObligation as TierableAttestationEscrowObligation,
+    obligations::escrow::default_escrow::AttestationEscrowObligation,
+    obligations::escrow::unconditional::UnconditionalAttestationEscrowObligation as UnconditionalAttestationEscrowObligation,
     utils::AttestationBarterUtils,
 };
 use crate::extensions::{AlkahestExtension, ContractModule};
@@ -52,14 +52,14 @@ macro_rules! impl_attestation_request {
 }
 
 impl_attestation_request!(AttestationEscrowObligation);
-impl_attestation_request!(TierableAttestationEscrowObligation);
+impl_attestation_request!(UnconditionalAttestationEscrowObligation);
 impl_attestation_request!(AttestationBarterUtils);
 
 // --- ABI conversions for Attestation obligation types ---
-impl_abi_conversions!(contracts::obligations::escrow::non_tierable::AttestationEscrowObligation::ObligationData);
-impl_abi_conversions!(contracts::obligations::escrow::non_tierable::AttestationEscrowObligation2::ObligationData);
-impl_abi_conversions!(contracts::obligations::escrow::tierable::AttestationEscrowObligation::ObligationData);
-impl_abi_conversions!(contracts::obligations::escrow::tierable::AttestationEscrowObligation2::ObligationData);
+impl_abi_conversions!(contracts::obligations::escrow::default_escrow::AttestationEscrowObligation::ObligationData);
+impl_abi_conversions!(contracts::obligations::escrow::default_escrow::AttestationEscrowObligation2::ObligationData);
+impl_abi_conversions!(contracts::obligations::escrow::unconditional::UnconditionalAttestationEscrowObligation::ObligationData);
+impl_abi_conversions!(contracts::obligations::escrow::unconditional::UnconditionalAttestationEscrowObligation2::ObligationData);
 
 /// Macro to implement From<IEAS::Attestation> for arbiter-specific Attestation types.
 /// These types have the same structure but are defined separately in each arbiter contract.
@@ -92,10 +92,10 @@ pub struct AttestationAddresses {
     pub eas: Address,
     pub eas_schema_registry: Address,
     pub barter_utils: Address,
-    pub escrow_obligation_nontierable: Address,
-    pub escrow_obligation_tierable: Address,
-    pub escrow_obligation_2_nontierable: Address,
-    pub escrow_obligation_2_tierable: Address,
+    pub escrow_obligation_default: Address,
+    pub escrow_obligation_unconditional: Address,
+    pub escrow_obligation_2_default: Address,
+    pub escrow_obligation_2_unconditional: Address,
 }
 
 #[derive(Clone)]
@@ -134,8 +134,8 @@ impl ContractModule for AttestationModule {
             AttestationContract::Eas => self.addresses.eas,
             AttestationContract::EasSchemaRegistry => self.addresses.eas_schema_registry,
             AttestationContract::BarterUtils => self.addresses.barter_utils,
-            AttestationContract::EscrowObligation => self.addresses.escrow_obligation_nontierable,
-            AttestationContract::EscrowObligation2 => self.addresses.escrow_obligation_2_nontierable,
+            AttestationContract::EscrowObligation => self.addresses.escrow_obligation_default,
+            AttestationContract::EscrowObligation2 => self.addresses.escrow_obligation_2_default,
         }
     }
 }
@@ -294,7 +294,7 @@ mod tests {
         let arbiter = test.addresses.attestation_addresses.barter_utils;
         let demand = Bytes::from(vec![4, 5, 6]);
 
-        let escrow_data = contracts::obligations::escrow::non_tierable::AttestationEscrowObligation::ObligationData {
+        let escrow_data = contracts::obligations::escrow::default_escrow::AttestationEscrowObligation::ObligationData {
             attestation: attestation_request.clone().into(),
             arbiter,
             demand: demand.clone(),
@@ -304,7 +304,7 @@ mod tests {
         let encoded = escrow_data.abi_encode();
 
         // Decode the data using TryFrom<Bytes>
-        let decoded: contracts::obligations::escrow::non_tierable::AttestationEscrowObligation::ObligationData =
+        let decoded: contracts::obligations::escrow::default_escrow::AttestationEscrowObligation::ObligationData =
             alloy::primitives::Bytes::from(encoded).try_into()?;
 
         // Verify decoded data
@@ -332,7 +332,7 @@ mod tests {
         let arbiter = test.addresses.attestation_addresses.barter_utils;
         let demand = Bytes::from(vec![4, 5, 6]);
 
-        let escrow_data = contracts::obligations::escrow::non_tierable::AttestationEscrowObligation2::ObligationData {
+        let escrow_data = contracts::obligations::escrow::default_escrow::AttestationEscrowObligation2::ObligationData {
             attestationUid: attestation_uid,
             arbiter,
             demand: demand.clone(),
@@ -342,7 +342,7 @@ mod tests {
         let encoded = escrow_data.abi_encode();
 
         // Decode the data using TryFrom<Bytes>
-        let decoded: contracts::obligations::escrow::non_tierable::AttestationEscrowObligation2::ObligationData =
+        let decoded: contracts::obligations::escrow::default_escrow::AttestationEscrowObligation2::ObligationData =
             alloy::primitives::Bytes::from(encoded).try_into()?;
 
         // Verify decoded data
@@ -558,7 +558,7 @@ mod tests {
             .attestation()
             .escrow()
             .v1()
-            .non_tierable()
+            .default()
             .create(attestation_request, &demand_data, escrow_expiration)
             .await?;
 
@@ -644,7 +644,7 @@ mod tests {
             .attestation()
             .escrow()
             .v2()
-            .non_tierable()
+            .default()
             .create(attestation_uid, &demand_data, escrow_expiration)
             .await?;
 
@@ -667,8 +667,8 @@ mod tests {
             .await?;
 
         // Get the expected schema ID from the contract
-        let escrow_contract = contracts::obligations::escrow::non_tierable::AttestationEscrowObligation2::new(
-            test.addresses.attestation_addresses.escrow_obligation_2_nontierable,
+        let escrow_contract = contracts::obligations::escrow::default_escrow::AttestationEscrowObligation2::new(
+            test.addresses.attestation_addresses.escrow_obligation_2_default,
             &test.god_provider,
         );
 
@@ -743,7 +743,7 @@ mod tests {
             .attestation()
             .escrow()
             .v1()
-            .non_tierable()
+            .default()
             .create(
                 attestation_request,
                 &demand_data,
@@ -771,7 +771,7 @@ mod tests {
             .attestation()
             .escrow()
             .v1()
-            .non_tierable()
+            .default()
             .collect(escrow_uid, fulfillment_uid)
             .await?;
 
@@ -853,7 +853,7 @@ mod tests {
             .attestation()
             .escrow()
             .v2()
-            .non_tierable()
+            .default()
             .create(attestation_uid, &demand_data, escrow_expiration)
             .await?;
 
@@ -873,7 +873,7 @@ mod tests {
                     item: "fulfillment data".to_string(),
                     schema: alloy::primitives::FixedBytes::default(),
                 },
-                escrow_uid, // Reference the escrow for non-tierable pattern
+                escrow_uid, // Reference the escrow for default pattern
             )
             .send()
             .await?
@@ -889,7 +889,7 @@ mod tests {
             .attestation()
             .escrow()
             .v2()
-            .non_tierable()
+            .default()
             .collect(escrow_uid, fulfillment_uid)
             .await?;
 
@@ -913,8 +913,8 @@ mod tests {
             .await?;
 
         // Get the expected validation schema ID from the contract
-        let escrow_contract = contracts::obligations::escrow::non_tierable::AttestationEscrowObligation2::new(
-            test.addresses.attestation_addresses.escrow_obligation_2_nontierable,
+        let escrow_contract = contracts::obligations::escrow::default_escrow::AttestationEscrowObligation2::new(
+            test.addresses.attestation_addresses.escrow_obligation_2_default,
             &test.god_provider,
         );
 

@@ -206,7 +206,7 @@ test("tradeErc20ForCustom", async () => {
   // make escrow with generic escrow function,
   // passing in TrustedPartyArbiter's address and our custom demand,
   // and no expiration (would be a future unix timstamp in seconds if used)
-  const escrow = await clientBuyer.erc20.escrow.nonTierable.create(
+  const escrow = await clientBuyer.erc20.escrow.default.create(
     { address: usdc, value: 10n },
     { arbiter: baseSepoliaAddresses.trustedOracleArbiter, demand },
     0n,
@@ -224,7 +224,7 @@ test("tradeErc20ForCustom", async () => {
   //     address arbiter;
   //     bytes demand;
   // }
-  const decodedObligation = clientSeller.erc20.escrow.nonTierable.decodeObligation(buyObligation.data);
+  const decodedObligation = clientSeller.erc20.escrow.default.decodeObligation(buyObligation.data);
   // TrustedOracleArbiter.DemandData
   // if using a custom arbiter, you can instead use decodeAbiParameters directly like below
   const decodedDemand = clientSeller.arbiters.general.trustedOracle.decodeDemand(decodedObligation.demand);
@@ -265,7 +265,7 @@ test("tradeErc20ForCustom", async () => {
   console.log("result obligation: ", resultObligation);
 
   // and collect the payment from escrow
-  const collection = await clientSeller.erc20.escrow.nonTierable.collect(escrow.attested.uid, resultObligation.uid);
+  const collection = await clientSeller.erc20.escrow.default.collect(escrow.attested.uid, resultObligation.uid);
 
   console.log("collection: ", collection);
 

@@ -163,7 +163,7 @@ contract TokenBundlePaymentObligation is BaseObligation, IArbiter {
         override
         returns (bool)
     {
-        if (!obligation._checkIntrinsic(ATTESTATION_SCHEMA)) return false;
+        if (obligation.schema != ATTESTATION_SCHEMA) return false;
 
         // Check that the payment references the correct escrow
         if (obligation.refUID != fulfilling) return false;

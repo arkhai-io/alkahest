@@ -386,7 +386,7 @@ describe("ERC1155 Tests", () => {
       );
 
       // Bob creates bundle escrow demanding Alice's ERC1155
-      const { attested: buyAttestation } = await bobClient.bundle.escrow.nonTierable.create(
+      const { attested: buyAttestation } = await bobClient.bundle.escrow.default.create(
         bundle,
         {
           arbiter: testContext.addresses.erc1155PaymentObligation,
@@ -471,7 +471,7 @@ describe("ERC1155 Tests", () => {
       await testClient.increaseTime({ seconds: 120 }); // Advance 120 seconds
 
       // Alice collects her expired escrow
-      await aliceClient.erc1155.escrow.nonTierable.reclaimExpired(buyAttestation.uid);
+      await aliceClient.erc1155.escrow.default.reclaimExpired(buyAttestation.uid);
 
       // Verify Alice got her tokens back
       const aliceBalance = await testClient.getErc1155Balance(

@@ -48,7 +48,7 @@ mod tests {
             .alice_client
             .erc20()
             .escrow()
-            .non_tierable()
+            .default()
             .permit_and_create(&price, &item, expiration)
             .await?;
 
@@ -106,7 +106,7 @@ mod tests {
         let collection = test
             .bob_client
             .erc20()
-            .escrow().non_tierable().collect(escrow_uid, fulfillment_uid)
+            .escrow().default().collect(escrow_uid, fulfillment_uid)
             .await?;
 
         println!("✅ Arbitrate decision passed. Tx: {:?}", collection);
@@ -334,7 +334,7 @@ mod tests {
         let collection = test
             .bob_client
             .erc20()
-            .escrow().non_tierable().collect(escrow_uid, fulfillment_uid)
+            .escrow().default().collect(escrow_uid, fulfillment_uid)
             .await?;
 
         println!("✅ Arbitrate decision passed. Tx: {:?}", collection);
@@ -400,7 +400,7 @@ mod tests {
         let collection = test
             .bob_client
             .erc20()
-            .escrow().non_tierable().collect(escrow_uid, fulfillment_uid)
+            .escrow().default().collect(escrow_uid, fulfillment_uid)
             .await?;
 
         println!("✅ Arbitrate decision passed. Tx: {:?}", collection);
@@ -467,7 +467,7 @@ mod tests {
         let collection = test
             .bob_client
             .erc20()
-            .escrow().non_tierable().collect(escrow_uid, good_fulfillment)
+            .escrow().default().collect(escrow_uid, good_fulfillment)
             .await?;
 
         println!("✅ Arbitrate decision passed. Tx: {:?}", collection);
@@ -522,7 +522,7 @@ mod tests {
         let collection = test
             .bob_client
             .erc20()
-            .escrow().non_tierable().collect(escrow_uid, fulfillment_uid)
+            .escrow().default().collect(escrow_uid, fulfillment_uid)
             .await?;
 
         println!("✅ Arbitrate decision passed. Tx: {:?}", collection);

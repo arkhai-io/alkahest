@@ -37,7 +37,7 @@ async def test_arbitrate_past_sync(env, alice_client, bob_client, charlie_client
     }
 
     expiration = int(time.time()) + 3600
-    escrow_receipt = await alice_client.erc20.escrow.non_tierable.permit_and_create(
+    escrow_receipt = await alice_client.erc20.escrow.default.permit_and_create(
         price, arbiter, expiration
     )
     escrow_uid = escrow_receipt['log']['uid']
@@ -65,7 +65,7 @@ async def test_arbitrate_past_sync(env, alice_client, bob_client, charlie_client
     assert decisions[0].decision == True, f"Expected decision=True, got {decisions[0].decision}"
 
     # Collect payment
-    collection_receipt = await bob_client.erc20.escrow.non_tierable.collect(
+    collection_receipt = await bob_client.erc20.escrow.default.collect(
         escrow_uid, fulfillment_uid
     )
 
@@ -97,7 +97,7 @@ async def test_conditional_arbitrate_past(env, alice_client, bob_client, charlie
     }
 
     expiration = int(time.time()) + 3600
-    escrow_receipt = await alice_client.erc20.escrow.non_tierable.permit_and_create(
+    escrow_receipt = await alice_client.erc20.escrow.default.permit_and_create(
         price, arbiter, expiration
     )
     escrow_uid = escrow_receipt['log']['uid']
@@ -151,7 +151,7 @@ async def test_skip_arbitrated(env, alice_client, bob_client, charlie_client):
     }
 
     expiration = int(time.time()) + 3600
-    escrow_receipt = await alice_client.erc20.escrow.non_tierable.permit_and_create(
+    escrow_receipt = await alice_client.erc20.escrow.default.permit_and_create(
         price, arbiter, expiration
     )
     escrow_uid = escrow_receipt['log']['uid']

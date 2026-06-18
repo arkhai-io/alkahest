@@ -62,12 +62,12 @@ client
 │   ├── approve(&token, purpose) -> Receipt
 │   ├── approve_if_less(&token, purpose) -> Option<Receipt>
 │   ├── escrow()
-│   │   ├── non_tierable()
+│   │   ├── non_unconditional()
 │   │   │   ├── make_statement(token, amount, arbiter, demand, expiration) -> Receipt
 │   │   │   ├── collect_payment(escrow_uid, fulfillment_uid) -> Receipt
 │   │   │   ├── get_statement(uid) -> DecodedAttestation<ObligationData>
 │   │   │   └── decode_statement(bytes) -> ObligationData
-│   │   └── tierable()              // (same API with tier support)
+│   │   └── unconditional()              // (no default fulfillment checks)
 │   ├── payment()
 │   │   ├── make_statement(token, amount, payee, expiration, ref_uid) -> Receipt
 │   │   ├── get_statement(uid) -> DecodedAttestation<ObligationData>
@@ -84,24 +84,24 @@ client
 │
 ├── erc721()                         // Same structure as erc20
 │   ├── approve(&token, purpose)
-│   ├── escrow().non_tierable() / .tierable()
+│   ├── escrow().non_unconditional() / .unconditional()
 │   ├── payment()
 │   └── barter()
 │
 ├── erc1155()
 │   ├── approve_all(token_address, purpose)
-│   ├── escrow().non_tierable() / .tierable()
+│   ├── escrow().non_unconditional() / .unconditional()
 │   ├── payment()
 │   └── barter()
 │
 ├── native_token()                   // No approval needed
-│   ├── escrow().non_tierable() / .tierable()
+│   ├── escrow().non_unconditional() / .unconditional()
 │   ├── payment()
 │   └── barter()
 │
 ├── token_bundle()
 │   ├── approve(&bundle, purpose)
-│   ├── escrow().non_tierable() / .tierable()
+│   ├── escrow().non_unconditional() / .unconditional()
 │   ├── payment()
 │   └── barter()
 │
@@ -206,7 +206,7 @@ Only multi-return functions return structs with named fields.
 ### Getting attestation UID from receipt
 
 ```rust
-let receipt = client.erc20().escrow().non_tierable().make_statement(...).await?;
+let receipt = client.erc20().escrow().non_unconditional().make_statement(...).await?;
 let attested_event = client.get_attested_event(receipt)?;
 let uid = attested_event.inner.uid;
 ```

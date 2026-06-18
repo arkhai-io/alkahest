@@ -236,7 +236,7 @@ describe("Native Token Tests", () => {
       // Manually construct escrow demand using the new nested API
       const demand = {
         arbiter: testContext.addresses.nativeTokenEscrowObligation,
-        demand: aliceClient.nativeToken.escrow.nonTierable.encodeObligationRaw(escrowData),
+        demand: aliceClient.nativeToken.escrow.default.encodeObligationRaw(escrowData),
       };
 
       expect(demand.arbiter).toBe(testContext.addresses.nativeTokenEscrowObligation);
@@ -300,7 +300,7 @@ describe("Native Token Tests", () => {
       };
 
       // Create escrow using the new nested API
-      const { hash } = await aliceClient.nativeToken.escrow.nonTierable.create(
+      const { hash } = await aliceClient.nativeToken.escrow.default.create(
         escrowData.amount,
         { arbiter: escrowData.arbiter, demand: escrowData.demand },
         BigInt(Math.floor(Date.now() / 1000) + 86400), // 1 day expiration

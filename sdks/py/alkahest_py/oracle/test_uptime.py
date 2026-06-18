@@ -140,7 +140,7 @@ async def test_asynchronous_offchain_oracle_uptime_flow(env, alice_client, bob_c
     price = {"address": env.mock_addresses.erc20_a, "value": 100}
     expiration = now + 3600
 
-    escrow_receipt = await alice_client.erc20.escrow.non_tierable.permit_and_create(
+    escrow_receipt = await alice_client.erc20.escrow.default.permit_and_create(
         price, arbiter, expiration
     )
     escrow_uid = escrow_receipt["log"]["uid"]
@@ -242,6 +242,6 @@ async def test_asynchronous_offchain_oracle_uptime_flow(env, alice_client, bob_c
     assert arbitration.decision is True, "Expected uptime check to pass"
 
     # Step 10: Bob collects the escrowed payment
-    await bob_client.erc20.escrow.non_tierable.collect(escrow_uid, fulfillment_uid)
+    await bob_client.erc20.escrow.default.collect(escrow_uid, fulfillment_uid)
 
     print("Asynchronous offchain oracle uptime test passed")

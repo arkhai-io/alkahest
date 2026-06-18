@@ -106,7 +106,7 @@ mod transport_parity {
         let escrow_receipt = alice_client
             .erc20()
             .escrow()
-            .non_tierable()
+            .default()
             .permit_and_create(&price, &item, expiration)
             .await?;
         let escrow_event = DefaultAlkahestClient::get_attested_event(escrow_receipt)?;

@@ -12,7 +12,7 @@ import {ERC1155} from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 
 import {IArbiter} from "@src/IArbiter.sol";
 import {StringObligation} from "@src/obligations/StringObligation.sol";
-import {TokenBundleEscrowObligation} from "@src/obligations/escrow/non-tierable/TokenBundleEscrowObligation.sol";
+import {TokenBundleEscrowObligation} from "@src/obligations/escrow/default/TokenBundleEscrowObligation.sol";
 
 contract MockERC1155 is ERC1155 {
     constructor() ERC1155("") {}
@@ -88,7 +88,7 @@ contract TokenBundleEscrowObligation_ReleaseSwallowFailure_POC is Test {
         assertEq(token.balanceOf(address(escrow), tokenId), amount, "erc1155 locked");
 
         // Create fulfillment whose recipient is a contract that rejects ETH and is not an ERC1155Receiver.
-        // Non-tierable requires fulfillment.refUID == escrowUid.
+        // Default requires fulfillment.refUID == escrowUid.
         vm.prank(address(badRecipient));
         bytes32 fulfillmentUid =
             stringObligation.doObligation(StringObligation.ObligationData({item: "fulfillment", schema: bytes32(0)}), escrowUid);

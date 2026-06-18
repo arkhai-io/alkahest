@@ -9,7 +9,7 @@ from alkahest_py import MockERC20
 
 
 @pytest.mark.asyncio
-async def test_non_tierable_get_obligation(env, alice_client):
+async def test_default_get_obligation(env, alice_client):
     mock_erc20 = MockERC20(env.mock_addresses.erc20_a, env.god_wallet_provider)
 
     transfer_amount = 100
@@ -27,13 +27,13 @@ async def test_non_tierable_get_obligation(env, alice_client):
     arbiter_data = {"arbiter": arbiter_address, "demand": demand_bytes}
     expiration = 0
 
-    create_result = await alice_client.erc20.escrow.non_tierable.create(
+    create_result = await alice_client.erc20.escrow.default.create(
         price_data, arbiter_data, expiration
     )
     escrow_uid = create_result["log"]["uid"]
     assert escrow_uid.startswith("0x") and len(escrow_uid) == 66
 
-    fetched = await alice_client.erc20.escrow.non_tierable.get_obligation(escrow_uid)
+    fetched = await alice_client.erc20.escrow.default.get_obligation(escrow_uid)
     attestation = fetched["attestation"]
     data = fetched["data"]
 

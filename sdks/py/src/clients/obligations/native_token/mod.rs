@@ -1,7 +1,7 @@
 //! Native Token obligations module
 //!
 //! This module provides functionality for native token (ETH) operations including:
-//! - Escrow obligations (tierable and non-tierable)
+//! - Escrow obligations (unconditional and default)
 //! - Payment obligations
 //! - Barter utilities for cross-token trading
 
@@ -17,7 +17,7 @@ use crate::error_handling::map_parse_to_pyerr;
 /// Client for interacting with native token (ETH) operations.
 ///
 /// Provides access to escrow, payment, and barter APIs via properties:
-/// - `client.native_token.escrow.non_tierable.create(...)`
+/// - `client.native_token.escrow.default.create(...)`
 /// - `client.native_token.payment.pay(...)`
 /// - `client.native_token.barter.buy_erc20_for_native(...)`
 #[pyclass]
@@ -87,7 +87,7 @@ impl PyNativeTokenEscrowObligationData {
 
     #[staticmethod]
     pub fn decode(obligation_data: Vec<u8>) -> PyResult<PyNativeTokenEscrowObligationData> {
-        use alkahest_rs::contracts::obligations::escrow::non_tierable::NativeTokenEscrowObligation;
+        use alkahest_rs::contracts::obligations::escrow::default_escrow::NativeTokenEscrowObligation;
         use alloy::sol_types::SolValue;
         let decoded = NativeTokenEscrowObligation::ObligationData::abi_decode(&obligation_data)
             .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
@@ -96,7 +96,7 @@ impl PyNativeTokenEscrowObligationData {
 
     #[staticmethod]
     pub fn encode(obligation: &PyNativeTokenEscrowObligationData) -> PyResult<Vec<u8>> {
-        use alkahest_rs::contracts::obligations::escrow::non_tierable::NativeTokenEscrowObligation;
+        use alkahest_rs::contracts::obligations::escrow::default_escrow::NativeTokenEscrowObligation;
         use alloy::{
             primitives::{Address, Bytes, U256},
             sol_types::SolValue,
@@ -120,11 +120,11 @@ impl PyNativeTokenEscrowObligationData {
     }
 }
 
-impl From<alkahest_rs::contracts::obligations::escrow::non_tierable::NativeTokenEscrowObligation::ObligationData>
+impl From<alkahest_rs::contracts::obligations::escrow::default_escrow::NativeTokenEscrowObligation::ObligationData>
     for PyNativeTokenEscrowObligationData
 {
     fn from(
-        data: alkahest_rs::contracts::obligations::escrow::non_tierable::NativeTokenEscrowObligation::ObligationData,
+        data: alkahest_rs::contracts::obligations::escrow::default_escrow::NativeTokenEscrowObligation::ObligationData,
     ) -> Self {
         Self {
             arbiter: format!("{:?}", data.arbiter),
@@ -134,11 +134,11 @@ impl From<alkahest_rs::contracts::obligations::escrow::non_tierable::NativeToken
     }
 }
 
-impl From<alkahest_rs::contracts::obligations::escrow::tierable::NativeTokenEscrowObligation::ObligationData>
+impl From<alkahest_rs::contracts::obligations::escrow::unconditional::UnconditionalNativeTokenEscrowObligation::ObligationData>
     for PyNativeTokenEscrowObligationData
 {
     fn from(
-        data: alkahest_rs::contracts::obligations::escrow::tierable::NativeTokenEscrowObligation::ObligationData,
+        data: alkahest_rs::contracts::obligations::escrow::unconditional::UnconditionalNativeTokenEscrowObligation::ObligationData,
     ) -> Self {
         Self {
             arbiter: format!("{:?}", data.arbiter),

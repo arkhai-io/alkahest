@@ -89,7 +89,7 @@ contract HookEscrowObligation is BaseEscrowObligation, IArbiter {
         override
         returns (bool)
     {
-        if (!obligation._checkIntrinsic(ATTESTATION_SCHEMA)) return false;
+        if (obligation.schema != ATTESTATION_SCHEMA) return false;
 
         ObligationData memory payment = abi.decode(obligation.data, (ObligationData));
         ObligationData memory demandData = abi.decode(demand, (ObligationData));

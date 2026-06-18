@@ -1,14 +1,14 @@
 import type { ViemClient } from "../../../../utils";
 import type { TokenBundleAddresses } from "../index";
-import { makeTokenBundleNonTierableEscrowClient, type TokenBundleNonTierableEscrowClient } from "./nonTierable";
-import { makeTokenBundleTierableEscrowClient, type TokenBundleTierableEscrowClient } from "./tierable";
+import { makeTokenBundleDefaultEscrowClient, type TokenBundleDefaultEscrowClient } from "./default";
+import { makeTokenBundleUnconditionalEscrowClient, type TokenBundleUnconditionalEscrowClient } from "./unconditional";
 
-export { makeTokenBundleNonTierableEscrowClient, type TokenBundleNonTierableEscrowClient } from "./nonTierable";
-export { makeTokenBundleTierableEscrowClient, type TokenBundleTierableEscrowClient } from "./tierable";
+export { makeTokenBundleDefaultEscrowClient, type TokenBundleDefaultEscrowClient } from "./default";
+export { makeTokenBundleUnconditionalEscrowClient, type TokenBundleUnconditionalEscrowClient } from "./unconditional";
 
 export type TokenBundleEscrowClient = {
-  nonTierable: TokenBundleNonTierableEscrowClient;
-  tierable: TokenBundleTierableEscrowClient;
+  default: TokenBundleDefaultEscrowClient;
+  unconditional: TokenBundleUnconditionalEscrowClient;
 };
 
 export const makeTokenBundleEscrowClient = (
@@ -16,7 +16,7 @@ export const makeTokenBundleEscrowClient = (
   addresses: TokenBundleAddresses,
 ): TokenBundleEscrowClient => {
   return {
-    nonTierable: makeTokenBundleNonTierableEscrowClient(viemClient, addresses),
-    tierable: makeTokenBundleTierableEscrowClient(viemClient, addresses),
+    default: makeTokenBundleDefaultEscrowClient(viemClient, addresses),
+    unconditional: makeTokenBundleUnconditionalEscrowClient(viemClient, addresses),
   };
 };

@@ -7,8 +7,8 @@ import { makeTokenBundleUtilClient, type TokenBundleUtilClient } from "./util";
 
 export { makeTokenBundleBarterUtilsClient, type TokenBundleBarterUtilsClient } from "./barterUtils";
 export { makeTokenBundleEscrowClient, type TokenBundleEscrowClient } from "./escrow";
-export { makeTokenBundleNonTierableEscrowClient, type TokenBundleNonTierableEscrowClient } from "./escrow/nonTierable";
-export { makeTokenBundleTierableEscrowClient, type TokenBundleTierableEscrowClient } from "./escrow/tierable";
+export { makeTokenBundleDefaultEscrowClient, type TokenBundleDefaultEscrowClient } from "./escrow/default";
+export { makeTokenBundleUnconditionalEscrowClient, type TokenBundleUnconditionalEscrowClient } from "./escrow/unconditional";
 export { makeTokenBundlePaymentClient, type TokenBundlePaymentClient } from "./payment";
 export { makeTokenBundleUtilClient, type TokenBundleUtilClient } from "./util";
 
@@ -17,7 +17,7 @@ export type TokenBundleAddresses = {
   barterUtils: `0x${string}`;
   nativeTokenBarterUtils: `0x${string}`;
   escrowObligation: `0x${string}`;
-  escrowObligationTierable: `0x${string}`;
+  escrowObligationUnconditional: `0x${string}`;
   paymentObligation: `0x${string}`;
 };
 
@@ -26,7 +26,7 @@ export const pickTokenBundleAddresses = (addresses: ChainAddresses): TokenBundle
   barterUtils: addresses.tokenBundleBarterUtils,
   nativeTokenBarterUtils: addresses.nativeTokenBarterUtils,
   escrowObligation: addresses.tokenBundleEscrowObligation,
-  escrowObligationTierable: addresses.tokenBundleEscrowObligation, // TODO: Add tierable address when available
+  escrowObligationUnconditional: addresses.tokenBundleEscrowObligation, // TODO: Add unconditional address when available
   paymentObligation: addresses.tokenBundlePaymentObligation,
 });
 

@@ -68,8 +68,10 @@ abstract contract BaseEscrowObligation is BaseObligation {
         // Extract arbiter and demand from escrow data
         (address arbiter, bytes memory demand) = extractArbiterAndDemand(escrow.data);
 
-        // Check that fulfillment references the escrow (non-tierable)
+        // Check that fulfillment references the escrow (default)
         if (fulfillment.refUID != escrow.uid) revert InvalidFulfillment();
+
+        if (!fulfillment._checkIntrinsic()) revert InvalidFulfillment();
 
         // Check fulfillment via the specified arbiter
         if (!IArbiter(arbiter).checkObligation(fulfillment, demand, escrow.uid)) {

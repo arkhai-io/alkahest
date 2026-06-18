@@ -8,8 +8,8 @@ macro_rules! client_address_config {
         pub struct $name {
             pub eas: String,
             pub barter_utils: String,
-            pub escrow_obligation_nontierable: String,
-            pub escrow_obligation_tierable: String,
+            pub escrow_obligation_default: String,
+            pub escrow_obligation_unconditional: String,
             pub payment_obligation: String,
         }
     };
@@ -32,10 +32,10 @@ pub struct AttestationAddresses {
     pub eas: String,
     pub eas_schema_registry: String,
     pub barter_utils: String,
-    pub escrow_obligation_nontierable: String,
-    pub escrow_obligation_tierable: String,
-    pub escrow_obligation_2_nontierable: String,
-    pub escrow_obligation_2_tierable: String,
+    pub escrow_obligation_default: String,
+    pub escrow_obligation_unconditional: String,
+    pub escrow_obligation_2_default: String,
+    pub escrow_obligation_2_unconditional: String,
 }
 
 #[derive(FromPyObject)]
@@ -148,8 +148,8 @@ macro_rules! try_from_address_config {
                 Ok(Self {
                     eas: parse_address!(eas),
                     barter_utils: parse_address!(barter_utils),
-                    escrow_obligation_nontierable: parse_address!(escrow_obligation_nontierable),
-                    escrow_obligation_tierable: parse_address!(escrow_obligation_tierable),
+                    escrow_obligation_default: parse_address!(escrow_obligation_default),
+                    escrow_obligation_unconditional: parse_address!(escrow_obligation_unconditional),
                     payment_obligation: parse_address!(payment_obligation),
                 })
             }
@@ -192,10 +192,10 @@ impl TryFrom<AttestationAddresses> for alkahest_rs::clients::attestation::Attest
             eas: parse_address!(eas),
             eas_schema_registry: parse_address!(eas_schema_registry),
             barter_utils: parse_address!(barter_utils),
-            escrow_obligation_nontierable: parse_address!(escrow_obligation_nontierable),
-            escrow_obligation_tierable: parse_address!(escrow_obligation_tierable),
-            escrow_obligation_2_nontierable: parse_address!(escrow_obligation_2_nontierable),
-            escrow_obligation_2_tierable: parse_address!(escrow_obligation_2_tierable),
+            escrow_obligation_default: parse_address!(escrow_obligation_default),
+            escrow_obligation_unconditional: parse_address!(escrow_obligation_unconditional),
+            escrow_obligation_2_default: parse_address!(escrow_obligation_2_default),
+            escrow_obligation_2_unconditional: parse_address!(escrow_obligation_2_unconditional),
         })
     }
 }
@@ -638,9 +638,9 @@ macro_rules! py_address_struct {
             #[pyo3(get)]
             pub barter_utils: String,
             #[pyo3(get)]
-            pub escrow_obligation_nontierable: String,
+            pub escrow_obligation_default: String,
             #[pyo3(get)]
-            pub escrow_obligation_tierable: String,
+            pub escrow_obligation_unconditional: String,
             #[pyo3(get)]
             pub payment_obligation: String,
         }
@@ -651,15 +651,15 @@ macro_rules! py_address_struct {
             pub fn new(
                 eas: String,
                 barter_utils: String,
-                escrow_obligation_nontierable: String,
-                escrow_obligation_tierable: String,
+                escrow_obligation_default: String,
+                escrow_obligation_unconditional: String,
                 payment_obligation: String,
             ) -> Self {
                 Self {
                     eas,
                     barter_utils,
-                    escrow_obligation_nontierable,
-                    escrow_obligation_tierable,
+                    escrow_obligation_default,
+                    escrow_obligation_unconditional,
                     payment_obligation,
                 }
             }
@@ -670,8 +670,8 @@ macro_rules! py_address_struct {
                 Self {
                     eas: format!("{:?}", data.eas),
                     barter_utils: format!("{:?}", data.barter_utils),
-                    escrow_obligation_nontierable: format!("{:?}", data.escrow_obligation_nontierable),
-                    escrow_obligation_tierable: format!("{:?}", data.escrow_obligation_tierable),
+                    escrow_obligation_default: format!("{:?}", data.escrow_obligation_default),
+                    escrow_obligation_unconditional: format!("{:?}", data.escrow_obligation_unconditional),
                     payment_obligation: format!("{:?}", data.payment_obligation),
                 }
             }
@@ -710,13 +710,13 @@ pub struct PyAttestationAddresses {
     #[pyo3(get)]
     pub barter_utils: String,
     #[pyo3(get)]
-    pub escrow_obligation_nontierable: String,
+    pub escrow_obligation_default: String,
     #[pyo3(get)]
-    pub escrow_obligation_tierable: String,
+    pub escrow_obligation_unconditional: String,
     #[pyo3(get)]
-    pub escrow_obligation_2_nontierable: String,
+    pub escrow_obligation_2_default: String,
     #[pyo3(get)]
-    pub escrow_obligation_2_tierable: String,
+    pub escrow_obligation_2_unconditional: String,
 }
 
 #[pymethods]
@@ -726,19 +726,19 @@ impl PyAttestationAddresses {
         eas: String,
         eas_schema_registry: String,
         barter_utils: String,
-        escrow_obligation_nontierable: String,
-        escrow_obligation_tierable: String,
-        escrow_obligation_2_nontierable: String,
-        escrow_obligation_2_tierable: String,
+        escrow_obligation_default: String,
+        escrow_obligation_unconditional: String,
+        escrow_obligation_2_default: String,
+        escrow_obligation_2_unconditional: String,
     ) -> Self {
         Self {
             eas,
             eas_schema_registry,
             barter_utils,
-            escrow_obligation_nontierable,
-            escrow_obligation_tierable,
-            escrow_obligation_2_nontierable,
-            escrow_obligation_2_tierable,
+            escrow_obligation_default,
+            escrow_obligation_unconditional,
+            escrow_obligation_2_default,
+            escrow_obligation_2_unconditional,
         }
     }
 }
@@ -749,10 +749,10 @@ impl From<&alkahest_rs::clients::attestation::AttestationAddresses> for PyAttest
             eas: format!("{:?}", data.eas),
             eas_schema_registry: format!("{:?}", data.eas_schema_registry),
             barter_utils: format!("{:?}", data.barter_utils),
-            escrow_obligation_nontierable: format!("{:?}", data.escrow_obligation_nontierable),
-            escrow_obligation_tierable: format!("{:?}", data.escrow_obligation_tierable),
-            escrow_obligation_2_nontierable: format!("{:?}", data.escrow_obligation_2_nontierable),
-            escrow_obligation_2_tierable: format!("{:?}", data.escrow_obligation_2_tierable),
+            escrow_obligation_default: format!("{:?}", data.escrow_obligation_default),
+            escrow_obligation_unconditional: format!("{:?}", data.escrow_obligation_unconditional),
+            escrow_obligation_2_default: format!("{:?}", data.escrow_obligation_2_default),
+            escrow_obligation_2_unconditional: format!("{:?}", data.escrow_obligation_2_unconditional),
         }
     }
 }

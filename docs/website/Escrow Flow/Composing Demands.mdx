@@ -81,7 +81,7 @@ const composedDemand = aliceClient.arbiters.encodeAllArbiterDemand({
 });
 
 // Deposit escrow with the composed demand (using permit for gasless approval)
-const { attested: escrow } = await aliceClient.erc20.escrow.nonTierable.permitAndCreate(
+const { attested: escrow } = await aliceClient.erc20.escrow.default.permitAndCreate(
   { address: erc20Token, value: parseEther("100") },
   { arbiter: allArbiter, demand: composedDemand },
   BigInt(Math.floor(Date.now() / 1000) + 86400),
@@ -128,7 +128,7 @@ let item = ArbiterData {
 let escrow_receipt = alice_client
     .erc20()
     .escrow()
-    .non_tierable()
+    .default()
     .permit_and_create(&price, &item, expiration_time)
     .await?;
 ```
@@ -155,7 +155,7 @@ composed_demand = AllArbiterDemandData(
 # Deposit escrow with the composed demand (using permit for gasless approval)
 price = {"address": erc20_token, "value": 100}
 item = {"arbiter": all_arbiter, "demand": composed_demand}
-escrow_receipt = await alice_client.erc20.escrow.non_tierable.permit_and_create(
+escrow_receipt = await alice_client.erc20.escrow.default.permit_and_create(
     price, item, int(time.time()) + 86400
 )
 ```
@@ -277,7 +277,7 @@ const composedDemand = aliceClient.arbiters.encodeAnyArbiterDemand({
 });
 
 // Create escrow with flexible oracle validation (using approveAndCreate)
-const { attested: escrow } = await aliceClient.erc20.escrow.nonTierable.approveAndCreate(
+const { attested: escrow } = await aliceClient.erc20.escrow.default.approveAndCreate(
   { address: erc20Token, value: parseEther("50") },
   { arbiter: anyArbiter, demand: composedDemand },
   BigInt(Math.floor(Date.now() / 1000) + 7200), // 2 hour expiration
@@ -331,7 +331,7 @@ let item = ArbiterData {
 let escrow_receipt = alice_client
     .erc20()
     .escrow()
-    .non_tierable()
+    .default()
     .approve_and_create(&price, &item, current_timestamp + 7200) // 2 hour expiration
     .await?;
 ```
@@ -356,7 +356,7 @@ composed_demand = AnyArbiterDemandData(
 # Create escrow with flexible oracle validation (using approve_and_create)
 price = {"address": erc20_token, "value": 50}
 item = {"arbiter": any_arbiter, "demand": composed_demand}
-escrow_receipt = await alice_client.erc20.escrow.non_tierable.approve_and_create(
+escrow_receipt = await alice_client.erc20.escrow.default.approve_and_create(
     price, item, int(time.time()) + 7200  # 2 hour expiration
 )
 ```
@@ -507,7 +507,7 @@ const finalDemand = aliceClient.arbiters.encodeAllArbiterDemand({
 });
 
 // Create the escrow with nested logical arbiters (using approveAndCreate)
-const { attested: escrow } = await aliceClient.erc20.escrow.nonTierable.approveAndCreate(
+const { attested: escrow } = await aliceClient.erc20.escrow.default.approveAndCreate(
   { address: erc20Token, value: parseEther("200") },
   { arbiter: allArbiter, demand: finalDemand },
   BigInt(Math.floor(Date.now() / 1000) + 7200), // 2 hour overall expiration
@@ -575,7 +575,7 @@ let item = ArbiterData {
 let escrow_receipt = alice_client
     .erc20()
     .escrow()
-    .non_tierable()
+    .default()
     .approve_and_create(&price, &item, current_timestamp + 7200) // 2 hour overall expiration
     .await?;
 ```
@@ -609,7 +609,7 @@ final_demand = AllArbiterDemandData(
 # Create the escrow with nested logical arbiters (using approve_and_create)
 price = {"address": erc20_token, "value": 200}
 item = {"arbiter": all_arbiter, "demand": final_demand}
-escrow_receipt = await alice_client.erc20.escrow.non_tierable.approve_and_create(
+escrow_receipt = await alice_client.erc20.escrow.default.approve_and_create(
     price, item, int(time.time()) + 7200  # 2 hour overall expiration
 )
 ```

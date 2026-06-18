@@ -260,7 +260,7 @@ impl<Extensions: AlkahestExtension> AlkahestClient<Extensions> {
         match contract {
             Erc20Contract::Eas => self.erc20().addresses.eas,
             Erc20Contract::BarterUtils => self.erc20().addresses.barter_utils,
-            Erc20Contract::EscrowObligation => self.erc20().addresses.escrow_obligation_nontierable,
+            Erc20Contract::EscrowObligation => self.erc20().addresses.escrow_obligation_default,
             Erc20Contract::PaymentObligation => self.erc20().addresses.payment_obligation,
         }
     }
@@ -273,7 +273,7 @@ impl<Extensions: AlkahestExtension> AlkahestClient<Extensions> {
         match contract {
             Erc721Contract::Eas => self.erc721().addresses.eas,
             Erc721Contract::BarterUtils => self.erc721().addresses.barter_utils,
-            Erc721Contract::EscrowObligation => self.erc721().addresses.escrow_obligation_nontierable,
+            Erc721Contract::EscrowObligation => self.erc721().addresses.escrow_obligation_default,
             Erc721Contract::PaymentObligation => self.erc721().addresses.payment_obligation,
         }
     }
@@ -286,7 +286,7 @@ impl<Extensions: AlkahestExtension> AlkahestClient<Extensions> {
         match contract {
             Erc1155Contract::Eas => self.erc1155().addresses.eas,
             Erc1155Contract::BarterUtils => self.erc1155().addresses.barter_utils,
-            Erc1155Contract::EscrowObligation => self.erc1155().addresses.escrow_obligation_nontierable,
+            Erc1155Contract::EscrowObligation => self.erc1155().addresses.escrow_obligation_default,
             Erc1155Contract::PaymentObligation => self.erc1155().addresses.payment_obligation,
         }
     }
@@ -300,7 +300,7 @@ impl<Extensions: AlkahestExtension> AlkahestClient<Extensions> {
             TokenBundleContract::Eas => self.token_bundle().addresses.eas,
             TokenBundleContract::BarterUtils => self.token_bundle().addresses.barter_utils,
             TokenBundleContract::EscrowObligation => {
-                self.token_bundle().addresses.escrow_obligation_nontierable
+                self.token_bundle().addresses.escrow_obligation_default
             }
             TokenBundleContract::PaymentObligation => {
                 self.token_bundle().addresses.payment_obligation
@@ -319,9 +319,9 @@ impl<Extensions: AlkahestExtension> AlkahestClient<Extensions> {
                 self.attestation().addresses.eas_schema_registry
             }
             AttestationContract::BarterUtils => self.attestation().addresses.barter_utils,
-            AttestationContract::EscrowObligation => self.attestation().addresses.escrow_obligation_nontierable,
+            AttestationContract::EscrowObligation => self.attestation().addresses.escrow_obligation_default,
             AttestationContract::EscrowObligation2 => {
-                self.attestation().addresses.escrow_obligation_2_nontierable
+                self.attestation().addresses.escrow_obligation_2_default
             }
         }
     }
@@ -575,7 +575,7 @@ mod tests {
 
         // Test specific contract addresses
         assert_ne!(config.erc20_addresses.barter_utils, Address::ZERO);
-        assert_ne!(config.erc20_addresses.escrow_obligation_nontierable, Address::ZERO);
+        assert_ne!(config.erc20_addresses.escrow_obligation_default, Address::ZERO);
         assert_ne!(config.erc20_addresses.payment_obligation, Address::ZERO);
     }
 
@@ -698,8 +698,8 @@ mod tests {
             roundtrip_config.erc20_addresses.barter_utils
         );
         assert_eq!(
-            config.erc20_addresses.escrow_obligation_nontierable,
-            roundtrip_config.erc20_addresses.escrow_obligation_nontierable
+            config.erc20_addresses.escrow_obligation_default,
+            roundtrip_config.erc20_addresses.escrow_obligation_default
         );
         assert_eq!(
             config.erc20_addresses.payment_obligation,

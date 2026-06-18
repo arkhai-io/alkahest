@@ -51,7 +51,7 @@ const SKIP_DIRS = new Set(["example"]);
 const SKIP_FILES = new Set([
   "BaseAttester.sol",
   "BaseEscrowObligation.sol",
-  "BaseEscrowObligationTierable.sol",
+  "BaseEscrowObligationUnconditional.sol",
   "BaseObligation.sol",
   "IArbiter.sol",
   "ArbiterUtils.sol",

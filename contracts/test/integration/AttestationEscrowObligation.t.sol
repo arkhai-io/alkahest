@@ -2,7 +2,7 @@
 pragma solidity ^0.8.26;
 
 import "forge-std/Test.sol";
-import {AttestationEscrowObligation} from "@src/obligations/escrow/non-tierable/AttestationEscrowObligation.sol";
+import {AttestationEscrowObligation} from "@src/obligations/escrow/default/AttestationEscrowObligation.sol";
 import {BaseEscrowObligation} from "@src/BaseEscrowObligation.sol";
 import {StringObligation} from "@src/obligations/StringObligation.sol";
 import {IArbiter} from "@src/IArbiter.sol";
@@ -118,7 +118,7 @@ contract AttestationEscrowObligationTest is Test {
         vm.prank(bob);
         bytes32 fulfillmentId = stringObligation.doObligation(
             StringObligation.ObligationData({item: "Test demand", schema: bytes32(0)}),
-            escrowId  // Reference the escrow for non-tierable pattern
+            escrowId  // Reference the escrow for default pattern
         );
 
         vm.prank(bob);

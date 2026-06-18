@@ -126,7 +126,6 @@ contract ERC20Splitter is IArbiter, ReentrancyGuard {
         override
         returns (bool)
     {
-        fulfillment._checkIntrinsic();
         fulfillment.verifyFulfillmentRecipient();
         DemandData memory demandData = abi.decode(demand, (DemandData));
         bytes32 decisionKey = keccak256(abi.encodePacked(fulfillment.uid, escrow));

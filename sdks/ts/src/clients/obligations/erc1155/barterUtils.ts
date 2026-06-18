@@ -1,6 +1,6 @@
 import { decodeAbiParameters, getAbiItem } from "viem";
 import { abi as easAbi } from "../../../contracts/IEAS";
-import { abi as erc1155EscrowAbi } from "../../../contracts/obligations/escrow/non-tierable/ERC1155EscrowObligation";
+import { abi as erc1155EscrowAbi } from "../../../contracts/obligations/escrow/default/ERC1155EscrowObligation";
 import { abi as erc1155BarterUtilsAbi } from "../../../contracts/utils/ERC1155BarterUtils";
 import { abi as nativeTokenBarterUtilsAbi } from "../../../contracts/utils/NativeTokenBarterUtils";
 import type { Erc20, Erc721, Erc1155, TokenBundle } from "../../../types";

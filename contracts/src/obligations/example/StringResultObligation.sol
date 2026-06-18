@@ -46,7 +46,6 @@ contract StringResultObligation is BaseObligation, IArbiter {
         bytes memory demand /* (string query) */,
         bytes32 fulfilling
     ) public view override returns (bool) {
-        if (!obligation._checkIntrinsic()) return false;
 
         // Check if the obligation is intended to fulfill the specific escrow
         if (

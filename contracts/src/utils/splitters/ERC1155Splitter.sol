@@ -122,7 +122,6 @@ contract ERC1155Splitter is IArbiter, ReentrancyGuard, ERC1155Holder {
         override
         returns (bool)
     {
-        fulfillment._checkIntrinsic();
         fulfillment.verifyFulfillmentRecipient();
         DemandData memory demandData = abi.decode(demand, (DemandData));
         return hasDecision[demandData.oracle][keccak256(abi.encodePacked(fulfillment.uid, escrow))];

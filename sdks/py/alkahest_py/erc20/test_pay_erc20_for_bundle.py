@@ -66,7 +66,7 @@ async def test_pay_erc20_for_bundle(env, alice_client, bob_client):
         "demand": demand_bytes
     }
     
-    buy_result = await bob_client.token_bundle.escrow.non_tierable.create(
+    buy_result = await bob_client.token_bundle.escrow.default.create(
         bundle_data, arbiter_data, expiration
     )
     

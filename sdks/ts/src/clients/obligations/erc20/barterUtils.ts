@@ -1,10 +1,10 @@
 import { decodeAbiParameters, getAbiItem } from "viem";
 import { abi as easAbi } from "../../../contracts/IEAS";
-import { abi as erc20EscrowAbi } from "../../../contracts/obligations/escrow/non-tierable/ERC20EscrowObligation";
-import { abi as erc721EscrowAbi } from "../../../contracts/obligations/escrow/non-tierable/ERC721EscrowObligation";
-import { abi as erc1155EscrowAbi } from "../../../contracts/obligations/escrow/non-tierable/ERC1155EscrowObligation";
-import { abi as tokenBundleEscrowAbi } from "../../../contracts/obligations/escrow/non-tierable/TokenBundleEscrowObligation";
-import { abi as nativeTokenEscrowAbi } from "../../../contracts/obligations/escrow/non-tierable/NativeTokenEscrowObligation";
+import { abi as erc20EscrowAbi } from "../../../contracts/obligations/escrow/default/ERC20EscrowObligation";
+import { abi as erc721EscrowAbi } from "../../../contracts/obligations/escrow/default/ERC721EscrowObligation";
+import { abi as erc1155EscrowAbi } from "../../../contracts/obligations/escrow/default/ERC1155EscrowObligation";
+import { abi as tokenBundleEscrowAbi } from "../../../contracts/obligations/escrow/default/TokenBundleEscrowObligation";
+import { abi as nativeTokenEscrowAbi } from "../../../contracts/obligations/escrow/default/NativeTokenEscrowObligation";
 import { abi as erc20PaymentAbi } from "../../../contracts/obligations/payment/ERC20PaymentObligation";
 import { abi as erc20BarterUtilsAbi } from "../../../contracts/utils/ERC20BarterUtils";
 import type { Erc20, Erc721, Erc1155, TokenBundle } from "../../../types";

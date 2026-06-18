@@ -1,7 +1,7 @@
 //! ERC1155 obligations module
 //!
 //! This module provides functionality for ERC1155 token operations including:
-//! - Escrow obligations (tierable and non-tierable)
+//! - Escrow obligations (unconditional and default)
 //! - Payment obligations
 //! - Barter utilities for cross-token trading
 //! - Utility functions for approvals
@@ -24,8 +24,8 @@ use crate::types::{ApprovalPurpose, ProviderContext, SharedWalletProvider};
 
 // --- ABI conversions for ERC1155 obligation types ---
 impl_abi_conversions!(contracts::obligations::ERC1155PaymentObligation::ObligationData);
-impl_abi_conversions!(contracts::obligations::escrow::non_tierable::ERC1155EscrowObligation::ObligationData);
-impl_abi_conversions!(contracts::obligations::escrow::tierable::ERC1155EscrowObligation::ObligationData);
+impl_abi_conversions!(contracts::obligations::escrow::default_escrow::ERC1155EscrowObligation::ObligationData);
+impl_abi_conversions!(contracts::obligations::escrow::unconditional::UnconditionalERC1155EscrowObligation::ObligationData);
 
 // --- TokenBundle conversions for ERC1155 barter utils ---
 impl_token_bundle_payment_obligation!(contracts::utils::erc1155::TokenBundlePaymentObligation::ObligationData);
@@ -34,8 +34,8 @@ impl_token_bundle_payment_obligation!(contracts::utils::erc1155::TokenBundlePaym
 pub struct Erc1155Addresses {
     pub eas: Address,
     pub barter_utils: Address,
-    pub escrow_obligation_nontierable: Address,
-    pub escrow_obligation_tierable: Address,
+    pub escrow_obligation_default: Address,
+    pub escrow_obligation_unconditional: Address,
     pub payment_obligation: Address,
 }
 
@@ -79,7 +79,7 @@ impl ContractModule for Erc1155Module {
         match contract {
             Erc1155Contract::Eas => self.addresses.eas,
             Erc1155Contract::BarterUtils => self.addresses.barter_utils,
-            Erc1155Contract::EscrowObligation => self.addresses.escrow_obligation_nontierable,
+            Erc1155Contract::EscrowObligation => self.addresses.escrow_obligation_default,
             Erc1155Contract::PaymentObligation => self.addresses.payment_obligation,
         }
     }
@@ -103,11 +103,11 @@ impl Erc1155Module {
     ///
     /// # Example
     /// ```rust,ignore
-    /// // Non-tierable escrow (1:1 escrow:fulfillment)
-    /// client.erc1155().escrow().non_tierable().create(&price, &item, expiration).await?;
+    /// // Non-unconditional escrow (1:1 escrow:fulfillment)
+    /// client.erc1155().escrow().default().create(&price, &item, expiration).await?;
     ///
-    /// // Tierable escrow (1:many escrow:fulfillment)
-    /// client.erc1155().escrow().tierable().create(&price, &item, expiration).await?;
+    /// // Unconditional escrow (1:many escrow:fulfillment)
+    /// client.erc1155().escrow().unconditional().create(&price, &item, expiration).await?;
     /// ```
     pub fn escrow(&self) -> escrow::Escrow<'_> {
         escrow::Escrow::new(self)
@@ -208,7 +208,7 @@ mod tests {
         let arbiter = test.addresses.erc1155_addresses.payment_obligation;
         let demand = Bytes::from(vec![1, 2, 3, 4]); // sample demand data
 
-        let escrow_data = crate::contracts::obligations::escrow::non_tierable::ERC1155EscrowObligation::ObligationData {
+        let escrow_data = crate::contracts::obligations::escrow::default_escrow::ERC1155EscrowObligation::ObligationData {
             token: token_address,
             tokenId: id,
             amount,
@@ -220,7 +220,7 @@ mod tests {
         let encoded = escrow_data.abi_encode();
 
         // Decode the data using TryFrom<Bytes>
-        let decoded: crate::contracts::obligations::escrow::non_tierable::ERC1155EscrowObligation::ObligationData =
+        let decoded: crate::contracts::obligations::escrow::default_escrow::ERC1155EscrowObligation::ObligationData =
             alloy::primitives::Bytes::from(encoded).try_into()?;
 
         // Verify decoded data
@@ -313,7 +313,7 @@ mod tests {
         let escrow_approved = mock_erc1155_a
             .isApprovedForAll(
                 test.alice.address(),
-                test.addresses.erc1155_addresses.escrow_obligation_nontierable,
+                test.addresses.erc1155_addresses.escrow_obligation_default,
             )
             .call()
             .await?;
@@ -403,7 +403,7 @@ mod tests {
             .alice_client
             .erc1155()
             .escrow()
-            .non_tierable()
+            .default()
             .create(&price, &item, 0)
             .await?;
 
@@ -416,7 +416,7 @@ mod tests {
         // Check escrow contract's balance increased
         let escrow_balance = mock_erc1155_a
             .balanceOf(
-                test.addresses.erc1155_addresses.escrow_obligation_nontierable,
+                test.addresses.erc1155_addresses.escrow_obligation_default,
                 U256::from(1),
             )
             .call()
@@ -540,7 +540,7 @@ mod tests {
         // verify escrow
         let escrow_balance = mock_erc1155_a
             .balanceOf(
-                test.addresses.erc1155_addresses.escrow_obligation_nontierable,
+                test.addresses.erc1155_addresses.escrow_obligation_default,
                 U256::from(1),
             )
             .call()
@@ -714,7 +714,7 @@ mod tests {
             .alice_client
             .erc1155()
             .escrow()
-            .non_tierable()
+            .default()
             .reclaim_expired(buy_attestation)
             .await?;
 
@@ -774,7 +774,7 @@ mod tests {
         // Verify escrow happened
         let escrow_balance = mock_erc1155_a
             .balanceOf(
-                test.addresses.erc1155_addresses.escrow_obligation_nontierable,
+                test.addresses.erc1155_addresses.escrow_obligation_default,
                 U256::from(1),
             )
             .call()
@@ -835,7 +835,7 @@ mod tests {
         // Verify escrow happened
         let escrow_balance = mock_erc1155_a
             .balanceOf(
-                test.addresses.erc1155_addresses.escrow_obligation_nontierable,
+                test.addresses.erc1155_addresses.escrow_obligation_default,
                 U256::from(1),
             )
             .call()
@@ -910,7 +910,7 @@ mod tests {
         // Verify escrow happened
         let escrow_balance = mock_erc1155_a
             .balanceOf(
-                test.addresses.erc1155_addresses.escrow_obligation_nontierable,
+                test.addresses.erc1155_addresses.escrow_obligation_default,
                 U256::from(1),
             )
             .call()
@@ -1211,7 +1211,7 @@ mod tests {
             .bob_client
             .token_bundle()
             .escrow()
-            .non_tierable()
+            .default()
             .create(
                 &bundle,
                 &ArbiterData {
@@ -1398,7 +1398,7 @@ mod tests {
         let initial_approval = mock_erc1155_a
             .isApprovedForAll(
                 test.alice.address(),
-                test.addresses.erc1155_addresses.clone().escrow_obligation_nontierable,
+                test.addresses.erc1155_addresses.clone().escrow_obligation_default,
             )
             .call()
             .await?;
@@ -1410,7 +1410,7 @@ mod tests {
             .alice_client
             .erc1155()
             .escrow()
-            .non_tierable()
+            .default()
             .approve_and_create(&price, &item, 0)
             .await?;
 
@@ -1428,7 +1428,7 @@ mod tests {
         // Check escrow contract's balance increased
         let escrow_balance = mock_erc1155_a
             .balanceOf(
-                test.addresses.erc1155_addresses.escrow_obligation_nontierable,
+                test.addresses.erc1155_addresses.escrow_obligation_default,
                 U256::from(1),
             )
             .call()
@@ -1445,7 +1445,7 @@ mod tests {
         let final_approval = mock_erc1155_a
             .isApprovedForAll(
                 test.alice.address(),
-                test.addresses.erc1155_addresses.escrow_obligation_nontierable,
+                test.addresses.erc1155_addresses.escrow_obligation_default,
             )
             .call()
             .await?;

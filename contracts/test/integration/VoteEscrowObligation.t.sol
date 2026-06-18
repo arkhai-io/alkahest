@@ -129,7 +129,7 @@ contract VoteEscrowObligationTest is Test {
         // Create fulfillment attestation via StringObligation
         bytes32 fulfillmentUid = stringObligation.doObligation(
             StringObligation.ObligationData({item: "Vote for proposal 42", schema: bytes32(0)}),
-            escrowUid  // Reference the escrow for non-tierable pattern
+            escrowUid  // Reference the escrow for default pattern
         );
         assertNotEq(
             fulfillmentUid,
@@ -382,7 +382,7 @@ contract VoteEscrowObligationTest is Test {
         vm.startPrank(bob);
         bytes32 fulfillmentUid = stringObligation.doObligation(
             StringObligation.ObligationData({item: "Test vote", schema: bytes32(0)}),
-            escrowUid  // Reference the escrow for non-tierable pattern
+            escrowUid  // Reference the escrow for default pattern
         );
 
         // The vote cast event should include metadata about the escrow data hash
@@ -419,7 +419,7 @@ contract VoteEscrowObligationTest is Test {
         vm.startPrank(bob);
         bytes32 fulfillmentUid = stringObligation.doObligation(
             StringObligation.ObligationData({item: "Vote once", schema: bytes32(0)}),
-            escrowUid  // Reference the escrow for non-tierable pattern
+            escrowUid  // Reference the escrow for default pattern
         );
         voteEscrow.collectEscrowRaw(escrowUid, fulfillmentUid);
         vm.stopPrank();
@@ -434,7 +434,7 @@ contract VoteEscrowObligationTest is Test {
         vm.startPrank(bob);
         bytes32 secondFulfillmentUid = stringObligation.doObligation(
             StringObligation.ObligationData({item: "Vote once", schema: bytes32(0)}),
-            secondEscrowUid  // Reference the second escrow for non-tierable pattern
+            secondEscrowUid  // Reference the second escrow for default pattern
         );
 
         vm.expectRevert(

@@ -1,19 +1,19 @@
 import type { ViemClient } from "../../../../utils";
 import type { Erc721Addresses } from "../index";
-import { type Erc721NonTierableEscrowClient, makeErc721NonTierableEscrowClient } from "./nonTierable";
-import { type Erc721TierableEscrowClient, makeErc721TierableEscrowClient } from "./tierable";
+import { type Erc721DefaultEscrowClient, makeErc721DefaultEscrowClient } from "./default";
+import { type Erc721UnconditionalEscrowClient, makeErc721UnconditionalEscrowClient } from "./unconditional";
 
-export { type Erc721NonTierableEscrowClient, makeErc721NonTierableEscrowClient } from "./nonTierable";
-export { type Erc721TierableEscrowClient, makeErc721TierableEscrowClient } from "./tierable";
+export { type Erc721DefaultEscrowClient, makeErc721DefaultEscrowClient } from "./default";
+export { type Erc721UnconditionalEscrowClient, makeErc721UnconditionalEscrowClient } from "./unconditional";
 
 export type Erc721EscrowClient = {
-  nonTierable: Erc721NonTierableEscrowClient;
-  tierable: Erc721TierableEscrowClient;
+  default: Erc721DefaultEscrowClient;
+  unconditional: Erc721UnconditionalEscrowClient;
 };
 
 export const makeErc721EscrowClient = (viemClient: ViemClient, addresses: Erc721Addresses): Erc721EscrowClient => {
   return {
-    nonTierable: makeErc721NonTierableEscrowClient(viemClient, addresses),
-    tierable: makeErc721TierableEscrowClient(viemClient, addresses),
+    default: makeErc721DefaultEscrowClient(viemClient, addresses),
+    unconditional: makeErc721UnconditionalEscrowClient(viemClient, addresses),
   };
 };

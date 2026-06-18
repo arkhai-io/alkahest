@@ -33,14 +33,14 @@ export * as IERC20 from "./IERC20";
 export * as IERC721 from "./IERC721";
 export * as IERC1155 from "./IERC1155";
 export * as ISchemaRegistry from "./ISchemaRegistry";
-// Obligations - Escrow (non-tierable)
-export * as AttestationEscrowObligation from "./obligations/escrow/non-tierable/AttestationEscrowObligation";
-export * as AttestationEscrowObligation2 from "./obligations/escrow/non-tierable/AttestationEscrowObligation2";
-export * as ERC20EscrowObligation from "./obligations/escrow/non-tierable/ERC20EscrowObligation";
-export * as ERC721EscrowObligation from "./obligations/escrow/non-tierable/ERC721EscrowObligation";
-export * as ERC1155EscrowObligation from "./obligations/escrow/non-tierable/ERC1155EscrowObligation";
-export * as NativeTokenEscrowObligation from "./obligations/escrow/non-tierable/NativeTokenEscrowObligation";
-export * as TokenBundleEscrowObligation from "./obligations/escrow/non-tierable/TokenBundleEscrowObligation";
+// Obligations - Escrow (default)
+export * as AttestationEscrowObligation from "./obligations/escrow/default/AttestationEscrowObligation";
+export * as AttestationEscrowObligation2 from "./obligations/escrow/default/AttestationEscrowObligation2";
+export * as ERC20EscrowObligation from "./obligations/escrow/default/ERC20EscrowObligation";
+export * as ERC721EscrowObligation from "./obligations/escrow/default/ERC721EscrowObligation";
+export * as ERC1155EscrowObligation from "./obligations/escrow/default/ERC1155EscrowObligation";
+export * as NativeTokenEscrowObligation from "./obligations/escrow/default/NativeTokenEscrowObligation";
+export * as TokenBundleEscrowObligation from "./obligations/escrow/default/TokenBundleEscrowObligation";
 // Obligations - Payment
 export * as ERC20PaymentObligation from "./obligations/payment/ERC20PaymentObligation";
 export * as ERC721PaymentObligation from "./obligations/payment/ERC721PaymentObligation";

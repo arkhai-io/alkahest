@@ -1,7 +1,7 @@
 //! ERC20 obligations module
 //!
 //! This module provides functionality for ERC20 token operations including:
-//! - Escrow obligations (non-tierable)
+//! - Escrow obligations (default)
 //! - Payment obligations
 //! - Barter utilities for cross-token trading
 //! - Utility functions for permits and approvals
@@ -19,7 +19,7 @@ use crate::error_handling::{map_eyre_to_pyerr, map_parse_to_pyerr};
 /// Client for interacting with ERC20 token operations.
 ///
 /// Provides access to escrow, payment, barter, and utility APIs via properties:
-/// - `client.erc20.escrow.non_tierable.create(...)`
+/// - `client.erc20.escrow.default.create(...)`
 /// - `client.erc20.payment.pay(...)`
 /// - `client.erc20.barter.buy_erc20_for_erc20(...)`
 /// - `client.erc20.util.approve(...)`
@@ -98,7 +98,7 @@ impl PyERC20EscrowObligationData {
 
     #[staticmethod]
     pub fn decode(obligation_data: Vec<u8>) -> PyResult<PyERC20EscrowObligationData> {
-        use alkahest_rs::contracts::obligations::escrow::non_tierable::ERC20EscrowObligation;
+        use alkahest_rs::contracts::obligations::escrow::default_escrow::ERC20EscrowObligation;
         use alloy::sol_types::SolValue;
         let decoded = ERC20EscrowObligation::ObligationData::abi_decode(&obligation_data)
             .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
@@ -107,7 +107,7 @@ impl PyERC20EscrowObligationData {
 
     #[staticmethod]
     pub fn encode(obligation: &PyERC20EscrowObligationData) -> eyre::Result<Vec<u8>> {
-        use alkahest_rs::contracts::obligations::escrow::non_tierable::ERC20EscrowObligation;
+        use alkahest_rs::contracts::obligations::escrow::default_escrow::ERC20EscrowObligation;
         use alloy::{
             primitives::{Address, Bytes, U256},
             sol_types::SolValue,
@@ -133,10 +133,10 @@ impl PyERC20EscrowObligationData {
     }
 }
 
-impl From<alkahest_rs::contracts::obligations::escrow::non_tierable::ERC20EscrowObligation::ObligationData>
+impl From<alkahest_rs::contracts::obligations::escrow::default_escrow::ERC20EscrowObligation::ObligationData>
     for PyERC20EscrowObligationData
 {
-    fn from(data: alkahest_rs::contracts::obligations::escrow::non_tierable::ERC20EscrowObligation::ObligationData) -> Self {
+    fn from(data: alkahest_rs::contracts::obligations::escrow::default_escrow::ERC20EscrowObligation::ObligationData) -> Self {
         Self {
             token: format!("{:?}", data.token),
             amount: data.amount.try_into().unwrap_or(0),
@@ -146,10 +146,10 @@ impl From<alkahest_rs::contracts::obligations::escrow::non_tierable::ERC20Escrow
     }
 }
 
-impl From<alkahest_rs::contracts::obligations::escrow::tierable::ERC20EscrowObligation::ObligationData>
+impl From<alkahest_rs::contracts::obligations::escrow::unconditional::UnconditionalERC20EscrowObligation::ObligationData>
     for PyERC20EscrowObligationData
 {
-    fn from(data: alkahest_rs::contracts::obligations::escrow::tierable::ERC20EscrowObligation::ObligationData) -> Self {
+    fn from(data: alkahest_rs::contracts::obligations::escrow::unconditional::UnconditionalERC20EscrowObligation::ObligationData) -> Self {
         Self {
             token: format!("{:?}", data.token),
             amount: data.amount.try_into().unwrap_or(0),

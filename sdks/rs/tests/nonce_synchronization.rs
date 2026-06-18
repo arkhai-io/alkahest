@@ -40,7 +40,7 @@ mod tests {
             .alice_client
             .erc20()
             .escrow()
-            .non_tierable()
+            .default()
             .permit_and_create(&price, &item, 0)
             .await?;
 
@@ -62,7 +62,7 @@ mod tests {
             .alice_client
             .erc20()
             .escrow()
-            .non_tierable()
+            .default()
             .permit_and_create(&price2, &item, 0)
             .await?;
 
@@ -139,7 +139,7 @@ mod tests {
         // First call: escrow creation with NEW ERC20 module instance
         let receipt1 = new_erc20_module
             .escrow()
-            .non_tierable()
+            .default()
             .permit_and_create(&price, &item, 0)
             .await?;
 
@@ -162,7 +162,7 @@ mod tests {
         // Third call: escrow creation again with NEW ERC20 module instance
         let receipt2 = new_erc20_module
             .escrow()
-            .non_tierable()
+            .default()
             .permit_and_create(&price2, &item, 0)
             .await?;
 

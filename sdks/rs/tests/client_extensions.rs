@@ -149,8 +149,8 @@ async fn test_client_with_erc20_extension() -> Result<()> {
     let custom_erc20_addresses = Erc20Addresses {
         eas: address!("0x1234567890123456789012345678901234567890"),
         payment_obligation: address!("0x2345678901234567890123456789012345678901"),
-        escrow_obligation_nontierable: address!("0x3456789012345678901234567890123456789012"),
-        escrow_obligation_tierable: address!("0x5678901234567890123456789012345678901234"),
+        escrow_obligation_default: address!("0x3456789012345678901234567890123456789012"),
+        escrow_obligation_unconditional: address!("0x5678901234567890123456789012345678901234"),
         barter_utils: address!("0x4567890123456789012345678901234567890123"),
     };
 
@@ -170,8 +170,8 @@ async fn test_client_with_erc20_extension() -> Result<()> {
         custom_erc20_addresses.payment_obligation
     );
     assert_eq!(
-        erc20_client.addresses.escrow_obligation_nontierable,
-        custom_erc20_addresses.escrow_obligation_nontierable
+        erc20_client.addresses.escrow_obligation_default,
+        custom_erc20_addresses.escrow_obligation_default
     );
     assert_eq!(
         erc20_client.addresses.barter_utils,
@@ -194,8 +194,8 @@ async fn test_chaining_multiple_extensions() -> Result<()> {
     let custom_erc20_addresses = Erc20Addresses {
         eas: address!("0x1234567890123456789012345678901234567890"),
         payment_obligation: address!("0x2345678901234567890123456789012345678901"),
-        escrow_obligation_nontierable: address!("0x3456789012345678901234567890123456789012"),
-        escrow_obligation_tierable: address!("0x5678901234567890123456789012345678901234"),
+        escrow_obligation_default: address!("0x3456789012345678901234567890123456789012"),
+        escrow_obligation_unconditional: address!("0x5678901234567890123456789012345678901234"),
         barter_utils: address!("0x4567890123456789012345678901234567890123"),
     };
 

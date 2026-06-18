@@ -1,6 +1,6 @@
 import { decodeAbiParameters, encodeAbiParameters, getAbiItem } from "viem";
 import { abi as easAbi } from "../../../contracts/IEAS";
-import { abi as tokenBundleEscrowAbi } from "../../../contracts/obligations/escrow/non-tierable/TokenBundleEscrowObligation";
+import { abi as tokenBundleEscrowAbi } from "../../../contracts/obligations/escrow/default/TokenBundleEscrowObligation";
 import { abi as tokenBundlePaymentAbi } from "../../../contracts/obligations/payment/TokenBundlePaymentObligation";
 import { abi as nativeTokenBarterUtilsAbi } from "../../../contracts/utils/NativeTokenBarterUtils";
 import { abi as tokenBundleBarterUtilsAbi } from "../../../contracts/utils/TokenBundleBarterUtils";

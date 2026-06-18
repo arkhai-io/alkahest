@@ -1,5 +1,5 @@
 import { decodeAbiParameters, encodeAbiParameters, getAbiItem } from "viem";
-import { abi as attestationEscrow2Abi } from "../../../../contracts/obligations/escrow/non-tierable/AttestationEscrowObligation2";
+import { abi as attestationEscrow2Abi } from "../../../../contracts/obligations/escrow/default/AttestationEscrowObligation2";
 import type { Demand } from "../../../../types";
 import { getAttestation, getAttestedEventFromTxHash, type ViemClient, writeContract } from "../../../../utils";
 import type { AttestationAddresses } from "../index";

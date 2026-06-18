@@ -78,7 +78,7 @@ impl<'a> BarterUtils<'a> {
         // Fetch the escrow attestation to get the ask amount
         let buy_attestation_data = eas_contract.getAttestation(buy_attestation).call().await?;
         let buy_attestation_data =
-            contracts::obligations::escrow::non_tierable::NativeTokenEscrowObligation::ObligationData::abi_decode(
+            contracts::obligations::escrow::default_escrow::NativeTokenEscrowObligation::ObligationData::abi_decode(
                 buy_attestation_data.data.as_ref(),
             )?;
         let demand_data =

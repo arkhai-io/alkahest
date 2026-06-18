@@ -78,7 +78,7 @@ const composedDemand = aliceClient.arbiters.encodeAllArbiterDemand({
 });
 
 // Deposit ERC-20 into escrow
-const { attested: escrow } = await aliceClient.erc20.escrow.nonTierable.permitAndCreate(
+const { attested: escrow } = await aliceClient.erc20.escrow.default.permitAndCreate(
   { address: erc20Token, value: parseEther("100") },
   { arbiter: allArbiter, demand: composedDemand },
   BigInt(Math.floor(Date.now() / 1000) + 86400),
@@ -125,7 +125,7 @@ let item = ArbiterData {
 let escrow_receipt = alice_client
     .erc20()
     .escrow()
-    .non_tierable()
+    .default()
     .permit_and_create(&price, &item, expiration_time)
     .await?;
 let escrow_uid = DefaultAlkahestClient::get_attested_event(escrow_receipt)?.uid;
@@ -150,7 +150,7 @@ composed_demand = AllArbiterDemandData(
 # Deposit ERC-20 into escrow
 price = {"address": erc20_token, "value": 100}
 item = {"arbiter": all_arbiter, "demand": composed_demand}
-escrow_receipt = await alice_client.erc20.escrow.non_tierable.permit_and_create(
+escrow_receipt = await alice_client.erc20.escrow.default.permit_and_create(
     price, item, int(time.time()) + 86400
 )
 escrow_uid = escrow_receipt["log"]["uid"]
@@ -478,7 +478,7 @@ erc20EscrowObligation.collectEscrow(escrowUid, fulfillmentUid);
 **TypeScript**
 
 ```typescript
-await bobClient.erc20.escrow.nonTierable.collect(escrow.uid, fulfillment.uid);
+await bobClient.erc20.escrow.default.collect(escrow.uid, fulfillment.uid);
 ```
 
 **Rust**
@@ -487,7 +487,7 @@ await bobClient.erc20.escrow.nonTierable.collect(escrow.uid, fulfillment.uid);
 bob_client
     .erc20()
     .escrow()
-    .non_tierable()
+    .default()
     .collect(escrow_uid, fulfillment_uid)
     .await?;
 ```
@@ -495,7 +495,7 @@ bob_client
 **Python**
 
 ```python
-await bob_client.erc20.escrow.non_tierable.collect(escrow_uid, fulfillment_uid)
+await bob_client.erc20.escrow.default.collect(escrow_uid, fulfillment_uid)
 ```
 
 ## Reclaiming the bond

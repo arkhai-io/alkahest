@@ -47,8 +47,8 @@ const demand = {
 ### 3. Create the escrow
 
 ```typescript
-const { hash, attested } = await client.erc20.escrow.nonTierable.doObligation(
-  client.erc20.escrow.nonTierable.encodeObligationRaw({
+const { hash, attested } = await client.erc20.escrow.default.doObligation(
+  client.erc20.escrow.default.encodeObligationRaw({
     token: TOKEN_ADDRESS,
     amount: parseEther("1.0"),
     arbiter: demand.arbiter,

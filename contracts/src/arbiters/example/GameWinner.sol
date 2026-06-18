@@ -89,7 +89,6 @@ contract GameWinner is IArbiter {
         bytes32 fulfilling
     ) external view override returns (bool) {
         // Check basic attestation validity
-        if (!obligation._checkIntrinsic()) return false;
 
         // Verify the attestation uses the correct schema
         if (obligation.schema != GAME_WINNER_SCHEMA) return false;

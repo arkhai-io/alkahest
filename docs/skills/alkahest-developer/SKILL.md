@@ -100,8 +100,8 @@ client = PyAlkahestClient("0xPRIVATE_KEY", "https://rpc-url", config)
 await client.erc20.util.approve({ address: TOKEN, value: amount }, "escrow");
 
 // 2. Create escrow
-const { hash, attested } = await client.erc20.escrow.nonTierable.doObligation(
-  client.erc20.escrow.nonTierable.encodeObligationRaw({
+const { hash, attested } = await client.erc20.escrow.default.doObligation(
+  client.erc20.escrow.default.encodeObligationRaw({
     token: TOKEN, amount, arbiter: ARBITER, demand: DEMAND_BYTES,
   }),
 );
@@ -114,7 +114,7 @@ const escrowUid = attested.uid;
 client.erc20().approve(&Erc20Data { address: token, value: amount }, ApprovalPurpose::Escrow).await?;
 
 // 2. Create escrow
-let receipt = client.erc20().escrow().non_tierable().make_statement(
+let receipt = client.erc20().escrow().default().make_statement(
     token, amount, arbiter, demand_bytes, expiration,
 ).await?;
 let attested = client.get_attested_event(receipt)?;
@@ -126,7 +126,7 @@ let attested = client.get_attested_event(receipt)?;
 await client.erc20.util.approve(token_address, amount, "escrow")
 
 # 2. Create escrow
-uid = await client.erc20.escrow.non_tierable.create(
+uid = await client.erc20.escrow.default.create(
     token=token_address, amount=amount,
     arbiter=arbiter_address, demand=demand_bytes,
     expiration=expiration,
@@ -163,7 +163,7 @@ uid = await client.string_obligation.do_obligation(
 
 **TypeScript:**
 ```typescript
-const { hash } = await client.erc20.escrow.nonTierable.collectObligation(
+const { hash } = await client.erc20.escrow.default.collectObligation(
   escrowUid,
   fulfillmentUid,
 );
@@ -171,14 +171,14 @@ const { hash } = await client.erc20.escrow.nonTierable.collectObligation(
 
 **Rust:**
 ```rust
-let receipt = client.erc20().escrow().non_tierable().collect_payment(
+let receipt = client.erc20().escrow().default().collect_payment(
     escrow_uid, fulfillment_uid,
 ).await?;
 ```
 
 **Python:**
 ```python
-tx_hash = await client.erc20.escrow.non_tierable.collect(escrow_uid, fulfillment_uid)
+tx_hash = await client.erc20.escrow.default.collect(escrow_uid, fulfillment_uid)
 ```
 
 ### Waiting for Fulfillment

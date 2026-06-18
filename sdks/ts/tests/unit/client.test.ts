@@ -142,7 +142,7 @@ describe("Client Tests", () => {
     test("should wait for an escrow fulfillment", async () => {
       await aliceClient.erc20.util.approve({ address: erc20Token, value: 10n }, "escrow");
       // Alice creates an escrow attestation that requires a fulfillment
-      const { attested: escrowData } = await aliceClient.erc20.escrow.nonTierable.create(
+      const { attested: escrowData } = await aliceClient.erc20.escrow.default.create(
         { address: erc20Token, value: 10n },
         { arbiter: testContext.addresses.trivialArbiter, demand: "0x" },
         0n,
@@ -164,7 +164,7 @@ describe("Client Tests", () => {
       );
 
       // Bob collects the escrow by providing the fulfillment
-      await bobClient.erc20.escrow.nonTierable.collect(escrowData.uid, fulfillmentUid);
+      await bobClient.erc20.escrow.default.collect(escrowData.uid, fulfillmentUid);
 
       // Wait for the fulfillment promise to resolve
       const fulfillment = await fulfillmentPromise;

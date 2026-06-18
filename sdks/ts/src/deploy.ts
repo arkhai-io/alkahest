@@ -36,13 +36,13 @@ import NonexclusiveRevocableConfirmationArbiter from "./contracts/arbiters/confi
 import NonexclusiveUnrevocableConfirmationArbiter from "./contracts/arbiters/confirmation/NonexclusiveUnrevocableConfirmationArbiter.json";
 
 // Obligations - Escrow
-import AttestationEscrowObligation from "./contracts/obligations/escrow/non-tierable/AttestationEscrowObligation.json";
-import AttestationEscrowObligation2 from "./contracts/obligations/escrow/non-tierable/AttestationEscrowObligation2.json";
-import ERC20EscrowObligation from "./contracts/obligations/escrow/non-tierable/ERC20EscrowObligation.json";
-import ERC721EscrowObligation from "./contracts/obligations/escrow/non-tierable/ERC721EscrowObligation.json";
-import ERC1155EscrowObligation from "./contracts/obligations/escrow/non-tierable/ERC1155EscrowObligation.json";
-import NativeTokenEscrowObligation from "./contracts/obligations/escrow/non-tierable/NativeTokenEscrowObligation.json";
-import TokenBundleEscrowObligation from "./contracts/obligations/escrow/non-tierable/TokenBundleEscrowObligation.json";
+import AttestationEscrowObligation from "./contracts/obligations/escrow/default/AttestationEscrowObligation.json";
+import AttestationEscrowObligation2 from "./contracts/obligations/escrow/default/AttestationEscrowObligation2.json";
+import ERC20EscrowObligation from "./contracts/obligations/escrow/default/ERC20EscrowObligation.json";
+import ERC721EscrowObligation from "./contracts/obligations/escrow/default/ERC721EscrowObligation.json";
+import ERC1155EscrowObligation from "./contracts/obligations/escrow/default/ERC1155EscrowObligation.json";
+import NativeTokenEscrowObligation from "./contracts/obligations/escrow/default/NativeTokenEscrowObligation.json";
+import TokenBundleEscrowObligation from "./contracts/obligations/escrow/default/TokenBundleEscrowObligation.json";
 
 // Obligations - Payment
 import ERC20PaymentObligation from "./contracts/obligations/payment/ERC20PaymentObligation.json";

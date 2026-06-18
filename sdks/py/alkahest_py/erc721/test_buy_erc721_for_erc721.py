@@ -43,7 +43,7 @@ async def test_buy_erc721_for_erc721(env, alice_client):
     
     # Verify escrow happened
     current_owner = mock_erc721_a.owner_of(token_id_a)
-    escrow_address = env.addresses.erc721_addresses.escrow_obligation_nontierable
+    escrow_address = env.addresses.erc721_addresses.escrow_obligation_default
     print(f"ERC721 token {token_id_a} now owned by: {current_owner}")
     print(f"Expected escrow address: {escrow_address}")
     

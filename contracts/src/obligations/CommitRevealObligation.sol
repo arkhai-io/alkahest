@@ -253,7 +253,7 @@ contract CommitRevealObligation is BaseObligation, IArbiter, Ownable {
         returns (bool)
     {
         // Basic attestation sanity checks (schema + expiry + revocation)
-        obligation._checkIntrinsic(ATTESTATION_SCHEMA);
+        if (obligation.schema != ATTESTATION_SCHEMA) return false;
 
         // Lookup the prior commitment for the fulfiller
         bytes32 revealedCommitment =

@@ -382,7 +382,7 @@ contract MajorityVoteArbiterTest is Test {
         assertEq(noVotes, 2);
     }
 
-    function testExpiredAttestation() public {
+    function testCheckObligationIgnoresExpiredAttestation() public {
         // Create an attestation with expiration time
         vm.prank(attester);
         AttestationRequestData memory attestationData = AttestationRequestData({
@@ -425,13 +425,14 @@ contract MajorityVoteArbiterTest is Test {
         // Fast forward past expiration
         vm.warp(block.timestamp + 2 hours);
 
-        // Should fail after expiration due to intrinsic check
+        // Semantic arbiter ignores expiration; use IntrinsicsArbiter when liveness is required.
         obligation = eas.getAttestation(expiringUID);
-        vm.expectRevert(); // Expecting DeadlineExpired error from ArbiterUtils
-        arbiter.checkObligation(obligation, encodedDemand, bytes32(0));
+        assertTrue(
+            arbiter.checkObligation(obligation, encodedDemand, bytes32(0))
+        );
     }
 
-    function testRevokedAttestation() public {
+    function testCheckObligationIgnoresRevokedAttestation() public {
         // Create a revocable attestation
         vm.prank(attester);
         AttestationRequestData memory attestationData = AttestationRequestData({
@@ -477,9 +478,10 @@ contract MajorityVoteArbiterTest is Test {
             })
         );
 
-        // Should fail after revocation due to intrinsic check
+        // Semantic arbiter ignores revocation; use IntrinsicsArbiter when liveness is required.
         obligation = eas.getAttestation(revocableUID);
-        vm.expectRevert(); // Expecting AttestationRevoked error from ArbiterUtils
-        arbiter.checkObligation(obligation, encodedDemand, bytes32(0));
+        assertTrue(
+            arbiter.checkObligation(obligation, encodedDemand, bytes32(0))
+        );
     }
 }

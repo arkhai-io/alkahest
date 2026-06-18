@@ -36,7 +36,7 @@ async def test_arbitrate_direct(env, alice_client, bob_client, charlie_client):
     }
 
     expiration = int(time.time()) + 3600
-    escrow_receipt = await alice_client.erc20.escrow.non_tierable.permit_and_create(
+    escrow_receipt = await alice_client.erc20.escrow.default.permit_and_create(
         price, arbiter, expiration
     )
     escrow_uid = escrow_receipt['log']['uid']
@@ -77,7 +77,7 @@ async def test_wait_for_arbitration(env, alice_client, bob_client, charlie_clien
     }
 
     expiration = int(time.time()) + 3600
-    escrow_receipt = await alice_client.erc20.escrow.non_tierable.permit_and_create(
+    escrow_receipt = await alice_client.erc20.escrow.default.permit_and_create(
         price, arbiter, expiration
     )
     escrow_uid = escrow_receipt['log']['uid']
@@ -128,7 +128,7 @@ async def test_get_escrow_attestation(env, alice_client, bob_client, charlie_cli
     }
 
     expiration = int(time.time()) + 3600
-    escrow_receipt = await alice_client.erc20.escrow.non_tierable.permit_and_create(
+    escrow_receipt = await alice_client.erc20.escrow.default.permit_and_create(
         price, arbiter, expiration
     )
     escrow_uid = escrow_receipt['log']['uid']
@@ -186,7 +186,7 @@ async def test_get_escrow_and_demand(env, alice_client, bob_client, charlie_clie
     }
 
     expiration = int(time.time()) + 3600
-    escrow_receipt = await alice_client.erc20.escrow.non_tierable.permit_and_create(
+    escrow_receipt = await alice_client.erc20.escrow.default.permit_and_create(
         price, arbiter, expiration
     )
     escrow_uid = escrow_receipt['log']['uid']

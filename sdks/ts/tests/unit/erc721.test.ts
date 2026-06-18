@@ -316,7 +316,7 @@ describe("ERC721 Tests", () => {
       await testClient.increaseTime({ seconds: 120 }); // Advance 120 seconds
 
       // Alice collects her expired escrow
-      const reclaimTxHash = await aliceClient.erc721.escrow.nonTierable.reclaimExpired(buyAttestation.uid);
+      const reclaimTxHash = await aliceClient.erc721.escrow.default.reclaimExpired(buyAttestation.uid);
 
       // increase block timestamp to index tx
       // await testClient.increaseTime({ seconds: 25 });
@@ -360,7 +360,7 @@ describe("ERC721 Tests", () => {
       );
 
       // Bob creates bundle escrow demanding Alice's Erc721
-      const { attested: buyAttestation } = await bobClient.bundle.escrow.nonTierable.create(
+      const { attested: buyAttestation } = await bobClient.bundle.escrow.default.create(
         bundle,
         {
           arbiter: testContext.addresses.erc721PaymentObligation,

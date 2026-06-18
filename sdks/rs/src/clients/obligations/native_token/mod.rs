@@ -1,7 +1,7 @@
 //! Native Token obligations module
 //!
 //! This module provides functionality for native token (ETH) operations including:
-//! - Escrow obligations (tierable and non-tierable)
+//! - Escrow obligations (unconditional and default)
 //! - Payment obligations
 //! - Barter utilities for cross-token trading
 
@@ -23,8 +23,8 @@ use crate::types::{ProviderContext, SharedWalletProvider};
 
 // --- ABI conversions for NativeToken obligation types ---
 impl_abi_conversions!(contracts::obligations::NativeTokenPaymentObligation::ObligationData);
-impl_abi_conversions!(contracts::obligations::escrow::non_tierable::NativeTokenEscrowObligation::ObligationData);
-impl_abi_conversions!(contracts::obligations::escrow::tierable::NativeTokenEscrowObligation::ObligationData);
+impl_abi_conversions!(contracts::obligations::escrow::default_escrow::NativeTokenEscrowObligation::ObligationData);
+impl_abi_conversions!(contracts::obligations::escrow::unconditional::UnconditionalNativeTokenEscrowObligation::ObligationData);
 
 // --- TokenBundle conversions for NativeToken barter utils ---
 impl_token_bundle_payment_obligation!(contracts::utils::native_token::TokenBundlePaymentObligation::ObligationData);
@@ -33,8 +33,8 @@ impl_token_bundle_payment_obligation!(contracts::utils::native_token::TokenBundl
 pub struct NativeTokenAddresses {
     pub eas: Address,
     pub barter_utils: Address,
-    pub escrow_obligation_nontierable: Address,
-    pub escrow_obligation_tierable: Address,
+    pub escrow_obligation_default: Address,
+    pub escrow_obligation_unconditional: Address,
     pub payment_obligation: Address,
 }
 
@@ -78,7 +78,7 @@ impl ContractModule for NativeTokenModule {
         match contract {
             NativeTokenContract::Eas => self.addresses.eas,
             NativeTokenContract::BarterUtils => self.addresses.barter_utils,
-            NativeTokenContract::EscrowObligation => self.addresses.escrow_obligation_nontierable,
+            NativeTokenContract::EscrowObligation => self.addresses.escrow_obligation_default,
             NativeTokenContract::PaymentObligation => self.addresses.payment_obligation,
         }
     }
@@ -102,11 +102,11 @@ impl NativeTokenModule {
     ///
     /// # Example
     /// ```rust,ignore
-    /// // Non-tierable escrow (1:1 escrow:fulfillment)
-    /// client.native_token().escrow().non_tierable().create(&price, &item, expiration).await?;
+    /// // Non-unconditional escrow (1:1 escrow:fulfillment)
+    /// client.native_token().escrow().default().create(&price, &item, expiration).await?;
     ///
-    /// // Tierable escrow (1:many escrow:fulfillment)
-    /// client.native_token().escrow().tierable().create(&price, &item, expiration).await?;
+    /// // Unconditional escrow (1:many escrow:fulfillment)
+    /// client.native_token().escrow().unconditional().create(&price, &item, expiration).await?;
     /// ```
     pub fn escrow(&self) -> escrow::Escrow<'_> {
         escrow::Escrow::new(self)

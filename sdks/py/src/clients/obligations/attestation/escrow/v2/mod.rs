@@ -2,11 +2,11 @@
 //!
 //! V2 references the attestation by UID instead of storing the full data.
 //!
-//! - `non_tierable`: 1:1 escrow to fulfillment relationship
-//! - `tierable`: 1:many escrow to fulfillment relationship
+//! - `default`: 1:1 escrow to fulfillment relationship
+//! - `unconditional`: no default fulfillment checks
 
-pub mod non_tierable;
-pub mod tierable;
+pub mod default_escrow;
+pub mod unconditional;
 
 use alkahest_rs::extensions::AttestationModule;
 use pyo3::{pyclass, pymethods};
@@ -26,15 +26,15 @@ impl V2 {
 
 #[pymethods]
 impl V2 {
-    /// Access non-tierable escrow operations (1:1 escrow:fulfillment)
+    /// Access default escrow operations (1:1 escrow:fulfillment)
     #[getter]
-    pub fn non_tierable(&self) -> non_tierable::NonTierable {
-        non_tierable::NonTierable::new(self.inner.clone())
+    pub fn default(&self) -> default_escrow::Default {
+        default_escrow::Default::new(self.inner.clone())
     }
 
-    /// Access tierable escrow operations (1:many escrow:fulfillment)
+    /// Access unconditional escrow operations (no default fulfillment checks)
     #[getter]
-    pub fn tierable(&self) -> tierable::Tierable {
-        tierable::Tierable::new(self.inner.clone())
+    pub fn unconditional(&self) -> unconditional::Unconditional {
+        unconditional::Unconditional::new(self.inner.clone())
     }
 }

@@ -38,7 +38,7 @@ async def test_pay_erc20_for_erc20(env, alice_client, bob_client):
     
     # Verify Alice's tokens are in escrow
     alice_balance_a_after_escrow = mock_erc20_a.balance_of(env.alice)
-    escrow_balance_a = mock_erc20_a.balance_of(env.addresses.erc20_addresses.escrow_obligation_nontierable)
+    escrow_balance_a = mock_erc20_a.balance_of(env.addresses.erc20_addresses.escrow_obligation_default)
     
     assert alice_balance_a_after_escrow == alice_initial_a, "Alice should have {alice_initial_a} token A after escrow, got {alice_balance_a_after_escrow}"
     

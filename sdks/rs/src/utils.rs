@@ -37,18 +37,15 @@ use crate::{
             },
         },
         obligations::{
-            escrow::non_tierable::{
+            escrow::default_escrow::{
                 AttestationEscrowObligation, AttestationEscrowObligation2, ERC20EscrowObligation, ERC721EscrowObligation,
                 ERC1155EscrowObligation, NativeTokenEscrowObligation, TokenBundleEscrowObligation,
             },
-            escrow::tierable::{
-                AttestationEscrowObligation as TierableAttestationEscrowObligation,
-                AttestationEscrowObligation2 as TierableAttestationEscrowObligation2,
-                ERC20EscrowObligation as TierableERC20EscrowObligation,
-                ERC721EscrowObligation as TierableERC721EscrowObligation,
-                ERC1155EscrowObligation as TierableERC1155EscrowObligation,
-                NativeTokenEscrowObligation as TierableNativeTokenEscrowObligation,
-                TokenBundleEscrowObligation as TierableTokenBundleEscrowObligation,
+            escrow::unconditional::{
+                UnconditionalAttestationEscrowObligation, UnconditionalAttestationEscrowObligation2,
+                UnconditionalERC20EscrowObligation, UnconditionalERC721EscrowObligation,
+                UnconditionalERC1155EscrowObligation, UnconditionalNativeTokenEscrowObligation,
+                UnconditionalTokenBundleEscrowObligation,
             },
             // Payment obligations are at root of obligations module
             ERC20PaymentObligation, ERC721PaymentObligation, ERC1155PaymentObligation,
@@ -428,7 +425,7 @@ async fn build_shared_env() -> eyre::Result<SharedTestEnv> {
         };
     }
 
-    // Deploy non-tierable obligations
+    // Deploy default obligations
     let attestation_escrow_obligation = deploy_obligation!(AttestationEscrowObligation);
     let attestation_escrow_obligation_2 = deploy_obligation!(AttestationEscrowObligation2);
     let bundle_escrow_obligation = deploy_obligation!(TokenBundleEscrowObligation);
@@ -442,14 +439,14 @@ async fn build_shared_env() -> eyre::Result<SharedTestEnv> {
     let native_token_escrow_obligation = deploy_obligation!(NativeTokenEscrowObligation);
     let native_token_payment_obligation = deploy_obligation!(NativeTokenPaymentObligation);
 
-    // Deploy tierable obligations
-    let tierable_attestation_escrow_obligation = deploy_obligation!(TierableAttestationEscrowObligation);
-    let tierable_attestation_escrow_obligation_2 = deploy_obligation!(TierableAttestationEscrowObligation2);
-    let tierable_bundle_escrow_obligation = deploy_obligation!(TierableTokenBundleEscrowObligation);
-    let tierable_erc20_escrow_obligation = deploy_obligation!(TierableERC20EscrowObligation);
-    let tierable_erc721_escrow_obligation = deploy_obligation!(TierableERC721EscrowObligation);
-    let tierable_erc1155_escrow_obligation = deploy_obligation!(TierableERC1155EscrowObligation);
-    let tierable_native_token_escrow_obligation = deploy_obligation!(TierableNativeTokenEscrowObligation);
+    // Deploy unconditional obligations
+    let unconditional_attestation_escrow_obligation = deploy_obligation!(UnconditionalAttestationEscrowObligation);
+    let unconditional_attestation_escrow_obligation_2 = deploy_obligation!(UnconditionalAttestationEscrowObligation2);
+    let unconditional_bundle_escrow_obligation = deploy_obligation!(UnconditionalTokenBundleEscrowObligation);
+    let unconditional_erc20_escrow_obligation = deploy_obligation!(UnconditionalERC20EscrowObligation);
+    let unconditional_erc721_escrow_obligation = deploy_obligation!(UnconditionalERC721EscrowObligation);
+    let unconditional_erc1155_escrow_obligation = deploy_obligation!(UnconditionalERC1155EscrowObligation);
+    let unconditional_native_token_escrow_obligation = deploy_obligation!(UnconditionalNativeTokenEscrowObligation);
 
     let string_obligation = StringObligation::deploy(
         &god_provider,
@@ -587,46 +584,46 @@ async fn build_shared_env() -> eyre::Result<SharedTestEnv> {
         erc20_addresses: Erc20Addresses {
             eas: eas.address().clone(),
             barter_utils: erc20_barter_utils.address().clone(),
-            escrow_obligation_nontierable: erc20_escrow_obligation.address().clone(),
-            escrow_obligation_tierable: tierable_erc20_escrow_obligation.address().clone(),
+            escrow_obligation_default: erc20_escrow_obligation.address().clone(),
+            escrow_obligation_unconditional: unconditional_erc20_escrow_obligation.address().clone(),
             payment_obligation: erc20_payment_obligation.address().clone(),
         },
         erc721_addresses: Erc721Addresses {
             eas: eas.address().clone(),
             barter_utils: erc721_barter_utils.address().clone(),
-            escrow_obligation_nontierable: erc721_escrow_obligation.address().clone(),
-            escrow_obligation_tierable: tierable_erc721_escrow_obligation.address().clone(),
+            escrow_obligation_default: erc721_escrow_obligation.address().clone(),
+            escrow_obligation_unconditional: unconditional_erc721_escrow_obligation.address().clone(),
             payment_obligation: erc721_payment_obligation.address().clone(),
         },
         erc1155_addresses: Erc1155Addresses {
             eas: eas.address().clone(),
             barter_utils: erc1155_barter_utils.address().clone(),
-            escrow_obligation_nontierable: erc1155_escrow_obligation.address().clone(),
-            escrow_obligation_tierable: tierable_erc1155_escrow_obligation.address().clone(),
+            escrow_obligation_default: erc1155_escrow_obligation.address().clone(),
+            escrow_obligation_unconditional: unconditional_erc1155_escrow_obligation.address().clone(),
             payment_obligation: erc1155_payment_obligation.address().clone(),
         },
         native_token_addresses: NativeTokenAddresses {
             eas: eas.address().clone(),
             barter_utils: native_token_barter_utils.address().clone(),
-            escrow_obligation_nontierable: native_token_escrow_obligation.address().clone(),
-            escrow_obligation_tierable: tierable_native_token_escrow_obligation.address().clone(),
+            escrow_obligation_default: native_token_escrow_obligation.address().clone(),
+            escrow_obligation_unconditional: unconditional_native_token_escrow_obligation.address().clone(),
             payment_obligation: native_token_payment_obligation.address().clone(),
         },
         token_bundle_addresses: TokenBundleAddresses {
             eas: eas.address().clone(),
             barter_utils: bundle_barter_utils.address().clone(),
-            escrow_obligation_nontierable: bundle_escrow_obligation.address().clone(),
-            escrow_obligation_tierable: tierable_bundle_escrow_obligation.address().clone(),
+            escrow_obligation_default: bundle_escrow_obligation.address().clone(),
+            escrow_obligation_unconditional: unconditional_bundle_escrow_obligation.address().clone(),
             payment_obligation: bundle_payment_obligation.address().clone(),
         },
         attestation_addresses: AttestationAddresses {
             eas: eas.address().clone(),
             eas_schema_registry: schema_registry.address().clone(),
             barter_utils: attestation_barter_utils.address().clone(),
-            escrow_obligation_nontierable: attestation_escrow_obligation.address().clone(),
-            escrow_obligation_tierable: tierable_attestation_escrow_obligation.address().clone(),
-            escrow_obligation_2_nontierable: attestation_escrow_obligation_2.address().clone(),
-            escrow_obligation_2_tierable: tierable_attestation_escrow_obligation_2.address().clone(),
+            escrow_obligation_default: attestation_escrow_obligation.address().clone(),
+            escrow_obligation_unconditional: unconditional_attestation_escrow_obligation.address().clone(),
+            escrow_obligation_2_default: attestation_escrow_obligation_2.address().clone(),
+            escrow_obligation_2_unconditional: unconditional_attestation_escrow_obligation_2.address().clone(),
         },
     };
 

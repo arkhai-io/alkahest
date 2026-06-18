@@ -37,7 +37,7 @@ async def test_buy_with_erc721(env, alice_client):
     await alice_client.erc721.util.approve(price_data, "escrow")
     
     # Alice creates buy order with ERC721
-    buy_result = await alice_client.erc721.escrow.non_tierable.create(price_data, arbiter_data, 0)
+    buy_result = await alice_client.erc721.escrow.default.create(price_data, arbiter_data, 0)
 
     assert buy_result['log']['uid'] and buy_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid buy attestation UID"
     
@@ -45,7 +45,7 @@ async def test_buy_with_erc721(env, alice_client):
     
     # Verify ERC721 is in escrow
     current_owner = mock_erc721_a.owner_of(token_id)
-    escrow_address = env.addresses.erc721_addresses.escrow_obligation_nontierable
+    escrow_address = env.addresses.erc721_addresses.escrow_obligation_default
     print(f"ERC721 token {token_id} now owned by: {current_owner}")
     print(f"Expected escrow address: {escrow_address}")
     

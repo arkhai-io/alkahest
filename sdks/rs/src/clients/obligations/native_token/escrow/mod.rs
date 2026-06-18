@@ -2,11 +2,11 @@
 //!
 //! This module contains escrow obligation clients for native tokens.
 //!
-//! - `non_tierable`: 1:1 escrow to fulfillment relationship
-//! - `tierable`: 1:many escrow to fulfillment relationship
+//! - `default`: 1:1 escrow to fulfillment relationship
+//! - `unconditional`: no default fulfillment checks
 
-pub mod non_tierable;
-pub mod tierable;
+pub mod default_escrow;
+pub mod unconditional;
 
 use super::NativeTokenModule;
 
@@ -20,13 +20,13 @@ impl<'a> Escrow<'a> {
         Self { module }
     }
 
-    /// Access non-tierable escrow API (1:1 escrow:fulfillment)
-    pub fn non_tierable(&self) -> non_tierable::NonTierable<'_> {
-        non_tierable::NonTierable::new(self.module)
+    /// Access default escrow API (1:1 escrow:fulfillment)
+    pub fn default(&self) -> default_escrow::Default<'_> {
+        default_escrow::Default::new(self.module)
     }
 
-    /// Access tierable escrow API (1:many escrow:fulfillment)
-    pub fn tierable(&self) -> tierable::Tierable<'_> {
-        tierable::Tierable::new(self.module)
+    /// Access unconditional escrow API (no default fulfillment checks)
+    pub fn unconditional(&self) -> unconditional::Unconditional<'_> {
+        unconditional::Unconditional::new(self.module)
     }
 }

@@ -1,7 +1,7 @@
 //! ERC20 obligations module
 //!
 //! This module provides functionality for ERC20 token operations including:
-//! - Escrow obligations (tierable and non-tierable)
+//! - Escrow obligations (unconditional and default)
 //! - Payment obligations
 //! - Barter utilities for cross-token trading
 //! - Utility functions for permits and approvals
@@ -24,8 +24,8 @@ use crate::types::{ApprovalPurpose, Erc20Data, ProviderContext, SharedWalletProv
 
 // --- ABI conversions for ERC20 obligation types ---
 impl_abi_conversions!(contracts::obligations::ERC20PaymentObligation::ObligationData);
-impl_abi_conversions!(contracts::obligations::escrow::non_tierable::ERC20EscrowObligation::ObligationData);
-impl_abi_conversions!(contracts::obligations::escrow::tierable::ERC20EscrowObligation::ObligationData);
+impl_abi_conversions!(contracts::obligations::escrow::default_escrow::ERC20EscrowObligation::ObligationData);
+impl_abi_conversions!(contracts::obligations::escrow::unconditional::UnconditionalERC20EscrowObligation::ObligationData);
 
 // --- TokenBundle conversions for ERC20 barter utils ---
 impl_token_bundle_payment_obligation!(contracts::utils::erc20::TokenBundlePaymentObligation::ObligationData);
@@ -34,8 +34,8 @@ impl_token_bundle_payment_obligation!(contracts::utils::erc20::TokenBundlePaymen
 pub struct Erc20Addresses {
     pub eas: Address,
     pub barter_utils: Address,
-    pub escrow_obligation_nontierable: Address,
-    pub escrow_obligation_tierable: Address,
+    pub escrow_obligation_default: Address,
+    pub escrow_obligation_unconditional: Address,
     pub payment_obligation: Address,
 }
 
@@ -79,7 +79,7 @@ impl ContractModule for Erc20Module {
         match contract {
             Erc20Contract::Eas => self.addresses.eas,
             Erc20Contract::BarterUtils => self.addresses.barter_utils,
-            Erc20Contract::EscrowObligation => self.addresses.escrow_obligation_nontierable,
+            Erc20Contract::EscrowObligation => self.addresses.escrow_obligation_default,
             Erc20Contract::PaymentObligation => self.addresses.payment_obligation,
         }
     }
@@ -103,11 +103,11 @@ impl Erc20Module {
     ///
     /// # Example
     /// ```rust,ignore
-    /// // Non-tierable escrow (1:1 escrow:fulfillment)
-    /// client.erc20().escrow().non_tierable().create(&price, &item, expiration).await?;
+    /// // Non-unconditional escrow (1:1 escrow:fulfillment)
+    /// client.erc20().escrow().default().create(&price, &item, expiration).await?;
     ///
-    /// // Tierable escrow (1:many escrow:fulfillment)
-    /// client.erc20().escrow().tierable().create(&price, &item, expiration).await?;
+    /// // Unconditional escrow (1:many escrow:fulfillment)
+    /// client.erc20().escrow().unconditional().create(&price, &item, expiration).await?;
     /// ```
     pub fn escrow(&self) -> escrow::Escrow<'_> {
         escrow::Escrow::new(self)
@@ -190,7 +190,7 @@ mod tests {
     use super::Erc20Module;
     use crate::{
         DefaultAlkahestClient,
-        contracts::obligations::{ERC20PaymentObligation, escrow::non_tierable::ERC20EscrowObligation},
+        contracts::obligations::{ERC20PaymentObligation, escrow::default_escrow::ERC20EscrowObligation},
         extensions::{AlkahestExtension, HasErc20, HasErc721, HasErc1155, HasTokenBundle},
         fixtures::{MockERC20Permit, MockERC721, MockERC1155},
         types::{
@@ -317,7 +317,7 @@ mod tests {
         let escrow_allowance = mock_erc20_a
             .allowance(
                 test.alice.address(),
-                test.addresses.erc20_addresses.escrow_obligation_nontierable,
+                test.addresses.erc20_addresses.escrow_obligation_default,
             )
             .call()
             .await?;
@@ -457,7 +457,7 @@ mod tests {
             .alice_client
             .erc20()
             .escrow()
-            .non_tierable()
+            .default()
             .create(&price, &item, 0)
             .await?;
 
@@ -465,7 +465,7 @@ mod tests {
         let alice_balance = mock_erc20_a.balanceOf(test.alice.address()).call().await?;
 
         let escrow_balance = mock_erc20_a
-            .balanceOf(test.addresses.erc20_addresses.escrow_obligation_nontierable)
+            .balanceOf(test.addresses.erc20_addresses.escrow_obligation_default)
             .call()
             .await?;
 
@@ -511,7 +511,7 @@ mod tests {
             .alice_client
             .erc20()
             .escrow()
-            .non_tierable()
+            .default()
             .permit_and_create(&price, &item, expiration)
             .await?;
 
@@ -519,7 +519,7 @@ mod tests {
         let alice_balance = mock_erc20_a.balanceOf(test.alice.address()).call().await?;
 
         let escrow_balance = mock_erc20_a
-            .balanceOf(test.addresses.erc20_addresses.escrow_obligation_nontierable)
+            .balanceOf(test.addresses.erc20_addresses.escrow_obligation_default)
             .call()
             .await?;
 
@@ -667,7 +667,7 @@ mod tests {
 
         let alice_balance = mock_erc20_a.balanceOf(test.alice.address()).call().await?;
         let escrow_balance = mock_erc20_a
-            .balanceOf(test.addresses.erc20_addresses.escrow_obligation_nontierable)
+            .balanceOf(test.addresses.erc20_addresses.escrow_obligation_default)
             .call()
             .await?;
 
@@ -716,7 +716,7 @@ mod tests {
 
         let alice_balance = mock_erc20_a.balanceOf(test.alice.address()).call().await?;
         let escrow_balance = mock_erc20_a
-            .balanceOf(test.addresses.erc20_addresses.escrow_obligation_nontierable)
+            .balanceOf(test.addresses.erc20_addresses.escrow_obligation_default)
             .call()
             .await?;
 
@@ -939,7 +939,7 @@ mod tests {
             .alice_client
             .erc20()
             .escrow()
-            .non_tierable()
+            .default()
             .reclaim_expired(buy_attestation)
             .await?;
 
@@ -998,7 +998,7 @@ mod tests {
         let alice_balance = mock_erc20.balanceOf(test.alice.address()).call().await?;
 
         let escrow_balance = mock_erc20
-            .balanceOf(test.addresses.erc20_addresses.escrow_obligation_nontierable)
+            .balanceOf(test.addresses.erc20_addresses.escrow_obligation_default)
             .call()
             .await?;
 
@@ -1057,7 +1057,7 @@ mod tests {
         let alice_balance = mock_erc20.balanceOf(test.alice.address()).call().await?;
 
         let escrow_balance = mock_erc20
-            .balanceOf(test.addresses.erc20_addresses.escrow_obligation_nontierable)
+            .balanceOf(test.addresses.erc20_addresses.escrow_obligation_default)
             .call()
             .await?;
 
@@ -1127,7 +1127,7 @@ mod tests {
         let alice_balance = mock_erc20.balanceOf(test.alice.address()).call().await?;
 
         let escrow_balance = mock_erc20
-            .balanceOf(test.addresses.erc20_addresses.escrow_obligation_nontierable)
+            .balanceOf(test.addresses.erc20_addresses.escrow_obligation_default)
             .call()
             .await?;
 
@@ -1179,7 +1179,7 @@ mod tests {
         let alice_balance = mock_erc20.balanceOf(test.alice.address()).call().await?;
 
         let escrow_balance = mock_erc20
-            .balanceOf(test.addresses.erc20_addresses.escrow_obligation_nontierable)
+            .balanceOf(test.addresses.erc20_addresses.escrow_obligation_default)
             .call()
             .await?;
 
@@ -1232,7 +1232,7 @@ mod tests {
         let alice_balance = mock_erc20.balanceOf(test.alice.address()).call().await?;
 
         let escrow_balance = mock_erc20
-            .balanceOf(test.addresses.erc20_addresses.escrow_obligation_nontierable)
+            .balanceOf(test.addresses.erc20_addresses.escrow_obligation_default)
             .call()
             .await?;
 
@@ -1297,7 +1297,7 @@ mod tests {
         let alice_balance = mock_erc20.balanceOf(test.alice.address()).call().await?;
 
         let escrow_balance = mock_erc20
-            .balanceOf(test.addresses.erc20_addresses.escrow_obligation_nontierable)
+            .balanceOf(test.addresses.erc20_addresses.escrow_obligation_default)
             .call()
             .await?;
 
@@ -1378,7 +1378,7 @@ mod tests {
         // Check ownership before the exchange
         let initial_erc721_owner = mock_erc721_a.ownerOf(erc721_token_id).call().await?;
         assert_eq!(
-            initial_erc721_owner, test.addresses.erc721_addresses.escrow_obligation_nontierable,
+            initial_erc721_owner, test.addresses.erc721_addresses.escrow_obligation_default,
             "ERC721 should be in escrow"
         );
 
@@ -1503,7 +1503,7 @@ mod tests {
         // Check ownership before the exchange
         let initial_erc721_owner = mock_erc721_a.ownerOf(erc721_token_id).call().await?;
         assert_eq!(
-            initial_erc721_owner, test.addresses.erc721_addresses.escrow_obligation_nontierable,
+            initial_erc721_owner, test.addresses.erc721_addresses.escrow_obligation_default,
             "ERC721 should be in escrow"
         );
 
@@ -1876,7 +1876,7 @@ mod tests {
             .bob_client
             .token_bundle()
             .escrow()
-            .non_tierable()
+            .default()
             .create(
                 &bundle,
                 &ArbiterData {
@@ -2057,7 +2057,7 @@ mod tests {
             .bob_client
             .token_bundle()
             .escrow()
-            .non_tierable()
+            .default()
             .create(
                 &bundle,
                 &ArbiterData {
@@ -2214,7 +2214,7 @@ mod tests {
             .alice_client
             .erc20()
             .escrow()
-            .non_tierable()
+            .default()
             .approve_and_create(&price, &item, 0)
             .await?;
 
@@ -2225,7 +2225,7 @@ mod tests {
         // Verify escrow happened
         let alice_balance = mock_erc20_a.balanceOf(test.alice.address()).call().await?;
         let escrow_balance = mock_erc20_a
-            .balanceOf(test.addresses.erc20_addresses.escrow_obligation_nontierable)
+            .balanceOf(test.addresses.erc20_addresses.escrow_obligation_default)
             .call()
             .await?;
 

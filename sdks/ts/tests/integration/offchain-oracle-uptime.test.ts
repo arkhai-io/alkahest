@@ -148,7 +148,7 @@ test("asynchronous offchain oracle uptime flow", { timeout: 15000 }, async () =>
     data: demandBytes,
   });
 
-  const { attested: escrow } = await testContext.alice.client.erc20.escrow.nonTierable.permitAndCreate(
+  const { attested: escrow } = await testContext.alice.client.erc20.escrow.default.permitAndCreate(
     {
       address: testContext.mockAddresses.erc20A,
       value: parseEther("100"),
@@ -240,7 +240,7 @@ test("asynchronous offchain oracle uptime flow", { timeout: 15000 }, async () =>
   let collectionHash: `0x${string}` | undefined;
   for (let attempts = 0; attempts < 50; attempts++) {
     try {
-      collectionHash = await testContext.bob.client.erc20.escrow.nonTierable.collect(escrow.uid, fulfillment.uid);
+      collectionHash = await testContext.bob.client.erc20.escrow.default.collect(escrow.uid, fulfillment.uid);
       break;
     } catch {
       await Bun.sleep(100);

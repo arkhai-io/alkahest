@@ -4,11 +4,10 @@ pragma solidity ^0.8.26;
 import "forge-std/Test.sol";
 import {ERC20Splitter} from "@src/utils/splitters/ERC20Splitter.sol";
 import {SplitterVerification} from "@src/utils/splitters/SplitterVerification.sol";
-import {ERC20EscrowObligation} from "@src/obligations/escrow/non-tierable/ERC20EscrowObligation.sol";
+import {ERC20EscrowObligation} from "@src/obligations/escrow/default/ERC20EscrowObligation.sol";
 import {StringObligation} from "@src/obligations/StringObligation.sol";
 import {BaseObligation} from "@src/BaseObligation.sol";
 import {BaseEscrowObligation} from "@src/BaseEscrowObligation.sol";
-import {ArbiterUtils} from "@src/ArbiterUtils.sol";
 import {IEAS, Attestation, AttestationRequest, AttestationRequestData} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -267,7 +266,7 @@ contract ERC20SplitterTest is Test {
         assertFalse(splitter.checkObligation(attackerFulfillment, demand, escrowUid));
     }
 
-    function testCheckObligationRejectsZeroUidFulfillment() public {
+    function testCheckObligationReturnsFalseForZeroUidFulfillmentWithoutDecision() public {
         bytes32 escrowUid = _createEscrow(buyer, AMOUNT, uint64(block.timestamp + EXPIRATION));
         bytes memory demand = abi.encode(ERC20Splitter.DemandData({oracle: oracle, data: bytes("")}));
 
@@ -284,8 +283,7 @@ contract ERC20SplitterTest is Test {
             data: bytes("")
         });
 
-        vm.expectRevert(ArbiterUtils.InvalidAttestationUid.selector);
-        splitter.checkObligation(fulfillment, demand, escrowUid);
+        assertFalse(splitter.checkObligation(fulfillment, demand, escrowUid));
     }
 
     // -----------------------------------------------------------------

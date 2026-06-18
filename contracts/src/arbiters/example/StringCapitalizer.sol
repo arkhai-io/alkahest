@@ -36,7 +36,6 @@ contract StringCapitalizer is IArbiter {
         bytes32 fulfilling
     ) external view override returns (bool) {
         // Check basic attestation validity
-        if (!obligation._checkIntrinsic()) return false;
 
         // Check if the obligation references what it's fulfilling (if provided)
         if (fulfilling != bytes32(0) && obligation.refUID != fulfilling) {

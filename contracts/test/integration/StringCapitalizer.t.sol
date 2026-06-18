@@ -233,7 +233,7 @@ contract StringCapitalizerTest is Test {
         );
     }
 
-    function testCheckObligationWithRevokedAttestation() public {
+    function testCheckObligationIgnoresRevokedAttestation() public {
         // Create a demand
         StringCapitalizer.DemandData memory demand = StringCapitalizer
             .DemandData({query: "hello"});
@@ -252,17 +252,16 @@ contract StringCapitalizerTest is Test {
             data: abi.encode(StringObligation.ObligationData({item: "HELLO", schema: bytes32(0)}))
         });
 
-        // The arbiter should revert when checking revoked attestations
-        // due to the ArbiterUtils._checkIntrinsic() function
-        vm.expectRevert(abi.encodeWithSignature("AttestationRevoked()"));
-        capitalizer.checkObligation(
+        bool result = capitalizer.checkObligation(
             revokedObligation,
             abi.encode(demand),
             bytes32(0)
         );
+
+        assertTrue(result, "Semantic arbiter should ignore revocation");
     }
 
-    function testCheckObligationWithExpiredAttestation() public {
+    function testCheckObligationIgnoresExpiredAttestation() public {
         // Warp to a future time so we can create expired attestations
         vm.warp(3 days);
 
@@ -284,14 +283,13 @@ contract StringCapitalizerTest is Test {
             data: abi.encode(StringObligation.ObligationData({item: "HELLO", schema: bytes32(0)}))
         });
 
-        // The arbiter should revert when checking expired attestations
-        // due to the ArbiterUtils._checkIntrinsic() function
-        vm.expectRevert(abi.encodeWithSignature("DeadlineExpired()"));
-        capitalizer.checkObligation(
+        bool result = capitalizer.checkObligation(
             expiredObligation,
             abi.encode(demand),
             bytes32(0)
         );
+
+        assertTrue(result, "Semantic arbiter should ignore expiration");
     }
 
     function testFuzzCapitalization(

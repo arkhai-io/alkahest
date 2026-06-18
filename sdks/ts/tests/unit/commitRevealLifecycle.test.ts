@@ -40,7 +40,7 @@ describe("CommitReveal Lifecycle Tests", () => {
 
     // ── 1. Alice creates native-token escrow with CommitReveal as arbiter ──
     const { attested: escrowAttested } =
-      await aliceClient.nativeToken.escrow.nonTierable.create(
+      await aliceClient.nativeToken.escrow.default.create(
         escrowAmount,
         {
           arbiter: testContext.addresses.commitRevealObligation,
@@ -86,7 +86,7 @@ describe("CommitReveal Lifecycle Tests", () => {
     // ── 4. Bob collects the escrowed native tokens ──
     const bobBalanceBefore = await testClient.getBalance({ address: bob });
 
-    const collectHash = await bobClient.nativeToken.escrow.nonTierable.collect(
+    const collectHash = await bobClient.nativeToken.escrow.default.collect(
       escrowUid,
       fulfillmentUid,
     );
@@ -106,7 +106,7 @@ describe("CommitReveal Lifecycle Tests", () => {
 
     // ── 1. Alice creates native-token escrow ──
     const { attested: escrowAttested } =
-      await aliceClient.nativeToken.escrow.nonTierable.create(
+      await aliceClient.nativeToken.escrow.default.create(
         escrowAmount,
         {
           arbiter: testContext.addresses.commitRevealObligation,

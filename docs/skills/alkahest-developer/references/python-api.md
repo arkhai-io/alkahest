@@ -51,11 +51,11 @@ client
 │   ├── util
 │   │   └── approve(token_address, amount, purpose)
 │   ├── escrow
-│   │   ├── non_tierable
+│   │   ├── default
 │   │   │   ├── create(token, amount, arbiter, demand, expiration) -> str (uid)
 │   │   │   ├── collect(escrow_uid, fulfillment_uid) -> str (tx_hash)
 │   │   │   └── get(uid) -> PyDecodedAttestation
-│   │   └── tierable
+│   │   └── unconditional
 │   ├── payment
 │   │   ├── pay(token, amount, payee, ...) -> str (uid)
 │   │   ├── approve_and_pay(token, amount, payee, ...) -> str (uid)
@@ -67,30 +67,30 @@ client
 │
 ├── erc721                            # Same structure as erc20
 │   ├── util (.approve)
-│   ├── escrow.non_tierable / .tierable
+│   ├── escrow.default / .unconditional
 │   ├── payment
 │   └── barter
 │
 ├── erc1155                           # Same structure
 │   ├── util (.approve_all)
-│   ├── escrow.non_tierable / .tierable
+│   ├── escrow.default / .unconditional
 │   ├── payment
 │   └── barter
 │
 ├── native_token                      # No util
-│   ├── escrow.non_tierable / .tierable
+│   ├── escrow.default / .unconditional
 │   ├── payment
 │   └── barter
 │
 ├── token_bundle
 │   ├── util (.approve)
-│   ├── escrow.non_tierable / .tierable
+│   ├── escrow.default / .unconditional
 │   ├── payment
 │   └── barter
 │
 ├── attestation
-│   ├── escrow.v1.non_tierable / .tierable
-│   ├── escrow.v2.non_tierable / .tierable
+│   ├── escrow.v1.default / .unconditional
+│   ├── escrow.v2.default / .unconditional
 │   └── util
 │       ├── get_attestation(uid) -> PyAttestation
 │       ├── register_schema(schema, resolver, revocable) -> str

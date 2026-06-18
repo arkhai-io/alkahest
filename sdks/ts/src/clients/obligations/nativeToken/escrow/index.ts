@@ -1,26 +1,26 @@
 import type { ViemClient } from "../../../../utils";
 import type { NativeTokenAddresses } from "../index";
-import { makeNativeTokenNonTierableEscrowClient, type NativeTokenNonTierableEscrowClient } from "./nonTierable";
-import { makeNativeTokenTierableEscrowClient, type NativeTokenTierableEscrowClient } from "./tierable";
+import { makeNativeTokenDefaultEscrowClient, type NativeTokenDefaultEscrowClient } from "./default";
+import { makeNativeTokenUnconditionalEscrowClient, type NativeTokenUnconditionalEscrowClient } from "./unconditional";
 
 export {
-  decodeObligation as decodeNonTierableObligation,
-  encodeObligation as encodeNonTierableObligation,
-  makeNativeTokenNonTierableEscrowClient,
-  type NativeTokenNonTierableEscrowClient,
-  type NativeTokenNonTierableEscrowObligationData,
-} from "./nonTierable";
+  decodeObligation as decodeDefaultObligation,
+  encodeObligation as encodeDefaultObligation,
+  makeNativeTokenDefaultEscrowClient,
+  type NativeTokenDefaultEscrowClient,
+  type NativeTokenDefaultEscrowObligationData,
+} from "./default";
 export {
-  decodeObligation as decodeTierableObligation,
-  encodeObligation as encodeTierableObligation,
-  makeNativeTokenTierableEscrowClient,
-  type NativeTokenTierableEscrowClient,
-  type NativeTokenTierableEscrowObligationData,
-} from "./tierable";
+  decodeObligation as decodeUnconditionalObligation,
+  encodeObligation as encodeUnconditionalObligation,
+  makeNativeTokenUnconditionalEscrowClient,
+  type NativeTokenUnconditionalEscrowClient,
+  type NativeTokenUnconditionalEscrowObligationData,
+} from "./unconditional";
 
 export type NativeTokenEscrowClient = {
-  nonTierable: NativeTokenNonTierableEscrowClient;
-  tierable: NativeTokenTierableEscrowClient;
+  default: NativeTokenDefaultEscrowClient;
+  unconditional: NativeTokenUnconditionalEscrowClient;
 };
 
 export const makeNativeTokenEscrowClient = (
@@ -28,7 +28,7 @@ export const makeNativeTokenEscrowClient = (
   addresses: NativeTokenAddresses,
 ): NativeTokenEscrowClient => {
   return {
-    nonTierable: makeNativeTokenNonTierableEscrowClient(viemClient, addresses),
-    tierable: makeNativeTokenTierableEscrowClient(viemClient, addresses),
+    default: makeNativeTokenDefaultEscrowClient(viemClient, addresses),
+    unconditional: makeNativeTokenUnconditionalEscrowClient(viemClient, addresses),
   };
 };

@@ -26,7 +26,7 @@ async def test_buy_erc20_for_erc20(env, alice_client):
     escrow_result = await alice_client.erc20.barter.buy_erc20_for_erc20(bid_data, ask_data, expiration)
     
     alice_final_a = mock_erc20_a.balance_of(env.alice)
-    escrow_balance_a = mock_erc20_a.balance_of(env.addresses.erc20_addresses.escrow_obligation_nontierable)
+    escrow_balance_a = mock_erc20_a.balance_of(env.addresses.erc20_addresses.escrow_obligation_default)
     
     expected_alice_balance = alice_after_transfer - bid_amount
     assert alice_final_a == expected_alice_balance, "Alice balance incorrect. Expected {expected_alice_balance}, got {alice_final_a}"

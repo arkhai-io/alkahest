@@ -63,8 +63,8 @@ describe("ERC20 Tests", () => {
       amount: parseEther("100"),
     };
 
-    const encoded = aliceClient.erc20.escrow.nonTierable.encodeObligationRaw(data);
-    const decoded = aliceClient.erc20.escrow.nonTierable.decodeObligation(encoded);
+    const encoded = aliceClient.erc20.escrow.default.encodeObligationRaw(data);
+    const decoded = aliceClient.erc20.escrow.default.decodeObligation(encoded);
     expect(decoded.amount).toEqual(data.amount);
     expect(compareAddresses(decoded.token, data.token)).toBeTruthy();
     expect(compareAddresses(decoded.arbiter, data.arbiter)).toBeTruthy();
@@ -113,7 +113,7 @@ describe("ERC20 Tests", () => {
       const expiration = BigInt(Math.floor(Date.now() / 1000) + 86400); // 1 day from now
 
       // Alice uses permit and creates custom demand escrow
-      const { attested } = await aliceClient.erc20.escrow.nonTierable.permitAndCreate(
+      const { attested } = await aliceClient.erc20.escrow.default.permitAndCreate(
         { address: aliceErc20Token, value: amount },
         { arbiter, demand },
         expiration,
@@ -535,7 +535,7 @@ describe("ERC20 Tests", () => {
       );
 
       // Bob creates bundle escrow demanding Alice's ERC20
-      const { attested: buyAttestation } = await bobClient.bundle.escrow.nonTierable.create(
+      const { attested: buyAttestation } = await bobClient.bundle.escrow.default.create(
         bundle,
         {
           arbiter: testContext.addresses.erc20PaymentObligation,

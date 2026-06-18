@@ -38,7 +38,7 @@ async def test_erc721_approve(env, alice_client):
     
     # Verify approval for escrow obligation
     escrow_approved = mock_erc721_a.get_approved(1)
-    expected_escrow_approval = env.addresses.erc721_addresses.escrow_obligation_nontierable
+    expected_escrow_approval = env.addresses.erc721_addresses.escrow_obligation_default
     
     assert escrow_approved.lower() == expected_escrow_approval.lower(), "Escrow approval should be set to {expected_escrow_approval}, got {escrow_approved}"
     

@@ -37,7 +37,7 @@ async fn test_commit_reveal_full_lifecycle() -> eyre::Result<()> {
         .alice_client
         .native_token()
         .escrow()
-        .non_tierable()
+        .default()
         .create(
             &NativeTokenData {
                 value: escrow_amount,
@@ -95,7 +95,7 @@ async fn test_commit_reveal_full_lifecycle() -> eyre::Result<()> {
         .bob_client
         .native_token()
         .escrow()
-        .non_tierable()
+        .default()
         .collect(escrow_uid, fulfillment_uid)
         .await?;
     assert!(collect_receipt.status());
@@ -133,7 +133,7 @@ async fn test_commit_reveal_bond_slash() -> eyre::Result<()> {
         .alice_client
         .native_token()
         .escrow()
-        .non_tierable()
+        .default()
         .create(
             &NativeTokenData {
                 value: escrow_amount,
