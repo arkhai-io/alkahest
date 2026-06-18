@@ -38,6 +38,8 @@ Tracking notes for `arkhai-io-alkahest-2026-04-13-analysis.md`.
   Commit: `4263e23155a59acd58dae497f7a982b6e5d89fa1 fix(splitters): refund fulfillment native rebates`
 - #20 Not-found handling / error classification: addressed by replacing unreachable `EAS.getAttestation` try/catch handling with explicit zero/mismatched UID checks in base escrow collection/reclaim paths and token-bundle unsafe partial paths.
   Commit: `e2b9c47c150d1ed9fadec5b1c0376868e1bdc17c fix(escrow): classify missing attestations`
+- Second report #1 `NativeTokenEscrowHook` empty `receive`: addressed by removing unnecessary payable `receive` functions from `NativeTokenEscrowHook`, `HookEscrowObligation`, and `HooksEscrowObligation`, so direct ETH transfers revert while accounted payable lock flows continue to work.
+  Commit: `6348408ead79fd85ea9a73eb295f1394061c51f2 fix(hooks): reject direct native transfers`
 - Default escrow checks follow-up: documented proposed default/unconditional escrow split before implementation.
   Doc: `docs/drafts/escrow-default-checks-plan.md`
 
@@ -57,7 +59,6 @@ Tracking notes for `arkhai-io-alkahest-2026-04-13-analysis.md`.
 
 ## Remaining Untriaged
 
-- Second report section #1 NativeTokenEscrowHook empty `receive`.
 - Second report section #2 Splitter self-recipient splits / missing withdrawal.
 - Second report section #4 TokenBundleSplitter ERC721 index bounds.
 - Second report section #5 Splitter `requestArbitration` event payload.
