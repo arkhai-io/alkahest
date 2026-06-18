@@ -326,6 +326,14 @@ pub mod obligations {
         "src/contracts/obligations/CommitRevealObligation.json"
     );
 
+    sol!(
+        #[allow(missing_docs)]
+        #[sol(rpc)]
+        #[derive(Debug)]
+        GlobalBondCommitRevealObligation,
+        "src/contracts/obligations/GlobalBondCommitRevealObligation.json"
+    );
+
     // Escrow obligations submodule
     pub mod escrow {
         pub mod default_escrow {

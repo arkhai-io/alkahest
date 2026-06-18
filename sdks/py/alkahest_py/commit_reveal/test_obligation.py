@@ -3,7 +3,9 @@ Tests for CommitRevealObligation client.
 """
 import time
 import pytest
-from alkahest_py import CommitRevealObligationData
+from alkahest_py import CommitRevealDemandData, CommitRevealObligationData
+
+BOND_AMOUNT = 10_000_000_000_000_000
 
 
 # ── Client wiring tests (no on-chain calls) ─────────────────────────────────
@@ -89,16 +91,6 @@ async def test_different_schemas_produce_different_encodings():
 # ── On-chain tests (require deployed CommitRevealObligation contract) ────────
 
 @pytest.mark.asyncio
-async def test_bond_amount(env, alice_client):
-    """Test reading the bond amount from the contract."""
-    cr_client = alice_client.commit_reveal
-    bond = await cr_client.bond_amount()
-    assert isinstance(bond, str)
-    bond_int = int(bond)
-    assert bond_int >= 0
-
-
-@pytest.mark.asyncio
 async def test_commit_deadline(env, alice_client):
     """Test reading the commit deadline from the contract."""
     cr_client = alice_client.commit_reveal
@@ -118,7 +110,7 @@ async def test_slashed_bond_recipient(env, alice_client):
     assert len(recipient) == 42
 
 
-async def commit_payload(env, cr_client, ref_uid, payload, salt, schema, claimer):
+async def commit_payload(env, cr_client, ref_uid, payload, salt, schema, claimer, bond_amount=BOND_AMOUNT):
     commitment = await cr_client.compute_commitment(
         ref_uid=ref_uid,
         claimer=claimer,
@@ -126,7 +118,7 @@ async def commit_payload(env, cr_client, ref_uid, payload, salt, schema, claimer
         salt=salt,
         schema=schema,
     )
-    tx_hash = await cr_client.commit(commitment)
+    tx_hash = await cr_client.commit(commitment, bond_amount)
     assert tx_hash.startswith("0x")
     return commitment
 
@@ -215,13 +207,14 @@ async def test_commit_and_get_commitment(env, alice_client, bob_client):
         schema=schema,
     )
 
-    tx_hash = await bob_cr.commit(commitment)
+    tx_hash = await bob_cr.commit(commitment, BOND_AMOUNT)
     assert tx_hash.startswith("0x")
 
-    commit_block, commit_timestamp, committer = await bob_cr.get_commitment(commitment)
+    commit_block, commit_timestamp, committer, bond_amount = await bob_cr.get_commitment(commitment)
     assert commit_block > 0
     assert commit_timestamp > 0
     assert committer.lower() == env.bob.lower()
+    assert int(bond_amount) == BOND_AMOUNT
 
 
 @pytest.mark.asyncio
@@ -243,7 +236,7 @@ async def test_is_commitment_claimed_false_before_reveal(env, alice_client, bob_
         schema=schema,
     )
 
-    await bob_cr.commit(commitment)
+    await bob_cr.commit(commitment, BOND_AMOUNT)
 
     claimed = await bob_cr.is_commitment_claimed(commitment)
     assert claimed is False
@@ -268,7 +261,7 @@ async def test_bond_reclaimed_after_reveal(env, alice_client, bob_client):
         schema=schema,
     )
 
-    await bob_cr.commit(commitment)
+    await bob_cr.commit(commitment, BOND_AMOUNT)
     await env.god_wallet_provider.anvil_mine(1)
 
     # Bob reveals (creates fulfillment attestation and reclaims bond)
@@ -296,10 +289,11 @@ async def test_full_lifecycle_escrow_commit_reveal_collect(env, alice_client, bo
     cr_obligation_address = env.addresses.commit_reveal_obligation_addresses.obligation
     escrow_amount = 2_000_000_000_000_000_000  # 2 ETH in wei
     expiration = int(time.time()) + 3600
+    demand = CommitRevealDemandData(str(BOND_AMOUNT)).encode_self()
 
     escrow_result = await alice_client.native_token.escrow.default.create(
         {"value": escrow_amount},
-        {"arbiter": cr_obligation_address, "demand": b""},
+        {"arbiter": cr_obligation_address, "demand": demand},
         expiration,
     )
     assert escrow_result is not None
@@ -317,14 +311,15 @@ async def test_full_lifecycle_escrow_commit_reveal_collect(env, alice_client, bo
     assert commitment.startswith("0x")
     assert len(commitment) == 66
 
-    tx_hash = await bob_cr.commit(commitment)
+    tx_hash = await bob_cr.commit(commitment, BOND_AMOUNT)
     assert tx_hash.startswith("0x")
 
     # Verify commitment is stored
-    commit_block, commit_timestamp, committer = await bob_cr.get_commitment(commitment)
+    commit_block, commit_timestamp, committer, bond_amount = await bob_cr.get_commitment(commitment)
     assert commit_block > 0
     assert commit_timestamp > 0
     assert committer.lower() == env.bob.lower()
+    assert int(bond_amount) == BOND_AMOUNT
 
     # 3. Bob reveals (creates fulfillment attestation referencing escrow)
     # Anvil automining: each tx gets its own block, so commit/reveal are in different blocks.
@@ -357,10 +352,11 @@ async def test_bond_slash_after_deadline(env, alice_client, bob_client):
     cr_obligation_address = env.addresses.commit_reveal_obligation_addresses.obligation
     escrow_amount = 2_000_000_000_000_000_000  # 2 ETH in wei
     expiration = int(time.time()) + 7200
+    demand = CommitRevealDemandData(str(BOND_AMOUNT)).encode_self()
 
     escrow_result = await alice_client.native_token.escrow.default.create(
         {"value": escrow_amount},
-        {"arbiter": cr_obligation_address, "demand": b""},
+        {"arbiter": cr_obligation_address, "demand": demand},
         expiration,
     )
     escrow_uid = escrow_result["log"]["uid"]
@@ -374,7 +370,7 @@ async def test_bond_slash_after_deadline(env, alice_client, bob_client):
         schema=schema,
     )
 
-    tx_hash = await bob_cr.commit(commitment)
+    tx_hash = await bob_cr.commit(commitment, BOND_AMOUNT)
     assert tx_hash.startswith("0x")
 
     # 3. Advance time past the commit deadline without revealing

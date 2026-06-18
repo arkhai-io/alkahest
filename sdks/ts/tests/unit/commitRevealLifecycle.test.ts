@@ -37,6 +37,8 @@ describe("CommitReveal Lifecycle Tests", () => {
     const payload = toHex("hello from bob");
     const salt = ("0x" + "aa".repeat(32)) as `0x${string}`;
     const schema = ("0x" + "00".repeat(32)) as `0x${string}`;
+    const bondAmount = parseEther("0.01");
+    const demand = bobClient.commitReveal.encodeDemand({ bondAmount });
 
     // ── 1. Alice creates native-token escrow with CommitReveal as arbiter ──
     const { attested: escrowAttested } =
@@ -44,7 +46,7 @@ describe("CommitReveal Lifecycle Tests", () => {
         escrowAmount,
         {
           arbiter: testContext.addresses.commitRevealObligation,
-          demand: "0x", // demand is unused by CommitRevealObligation.checkObligation
+          demand,
         },
       );
     const escrowUid = escrowAttested.uid;
@@ -60,14 +62,16 @@ describe("CommitReveal Lifecycle Tests", () => {
     );
     expect(commitment).toMatch(/^0x[0-9a-f]{64}$/);
 
-    const { hash: commitHash } = await bobClient.commitReveal.commit(commitment);
+    const { hash: commitHash } = await bobClient.commitReveal.commit(commitment, bondAmount);
     await testClient.waitForTransactionReceipt({ hash: commitHash });
 
     // Verify commitment is stored
-    // commitments() returns [commitBlock, commitTimestamp, committer]
-    const [commitBlock, _commitTimestamp, committer] = await bobClient.commitReveal.getCommitment(commitment);
+    // commitments() returns [commitBlock, commitTimestamp, committer, bondAmount]
+    const [commitBlock, _commitTimestamp, committer, committedBondAmount] =
+      await bobClient.commitReveal.getCommitment(commitment);
     expect(commitBlock).toBeGreaterThan(0n);
     expect((committer as string).toLowerCase()).toBe(bob.toLowerCase());
+    expect(committedBondAmount).toBe(bondAmount);
 
     // ── 3. Bob reveals (creates fulfillment attestation referencing escrow) ──
     await testClient.mine({ blocks: 1 });
@@ -103,6 +107,8 @@ describe("CommitReveal Lifecycle Tests", () => {
     const payload = toHex("will not reveal");
     const salt = ("0x" + "bb".repeat(32)) as `0x${string}`;
     const schema = ("0x" + "00".repeat(32)) as `0x${string}`;
+    const bondAmount = parseEther("0.01");
+    const demand = bobClient.commitReveal.encodeDemand({ bondAmount });
 
     // ── 1. Alice creates native-token escrow ──
     const { attested: escrowAttested } =
@@ -110,7 +116,7 @@ describe("CommitReveal Lifecycle Tests", () => {
         escrowAmount,
         {
           arbiter: testContext.addresses.commitRevealObligation,
-          demand: "0x",
+          demand,
         },
       );
     const escrowUid = escrowAttested.uid;
@@ -123,7 +129,7 @@ describe("CommitReveal Lifecycle Tests", () => {
       obligationData,
     );
 
-    const { hash: commitHash } = await bobClient.commitReveal.commit(commitment);
+    const { hash: commitHash } = await bobClient.commitReveal.commit(commitment, bondAmount);
     await testClient.waitForTransactionReceipt({ hash: commitHash });
 
     // ── 3. Advance time past the commit deadline without revealing ──

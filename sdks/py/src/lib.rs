@@ -52,7 +52,7 @@ use crate::{
             erc1155::{PyERC1155EscrowObligationData, PyERC1155PaymentObligationData},
             erc20::{PyERC20EscrowObligationData, PyERC20PaymentObligationData},
             erc721::{PyERC721EscrowObligationData, PyERC721PaymentObligationData},
-            commit_reveal::PyCommitRevealObligationData,
+            commit_reveal::{PyCommitRevealDemandData, PyCommitRevealObligationData},
             native_token::PyNativeTokenEscrowObligationData,
             string::PyStringObligationData,
             token_bundle::PyTokenBundleEscrowObligationData,
@@ -553,6 +553,7 @@ fn alkahest_py(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyStringObligationData>()?;
     m.add_class::<CommitRevealObligationClient>()?;
     m.add_class::<PyCommitRevealObligationData>()?;
+    m.add_class::<PyCommitRevealDemandData>()?;
     m.add_class::<PyErc20Data>()?;
     m.add_class::<crate::types::PyDefaultExtensionConfig>()?;
 

@@ -29,7 +29,7 @@ pub use string::StringObligationClient;
 pub use token_bundle::TokenBundleClient;
 
 // Re-export obligation data types
-pub use commit_reveal::PyCommitRevealObligationData;
+pub use commit_reveal::{PyCommitRevealDemandData, PyCommitRevealObligationData};
 pub use erc1155::{PyERC1155EscrowObligationData, PyERC1155PaymentObligationData};
 pub use erc20::{PyERC20EscrowObligationData, PyERC20PaymentObligationData};
 pub use erc721::{PyERC721EscrowObligationData, PyERC721PaymentObligationData};

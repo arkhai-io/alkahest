@@ -6,6 +6,7 @@ use alloy::{
 };
 
 use alkahest_rs::{
+    clients::commit_reveal_obligation::CommitRevealObligationModule,
     contracts::obligations::CommitRevealObligation,
     extensions::{HasCommitReveal, HasNativeToken},
     types::{ArbiterData, NativeTokenData},
@@ -22,15 +23,18 @@ async fn test_commit_reveal_full_lifecycle() -> eyre::Result<()> {
     let escrow_amount = U256::from(2_000_000_000_000_000_000u128); // 2 ETH
     let expiration = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() + 3600;
 
-    // The demand bytes are unused by CommitRevealObligation.checkObligation,
-    // but we still need a valid ArbiterData pointing at the CR contract.
+    let bond_amount = U256::from(10_000_000_000_000_000u64); // 0.01 ETH
+    let demand = CommitRevealObligation::DemandData {
+        bondAmount: bond_amount,
+    };
+
     let arbiter = test
         .addresses
         .commit_reveal_obligation_addresses
         .obligation;
     let item = ArbiterData {
         arbiter,
-        demand: Bytes::new(),
+        demand: CommitRevealObligationModule::encode_demand(&demand),
     };
 
     let escrow_receipt = test
@@ -67,17 +71,22 @@ async fn test_commit_reveal_full_lifecycle() -> eyre::Result<()> {
         .compute_commitment(escrow_uid, test.bob.address(), obligation_data.clone())
         .await?;
 
-    let commit_receipt = test.bob_client.commit_reveal().commit(commitment).await?;
+    let commit_receipt = test
+        .bob_client
+        .commit_reveal()
+        .commit(commitment, bond_amount)
+        .await?;
     assert!(commit_receipt.status());
 
     // Verify commitment is stored
-    let (commit_block, _commit_ts, committer) = test
+    let (commit_block, _commit_ts, committer, committed_bond_amount) = test
         .bob_client
         .commit_reveal()
         .get_commitment(commitment)
         .await?;
     assert!(commit_block > 0);
     assert_eq!(committer, test.bob.address());
+    assert_eq!(committed_bond_amount, bond_amount);
 
     // ── 3. Bob reveals (creates fulfillment attestation referencing escrow) ──
     // In Anvil automining mode, the next tx is in a new block, satisfying the
@@ -119,6 +128,10 @@ async fn test_commit_reveal_bond_slash() -> eyre::Result<()> {
     // ── 1. Alice creates a native-token escrow ──
     let escrow_amount = U256::from(2_000_000_000_000_000_000u128); // 2 ETH
     let expiration = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() + 7200;
+    let bond_amount = U256::from(10_000_000_000_000_000u64); // 0.01 ETH
+    let demand = CommitRevealObligation::DemandData {
+        bondAmount: bond_amount,
+    };
 
     let arbiter = test
         .addresses
@@ -126,7 +139,7 @@ async fn test_commit_reveal_bond_slash() -> eyre::Result<()> {
         .obligation;
     let item = ArbiterData {
         arbiter,
-        demand: Bytes::new(),
+        demand: CommitRevealObligationModule::encode_demand(&demand),
     };
 
     let escrow_receipt = test
@@ -163,7 +176,11 @@ async fn test_commit_reveal_bond_slash() -> eyre::Result<()> {
         .compute_commitment(escrow_uid, test.bob.address(), obligation_data.clone())
         .await?;
 
-    let commit_receipt = test.bob_client.commit_reveal().commit(commitment).await?;
+    let commit_receipt = test
+        .bob_client
+        .commit_reveal()
+        .commit(commitment, bond_amount)
+        .await?;
     assert!(commit_receipt.status());
 
     // ── 3. Advance time past the commit deadline without revealing ──

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { decodeAbiParameters, encodeAbiParameters, getAbiItem } from "viem";
 import { abi as commitRevealObligationAbi } from "../../src/contracts/obligations/CommitRevealObligation";
-import type { CommitRevealObligationData } from "../../src/clients/obligations/commitReveal";
+import type { CommitRevealDemandData, CommitRevealObligationData } from "../../src/clients/obligations/commitReveal";
 
 const decodeFunction = getAbiItem({
   abi: commitRevealObligationAbi.abi,
@@ -9,11 +9,23 @@ const decodeFunction = getAbiItem({
 });
 const dataType = decodeFunction.outputs[0];
 
+const decodeDemandFunction = getAbiItem({
+  abi: commitRevealObligationAbi.abi,
+  name: "decodeDemandData",
+});
+const demandType = decodeDemandFunction.outputs[0];
+
 const encode = (data: CommitRevealObligationData): `0x${string}` =>
   encodeAbiParameters([dataType], [data]);
 
 const decode = (encoded: `0x${string}`): CommitRevealObligationData =>
   decodeAbiParameters([dataType], encoded)[0] as CommitRevealObligationData;
+
+const encodeDemand = (data: CommitRevealDemandData): `0x${string}` =>
+  encodeAbiParameters([demandType], [data]);
+
+const decodeDemand = (encoded: `0x${string}`): CommitRevealDemandData =>
+  decodeAbiParameters([demandType], encoded)[0] as CommitRevealDemandData;
 
 const mockPayload = "0xdeadbeef" as `0x${string}`;
 const mockSalt = "0x1111111111111111111111111111111111111111111111111111111111111111" as `0x${string}`;
@@ -87,5 +99,16 @@ describe("CommitRevealObligation Codec", () => {
     const decoded = decode(encoded1);
     const encoded2 = encode(decoded);
     expect(encoded1).toBe(encoded2);
+  });
+
+  test("should encode and decode CommitReveal demand data", () => {
+    const data: CommitRevealDemandData = {
+      bondAmount: 10_000_000_000_000_000n,
+    };
+
+    const encoded = encodeDemand(data);
+    const decoded = decodeDemand(encoded);
+
+    expect(decoded.bondAmount).toBe(data.bondAmount);
   });
 });

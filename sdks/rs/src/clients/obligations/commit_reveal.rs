@@ -7,6 +7,7 @@ use crate::{
 };
 
 impl_abi_conversions!(contracts::obligations::CommitRevealObligation::ObligationData);
+impl_abi_conversions!(contracts::obligations::CommitRevealObligation::DemandData);
 
 use alloy::{
     primitives::{Address, Bytes, FixedBytes, U256},
@@ -102,6 +103,23 @@ impl CommitRevealObligationModule {
             .into()
     }
 
+    pub fn decode_demand(
+        demand_data: &Bytes,
+    ) -> eyre::Result<contracts::obligations::CommitRevealObligation::DemandData> {
+        let data =
+            contracts::obligations::CommitRevealObligation::DemandData::abi_decode(
+                demand_data.as_ref(),
+            )?;
+        Ok(data)
+    }
+
+    pub fn encode_demand(
+        demand_data: &contracts::obligations::CommitRevealObligation::DemandData,
+    ) -> Bytes {
+        contracts::obligations::CommitRevealObligation::DemandData::abi_encode(demand_data)
+            .into()
+    }
+
     pub async fn do_obligation(
         &self,
         data: contracts::obligations::CommitRevealObligation::ObligationData,
@@ -122,13 +140,15 @@ impl CommitRevealObligationModule {
         Ok(receipt)
     }
 
-    pub async fn commit(&self, commitment: FixedBytes<32>) -> eyre::Result<TransactionReceipt> {
+    pub async fn commit(
+        &self,
+        commitment: FixedBytes<32>,
+        bond_amount: U256,
+    ) -> eyre::Result<TransactionReceipt> {
         let contract = contracts::obligations::CommitRevealObligation::new(
             self.addresses.obligation,
             &*self.wallet_provider,
         );
-
-        let bond_amount = contract.bondAmount().call().await?;
 
         let receipt = contract
             .commit(commitment)
@@ -179,16 +199,6 @@ impl CommitRevealObligationModule {
         Ok(receipt)
     }
 
-    pub async fn bond_amount(&self) -> eyre::Result<U256> {
-        let contract = contracts::obligations::CommitRevealObligation::new(
-            self.addresses.obligation,
-            &*self.wallet_provider,
-        );
-
-        let result = contract.bondAmount().call().await?;
-        Ok(result)
-    }
-
     pub async fn commit_deadline(&self) -> eyre::Result<U256> {
         let contract = contracts::obligations::CommitRevealObligation::new(
             self.addresses.obligation,
@@ -212,14 +222,19 @@ impl CommitRevealObligationModule {
     pub async fn get_commitment(
         &self,
         commitment: FixedBytes<32>,
-    ) -> eyre::Result<(u64, u64, Address)> {
+    ) -> eyre::Result<(u64, u64, Address, U256)> {
         let contract = contracts::obligations::CommitRevealObligation::new(
             self.addresses.obligation,
             &*self.wallet_provider,
         );
 
         let result = contract.commitments(commitment).call().await?;
-        Ok((result.commitBlock, result.commitTimestamp, result.committer))
+        Ok((
+            result.commitBlock,
+            result.commitTimestamp,
+            result.committer,
+            result.bondAmount,
+        ))
     }
 
     pub async fn is_commitment_claimed(
@@ -240,7 +255,6 @@ impl CommitRevealObligationModule {
 mod tests {
     use super::*;
     use alloy::primitives::{Bytes, FixedBytes};
-    use alloy::sol_types::SolValue as _;
 
     #[test]
     fn test_encode_decode_roundtrip() {
@@ -314,6 +328,18 @@ mod tests {
         let decoded = CommitRevealObligationModule::decode(&encoded1).unwrap();
         let encoded2 = CommitRevealObligationModule::encode(&decoded);
         assert_eq!(encoded1, encoded2);
+    }
+
+    #[test]
+    fn test_encode_decode_demand_roundtrip() {
+        let data = contracts::obligations::CommitRevealObligation::DemandData {
+            bondAmount: U256::from(10_000_000_000_000_000u64),
+        };
+
+        let encoded = CommitRevealObligationModule::encode_demand(&data);
+        let decoded = CommitRevealObligationModule::decode_demand(&encoded).unwrap();
+
+        assert_eq!(decoded.bondAmount, data.bondAmount);
     }
 
     #[test]

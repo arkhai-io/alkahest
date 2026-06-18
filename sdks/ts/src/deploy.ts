@@ -1,4 +1,3 @@
-import { parseEther } from "viem";
 import type { ChainAddresses } from "./types";
 
 // EAS
@@ -179,7 +178,6 @@ export async function deployAlkahest(
     result.commitRevealObligation = await deploy(deployFn, CommitRevealObligation as Artifact, [
       easAddress,
       easSrAddress,
-      parseEther("0.01"),
       3600n,
       "0x0000000000000000000000000000000000000000",
     ]);

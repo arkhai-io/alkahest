@@ -459,7 +459,6 @@ async fn build_shared_env() -> eyre::Result<SharedTestEnv> {
         &god_provider,
         eas.address().clone(),
         schema_registry.address().clone(),
-        U256::from(10_000_000_000_000_000u64), // 0.01 ETH bond
         U256::from(3600u64),                    // 1 hour deadline
         Address::ZERO,                          // burn slashed bonds
     )

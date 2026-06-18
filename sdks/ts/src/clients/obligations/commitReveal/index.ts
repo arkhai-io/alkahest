@@ -12,10 +12,21 @@ const commitRevealDecodeFunction = getAbiItem({
 
 const commitRevealDataType = commitRevealDecodeFunction.outputs[0];
 
+const commitRevealDemandDecodeFunction = getAbiItem({
+  abi: commitRevealObligationAbi.abi,
+  name: "decodeDemandData",
+});
+
+const commitRevealDemandType = commitRevealDemandDecodeFunction.outputs[0];
+
 export type CommitRevealObligationData = {
   payload: `0x${string}`;
   salt: `0x${string}`;
   schema: `0x${string}`;
+};
+
+export type CommitRevealDemandData = {
+  bondAmount: bigint;
 };
 
 export type CommitRevealAddresses = {
@@ -38,18 +49,15 @@ export const makeCommitRevealObligationClient = (viemClient: ViemClient, address
     return decodeAbiParameters([commitRevealDataType], obligationData)[0];
   };
 
+  const decodeDemand = (demandData: `0x${string}`) => {
+    return decodeAbiParameters([commitRevealDemandType], demandData)[0];
+  };
+
   const getSchema = async () =>
     await viemClient.readContract({
       address: contractAddress,
       abi,
       functionName: "ATTESTATION_SCHEMA",
-    });
-
-  const getBondAmount = async () =>
-    await viemClient.readContract({
-      address: contractAddress,
-      abi,
-      functionName: "bondAmount",
     });
 
   return {
@@ -59,6 +67,11 @@ export const makeCommitRevealObligationClient = (viemClient: ViemClient, address
       return encodeAbiParameters([commitRevealDataType], [data]);
     },
     decode,
+
+    encodeDemand: (data: CommitRevealDemandData) => {
+      return encodeAbiParameters([commitRevealDemandType], [data]);
+    },
+    decodeDemand,
 
     doObligation: async (
       data: CommitRevealObligationData,
@@ -76,9 +89,7 @@ export const makeCommitRevealObligationClient = (viemClient: ViemClient, address
       return { hash, attested };
     },
 
-    commit: async (commitment: `0x${string}`) => {
-      const bondAmount = await getBondAmount();
-
+    commit: async (commitment: `0x${string}`, bondAmount: bigint) => {
       const { request } = await viemClient.simulateContract({
         address: contractAddress,
         abi,
@@ -115,8 +126,6 @@ export const makeCommitRevealObligationClient = (viemClient: ViemClient, address
       const hash = await viemClient.writeContract(request);
       return { hash };
     },
-
-    getBondAmount,
 
     getCommitDeadline: async () =>
       await viemClient.readContract({

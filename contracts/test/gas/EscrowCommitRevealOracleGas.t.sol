@@ -4,7 +4,7 @@ pragma solidity ^0.8.26;
 import "forge-std/Test.sol";
 import {IEAS} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
-import {CommitRevealObligation} from "@src/obligations/CommitRevealObligation.sol";
+import {GlobalBondCommitRevealObligation} from "@src/obligations/GlobalBondCommitRevealObligation.sol";
 import {TrustedOracleArbiter} from "@src/arbiters/TrustedOracleArbiter.sol";
 import {ERC20EscrowObligation} from "@src/obligations/escrow/default/ERC20EscrowObligation.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -23,7 +23,7 @@ contract MockToken is ERC20 {
 contract EscrowCommitRevealOracleGasTest is Test {
     IEAS internal eas;
     ISchemaRegistry internal schemaRegistry;
-    CommitRevealObligation internal commitReveal;
+    GlobalBondCommitRevealObligation internal commitReveal;
     TrustedOracleArbiter internal trustedOracleArbiter;
     ERC20EscrowObligation internal erc20Escrow;
     MockToken internal paymentToken;
@@ -40,7 +40,7 @@ contract EscrowCommitRevealOracleGasTest is Test {
         EASDeployer easDeployer = new EASDeployer();
         (eas, schemaRegistry) = easDeployer.deployEAS();
 
-        commitReveal = new CommitRevealObligation(eas, schemaRegistry, BOND, 1 hours, address(0));
+        commitReveal = new GlobalBondCommitRevealObligation(eas, schemaRegistry, BOND, 1 hours, address(0));
         trustedOracleArbiter = new TrustedOracleArbiter(eas);
         erc20Escrow = new ERC20EscrowObligation(eas, schemaRegistry);
 
@@ -66,20 +66,22 @@ contract EscrowCommitRevealOracleGasTest is Test {
         });
     }
 
-    function _commitData() internal pure returns (CommitRevealObligation.ObligationData memory) {
+    function _commitData() internal pure returns (GlobalBondCommitRevealObligation.ObligationData memory) {
         bytes memory payload = new bytes(PAYLOAD_SIZE);
-        return
-            CommitRevealObligation.ObligationData({payload: payload, salt: bytes32("salt"), schema: bytes32("schema")});
+        return GlobalBondCommitRevealObligation.ObligationData({
+            payload: payload, salt: bytes32("salt"), schema: bytes32("schema")
+        });
     }
 
     function _commitDataWithSize(uint256 payloadSize)
         internal
         pure
-        returns (CommitRevealObligation.ObligationData memory)
+        returns (GlobalBondCommitRevealObligation.ObligationData memory)
     {
         bytes memory payload = new bytes(payloadSize);
-        return
-            CommitRevealObligation.ObligationData({payload: payload, salt: bytes32("salt"), schema: bytes32("schema")});
+        return GlobalBondCommitRevealObligation.ObligationData({
+            payload: payload, salt: bytes32("salt"), schema: bytes32("schema")
+        });
     }
 
     function _createEscrow() internal returns (bytes32 escrowUid, bytes memory innerDemand) {
@@ -95,7 +97,11 @@ contract EscrowCommitRevealOracleGasTest is Test {
 
     function _setupEscrowAndCommit()
         internal
-        returns (bytes32 escrowUid, bytes memory innerDemand, CommitRevealObligation.ObligationData memory data)
+        returns (
+            bytes32 escrowUid,
+            bytes memory innerDemand,
+            GlobalBondCommitRevealObligation.ObligationData memory data
+        )
     {
         (escrowUid, innerDemand) = _createEscrow();
         data = _commitData();
@@ -110,7 +116,7 @@ contract EscrowCommitRevealOracleGasTest is Test {
         internal
         returns (bytes32 escrowUid, bytes32 fulfillmentUid, bytes memory innerDemand)
     {
-        CommitRevealObligation.ObligationData memory data;
+        GlobalBondCommitRevealObligation.ObligationData memory data;
         (escrowUid, innerDemand, data) = _setupEscrowAndCommit();
 
         vm.roll(block.number + 1);
@@ -144,7 +150,7 @@ contract EscrowCommitRevealOracleGasTest is Test {
     function testGas_Fulfiller_Commit() public {
         vm.pauseGasMetering();
         (bytes32 escrowUid,) = _createEscrow();
-        CommitRevealObligation.ObligationData memory data = _commitData();
+        GlobalBondCommitRevealObligation.ObligationData memory data = _commitData();
         bytes32 commitment = commitReveal.computeCommitment(escrowUid, bob, data);
         vm.deal(bob, BOND);
         vm.resumeGasMetering();
@@ -155,7 +161,7 @@ contract EscrowCommitRevealOracleGasTest is Test {
 
     function testGas_Fulfiller_Reveal() public {
         vm.pauseGasMetering();
-        (bytes32 escrowUid,, CommitRevealObligation.ObligationData memory data) = _setupEscrowAndCommit();
+        (bytes32 escrowUid,, GlobalBondCommitRevealObligation.ObligationData memory data) = _setupEscrowAndCommit();
         vm.roll(block.number + 1);
         vm.resumeGasMetering();
 
@@ -197,7 +203,7 @@ contract EscrowCommitRevealOracleGasTest is Test {
         // Bond reclaim is now atomic with reveal in doObligation.
         // This measures the combined cost (commit already done).
         vm.pauseGasMetering();
-        (bytes32 escrowUid,, CommitRevealObligation.ObligationData memory data) = _setupEscrowAndCommit();
+        (bytes32 escrowUid,, GlobalBondCommitRevealObligation.ObligationData memory data) = _setupEscrowAndCommit();
         vm.roll(block.number + 1);
         vm.resumeGasMetering();
 
@@ -208,7 +214,7 @@ contract EscrowCommitRevealOracleGasTest is Test {
     function _measureRevealWithPayload(uint256 payloadSize) internal {
         vm.pauseGasMetering();
         (bytes32 escrowUid,) = _createEscrow();
-        CommitRevealObligation.ObligationData memory data = _commitDataWithSize(payloadSize);
+        GlobalBondCommitRevealObligation.ObligationData memory data = _commitDataWithSize(payloadSize);
         bytes32 commitment = commitReveal.computeCommitment(escrowUid, bob, data);
         vm.deal(bob, BOND);
         vm.prank(bob);

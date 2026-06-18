@@ -1,5 +1,5 @@
 use alkahest_rs::extensions::CommitRevealObligationModule;
-use alloy::primitives::FixedBytes;
+use alloy::primitives::{FixedBytes, U256};
 use pyo3::{pyclass, pymethods, PyResult};
 
 use crate::error_handling::{map_eyre_to_pyerr, map_parse_to_pyerr};
@@ -80,11 +80,15 @@ impl CommitRevealObligationClient {
         &self,
         py: pyo3::Python<'py>,
         commitment: String,
+        bond_amount: u128,
     ) -> PyResult<pyo3::Bound<'py, pyo3::PyAny>> {
         let inner = self.inner.clone();
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let commitment: FixedBytes<32> = commitment.parse().map_err(map_parse_to_pyerr)?;
-            let receipt = inner.commit(commitment).await.map_err(map_eyre_to_pyerr)?;
+            let receipt = inner
+                .commit(commitment, U256::from(bond_amount))
+                .await
+                .map_err(map_eyre_to_pyerr)?;
             Ok(format!(
                 "0x{}",
                 alloy::hex::encode(receipt.transaction_hash.as_slice())
@@ -142,17 +146,6 @@ impl CommitRevealObligationClient {
         })
     }
 
-    pub fn bond_amount<'py>(
-        &self,
-        py: pyo3::Python<'py>,
-    ) -> PyResult<pyo3::Bound<'py, pyo3::PyAny>> {
-        let inner = self.inner.clone();
-        pyo3_async_runtimes::tokio::future_into_py(py, async move {
-            let result = inner.bond_amount().await.map_err(map_eyre_to_pyerr)?;
-            Ok(result.to_string())
-        })
-    }
-
     pub fn commit_deadline<'py>(
         &self,
         py: pyo3::Python<'py>,
@@ -186,11 +179,16 @@ impl CommitRevealObligationClient {
         let inner = self.inner.clone();
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let commitment: FixedBytes<32> = commitment.parse().map_err(map_parse_to_pyerr)?;
-            let (commit_block, commit_timestamp, committer) = inner
+            let (commit_block, commit_timestamp, committer, bond_amount) = inner
                 .get_commitment(commitment)
                 .await
                 .map_err(map_eyre_to_pyerr)?;
-            Ok((commit_block, commit_timestamp, format!("{:?}", committer)))
+            Ok((
+                commit_block,
+                commit_timestamp,
+                format!("{:?}", committer),
+                bond_amount.to_string(),
+            ))
         })
     }
 
@@ -283,6 +281,63 @@ impl From<alkahest_rs::contracts::obligations::CommitRevealObligation::Obligatio
             payload: data.payload.to_vec(),
             salt: format!("0x{}", alloy::hex::encode(data.salt.as_slice())),
             schema: format!("0x{}", alloy::hex::encode(data.schema.as_slice())),
+        }
+    }
+}
+
+#[pyclass]
+#[derive(Clone, Debug)]
+pub struct PyCommitRevealDemandData {
+    #[pyo3(get)]
+    pub bond_amount: String,
+}
+
+#[pymethods]
+impl PyCommitRevealDemandData {
+    #[new]
+    pub fn new(bond_amount: String) -> Self {
+        Self { bond_amount }
+    }
+
+    fn __repr__(&self) -> String {
+        format!("PyCommitRevealDemandData(bond_amount='{}')", self.bond_amount)
+    }
+
+    #[staticmethod]
+    pub fn encode(demand: &PyCommitRevealDemandData) -> PyResult<Vec<u8>> {
+        use alloy::sol_types::SolValue;
+
+        let demand_data =
+            alkahest_rs::contracts::obligations::CommitRevealObligation::DemandData {
+                bondAmount: U256::from_str_radix(&demand.bond_amount, 10)
+                    .map_err(map_parse_to_pyerr)?,
+            };
+
+        Ok(demand_data.abi_encode())
+    }
+
+    #[staticmethod]
+    pub fn decode(demand_data: Vec<u8>) -> PyResult<PyCommitRevealDemandData> {
+        use alloy::primitives::Bytes;
+        let bytes = Bytes::from(demand_data);
+        let decoded =
+            CommitRevealObligationModule::decode_demand(&bytes).map_err(map_eyre_to_pyerr)?;
+        Ok(decoded.into())
+    }
+
+    pub fn encode_self(&self) -> PyResult<Vec<u8>> {
+        PyCommitRevealDemandData::encode(self)
+    }
+}
+
+impl From<alkahest_rs::contracts::obligations::CommitRevealObligation::DemandData>
+    for PyCommitRevealDemandData
+{
+    fn from(
+        data: alkahest_rs::contracts::obligations::CommitRevealObligation::DemandData,
+    ) -> Self {
+        Self {
+            bond_amount: data.bondAmount.to_string(),
         }
     }
 }
