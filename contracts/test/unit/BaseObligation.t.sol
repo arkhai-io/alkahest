@@ -2,7 +2,7 @@
 pragma solidity ^0.8.26;
 
 import "forge-std/Test.sol";
-import {BaseObligation} from "@src/BaseObligation.sol";
+import {AttestationContext, BaseObligation} from "@src/BaseObligation.sol";
 import {BaseAttester} from "@src/BaseAttester.sol";
 import {SchemaResolver} from "@eas/resolver/SchemaResolver.sol";
 import {IEAS, Attestation, AttestationRequest, AttestationRequestData} from "@eas/IEAS.sol";
@@ -39,17 +39,12 @@ contract MockBaseObligation is BaseObligation {
         lastBeforeAttestRecipient = recipient;
     }
 
-    function _afterAttest(
-        bytes32 uid,
-        bytes memory data,
-        address payer,
-        address recipient
-    ) internal override {
+    function _afterAttest(AttestationContext memory context) internal override {
         afterAttestCalled = true;
-        lastAfterAttestUid = uid;
-        lastAfterAttestData = data;
-        lastAfterAttestPayer = payer;
-        lastAfterAttestRecipient = recipient;
+        lastAfterAttestUid = context.uid;
+        lastAfterAttestData = context.data;
+        lastAfterAttestPayer = context.payer;
+        lastAfterAttestRecipient = context.recipient;
     }
 
     // Public wrapper for onAttest for testing

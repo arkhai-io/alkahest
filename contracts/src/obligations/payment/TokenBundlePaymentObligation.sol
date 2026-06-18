@@ -8,7 +8,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
-import {BaseObligation} from "../../BaseObligation.sol";
+import {AttestationContext, BaseObligation} from "../../BaseObligation.sol";
 import {IArbiter} from "../../IArbiter.sol";
 import {ArbiterUtils} from "../../ArbiterUtils.sol";
 
@@ -102,17 +102,9 @@ contract TokenBundlePaymentObligation is BaseObligation, IArbiter {
         }
     }
 
-    function _afterAttest(
-        bytes32 uid,
-        bytes memory data,
-        address payer,
-        address /* recipient */
-    )
-        internal
-        override
-    {
-        ObligationData memory obligationData = abi.decode(data, (ObligationData));
-        emit BundleTransferred(uid, payer, obligationData.payee);
+    function _afterAttest(AttestationContext memory context) internal override {
+        ObligationData memory obligationData = abi.decode(context.data, (ObligationData));
+        emit BundleTransferred(context.uid, context.payer, obligationData.payee);
     }
 
     function validateArrayLengths(ObligationData memory data) internal pure {

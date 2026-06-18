@@ -7,6 +7,17 @@ import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {Attestation} from "@eas/Common.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
+struct AttestationContext {
+    bytes32 uid;
+    bytes32 schema;
+    address attester;
+    address payer;
+    address recipient;
+    uint64 expirationTime;
+    bytes32 refUID;
+    bytes data;
+}
+
 abstract contract BaseObligation is BaseAttester, ReentrancyGuard {
     constructor(
         IEAS _eas,
@@ -37,7 +48,18 @@ abstract contract BaseObligation is BaseAttester, ReentrancyGuard {
     ) internal virtual nonReentrant returns (bytes32 uid_) {
         _beforeAttest(data, msg.sender, recipient);
         uid_ = _attest(data, recipient, expirationTime, refUID);
-        _afterAttest(uid_, data, msg.sender, recipient);
+        _afterAttest(
+            AttestationContext({
+                uid: uid_,
+                schema: ATTESTATION_SCHEMA,
+                attester: address(this),
+                payer: msg.sender,
+                recipient: recipient,
+                expirationTime: expirationTime,
+                refUID: refUID,
+                data: data
+            })
+        );
     }
 
     // Hooks for obligations to implement
@@ -47,10 +69,5 @@ abstract contract BaseObligation is BaseAttester, ReentrancyGuard {
         address recipient
     ) internal virtual {}
 
-    function _afterAttest(
-        bytes32 uid,
-        bytes memory data,
-        address payer,
-        address recipient
-    ) internal virtual {}
+    function _afterAttest(AttestationContext memory context) internal virtual {}
 }

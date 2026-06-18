@@ -6,7 +6,7 @@ import {IEAS, AttestationRequest, AttestationRequestData, RevocationRequest, Rev
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {BaseObligation} from "../../BaseObligation.sol";
+import {AttestationContext, BaseObligation} from "../../BaseObligation.sol";
 import {IArbiter} from "../../IArbiter.sol";
 import {ArbiterUtils} from "../../ArbiterUtils.sol";
 
@@ -105,13 +105,8 @@ contract ERC20PaymentObligation is BaseObligation, IArbiter {
         }
     }
 
-    function _afterAttest(
-        bytes32 uid,
-        bytes memory /* data */,
-        address /* payer */,
-        address recipient
-    ) internal override {
-        emit PaymentMade(uid, recipient);
+    function _afterAttest(AttestationContext memory context) internal override {
+        emit PaymentMade(context.uid, context.recipient);
     }
 
     function checkObligation(

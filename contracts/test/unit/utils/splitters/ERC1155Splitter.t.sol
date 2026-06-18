@@ -5,6 +5,7 @@ import "forge-std/Test.sol";
 import {ERC1155Splitter} from "@src/utils/splitters/ERC1155Splitter.sol";
 import {ERC1155EscrowObligation} from "@src/obligations/escrow/default/ERC1155EscrowObligation.sol";
 import {StringObligation} from "@src/obligations/StringObligation.sol";
+import {AttestationContext} from "@src/BaseObligation.sol";
 import {IEAS, Attestation} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {ERC1155} from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
@@ -28,8 +29,8 @@ contract ERC1155SplitterRefundingStringObligation is StringObligation {
         refundAmount = _refundAmount;
     }
 
-    function _afterAttest(bytes32, bytes memory, address payer, address) internal override {
-        (bool success,) = payable(payer).call{value: refundAmount}("");
+    function _afterAttest(AttestationContext memory context) internal override {
+        (bool success,) = payable(context.payer).call{value: refundAmount}("");
         require(success, "refund failed");
     }
 }

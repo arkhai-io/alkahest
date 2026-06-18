@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.26;
 
-import {BaseObligation} from "./BaseObligation.sol";
+import {AttestationContext, BaseObligation} from "./BaseObligation.sol";
 import {IArbiter} from "./IArbiter.sol";
 import {ArbiterUtils} from "./ArbiterUtils.sol";
 import {Attestation} from "@eas/Common.sol";
@@ -40,6 +40,9 @@ abstract contract BaseEscrowObligationUnconditional is BaseObligation {
 
     // Called when escrow expires and is reclaimed
     function _returnEscrow(bytes memory data, address to) internal virtual;
+
+    // Called after EAS creates the escrow attestation and before EscrowMade is emitted
+    function _afterEscrowAttest(AttestationContext memory context) internal virtual {}
 
     // Extract arbiter and demand from encoded data
     function extractArbiterAndDemand(bytes memory data)
@@ -140,17 +143,8 @@ abstract contract BaseEscrowObligationUnconditional is BaseObligation {
 
     // Hook implementations
 
-    function _afterAttest(
-        bytes32 uid,
-        bytes memory,
-        /*data*/
-        address,
-        /*payer*/
-        address recipient
-    )
-        internal
-        override
-    {
-        emit EscrowMade(uid, recipient);
+    function _afterAttest(AttestationContext memory context) internal override {
+        _afterEscrowAttest(context);
+        emit EscrowMade(context.uid, context.recipient);
     }
 }

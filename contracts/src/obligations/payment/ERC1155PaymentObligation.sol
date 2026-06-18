@@ -5,7 +5,7 @@ import {Attestation} from "@eas/Common.sol";
 import {IEAS, AttestationRequest, AttestationRequestData, RevocationRequest, RevocationRequestData} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
-import {BaseObligation} from "../../BaseObligation.sol";
+import {AttestationContext, BaseObligation} from "../../BaseObligation.sol";
 import {IArbiter} from "../../IArbiter.sol";
 import {ArbiterUtils} from "../../ArbiterUtils.sol";
 
@@ -100,13 +100,8 @@ contract ERC1155PaymentObligation is BaseObligation, IArbiter {
         }
     }
 
-    function _afterAttest(
-        bytes32 uid,
-        bytes memory /* data */,
-        address /* payer */,
-        address recipient
-    ) internal override {
-        emit PaymentMade(uid, recipient);
+    function _afterAttest(AttestationContext memory context) internal override {
+        emit PaymentMade(context.uid, context.recipient);
     }
 
     function checkObligation(
