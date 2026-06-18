@@ -34,6 +34,8 @@ Tracking notes for `arkhai-io-alkahest-2026-04-13-analysis.md`.
   Commit: `eae63e650bf424fd2b98b2876959a2e57b992bfb fix(splitters): clear bundle decision arrays`
 - #18 CommitReveal bond accounting: addressed by replacing current-global bond refunds/slashes with block-based bond amount epochs. Bond amount changes take effect on the next block, and each commitment refunds or slashes the amount active at its commit block.
   Commit: `b38ac88a97ec3f68a5f506175100fec6aba10978 fix(commit-reveal): snapshot bond amount epochs`
+- #19 NativeTokenSplitter payer misdirection during `createFulfillment`: addressed by refunding native balance increases during payable splitter fulfillment creation back to the external fulfiller in `NativeTokenSplitter` and `TokenBundleSplitterBase`.
+  Commit: `4263e23155a59acd58dae497f7a982b6e5d89fa1 fix(splitters): refund fulfillment native rebates`
 - Default escrow checks follow-up: documented proposed default/unconditional escrow split before implementation.
   Doc: `docs/drafts/escrow-default-checks-plan.md`
 
@@ -53,7 +55,6 @@ Tracking notes for `arkhai-io-alkahest-2026-04-13-analysis.md`.
 
 ## Remaining Untriaged
 
-- #19 NativeTokenSplitter payer misdirection during `createFulfillment`.
 - #20 Not-found handling / error classification.
 - Second report section #1 NativeTokenEscrowHook empty `receive`.
 - Second report section #2 Splitter self-recipient splits / missing withdrawal.
