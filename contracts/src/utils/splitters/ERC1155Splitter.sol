@@ -75,6 +75,7 @@ contract ERC1155Splitter is IArbiter, ReentrancyGuard, ERC1155Holder {
     error InvalidFulfillmentUid();
     error FulfillerAlreadyRecorded(bytes32 fulfillment);
     error InvalidCreatedFulfillment(bytes32 fulfillment);
+    error NativeTokenRefundFailed(address recipient, uint256 amount);
 
     IEAS public eas;
     mapping(address => mapping(bytes32 => Split[])) internal decisions;
@@ -133,10 +134,12 @@ contract ERC1155Splitter is IArbiter, ReentrancyGuard, ERC1155Holder {
         nonReentrant
         returns (bytes32 fulfillmentUid)
     {
+        uint256 retainedBalance = address(this).balance - msg.value;
         fulfillmentUid = IObligation(obligationContract).doObligationRaw{value: msg.value}(data, expirationTime, refUID);
         _validateCreatedFulfillment(fulfillmentUid, obligationContract, data, expirationTime, refUID);
         if (fulfillers[fulfillmentUid] != address(0)) revert FulfillerAlreadyRecorded(fulfillmentUid);
         fulfillers[fulfillmentUid] = msg.sender;
+        _refundNativeBalanceIncrease(retainedBalance, msg.sender);
         emit FulfillmentCreated(fulfillmentUid, msg.sender, obligationContract);
     }
 
@@ -227,6 +230,15 @@ contract ERC1155Splitter is IArbiter, ReentrancyGuard, ERC1155Holder {
         }
     }
 
+    function _refundNativeBalanceIncrease(uint256 retainedBalance, address recipient) internal {
+        uint256 currentBalance = address(this).balance;
+        if (currentBalance <= retainedBalance) return;
+
+        uint256 refundAmount = currentBalance - retainedBalance;
+        (bool success,) = payable(recipient).call{value: refundAmount}("");
+        if (!success) revert NativeTokenRefundFailed(recipient, refundAmount);
+    }
+
     function getSplits(address oracle, bytes32 fulfillment, bytes32 escrow) external view returns (Split[] memory) {
         return decisions[oracle][keccak256(abi.encodePacked(fulfillment, escrow))];
     }
@@ -234,4 +246,6 @@ contract ERC1155Splitter is IArbiter, ReentrancyGuard, ERC1155Holder {
     function decodeDemandData(bytes calldata data) external pure returns (DemandData memory) {
         return abi.decode(data, (DemandData));
     }
+
+    receive() external payable {}
 }
