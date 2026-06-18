@@ -89,3 +89,16 @@ SDK and indexer code should re-read the escrow attestation from EAS, interpret
 the configured arbiter/demand tree, and decide whether the request is relevant
 before prompting or submitting oracle decisions. They should not treat the event
 payload alone as authorization or as the canonical splitter demand.
+
+## Base Splitter Refactor
+
+The splitter contracts now share enough generic orchestration logic that a
+narrow `BaseSplitter` may be worthwhile as a follow-up refactor. It should cover
+common fulfillment creation, created-fulfillment validation, executor-sentinel
+resolution, arbitration request authorization helpers, decision-key helpers,
+native refund proxying, and shared errors/events.
+
+It should not try to abstract asset-specific arbitration, escrow collection,
+receipt verification, or distribution loops. Those differ across native, ERC20,
+ERC1155, and token-bundle splitters, and keeping them local makes each asset
+path easier to audit.
