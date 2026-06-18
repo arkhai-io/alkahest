@@ -1,6 +1,10 @@
-# Escrow Default Checks Plan
+# Audit Follow-Ups
 
-## Context
+Tracking larger compatibility-aware follow-ups from audit triage.
+
+## Default Escrow Checks
+
+### Context
 
 The current escrow variants split on whether a fulfillment must reference the
 escrow being collected. The non-tierable base checks `fulfillment.refUID ==
@@ -15,7 +19,7 @@ arbiter. That creates two problems:
 - If escrow itself adds fulfillment intrinsic checks, bundled arbiters that also
   call `_checkIntrinsic` perform the same check twice.
 
-## Proposed Direction
+### Proposed Direction
 
 Keep the unprefixed escrow contracts as the safe default:
 
@@ -37,7 +41,7 @@ Manual composition can then restore individual default checks when needed:
 - `ReferencesEscrowArbiter` for `fulfillment.refUID == escrow.uid`.
 - `AllArbiter` for combining those checks with a semantic arbiter.
 
-## Follow-Up Work
+### Scope
 
 This touches contract names, generated docs, and SDK surfaces, so it should be
 handled as a separate compatibility-aware change after the remaining audit items

@@ -43,7 +43,7 @@ Tracking notes for `arkhai-io-alkahest-2026-04-13-analysis.md`.
 - Second report #4 `TokenBundleSplitter` ERC721 index bounds: addressed for the validated splitter by always running ERC721 assignment validation, including zero-ERC721 escrows, so non-empty ERC721 indices are rejected with `InvalidERC721Index`. The unvalidated splitter remains oracle/operator responsibility by design.
   Commit: `09e498aebe056151b3dd690ec0cb8dfd13de0b6d fix(splitters): validate empty erc721 assignments`
 - Default escrow checks follow-up: documented proposed default/unconditional escrow split before implementation.
-  Doc: `docs/drafts/escrow-default-checks-plan.md`
+  Doc: `docs/drafts/audit-follow-ups.md`
 
 ## False Positives / Expected Behavior
 
@@ -56,12 +56,12 @@ Tracking notes for `arkhai-io-alkahest-2026-04-13-analysis.md`.
 - Second report #2 Splitter self-recipient splits / missing withdrawal: accepted as oracle-controlled distribution behavior. Split recipients are entirely the splitter oracle's responsibility, and guarding `address(this)` would be an arbitrary blacklist special case. Existing zero-address recipient guards were removed for consistency because intentional burn/blackhole recipients are also oracle policy.
   Commit: `19cf58e179deb9c7f50bd68b6b13b95757344299 fix(splitters): leave recipient policy to oracle`
 - Second report #5 Splitter `requestArbitration` event payload: accepted as an off-chain integration hazard rather than an on-chain issue. Splitter contracts cannot generally validate or derive the relevant oracle/demand payload when the splitter is nested inside `AllArbiter`, `AnyArbiter`, or future composite arbiters. SDKs and indexers should treat splitter request events as hints and re-read the canonical escrow attestation from EAS before deciding.
-  Follow-up doc: `docs/drafts/escrow-default-checks-plan.md`
+  Follow-up doc: `docs/drafts/audit-follow-ups.md`
 
 ## Deferred
 
 - #10 Missing fulfillment validation in tierable escrow collect paths: deferred to the default/unconditional escrow split. Tierable escrows intentionally do not require `fulfillment.refUID == escrow.uid`; default fulfillment intrinsic checks should be added as part of the broader default-checks API change rather than patched ad hoc here.
-  Doc: `docs/drafts/escrow-default-checks-plan.md`
+  Doc: `docs/drafts/audit-follow-ups.md`
 
 ## Remaining Untriaged
 
