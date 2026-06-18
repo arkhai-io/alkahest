@@ -40,6 +40,8 @@ Tracking notes for `arkhai-io-alkahest-2026-04-13-analysis.md`.
   Commit: `e2b9c47c150d1ed9fadec5b1c0376868e1bdc17c fix(escrow): classify missing attestations`
 - Second report #1 `NativeTokenEscrowHook` empty `receive`: addressed by removing unnecessary payable `receive` functions from `NativeTokenEscrowHook`, hook escrow obligations, native/token-bundle escrow obligations, native/token-bundle payment obligations, and native/token-bundle barter utilities. Direct ETH transfers now revert except on splitter contracts that intentionally receive escrow payouts and fulfillment refunds.
   Commits: `6348408ead79fd85ea9a73eb295f1394061c51f2 fix(hooks): reject direct native transfers`, `d9ffc71094db7eefd49ae38f8d4be349196161a2 fix(native): remove unnecessary raw receivers`
+- Second report #4 `TokenBundleSplitter` ERC721 index bounds: addressed for the validated splitter by always running ERC721 assignment validation, including zero-ERC721 escrows, so non-empty ERC721 indices are rejected with `InvalidERC721Index`. The unvalidated splitter remains oracle/operator responsibility by design.
+  Commit: `09e498aebe056151b3dd690ec0cb8dfd13de0b6d fix(splitters): validate empty erc721 assignments`
 - Default escrow checks follow-up: documented proposed default/unconditional escrow split before implementation.
   Doc: `docs/drafts/escrow-default-checks-plan.md`
 
@@ -61,7 +63,6 @@ Tracking notes for `arkhai-io-alkahest-2026-04-13-analysis.md`.
 
 ## Remaining Untriaged
 
-- Second report section #4 TokenBundleSplitter ERC721 index bounds.
 - Second report section #5 Splitter `requestArbitration` event payload.
 - Second report section #6 Splitter missing payable receive for refunding fulfillments.
 - Second report section #7 BaseObligation payable raw entrypoint footgun.
