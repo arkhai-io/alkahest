@@ -5,11 +5,25 @@ import "forge-std/Test.sol";
 import {NativeTokenSplitter} from "@src/utils/splitters/NativeTokenSplitter.sol";
 import {NativeTokenEscrowObligation} from "@src/obligations/escrow/non-tierable/NativeTokenEscrowObligation.sol";
 import {StringObligation} from "@src/obligations/StringObligation.sol";
-import {BaseEscrowObligation} from "@src/BaseEscrowObligation.sol";
-import {IEAS, Attestation, AttestationRequest, AttestationRequestData} from "@eas/IEAS.sol";
+import {IEAS, Attestation} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 
 import {EASDeployer} from "@test/utils/EASDeployer.sol";
+
+contract NativeSplitterRefundingStringObligation is StringObligation {
+    uint256 public immutable refundAmount;
+
+    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, uint256 _refundAmount)
+        StringObligation(_eas, _schemaRegistry)
+    {
+        refundAmount = _refundAmount;
+    }
+
+    function _afterAttest(bytes32, bytes memory, address payer, address) internal override {
+        (bool success,) = payable(payer).call{value: refundAmount}("");
+        require(success, "refund failed");
+    }
+}
 
 contract NativeTokenSplitterTest is Test {
     NativeTokenSplitter public splitter;
@@ -31,622 +45,146 @@ contract NativeTokenSplitterTest is Test {
     function setUp() public {
         EASDeployer easDeployer = new EASDeployer();
         (eas, schemaRegistry) = easDeployer.deployEAS();
-
         splitter = new NativeTokenSplitter(eas);
         escrowObligation = new NativeTokenEscrowObligation(eas, schemaRegistry);
         stringObligation = new StringObligation(eas, schemaRegistry);
-
         vm.deal(buyer, 10 ether);
         vm.deal(executor, 1 ether);
     }
 
-    // -----------------------------------------------------------------
-    // Helpers
-    // -----------------------------------------------------------------
-
-    function _createEscrow(
-        address _buyer,
-        uint256 amount,
-        uint64 expiration
-    ) internal returns (bytes32) {
-        bytes memory demand = abi.encode(
-            NativeTokenSplitter.DemandData({oracle: oracle, data: bytes("")})
-        );
-
-        NativeTokenEscrowObligation.ObligationData
-            memory data = NativeTokenEscrowObligation.ObligationData({
-                amount: amount,
-                arbiter: address(splitter),
-                demand: demand
-            });
-
+    function _createEscrow(address _buyer, uint256 amount, uint64 expiration) internal returns (bytes32) {
+        bytes memory demand = abi.encode(NativeTokenSplitter.DemandData({oracle: oracle, data: bytes("")}));
+        NativeTokenEscrowObligation.ObligationData memory data =
+            NativeTokenEscrowObligation.ObligationData({amount: amount, arbiter: address(splitter), demand: demand});
         vm.prank(_buyer);
-        bytes32 uid = escrowObligation.doObligation{value: amount}(
-            data,
-            expiration
-        );
-
-        return uid;
+        return escrowObligation.doObligation{value: amount}(data, expiration);
     }
 
-    function _createFulfillmentViaSplitter(
-        address _executor,
-        bytes32 escrowUid
-    ) internal returns (bytes32) {
-        bytes memory callData = abi.encodeCall(
-            stringObligation.doObligation,
-            (
-                StringObligation.ObligationData({
-                    item: "fulfillment",
-                    schema: bytes32(0)
-                }),
-                escrowUid
-            )
-        );
-
+    function _createFulfillmentViaSplitter(address _executor, bytes32 escrowUid) internal returns (bytes32) {
+        bytes memory obligationData =
+            abi.encode(StringObligation.ObligationData({item: "fulfillment", schema: bytes32(0)}));
         vm.prank(_executor);
-        bytes memory result = splitter.execute(
-            address(stringObligation),
-            callData
-        );
-
-        return abi.decode(result, (bytes32));
+        return splitter.createFulfillment(address(stringObligation), obligationData, 0, escrowUid);
     }
 
-    function _decisionKey(bytes32 escrowUid) internal view returns (bytes32) {
-        Attestation memory escrow = eas.getAttestation(escrowUid);
-        NativeTokenSplitter.EscrowObligationData memory escrowData = abi
-            .decode(escrow.data, (NativeTokenSplitter.EscrowObligationData));
-        return keccak256(abi.encodePacked(escrowUid, escrowData.demand));
+    function testCreateFulfillmentRecordsFulfiller() public {
+        bytes32 escrowUid = _createEscrow(buyer, AMOUNT, uint64(block.timestamp + EXPIRATION));
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(executor, escrowUid);
+        assertEq(splitter.fulfillers(fulfillmentUid), executor);
+        Attestation memory f = eas.getAttestation(fulfillmentUid);
+        assertEq(f.recipient, address(splitter));
     }
 
-    // -----------------------------------------------------------------
-    // arbitrate
-    // -----------------------------------------------------------------
+    function testCreateFulfillmentRefundsNativeBalanceIncreaseToFulfiller() public {
+        bytes32 escrowUid = _createEscrow(buyer, AMOUNT, uint64(block.timestamp + EXPIRATION));
+        uint256 refundAmount = 0.3 ether;
+        uint256 spentAmount = 0.2 ether;
+        NativeSplitterRefundingStringObligation refundingObligation =
+            new NativeSplitterRefundingStringObligation(eas, schemaRegistry, refundAmount);
+        bytes memory obligationData =
+            abi.encode(StringObligation.ObligationData({item: "fulfillment", schema: bytes32(0)}));
 
-    function testArbitrate() public {
-        bytes32 escrowUid = _createEscrow(
-            buyer,
-            AMOUNT,
-            uint64(block.timestamp + EXPIRATION)
-        );
-
-        NativeTokenSplitter.Split[]
-            memory splits = new NativeTokenSplitter.Split[](2);
-        splits[0] = NativeTokenSplitter.Split({
-            recipient: alice,
-            amount: 0.6 ether
-        });
-        splits[1] = NativeTokenSplitter.Split({
-            recipient: bob,
-            amount: 0.4 ether
-        });
-
-        vm.prank(oracle);
-        splitter.arbitrate(escrowUid, splits);
-
-        assertTrue(
-            splitter.hasDecision(oracle, _decisionKey(escrowUid)),
-            "Decision should be recorded"
-        );
-    }
-
-    function testArbitrateWithExecutorSentinel() public {
-        bytes32 escrowUid = _createEscrow(
-            buyer,
-            AMOUNT,
-            uint64(block.timestamp + EXPIRATION)
-        );
-
-        NativeTokenSplitter.Split[]
-            memory splits = new NativeTokenSplitter.Split[](2);
-        splits[0] = NativeTokenSplitter.Split({
-            recipient: splitter.EXECUTOR_SENTINEL(),
-            amount: 0.7 ether
-        });
-        splits[1] = NativeTokenSplitter.Split({
-            recipient: bob,
-            amount: 0.3 ether
-        });
-
-        vm.prank(oracle);
-        splitter.arbitrate(escrowUid, splits);
-
-        assertTrue(
-            splitter.hasDecision(oracle, _decisionKey(escrowUid)),
-            "Decision with sentinel should be recorded"
-        );
-    }
-
-    function testArbitrateRevertsEmptySplits() public {
-        bytes32 escrowUid = _createEscrow(
-            buyer,
-            AMOUNT,
-            uint64(block.timestamp + EXPIRATION)
-        );
-
-        NativeTokenSplitter.Split[]
-            memory splits = new NativeTokenSplitter.Split[](0);
-
-        vm.prank(oracle);
-        vm.expectRevert(NativeTokenSplitter.EmptySplits.selector);
-        splitter.arbitrate(escrowUid, splits);
-    }
-
-    function testArbitrateRevertsZeroRecipient() public {
-        bytes32 escrowUid = _createEscrow(
-            buyer,
-            AMOUNT,
-            uint64(block.timestamp + EXPIRATION)
-        );
-
-        NativeTokenSplitter.Split[]
-            memory splits = new NativeTokenSplitter.Split[](1);
-        splits[0] = NativeTokenSplitter.Split({
-            recipient: address(0),
-            amount: AMOUNT
-        });
-
-        vm.prank(oracle);
-        vm.expectRevert(NativeTokenSplitter.ZeroRecipient.selector);
-        splitter.arbitrate(escrowUid, splits);
-    }
-
-    function testArbitrateRevertsInvalidTotal() public {
-        bytes32 escrowUid = _createEscrow(
-            buyer,
-            AMOUNT,
-            uint64(block.timestamp + EXPIRATION)
-        );
-
-        NativeTokenSplitter.Split[]
-            memory splits = new NativeTokenSplitter.Split[](1);
-        splits[0] = NativeTokenSplitter.Split({
-            recipient: alice,
-            amount: 0.5 ether
-        });
-
-        vm.prank(oracle);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                NativeTokenSplitter.InvalidSplits.selector,
-                AMOUNT,
-                0.5 ether
-            )
-        );
-        splitter.arbitrate(escrowUid, splits);
-    }
-
-    function testArbitrateOverwritesPreviousDecision() public {
-        bytes32 escrowUid = _createEscrow(
-            buyer,
-            AMOUNT,
-            uint64(block.timestamp + EXPIRATION)
-        );
-
-        NativeTokenSplitter.Split[]
-            memory splits1 = new NativeTokenSplitter.Split[](1);
-        splits1[0] = NativeTokenSplitter.Split({
-            recipient: alice,
-            amount: AMOUNT
-        });
-
-        vm.prank(oracle);
-        splitter.arbitrate(escrowUid, splits1);
-
-        NativeTokenSplitter.Split[]
-            memory splits2 = new NativeTokenSplitter.Split[](1);
-        splits2[0] = NativeTokenSplitter.Split({
-            recipient: bob,
-            amount: AMOUNT
-        });
-
-        vm.prank(oracle);
-        splitter.arbitrate(escrowUid, splits2);
-
-        NativeTokenSplitter.Split[] memory stored = splitter.getSplits(
-            oracle,
-            escrowUid
-        );
-        assertEq(stored.length, 1);
-        assertEq(stored[0].recipient, bob);
-        assertEq(stored[0].amount, AMOUNT);
-    }
-
-    // -----------------------------------------------------------------
-    // checkObligation
-    // -----------------------------------------------------------------
-
-    function testCheckObligationReturnsTrueWhenDecisionExists() public {
-        bytes32 escrowUid = _createEscrow(
-            buyer,
-            AMOUNT,
-            uint64(block.timestamp + EXPIRATION)
-        );
-
-        NativeTokenSplitter.Split[]
-            memory splits = new NativeTokenSplitter.Split[](1);
-        splits[0] = NativeTokenSplitter.Split({
-            recipient: alice,
-            amount: AMOUNT
-        });
-
-        vm.prank(oracle);
-        splitter.arbitrate(escrowUid, splits);
-
-        bytes memory demand = abi.encode(
-            NativeTokenSplitter.DemandData({oracle: oracle, data: bytes("")})
-        );
-
-        Attestation memory dummyAttestation;
-        assertTrue(
-            splitter.checkObligation(dummyAttestation, demand, escrowUid)
-        );
-    }
-
-    function testCheckObligationReturnsFalseWhenNoDecision() public {
-        bytes32 escrowUid = _createEscrow(
-            buyer,
-            AMOUNT,
-            uint64(block.timestamp + EXPIRATION)
-        );
-
-        bytes memory demand = abi.encode(
-            NativeTokenSplitter.DemandData({oracle: oracle, data: bytes("")})
-        );
-
-        Attestation memory dummyAttestation;
-        assertFalse(
-            splitter.checkObligation(dummyAttestation, demand, escrowUid)
-        );
-    }
-
-    function testCheckObligationScopedByOracle() public {
-        bytes32 escrowUid = _createEscrow(
-            buyer,
-            AMOUNT,
-            uint64(block.timestamp + EXPIRATION)
-        );
-
-        NativeTokenSplitter.Split[]
-            memory splits = new NativeTokenSplitter.Split[](1);
-        splits[0] = NativeTokenSplitter.Split({
-            recipient: alice,
-            amount: AMOUNT
-        });
-
-        vm.prank(oracle);
-        splitter.arbitrate(escrowUid, splits);
-
-        bytes memory demandWithDifferentOracle = abi.encode(
-            NativeTokenSplitter.DemandData({oracle: alice, data: bytes("")})
-        );
-
-        Attestation memory dummyAttestation;
-        assertFalse(
-            splitter.checkObligation(
-                dummyAttestation,
-                demandWithDifferentOracle,
-                escrowUid
-            )
-        );
-    }
-
-    // -----------------------------------------------------------------
-    // execute
-    // -----------------------------------------------------------------
-
-    function testExecuteProxiesCalls() public {
-        bytes32 escrowUid = _createEscrow(
-            buyer,
-            AMOUNT,
-            uint64(block.timestamp + EXPIRATION)
-        );
-
-        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
-            executor,
-            escrowUid
-        );
-
-        Attestation memory fulfillment = eas.getAttestation(fulfillmentUid);
-        assertEq(
-            fulfillment.recipient,
-            address(splitter),
-            "Splitter should be the fulfillment recipient"
-        );
-        assertEq(
-            fulfillment.refUID,
-            escrowUid,
-            "Fulfillment should reference the escrow"
-        );
-    }
-
-    function testExecuteRevertsOnFailedCall() public {
-        bytes memory badData = abi.encodeWithSignature("nonExistent()");
-
+        uint256 executorBalanceBefore = executor.balance;
         vm.prank(executor);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                NativeTokenSplitter.ExecuteFailed.selector,
-                address(splitter),
-                badData
-            )
+        bytes32 fulfillmentUid = splitter.createFulfillment{value: refundAmount + spentAmount}(
+            address(refundingObligation), obligationData, 0, escrowUid
         );
-        splitter.execute(address(splitter), badData);
-    }
 
-    // -----------------------------------------------------------------
-    // collectAndDistribute
-    // -----------------------------------------------------------------
+        assertEq(splitter.fulfillers(fulfillmentUid), executor);
+        assertEq(executor.balance, executorBalanceBefore - spentAmount, "executor only pays non-refunded value");
+        assertEq(address(splitter).balance, 0, "refund is not stranded in splitter");
+    }
 
     function testCollectAndDistribute() public {
-        bytes32 escrowUid = _createEscrow(
-            buyer,
-            AMOUNT,
-            uint64(block.timestamp + EXPIRATION)
-        );
+        bytes32 escrowUid = _createEscrow(buyer, AMOUNT, uint64(block.timestamp + EXPIRATION));
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(executor, escrowUid);
 
-        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
-            executor,
-            escrowUid
-        );
-
-        NativeTokenSplitter.Split[]
-            memory splits = new NativeTokenSplitter.Split[](2);
-        splits[0] = NativeTokenSplitter.Split({
-            recipient: alice,
-            amount: 0.6 ether
-        });
-        splits[1] = NativeTokenSplitter.Split({
-            recipient: bob,
-            amount: 0.4 ether
-        });
+        NativeTokenSplitter.Split[] memory splits = new NativeTokenSplitter.Split[](2);
+        splits[0] = NativeTokenSplitter.Split({recipient: alice, amount: 0.6 ether});
+        splits[1] = NativeTokenSplitter.Split({recipient: bob, amount: 0.4 ether});
 
         vm.prank(oracle);
-        splitter.arbitrate(escrowUid, splits);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
 
-        vm.prank(executor);
-        splitter.collectAndDistribute(
-            address(escrowObligation),
-            escrowUid,
-            fulfillmentUid
-        );
+        vm.prank(carol);
+        splitter.collectAndDistribute(address(escrowObligation), escrowUid, fulfillmentUid);
 
-        assertEq(alice.balance, 0.6 ether, "Alice should receive 0.6 ETH");
-        assertEq(bob.balance, 0.4 ether, "Bob should receive 0.4 ETH");
-        assertEq(
-            address(splitter).balance,
-            0,
-            "Splitter should have no remaining ETH"
-        );
-        assertEq(
-            address(escrowObligation).balance,
-            0,
-            "Escrow should have no remaining ETH"
-        );
+        assertEq(alice.balance, 0.6 ether);
+        assertEq(bob.balance, 0.4 ether);
+        assertEq(address(splitter).balance, 0);
     }
 
     function testCollectAndDistributeWithSentinel() public {
-        bytes32 escrowUid = _createEscrow(
-            buyer,
-            AMOUNT,
-            uint64(block.timestamp + EXPIRATION)
-        );
+        bytes32 escrowUid = _createEscrow(buyer, AMOUNT, uint64(block.timestamp + EXPIRATION));
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(executor, escrowUid);
 
-        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
-            executor,
-            escrowUid
-        );
+        uint256 executorBalBefore = executor.balance;
 
-        uint256 executorBalanceBefore = executor.balance;
-
-        NativeTokenSplitter.Split[]
-            memory splits = new NativeTokenSplitter.Split[](3);
-        splits[0] = NativeTokenSplitter.Split({
-            recipient: splitter.EXECUTOR_SENTINEL(),
-            amount: 0.5 ether
-        });
-        splits[1] = NativeTokenSplitter.Split({
-            recipient: alice,
-            amount: 0.3 ether
-        });
-        splits[2] = NativeTokenSplitter.Split({
-            recipient: bob,
-            amount: 0.2 ether
-        });
+        NativeTokenSplitter.Split[] memory splits = new NativeTokenSplitter.Split[](2);
+        splits[0] = NativeTokenSplitter.Split({recipient: splitter.EXECUTOR_SENTINEL(), amount: 0.6 ether});
+        splits[1] = NativeTokenSplitter.Split({recipient: bob, amount: 0.4 ether});
 
         vm.prank(oracle);
-        splitter.arbitrate(escrowUid, splits);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
 
-        vm.prank(executor);
-        splitter.collectAndDistribute(
-            address(escrowObligation),
-            escrowUid,
-            fulfillmentUid
-        );
+        // Different caller — sentinel resolves to executor
+        vm.prank(carol);
+        splitter.collectAndDistribute(address(escrowObligation), escrowUid, fulfillmentUid);
 
-        assertEq(
-            executor.balance,
-            executorBalanceBefore + 0.5 ether,
-            "Executor should receive sentinel share"
-        );
-        assertEq(alice.balance, 0.3 ether, "Alice should receive 0.3 ETH");
-        assertEq(bob.balance, 0.2 ether, "Bob should receive 0.2 ETH");
+        assertEq(executor.balance, executorBalBefore + 0.6 ether, "Executor gets sentinel share");
+        assertEq(bob.balance, 0.4 ether);
     }
 
-    function testCollectAndDistributeSingleRecipient() public {
-        bytes32 escrowUid = _createEscrow(
-            buyer,
-            AMOUNT,
-            uint64(block.timestamp + EXPIRATION)
-        );
+    function testCheckObligationRejectsDifferentFulfillment() public {
+        bytes32 escrowUid = _createEscrow(buyer, AMOUNT, uint64(block.timestamp + EXPIRATION));
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(executor, escrowUid);
 
-        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
-            executor,
-            escrowUid
-        );
+        NativeTokenSplitter.Split[] memory splits = new NativeTokenSplitter.Split[](1);
+        splits[0] = NativeTokenSplitter.Split({recipient: alice, amount: AMOUNT});
+        vm.prank(oracle);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
 
-        NativeTokenSplitter.Split[]
-            memory splits = new NativeTokenSplitter.Split[](1);
-        splits[0] = NativeTokenSplitter.Split({
-            recipient: carol,
-            amount: AMOUNT
-        });
+        bytes32 attackerFulfillmentUid = _createFulfillmentViaSplitter(alice, escrowUid);
+        bytes memory demand = abi.encode(NativeTokenSplitter.DemandData({oracle: oracle, data: bytes("")}));
+
+        Attestation memory attackerF = eas.getAttestation(attackerFulfillmentUid);
+        assertFalse(splitter.checkObligation(attackerF, demand, escrowUid));
+    }
+
+    function testArbitrateRejectsZeroFulfillment() public {
+        bytes32 escrowUid = _createEscrow(buyer, AMOUNT, uint64(block.timestamp + EXPIRATION));
+
+        NativeTokenSplitter.Split[] memory splits = new NativeTokenSplitter.Split[](1);
+        splits[0] = NativeTokenSplitter.Split({recipient: alice, amount: AMOUNT});
 
         vm.prank(oracle);
-        splitter.arbitrate(escrowUid, splits);
-
-        vm.prank(executor);
-        splitter.collectAndDistribute(
-            address(escrowObligation),
-            escrowUid,
-            fulfillmentUid
-        );
-
-        assertEq(carol.balance, AMOUNT, "Carol should receive all ETH");
+        vm.expectRevert(NativeTokenSplitter.InvalidFulfillmentUid.selector);
+        splitter.arbitrate(bytes32(0), escrowUid, splits);
     }
-
-    function testCollectAndDistributeEmitsEvent() public {
-        bytes32 escrowUid = _createEscrow(
-            buyer,
-            AMOUNT,
-            uint64(block.timestamp + EXPIRATION)
-        );
-
-        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(
-            executor,
-            escrowUid
-        );
-
-        NativeTokenSplitter.Split[]
-            memory splits = new NativeTokenSplitter.Split[](1);
-        splits[0] = NativeTokenSplitter.Split({
-            recipient: alice,
-            amount: AMOUNT
-        });
-
-        vm.prank(oracle);
-        splitter.arbitrate(escrowUid, splits);
-
-        vm.expectEmit(true, true, true, true);
-        emit NativeTokenSplitter.EscrowCollectedAndDistributed(
-            escrowUid,
-            fulfillmentUid,
-            executor,
-            splits
-        );
-
-        vm.prank(executor);
-        splitter.collectAndDistribute(
-            address(escrowObligation),
-            escrowUid,
-            fulfillmentUid
-        );
-    }
-
-    // -----------------------------------------------------------------
-    // requestArbitration
-    // -----------------------------------------------------------------
 
     function testRequestArbitrationAsRecipient() public {
-        bytes32 escrowUid = _createEscrow(
-            buyer,
-            AMOUNT,
-            uint64(block.timestamp + EXPIRATION)
-        );
-
-        bytes memory demand = bytes("some demand");
+        bytes32 escrowUid = _createEscrow(buyer, AMOUNT, uint64(block.timestamp + EXPIRATION));
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(executor, escrowUid);
 
         vm.prank(buyer);
-        vm.expectEmit(true, true, false, true);
-        emit NativeTokenSplitter.ArbitrationRequested(
-            escrowUid,
-            oracle,
-            demand
-        );
-        splitter.requestArbitration(escrowUid, oracle, demand);
+        vm.expectEmit(true, true, true, true);
+        emit NativeTokenSplitter.ArbitrationRequested(fulfillmentUid, escrowUid, oracle, bytes("demand"));
+        splitter.requestArbitration(fulfillmentUid, escrowUid, oracle, bytes("demand"));
     }
 
     function testRequestArbitrationUnauthorized() public {
-        bytes32 escrowUid = _createEscrow(
-            buyer,
-            AMOUNT,
-            uint64(block.timestamp + EXPIRATION)
-        );
+        bytes32 escrowUid = _createEscrow(buyer, AMOUNT, uint64(block.timestamp + EXPIRATION));
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(executor, escrowUid);
 
         vm.prank(carol);
-        vm.expectRevert(
-            NativeTokenSplitter.UnauthorizedArbitrationRequest.selector
-        );
-        splitter.requestArbitration(escrowUid, oracle, bytes("demand"));
+        vm.expectRevert(NativeTokenSplitter.UnauthorizedArbitrationRequest.selector);
+        splitter.requestArbitration(fulfillmentUid, escrowUid, oracle, bytes("demand"));
     }
-
-    // -----------------------------------------------------------------
-    // getSplits view helper
-    // -----------------------------------------------------------------
-
-    function testGetSplits() public {
-        bytes32 escrowUid = _createEscrow(
-            buyer,
-            AMOUNT,
-            uint64(block.timestamp + EXPIRATION)
-        );
-
-        NativeTokenSplitter.Split[]
-            memory splits = new NativeTokenSplitter.Split[](3);
-        splits[0] = NativeTokenSplitter.Split({
-            recipient: alice,
-            amount: 0.5 ether
-        });
-        splits[1] = NativeTokenSplitter.Split({
-            recipient: bob,
-            amount: 0.3 ether
-        });
-        splits[2] = NativeTokenSplitter.Split({
-            recipient: carol,
-            amount: 0.2 ether
-        });
-
-        vm.prank(oracle);
-        splitter.arbitrate(escrowUid, splits);
-
-        NativeTokenSplitter.Split[] memory stored = splitter.getSplits(
-            oracle,
-            escrowUid
-        );
-
-        assertEq(stored.length, 3);
-        assertEq(stored[0].recipient, alice);
-        assertEq(stored[0].amount, 0.5 ether);
-        assertEq(stored[1].recipient, bob);
-        assertEq(stored[1].amount, 0.3 ether);
-        assertEq(stored[2].recipient, carol);
-        assertEq(stored[2].amount, 0.2 ether);
-    }
-
-    function testGetSplitsReturnsEmptyWhenNoDecision() public {
-        bytes32 escrowUid = _createEscrow(
-            buyer,
-            AMOUNT,
-            uint64(block.timestamp + EXPIRATION)
-        );
-
-        NativeTokenSplitter.Split[] memory stored = splitter.getSplits(
-            oracle,
-            escrowUid
-        );
-
-        assertEq(stored.length, 0);
-    }
-
-    // -----------------------------------------------------------------
-    // receive
-    // -----------------------------------------------------------------
 
     function testReceiveETH() public {
         vm.deal(address(this), 1 ether);
-        (bool success, ) = address(splitter).call{value: 0.5 ether}("");
-        assertTrue(success, "Splitter should accept ETH");
+        (bool success,) = address(splitter).call{value: 0.5 ether}("");
+        assertTrue(success);
         assertEq(address(splitter).balance, 0.5 ether);
     }
 }

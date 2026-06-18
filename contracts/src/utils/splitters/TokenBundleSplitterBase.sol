@@ -11,26 +11,26 @@ import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {IArbiter} from "../../IArbiter.sol";
 import {ArbiterUtils} from "../../ArbiterUtils.sol";
+import {SplitterVerification} from "./SplitterVerification.sol";
 
 interface ITokenBundleEscrowObligation {
-    function collectEscrow(
-        bytes32 escrow,
-        bytes32 fulfillment
-    ) external returns (bool);
+    function collectEscrow(bytes32 escrow, bytes32 fulfillment) external returns (bool);
+}
+
+interface IObligation {
+    function doObligationRaw(bytes calldata data, uint64 expirationTime, bytes32 refUID)
+        external
+        payable
+        returns (bytes32);
 }
 
 abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155Holder {
     using ArbiterUtils for Attestation;
+    using SplitterVerification for Attestation;
     using SafeERC20 for IERC20;
 
-    /// @notice Sentinel address meaning "the executor who triggered the action".
     address public constant EXECUTOR_SENTINEL = address(0xEEEE);
 
-    /// @notice A per-recipient portion of the bundle.
-    ///         erc20Amounts and erc1155Amounts are parallel to the escrow's
-    ///         token arrays (same length, same order).
-    ///         erc721Indices lists which of the escrow's ERC721s go to this recipient
-    ///         (by index into the escrow's erc721Tokens/erc721TokenIds arrays).
     struct BundleSplit {
         address recipient;
         uint256 nativeAmount;
@@ -39,13 +39,11 @@ abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155H
         uint256[] erc1155Amounts;
     }
 
-    /// @notice Demand data embedded in the escrow obligation.
     struct DemandData {
         address oracle;
         bytes data;
     }
 
-    /// @dev Layout of TokenBundleEscrowObligation.ObligationData for decoding.
     struct EscrowObligationData {
         address arbiter;
         bytes demand;
@@ -59,37 +57,40 @@ abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155H
         uint256[] erc1155Amounts;
     }
 
-    event ArbitrationMade(
-        bytes32 indexed decisionKey,
-        bytes32 indexed obligation,
-        address indexed oracle
-    );
+    event ArbitrationMade(bytes32 indexed decisionKey, bytes32 indexed obligation, address indexed oracle);
     event ArbitrationRequested(
-        bytes32 indexed obligation,
-        address indexed oracle,
-        bytes demand
+        bytes32 indexed fulfillment, bytes32 indexed escrow, address indexed oracle, bytes demand
     );
-    event EscrowCollectedAndDistributed(
-        bytes32 indexed escrow,
-        bytes32 indexed fulfillment,
-        address indexed executor
+    event EscrowCollectedAndDistributed(bytes32 indexed escrow, bytes32 indexed fulfillment, address indexed fulfiller);
+    event FulfillmentCreated(
+        bytes32 indexed fulfillmentUid, address indexed fulfiller, address indexed obligationContract
+    );
+    event NativeTransferFailedOnDistribute(address indexed recipient, uint256 amount);
+    event ERC20TransferFailedOnDistribute(address indexed recipient, address indexed token, uint256 amount);
+    event ERC721TransferFailedOnDistribute(address indexed recipient, address indexed token, uint256 tokenId);
+    event ERC1155TransferFailedOnDistribute(
+        address indexed recipient, address indexed token, uint256 tokenId, uint256 amount
     );
 
     error UnauthorizedArbitrationRequest();
     error EmptySplits();
-    error ZeroRecipient();
-    error ExecuteFailed(address target, bytes data);
+    error TooManySplits(uint256 provided, uint256 max);
     error NativeTokenTransferFailed(address to, uint256 amount);
+    error ERC20TransferFailed(address token, address to, uint256 amount);
+    error ERC721TransferFailed(address token, address to, uint256 tokenId);
+    error ERC1155TransferFailed(address token, address to, uint256 tokenId, uint256 amount);
+    error NoFulfillerRecorded(bytes32 fulfillment);
+    error InvalidFulfillmentUid();
+    error FulfillerAlreadyRecorded(bytes32 fulfillment);
+    error InvalidCreatedFulfillment(bytes32 fulfillment);
+    error NativeTokenRefundFailed(address to, uint256 amount);
 
     IEAS public eas;
-
-    /// @notice decisions[oracle][decisionKey] => splits array.
     mapping(address => mapping(bytes32 => BundleSplit[])) internal decisions;
-    /// @notice Whether a decision has been made (distinguishes empty from nonexistent).
     mapping(address => mapping(bytes32 => bool)) public hasDecision;
+    mapping(bytes32 => address) public fulfillers;
 
-    /// @notice Transient storage for the current executor during execute/collectAndDistribute.
-    address private _currentExecutor;
+    uint256 public constant MAX_SPLITS = 50;
 
     constructor(IEAS _eas) {
         eas = _eas;
@@ -99,29 +100,20 @@ abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155H
     // Oracle arbitration
     // -----------------------------------------------------------------
 
-    /// @notice Oracle submits a split decision for an obligation.
-    function arbitrate(
-        bytes32 obligation,
-        BundleSplit[] calldata splits
-    ) external virtual;
+    function arbitrate(bytes32 fulfillment, bytes32 escrow, BundleSplit[] calldata splits) external virtual;
 
-    /// @notice Stores a decision in storage.
-    function _storeDecision(
-        address oracle,
-        bytes32 decisionKey,
-        BundleSplit[] calldata splits
-    ) internal {
+    function _storeDecision(address oracle, bytes32 decisionKey, BundleSplit[] calldata splits) internal {
         if (splits.length == 0) revert EmptySplits();
-
+        if (splits.length > MAX_SPLITS) revert TooManySplits(splits.length, MAX_SPLITS);
         delete decisions[oracle][decisionKey];
         for (uint256 i; i < splits.length; ++i) {
-            if (splits[i].recipient == address(0)) revert ZeroRecipient();
-
             decisions[oracle][decisionKey].push();
             BundleSplit storage stored = decisions[oracle][decisionKey][i];
             stored.recipient = splits[i].recipient;
             stored.nativeAmount = splits[i].nativeAmount;
-
+            delete stored.erc20Amounts;
+            delete stored.erc721Indices;
+            delete stored.erc1155Amounts;
             for (uint256 j; j < splits[i].erc20Amounts.length; ++j) {
                 stored.erc20Amounts.push(splits[i].erc20Amounts[j]);
             }
@@ -132,178 +124,295 @@ abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155H
                 stored.erc1155Amounts.push(splits[i].erc1155Amounts[j]);
             }
         }
-
         hasDecision[oracle][decisionKey] = true;
     }
 
-    /// @notice Emits an event requesting the oracle to arbitrate.
-    function requestArbitration(
-        bytes32 _obligation,
-        address oracle,
-        bytes memory demand
-    ) external {
-        Attestation memory obligation = eas.getAttestation(_obligation);
-        if (
-            obligation.attester != msg.sender &&
-            obligation.recipient != msg.sender
-        ) revert UnauthorizedArbitrationRequest();
-
-        emit ArbitrationRequested(_obligation, oracle, demand);
+    function requestArbitration(bytes32 _fulfillment, bytes32 _escrow, address oracle, bytes memory demand) external {
+        Attestation memory escrowAttestation = eas.getAttestation(_escrow);
+        if (escrowAttestation.attester != msg.sender && escrowAttestation.recipient != msg.sender) {
+            revert UnauthorizedArbitrationRequest();
+        }
+        emit ArbitrationRequested(_fulfillment, _escrow, oracle, demand);
     }
 
-    // -----------------------------------------------------------------
-    // IArbiter
-    // -----------------------------------------------------------------
-
-    /// @inheritdoc IArbiter
-    function checkObligation(
-        Attestation memory,
-        bytes memory demand,
-        bytes32 fulfilling
-    ) public view override returns (bool) {
+    function checkObligation(Attestation memory fulfillment, bytes memory demand, bytes32 escrow)
+        public
+        view
+        override
+        returns (bool)
+    {
+        fulfillment._checkIntrinsic();
+        fulfillment.verifyFulfillmentRecipient();
         DemandData memory demandData = abi.decode(demand, (DemandData));
-        bytes32 decisionKey = keccak256(
-            abi.encodePacked(fulfilling, demand)
-        );
-        return hasDecision[demandData.oracle][decisionKey];
+        return hasDecision[demandData.oracle][keccak256(abi.encodePacked(fulfillment.uid, escrow))];
+    }
+
+    function createFulfillment(address obligationContract, bytes calldata data, uint64 expirationTime, bytes32 refUID)
+        external
+        payable
+        nonReentrant
+        returns (bytes32 fulfillmentUid)
+    {
+        uint256 retainedBalance = address(this).balance - msg.value;
+        fulfillmentUid = IObligation(obligationContract).doObligationRaw{value: msg.value}(data, expirationTime, refUID);
+        _validateCreatedFulfillment(fulfillmentUid, obligationContract, data, expirationTime, refUID);
+        if (fulfillers[fulfillmentUid] != address(0)) revert FulfillerAlreadyRecorded(fulfillmentUid);
+        fulfillers[fulfillmentUid] = msg.sender;
+        _refundNativeBalanceIncrease(retainedBalance, msg.sender);
+        emit FulfillmentCreated(fulfillmentUid, msg.sender, obligationContract);
     }
 
     // -----------------------------------------------------------------
-    // Execute (proxy calls through the splitter)
+    // Collect + distribute
     // -----------------------------------------------------------------
 
-    /// @notice Execute an arbitrary call as the splitter contract.
-    ///         Payable to allow forwarding ETH for native token operations.
-    function execute(
-        address target,
-        bytes calldata data
-    ) external payable returns (bytes memory) {
-        _currentExecutor = msg.sender;
-        (bool success, bytes memory result) = target.call{value: msg.value}(
-            data
-        );
-        if (!success) revert ExecuteFailed(target, data);
-        _currentExecutor = address(0);
-        return result;
-    }
-
-    // -----------------------------------------------------------------
-    // Atomic collect + distribute
-    // -----------------------------------------------------------------
-
-    /// @notice Collects a token bundle escrow and distributes assets per oracle splits.
-    function collectAndDistribute(
-        address escrowContract,
-        bytes32 escrow,
-        bytes32 fulfillment
-    ) external nonReentrant {
-        _currentExecutor = msg.sender;
-
-        Attestation memory escrowAttestation = eas.getAttestation(escrow);
-        EscrowObligationData memory escrowData = abi.decode(
-            escrowAttestation.data,
-            (EscrowObligationData)
-        );
-        DemandData memory demandData = abi.decode(
-            escrowData.demand,
-            (DemandData)
-        );
-
-        bytes32 decisionKey = keccak256(
-            abi.encodePacked(escrow, escrowData.demand)
-        );
-
-        BundleSplit[] memory splits = decisions[demandData.oracle][decisionKey];
-
-        // Collect escrow — all assets transfer to this contract
-        ITokenBundleEscrowObligation(escrowContract).collectEscrow(
-            escrow,
-            fulfillment
-        );
-
-        // Distribute according to splits
+    /// @notice Collects a token bundle escrow and distributes assets. Reverts if any transfer fails.
+    function collectAndDistribute(address escrowContract, bytes32 escrow, bytes32 fulfillment) external nonReentrant {
+        (BundleSplit[] memory splits, EscrowObligationData memory escrowData) =
+            _collectAndDecode(escrowContract, escrow, fulfillment);
+        address fulfiller = _recordedFulfiller(fulfillment);
         for (uint256 s; s < splits.length; ++s) {
-            address recipient = splits[s].recipient;
-            if (recipient == EXECUTOR_SENTINEL) {
-                recipient = msg.sender;
-            }
+            address recipient = _resolveSentinel(splits[s].recipient, fulfillment, fulfiller);
+            _distributeAtomic(splits[s], escrowData, recipient);
+        }
+        emit EscrowCollectedAndDistributed(escrow, fulfillment, fulfiller);
+    }
 
-            // Native tokens
-            if (splits[s].nativeAmount > 0) {
-                (bool success, ) = payable(recipient).call{
-                    value: splits[s].nativeAmount
-                }("");
-                if (!success)
-                    revert NativeTokenTransferFailed(
-                        recipient,
-                        splits[s].nativeAmount
-                    );
-            }
+    /// @notice Unsafe partial distribution — continues on individual transfer failures.
+    /// @dev Use only as a last resort when collectAndDistribute is permanently blocked.
+    ///      Failed transfers emit events but do not revert. Stuck tokens remain in the splitter.
+    function unsafePartiallyCollectAndDistribute(address escrowContract, bytes32 escrow, bytes32 fulfillment)
+        external
+        nonReentrant
+    {
+        (BundleSplit[] memory splits, EscrowObligationData memory escrowData) =
+            _collectAndDecode(escrowContract, escrow, fulfillment);
+        address fulfiller = _recordedFulfiller(fulfillment);
+        for (uint256 s; s < splits.length; ++s) {
+            address recipient = _resolveSentinel(splits[s].recipient, fulfillment, fulfiller);
+            _distributePartial(splits[s], escrowData, recipient);
+        }
+        emit EscrowCollectedAndDistributed(escrow, fulfillment, fulfiller);
+    }
 
-            // ERC20s
-            for (uint256 i; i < splits[s].erc20Amounts.length; ++i) {
-                if (splits[s].erc20Amounts[i] > 0) {
-                    IERC20(escrowData.erc20Tokens[i]).safeTransfer(
-                        recipient,
-                        splits[s].erc20Amounts[i]
-                    );
-                }
-            }
+    // -----------------------------------------------------------------
+    // Internal helpers
+    // -----------------------------------------------------------------
 
-            // ERC721s
-            for (uint256 i; i < splits[s].erc721Indices.length; ++i) {
-                uint256 idx = splits[s].erc721Indices[i];
-                IERC721(escrowData.erc721Tokens[idx]).transferFrom(
-                    address(this),
-                    recipient,
-                    escrowData.erc721TokenIds[idx]
+    function _collectAndDecode(address escrowContract, bytes32 escrow, bytes32 fulfillment)
+        internal
+        returns (BundleSplit[] memory splits, EscrowObligationData memory escrowData)
+    {
+        Attestation memory escrowAttestation = eas.getAttestation(escrow);
+        escrowAttestation.verifyEscrowAttestation(escrowContract);
+        Attestation memory fulfillmentAttestation = eas.getAttestation(fulfillment);
+        fulfillmentAttestation.verifyFulfillmentRecipient();
+
+        escrowData = abi.decode(escrowAttestation.data, (EscrowObligationData));
+        DemandData memory demandData = abi.decode(escrowData.demand, (DemandData));
+        splits = decisions[demandData.oracle][keccak256(abi.encodePacked(fulfillment, escrow))];
+        _verifyERC721NotAlreadyHeld(escrowData);
+        uint256 nativeBefore = address(this).balance;
+        uint256[] memory erc20Before = _erc20Balances(escrowData);
+        uint256[] memory erc1155Before = _erc1155Balances(escrowData);
+        ITokenBundleEscrowObligation(escrowContract).collectEscrow(escrow, fulfillment);
+        _verifyCollectedDeltas(escrowData, nativeBefore, erc20Before, erc1155Before);
+    }
+
+    function _recordedFulfiller(bytes32 fulfillment) internal view returns (address fulfiller) {
+        fulfiller = fulfillers[fulfillment];
+    }
+
+    function _resolveSentinel(address recipient, bytes32 fulfillment, address fulfiller)
+        internal
+        pure
+        returns (address)
+    {
+        if (recipient == EXECUTOR_SENTINEL) {
+            if (fulfiller == address(0)) revert NoFulfillerRecorded(fulfillment);
+            recipient = fulfiller;
+        }
+        return recipient;
+    }
+
+    function _validateCreatedFulfillment(
+        bytes32 fulfillmentUid,
+        address obligationContract,
+        bytes calldata data,
+        uint64 expirationTime,
+        bytes32 refUID
+    ) internal view {
+        if (fulfillmentUid == bytes32(0)) revert InvalidFulfillmentUid();
+
+        Attestation memory fulfillment = eas.getAttestation(fulfillmentUid);
+        if (
+            fulfillment.uid != fulfillmentUid || fulfillment.attester != obligationContract
+                || fulfillment.recipient != address(this) || fulfillment.expirationTime != expirationTime
+                || fulfillment.refUID != refUID || keccak256(fulfillment.data) != keccak256(data)
+        ) {
+            revert InvalidCreatedFulfillment(fulfillmentUid);
+        }
+    }
+
+    function _refundNativeBalanceIncrease(uint256 retainedBalance, address recipient) internal {
+        uint256 currentBalance = address(this).balance;
+        if (currentBalance <= retainedBalance) return;
+
+        uint256 refundAmount = currentBalance - retainedBalance;
+        (bool success,) = payable(recipient).call{value: refundAmount}("");
+        if (!success) revert NativeTokenRefundFailed(recipient, refundAmount);
+    }
+
+    function _erc20Balances(EscrowObligationData memory escrowData) internal view returns (uint256[] memory balances) {
+        balances = new uint256[](escrowData.erc20Tokens.length);
+        for (uint256 i; i < escrowData.erc20Tokens.length; ++i) {
+            balances[i] = IERC20(escrowData.erc20Tokens[i]).balanceOf(address(this));
+        }
+    }
+
+    function _erc1155Balances(EscrowObligationData memory escrowData)
+        internal
+        view
+        returns (uint256[] memory balances)
+    {
+        balances = new uint256[](escrowData.erc1155Tokens.length);
+        for (uint256 i; i < escrowData.erc1155Tokens.length; ++i) {
+            balances[i] = IERC1155(escrowData.erc1155Tokens[i]).balanceOf(address(this), escrowData.erc1155TokenIds[i]);
+        }
+    }
+
+    function _verifyERC721NotAlreadyHeld(EscrowObligationData memory escrowData) internal view {
+        for (uint256 i; i < escrowData.erc721Tokens.length; ++i) {
+            if (IERC721(escrowData.erc721Tokens[i]).ownerOf(escrowData.erc721TokenIds[i]) == address(this)) {
+                revert SplitterVerification.InvalidERC721Receipt(
+                    escrowData.erc721Tokens[i], escrowData.erc721TokenIds[i]
                 );
             }
+        }
+    }
 
-            // ERC1155s
-            for (uint256 i; i < splits[s].erc1155Amounts.length; ++i) {
-                if (splits[s].erc1155Amounts[i] > 0) {
-                    IERC1155(escrowData.erc1155Tokens[i]).safeTransferFrom(
-                        address(this),
-                        recipient,
-                        escrowData.erc1155TokenIds[i],
-                        splits[s].erc1155Amounts[i],
-                        ""
+    function _verifyCollectedDeltas(
+        EscrowObligationData memory escrowData,
+        uint256 nativeBefore,
+        uint256[] memory erc20Before,
+        uint256[] memory erc1155Before
+    ) internal view {
+        SplitterVerification.verifyDelta(nativeBefore, address(this).balance, escrowData.nativeAmount);
+
+        for (uint256 i; i < escrowData.erc20Tokens.length; ++i) {
+            SplitterVerification.verifyDelta(
+                erc20Before[i], IERC20(escrowData.erc20Tokens[i]).balanceOf(address(this)), escrowData.erc20Amounts[i]
+            );
+        }
+
+        for (uint256 i; i < escrowData.erc721Tokens.length; ++i) {
+            if (IERC721(escrowData.erc721Tokens[i]).ownerOf(escrowData.erc721TokenIds[i]) != address(this)) {
+                revert SplitterVerification.InvalidERC721Receipt(
+                    escrowData.erc721Tokens[i], escrowData.erc721TokenIds[i]
+                );
+            }
+        }
+
+        for (uint256 i; i < escrowData.erc1155Tokens.length; ++i) {
+            SplitterVerification.verifyDelta(
+                erc1155Before[i],
+                IERC1155(escrowData.erc1155Tokens[i]).balanceOf(address(this), escrowData.erc1155TokenIds[i]),
+                escrowData.erc1155Amounts[i]
+            );
+        }
+    }
+
+    function _distributeAtomic(BundleSplit memory split, EscrowObligationData memory escrowData, address recipient)
+        internal
+    {
+        if (split.nativeAmount > 0) {
+            (bool success,) = payable(recipient).call{value: split.nativeAmount}("");
+            if (!success) revert NativeTokenTransferFailed(recipient, split.nativeAmount);
+        }
+        for (uint256 i; i < split.erc20Amounts.length; ++i) {
+            if (split.erc20Amounts[i] > 0) {
+                bool success = IERC20(escrowData.erc20Tokens[i]).trySafeTransfer(recipient, split.erc20Amounts[i]);
+                if (!success) revert ERC20TransferFailed(escrowData.erc20Tokens[i], recipient, split.erc20Amounts[i]);
+            }
+        }
+        for (uint256 i; i < split.erc721Indices.length; ++i) {
+            uint256 idx = split.erc721Indices[i];
+            try IERC721(escrowData.erc721Tokens[idx])
+                .safeTransferFrom(address(this), recipient, escrowData.erc721TokenIds[idx]) {}
+            catch {
+                revert ERC721TransferFailed(escrowData.erc721Tokens[idx], recipient, escrowData.erc721TokenIds[idx]);
+            }
+        }
+        for (uint256 i; i < split.erc1155Amounts.length; ++i) {
+            if (split.erc1155Amounts[i] > 0) {
+                try IERC1155(escrowData.erc1155Tokens[i])
+                    .safeTransferFrom(
+                        address(this), recipient, escrowData.erc1155TokenIds[i], split.erc1155Amounts[i], ""
+                    ) {}
+                catch {
+                    revert ERC1155TransferFailed(
+                        escrowData.erc1155Tokens[i], recipient, escrowData.erc1155TokenIds[i], split.erc1155Amounts[i]
                     );
                 }
             }
         }
+    }
 
-        emit EscrowCollectedAndDistributed(escrow, fulfillment, msg.sender);
-
-        _currentExecutor = address(0);
+    function _distributePartial(BundleSplit memory split, EscrowObligationData memory escrowData, address recipient)
+        internal
+    {
+        if (split.nativeAmount > 0) {
+            (bool success,) = payable(recipient).call{value: split.nativeAmount}("");
+            if (!success) emit NativeTransferFailedOnDistribute(recipient, split.nativeAmount);
+        }
+        for (uint256 i; i < split.erc20Amounts.length; ++i) {
+            if (split.erc20Amounts[i] > 0) {
+                bool success = IERC20(escrowData.erc20Tokens[i]).trySafeTransfer(recipient, split.erc20Amounts[i]);
+                if (!success) {
+                    emit ERC20TransferFailedOnDistribute(recipient, escrowData.erc20Tokens[i], split.erc20Amounts[i]);
+                }
+            }
+        }
+        for (uint256 i; i < split.erc721Indices.length; ++i) {
+            uint256 idx = split.erc721Indices[i];
+            try IERC721(escrowData.erc721Tokens[idx])
+                .safeTransferFrom(address(this), recipient, escrowData.erc721TokenIds[idx]) {}
+            catch {
+                emit ERC721TransferFailedOnDistribute(
+                    recipient, escrowData.erc721Tokens[idx], escrowData.erc721TokenIds[idx]
+                );
+            }
+        }
+        for (uint256 i; i < split.erc1155Amounts.length; ++i) {
+            if (split.erc1155Amounts[i] > 0) {
+                try IERC1155(escrowData.erc1155Tokens[i])
+                    .safeTransferFrom(
+                        address(this), recipient, escrowData.erc1155TokenIds[i], split.erc1155Amounts[i], ""
+                    ) {}
+                catch {
+                    emit ERC1155TransferFailedOnDistribute(
+                        recipient, escrowData.erc1155Tokens[i], escrowData.erc1155TokenIds[i], split.erc1155Amounts[i]
+                    );
+                }
+            }
+        }
     }
 
     // -----------------------------------------------------------------
     // View helpers
     // -----------------------------------------------------------------
 
-    function getSplits(
-        address oracle,
-        bytes32 obligation
-    ) external view returns (BundleSplit[] memory) {
-        Attestation memory escrow = eas.getAttestation(obligation);
-        EscrowObligationData memory escrowData = abi.decode(
-            escrow.data,
-            (EscrowObligationData)
-        );
-        bytes32 decisionKey = keccak256(
-            abi.encodePacked(obligation, escrowData.demand)
-        );
-        return decisions[oracle][decisionKey];
+    function getSplits(address oracle, bytes32 fulfillment, bytes32 escrow)
+        external
+        view
+        returns (BundleSplit[] memory)
+    {
+        return decisions[oracle][keccak256(abi.encodePacked(fulfillment, escrow))];
     }
 
-    function decodeDemandData(
-        bytes calldata data
-    ) external pure returns (DemandData memory) {
+    function decodeDemandData(bytes calldata data) external pure returns (DemandData memory) {
         return abi.decode(data, (DemandData));
     }
 
-    /// @notice Allow contract to receive ETH from escrow collection.
     receive() external payable {}
 }

@@ -21,7 +21,7 @@ contract IntrinsicsArbiterTest is Test {
     function testValidAttestation() public view {
         // Create a valid attestation: not expired, not revoked
         Attestation memory attestation = Attestation({
-            uid: bytes32(0),
+            uid: bytes32(uint256(1)),
             schema: bytes32(0),
             time: currentTime,
             expirationTime: currentTime + 1 days, // expires in the future
@@ -33,11 +33,7 @@ contract IntrinsicsArbiterTest is Test {
             data: bytes("")
         });
 
-        bool result = arbiter.checkObligation(
-            attestation,
-            bytes(""),
-            bytes32(0)
-        );
+        bool result = arbiter.checkObligation(attestation, bytes(""), bytes32(0));
         assertTrue(result, "Valid attestation should return true");
 
         // Attestation with no expiration (expirationTime = 0) should also be valid
@@ -46,10 +42,28 @@ contract IntrinsicsArbiterTest is Test {
         assertTrue(result, "Attestation with no expiration should return true");
     }
 
+    function testZeroUidReverts() public {
+        Attestation memory attestation = Attestation({
+            uid: bytes32(0),
+            schema: bytes32(0),
+            time: currentTime,
+            expirationTime: currentTime + 1 days,
+            revocationTime: uint64(0),
+            refUID: bytes32(0),
+            recipient: address(0),
+            attester: address(0),
+            revocable: true,
+            data: bytes("")
+        });
+
+        vm.expectRevert(ArbiterUtils.InvalidAttestationUid.selector);
+        arbiter.checkObligation(attestation, bytes(""), bytes32(0));
+    }
+
     function testExpiredAttestation() public {
         // Create an expired attestation
         Attestation memory attestation = Attestation({
-            uid: bytes32(0),
+            uid: bytes32(uint256(1)),
             schema: bytes32(0),
             time: currentTime - 2 days,
             expirationTime: currentTime - 1 days, // expired in the past
@@ -68,7 +82,7 @@ contract IntrinsicsArbiterTest is Test {
     function testRevokedAttestation() public {
         // Create a revoked attestation
         Attestation memory attestation = Attestation({
-            uid: bytes32(0),
+            uid: bytes32(uint256(1)),
             schema: bytes32(0),
             time: currentTime,
             expirationTime: currentTime + 1 days, // not expired
@@ -87,7 +101,7 @@ contract IntrinsicsArbiterTest is Test {
     function testExpiredAndRevokedAttestation() public {
         // Create an attestation that is both expired and revoked
         Attestation memory attestation = Attestation({
-            uid: bytes32(0),
+            uid: bytes32(uint256(1)),
             schema: bytes32(0),
             time: currentTime - 2 days,
             expirationTime: currentTime - 1 days, // expired
@@ -107,7 +121,7 @@ contract IntrinsicsArbiterTest is Test {
     function testTimeManipulation() public {
         // Create a valid attestation
         Attestation memory attestation = Attestation({
-            uid: bytes32(0),
+            uid: bytes32(uint256(1)),
             schema: bytes32(0),
             time: currentTime,
             expirationTime: currentTime + 1 days, // expires in the future
@@ -120,20 +134,13 @@ contract IntrinsicsArbiterTest is Test {
         });
 
         // Attestation is valid now
-        bool result = arbiter.checkObligation(
-            attestation,
-            bytes(""),
-            bytes32(0)
-        );
+        bool result = arbiter.checkObligation(attestation, bytes(""), bytes32(0));
         assertTrue(result, "Attestation should be valid initially");
 
         // Warp time to just before expiration
         vm.warp(currentTime + 1 days - 1);
         result = arbiter.checkObligation(attestation, bytes(""), bytes32(0));
-        assertTrue(
-            result,
-            "Attestation should still be valid just before expiration"
-        );
+        assertTrue(result, "Attestation should still be valid just before expiration");
 
         // Warp time to exactly at expiration
         vm.warp(currentTime + 1 days);

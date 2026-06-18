@@ -371,7 +371,7 @@ describe("Arbiters Tests", () => {
     test("testCheckObligationWithMatchingSchema", async () => {
       // Create a test attestation with matching schema
       const attestation = {
-        uid: "0x0000000000000000000000000000000000000000000000000000000000000000" as const,
+        uid: "0x1111111111111111111111111111111111111111111111111111111111111111" as const,
         schema,
         time: BigInt(Math.floor(Date.now() / 1000)),
         expirationTime: 0n,

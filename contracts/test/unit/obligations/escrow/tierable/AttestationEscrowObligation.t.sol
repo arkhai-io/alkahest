@@ -10,6 +10,7 @@ import {IEAS, Attestation, AttestationRequest, AttestationRequestData} from "@ea
 import {ISchemaRegistry, SchemaRecord} from "@eas/ISchemaRegistry.sol";
 import {ISchemaResolver} from "@eas/resolver/ISchemaResolver.sol";
 import {EASDeployer} from "@test/utils/EASDeployer.sol";
+import {PayableResolver} from "../../fixtures/PayableResolver.sol";
 
 contract AttestationEscrowObligationTierableTest is Test {
     AttestationEscrowObligation public escrowObligation;
@@ -21,6 +22,8 @@ contract AttestationEscrowObligationTierableTest is Test {
     address internal requester2;
     address internal attester;
     bytes32 private testSchemaId;
+    bytes32 private paidSchemaId;
+    PayableResolver private payableResolver;
     uint64 constant EXPIRATION_TIME = 365 days;
 
     function setUp() public {
@@ -35,6 +38,8 @@ contract AttestationEscrowObligationTierableTest is Test {
         attester = makeAddr("attester");
 
         testSchemaId = schemaRegistry.register("string testData", ISchemaResolver(address(0)), true);
+        payableResolver = new PayableResolver(eas);
+        paidSchemaId = schemaRegistry.register("string paidData", payableResolver, true);
     }
 
     function createTestAttestationRequest() internal view returns (AttestationRequest memory) {
@@ -55,9 +60,7 @@ contract AttestationEscrowObligationTierableTest is Test {
         vm.prank(requester1);
         bytes32 uid = escrowObligation.doObligation(
             AttestationEscrowObligation.ObligationData({
-                attestation: createTestAttestationRequest(),
-                arbiter: address(mockArbiter),
-                demand: abi.encode("test")
+                attestation: createTestAttestationRequest(), arbiter: address(mockArbiter), demand: abi.encode("test")
             }),
             uint64(block.timestamp + EXPIRATION_TIME)
         );
@@ -72,9 +75,7 @@ contract AttestationEscrowObligationTierableTest is Test {
         vm.prank(requester1);
         bytes32 escrow1Uid = escrowObligation.doObligation(
             AttestationEscrowObligation.ObligationData({
-                attestation: req,
-                arbiter: address(mockArbiter),
-                demand: abi.encode("test")
+                attestation: req, arbiter: address(mockArbiter), demand: abi.encode("test")
             }),
             uint64(block.timestamp + EXPIRATION_TIME)
         );
@@ -82,9 +83,7 @@ contract AttestationEscrowObligationTierableTest is Test {
         vm.prank(requester2);
         bytes32 escrow2Uid = escrowObligation.doObligation(
             AttestationEscrowObligation.ObligationData({
-                attestation: req,
-                arbiter: address(mockArbiter),
-                demand: abi.encode("test")
+                attestation: req, arbiter: address(mockArbiter), demand: abi.encode("test")
             }),
             uint64(block.timestamp + EXPIRATION_TIME)
         );
@@ -93,8 +92,7 @@ contract AttestationEscrowObligationTierableTest is Test {
         StringObligation stringObligation = new StringObligation(eas, schemaRegistry);
         vm.prank(attester);
         bytes32 fulfillmentUid = stringObligation.doObligation(
-            StringObligation.ObligationData({item: "fulfillment", schema: bytes32(0)}),
-            bytes32(0)
+            StringObligation.ObligationData({item: "fulfillment", schema: bytes32(0)}), bytes32(0)
         );
 
         // Collect both with same fulfillment - this creates the escrowed attestations
@@ -112,5 +110,56 @@ contract AttestationEscrowObligationTierableTest is Test {
 
         assertTrue(att1.uid != bytes32(0), "First attestation should exist");
         assertTrue(att2.uid != bytes32(0), "Second attestation should exist");
+    }
+
+    function testTierableMultiplePaidEscrowsOneFulfillment() public {
+        AttestationRequest memory req = AttestationRequest({
+            schema: paidSchemaId,
+            data: AttestationRequestData({
+                recipient: attester,
+                expirationTime: 0,
+                revocable: true,
+                refUID: bytes32(0),
+                data: abi.encode("paid test data"),
+                value: 1 wei
+            })
+        });
+
+        vm.deal(requester1, 1 ether);
+        vm.deal(requester2, 1 ether);
+
+        vm.prank(requester1);
+        bytes32 escrow1Uid = escrowObligation.doObligation{value: 1 wei}(
+            AttestationEscrowObligation.ObligationData({
+                attestation: req, arbiter: address(mockArbiter), demand: abi.encode("test")
+            }),
+            uint64(block.timestamp + EXPIRATION_TIME)
+        );
+
+        vm.prank(requester2);
+        bytes32 escrow2Uid = escrowObligation.doObligation{value: 1 wei}(
+            AttestationEscrowObligation.ObligationData({
+                attestation: req, arbiter: address(mockArbiter), demand: abi.encode("test")
+            }),
+            uint64(block.timestamp + EXPIRATION_TIME)
+        );
+
+        assertEq(address(escrowObligation).balance, 2 wei);
+
+        StringObligation stringObligation = new StringObligation(eas, schemaRegistry);
+        vm.prank(attester);
+        bytes32 fulfillmentUid = stringObligation.doObligation(
+            StringObligation.ObligationData({item: "fulfillment", schema: bytes32(0)}), bytes32(0)
+        );
+
+        vm.startPrank(attester);
+        bytes32 result1 = escrowObligation.collectEscrow(escrow1Uid, fulfillmentUid);
+        bytes32 result2 = escrowObligation.collectEscrow(escrow2Uid, fulfillmentUid);
+        vm.stopPrank();
+
+        assertNotEq(result1, bytes32(0));
+        assertNotEq(result2, bytes32(0));
+        assertEq(payableResolver.attestValue(), 2 wei);
+        assertEq(address(escrowObligation).balance, 0);
     }
 }

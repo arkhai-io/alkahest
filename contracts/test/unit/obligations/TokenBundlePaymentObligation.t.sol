@@ -24,10 +24,7 @@ contract MockERC20 is ERC20 {
 contract MockERC721 is ERC721 {
     uint256 private _tokenIdCounter;
 
-    constructor(
-        string memory name,
-        string memory symbol
-    ) ERC721(name, symbol) {}
+    constructor(string memory name, string memory symbol) ERC721(name, symbol) {}
 
     function mint(address to) external returns (uint256) {
         uint256 tokenId = _tokenIdCounter++;
@@ -47,11 +44,7 @@ contract MockERC1155 is ERC1155 {
         _mint(to, id, amount, "");
     }
 
-    function mintBatch(
-        address to,
-        uint256[] memory ids,
-        uint256[] memory amounts
-    ) external {
+    function mintBatch(address to, uint256[] memory ids, uint256[] memory amounts) external {
         _mintBatch(to, ids, amounts, "");
     }
 }
@@ -134,8 +127,7 @@ contract TokenBundlePaymentObligationTest is Test {
     }
 
     function testDoObligationWithNativeTokens() public {
-        TokenBundlePaymentObligation.ObligationData
-            memory data = createNativeOnlyBundleData();
+        TokenBundlePaymentObligation.ObligationData memory data = createNativeOnlyBundleData();
 
         uint256 payeeBalanceBefore = payee.balance;
 
@@ -150,8 +142,7 @@ contract TokenBundlePaymentObligationTest is Test {
     }
 
     function testDoObligationWithFullBundle() public {
-        TokenBundlePaymentObligation.ObligationData
-            memory data = createFullBundleData();
+        TokenBundlePaymentObligation.ObligationData memory data = createFullBundleData();
 
         uint256 payeeBalanceBefore = payee.balance;
 
@@ -174,8 +165,7 @@ contract TokenBundlePaymentObligationTest is Test {
     }
 
     function testDoObligationForWithFullBundle() public {
-        TokenBundlePaymentObligation.ObligationData
-            memory data = createFullBundleData();
+        TokenBundlePaymentObligation.ObligationData memory data = createFullBundleData();
 
         // Update NFT IDs to Bob's NFTs
         data.erc721TokenIds[0] = NFT1_ID + 10;
@@ -207,19 +197,12 @@ contract TokenBundlePaymentObligationTest is Test {
         assertEq(nft2.ownerOf(NFT2_ID + 10), payee);
 
         // Verify ERC1155 transfers
-        assertEq(
-            multiToken.balanceOf(payee, MULTI_TOKEN_ID_1),
-            MULTI_TOKEN_AMOUNT_1
-        );
-        assertEq(
-            multiToken.balanceOf(payee, MULTI_TOKEN_ID_2),
-            MULTI_TOKEN_AMOUNT_2
-        );
+        assertEq(multiToken.balanceOf(payee, MULTI_TOKEN_ID_1), MULTI_TOKEN_AMOUNT_1);
+        assertEq(multiToken.balanceOf(payee, MULTI_TOKEN_ID_2), MULTI_TOKEN_AMOUNT_2);
     }
 
     function testExcessNativeTokenRefund() public {
-        TokenBundlePaymentObligation.ObligationData
-            memory data = createNativeOnlyBundleData();
+        TokenBundlePaymentObligation.ObligationData memory data = createNativeOnlyBundleData();
 
         uint256 excessAmount = 0.5 ether;
         uint256 totalSent = NATIVE_AMOUNT + excessAmount;
@@ -239,16 +222,13 @@ contract TokenBundlePaymentObligationTest is Test {
     }
 
     function testInsufficientNativeTokenPayment() public {
-        TokenBundlePaymentObligation.ObligationData
-            memory data = createNativeOnlyBundleData();
+        TokenBundlePaymentObligation.ObligationData memory data = createNativeOnlyBundleData();
 
         vm.startPrank(alice);
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                TokenBundlePaymentObligation.InsufficientPayment.selector,
-                NATIVE_AMOUNT,
-                NATIVE_AMOUNT - 0.1 ether
+                TokenBundlePaymentObligation.InsufficientPayment.selector, NATIVE_AMOUNT, NATIVE_AMOUNT - 0.1 ether
             )
         );
 
@@ -261,28 +241,23 @@ contract TokenBundlePaymentObligationTest is Test {
         // Create a contract that rejects native token transfers
         RevertingReceiver revertingPayee = new RevertingReceiver();
 
-        TokenBundlePaymentObligation.ObligationData
-            memory data = TokenBundlePaymentObligation.ObligationData({
-                nativeAmount: NATIVE_AMOUNT,
-                erc20Tokens: new address[](0),
-                erc20Amounts: new uint256[](0),
-                erc721Tokens: new address[](0),
-                erc721TokenIds: new uint256[](0),
-                erc1155Tokens: new address[](0),
-                erc1155TokenIds: new uint256[](0),
-                erc1155Amounts: new uint256[](0),
-                payee: address(revertingPayee)
-            });
+        TokenBundlePaymentObligation.ObligationData memory data = TokenBundlePaymentObligation.ObligationData({
+            nativeAmount: NATIVE_AMOUNT,
+            erc20Tokens: new address[](0),
+            erc20Amounts: new uint256[](0),
+            erc721Tokens: new address[](0),
+            erc721TokenIds: new uint256[](0),
+            erc1155Tokens: new address[](0),
+            erc1155TokenIds: new uint256[](0),
+            erc1155Amounts: new uint256[](0),
+            payee: address(revertingPayee)
+        });
 
         vm.startPrank(alice);
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                TokenBundlePaymentObligation
-                    .NativeTokenTransferFailed
-                    .selector,
-                address(revertingPayee),
-                NATIVE_AMOUNT
+                TokenBundlePaymentObligation.NativeTokenTransferFailed.selector, address(revertingPayee), NATIVE_AMOUNT
             )
         );
 
@@ -299,9 +274,7 @@ contract TokenBundlePaymentObligationTest is Test {
         data1.payee = payee;
 
         vm.startPrank(alice);
-        vm.expectRevert(
-            TokenBundlePaymentObligation.ArrayLengthMismatch.selector
-        );
+        vm.expectRevert(TokenBundlePaymentObligation.ArrayLengthMismatch.selector);
         obligation.doObligation(data1, bytes32(0));
 
         // ERC721 mismatch
@@ -310,9 +283,7 @@ contract TokenBundlePaymentObligationTest is Test {
         data2.erc721TokenIds = new uint256[](1);
         data2.payee = payee;
 
-        vm.expectRevert(
-            TokenBundlePaymentObligation.ArrayLengthMismatch.selector
-        );
+        vm.expectRevert(TokenBundlePaymentObligation.ArrayLengthMismatch.selector);
         obligation.doObligation(data2, bytes32(0));
 
         // ERC1155 mismatch
@@ -322,9 +293,7 @@ contract TokenBundlePaymentObligationTest is Test {
         data3.erc1155Amounts = new uint256[](1);
         data3.payee = payee;
 
-        vm.expectRevert(
-            TokenBundlePaymentObligation.ArrayLengthMismatch.selector
-        );
+        vm.expectRevert(TokenBundlePaymentObligation.ArrayLengthMismatch.selector);
         obligation.doObligation(data3, bytes32(0));
 
         vm.stopPrank();
@@ -332,8 +301,7 @@ contract TokenBundlePaymentObligationTest is Test {
 
     function testCheckObligation() public {
         // Create payment data
-        TokenBundlePaymentObligation.ObligationData
-            memory paymentData = createFullBundleData();
+        TokenBundlePaymentObligation.ObligationData memory paymentData = createFullBundleData();
 
         // Create mock attestation
         Attestation memory attestation = Attestation({
@@ -351,69 +319,44 @@ contract TokenBundlePaymentObligationTest is Test {
 
         // Test exact match
         bytes memory demandBytes = abi.encode(paymentData);
-        assertTrue(
-            obligation.checkObligation(attestation, demandBytes, bytes32(0))
-        );
+        assertTrue(obligation.checkObligation(attestation, demandBytes, bytes32(0)));
 
         // Test with subset demands
         bytes memory subsetERC20 = abi.encode(createSubsetERC20Demand());
-        assertTrue(
-            obligation.checkObligation(attestation, subsetERC20, bytes32(0))
-        );
+        assertTrue(obligation.checkObligation(attestation, subsetERC20, bytes32(0)));
 
         bytes memory subsetERC721 = abi.encode(createSubsetERC721Demand());
-        assertTrue(
-            obligation.checkObligation(attestation, subsetERC721, bytes32(0))
-        );
+        assertTrue(obligation.checkObligation(attestation, subsetERC721, bytes32(0)));
 
         bytes memory subsetERC1155 = abi.encode(createSubsetERC1155Demand());
-        assertTrue(
-            obligation.checkObligation(attestation, subsetERC1155, bytes32(0))
-        );
+        assertTrue(obligation.checkObligation(attestation, subsetERC1155, bytes32(0)));
 
         // Test with lower native amount demand
         bytes memory lowerNative = abi.encode(createLowerNativeAmountDemand());
-        assertTrue(
-            obligation.checkObligation(attestation, lowerNative, bytes32(0))
-        );
+        assertTrue(obligation.checkObligation(attestation, lowerNative, bytes32(0)));
 
         // Test failures
-        bytes memory higherNative = abi.encode(
-            createHigherNativeAmountDemand()
-        );
-        assertFalse(
-            obligation.checkObligation(attestation, higherNative, bytes32(0))
-        );
+        bytes memory higherNative = abi.encode(createHigherNativeAmountDemand());
+        assertFalse(obligation.checkObligation(attestation, higherNative, bytes32(0)));
 
         bytes memory moreERC20 = abi.encode(createMoreERC20Demand());
-        assertFalse(
-            obligation.checkObligation(attestation, moreERC20, bytes32(0))
-        );
+        assertFalse(obligation.checkObligation(attestation, moreERC20, bytes32(0)));
 
         bytes memory differentPayee = abi.encode(createDifferentPayeeDemand());
-        assertFalse(
-            obligation.checkObligation(attestation, differentPayee, bytes32(0))
-        );
+        assertFalse(obligation.checkObligation(attestation, differentPayee, bytes32(0)));
     }
 
-    function testReceiveFunction() public {
-        uint256 balanceBefore = address(obligation).balance;
-
-        // Send native tokens directly to the contract
+    function testDirectNativeTransferReverts() public {
         vm.deal(alice, 10 ether);
         vm.prank(alice);
-        (bool success, ) = address(obligation).call{value: 1 ether}("");
+        (bool success,) = address(obligation).call{value: 1 ether}("");
 
-        assertTrue(success);
-        assertEq(address(obligation).balance, balanceBefore + 1 ether);
+        assertFalse(success);
+        assertEq(address(obligation).balance, 0);
     }
 
     // Helper functions to create test data
-    function createFullBundleData()
-        internal
-        view
-        returns (TokenBundlePaymentObligation.ObligationData memory)
-    {
+    function createFullBundleData() internal view returns (TokenBundlePaymentObligation.ObligationData memory) {
         address[] memory erc20Tokens = new address[](2);
         erc20Tokens[0] = address(token1);
         erc20Tokens[1] = address(token2);
@@ -442,94 +385,74 @@ contract TokenBundlePaymentObligationTest is Test {
         erc1155Amounts[0] = MULTI_TOKEN_AMOUNT_1;
         erc1155Amounts[1] = MULTI_TOKEN_AMOUNT_2;
 
-        return
-            TokenBundlePaymentObligation.ObligationData({
-                nativeAmount: NATIVE_AMOUNT,
-                erc20Tokens: erc20Tokens,
-                erc20Amounts: erc20Amounts,
-                erc721Tokens: erc721Tokens,
-                erc721TokenIds: erc721TokenIds,
-                erc1155Tokens: erc1155Tokens,
-                erc1155TokenIds: erc1155TokenIds,
-                erc1155Amounts: erc1155Amounts,
-                payee: payee
-            });
+        return TokenBundlePaymentObligation.ObligationData({
+            nativeAmount: NATIVE_AMOUNT,
+            erc20Tokens: erc20Tokens,
+            erc20Amounts: erc20Amounts,
+            erc721Tokens: erc721Tokens,
+            erc721TokenIds: erc721TokenIds,
+            erc1155Tokens: erc1155Tokens,
+            erc1155TokenIds: erc1155TokenIds,
+            erc1155Amounts: erc1155Amounts,
+            payee: payee
+        });
     }
 
-    function createNativeOnlyBundleData()
-        internal
-        view
-        returns (TokenBundlePaymentObligation.ObligationData memory)
-    {
-        return
-            TokenBundlePaymentObligation.ObligationData({
-                nativeAmount: NATIVE_AMOUNT,
-                erc20Tokens: new address[](0),
-                erc20Amounts: new uint256[](0),
-                erc721Tokens: new address[](0),
-                erc721TokenIds: new uint256[](0),
-                erc1155Tokens: new address[](0),
-                erc1155TokenIds: new uint256[](0),
-                erc1155Amounts: new uint256[](0),
-                payee: payee
-            });
+    function createNativeOnlyBundleData() internal view returns (TokenBundlePaymentObligation.ObligationData memory) {
+        return TokenBundlePaymentObligation.ObligationData({
+            nativeAmount: NATIVE_AMOUNT,
+            erc20Tokens: new address[](0),
+            erc20Amounts: new uint256[](0),
+            erc721Tokens: new address[](0),
+            erc721TokenIds: new uint256[](0),
+            erc1155Tokens: new address[](0),
+            erc1155TokenIds: new uint256[](0),
+            erc1155Amounts: new uint256[](0),
+            payee: payee
+        });
     }
 
-    function createSubsetERC20Demand()
-        internal
-        view
-        returns (TokenBundlePaymentObligation.ObligationData memory)
-    {
+    function createSubsetERC20Demand() internal view returns (TokenBundlePaymentObligation.ObligationData memory) {
         address[] memory erc20Tokens = new address[](1);
         erc20Tokens[0] = address(token1);
 
         uint256[] memory erc20Amounts = new uint256[](1);
         erc20Amounts[0] = TOKEN1_AMOUNT;
 
-        return
-            TokenBundlePaymentObligation.ObligationData({
-                nativeAmount: NATIVE_AMOUNT,
-                erc20Tokens: erc20Tokens,
-                erc20Amounts: erc20Amounts,
-                erc721Tokens: new address[](0),
-                erc721TokenIds: new uint256[](0),
-                erc1155Tokens: new address[](0),
-                erc1155TokenIds: new uint256[](0),
-                erc1155Amounts: new uint256[](0),
-                payee: payee
-            });
+        return TokenBundlePaymentObligation.ObligationData({
+            nativeAmount: NATIVE_AMOUNT,
+            erc20Tokens: erc20Tokens,
+            erc20Amounts: erc20Amounts,
+            erc721Tokens: new address[](0),
+            erc721TokenIds: new uint256[](0),
+            erc1155Tokens: new address[](0),
+            erc1155TokenIds: new uint256[](0),
+            erc1155Amounts: new uint256[](0),
+            payee: payee
+        });
     }
 
-    function createSubsetERC721Demand()
-        internal
-        view
-        returns (TokenBundlePaymentObligation.ObligationData memory)
-    {
+    function createSubsetERC721Demand() internal view returns (TokenBundlePaymentObligation.ObligationData memory) {
         address[] memory erc721Tokens = new address[](1);
         erc721Tokens[0] = address(nft1);
 
         uint256[] memory erc721TokenIds = new uint256[](1);
         erc721TokenIds[0] = NFT1_ID;
 
-        return
-            TokenBundlePaymentObligation.ObligationData({
-                nativeAmount: 0,
-                erc20Tokens: new address[](0),
-                erc20Amounts: new uint256[](0),
-                erc721Tokens: erc721Tokens,
-                erc721TokenIds: erc721TokenIds,
-                erc1155Tokens: new address[](0),
-                erc1155TokenIds: new uint256[](0),
-                erc1155Amounts: new uint256[](0),
-                payee: payee
-            });
+        return TokenBundlePaymentObligation.ObligationData({
+            nativeAmount: 0,
+            erc20Tokens: new address[](0),
+            erc20Amounts: new uint256[](0),
+            erc721Tokens: erc721Tokens,
+            erc721TokenIds: erc721TokenIds,
+            erc1155Tokens: new address[](0),
+            erc1155TokenIds: new uint256[](0),
+            erc1155Amounts: new uint256[](0),
+            payee: payee
+        });
     }
 
-    function createSubsetERC1155Demand()
-        internal
-        view
-        returns (TokenBundlePaymentObligation.ObligationData memory)
-    {
+    function createSubsetERC1155Demand() internal view returns (TokenBundlePaymentObligation.ObligationData memory) {
         address[] memory erc1155Tokens = new address[](1);
         erc1155Tokens[0] = address(multiToken);
 
@@ -539,18 +462,17 @@ contract TokenBundlePaymentObligationTest is Test {
         uint256[] memory erc1155Amounts = new uint256[](1);
         erc1155Amounts[0] = MULTI_TOKEN_AMOUNT_1;
 
-        return
-            TokenBundlePaymentObligation.ObligationData({
-                nativeAmount: 0,
-                erc20Tokens: new address[](0),
-                erc20Amounts: new uint256[](0),
-                erc721Tokens: new address[](0),
-                erc721TokenIds: new uint256[](0),
-                erc1155Tokens: erc1155Tokens,
-                erc1155TokenIds: erc1155TokenIds,
-                erc1155Amounts: erc1155Amounts,
-                payee: payee
-            });
+        return TokenBundlePaymentObligation.ObligationData({
+            nativeAmount: 0,
+            erc20Tokens: new address[](0),
+            erc20Amounts: new uint256[](0),
+            erc721Tokens: new address[](0),
+            erc721TokenIds: new uint256[](0),
+            erc1155Tokens: erc1155Tokens,
+            erc1155TokenIds: erc1155TokenIds,
+            erc1155Amounts: erc1155Amounts,
+            payee: payee
+        });
     }
 
     function createLowerNativeAmountDemand()
@@ -558,8 +480,7 @@ contract TokenBundlePaymentObligationTest is Test {
         view
         returns (TokenBundlePaymentObligation.ObligationData memory)
     {
-        TokenBundlePaymentObligation.ObligationData
-            memory data = createFullBundleData();
+        TokenBundlePaymentObligation.ObligationData memory data = createFullBundleData();
         data.nativeAmount = NATIVE_AMOUNT / 2;
         return data;
     }
@@ -569,17 +490,12 @@ contract TokenBundlePaymentObligationTest is Test {
         view
         returns (TokenBundlePaymentObligation.ObligationData memory)
     {
-        TokenBundlePaymentObligation.ObligationData
-            memory data = createFullBundleData();
+        TokenBundlePaymentObligation.ObligationData memory data = createFullBundleData();
         data.nativeAmount = NATIVE_AMOUNT * 2;
         return data;
     }
 
-    function createMoreERC20Demand()
-        internal
-        view
-        returns (TokenBundlePaymentObligation.ObligationData memory)
-    {
+    function createMoreERC20Demand() internal view returns (TokenBundlePaymentObligation.ObligationData memory) {
         address[] memory erc20Tokens = new address[](3);
         erc20Tokens[0] = address(token1);
         erc20Tokens[1] = address(token2);
@@ -590,27 +506,21 @@ contract TokenBundlePaymentObligationTest is Test {
         erc20Amounts[1] = TOKEN2_AMOUNT;
         erc20Amounts[2] = TOKEN1_AMOUNT;
 
-        return
-            TokenBundlePaymentObligation.ObligationData({
-                nativeAmount: NATIVE_AMOUNT,
-                erc20Tokens: erc20Tokens,
-                erc20Amounts: erc20Amounts,
-                erc721Tokens: new address[](0),
-                erc721TokenIds: new uint256[](0),
-                erc1155Tokens: new address[](0),
-                erc1155TokenIds: new uint256[](0),
-                erc1155Amounts: new uint256[](0),
-                payee: payee
-            });
+        return TokenBundlePaymentObligation.ObligationData({
+            nativeAmount: NATIVE_AMOUNT,
+            erc20Tokens: erc20Tokens,
+            erc20Amounts: erc20Amounts,
+            erc721Tokens: new address[](0),
+            erc721TokenIds: new uint256[](0),
+            erc1155Tokens: new address[](0),
+            erc1155TokenIds: new uint256[](0),
+            erc1155Amounts: new uint256[](0),
+            payee: payee
+        });
     }
 
-    function createDifferentPayeeDemand()
-        internal
-        view
-        returns (TokenBundlePaymentObligation.ObligationData memory)
-    {
-        TokenBundlePaymentObligation.ObligationData
-            memory data = createFullBundleData();
+    function createDifferentPayeeDemand() internal view returns (TokenBundlePaymentObligation.ObligationData memory) {
+        TokenBundlePaymentObligation.ObligationData memory data = createFullBundleData();
         data.payee = charlie;
         return data;
     }
@@ -625,14 +535,8 @@ contract TokenBundlePaymentObligationTest is Test {
         assertEq(nft2.ownerOf(NFT2_ID), payee);
 
         // Verify ERC1155 transfers
-        assertEq(
-            multiToken.balanceOf(payee, MULTI_TOKEN_ID_1),
-            MULTI_TOKEN_AMOUNT_1
-        );
-        assertEq(
-            multiToken.balanceOf(payee, MULTI_TOKEN_ID_2),
-            MULTI_TOKEN_AMOUNT_2
-        );
+        assertEq(multiToken.balanceOf(payee, MULTI_TOKEN_ID_1), MULTI_TOKEN_AMOUNT_1);
+        assertEq(multiToken.balanceOf(payee, MULTI_TOKEN_ID_2), MULTI_TOKEN_AMOUNT_2);
     }
 }
 

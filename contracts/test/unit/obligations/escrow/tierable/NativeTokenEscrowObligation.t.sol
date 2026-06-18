@@ -39,12 +39,8 @@ contract NativeTokenEscrowObligationTierableTest is Test {
 
     function testDoObligation() public {
         bytes memory demand = abi.encode("test demand");
-        NativeTokenEscrowObligation.ObligationData memory data = NativeTokenEscrowObligation
-            .ObligationData({
-                amount: AMOUNT,
-                arbiter: address(mockArbiter),
-                demand: demand
-            });
+        NativeTokenEscrowObligation.ObligationData memory data =
+            NativeTokenEscrowObligation.ObligationData({amount: AMOUNT, arbiter: address(mockArbiter), demand: demand});
 
         vm.prank(buyer1);
         bytes32 uid = escrowObligation.doObligation{value: AMOUNT}(data, uint64(block.timestamp + EXPIRATION_TIME));
@@ -55,25 +51,17 @@ contract NativeTokenEscrowObligationTierableTest is Test {
 
     function testTierableMultipleEscrowsOneFulfillment() public {
         bytes memory demand = abi.encode("test demand");
-        
+
         // Create two escrows
         vm.prank(buyer1);
         bytes32 payment1Uid = escrowObligation.doObligation{value: AMOUNT}(
-            NativeTokenEscrowObligation.ObligationData({
-                amount: AMOUNT,
-                arbiter: address(mockArbiter),
-                demand: demand
-            }),
+            NativeTokenEscrowObligation.ObligationData({amount: AMOUNT, arbiter: address(mockArbiter), demand: demand}),
             uint64(block.timestamp + EXPIRATION_TIME)
         );
 
         vm.prank(buyer2);
         bytes32 payment2Uid = escrowObligation.doObligation{value: AMOUNT}(
-            NativeTokenEscrowObligation.ObligationData({
-                amount: AMOUNT,
-                arbiter: address(mockArbiter),
-                demand: demand
-            }),
+            NativeTokenEscrowObligation.ObligationData({amount: AMOUNT, arbiter: address(mockArbiter), demand: demand}),
             uint64(block.timestamp + EXPIRATION_TIME)
         );
 
@@ -81,8 +69,7 @@ contract NativeTokenEscrowObligationTierableTest is Test {
         StringObligation stringObligation = new StringObligation(eas, schemaRegistry);
         vm.prank(seller);
         bytes32 fulfillmentUid = stringObligation.doObligation(
-            StringObligation.ObligationData({item: "fulfillment", schema: bytes32(0)}),
-            bytes32(0)
+            StringObligation.ObligationData({item: "fulfillment", schema: bytes32(0)}), bytes32(0)
         );
 
         uint256 sellerBalanceBefore = seller.balance;
@@ -101,9 +88,7 @@ contract NativeTokenEscrowObligationTierableTest is Test {
         vm.prank(buyer1);
         bytes32 uid = escrowObligation.doObligation{value: AMOUNT}(
             NativeTokenEscrowObligation.ObligationData({
-                amount: AMOUNT,
-                arbiter: address(mockArbiter),
-                demand: abi.encode("test")
+                amount: AMOUNT, arbiter: address(mockArbiter), demand: abi.encode("test")
             }),
             uint64(block.timestamp + 100)
         );
@@ -115,5 +100,40 @@ contract NativeTokenEscrowObligationTierableTest is Test {
         escrowObligation.reclaimExpired(uid);
 
         assertEq(buyer1.balance, buyerBalanceBefore + AMOUNT, "Buyer should have received refund");
+    }
+
+    function testCollectEscrowWithMissingFulfillmentRevertsAttestationNotFound() public {
+        vm.prank(buyer1);
+        bytes32 escrowUid = escrowObligation.doObligation{value: AMOUNT}(
+            NativeTokenEscrowObligation.ObligationData({
+                amount: AMOUNT, arbiter: address(mockArbiter), demand: abi.encode("test")
+            }),
+            uint64(block.timestamp + EXPIRATION_TIME)
+        );
+        bytes32 missingFulfillment = bytes32("missing fulfillment");
+
+        vm.expectRevert(
+            abi.encodeWithSelector(BaseEscrowObligationTierable.AttestationNotFound.selector, missingFulfillment)
+        );
+        escrowObligation.collectEscrow(escrowUid, missingFulfillment);
+    }
+
+    function testCollectEscrowWithMissingEscrowRevertsAttestationNotFound() public {
+        bytes32 missingEscrow = bytes32("missing escrow");
+        bytes32 missingFulfillment = bytes32("missing fulfillment");
+
+        vm.expectRevert(
+            abi.encodeWithSelector(BaseEscrowObligationTierable.AttestationNotFound.selector, missingEscrow)
+        );
+        escrowObligation.collectEscrow(missingEscrow, missingFulfillment);
+    }
+
+    function testReclaimExpiredWithMissingEscrowRevertsAttestationNotFound() public {
+        bytes32 missingEscrow = bytes32("missing escrow");
+
+        vm.expectRevert(
+            abi.encodeWithSelector(BaseEscrowObligationTierable.AttestationNotFound.selector, missingEscrow)
+        );
+        escrowObligation.reclaimExpired(missingEscrow);
     }
 }

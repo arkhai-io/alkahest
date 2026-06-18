@@ -10,26 +10,10 @@ import {TokenBundleSplitterBase} from "./TokenBundleSplitterBase.sol";
 ///         More expensive oracle calls, but guarantees correctness at submission time.
 contract TokenBundleSplitter is TokenBundleSplitterBase {
     error InvalidNativeSplitTotal(uint256 expected, uint256 provided);
-    error InvalidERC20SplitTotal(
-        uint256 tokenIndex,
-        uint256 expected,
-        uint256 provided
-    );
-    error InvalidERC1155SplitTotal(
-        uint256 tokenIndex,
-        uint256 expected,
-        uint256 provided
-    );
-    error InvalidERC20ArrayLength(
-        uint256 splitIndex,
-        uint256 expected,
-        uint256 provided
-    );
-    error InvalidERC1155ArrayLength(
-        uint256 splitIndex,
-        uint256 expected,
-        uint256 provided
-    );
+    error InvalidERC20SplitTotal(uint256 tokenIndex, uint256 expected, uint256 provided);
+    error InvalidERC1155SplitTotal(uint256 tokenIndex, uint256 expected, uint256 provided);
+    error InvalidERC20ArrayLength(uint256 splitIndex, uint256 expected, uint256 provided);
+    error InvalidERC1155ArrayLength(uint256 splitIndex, uint256 expected, uint256 provided);
     error DuplicateERC721Assignment(uint256 tokenIndex);
     error MissingERC721Assignment(uint256 tokenIndex);
     error InvalidERC721Index(uint256 index, uint256 max);
@@ -39,31 +23,22 @@ contract TokenBundleSplitter is TokenBundleSplitterBase {
     /// @notice Oracle submits a split decision with full validation.
     ///         Validates that all split amounts sum to the escrow totals,
     ///         and that each ERC721 is assigned to exactly one recipient.
-    function arbitrate(
-        bytes32 obligation,
-        BundleSplit[] calldata splits
-    ) external override {
-        Attestation memory escrow = eas.getAttestation(obligation);
-        EscrowObligationData memory escrowData = abi.decode(
-            escrow.data,
-            (EscrowObligationData)
-        );
+    function arbitrate(bytes32 fulfillment, bytes32 escrow, BundleSplit[] calldata splits) external override {
+        if (fulfillment == bytes32(0)) revert InvalidFulfillmentUid();
+
+        Attestation memory escrowAttestation = eas.getAttestation(escrow);
+        EscrowObligationData memory escrowData = abi.decode(escrowAttestation.data, (EscrowObligationData));
 
         _validateSplits(splits, escrowData);
 
-        bytes32 decisionKey = keccak256(
-            abi.encodePacked(obligation, escrowData.demand)
-        );
+        bytes32 decisionKey = keccak256(abi.encodePacked(fulfillment, escrow));
 
         _storeDecision(msg.sender, decisionKey, splits);
 
-        emit ArbitrationMade(decisionKey, obligation, msg.sender);
+        emit ArbitrationMade(decisionKey, escrow, msg.sender);
     }
 
-    function _validateSplits(
-        BundleSplit[] calldata splits,
-        EscrowObligationData memory escrowData
-    ) internal pure {
+    function _validateSplits(BundleSplit[] calldata splits, EscrowObligationData memory escrowData) internal pure {
         if (splits.length == 0) revert EmptySplits();
 
         uint256 numSplits = splits.length;
@@ -73,75 +48,61 @@ contract TokenBundleSplitter is TokenBundleSplitterBase {
         for (uint256 s; s < numSplits; ++s) {
             nativeTotal += splits[s].nativeAmount;
         }
-        if (nativeTotal != escrowData.nativeAmount)
-            revert InvalidNativeSplitTotal(
-                escrowData.nativeAmount,
-                nativeTotal
-            );
+        if (nativeTotal != escrowData.nativeAmount) {
+            revert InvalidNativeSplitTotal(escrowData.nativeAmount, nativeTotal);
+        }
 
         // --- ERC20 totals ---
         uint256 numErc20 = escrowData.erc20Tokens.length;
         for (uint256 s; s < numSplits; ++s) {
-            if (splits[s].erc20Amounts.length != numErc20)
-                revert InvalidERC20ArrayLength(
-                    s,
-                    numErc20,
-                    splits[s].erc20Amounts.length
-                );
+            if (splits[s].erc20Amounts.length != numErc20) {
+                revert InvalidERC20ArrayLength(s, numErc20, splits[s].erc20Amounts.length);
+            }
         }
         for (uint256 t; t < numErc20; ++t) {
             uint256 total;
             for (uint256 s; s < numSplits; ++s) {
                 total += splits[s].erc20Amounts[t];
             }
-            if (total != escrowData.erc20Amounts[t])
-                revert InvalidERC20SplitTotal(
-                    t,
-                    escrowData.erc20Amounts[t],
-                    total
-                );
+            if (total != escrowData.erc20Amounts[t]) {
+                revert InvalidERC20SplitTotal(t, escrowData.erc20Amounts[t], total);
+            }
         }
 
         // --- ERC721 assignments (each must appear exactly once) ---
         uint256 numErc721 = escrowData.erc721Tokens.length;
-        if (numErc721 > 0) {
-            bool[] memory assigned = new bool[](numErc721);
-            for (uint256 s; s < numSplits; ++s) {
-                for (uint256 i; i < splits[s].erc721Indices.length; ++i) {
-                    uint256 idx = splits[s].erc721Indices[i];
-                    if (idx >= numErc721)
-                        revert InvalidERC721Index(idx, numErc721);
-                    if (assigned[idx])
-                        revert DuplicateERC721Assignment(idx);
-                    assigned[idx] = true;
+        bool[] memory assigned = new bool[](numErc721);
+        for (uint256 s; s < numSplits; ++s) {
+            for (uint256 i; i < splits[s].erc721Indices.length; ++i) {
+                uint256 idx = splits[s].erc721Indices[i];
+                if (idx >= numErc721) {
+                    revert InvalidERC721Index(idx, numErc721);
                 }
+                if (assigned[idx]) {
+                    revert DuplicateERC721Assignment(idx);
+                }
+                assigned[idx] = true;
             }
-            for (uint256 t; t < numErc721; ++t) {
-                if (!assigned[t]) revert MissingERC721Assignment(t);
-            }
+        }
+        for (uint256 t; t < numErc721; ++t) {
+            if (!assigned[t]) revert MissingERC721Assignment(t);
         }
 
         // --- ERC1155 totals ---
         uint256 numErc1155 = escrowData.erc1155Tokens.length;
         for (uint256 s; s < numSplits; ++s) {
-            if (splits[s].erc1155Amounts.length != numErc1155)
-                revert InvalidERC1155ArrayLength(
-                    s,
-                    numErc1155,
-                    splits[s].erc1155Amounts.length
-                );
+            if (splits[s].erc1155Amounts.length != numErc1155) {
+                revert InvalidERC1155ArrayLength(s, numErc1155, splits[s].erc1155Amounts.length);
+            }
         }
         for (uint256 t; t < numErc1155; ++t) {
             uint256 total;
             for (uint256 s; s < numSplits; ++s) {
                 total += splits[s].erc1155Amounts[t];
             }
-            if (total != escrowData.erc1155Amounts[t])
-                revert InvalidERC1155SplitTotal(
-                    t,
-                    escrowData.erc1155Amounts[t],
-                    total
-                );
+            if (total != escrowData.erc1155Amounts[t]) {
+                revert InvalidERC1155SplitTotal(t, escrowData.erc1155Amounts[t], total);
+            }
         }
     }
 }

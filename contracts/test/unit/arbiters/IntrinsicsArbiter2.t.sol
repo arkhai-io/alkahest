@@ -19,18 +19,15 @@ contract IntrinsicsArbiter2Test is Test {
         currentTime = uint64(block.timestamp);
     }
 
-    function createDemandData(
-        bytes32 schema
-    ) private pure returns (bytes memory) {
-        IntrinsicsArbiter2.DemandData memory demandData = IntrinsicsArbiter2
-            .DemandData({schema: schema});
+    function createDemandData(bytes32 schema) private pure returns (bytes memory) {
+        IntrinsicsArbiter2.DemandData memory demandData = IntrinsicsArbiter2.DemandData({schema: schema});
         return abi.encode(demandData);
     }
 
     function testValidAttestationWithMatchingSchema() public view {
         // Create a valid attestation: not expired, not revoked, with matching schema
         Attestation memory attestation = Attestation({
-            uid: bytes32(0),
+            uid: bytes32(uint256(1)),
             schema: TEST_SCHEMA,
             time: currentTime,
             expirationTime: currentTime + 1 days, // expires in the future
@@ -44,10 +41,7 @@ contract IntrinsicsArbiter2Test is Test {
 
         bytes memory demand = createDemandData(TEST_SCHEMA);
         bool result = arbiter.checkObligation(attestation, demand, bytes32(0));
-        assertTrue(
-            result,
-            "Valid attestation with matching schema should return true"
-        );
+        assertTrue(result, "Valid attestation with matching schema should return true");
 
         // Attestation with no expiration (expirationTime = 0) should also be valid
         attestation.expirationTime = 0;
@@ -55,10 +49,28 @@ contract IntrinsicsArbiter2Test is Test {
         assertTrue(result, "Attestation with no expiration should return true");
     }
 
+    function testZeroUidReverts() public {
+        Attestation memory attestation = Attestation({
+            uid: bytes32(0),
+            schema: TEST_SCHEMA,
+            time: currentTime,
+            expirationTime: currentTime + 1 days,
+            revocationTime: uint64(0),
+            refUID: bytes32(0),
+            recipient: address(0),
+            attester: address(0),
+            revocable: true,
+            data: bytes("")
+        });
+
+        vm.expectRevert(ArbiterUtils.InvalidAttestationUid.selector);
+        arbiter.checkObligation(attestation, createDemandData(TEST_SCHEMA), bytes32(0));
+    }
+
     function testInvalidSchema() public {
         // Create an attestation with non-matching schema
         Attestation memory attestation = Attestation({
-            uid: bytes32(0),
+            uid: bytes32(uint256(1)),
             schema: TEST_SCHEMA,
             time: currentTime,
             expirationTime: currentTime + 1 days, // expires in the future
@@ -79,7 +91,7 @@ contract IntrinsicsArbiter2Test is Test {
     function testExpiredAttestation() public {
         // Create an expired attestation
         Attestation memory attestation = Attestation({
-            uid: bytes32(0),
+            uid: bytes32(uint256(1)),
             schema: TEST_SCHEMA,
             time: currentTime - 2 days,
             expirationTime: currentTime - 1 days, // expired in the past
@@ -100,7 +112,7 @@ contract IntrinsicsArbiter2Test is Test {
     function testRevokedAttestation() public {
         // Create a revoked attestation
         Attestation memory attestation = Attestation({
-            uid: bytes32(0),
+            uid: bytes32(uint256(1)),
             schema: TEST_SCHEMA,
             time: currentTime,
             expirationTime: currentTime + 1 days, // not expired
@@ -121,7 +133,7 @@ contract IntrinsicsArbiter2Test is Test {
     function testExpiredAndRevokedAttestation() public {
         // Create an attestation that is both expired and revoked
         Attestation memory attestation = Attestation({
-            uid: bytes32(0),
+            uid: bytes32(uint256(1)),
             schema: TEST_SCHEMA,
             time: currentTime - 2 days,
             expirationTime: currentTime - 1 days, // expired
@@ -148,7 +160,7 @@ contract IntrinsicsArbiter2Test is Test {
     function testTimeManipulation() public {
         // Create a valid attestation
         Attestation memory attestation = Attestation({
-            uid: bytes32(0),
+            uid: bytes32(uint256(1)),
             schema: TEST_SCHEMA,
             time: currentTime,
             expirationTime: currentTime + 1 days, // expires in the future
@@ -169,10 +181,7 @@ contract IntrinsicsArbiter2Test is Test {
         // Warp time to just before expiration
         vm.warp(currentTime + 1 days - 1);
         result = arbiter.checkObligation(attestation, demand, bytes32(0));
-        assertTrue(
-            result,
-            "Attestation should still be valid just before expiration"
-        );
+        assertTrue(result, "Attestation should still be valid just before expiration");
 
         // Warp time to exactly at expiration
         vm.warp(currentTime + 1 days);
@@ -187,18 +196,12 @@ contract IntrinsicsArbiter2Test is Test {
 
     function testDecodeDemandData() public view {
         bytes32 testSchema = bytes32(uint256(123));
-        IntrinsicsArbiter2.DemandData memory demandData = IntrinsicsArbiter2
-            .DemandData({schema: testSchema});
+        IntrinsicsArbiter2.DemandData memory demandData = IntrinsicsArbiter2.DemandData({schema: testSchema});
 
         bytes memory encodedData = abi.encode(demandData);
 
-        IntrinsicsArbiter2.DemandData memory decodedData = arbiter
-            .decodeDemandData(encodedData);
+        IntrinsicsArbiter2.DemandData memory decodedData = arbiter.decodeDemandData(encodedData);
 
-        assertEq(
-            decodedData.schema,
-            testSchema,
-            "Decoded schema should match original"
-        );
+        assertEq(decodedData.schema, testSchema, "Decoded schema should match original");
     }
 }

@@ -10,31 +10,19 @@ import {ArbiterUtils} from "@src/ArbiterUtils.sol";
 
 // Mock arbiters for testing
 contract MockSuccessArbiter is IArbiter {
-    function checkObligation(
-        Attestation memory,
-        bytes memory,
-        bytes32
-    ) public pure override returns (bool) {
+    function checkObligation(Attestation memory, bytes memory, bytes32) public pure override returns (bool) {
         return true;
     }
 }
 
 contract MockFailArbiter is IArbiter {
-    function checkObligation(
-        Attestation memory,
-        bytes memory,
-        bytes32
-    ) public pure override returns (bool) {
+    function checkObligation(Attestation memory, bytes memory, bytes32) public pure override returns (bool) {
         return false;
     }
 }
 
 contract MockRevertArbiter is IArbiter {
-    function checkObligation(
-        Attestation memory,
-        bytes memory,
-        bytes32
-    ) public pure override returns (bool) {
+    function checkObligation(Attestation memory, bytes memory, bytes32) public pure override returns (bool) {
         revert("Arbiter reverted");
     }
 }
@@ -60,54 +48,38 @@ contract AnyArbiterTest is Test {
         revertArbiter = new MockRevertArbiter();
     }
 
-    function createValidAttestation()
-        internal
-        view
-        returns (Attestation memory)
-    {
-        return
-            Attestation({
-                uid: bytes32(0),
-                schema: bytes32(0),
-                time: currentTime,
-                expirationTime: currentTime + 1 days, // expires in the future
-                revocationTime: uint64(0), // not revoked
-                refUID: bytes32(0),
-                recipient: address(0),
-                attester: address(0),
-                revocable: true,
-                data: bytes("")
-            });
-    }
-
-    function createExpiredAttestation()
-        internal
-        view
-        returns (Attestation memory)
-    {
-        return
-            Attestation({
-                uid: bytes32(0),
-                schema: bytes32(0),
-                time: currentTime - 2 days,
-                expirationTime: currentTime - 1 days, // expired in the past
-                revocationTime: uint64(0), // not revoked
-                refUID: bytes32(0),
-                recipient: address(0),
-                attester: address(0),
-                revocable: true,
-                data: bytes("")
-            });
-    }
-
-    function createDemandData(
-        address[] memory arbiters,
-        bytes[] memory demands
-    ) internal pure returns (bytes memory) {
-        AnyArbiter.DemandData memory demandData = AnyArbiter.DemandData({
-            arbiters: arbiters,
-            demands: demands
+    function createValidAttestation() internal view returns (Attestation memory) {
+        return Attestation({
+            uid: bytes32(uint256(1)),
+            schema: bytes32(0),
+            time: currentTime,
+            expirationTime: currentTime + 1 days, // expires in the future
+            revocationTime: uint64(0), // not revoked
+            refUID: bytes32(0),
+            recipient: address(0),
+            attester: address(0),
+            revocable: true,
+            data: bytes("")
         });
+    }
+
+    function createExpiredAttestation() internal view returns (Attestation memory) {
+        return Attestation({
+            uid: bytes32(uint256(1)),
+            schema: bytes32(0),
+            time: currentTime - 2 days,
+            expirationTime: currentTime - 1 days, // expired in the past
+            revocationTime: uint64(0), // not revoked
+            refUID: bytes32(0),
+            recipient: address(0),
+            attester: address(0),
+            revocable: true,
+            data: bytes("")
+        });
+    }
+
+    function createDemandData(address[] memory arbiters, bytes[] memory demands) internal pure returns (bytes memory) {
+        AnyArbiter.DemandData memory demandData = AnyArbiter.DemandData({arbiters: arbiters, demands: demands});
         return abi.encode(demandData);
     }
 
@@ -123,11 +95,7 @@ contract AnyArbiterTest is Test {
         bytes memory demandData = createDemandData(arbiters, demands);
 
         // No arbiters to check should result in false
-        bool result = anyArbiter.checkObligation(
-            attestation,
-            demandData,
-            bytes32(0)
-        );
+        bool result = anyArbiter.checkObligation(attestation, demandData, bytes32(0));
         assertFalse(result, "Empty arbiter array should return false");
     }
 
@@ -146,11 +114,7 @@ contract AnyArbiterTest is Test {
         bytes memory demandData = createDemandData(arbiters, demands);
 
         // Single successful arbiter should return true
-        bool result = anyArbiter.checkObligation(
-            attestation,
-            demandData,
-            bytes32(0)
-        );
+        bool result = anyArbiter.checkObligation(attestation, demandData, bytes32(0));
         assertTrue(result, "Single successful arbiter should return true");
     }
 
@@ -173,15 +137,8 @@ contract AnyArbiterTest is Test {
         bytes memory demandData = createDemandData(arbiters, demands);
 
         // Should return true because at least one arbiter succeeds
-        bool result = anyArbiter.checkObligation(
-            attestation,
-            demandData,
-            bytes32(0)
-        );
-        assertTrue(
-            result,
-            "Should return true when at least one arbiter succeeds"
-        );
+        bool result = anyArbiter.checkObligation(attestation, demandData, bytes32(0));
+        assertTrue(result, "Should return true when at least one arbiter succeeds");
     }
 
     function testAllArbitersFail() public view {
@@ -201,11 +158,7 @@ contract AnyArbiterTest is Test {
         bytes memory demandData = createDemandData(arbiters, demands);
 
         // Should return false because all arbiters fail
-        bool result = anyArbiter.checkObligation(
-            attestation,
-            demandData,
-            bytes32(0)
-        );
+        bool result = anyArbiter.checkObligation(attestation, demandData, bytes32(0));
         assertFalse(result, "Should return false when all arbiters fail");
     }
 
@@ -226,11 +179,7 @@ contract AnyArbiterTest is Test {
         bytes memory demandData = createDemandData(arbiters, demands);
 
         // Should return false because all arbiters revert
-        bool result = anyArbiter.checkObligation(
-            attestation,
-            demandData,
-            bytes32(0)
-        );
+        bool result = anyArbiter.checkObligation(attestation, demandData, bytes32(0));
         assertFalse(result, "Should return false when all arbiters revert");
     }
 
@@ -253,15 +202,8 @@ contract AnyArbiterTest is Test {
         bytes memory demandData = createDemandData(arbiters, demands);
 
         // Should return false because all arbiters either revert or fail
-        bool result = anyArbiter.checkObligation(
-            attestation,
-            demandData,
-            bytes32(0)
-        );
-        assertFalse(
-            result,
-            "Should return false when all arbiters either revert or fail"
-        );
+        bool result = anyArbiter.checkObligation(attestation, demandData, bytes32(0));
+        assertFalse(result, "Should return false when all arbiters either revert or fail");
     }
 
     function testSomeArbitersRevertOneSucceeds() public view {
@@ -283,15 +225,8 @@ contract AnyArbiterTest is Test {
         bytes memory demandData = createDemandData(arbiters, demands);
 
         // Should return true because at least one arbiter succeeds, even with reverts
-        bool result = anyArbiter.checkObligation(
-            attestation,
-            demandData,
-            bytes32(0)
-        );
-        assertTrue(
-            result,
-            "Should return true when at least one arbiter succeeds, even with reverts"
-        );
+        bool result = anyArbiter.checkObligation(attestation, demandData, bytes32(0));
+        assertTrue(result, "Should return true when at least one arbiter succeeds, even with reverts");
     }
 
     function testIntrinsicsArbiterWithValidAttestation() public view {
@@ -309,15 +244,8 @@ contract AnyArbiterTest is Test {
         bytes memory demandData = createDemandData(arbiters, demands);
 
         // Should return true because IntrinsicsArbiter should validate the attestation
-        bool result = anyArbiter.checkObligation(
-            attestation,
-            demandData,
-            bytes32(0)
-        );
-        assertTrue(
-            result,
-            "Should return true with valid attestation for IntrinsicsArbiter"
-        );
+        bool result = anyArbiter.checkObligation(attestation, demandData, bytes32(0));
+        assertTrue(result, "Should return true with valid attestation for IntrinsicsArbiter");
     }
 
     function testIntrinsicsArbiterWithExpiredAttestation() public view {
@@ -335,15 +263,8 @@ contract AnyArbiterTest is Test {
         bytes memory demandData = createDemandData(arbiters, demands);
 
         // Should return false because IntrinsicsArbiter will revert, but AnyArbiter catches it
-        bool result = anyArbiter.checkObligation(
-            attestation,
-            demandData,
-            bytes32(0)
-        );
-        assertFalse(
-            result,
-            "Should return false with expired attestation for IntrinsicsArbiter"
-        );
+        bool result = anyArbiter.checkObligation(attestation, demandData, bytes32(0));
+        assertFalse(result, "Should return false with expired attestation for IntrinsicsArbiter");
     }
 
     function testExpiredAttestationWithSuccessfulBackup() public view {
@@ -363,15 +284,8 @@ contract AnyArbiterTest is Test {
         bytes memory demandData = createDemandData(arbiters, demands);
 
         // Should return true because the second arbiter succeeds
-        bool result = anyArbiter.checkObligation(
-            attestation,
-            demandData,
-            bytes32(0)
-        );
-        assertTrue(
-            result,
-            "Should return true when at least one arbiter succeeds, even with reverts"
-        );
+        bool result = anyArbiter.checkObligation(attestation, demandData, bytes32(0));
+        assertTrue(result, "Should return true when at least one arbiter succeeds, even with reverts");
     }
 
     function testDecodeDemandData() public view {
@@ -387,43 +301,17 @@ contract AnyArbiterTest is Test {
         bytes memory encodedData = createDemandData(arbiters, demands);
 
         // Decode the demand data
-        AnyArbiter.DemandData memory decodedData = anyArbiter.decodeDemandData(
-            encodedData
-        );
+        AnyArbiter.DemandData memory decodedData = anyArbiter.decodeDemandData(encodedData);
 
         // Verify decoded data matches original
-        assertEq(
-            decodedData.arbiters.length,
-            arbiters.length,
-            "Arbiter array length mismatch"
-        );
-        assertEq(
-            decodedData.demands.length,
-            demands.length,
-            "Demands array length mismatch"
-        );
-        assertEq(
-            decodedData.arbiters[0],
-            arbiters[0],
-            "First arbiter address mismatch"
-        );
-        assertEq(
-            decodedData.arbiters[1],
-            arbiters[1],
-            "Second arbiter address mismatch"
-        );
+        assertEq(decodedData.arbiters.length, arbiters.length, "Arbiter array length mismatch");
+        assertEq(decodedData.demands.length, demands.length, "Demands array length mismatch");
+        assertEq(decodedData.arbiters[0], arbiters[0], "First arbiter address mismatch");
+        assertEq(decodedData.arbiters[1], arbiters[1], "Second arbiter address mismatch");
 
         // Compare the demand data bytes
-        assertEq(
-            keccak256(decodedData.demands[0]),
-            keccak256(demands[0]),
-            "First demand data mismatch"
-        );
-        assertEq(
-            keccak256(decodedData.demands[1]),
-            keccak256(demands[1]),
-            "Second demand data mismatch"
-        );
+        assertEq(keccak256(decodedData.demands[0]), keccak256(demands[0]), "First demand data mismatch");
+        assertEq(keccak256(decodedData.demands[1]), keccak256(demands[1]), "Second demand data mismatch");
     }
 
     function testMismatchedArrayLengths() public {
@@ -443,6 +331,24 @@ contract AnyArbiterTest is Test {
 
         // This should revert with an out of bounds error when trying to access demands[1]
         vm.expectRevert(AnyArbiter.MismatchedArrayLengths.selector);
+        anyArbiter.checkObligation(attestation, demandData, bytes32(0));
+    }
+
+    function testTooManyArbitersReverts() public {
+        uint256 provided = anyArbiter.MAX_ARBITERS() + 1;
+        address[] memory arbiters = new address[](provided);
+        bytes[] memory demands = new bytes[](provided);
+        for (uint256 i; i < provided; ++i) {
+            arbiters[i] = address(successArbiter);
+            demands[i] = bytes("");
+        }
+
+        Attestation memory attestation = createValidAttestation();
+        bytes memory demandData = createDemandData(arbiters, demands);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(AnyArbiter.TooManyArbiters.selector, provided, anyArbiter.MAX_ARBITERS())
+        );
         anyArbiter.checkObligation(attestation, demandData, bytes32(0));
     }
 }

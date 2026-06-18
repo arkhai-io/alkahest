@@ -100,15 +100,7 @@ async fn test_commit_reveal_full_lifecycle() -> eyre::Result<()> {
         .await?;
     assert!(collect_receipt.status());
 
-    // ── 5. Bob reclaims bond ──
-    let reclaim_receipt = test
-        .bob_client
-        .commit_reveal()
-        .reclaim_bond(fulfillment_uid)
-        .await?;
-    assert!(reclaim_receipt.status());
-
-    // Verify commitment is now claimed
+    // Reveal atomically reclaims the bond.
     let claimed = test
         .bob_client
         .commit_reveal()

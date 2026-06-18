@@ -5,6 +5,8 @@ import "forge-std/Test.sol";
 import {StringObligation} from "@src/obligations/StringObligation.sol";
 import {IEAS, Attestation} from "@eas/IEAS.sol";
 import {ISchemaRegistry, SchemaRecord} from "@eas/ISchemaRegistry.sol";
+import {ISchemaResolver} from "@eas/resolver/ISchemaResolver.sol";
+import {SchemaRegistryUtils} from "@src/SchemaRegistryUtils.sol";
 import {EASDeployer} from "@test/utils/EASDeployer.sol";
 
 contract StringObligationTest is Test {
@@ -31,6 +33,26 @@ contract StringObligationTest is Test {
         SchemaRecord memory schema = stringObligation.getSchema();
         assertEq(schema.uid, schemaId, "Schema UID should match");
         assertEq(schema.schema, "string item, bytes32 schema", "Schema string should match");
+    }
+
+    function testConstructorReusesExistingSchema() public {
+        address predicted = vm.computeCreateAddress(address(this), vm.getNonce(address(this)));
+        bytes32 expectedSchema = SchemaRegistryUtils.getUID(
+            "string item, bytes32 schema",
+            ISchemaResolver(predicted),
+            true
+        );
+
+        bytes32 registeredSchema = schemaRegistry.register(
+            "string item, bytes32 schema",
+            ISchemaResolver(predicted),
+            true
+        );
+        assertEq(registeredSchema, expectedSchema);
+
+        StringObligation reusedSchemaObligation = new StringObligation(eas, schemaRegistry);
+        assertEq(reusedSchemaObligation.ATTESTATION_SCHEMA(), expectedSchema);
+        assertEq(reusedSchemaObligation.getSchema().uid, expectedSchema);
     }
 
     function testDoObligation() public {

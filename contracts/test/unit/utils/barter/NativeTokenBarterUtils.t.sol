@@ -6,7 +6,9 @@ import {IEAS} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {Attestation} from "@eas/Common.sol";
 import {NativeTokenBarterUtils} from "../../../../src/utils/barter/NativeTokenBarterUtils.sol";
-import {NativeTokenEscrowObligation} from "../../../../src/obligations/escrow/non-tierable/NativeTokenEscrowObligation.sol";
+import {
+    NativeTokenEscrowObligation
+} from "../../../../src/obligations/escrow/non-tierable/NativeTokenEscrowObligation.sol";
 import {NativeTokenPaymentObligation} from "../../../../src/obligations/payment/NativeTokenPaymentObligation.sol";
 import {ERC20EscrowObligation} from "../../../../src/obligations/escrow/non-tierable/ERC20EscrowObligation.sol";
 import {ERC20PaymentObligation} from "../../../../src/obligations/payment/ERC20PaymentObligation.sol";
@@ -14,7 +16,9 @@ import {ERC721EscrowObligation} from "../../../../src/obligations/escrow/non-tie
 import {ERC721PaymentObligation} from "../../../../src/obligations/payment/ERC721PaymentObligation.sol";
 import {ERC1155EscrowObligation} from "../../../../src/obligations/escrow/non-tierable/ERC1155EscrowObligation.sol";
 import {ERC1155PaymentObligation} from "../../../../src/obligations/payment/ERC1155PaymentObligation.sol";
-import {TokenBundleEscrowObligation} from "../../../../src/obligations/escrow/non-tierable/TokenBundleEscrowObligation.sol";
+import {
+    TokenBundleEscrowObligation
+} from "../../../../src/obligations/escrow/non-tierable/TokenBundleEscrowObligation.sol";
 import {TokenBundlePaymentObligation} from "../../../../src/obligations/payment/TokenBundlePaymentObligation.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
@@ -35,10 +39,7 @@ contract MockERC20 is ERC20 {
 contract MockERC721 is ERC721 {
     uint256 private _currentTokenId = 0;
 
-    constructor(
-        string memory name,
-        string memory symbol
-    ) ERC721(name, symbol) {}
+    constructor(string memory name, string memory symbol) ERC721(name, symbol) {}
 
     function mint(address to) public returns (uint256) {
         _currentTokenId++;
@@ -50,12 +51,7 @@ contract MockERC721 is ERC721 {
 contract MockERC1155 is ERC1155 {
     constructor(string memory uri) ERC1155(uri) {}
 
-    function mint(
-        address to,
-        uint256 id,
-        uint256 amount,
-        bytes memory data
-    ) public {
+    function mint(address to, uint256 id, uint256 amount, bytes memory data) public {
         _mint(to, id, amount, data);
     }
 }
@@ -143,11 +139,7 @@ contract NativeTokenBarterUtilsTest is Test {
     function testBuyEthForEth() public {
         vm.startPrank(alice);
 
-        bytes32 buyAttestation = barterUtils.buyEthForEth{value: BID_AMOUNT}(
-            BID_AMOUNT,
-            ASK_AMOUNT,
-            EXPIRATION
-        );
+        bytes32 buyAttestation = barterUtils.buyEthForEth{value: BID_AMOUNT}(BID_AMOUNT, ASK_AMOUNT, EXPIRATION);
 
         assertEq(address(nativeEscrow).balance, BID_AMOUNT);
         assertTrue(buyAttestation != bytes32(0));
@@ -158,11 +150,7 @@ contract NativeTokenBarterUtilsTest is Test {
     function testPayEthForEth() public {
         // Alice creates buy order
         vm.startPrank(alice);
-        bytes32 buyAttestation = barterUtils.buyEthForEth{value: BID_AMOUNT}(
-            BID_AMOUNT,
-            ASK_AMOUNT,
-            EXPIRATION
-        );
+        bytes32 buyAttestation = barterUtils.buyEthForEth{value: BID_AMOUNT}(BID_AMOUNT, ASK_AMOUNT, EXPIRATION);
         vm.stopPrank();
 
         uint256 aliceBalanceBefore = alice.balance;
@@ -170,9 +158,7 @@ contract NativeTokenBarterUtilsTest is Test {
 
         // Bob fulfills the order
         vm.startPrank(bob);
-        bytes32 sellAttestation = barterUtils.payEthForEth{value: ASK_AMOUNT}(
-            buyAttestation
-        );
+        bytes32 sellAttestation = barterUtils.payEthForEth{value: ASK_AMOUNT}(buyAttestation);
         vm.stopPrank();
 
         assertTrue(sellAttestation != bytes32(0));
@@ -185,12 +171,8 @@ contract NativeTokenBarterUtilsTest is Test {
     function testBuyErc20WithEth() public {
         vm.startPrank(alice);
 
-        bytes32 buyAttestation = barterUtils.buyErc20WithEth{value: BID_AMOUNT}(
-            BID_AMOUNT,
-            address(testERC20),
-            100 * 10 ** 18,
-            EXPIRATION
-        );
+        bytes32 buyAttestation =
+            barterUtils.buyErc20WithEth{value: BID_AMOUNT}(BID_AMOUNT, address(testERC20), 100 * 10 ** 18, EXPIRATION);
 
         assertEq(address(nativeEscrow).balance, BID_AMOUNT);
         assertTrue(buyAttestation != bytes32(0));
@@ -207,12 +189,7 @@ contract NativeTokenBarterUtilsTest is Test {
                 token: address(testERC20),
                 amount: 100 * 10 ** 18,
                 arbiter: address(nativePayment),
-                demand: abi.encode(
-                    NativeTokenPaymentObligation.ObligationData({
-                        amount: BID_AMOUNT,
-                        payee: bob
-                    })
-                )
+                demand: abi.encode(NativeTokenPaymentObligation.ObligationData({amount: BID_AMOUNT, payee: bob}))
             }),
             EXPIRATION,
             bob
@@ -225,18 +202,13 @@ contract NativeTokenBarterUtilsTest is Test {
 
         // Alice fulfills the order with ETH
         vm.startPrank(alice);
-        bytes32 sellAttestation = barterUtils.payEthForErc20{value: BID_AMOUNT}(
-            buyAttestation
-        );
+        bytes32 sellAttestation = barterUtils.payEthForErc20{value: BID_AMOUNT}(buyAttestation);
         vm.stopPrank();
 
         assertTrue(sellAttestation != bytes32(0));
         assertEq(alice.balance, aliceBalanceBefore - BID_AMOUNT);
         assertEq(bob.balance, bobBalanceBefore + BID_AMOUNT);
-        assertEq(
-            testERC20.balanceOf(alice),
-            aliceTokensBefore + 100 * 10 ** 18
-        );
+        assertEq(testERC20.balanceOf(alice), aliceTokensBefore + 100 * 10 ** 18);
     }
 
     // ============ Native Token to ERC721 Tests ============
@@ -244,9 +216,7 @@ contract NativeTokenBarterUtilsTest is Test {
     function testBuyErc721WithEth() public {
         vm.startPrank(alice);
 
-        bytes32 buyAttestation = barterUtils.buyErc721WithEth{
-            value: BID_AMOUNT
-        }(
+        bytes32 buyAttestation = barterUtils.buyErc721WithEth{value: BID_AMOUNT}(
             BID_AMOUNT,
             address(testERC721),
             2, // Bob's NFT
@@ -268,12 +238,7 @@ contract NativeTokenBarterUtilsTest is Test {
                 token: address(testERC721),
                 tokenId: 2,
                 arbiter: address(nativePayment),
-                demand: abi.encode(
-                    NativeTokenPaymentObligation.ObligationData({
-                        amount: BID_AMOUNT,
-                        payee: bob
-                    })
-                )
+                demand: abi.encode(NativeTokenPaymentObligation.ObligationData({amount: BID_AMOUNT, payee: bob}))
             }),
             EXPIRATION,
             bob
@@ -285,9 +250,7 @@ contract NativeTokenBarterUtilsTest is Test {
 
         // Alice fulfills the order with ETH
         vm.startPrank(alice);
-        bytes32 sellAttestation = barterUtils.payEthForErc721{
-            value: BID_AMOUNT
-        }(buyAttestation);
+        bytes32 sellAttestation = barterUtils.payEthForErc721{value: BID_AMOUNT}(buyAttestation);
         vm.stopPrank();
 
         assertTrue(sellAttestation != bytes32(0));
@@ -301,9 +264,7 @@ contract NativeTokenBarterUtilsTest is Test {
     function testBuyErc1155WithEth() public {
         vm.startPrank(alice);
 
-        bytes32 buyAttestation = barterUtils.buyErc1155WithEth{
-            value: BID_AMOUNT
-        }(
+        bytes32 buyAttestation = barterUtils.buyErc1155WithEth{value: BID_AMOUNT}(
             BID_AMOUNT,
             address(testERC1155),
             2, // Bob's token ID
@@ -327,12 +288,7 @@ contract NativeTokenBarterUtilsTest is Test {
                 tokenId: 2,
                 amount: 50,
                 arbiter: address(nativePayment),
-                demand: abi.encode(
-                    NativeTokenPaymentObligation.ObligationData({
-                        amount: BID_AMOUNT,
-                        payee: bob
-                    })
-                )
+                demand: abi.encode(NativeTokenPaymentObligation.ObligationData({amount: BID_AMOUNT, payee: bob}))
             }),
             EXPIRATION,
             bob
@@ -345,9 +301,7 @@ contract NativeTokenBarterUtilsTest is Test {
 
         // Alice fulfills the order with ETH
         vm.startPrank(alice);
-        bytes32 sellAttestation = barterUtils.payEthForErc1155{
-            value: BID_AMOUNT
-        }(buyAttestation);
+        bytes32 sellAttestation = barterUtils.payEthForErc1155{value: BID_AMOUNT}(buyAttestation);
         vm.stopPrank();
 
         assertTrue(sellAttestation != bytes32(0));
@@ -373,22 +327,19 @@ contract NativeTokenBarterUtilsTest is Test {
         erc721Tokens[0] = address(testERC721);
         erc721TokenIds[0] = 2;
 
-        TokenBundlePaymentObligation.ObligationData
-            memory bundleData = TokenBundlePaymentObligation.ObligationData({
-                nativeAmount: 0,
-                erc20Tokens: erc20Tokens,
-                erc20Amounts: erc20Amounts,
-                erc721Tokens: erc721Tokens,
-                erc721TokenIds: erc721TokenIds,
-                erc1155Tokens: erc1155Tokens,
-                erc1155TokenIds: erc1155TokenIds,
-                erc1155Amounts: erc1155Amounts,
-                payee: alice
-            });
+        TokenBundlePaymentObligation.ObligationData memory bundleData = TokenBundlePaymentObligation.ObligationData({
+            nativeAmount: 0,
+            erc20Tokens: erc20Tokens,
+            erc20Amounts: erc20Amounts,
+            erc721Tokens: erc721Tokens,
+            erc721TokenIds: erc721TokenIds,
+            erc1155Tokens: erc1155Tokens,
+            erc1155TokenIds: erc1155TokenIds,
+            erc1155Amounts: erc1155Amounts,
+            payee: alice
+        });
 
-        bytes32 buyAttestation = barterUtils.buyBundleWithEth{
-            value: BID_AMOUNT
-        }(BID_AMOUNT, bundleData, EXPIRATION);
+        bytes32 buyAttestation = barterUtils.buyBundleWithEth{value: BID_AMOUNT}(BID_AMOUNT, bundleData, EXPIRATION);
 
         assertEq(address(nativeEscrow).balance, BID_AMOUNT);
         assertTrue(buyAttestation != bytes32(0));
@@ -415,30 +366,20 @@ contract NativeTokenBarterUtilsTest is Test {
         erc721Tokens[0] = address(testERC721);
         erc721TokenIds[0] = 2;
 
-        TokenBundleEscrowObligation.ObligationData
-            memory bundleData = TokenBundleEscrowObligation.ObligationData({
-                nativeAmount: 0,
-                erc20Tokens: erc20Tokens,
-                erc20Amounts: erc20Amounts,
-                erc721Tokens: erc721Tokens,
-                erc721TokenIds: erc721TokenIds,
-                erc1155Tokens: erc1155Tokens,
-                erc1155TokenIds: erc1155TokenIds,
-                erc1155Amounts: erc1155Amounts,
-                arbiter: address(nativePayment),
-                demand: abi.encode(
-                    NativeTokenPaymentObligation.ObligationData({
-                        amount: BID_AMOUNT,
-                        payee: bob
-                    })
-                )
-            });
+        TokenBundleEscrowObligation.ObligationData memory bundleData = TokenBundleEscrowObligation.ObligationData({
+            nativeAmount: 0,
+            erc20Tokens: erc20Tokens,
+            erc20Amounts: erc20Amounts,
+            erc721Tokens: erc721Tokens,
+            erc721TokenIds: erc721TokenIds,
+            erc1155Tokens: erc1155Tokens,
+            erc1155TokenIds: erc1155TokenIds,
+            erc1155Amounts: erc1155Amounts,
+            arbiter: address(nativePayment),
+            demand: abi.encode(NativeTokenPaymentObligation.ObligationData({amount: BID_AMOUNT, payee: bob}))
+        });
 
-        bytes32 buyAttestation = bundleEscrow.doObligationFor(
-            bundleData,
-            EXPIRATION,
-            bob
-        );
+        bytes32 buyAttestation = bundleEscrow.doObligationFor(bundleData, EXPIRATION, bob);
         vm.stopPrank();
 
         uint256 aliceBalanceBefore = alice.balance;
@@ -446,9 +387,7 @@ contract NativeTokenBarterUtilsTest is Test {
 
         // Alice fulfills the order with ETH
         vm.startPrank(alice);
-        bytes32 sellAttestation = barterUtils.payEthForBundle{
-            value: BID_AMOUNT
-        }(buyAttestation);
+        bytes32 sellAttestation = barterUtils.payEthForBundle{value: BID_AMOUNT}(buyAttestation);
         vm.stopPrank();
 
         assertTrue(sellAttestation != bytes32(0));
@@ -459,14 +398,12 @@ contract NativeTokenBarterUtilsTest is Test {
 
     // ============ Utility Tests ============
 
-    function testReceiveFunction() public {
-        uint256 balanceBefore = address(barterUtils).balance;
-
+    function testDirectNativeTransferReverts() public {
         vm.prank(alice);
-        (bool success, ) = address(barterUtils).call{value: 1 ether}("");
+        (bool success,) = address(barterUtils).call{value: 1 ether}("");
 
-        assertTrue(success);
-        assertEq(address(barterUtils).balance, balanceBefore + 1 ether);
+        assertFalse(success);
+        assertEq(address(barterUtils).balance, 0);
     }
 
     // ============ Security Tests - msg.value Validation ============
@@ -552,18 +489,17 @@ contract NativeTokenBarterUtilsTest is Test {
         uint256[] memory erc1155TokenIds = new uint256[](0);
         uint256[] memory erc1155Amounts = new uint256[](0);
 
-        TokenBundlePaymentObligation.ObligationData
-            memory bundleData = TokenBundlePaymentObligation.ObligationData({
-                nativeAmount: 0,
-                erc20Tokens: erc20Tokens,
-                erc20Amounts: erc20Amounts,
-                erc721Tokens: erc721Tokens,
-                erc721TokenIds: erc721TokenIds,
-                erc1155Tokens: erc1155Tokens,
-                erc1155TokenIds: erc1155TokenIds,
-                erc1155Amounts: erc1155Amounts,
-                payee: alice
-            });
+        TokenBundlePaymentObligation.ObligationData memory bundleData = TokenBundlePaymentObligation.ObligationData({
+            nativeAmount: 0,
+            erc20Tokens: erc20Tokens,
+            erc20Amounts: erc20Amounts,
+            erc721Tokens: erc721Tokens,
+            erc721TokenIds: erc721TokenIds,
+            erc1155Tokens: erc1155Tokens,
+            erc1155TokenIds: erc1155TokenIds,
+            erc1155Amounts: erc1155Amounts,
+            payee: alice
+        });
 
         vm.startPrank(alice);
         vm.expectRevert(NativeTokenBarterUtils.MsgValueMismatch.selector);

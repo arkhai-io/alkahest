@@ -13,25 +13,29 @@ contract AllArbiter is IArbiter {
     }
 
     error MismatchedArrayLengths();
+    error TooManyArbiters(uint256 provided, uint256 max);
 
-    function checkObligation(
-        Attestation memory obligation,
-        bytes memory demand,
-        bytes32 fulfilling
-    ) public view override returns (bool) {
+    uint256 public constant MAX_ARBITERS = 50;
+
+    function checkObligation(Attestation memory obligation, bytes memory demand, bytes32 fulfilling)
+        public
+        view
+        override
+        returns (bool)
+    {
         DemandData memory demand_ = abi.decode(demand, (DemandData));
-        if (demand_.arbiters.length != demand_.demands.length)
+        if (demand_.arbiters.length != demand_.demands.length) {
             revert MismatchedArrayLengths();
+        }
+        if (demand_.arbiters.length > MAX_ARBITERS) {
+            revert TooManyArbiters(demand_.arbiters.length, MAX_ARBITERS);
+        }
 
         for (uint256 i = 0; i < demand_.arbiters.length; i++) {
             if (
                 // can throw, since some arbiters throw with failure case instead of returning false
                 // error must be checked against all base arbiters
-                !IArbiter(demand_.arbiters[i]).checkObligation(
-                    obligation,
-                    demand_.demands[i],
-                    fulfilling
-                )
+                !IArbiter(demand_.arbiters[i]).checkObligation(obligation, demand_.demands[i], fulfilling)
             ) {
                 return false;
             }
@@ -39,9 +43,7 @@ contract AllArbiter is IArbiter {
         return true;
     }
 
-    function decodeDemandData(
-        bytes calldata data
-    ) public pure returns (DemandData memory) {
+    function decodeDemandData(bytes calldata data) public pure returns (DemandData memory) {
         return abi.decode(data, (DemandData));
     }
 }

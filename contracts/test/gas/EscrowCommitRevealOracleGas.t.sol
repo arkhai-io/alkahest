@@ -203,13 +203,16 @@ contract EscrowCommitRevealOracleGasTest is Test {
         erc20Escrow.collectEscrow(escrowUid, fulfillmentUid);
     }
 
-    function testGas_Fulfiller_ReclaimBond() public {
+    function testGas_Fulfiller_RevealWithBondReclaim() public {
+        // Bond reclaim is now atomic with reveal in doObligation.
+        // This measures the combined cost (commit already done).
         vm.pauseGasMetering();
-        (, bytes32 fulfillmentUid, ) = _setupEscrowCommitReveal();
+        (bytes32 escrowUid, , CommitRevealObligation.ObligationData memory data) = _setupEscrowAndCommit();
+        vm.roll(block.number + 1);
         vm.resumeGasMetering();
 
         vm.prank(bob);
-        commitReveal.reclaimBond(fulfillmentUid);
+        commitReveal.doObligation(data, escrowUid);
     }
 
     function _measureRevealWithPayload(uint256 payloadSize) internal {

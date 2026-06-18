@@ -104,18 +104,6 @@ export const makeCommitRevealObligationClient = (viemClient: ViemClient, address
       });
     },
 
-    reclaimBond: async (obligationUid: `0x${string}`) => {
-      const { request } = await viemClient.simulateContract({
-        address: contractAddress,
-        abi,
-        functionName: "reclaimBond",
-        args: [obligationUid],
-      });
-
-      const hash = await viemClient.writeContract(request);
-      return { hash };
-    },
-
     slashBond: async (commitment: `0x${string}`) => {
       const { request } = await viemClient.simulateContract({
         address: contractAddress,

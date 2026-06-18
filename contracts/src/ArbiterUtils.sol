@@ -7,34 +7,25 @@ library ArbiterUtils {
     error DeadlineExpired();
     error AttestationRevoked();
     error InvalidSchema();
+    error InvalidAttestationUid();
 
-    function _checkExpired(
-        Attestation memory obligation
-    ) internal view returns (bool) {
-        return
-            obligation.expirationTime != 0 &&
-            obligation.expirationTime <= block.timestamp;
+    function _checkExpired(Attestation memory obligation) internal view returns (bool) {
+        return obligation.expirationTime != 0 && obligation.expirationTime <= block.timestamp;
     }
 
-    function _checkRevoked(
-        Attestation memory obligation
-    ) internal pure returns (bool) {
+    function _checkRevoked(Attestation memory obligation) internal pure returns (bool) {
         return obligation.revocationTime != 0;
     }
 
-    function _checkIntrinsic(
-        Attestation memory obligation
-    ) internal view returns (bool) {
+    function _checkIntrinsic(Attestation memory obligation) internal view returns (bool) {
+        if (obligation.uid == bytes32(0)) revert InvalidAttestationUid();
         if (_checkExpired(obligation)) revert DeadlineExpired();
         if (_checkRevoked(obligation)) revert AttestationRevoked();
 
         return true;
     }
 
-    function _checkIntrinsic(
-        Attestation memory obligation,
-        bytes32 schema
-    ) internal view returns (bool) {
+    function _checkIntrinsic(Attestation memory obligation, bytes32 schema) internal view returns (bool) {
         if (obligation.schema != schema) revert InvalidSchema();
         return _checkIntrinsic(obligation);
     }

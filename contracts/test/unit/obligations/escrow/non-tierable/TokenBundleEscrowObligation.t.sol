@@ -24,10 +24,7 @@ contract MockERC20 is ERC20 {
 contract MockERC721 is ERC721 {
     uint256 private _tokenIdCounter;
 
-    constructor(
-        string memory name,
-        string memory symbol
-    ) ERC721(name, symbol) {}
+    constructor(string memory name, string memory symbol) ERC721(name, symbol) {}
 
     function mint(address to) external returns (uint256) {
         uint256 tokenId = _tokenIdCounter++;
@@ -47,11 +44,7 @@ contract MockERC1155 is ERC1155 {
         _mint(to, id, amount, "");
     }
 
-    function mintBatch(
-        address to,
-        uint256[] memory ids,
-        uint256[] memory amounts
-    ) external {
+    function mintBatch(address to, uint256[] memory ids, uint256[] memory amounts) external {
         _mintBatch(to, ids, amounts, "");
     }
 }
@@ -72,10 +65,16 @@ contract MockArbiter {
     }
 
     function checkObligation(
-        Attestation memory /* obligation */,
-        bytes memory /* demand */,
+        Attestation memory,
+        /* obligation */
+        bytes memory,
+        /* demand */
         bytes32 /* fulfilling */
-    ) external view returns (bool) {
+    )
+        external
+        view
+        returns (bool)
+    {
         return true;
     }
 }
@@ -162,17 +161,13 @@ contract TokenBundleEscrowObligationTest is Test {
     }
 
     function testDoObligationWithNativeTokens() public {
-        TokenBundleEscrowObligation.ObligationData
-            memory data = createNativeOnlyBundleData();
+        TokenBundleEscrowObligation.ObligationData memory data = createNativeOnlyBundleData();
 
         uint256 escrowBalanceBefore = address(escrow).balance;
 
         vm.startPrank(alice);
 
-        bytes32 escrowId = escrow.doObligation{value: NATIVE_AMOUNT}(
-            data,
-            uint64(block.timestamp + EXPIRATION_TIME)
-        );
+        bytes32 escrowId = escrow.doObligation{value: NATIVE_AMOUNT}(data, uint64(block.timestamp + EXPIRATION_TIME));
 
         vm.stopPrank();
 
@@ -182,8 +177,7 @@ contract TokenBundleEscrowObligationTest is Test {
     }
 
     function testDoObligationWithFullBundle() public {
-        TokenBundleEscrowObligation.ObligationData
-            memory data = createFullBundleData();
+        TokenBundleEscrowObligation.ObligationData memory data = createFullBundleData();
 
         uint256 escrowBalanceBefore = address(escrow).balance;
 
@@ -196,10 +190,7 @@ contract TokenBundleEscrowObligationTest is Test {
         nft2.approve(address(escrow), NFT2_ID);
         multiToken.setApprovalForAll(address(escrow), true);
 
-        bytes32 escrowId = escrow.doObligation{value: NATIVE_AMOUNT}(
-            data,
-            uint64(block.timestamp + EXPIRATION_TIME)
-        );
+        bytes32 escrowId = escrow.doObligation{value: NATIVE_AMOUNT}(data, uint64(block.timestamp + EXPIRATION_TIME));
 
         vm.stopPrank();
 
@@ -210,8 +201,7 @@ contract TokenBundleEscrowObligationTest is Test {
     }
 
     function testDoObligationForWithFullBundle() public {
-        TokenBundleEscrowObligation.ObligationData
-            memory data = createFullBundleData();
+        TokenBundleEscrowObligation.ObligationData memory data = createFullBundleData();
 
         // Update NFT IDs to Bob's NFTs
         data.erc721TokenIds[0] = NFT1_ID + 10;
@@ -225,11 +215,8 @@ contract TokenBundleEscrowObligationTest is Test {
         nft2.approve(address(escrow), NFT2_ID + 10);
         multiToken.setApprovalForAll(address(escrow), true);
 
-        bytes32 escrowId = escrow.doObligationFor{value: NATIVE_AMOUNT}(
-            data,
-            uint64(block.timestamp + EXPIRATION_TIME),
-            charlie
-        );
+        bytes32 escrowId =
+            escrow.doObligationFor{value: NATIVE_AMOUNT}(data, uint64(block.timestamp + EXPIRATION_TIME), charlie);
 
         vm.stopPrank();
 
@@ -243,58 +230,40 @@ contract TokenBundleEscrowObligationTest is Test {
         assertEq(nft2.ownerOf(NFT2_ID + 10), address(escrow));
 
         // Verify ERC1155 transfers
-        assertEq(
-            multiToken.balanceOf(address(escrow), MULTI_TOKEN_ID_1),
-            MULTI_TOKEN_AMOUNT_1
-        );
-        assertEq(
-            multiToken.balanceOf(address(escrow), MULTI_TOKEN_ID_2),
-            MULTI_TOKEN_AMOUNT_2
-        );
+        assertEq(multiToken.balanceOf(address(escrow), MULTI_TOKEN_ID_1), MULTI_TOKEN_AMOUNT_1);
+        assertEq(multiToken.balanceOf(address(escrow), MULTI_TOKEN_ID_2), MULTI_TOKEN_AMOUNT_2);
 
         assertTrue(escrowId != bytes32(0));
     }
 
     function testIncorrectNativeTokenPaymentUnderpay() public {
-        TokenBundleEscrowObligation.ObligationData
-            memory data = createNativeOnlyBundleData();
+        TokenBundleEscrowObligation.ObligationData memory data = createNativeOnlyBundleData();
 
         vm.startPrank(alice);
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                TokenBundleEscrowObligation.IncorrectPayment.selector,
-                NATIVE_AMOUNT,
-                NATIVE_AMOUNT - 0.1 ether
+                TokenBundleEscrowObligation.IncorrectPayment.selector, NATIVE_AMOUNT, NATIVE_AMOUNT - 0.1 ether
             )
         );
 
-        escrow.doObligation{value: NATIVE_AMOUNT - 0.1 ether}(
-            data,
-            uint64(block.timestamp + EXPIRATION_TIME)
-        );
+        escrow.doObligation{value: NATIVE_AMOUNT - 0.1 ether}(data, uint64(block.timestamp + EXPIRATION_TIME));
 
         vm.stopPrank();
     }
 
     function testIncorrectNativeTokenPaymentOverpay() public {
-        TokenBundleEscrowObligation.ObligationData
-            memory data = createNativeOnlyBundleData();
+        TokenBundleEscrowObligation.ObligationData memory data = createNativeOnlyBundleData();
 
         vm.startPrank(alice);
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                TokenBundleEscrowObligation.IncorrectPayment.selector,
-                NATIVE_AMOUNT,
-                NATIVE_AMOUNT + 0.5 ether
+                TokenBundleEscrowObligation.IncorrectPayment.selector, NATIVE_AMOUNT, NATIVE_AMOUNT + 0.5 ether
             )
         );
 
-        escrow.doObligation{value: NATIVE_AMOUNT + 0.5 ether}(
-            data,
-            uint64(block.timestamp + EXPIRATION_TIME)
-        );
+        escrow.doObligation{value: NATIVE_AMOUNT + 0.5 ether}(data, uint64(block.timestamp + EXPIRATION_TIME));
 
         vm.stopPrank();
     }
@@ -308,9 +277,7 @@ contract TokenBundleEscrowObligationTest is Test {
         data1.erc20Amounts = new uint256[](1);
 
         vm.startPrank(alice);
-        vm.expectRevert(
-            TokenBundleEscrowObligation.ArrayLengthMismatch.selector
-        );
+        vm.expectRevert(TokenBundleEscrowObligation.ArrayLengthMismatch.selector);
         escrow.doObligation(data1, uint64(block.timestamp + EXPIRATION_TIME));
 
         // ERC721 mismatch
@@ -320,9 +287,7 @@ contract TokenBundleEscrowObligationTest is Test {
         data2.erc721Tokens = new address[](2);
         data2.erc721TokenIds = new uint256[](1);
 
-        vm.expectRevert(
-            TokenBundleEscrowObligation.ArrayLengthMismatch.selector
-        );
+        vm.expectRevert(TokenBundleEscrowObligation.ArrayLengthMismatch.selector);
         escrow.doObligation(data2, uint64(block.timestamp + EXPIRATION_TIME));
 
         // ERC1155 mismatch
@@ -333,18 +298,32 @@ contract TokenBundleEscrowObligationTest is Test {
         data3.erc1155TokenIds = new uint256[](2);
         data3.erc1155Amounts = new uint256[](1);
 
-        vm.expectRevert(
-            TokenBundleEscrowObligation.ArrayLengthMismatch.selector
-        );
+        vm.expectRevert(TokenBundleEscrowObligation.ArrayLengthMismatch.selector);
         escrow.doObligation(data3, uint64(block.timestamp + EXPIRATION_TIME));
 
         vm.stopPrank();
     }
 
+    function testTooManyBundleItemsReverts() public {
+        TokenBundleEscrowObligation.ObligationData memory data;
+        data.arbiter = address(arbiter);
+        data.demand = "";
+        uint256 provided = escrow.MAX_BUNDLE_ITEMS() + 1;
+        data.erc20Tokens = new address[](provided);
+        data.erc20Amounts = new uint256[](provided);
+
+        vm.prank(alice);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                TokenBundleEscrowObligation.TooManyBundleItems.selector, provided, escrow.MAX_BUNDLE_ITEMS()
+            )
+        );
+        escrow.doObligation(data, uint64(block.timestamp + EXPIRATION_TIME));
+    }
+
     function testCollectEscrow() public {
         // Create escrow
-        TokenBundleEscrowObligation.ObligationData
-            memory data = createFullBundleData();
+        TokenBundleEscrowObligation.ObligationData memory data = createFullBundleData();
 
         vm.startPrank(alice);
         token1.approve(address(escrow), TOKEN1_AMOUNT);
@@ -353,10 +332,7 @@ contract TokenBundleEscrowObligationTest is Test {
         nft2.approve(address(escrow), NFT2_ID);
         multiToken.setApprovalForAll(address(escrow), true);
 
-        bytes32 escrowId = escrow.doObligation{value: NATIVE_AMOUNT}(
-            data,
-            uint64(block.timestamp + EXPIRATION_TIME)
-        );
+        bytes32 escrowId = escrow.doObligation{value: NATIVE_AMOUNT}(data, uint64(block.timestamp + EXPIRATION_TIME));
         vm.stopPrank();
 
         // Create and approve fulfillment
@@ -378,11 +354,7 @@ contract TokenBundleEscrowObligationTest is Test {
         });
 
         // Mock arbiter check
-        vm.mockCall(
-            address(arbiter),
-            abi.encodeWithSelector(MockArbiter.checkObligation.selector),
-            abi.encode(true)
-        );
+        vm.mockCall(address(arbiter), abi.encodeWithSelector(MockArbiter.checkObligation.selector), abi.encode(true));
 
         // Mock EAS getAttestation for fulfillment
         vm.mockCall(
@@ -406,9 +378,7 @@ contract TokenBundleEscrowObligationTest is Test {
         });
 
         vm.mockCall(
-            address(eas),
-            abi.encodeWithSelector(IEAS.getAttestation.selector, escrowId),
-            abi.encode(escrowAttestation)
+            address(eas), abi.encodeWithSelector(IEAS.getAttestation.selector, escrowId), abi.encode(escrowAttestation)
         );
 
         // Bob collects escrow
@@ -423,20 +393,13 @@ contract TokenBundleEscrowObligationTest is Test {
         assertEq(token2.balanceOf(bob), TOKEN2_AMOUNT * 10 + TOKEN2_AMOUNT);
         assertEq(nft1.ownerOf(NFT1_ID), bob);
         assertEq(nft2.ownerOf(NFT2_ID), bob);
-        assertEq(
-            multiToken.balanceOf(bob, MULTI_TOKEN_ID_1),
-            MULTI_TOKEN_AMOUNT_1 * 10 + MULTI_TOKEN_AMOUNT_1
-        );
-        assertEq(
-            multiToken.balanceOf(bob, MULTI_TOKEN_ID_2),
-            MULTI_TOKEN_AMOUNT_2 * 10 + MULTI_TOKEN_AMOUNT_2
-        );
+        assertEq(multiToken.balanceOf(bob, MULTI_TOKEN_ID_1), MULTI_TOKEN_AMOUNT_1 * 10 + MULTI_TOKEN_AMOUNT_1);
+        assertEq(multiToken.balanceOf(bob, MULTI_TOKEN_ID_2), MULTI_TOKEN_AMOUNT_2 * 10 + MULTI_TOKEN_AMOUNT_2);
     }
 
     function testReclaimExpired() public {
         // Create escrow
-        TokenBundleEscrowObligation.ObligationData
-            memory data = createFullBundleData();
+        TokenBundleEscrowObligation.ObligationData memory data = createFullBundleData();
 
         vm.startPrank(alice);
         token1.approve(address(escrow), TOKEN1_AMOUNT);
@@ -445,10 +408,7 @@ contract TokenBundleEscrowObligationTest is Test {
         nft2.approve(address(escrow), NFT2_ID);
         multiToken.setApprovalForAll(address(escrow), true);
 
-        bytes32 escrowId = escrow.doObligation{value: NATIVE_AMOUNT}(
-            data,
-            uint64(block.timestamp + EXPIRATION_TIME)
-        );
+        bytes32 escrowId = escrow.doObligation{value: NATIVE_AMOUNT}(data, uint64(block.timestamp + EXPIRATION_TIME));
         vm.stopPrank();
 
         // Mock EAS getAttestation for escrow
@@ -466,9 +426,7 @@ contract TokenBundleEscrowObligationTest is Test {
         });
 
         vm.mockCall(
-            address(eas),
-            abi.encodeWithSelector(IEAS.getAttestation.selector, escrowId),
-            abi.encode(escrowAttestation)
+            address(eas), abi.encodeWithSelector(IEAS.getAttestation.selector, escrowId), abi.encode(escrowAttestation)
         );
 
         // Move time past expiration
@@ -488,20 +446,13 @@ contract TokenBundleEscrowObligationTest is Test {
         assertEq(token2.balanceOf(alice), aliceToken2Before + TOKEN2_AMOUNT);
         assertEq(nft1.ownerOf(NFT1_ID), alice);
         assertEq(nft2.ownerOf(NFT2_ID), alice);
-        assertEq(
-            multiToken.balanceOf(alice, MULTI_TOKEN_ID_1),
-            MULTI_TOKEN_AMOUNT_1 * 10
-        );
-        assertEq(
-            multiToken.balanceOf(alice, MULTI_TOKEN_ID_2),
-            MULTI_TOKEN_AMOUNT_2 * 10
-        );
+        assertEq(multiToken.balanceOf(alice, MULTI_TOKEN_ID_1), MULTI_TOKEN_AMOUNT_1 * 10);
+        assertEq(multiToken.balanceOf(alice, MULTI_TOKEN_ID_2), MULTI_TOKEN_AMOUNT_2 * 10);
     }
 
     function testCheckObligation() public {
         // Create payment data
-        TokenBundleEscrowObligation.ObligationData
-            memory paymentData = createFullBundleData();
+        TokenBundleEscrowObligation.ObligationData memory paymentData = createFullBundleData();
 
         // Create mock attestation
         Attestation memory attestation = Attestation({
@@ -519,73 +470,44 @@ contract TokenBundleEscrowObligationTest is Test {
 
         // Test exact match
         bytes memory demandBytes = abi.encode(paymentData);
-        assertTrue(
-            escrow.checkObligation(attestation, demandBytes, bytes32(0))
-        );
+        assertTrue(escrow.checkObligation(attestation, demandBytes, bytes32(0)));
 
         // Test with subset demands
         bytes memory subsetERC20 = abi.encode(createSubsetERC20Demand());
-        assertTrue(
-            escrow.checkObligation(attestation, subsetERC20, bytes32(0))
-        );
+        assertTrue(escrow.checkObligation(attestation, subsetERC20, bytes32(0)));
 
         bytes memory subsetERC721 = abi.encode(createSubsetERC721Demand());
-        assertTrue(
-            escrow.checkObligation(attestation, subsetERC721, bytes32(0))
-        );
+        assertTrue(escrow.checkObligation(attestation, subsetERC721, bytes32(0)));
 
         bytes memory subsetERC1155 = abi.encode(createSubsetERC1155Demand());
-        assertTrue(
-            escrow.checkObligation(attestation, subsetERC1155, bytes32(0))
-        );
+        assertTrue(escrow.checkObligation(attestation, subsetERC1155, bytes32(0)));
 
         // Test with lower native amount demand
         bytes memory lowerNative = abi.encode(createLowerNativeAmountDemand());
-        assertTrue(
-            escrow.checkObligation(attestation, lowerNative, bytes32(0))
-        );
+        assertTrue(escrow.checkObligation(attestation, lowerNative, bytes32(0)));
 
         // Test failures
-        bytes memory higherNative = abi.encode(
-            createHigherNativeAmountDemand()
-        );
-        assertFalse(
-            escrow.checkObligation(attestation, higherNative, bytes32(0))
-        );
+        bytes memory higherNative = abi.encode(createHigherNativeAmountDemand());
+        assertFalse(escrow.checkObligation(attestation, higherNative, bytes32(0)));
 
-        bytes memory differentArbiter = abi.encode(
-            createDifferentArbiterDemand()
-        );
-        assertFalse(
-            escrow.checkObligation(attestation, differentArbiter, bytes32(0))
-        );
+        bytes memory differentArbiter = abi.encode(createDifferentArbiterDemand());
+        assertFalse(escrow.checkObligation(attestation, differentArbiter, bytes32(0)));
 
-        bytes memory differentDemandData = abi.encode(
-            createDifferentDemandData()
-        );
-        assertFalse(
-            escrow.checkObligation(attestation, differentDemandData, bytes32(0))
-        );
+        bytes memory differentDemandData = abi.encode(createDifferentDemandData());
+        assertFalse(escrow.checkObligation(attestation, differentDemandData, bytes32(0)));
     }
 
-    function testReceiveFunction() public {
-        uint256 balanceBefore = address(escrow).balance;
-
-        // Send native tokens directly to the contract
+    function testDirectNativeTransferReverts() public {
         vm.deal(alice, 10 ether);
         vm.prank(alice);
-        (bool success, ) = address(escrow).call{value: 1 ether}("");
+        (bool success,) = address(escrow).call{value: 1 ether}("");
 
-        assertTrue(success);
-        assertEq(address(escrow).balance, balanceBefore + 1 ether);
+        assertFalse(success);
+        assertEq(address(escrow).balance, 0);
     }
 
     // Helper functions to create test data
-    function createFullBundleData()
-        internal
-        view
-        returns (TokenBundleEscrowObligation.ObligationData memory)
-    {
+    function createFullBundleData() internal view returns (TokenBundleEscrowObligation.ObligationData memory) {
         bytes memory demandData = abi.encode("test demand");
 
         address[] memory erc20Tokens = new address[](2);
@@ -616,48 +538,38 @@ contract TokenBundleEscrowObligationTest is Test {
         erc1155Amounts[0] = MULTI_TOKEN_AMOUNT_1;
         erc1155Amounts[1] = MULTI_TOKEN_AMOUNT_2;
 
-        return
-            TokenBundleEscrowObligation.ObligationData({
-                arbiter: address(arbiter),
-                demand: demandData,
-                nativeAmount: NATIVE_AMOUNT,
-                erc20Tokens: erc20Tokens,
-                erc20Amounts: erc20Amounts,
-                erc721Tokens: erc721Tokens,
-                erc721TokenIds: erc721TokenIds,
-                erc1155Tokens: erc1155Tokens,
-                erc1155TokenIds: erc1155TokenIds,
-                erc1155Amounts: erc1155Amounts
-            });
+        return TokenBundleEscrowObligation.ObligationData({
+            arbiter: address(arbiter),
+            demand: demandData,
+            nativeAmount: NATIVE_AMOUNT,
+            erc20Tokens: erc20Tokens,
+            erc20Amounts: erc20Amounts,
+            erc721Tokens: erc721Tokens,
+            erc721TokenIds: erc721TokenIds,
+            erc1155Tokens: erc1155Tokens,
+            erc1155TokenIds: erc1155TokenIds,
+            erc1155Amounts: erc1155Amounts
+        });
     }
 
-    function createNativeOnlyBundleData()
-        internal
-        view
-        returns (TokenBundleEscrowObligation.ObligationData memory)
-    {
+    function createNativeOnlyBundleData() internal view returns (TokenBundleEscrowObligation.ObligationData memory) {
         bytes memory demandData = abi.encode("test demand");
 
-        return
-            TokenBundleEscrowObligation.ObligationData({
-                arbiter: address(arbiter),
-                demand: demandData,
-                nativeAmount: NATIVE_AMOUNT,
-                erc20Tokens: new address[](0),
-                erc20Amounts: new uint256[](0),
-                erc721Tokens: new address[](0),
-                erc721TokenIds: new uint256[](0),
-                erc1155Tokens: new address[](0),
-                erc1155TokenIds: new uint256[](0),
-                erc1155Amounts: new uint256[](0)
-            });
+        return TokenBundleEscrowObligation.ObligationData({
+            arbiter: address(arbiter),
+            demand: demandData,
+            nativeAmount: NATIVE_AMOUNT,
+            erc20Tokens: new address[](0),
+            erc20Amounts: new uint256[](0),
+            erc721Tokens: new address[](0),
+            erc721TokenIds: new uint256[](0),
+            erc1155Tokens: new address[](0),
+            erc1155TokenIds: new uint256[](0),
+            erc1155Amounts: new uint256[](0)
+        });
     }
 
-    function createSubsetERC20Demand()
-        internal
-        view
-        returns (TokenBundleEscrowObligation.ObligationData memory)
-    {
+    function createSubsetERC20Demand() internal view returns (TokenBundleEscrowObligation.ObligationData memory) {
         bytes memory demandData = abi.encode("test demand");
 
         address[] memory erc20Tokens = new address[](1);
@@ -666,26 +578,21 @@ contract TokenBundleEscrowObligationTest is Test {
         uint256[] memory erc20Amounts = new uint256[](1);
         erc20Amounts[0] = TOKEN1_AMOUNT;
 
-        return
-            TokenBundleEscrowObligation.ObligationData({
-                arbiter: address(arbiter),
-                demand: demandData,
-                nativeAmount: NATIVE_AMOUNT,
-                erc20Tokens: erc20Tokens,
-                erc20Amounts: erc20Amounts,
-                erc721Tokens: new address[](0),
-                erc721TokenIds: new uint256[](0),
-                erc1155Tokens: new address[](0),
-                erc1155TokenIds: new uint256[](0),
-                erc1155Amounts: new uint256[](0)
-            });
+        return TokenBundleEscrowObligation.ObligationData({
+            arbiter: address(arbiter),
+            demand: demandData,
+            nativeAmount: NATIVE_AMOUNT,
+            erc20Tokens: erc20Tokens,
+            erc20Amounts: erc20Amounts,
+            erc721Tokens: new address[](0),
+            erc721TokenIds: new uint256[](0),
+            erc1155Tokens: new address[](0),
+            erc1155TokenIds: new uint256[](0),
+            erc1155Amounts: new uint256[](0)
+        });
     }
 
-    function createSubsetERC721Demand()
-        internal
-        view
-        returns (TokenBundleEscrowObligation.ObligationData memory)
-    {
+    function createSubsetERC721Demand() internal view returns (TokenBundleEscrowObligation.ObligationData memory) {
         bytes memory demandData = abi.encode("test demand");
 
         address[] memory erc721Tokens = new address[](1);
@@ -694,26 +601,21 @@ contract TokenBundleEscrowObligationTest is Test {
         uint256[] memory erc721TokenIds = new uint256[](1);
         erc721TokenIds[0] = NFT1_ID;
 
-        return
-            TokenBundleEscrowObligation.ObligationData({
-                arbiter: address(arbiter),
-                demand: demandData,
-                nativeAmount: 0,
-                erc20Tokens: new address[](0),
-                erc20Amounts: new uint256[](0),
-                erc721Tokens: erc721Tokens,
-                erc721TokenIds: erc721TokenIds,
-                erc1155Tokens: new address[](0),
-                erc1155TokenIds: new uint256[](0),
-                erc1155Amounts: new uint256[](0)
-            });
+        return TokenBundleEscrowObligation.ObligationData({
+            arbiter: address(arbiter),
+            demand: demandData,
+            nativeAmount: 0,
+            erc20Tokens: new address[](0),
+            erc20Amounts: new uint256[](0),
+            erc721Tokens: erc721Tokens,
+            erc721TokenIds: erc721TokenIds,
+            erc1155Tokens: new address[](0),
+            erc1155TokenIds: new uint256[](0),
+            erc1155Amounts: new uint256[](0)
+        });
     }
 
-    function createSubsetERC1155Demand()
-        internal
-        view
-        returns (TokenBundleEscrowObligation.ObligationData memory)
-    {
+    function createSubsetERC1155Demand() internal view returns (TokenBundleEscrowObligation.ObligationData memory) {
         bytes memory demandData = abi.encode("test demand");
 
         address[] memory erc1155Tokens = new address[](1);
@@ -725,28 +627,22 @@ contract TokenBundleEscrowObligationTest is Test {
         uint256[] memory erc1155Amounts = new uint256[](1);
         erc1155Amounts[0] = MULTI_TOKEN_AMOUNT_1;
 
-        return
-            TokenBundleEscrowObligation.ObligationData({
-                arbiter: address(arbiter),
-                demand: demandData,
-                nativeAmount: 0,
-                erc20Tokens: new address[](0),
-                erc20Amounts: new uint256[](0),
-                erc721Tokens: new address[](0),
-                erc721TokenIds: new uint256[](0),
-                erc1155Tokens: erc1155Tokens,
-                erc1155TokenIds: erc1155TokenIds,
-                erc1155Amounts: erc1155Amounts
-            });
+        return TokenBundleEscrowObligation.ObligationData({
+            arbiter: address(arbiter),
+            demand: demandData,
+            nativeAmount: 0,
+            erc20Tokens: new address[](0),
+            erc20Amounts: new uint256[](0),
+            erc721Tokens: new address[](0),
+            erc721TokenIds: new uint256[](0),
+            erc1155Tokens: erc1155Tokens,
+            erc1155TokenIds: erc1155TokenIds,
+            erc1155Amounts: erc1155Amounts
+        });
     }
 
-    function createLowerNativeAmountDemand()
-        internal
-        view
-        returns (TokenBundleEscrowObligation.ObligationData memory)
-    {
-        TokenBundleEscrowObligation.ObligationData
-            memory data = createFullBundleData();
+    function createLowerNativeAmountDemand() internal view returns (TokenBundleEscrowObligation.ObligationData memory) {
+        TokenBundleEscrowObligation.ObligationData memory data = createFullBundleData();
         data.nativeAmount = NATIVE_AMOUNT / 2;
         return data;
     }
@@ -756,30 +652,19 @@ contract TokenBundleEscrowObligationTest is Test {
         view
         returns (TokenBundleEscrowObligation.ObligationData memory)
     {
-        TokenBundleEscrowObligation.ObligationData
-            memory data = createFullBundleData();
+        TokenBundleEscrowObligation.ObligationData memory data = createFullBundleData();
         data.nativeAmount = NATIVE_AMOUNT * 2;
         return data;
     }
 
-    function createDifferentArbiterDemand()
-        internal
-        view
-        returns (TokenBundleEscrowObligation.ObligationData memory)
-    {
-        TokenBundleEscrowObligation.ObligationData
-            memory data = createFullBundleData();
+    function createDifferentArbiterDemand() internal view returns (TokenBundleEscrowObligation.ObligationData memory) {
+        TokenBundleEscrowObligation.ObligationData memory data = createFullBundleData();
         data.arbiter = address(0x9999); // Different arbiter
         return data;
     }
 
-    function createDifferentDemandData()
-        internal
-        view
-        returns (TokenBundleEscrowObligation.ObligationData memory)
-    {
-        TokenBundleEscrowObligation.ObligationData
-            memory data = createFullBundleData();
+    function createDifferentDemandData() internal view returns (TokenBundleEscrowObligation.ObligationData memory) {
+        TokenBundleEscrowObligation.ObligationData memory data = createFullBundleData();
         data.demand = abi.encode("different demand data");
         return data;
     }
@@ -794,27 +679,17 @@ contract TokenBundleEscrowObligationTest is Test {
         assertEq(nft2.ownerOf(NFT2_ID), address(escrow));
 
         // Verify ERC1155 transfers
-        assertEq(
-            multiToken.balanceOf(address(escrow), MULTI_TOKEN_ID_1),
-            MULTI_TOKEN_AMOUNT_1
-        );
-        assertEq(
-            multiToken.balanceOf(address(escrow), MULTI_TOKEN_ID_2),
-            MULTI_TOKEN_AMOUNT_2
-        );
+        assertEq(multiToken.balanceOf(address(escrow), MULTI_TOKEN_ID_1), MULTI_TOKEN_AMOUNT_1);
+        assertEq(multiToken.balanceOf(address(escrow), MULTI_TOKEN_ID_2), MULTI_TOKEN_AMOUNT_2);
     }
 
     // Test that collectEscrow reverts when native token transfer fails
     function testCollectEscrowRevertsOnNativeTransferFailure() public {
         // Create a bundle with native tokens
-        TokenBundleEscrowObligation.ObligationData
-            memory data = createNativeOnlyBundleData();
+        TokenBundleEscrowObligation.ObligationData memory data = createNativeOnlyBundleData();
 
         vm.startPrank(alice);
-        bytes32 escrowId = escrow.doObligation{value: NATIVE_AMOUNT}(
-            data,
-            uint64(block.timestamp + EXPIRATION_TIME)
-        );
+        bytes32 escrowId = escrow.doObligation{value: NATIVE_AMOUNT}(data, uint64(block.timestamp + EXPIRATION_TIME));
         vm.stopPrank();
 
         // Create a rejecting recipient
@@ -839,11 +714,7 @@ contract TokenBundleEscrowObligationTest is Test {
         });
 
         // Mock arbiter check
-        vm.mockCall(
-            address(arbiter),
-            abi.encodeWithSelector(MockArbiter.checkObligation.selector),
-            abi.encode(true)
-        );
+        vm.mockCall(address(arbiter), abi.encodeWithSelector(MockArbiter.checkObligation.selector), abi.encode(true));
 
         // Mock EAS getAttestation for fulfillment
         vm.mockCall(
@@ -867,17 +738,13 @@ contract TokenBundleEscrowObligationTest is Test {
         });
 
         vm.mockCall(
-            address(eas),
-            abi.encodeWithSelector(IEAS.getAttestation.selector, escrowId),
-            abi.encode(escrowAttestation)
+            address(eas), abi.encodeWithSelector(IEAS.getAttestation.selector, escrowId), abi.encode(escrowAttestation)
         );
 
         // collectEscrow should revert because native token transfer fails
         vm.expectRevert(
             abi.encodeWithSelector(
-                TokenBundleEscrowObligation.NativeTokenTransferFailed.selector,
-                address(badRecipient),
-                NATIVE_AMOUNT
+                TokenBundleEscrowObligation.NativeTokenTransferFailed.selector, address(badRecipient), NATIVE_AMOUNT
             )
         );
         escrow.collectEscrow(escrowId, fulfillmentId);
@@ -889,14 +756,10 @@ contract TokenBundleEscrowObligationTest is Test {
     // Test that unsafePartiallyCollectEscrow continues on native transfer failure
     function testUnsafePartiallyCollectEscrowContinuesOnFailure() public {
         // Create a bundle with native tokens
-        TokenBundleEscrowObligation.ObligationData
-            memory data = createNativeOnlyBundleData();
+        TokenBundleEscrowObligation.ObligationData memory data = createNativeOnlyBundleData();
 
         vm.startPrank(alice);
-        bytes32 escrowId = escrow.doObligation{value: NATIVE_AMOUNT}(
-            data,
-            uint64(block.timestamp + EXPIRATION_TIME)
-        );
+        bytes32 escrowId = escrow.doObligation{value: NATIVE_AMOUNT}(data, uint64(block.timestamp + EXPIRATION_TIME));
         vm.stopPrank();
 
         // Create a rejecting recipient
@@ -921,11 +784,7 @@ contract TokenBundleEscrowObligationTest is Test {
         });
 
         // Mock arbiter check
-        vm.mockCall(
-            address(arbiter),
-            abi.encodeWithSelector(MockArbiter.checkObligation.selector),
-            abi.encode(true)
-        );
+        vm.mockCall(address(arbiter), abi.encodeWithSelector(MockArbiter.checkObligation.selector), abi.encode(true));
 
         // Mock EAS getAttestation for fulfillment
         vm.mockCall(
@@ -949,17 +808,12 @@ contract TokenBundleEscrowObligationTest is Test {
         });
 
         vm.mockCall(
-            address(eas),
-            abi.encodeWithSelector(IEAS.getAttestation.selector, escrowId),
-            abi.encode(escrowAttestation)
+            address(eas), abi.encodeWithSelector(IEAS.getAttestation.selector, escrowId), abi.encode(escrowAttestation)
         );
 
         // unsafePartiallyCollectEscrow should succeed (emitting events for failures)
         vm.expectEmit(true, false, false, true);
-        emit TokenBundleEscrowObligation.NativeTokenTransferFailedOnRelease(
-            address(badRecipient),
-            NATIVE_AMOUNT
-        );
+        emit TokenBundleEscrowObligation.NativeTokenTransferFailedOnRelease(address(badRecipient), NATIVE_AMOUNT);
 
         bool success = escrow.unsafePartiallyCollectEscrow(escrowId, fulfillmentId);
         assertTrue(success);
@@ -989,9 +843,7 @@ contract TokenBundleEscrowObligationTest is Test {
         vm.deal(alice, 10 ether);
         vm.startPrank(alice);
         bytes32 escrowId = escrow.doObligationFor{value: NATIVE_AMOUNT}(
-            data,
-            uint64(block.timestamp + EXPIRATION_TIME),
-            address(badRecipient)
+            data, uint64(block.timestamp + EXPIRATION_TIME), address(badRecipient)
         );
         vm.stopPrank();
 
@@ -1010,9 +862,7 @@ contract TokenBundleEscrowObligationTest is Test {
         });
 
         vm.mockCall(
-            address(eas),
-            abi.encodeWithSelector(IEAS.getAttestation.selector, escrowId),
-            abi.encode(escrowAttestation)
+            address(eas), abi.encodeWithSelector(IEAS.getAttestation.selector, escrowId), abi.encode(escrowAttestation)
         );
 
         // Move time past expiration
@@ -1021,9 +871,7 @@ contract TokenBundleEscrowObligationTest is Test {
         // reclaimExpired should revert because native token transfer fails
         vm.expectRevert(
             abi.encodeWithSelector(
-                TokenBundleEscrowObligation.NativeTokenTransferFailed.selector,
-                address(badRecipient),
-                NATIVE_AMOUNT
+                TokenBundleEscrowObligation.NativeTokenTransferFailed.selector, address(badRecipient), NATIVE_AMOUNT
             )
         );
         escrow.reclaimExpired(escrowId);
@@ -1053,9 +901,7 @@ contract TokenBundleEscrowObligationTest is Test {
         vm.deal(alice, 10 ether);
         vm.startPrank(alice);
         bytes32 escrowId = escrow.doObligationFor{value: NATIVE_AMOUNT}(
-            data,
-            uint64(block.timestamp + EXPIRATION_TIME),
-            address(badRecipient)
+            data, uint64(block.timestamp + EXPIRATION_TIME), address(badRecipient)
         );
         vm.stopPrank();
 
@@ -1074,9 +920,7 @@ contract TokenBundleEscrowObligationTest is Test {
         });
 
         vm.mockCall(
-            address(eas),
-            abi.encodeWithSelector(IEAS.getAttestation.selector, escrowId),
-            abi.encode(escrowAttestation)
+            address(eas), abi.encodeWithSelector(IEAS.getAttestation.selector, escrowId), abi.encode(escrowAttestation)
         );
 
         // Move time past expiration
@@ -1084,10 +928,7 @@ contract TokenBundleEscrowObligationTest is Test {
 
         // unsafePartiallyReclaimExpired should succeed (emitting events for failures)
         vm.expectEmit(true, false, false, true);
-        emit TokenBundleEscrowObligation.NativeTokenTransferFailedOnRelease(
-            address(badRecipient),
-            NATIVE_AMOUNT
-        );
+        emit TokenBundleEscrowObligation.NativeTokenTransferFailedOnRelease(address(badRecipient), NATIVE_AMOUNT);
 
         bool success = escrow.unsafePartiallyReclaimExpired(escrowId);
         assertTrue(success);

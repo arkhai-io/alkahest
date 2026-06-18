@@ -1,0 +1,600 @@
+{
+  "abi": [
+    {
+      "type": "function",
+      "name": "decodeHookData",
+      "inputs": [
+        {
+          "name": "data",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "tuple",
+          "internalType": "struct ERC20EscrowHook.HookData",
+          "components": [
+            {
+              "name": "token",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "amount",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ]
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "type": "function",
+      "name": "deposits",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "encodeHookData",
+      "inputs": [
+        {
+          "name": "hookData",
+          "type": "tuple",
+          "internalType": "struct ERC20EscrowHook.HookData",
+          "components": [
+            {
+              "name": "token",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "amount",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "type": "function",
+      "name": "onLock",
+      "inputs": [
+        {
+          "name": "data",
+          "type": "bytes",
+          "internalType": "bytes"
+        },
+        {
+          "name": "from",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "payable"
+    },
+    {
+      "type": "function",
+      "name": "onRelease",
+      "inputs": [
+        {
+          "name": "data",
+          "type": "bytes",
+          "internalType": "bytes"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "onReturn",
+      "inputs": [
+        {
+          "name": "data",
+          "type": "bytes",
+          "internalType": "bytes"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "error",
+      "name": "ERC20TransferFailed",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "from",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "InsufficientDeposit",
+      "inputs": [
+        {
+          "name": "caller",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "requested",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "available",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "NoDeposit",
+      "inputs": [
+        {
+          "name": "caller",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "UnexpectedNativeValue",
+      "inputs": []
+    }
+  ],
+  "bytecode": {
+    "object": "0x6080806040523460155761078a908161001a8239f35b5f80fdfe60806040526004361015610011575f80fd5b5f3560e01c80631a6a5893146101245780631dc8160b14610197578063488a6ebe146101295780638b9d4539146101245780638f601f66146100ca5763f73085df1461005b575f80fd5b346100c65760203660031901126100c65760043567ffffffffffffffff81116100c6576100ac61009160409236906004016103a6565b5f6020855161009f816106bb565b828152015281019061070d565b602082519160018060a01b03815116835201516020820152f35b5f80fd5b346100c65760403660031901126100c6576100e36103d4565b602435906001600160a01b03821682036100c6576001600160a01b039081165f90815260208181526040808320949093168252928352819020549051908152f35b610441565b346100c65760403660031901126100c657604080516020810191906001600160a01b036101546103d4565b1683526024358282015281815261016c6060826106eb565b8151928391602083525180918160208501528484015e5f828201840152601f01601f19168101030190f35b6101a0366103ea565b5091903461039757816101b791602493019061070d565b80516040516370a0823160e01b81523060048201529193919260209184919082906001600160a01b03165afa91821561034b575f92610363575b508251602080850180516040516323b872dd60e01b5f9081526001600160a01b0387811660045230602452604493909352929694909391169160648180855af19060015f5114821615610356575b5060408290525f60605285516370a0823160e01b8352306004840152602090839060249082906001600160a01b03165afa91821561034b575f92610317575b5015918215610301575b50506102c4575051335f9081526020818152604080832094516001600160a01b0316835293905291909120805490916102c091610747565b9055005b82519151604051634a73404560e11b81526001600160a01b0393841660048201529190921660248201523060448201526064810191909152608490fd5b61030f919250845190610747565b118480610288565b9091506020813d602011610343575b81610333602093836106eb565b810103126100c65751908661027e565b3d9150610326565b6040513d5f823e3d90fd5b3b15153d1516168661023f565b9091506020813d60201161038f575b8161037f602093836106eb565b810103126100c6575190836101f1565b3d9150610372565b63e0aeda7d60e01b5f5260045ffd5b9181601f840112156100c65782359167ffffffffffffffff83116100c657602083818601950101116100c657565b600435906001600160a01b03821682036100c657565b60606003198201126100c6576004359067ffffffffffffffff82116100c657610415916004016103a6565b90916024356001600160a01b03811681036100c657906044356001600160a01b03811681036100c65790565b346100c65761045e610452366103ea565b5092919081019061070d565b335f9081526020818152604080832084516001600160a01b03168452909152902054908115610697576020810191825180821061066057508251810390811161064c57335f9081526020818152604080832085516001600160a01b0390811685529083529281902093909355835192516370a0823160e01b8152868316600482018190529093909284916024918391165afa91821561034b575f92610618575b5060018060a01b03835116908451916040519263a9059cbb60e01b5f52826004526024528260205f60448180865af19160015f5114831615610606575b50602481602093948160405260018060a01b03895116906370a0823160e01b835260048301525afa91821561034b575f926105d2575b50159182156105bc575b505061058357005b519051604051634a73404560e11b81526001600160a01b0392831660048201523060248201529290911660448301526064820152608490fd5b6105ca919250845190610747565b115f8061057b565b9091506020813d6020116105fe575b816105ee602093836106eb565b810103126100c65751905f610571565b3d91506105e1565b3d15903b15151690911690602461053b565b9091506020813d602011610644575b81610634602093836106eb565b810103126100c65751905f6104fe565b3d9150610627565b634e487b7160e01b5f52601160045260245ffd5b915160405163b90e11b560e01b81523360048201526001600160a01b03909116602482015260448101929092526064820152608490fd5b51631f5f09af60e21b5f908152336004526001600160a01b03909116602452604490fd5b6040810190811067ffffffffffffffff8211176106d757604052565b634e487b7160e01b5f52604160045260245ffd5b90601f8019910116810190811067ffffffffffffffff8211176106d757604052565b908160409103126100c65760405190610725826106bb565b8035906001600160a01b03821682036100c65760209183520135602082015290565b9190820180921161064c5756fea2646970667358221220c6b323e5c7c7ef4426a05d069293e506fa504442a6566a16408590fe77b9cccf64736f6c634300081b0033",
+    "sourceMap": "754:3891:89:-:0;;;;;;;;;;;;;;;;;",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x60806040526004361015610011575f80fd5b5f3560e01c80631a6a5893146101245780631dc8160b14610197578063488a6ebe146101295780638b9d4539146101245780638f601f66146100ca5763f73085df1461005b575f80fd5b346100c65760203660031901126100c65760043567ffffffffffffffff81116100c6576100ac61009160409236906004016103a6565b5f6020855161009f816106bb565b828152015281019061070d565b602082519160018060a01b03815116835201516020820152f35b5f80fd5b346100c65760403660031901126100c6576100e36103d4565b602435906001600160a01b03821682036100c6576001600160a01b039081165f90815260208181526040808320949093168252928352819020549051908152f35b610441565b346100c65760403660031901126100c657604080516020810191906001600160a01b036101546103d4565b1683526024358282015281815261016c6060826106eb565b8151928391602083525180918160208501528484015e5f828201840152601f01601f19168101030190f35b6101a0366103ea565b5091903461039757816101b791602493019061070d565b80516040516370a0823160e01b81523060048201529193919260209184919082906001600160a01b03165afa91821561034b575f92610363575b508251602080850180516040516323b872dd60e01b5f9081526001600160a01b0387811660045230602452604493909352929694909391169160648180855af19060015f5114821615610356575b5060408290525f60605285516370a0823160e01b8352306004840152602090839060249082906001600160a01b03165afa91821561034b575f92610317575b5015918215610301575b50506102c4575051335f9081526020818152604080832094516001600160a01b0316835293905291909120805490916102c091610747565b9055005b82519151604051634a73404560e11b81526001600160a01b0393841660048201529190921660248201523060448201526064810191909152608490fd5b61030f919250845190610747565b118480610288565b9091506020813d602011610343575b81610333602093836106eb565b810103126100c65751908661027e565b3d9150610326565b6040513d5f823e3d90fd5b3b15153d1516168661023f565b9091506020813d60201161038f575b8161037f602093836106eb565b810103126100c6575190836101f1565b3d9150610372565b63e0aeda7d60e01b5f5260045ffd5b9181601f840112156100c65782359167ffffffffffffffff83116100c657602083818601950101116100c657565b600435906001600160a01b03821682036100c657565b60606003198201126100c6576004359067ffffffffffffffff82116100c657610415916004016103a6565b90916024356001600160a01b03811681036100c657906044356001600160a01b03811681036100c65790565b346100c65761045e610452366103ea565b5092919081019061070d565b335f9081526020818152604080832084516001600160a01b03168452909152902054908115610697576020810191825180821061066057508251810390811161064c57335f9081526020818152604080832085516001600160a01b0390811685529083529281902093909355835192516370a0823160e01b8152868316600482018190529093909284916024918391165afa91821561034b575f92610618575b5060018060a01b03835116908451916040519263a9059cbb60e01b5f52826004526024528260205f60448180865af19160015f5114831615610606575b50602481602093948160405260018060a01b03895116906370a0823160e01b835260048301525afa91821561034b575f926105d2575b50159182156105bc575b505061058357005b519051604051634a73404560e11b81526001600160a01b0392831660048201523060248201529290911660448301526064820152608490fd5b6105ca919250845190610747565b115f8061057b565b9091506020813d6020116105fe575b816105ee602093836106eb565b810103126100c65751905f610571565b3d91506105e1565b3d15903b15151690911690602461053b565b9091506020813d602011610644575b81610634602093836106eb565b810103126100c65751905f6104fe565b3d9150610627565b634e487b7160e01b5f52601160045260245ffd5b915160405163b90e11b560e01b81523360048201526001600160a01b03909116602482015260448101929092526064820152608490fd5b51631f5f09af60e21b5f908152336004526001600160a01b03909116602452604490fd5b6040810190811067ffffffffffffffff8211176106d757604052565b634e487b7160e01b5f52604160045260245ffd5b90601f8019910116810190811067ffffffffffffffff8211176106d757604052565b908160409103126100c65760405190610725826106bb565b8035906001600160a01b03821682036100c65760209183520135602082015290565b9190820180921161064c5756fea2646970667358221220c6b323e5c7c7ef4426a05d069293e506fa504442a6566a16408590fe77b9cccf64736f6c634300081b0033",
+    "sourceMap": "754:3891:89:-:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;754:3891:89;;;;;;;;;;;4608:28;754:3891;;;;;;;;:::i;:::-;;;;;;;;:::i;:::-;;;;;;4608:28;;;;:::i;:::-;754:3891;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;754:3891:89;;;;;;:::i;:::-;;;;-1:-1:-1;;;;;754:3891:89;;;;;;-1:-1:-1;;;;;754:3891:89;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;-1:-1:-1;;754:3891:89;;;;;;;4459:20;;;;754:3891;-1:-1:-1;;;;;754:3891:89;;:::i;:::-;;;;;;;;;;4459:20;;;;;;;:::i;:::-;754:3891;;;;;4459:20;754:3891;;;;;;4459:20;754:3891;;;;;;;;;;;;;;;;-1:-1:-1;;754:3891:89;;;;;;;;;;;:::i;:::-;1666:9;;;;1662:62;;1761:28;;;1824:46;1761:28;;;;:::i;:::-;754:3891;;;;-1:-1:-1;;;1824:46:89;;1864:4;754:3891;1824:46;;754:3891;;;;;;;;;;;;-1:-1:-1;;;;;754:3891:89;1824:46;;;;;;;754:3891;1824:46;;;754:3891;-1:-1:-1;754:3891:89;;;1996:14;;;754:3891;;;10404:1148:49;-1:-1:-1;;;754:3891:89;10404:1148:49;;;-1:-1:-1;;;;;10404:1148:49;;;754:3891:89;10404:1148:49;1864:4:89;1824:46;10404:1148:49;;;;;;1996:14:89;;;10404:1148:49;;754:3891:89;;;10404:1148:49;754:3891:89;;;10404:1148:49;;;;754:3891:89;10404:1148:49;;;;;;;754:3891:89;-1:-1:-1;754:3891:89;10404:1148:49;;;754:3891:89;10404:1148:49;;754:3891:89;;-1:-1:-1;;;2054:46:89;;1864:4;754:3891;2054:46;;754:3891;;;10404:1148:49;;1824:46:89;;10404:1148:49;;-1:-1:-1;;;;;754:3891:89;2054:46;;;;;;;754:3891;2054:46;;;754:3891;2115:8;;754:3891;;;2115:57;;754:3891;2111:244;;;;-1:-1:-1;754:3891:89;2374:10;754:3891;;;;;;;;;;;;;;-1:-1:-1;;;;;754:3891:89;;;;;;;;;;;;;;2365:53;;;:::i;:::-;754:3891;;;2111:244;754:3891;;;;;;-1:-1:-1;;;2195:149:89;;-1:-1:-1;;;;;754:3891:89;;;;2195:149;;754:3891;;;;;;;;;1864:4;754:3891;;;;;;;;;;;;;2195:149;2115:57;2142:30;754:3891;;;;;2142:30;;:::i;:::-;-1:-1:-1;2115:57:89;;;;2054:46;;;;754:3891;2054:46;;754:3891;2054:46;;;;;;754:3891;2054:46;;;:::i;:::-;;;754:3891;;;;;2054:46;;;;;;;-1:-1:-1;2054:46:89;;;754:3891;;;;;;;;;10404:1148:49;;;;;;;;;;;1824:46:89;;;;754:3891;1824:46;;754:3891;1824:46;;;;;;754:3891;1824:46;;;:::i;:::-;;;754:3891;;;;;1824:46;;;;;;;-1:-1:-1;1824:46:89;;1662:62;1689:35;;;754:3891;1689:35;754:3891;;1689:35;754:3891;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::o;:::-;;;;-1:-1:-1;;;;;754:3891:89;;;;;;:::o;:::-;;-1:-1:-1;;754:3891:89;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;-1:-1:-1;;;;;754:3891:89;;;;;;;;;-1:-1:-1;;;;;754:3891:89;;;;;;;:::o;:::-;;;;3011:28;754:3891;;;:::i;:::-;3011:28;;;;;;;;:::i;:::-;3079:10;3070:8;754:3891;;;;;;;;;;;;;-1:-1:-1;;;;;754:3891:89;;;;;;;;;;3119:14;;3115:88;;754:3891;3228:14;;754:3891;;;3216:26;;;3212:215;;754:3891;;;;;;;;;;3079:10;3070:8;754:3891;;;;;;;;;;;;;-1:-1:-1;;;;;754:3891:89;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;;3536:35:89;;754:3891;;;;3536:35;;754:3891;;;;;;;;;3536:35;;754:3891;;;3536:35;;;;;;;3070:8;3536:35;;;754:3891;;;;;;;;;;;;;2138:38:49;754:3891:89;8544:1067:49;8509:24;;;;3070:8:89;8544:1067:49;;754:3891:89;8544:1067:49;3536:35:89;8544:1067:49;;754:3891:89;3070:8;8544:1067:49;;;;;;;;3070:8:89;8544:1067:49;;;;;;;754:3891:89;8544:1067:49;3536:35:89;8544:1067:49;754:3891:89;8544:1067:49;;;754:3891:89;8544:1067:49;754:3891:89;;;;;;;;;;;;3722:35;;754:3891;3722:35;;754:3891;3722:35;;;;;;;3070:8;3722:35;;;754:3891;3772:8;;754:3891;;;3772:57;;754:3891;3768:242;;;;754:3891;3768:242;754:3891;;;;;-1:-1:-1;;;3852:147:89;;-1:-1:-1;;;;;754:3891:89;;;;3852:147;;754:3891;3928:4;754:3891;;;;;;;;;;;;;;;;;;2195:149;3772:57;3799:30;754:3891;;;;;3799:30;;:::i;:::-;-1:-1:-1;3772:57:89;;;;3722:35;;;;754:3891;3722:35;;754:3891;3722:35;;;;;;754:3891;3722:35;;;:::i;:::-;;;754:3891;;;;;3722:35;;;;;;;-1:-1:-1;3722:35:89;;8544:1067:49;;;;;;;;;;;;3536:35:89;8544:1067:49;;3536:35:89;;;;754:3891;3536:35;;754:3891;3536:35;;;;;;754:3891;3536:35;;;:::i;:::-;;;754:3891;;;;;3536:35;;;;;;;-1:-1:-1;3536:35:89;;754:3891;;;;3070:8;754:3891;;;;;3070:8;754:3891;3212:215;754:3891;;;;-1:-1:-1;;;3265:151:89;;3079:10;754:3891;3265:151;;754:3891;-1:-1:-1;;;;;754:3891:89;;;;;;;;;;;;;;;;;;3265:151;;;3115:88;754:3891;-1:-1:-1;;;3070:8:89;3156:36;;;3079:10;754:3891;;-1:-1:-1;;;;;754:3891:89;;;;;;;3156:36;754:3891;;;;;;;;;;;;;;;:::o;:::-;;;;-1:-1:-1;754:3891:89;;;;;-1:-1:-1;754:3891:89;;;;4459:20;;754:3891;;;;;;;;;;;;;;;;:::o;:::-;;;;;;;;;;;;;;;:::i;:::-;;;;-1:-1:-1;;;;;754:3891:89;;;;;;;;;;;;;;;;;:::o;:::-;;;;;;;;;;:::o",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "decodeHookData(bytes)": "f73085df",
+    "deposits(address,address)": "8f601f66",
+    "encodeHookData((address,uint256))": "488a6ebe",
+    "onLock(bytes,address,address)": "1dc8160b",
+    "onRelease(bytes,address,address)": "1a6a5893",
+    "onReturn(bytes,address,address)": "8b9d4539"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.27+commit.40a35a09\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"ERC20TransferFailed\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"caller\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"requested\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"available\",\"type\":\"uint256\"}],\"name\":\"InsufficientDeposit\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"caller\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"}],\"name\":\"NoDeposit\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"UnexpectedNativeValue\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"}],\"name\":\"decodeHookData\",\"outputs\":[{\"components\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"internalType\":\"struct ERC20EscrowHook.HookData\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"pure\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"deposits\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"internalType\":\"struct ERC20EscrowHook.HookData\",\"name\":\"hookData\",\"type\":\"tuple\"}],\"name\":\"encodeHookData\",\"outputs\":[{\"internalType\":\"bytes\",\"name\":\"\",\"type\":\"bytes\"}],\"stateMutability\":\"pure\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"},{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"onLock\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"onRelease\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"onReturn\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"details\":\"hookData is abi.encode(HookData).      Security model: deposits are tracked per-caller (msg.sender) per-token.      Any contract can deposit via onLock and only withdraw what it deposited      via onRelease/onReturn. No owner, no authorization mapping.      Users must approve this hook contract for the token before the      obligation calls onLock.\",\"kind\":\"dev\",\"methods\":{},\"title\":\"ERC20EscrowHook\",\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"deposits(address,address)\":{\"notice\":\"Tracks deposits: caller (obligation) \\u2192 token \\u2192 amount held.\"}},\"notice\":\"An IEscrowHook that escrows a single ERC20 token + amount.\",\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/obligations/escrow/hook-based/hooks/ERC20EscrowHook.sol\":\"ERC20EscrowHook\"},\"evmVersion\":\"prague\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@eas/=lib/eas-contracts/contracts/\",\":@erc8004/=lib/erc-8004-contracts/contracts/\",\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@src/=src/\",\":@test/=test/\",\":ds-test/=lib/openzeppelin-contracts/lib/forge-std/lib/ds-test/src/\",\":eas-contracts/=lib/eas-contracts/contracts/\",\":erc-8004-contracts/=lib/erc-8004-contracts/contracts/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":eth-gas-reporter/=lib/eas-contracts/node_modules/eth-gas-reporter/\",\":forge-std/=lib/forge-std/src/\",\":halmos-cheatcodes/=lib/openzeppelin-contracts/lib/halmos-cheatcodes/src/\",\":hardhat-deploy/=lib/eas-contracts/node_modules/hardhat-deploy/\",\":hardhat/=lib/eas-contracts/node_modules/hardhat/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\"],\"viaIR\":true},\"sources\":{\"lib/openzeppelin-contracts/contracts/interfaces/IERC1363.sol\":{\"keccak256\":\"0xd5ea07362ab630a6a3dee4285a74cf2377044ca2e4be472755ad64d7c5d4b69d\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://da5e832b40fc5c3145d3781e2e5fa60ac2052c9d08af7e300dc8ab80c4343100\",\"dweb:/ipfs/QmTzf7N5ZUdh5raqtzbM11yexiUoLC9z3Ws632MCuycq1d\"]},\"lib/openzeppelin-contracts/contracts/interfaces/IERC165.sol\":{\"keccak256\":\"0x0afcb7e740d1537b252cb2676f600465ce6938398569f09ba1b9ca240dde2dfc\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://1c299900ac4ec268d4570ecef0d697a3013cd11a6eb74e295ee3fbc945056037\",\"dweb:/ipfs/Qmab9owJoxcA7vJT5XNayCMaUR1qxqj1NDzzisduwaJMcZ\"]},\"lib/openzeppelin-contracts/contracts/interfaces/IERC20.sol\":{\"keccak256\":\"0x1a6221315ce0307746c2c4827c125d821ee796c74a676787762f4778671d4f44\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://1bb2332a7ee26dd0b0de9b7fe266749f54820c99ab6a3bcb6f7e6b751d47ee2d\",\"dweb:/ipfs/QmcRWpaBeCYkhy68PR3B4AgD7asuQk7PwkWxrvJbZcikLF\"]},\"lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol\":{\"keccak256\":\"0x74ed01eb66b923d0d0cfe3be84604ac04b76482a55f9dd655e1ef4d367f95bc2\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://5282825a626cfe924e504274b864a652b0023591fa66f06a067b25b51ba9b303\",\"dweb:/ipfs/QmeCfPykghhMc81VJTrHTC7sF6CRvaA1FXVq2pJhwYp1dV\"]},\"lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol\":{\"keccak256\":\"0x304d732678032a9781ae85c8f204c8fba3d3a5e31c02616964e75cfdc5049098\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://299ced486011781dc98f638059678323c03079fefae1482abaa2135b22fa92d0\",\"dweb:/ipfs/QmbZNbcPTBxNvwChavN2kkZZs7xHhYL7mv51KrxMhsMs3j\"]},\"lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol\":{\"keccak256\":\"0x8891738ffe910f0cf2da09566928589bf5d63f4524dd734fd9cedbac3274dd5c\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://971f954442df5c2ef5b5ebf1eb245d7105d9fbacc7386ee5c796df1d45b21617\",\"dweb:/ipfs/QmadRjHbkicwqwwh61raUEapaVEtaLMcYbQZWs9gUkgj3u\"]},\"src/obligations/escrow/hook-based/IEscrowHook.sol\":{\"keccak256\":\"0x9937854ef875b24d7a2b961f8188bb380bfc385796a2dece839856a515eeeca0\",\"license\":\"UNLICENSED\",\"urls\":[\"bzz-raw://d12dc1ef365e83189196d3d026b71ed899d8c8758dfabb33b5d9b4305898f606\",\"dweb:/ipfs/QmW8QpxkbXY9U3VVkrKx17cci5pAnWePehEfp8Zr6Ya4rM\"]},\"src/obligations/escrow/hook-based/hooks/ERC20EscrowHook.sol\":{\"keccak256\":\"0x7a7f1b280d6e755edbaba3fd62727593e0878794ad1f1df229899cac36d13c21\",\"license\":\"UNLICENSED\",\"urls\":[\"bzz-raw://3b439bc836a36841a149fa0cc174e8df613b208a3f3e3f8fd7b90a27885cd0a8\",\"dweb:/ipfs/QmRMJs7CYUrAjESAdrUMpptSNYhBDQyTYR8XJFZSz6oMWV\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.27+commit.40a35a09"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "token",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "from",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
+            }
+          ],
+          "type": "error",
+          "name": "ERC20TransferFailed"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "caller",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "token",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "requested",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "available",
+              "type": "uint256"
+            }
+          ],
+          "type": "error",
+          "name": "InsufficientDeposit"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "caller",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "token",
+              "type": "address"
+            }
+          ],
+          "type": "error",
+          "name": "NoDeposit"
+        },
+        {
+          "inputs": [],
+          "type": "error",
+          "name": "UnexpectedNativeValue"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes",
+              "name": "data",
+              "type": "bytes"
+            }
+          ],
+          "stateMutability": "pure",
+          "type": "function",
+          "name": "decodeHookData",
+          "outputs": [
+            {
+              "internalType": "struct ERC20EscrowHook.HookData",
+              "name": "",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "address",
+                  "name": "token",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amount",
+                  "type": "uint256"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "deposits",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "struct ERC20EscrowHook.HookData",
+              "name": "hookData",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "address",
+                  "name": "token",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amount",
+                  "type": "uint256"
+                }
+              ]
+            }
+          ],
+          "stateMutability": "pure",
+          "type": "function",
+          "name": "encodeHookData",
+          "outputs": [
+            {
+              "internalType": "bytes",
+              "name": "",
+              "type": "bytes"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes",
+              "name": "data",
+              "type": "bytes"
+            },
+            {
+              "internalType": "address",
+              "name": "from",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "payable",
+          "type": "function",
+          "name": "onLock"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes",
+              "name": "data",
+              "type": "bytes"
+            },
+            {
+              "internalType": "address",
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "onRelease"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes",
+              "name": "data",
+              "type": "bytes"
+            },
+            {
+              "internalType": "address",
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "onReturn"
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {},
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {
+          "deposits(address,address)": {
+            "notice": "Tracks deposits: caller (obligation) → token → amount held."
+          }
+        },
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        "@eas/=lib/eas-contracts/contracts/",
+        "@erc8004/=lib/erc-8004-contracts/contracts/",
+        "@openzeppelin/=lib/openzeppelin-contracts/",
+        "@src/=src/",
+        "@test/=test/",
+        "ds-test/=lib/openzeppelin-contracts/lib/forge-std/lib/ds-test/src/",
+        "eas-contracts/=lib/eas-contracts/contracts/",
+        "erc-8004-contracts/=lib/erc-8004-contracts/contracts/",
+        "erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        "eth-gas-reporter/=lib/eas-contracts/node_modules/eth-gas-reporter/",
+        "forge-std/=lib/forge-std/src/",
+        "halmos-cheatcodes/=lib/openzeppelin-contracts/lib/halmos-cheatcodes/src/",
+        "hardhat-deploy/=lib/eas-contracts/node_modules/hardhat-deploy/",
+        "hardhat/=lib/eas-contracts/node_modules/hardhat/",
+        "openzeppelin-contracts/=lib/openzeppelin-contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/obligations/escrow/hook-based/hooks/ERC20EscrowHook.sol": "ERC20EscrowHook"
+      },
+      "evmVersion": "prague",
+      "libraries": {},
+      "viaIR": true
+    },
+    "sources": {
+      "lib/openzeppelin-contracts/contracts/interfaces/IERC1363.sol": {
+        "keccak256": "0xd5ea07362ab630a6a3dee4285a74cf2377044ca2e4be472755ad64d7c5d4b69d",
+        "urls": [
+          "bzz-raw://da5e832b40fc5c3145d3781e2e5fa60ac2052c9d08af7e300dc8ab80c4343100",
+          "dweb:/ipfs/QmTzf7N5ZUdh5raqtzbM11yexiUoLC9z3Ws632MCuycq1d"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/interfaces/IERC165.sol": {
+        "keccak256": "0x0afcb7e740d1537b252cb2676f600465ce6938398569f09ba1b9ca240dde2dfc",
+        "urls": [
+          "bzz-raw://1c299900ac4ec268d4570ecef0d697a3013cd11a6eb74e295ee3fbc945056037",
+          "dweb:/ipfs/Qmab9owJoxcA7vJT5XNayCMaUR1qxqj1NDzzisduwaJMcZ"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/interfaces/IERC20.sol": {
+        "keccak256": "0x1a6221315ce0307746c2c4827c125d821ee796c74a676787762f4778671d4f44",
+        "urls": [
+          "bzz-raw://1bb2332a7ee26dd0b0de9b7fe266749f54820c99ab6a3bcb6f7e6b751d47ee2d",
+          "dweb:/ipfs/QmcRWpaBeCYkhy68PR3B4AgD7asuQk7PwkWxrvJbZcikLF"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol": {
+        "keccak256": "0x74ed01eb66b923d0d0cfe3be84604ac04b76482a55f9dd655e1ef4d367f95bc2",
+        "urls": [
+          "bzz-raw://5282825a626cfe924e504274b864a652b0023591fa66f06a067b25b51ba9b303",
+          "dweb:/ipfs/QmeCfPykghhMc81VJTrHTC7sF6CRvaA1FXVq2pJhwYp1dV"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol": {
+        "keccak256": "0x304d732678032a9781ae85c8f204c8fba3d3a5e31c02616964e75cfdc5049098",
+        "urls": [
+          "bzz-raw://299ced486011781dc98f638059678323c03079fefae1482abaa2135b22fa92d0",
+          "dweb:/ipfs/QmbZNbcPTBxNvwChavN2kkZZs7xHhYL7mv51KrxMhsMs3j"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol": {
+        "keccak256": "0x8891738ffe910f0cf2da09566928589bf5d63f4524dd734fd9cedbac3274dd5c",
+        "urls": [
+          "bzz-raw://971f954442df5c2ef5b5ebf1eb245d7105d9fbacc7386ee5c796df1d45b21617",
+          "dweb:/ipfs/QmadRjHbkicwqwwh61raUEapaVEtaLMcYbQZWs9gUkgj3u"
+        ],
+        "license": "MIT"
+      },
+      "src/obligations/escrow/hook-based/IEscrowHook.sol": {
+        "keccak256": "0x9937854ef875b24d7a2b961f8188bb380bfc385796a2dece839856a515eeeca0",
+        "urls": [
+          "bzz-raw://d12dc1ef365e83189196d3d026b71ed899d8c8758dfabb33b5d9b4305898f606",
+          "dweb:/ipfs/QmW8QpxkbXY9U3VVkrKx17cci5pAnWePehEfp8Zr6Ya4rM"
+        ],
+        "license": "UNLICENSED"
+      },
+      "src/obligations/escrow/hook-based/hooks/ERC20EscrowHook.sol": {
+        "keccak256": "0x7a7f1b280d6e755edbaba3fd62727593e0878794ad1f1df229899cac36d13c21",
+        "urls": [
+          "bzz-raw://3b439bc836a36841a149fa0cc174e8df613b208a3f3e3f8fd7b90a27885cd0a8",
+          "dweb:/ipfs/QmRMJs7CYUrAjESAdrUMpptSNYhBDQyTYR8XJFZSz6oMWV"
+        ],
+        "license": "UNLICENSED"
+      }
+    },
+    "version": 1
+  },
+  "id": 89
+}

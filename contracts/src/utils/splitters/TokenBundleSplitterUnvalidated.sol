@@ -14,22 +14,13 @@ contract TokenBundleSplitterUnvalidated is TokenBundleSplitterBase {
 
     /// @notice Oracle submits a split decision without validation.
     ///         Only checks for empty splits and zero-address recipients.
-    function arbitrate(
-        bytes32 obligation,
-        BundleSplit[] calldata splits
-    ) external override {
-        Attestation memory escrow = eas.getAttestation(obligation);
-        EscrowObligationData memory escrowData = abi.decode(
-            escrow.data,
-            (EscrowObligationData)
-        );
+    function arbitrate(bytes32 fulfillment, bytes32 escrow, BundleSplit[] calldata splits) external override {
+        if (fulfillment == bytes32(0)) revert InvalidFulfillmentUid();
 
-        bytes32 decisionKey = keccak256(
-            abi.encodePacked(obligation, escrowData.demand)
-        );
+        bytes32 decisionKey = keccak256(abi.encodePacked(fulfillment, escrow));
 
         _storeDecision(msg.sender, decisionKey, splits);
 
-        emit ArbitrationMade(decisionKey, obligation, msg.sender);
+        emit ArbitrationMade(decisionKey, escrow, msg.sender);
     }
 }
