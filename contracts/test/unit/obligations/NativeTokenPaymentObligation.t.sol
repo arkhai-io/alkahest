@@ -26,10 +26,7 @@ contract NativeTokenPaymentObligationTest is Test {
         EASDeployer easDeployer = new EASDeployer();
         (eas, schemaRegistry) = easDeployer.deployEAS();
 
-        paymentObligation = new NativeTokenPaymentObligation(
-            eas,
-            schemaRegistry
-        );
+        paymentObligation = new NativeTokenPaymentObligation(eas, schemaRegistry);
 
         buyer = makeAddr("buyer");
         seller = makeAddr("seller");
@@ -42,11 +39,8 @@ contract NativeTokenPaymentObligationTest is Test {
     }
 
     function testDoObligation() public {
-        NativeTokenPaymentObligation.ObligationData
-            memory data = NativeTokenPaymentObligation.ObligationData({
-                amount: AMOUNT,
-                payee: seller
-            });
+        NativeTokenPaymentObligation.ObligationData memory data =
+            NativeTokenPaymentObligation.ObligationData({amount: AMOUNT, payee: seller});
 
         uint256 buyerBalanceBefore = buyer.balance;
         uint256 sellerBalanceBefore = seller.balance;
@@ -63,8 +57,7 @@ contract NativeTokenPaymentObligationTest is Test {
         assertEq(seller.balance, sellerBalanceBefore + AMOUNT);
 
         // Check obligation data
-        NativeTokenPaymentObligation.ObligationData
-            memory storedData = paymentObligation.getObligationData(uid);
+        NativeTokenPaymentObligation.ObligationData memory storedData = paymentObligation.getObligationData(uid);
         assertEq(storedData.amount, data.amount);
         assertEq(storedData.payee, data.payee);
 
@@ -75,11 +68,8 @@ contract NativeTokenPaymentObligationTest is Test {
     }
 
     function testDoObligationFor() public {
-        NativeTokenPaymentObligation.ObligationData
-            memory data = NativeTokenPaymentObligation.ObligationData({
-                amount: AMOUNT,
-                payee: seller
-            });
+        NativeTokenPaymentObligation.ObligationData memory data =
+            NativeTokenPaymentObligation.ObligationData({amount: AMOUNT, payee: seller});
 
         uint256 buyerBalanceBefore = buyer.balance;
         uint256 sellerBalanceBefore = seller.balance;
@@ -89,11 +79,7 @@ contract NativeTokenPaymentObligationTest is Test {
         emit PaymentMade(bytes32(0), randomUser);
 
         vm.prank(buyer);
-        bytes32 uid = paymentObligation.doObligationFor{value: AMOUNT}(
-            data,
-            randomUser,
-            bytes32(0)
-        );
+        bytes32 uid = paymentObligation.doObligationFor{value: AMOUNT}(data, randomUser, bytes32(0));
 
         // Check balances
         assertEq(buyer.balance, buyerBalanceBefore - AMOUNT);
@@ -105,29 +91,19 @@ contract NativeTokenPaymentObligationTest is Test {
     }
 
     function testInsufficientPayment() public {
-        NativeTokenPaymentObligation.ObligationData
-            memory data = NativeTokenPaymentObligation.ObligationData({
-                amount: AMOUNT,
-                payee: seller
-            });
+        NativeTokenPaymentObligation.ObligationData memory data =
+            NativeTokenPaymentObligation.ObligationData({amount: AMOUNT, payee: seller});
 
         vm.prank(buyer);
         vm.expectRevert(
-            abi.encodeWithSelector(
-                NativeTokenPaymentObligation.InsufficientPayment.selector,
-                AMOUNT,
-                0.5 ether
-            )
+            abi.encodeWithSelector(NativeTokenPaymentObligation.InsufficientPayment.selector, AMOUNT, 0.5 ether)
         );
         paymentObligation.doObligation{value: 0.5 ether}(data, bytes32(0));
     }
 
     function testExcessPaymentRefund() public {
-        NativeTokenPaymentObligation.ObligationData
-            memory data = NativeTokenPaymentObligation.ObligationData({
-                amount: AMOUNT,
-                payee: seller
-            });
+        NativeTokenPaymentObligation.ObligationData memory data =
+            NativeTokenPaymentObligation.ObligationData({amount: AMOUNT, payee: seller});
 
         uint256 excessAmount = 0.5 ether;
         uint256 totalPayment = AMOUNT + excessAmount;
@@ -143,8 +119,7 @@ contract NativeTokenPaymentObligationTest is Test {
         assertEq(seller.balance, sellerBalanceBefore + AMOUNT);
 
         // Verify payment was recorded correctly
-        NativeTokenPaymentObligation.ObligationData
-            memory storedData = paymentObligation.getObligationData(uid);
+        NativeTokenPaymentObligation.ObligationData memory storedData = paymentObligation.getObligationData(uid);
         assertEq(storedData.amount, AMOUNT); // Should store actual amount, not excess
     }
 
@@ -152,29 +127,21 @@ contract NativeTokenPaymentObligationTest is Test {
         // Create a contract that rejects ETH
         RevertingReceiver revertingReceiver = new RevertingReceiver();
 
-        NativeTokenPaymentObligation.ObligationData
-            memory data = NativeTokenPaymentObligation.ObligationData({
-                amount: AMOUNT,
-                payee: address(revertingReceiver)
-            });
+        NativeTokenPaymentObligation.ObligationData memory data =
+            NativeTokenPaymentObligation.ObligationData({amount: AMOUNT, payee: address(revertingReceiver)});
 
         vm.prank(buyer);
         vm.expectRevert(
             abi.encodeWithSelector(
-                NativeTokenPaymentObligation.NativeTokenTransferFailed.selector,
-                address(revertingReceiver),
-                AMOUNT
+                NativeTokenPaymentObligation.NativeTokenTransferFailed.selector, address(revertingReceiver), AMOUNT
             )
         );
         paymentObligation.doObligation{value: AMOUNT}(data, bytes32(0));
     }
 
     function testCheckObligation() public {
-        NativeTokenPaymentObligation.ObligationData
-            memory data = NativeTokenPaymentObligation.ObligationData({
-                amount: AMOUNT,
-                payee: seller
-            });
+        NativeTokenPaymentObligation.ObligationData memory data =
+            NativeTokenPaymentObligation.ObligationData({amount: AMOUNT, payee: seller});
 
         vm.prank(buyer);
         bytes32 uid = paymentObligation.doObligation{value: AMOUNT}(data, bytes32(0));
@@ -182,79 +149,45 @@ contract NativeTokenPaymentObligationTest is Test {
         Attestation memory attestation = eas.getAttestation(uid);
 
         // Should match with same data
-        bool result = paymentObligation.checkObligation(
-            attestation,
-            abi.encode(data),
-            bytes32(0)
-        );
+        bool result = paymentObligation.checkObligation(attestation, abi.encode(data), bytes32(0));
         assertTrue(result);
 
         // Should match with lower demanded amount
-        NativeTokenPaymentObligation.ObligationData
-            memory lowerDemand = NativeTokenPaymentObligation.ObligationData({
-                amount: 0.5 ether,
-                payee: seller
-            });
-        result = paymentObligation.checkObligation(
-            attestation,
-            abi.encode(lowerDemand),
-            bytes32(0)
-        );
+        NativeTokenPaymentObligation.ObligationData memory lowerDemand =
+            NativeTokenPaymentObligation.ObligationData({amount: 0.5 ether, payee: seller});
+        result = paymentObligation.checkObligation(attestation, abi.encode(lowerDemand), bytes32(0));
         assertTrue(result);
 
         // Should not match with higher demanded amount
-        NativeTokenPaymentObligation.ObligationData
-            memory higherDemand = NativeTokenPaymentObligation.ObligationData({
-                amount: 2 ether,
-                payee: seller
-            });
-        result = paymentObligation.checkObligation(
-            attestation,
-            abi.encode(higherDemand),
-            bytes32(0)
-        );
+        NativeTokenPaymentObligation.ObligationData memory higherDemand =
+            NativeTokenPaymentObligation.ObligationData({amount: 2 ether, payee: seller});
+        result = paymentObligation.checkObligation(attestation, abi.encode(higherDemand), bytes32(0));
         assertFalse(result);
 
         // Should not match with different payee
-        NativeTokenPaymentObligation.ObligationData
-            memory differentPayee = NativeTokenPaymentObligation
-                .ObligationData({amount: AMOUNT, payee: randomUser});
-        result = paymentObligation.checkObligation(
-            attestation,
-            abi.encode(differentPayee),
-            bytes32(0)
-        );
+        NativeTokenPaymentObligation.ObligationData memory differentPayee =
+            NativeTokenPaymentObligation.ObligationData({amount: AMOUNT, payee: randomUser});
+        result = paymentObligation.checkObligation(attestation, abi.encode(differentPayee), bytes32(0));
         assertFalse(result);
     }
 
     function testDecodeObligationData() public view {
-        NativeTokenPaymentObligation.ObligationData
-            memory data = NativeTokenPaymentObligation.ObligationData({
-                amount: AMOUNT,
-                payee: seller
-            });
+        NativeTokenPaymentObligation.ObligationData memory data =
+            NativeTokenPaymentObligation.ObligationData({amount: AMOUNT, payee: seller});
 
-        NativeTokenPaymentObligation.ObligationData
-            memory decoded = paymentObligation.decodeObligationData(
-                abi.encode(data)
-            );
+        NativeTokenPaymentObligation.ObligationData memory decoded =
+            paymentObligation.decodeObligationData(abi.encode(data));
 
         assertEq(decoded.amount, data.amount);
         assertEq(decoded.payee, data.payee);
     }
 
-    function testReceiveFunction() public {
-        uint256 contractBalanceBefore = address(paymentObligation).balance;
-
-        // Send ETH directly to contract
+    function testDirectNativeTransferReverts() public {
         vm.prank(buyer);
-        (bool success, ) = address(paymentObligation).call{value: 1 ether}("");
-        assertTrue(success);
+        (bool success,) = address(paymentObligation).call{value: 1 ether}("");
 
-        assertEq(
-            address(paymentObligation).balance,
-            contractBalanceBefore + 1 ether
-        );
+        assertFalse(success);
+        assertEq(address(paymentObligation).balance, 0);
     }
 
     function testRefundFailure() public {
@@ -262,11 +195,8 @@ contract NativeTokenPaymentObligationTest is Test {
         RevertingSender revertingSender = new RevertingSender();
         vm.deal(address(revertingSender), 10 ether);
 
-        NativeTokenPaymentObligation.ObligationData
-            memory data = NativeTokenPaymentObligation.ObligationData({
-                amount: AMOUNT,
-                payee: seller
-            });
+        NativeTokenPaymentObligation.ObligationData memory data =
+            NativeTokenPaymentObligation.ObligationData({amount: AMOUNT, payee: seller});
 
         uint256 excessAmount = 0.5 ether;
         uint256 totalPayment = AMOUNT + excessAmount;
@@ -275,24 +205,15 @@ contract NativeTokenPaymentObligationTest is Test {
         vm.prank(address(revertingSender));
         vm.expectRevert(
             abi.encodeWithSelector(
-                NativeTokenPaymentObligation.NativeTokenTransferFailed.selector,
-                address(revertingSender),
-                excessAmount
+                NativeTokenPaymentObligation.NativeTokenTransferFailed.selector, address(revertingSender), excessAmount
             )
         );
-        revertingSender.makePayment{value: totalPayment}(
-            paymentObligation,
-            data,
-            totalPayment
-        );
+        revertingSender.makePayment{value: totalPayment}(paymentObligation, data, totalPayment);
     }
 
     function testZeroAmountPayment() public {
-        NativeTokenPaymentObligation.ObligationData
-            memory data = NativeTokenPaymentObligation.ObligationData({
-                amount: 0,
-                payee: seller
-            });
+        NativeTokenPaymentObligation.ObligationData memory data =
+            NativeTokenPaymentObligation.ObligationData({amount: 0, payee: seller});
 
         uint256 buyerBalanceBefore = buyer.balance;
         uint256 sellerBalanceBefore = seller.balance;
@@ -310,11 +231,8 @@ contract NativeTokenPaymentObligationTest is Test {
     }
 
     function testMultiplePayments() public {
-        NativeTokenPaymentObligation.ObligationData
-            memory data = NativeTokenPaymentObligation.ObligationData({
-                amount: AMOUNT,
-                payee: seller
-            });
+        NativeTokenPaymentObligation.ObligationData memory data =
+            NativeTokenPaymentObligation.ObligationData({amount: AMOUNT, payee: seller});
 
         uint256 sellerBalanceBefore = seller.balance;
 

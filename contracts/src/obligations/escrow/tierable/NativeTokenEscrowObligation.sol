@@ -20,22 +20,17 @@ contract NativeTokenEscrowObligation is BaseEscrowObligationTierable, IArbiter {
     error IncorrectPayment(uint256 expected, uint256 received);
     error NativeTokenTransferFailed(address to, uint256 amount);
 
-    constructor(
-        IEAS _eas,
-        ISchemaRegistry _schemaRegistry
-    )
-        BaseEscrowObligationTierable(
-            _eas,
-            _schemaRegistry,
-            "address arbiter, bytes demand, uint256 amount",
-            true
-        )
+    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry)
+        BaseEscrowObligationTierable(_eas, _schemaRegistry, "address arbiter, bytes demand, uint256 amount", true)
     {}
 
     // Extract arbiter and demand from encoded data
-    function extractArbiterAndDemand(
-        bytes memory data
-    ) public pure override returns (address arbiter, bytes memory demand) {
+    function extractArbiterAndDemand(bytes memory data)
+        public
+        pure
+        override
+        returns (address arbiter, bytes memory demand)
+    {
         ObligationData memory decoded = abi.decode(data, (ObligationData));
         return (decoded.arbiter, decoded.demand);
     }
@@ -44,7 +39,10 @@ contract NativeTokenEscrowObligation is BaseEscrowObligationTierable, IArbiter {
     function _lockEscrow(
         bytes memory data,
         address /* from */
-    ) internal override {
+    )
+        internal
+        override
+    {
         ObligationData memory decoded = abi.decode(data, (ObligationData));
 
         if (msg.value != decoded.amount) {
@@ -57,13 +55,14 @@ contract NativeTokenEscrowObligation is BaseEscrowObligationTierable, IArbiter {
         bytes memory escrowData,
         address to,
         bytes32 /* fulfillmentUid */
-    ) internal override returns (bytes memory) {
-        ObligationData memory decoded = abi.decode(
-            escrowData,
-            (ObligationData)
-        );
+    )
+        internal
+        override
+        returns (bytes memory)
+    {
+        ObligationData memory decoded = abi.decode(escrowData, (ObligationData));
 
-        (bool success, ) = payable(to).call{value: decoded.amount}("");
+        (bool success,) = payable(to).call{value: decoded.amount}("");
         if (!success) {
             revert NativeTokenTransferFailed(to, decoded.amount);
         }
@@ -81,70 +80,45 @@ contract NativeTokenEscrowObligation is BaseEscrowObligationTierable, IArbiter {
         Attestation memory obligation,
         bytes memory demand,
         bytes32 /* fulfilling */
-    ) public view override returns (bool) {
+    )
+        public
+        view
+        override
+        returns (bool)
+    {
         if (!obligation._checkIntrinsic(ATTESTATION_SCHEMA)) return false;
 
-        ObligationData memory payment = abi.decode(
-            obligation.data,
-            (ObligationData)
-        );
+        ObligationData memory payment = abi.decode(obligation.data, (ObligationData));
         ObligationData memory demandData = abi.decode(demand, (ObligationData));
 
-        return
-            payment.amount >= demandData.amount &&
-            payment.arbiter == demandData.arbiter &&
-            keccak256(payment.demand) == keccak256(demandData.demand);
+        return payment.amount >= demandData.amount && payment.arbiter == demandData.arbiter
+            && keccak256(payment.demand) == keccak256(demandData.demand);
     }
 
     // Typed convenience methods
-    function doObligation(
-        ObligationData calldata data,
-        uint64 expirationTime
-    ) external payable returns (bytes32) {
-        return
-            _doObligationForRaw(
-                abi.encode(data),
-                expirationTime,
-                msg.sender,
-                bytes32(0)
-            );
+    function doObligation(ObligationData calldata data, uint64 expirationTime) external payable returns (bytes32) {
+        return _doObligationForRaw(abi.encode(data), expirationTime, msg.sender, bytes32(0));
     }
 
-    function doObligationFor(
-        ObligationData calldata data,
-        uint64 expirationTime,
-        address recipient
-    ) external payable returns (bytes32) {
-        return
-            _doObligationForRaw(
-                abi.encode(data),
-                expirationTime,
-                recipient,
-                bytes32(0)
-            );
+    function doObligationFor(ObligationData calldata data, uint64 expirationTime, address recipient)
+        external
+        payable
+        returns (bytes32)
+    {
+        return _doObligationForRaw(abi.encode(data), expirationTime, recipient, bytes32(0));
     }
 
-    function collectEscrow(
-        bytes32 escrow,
-        bytes32 fulfillment
-    ) external returns (bool) {
+    function collectEscrow(bytes32 escrow, bytes32 fulfillment) external returns (bool) {
         collectEscrowRaw(escrow, fulfillment);
         return true;
     }
 
-    function getObligationData(
-        bytes32 uid
-    ) public view returns (ObligationData memory) {
+    function getObligationData(bytes32 uid) public view returns (ObligationData memory) {
         Attestation memory attestation = _getAttestation(uid);
         return abi.decode(attestation.data, (ObligationData));
     }
 
-    function decodeObligationData(
-        bytes calldata data
-    ) public pure returns (ObligationData memory) {
+    function decodeObligationData(bytes calldata data) public pure returns (ObligationData memory) {
         return abi.decode(data, (ObligationData));
     }
-
-    // Allow contract to receive native tokens
-    receive() external payable override {}
 }

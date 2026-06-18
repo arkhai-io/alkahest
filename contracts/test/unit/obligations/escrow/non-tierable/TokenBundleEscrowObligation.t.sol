@@ -497,16 +497,13 @@ contract TokenBundleEscrowObligationTest is Test {
         assertFalse(escrow.checkObligation(attestation, differentDemandData, bytes32(0)));
     }
 
-    function testReceiveFunction() public {
-        uint256 balanceBefore = address(escrow).balance;
-
-        // Send native tokens directly to the contract
+    function testDirectNativeTransferReverts() public {
         vm.deal(alice, 10 ether);
         vm.prank(alice);
         (bool success,) = address(escrow).call{value: 1 ether}("");
 
-        assertTrue(success);
-        assertEq(address(escrow).balance, balanceBefore + 1 ether);
+        assertFalse(success);
+        assertEq(address(escrow).balance, 0);
     }
 
     // Helper functions to create test data

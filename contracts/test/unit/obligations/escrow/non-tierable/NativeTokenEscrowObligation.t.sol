@@ -321,15 +321,12 @@ contract NativeTokenEscrowObligationTest is Test {
         assertEq(decoded.amount, data.amount);
     }
 
-    function testReceiveFunction() public {
-        uint256 contractBalanceBefore = address(escrowObligation).balance;
-
-        // Send ETH directly to contract
+    function testDirectNativeTransferReverts() public {
         vm.prank(buyer);
         (bool success,) = address(escrowObligation).call{value: 1 ether}("");
-        assertTrue(success);
 
-        assertEq(address(escrowObligation).balance, contractBalanceBefore + 1 ether);
+        assertFalse(success);
+        assertEq(address(escrowObligation).balance, 0);
     }
 
     function testCollectEscrowWithWrongSchema() public {

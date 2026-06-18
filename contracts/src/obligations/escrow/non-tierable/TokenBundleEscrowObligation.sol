@@ -458,7 +458,4 @@ contract TokenBundleEscrowObligation is BaseEscrowObligation, IArbiter, ERC1155H
     function decodeObligationData(bytes calldata data) public pure returns (ObligationData memory) {
         return abi.decode(data, (ObligationData));
     }
-
-    // Allow contract to receive native tokens
-    receive() external payable override {}
 }
