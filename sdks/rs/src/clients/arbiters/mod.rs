@@ -2,25 +2,19 @@ use crate::{
     addresses::BASE_SEPOLIA_ADDRESSES,
     contracts,
     extensions::{AlkahestExtension, ContractModule},
-    impl_abi_conversions,
-    impl_from_attestation,
+    impl_abi_conversions, impl_from_attestation,
     types::{SharedPublicProvider, SharedWalletProvider},
 };
 
 // Implement ABI conversions for core arbiter DemandData types
 impl_abi_conversions!(contracts::arbiters::TrustedOracleArbiter::DemandData);
-impl_abi_conversions!(contracts::arbiters::IntrinsicsArbiter2::DemandData);
 impl_abi_conversions!(contracts::arbiters::ERC8004Arbiter::DemandData);
 
 // Implement From<IEAS::Attestation> for core arbiter Attestation types
 impl_from_attestation!(contracts::arbiters::TrivialArbiter::Attestation);
 impl_from_attestation!(contracts::arbiters::TrustedOracleArbiter::Attestation);
 impl_from_attestation!(contracts::arbiters::IntrinsicsArbiter::Attestation);
-impl_from_attestation!(contracts::arbiters::IntrinsicsArbiter2::Attestation);
-use alloy::{
-    primitives::Address,
-    signers::local::PrivateKeySigner,
-};
+use alloy::{primitives::Address, signers::local::PrivateKeySigner};
 use serde::{Deserialize, Serialize};
 
 mod attestation_properties;
@@ -48,7 +42,6 @@ pub struct ArbitersAddresses {
     pub trivial_arbiter: Address,
     pub trusted_oracle_arbiter: Address,
     pub intrinsics_arbiter: Address,
-    pub intrinsics_arbiter_2: Address,
     pub erc8004_arbiter: Address,
     // Logical arbiters
     pub any_arbiter: Address,
@@ -103,8 +96,6 @@ pub enum ArbitersContract {
     TrustedOracleArbiter,
     /// Intrinsics arbiter
     IntrinsicsArbiter,
-    /// Intrinsics arbiter v2
-    IntrinsicsArbiter2,
     /// ERC8004 arbiter
     ERC8004Arbiter,
     /// Any arbiter (logical OR)
@@ -126,7 +117,6 @@ impl ContractModule for ArbitersModule {
             ArbitersContract::TrivialArbiter => self.addresses.trivial_arbiter,
             ArbitersContract::TrustedOracleArbiter => self.addresses.trusted_oracle_arbiter,
             ArbitersContract::IntrinsicsArbiter => self.addresses.intrinsics_arbiter,
-            ArbitersContract::IntrinsicsArbiter2 => self.addresses.intrinsics_arbiter_2,
             ArbitersContract::ERC8004Arbiter => self.addresses.erc8004_arbiter,
             ArbitersContract::AnyArbiter => self.addresses.any_arbiter,
             ArbitersContract::AllArbiter => self.addresses.all_arbiter,
@@ -192,7 +182,6 @@ pub enum DecodedDemand {
 
     // Core arbiters (with demand data)
     TrustedOracle(contracts::arbiters::TrustedOracleArbiter::DemandData),
-    IntrinsicsArbiter2(contracts::arbiters::IntrinsicsArbiter2::DemandData),
     ERC8004Arbiter(contracts::arbiters::ERC8004Arbiter::DemandData),
 
     // Logical arbiters
@@ -201,9 +190,15 @@ pub enum DecodedDemand {
 
     // Attestation property arbiters (non-composing only)
     AttesterArbiter(contracts::arbiters::attestation_properties::AttesterArbiter::DemandData),
-    ExpirationTimeAfterArbiter(contracts::arbiters::attestation_properties::ExpirationTimeAfterArbiter::DemandData),
-    ExpirationTimeBeforeArbiter(contracts::arbiters::attestation_properties::ExpirationTimeBeforeArbiter::DemandData),
-    ExpirationTimeEqualArbiter(contracts::arbiters::attestation_properties::ExpirationTimeEqualArbiter::DemandData),
+    ExpirationTimeAfterArbiter(
+        contracts::arbiters::attestation_properties::ExpirationTimeAfterArbiter::DemandData,
+    ),
+    ExpirationTimeBeforeArbiter(
+        contracts::arbiters::attestation_properties::ExpirationTimeBeforeArbiter::DemandData,
+    ),
+    ExpirationTimeEqualArbiter(
+        contracts::arbiters::attestation_properties::ExpirationTimeEqualArbiter::DemandData,
+    ),
     RecipientArbiter(contracts::arbiters::attestation_properties::RecipientArbiter::DemandData),
     RefUidArbiter(contracts::arbiters::attestation_properties::RefUidArbiter::DemandData),
     RevocableArbiter(contracts::arbiters::attestation_properties::RevocableArbiter::DemandData),
@@ -239,10 +234,6 @@ impl ArbitersModule {
             let demand: contracts::arbiters::TrustedOracleArbiter::DemandData =
                 demand_bytes.try_into()?;
             DecodedDemand::TrustedOracle(demand)
-        } else if arbiter_addr == addresses.intrinsics_arbiter_2 {
-            let demand: contracts::arbiters::IntrinsicsArbiter2::DemandData =
-                demand_bytes.try_into()?;
-            DecodedDemand::IntrinsicsArbiter2(demand)
         } else if arbiter_addr == addresses.erc8004_arbiter {
             let demand: contracts::arbiters::ERC8004Arbiter::DemandData =
                 demand_bytes.try_into()?;
@@ -260,7 +251,8 @@ impl ArbitersModule {
 
         // Attestation property arbiters (non-composing)
         } else if arbiter_addr == addresses.attester_arbiter {
-            let demand: contracts::arbiters::attestation_properties::AttesterArbiter::DemandData = demand_bytes.try_into()?;
+            let demand: contracts::arbiters::attestation_properties::AttesterArbiter::DemandData =
+                demand_bytes.try_into()?;
             DecodedDemand::AttesterArbiter(demand)
         } else if arbiter_addr == addresses.expiration_time_after_arbiter {
             let demand: contracts::arbiters::attestation_properties::ExpirationTimeAfterArbiter::DemandData = demand_bytes.try_into()?;
@@ -272,28 +264,36 @@ impl ArbitersModule {
             let demand: contracts::arbiters::attestation_properties::ExpirationTimeEqualArbiter::DemandData = demand_bytes.try_into()?;
             DecodedDemand::ExpirationTimeEqualArbiter(demand)
         } else if arbiter_addr == addresses.recipient_arbiter {
-            let demand: contracts::arbiters::attestation_properties::RecipientArbiter::DemandData = demand_bytes.try_into()?;
+            let demand: contracts::arbiters::attestation_properties::RecipientArbiter::DemandData =
+                demand_bytes.try_into()?;
             DecodedDemand::RecipientArbiter(demand)
         } else if arbiter_addr == addresses.ref_uid_arbiter {
-            let demand: contracts::arbiters::attestation_properties::RefUidArbiter::DemandData = demand_bytes.try_into()?;
+            let demand: contracts::arbiters::attestation_properties::RefUidArbiter::DemandData =
+                demand_bytes.try_into()?;
             DecodedDemand::RefUidArbiter(demand)
         } else if arbiter_addr == addresses.revocable_arbiter {
-            let demand: contracts::arbiters::attestation_properties::RevocableArbiter::DemandData = demand_bytes.try_into()?;
+            let demand: contracts::arbiters::attestation_properties::RevocableArbiter::DemandData =
+                demand_bytes.try_into()?;
             DecodedDemand::RevocableArbiter(demand)
         } else if arbiter_addr == addresses.schema_arbiter {
-            let demand: contracts::arbiters::attestation_properties::SchemaArbiter::DemandData = demand_bytes.try_into()?;
+            let demand: contracts::arbiters::attestation_properties::SchemaArbiter::DemandData =
+                demand_bytes.try_into()?;
             DecodedDemand::SchemaArbiter(demand)
         } else if arbiter_addr == addresses.time_after_arbiter {
-            let demand: contracts::arbiters::attestation_properties::TimeAfterArbiter::DemandData = demand_bytes.try_into()?;
+            let demand: contracts::arbiters::attestation_properties::TimeAfterArbiter::DemandData =
+                demand_bytes.try_into()?;
             DecodedDemand::TimeAfterArbiter(demand)
         } else if arbiter_addr == addresses.time_before_arbiter {
-            let demand: contracts::arbiters::attestation_properties::TimeBeforeArbiter::DemandData = demand_bytes.try_into()?;
+            let demand: contracts::arbiters::attestation_properties::TimeBeforeArbiter::DemandData =
+                demand_bytes.try_into()?;
             DecodedDemand::TimeBeforeArbiter(demand)
         } else if arbiter_addr == addresses.time_equal_arbiter {
-            let demand: contracts::arbiters::attestation_properties::TimeEqualArbiter::DemandData = demand_bytes.try_into()?;
+            let demand: contracts::arbiters::attestation_properties::TimeEqualArbiter::DemandData =
+                demand_bytes.try_into()?;
             DecodedDemand::TimeEqualArbiter(demand)
         } else if arbiter_addr == addresses.uid_arbiter {
-            let demand: contracts::arbiters::attestation_properties::UidArbiter::DemandData = demand_bytes.try_into()?;
+            let demand: contracts::arbiters::attestation_properties::UidArbiter::DemandData =
+                demand_bytes.try_into()?;
             DecodedDemand::UidArbiter(demand)
         } else {
             DecodedDemand::Unknown {

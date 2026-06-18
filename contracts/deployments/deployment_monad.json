@@ -31,7 +31,6 @@
   "erc721PaymentObligation": "0xD56bD862e7BEbD0BD7356603e9E52B32c241E2AE",
   "erc8004Arbiter": "0xE923ca73F70a9eDfd36eA202C5964700B3f596b6",
   "intrinsicsArbiter": "0x08aF8e62a6508F357bd501d1e1223d38912bc708",
-  "intrinsicsArbiter2": "0xa6f47524148D2A5304779C5F9c536786Bc553e49",
   "nativeTokenBarterUtils": "0xE571D48D05962C57c95e48b8A7375466D1d02487",
   "nativeTokenEscrowObligation": "0x194C3Da79a1De5f9141b1DbCdF98eC5d511B4E5a",
   "nativeTokenPaymentObligation": "0xFeaA2fa295d1453BA382b7eE0e3F66c489A6d9Bb",

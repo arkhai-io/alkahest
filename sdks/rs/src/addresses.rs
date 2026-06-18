@@ -16,7 +16,6 @@ pub const BASE_SEPOLIA_ADDRESSES: DefaultExtensionConfig = DefaultExtensionConfi
         trivial_arbiter: address!("0x50EDa6c29C740bfbA6875422287025D985b96b7b"),
         trusted_oracle_arbiter: address!("0x3664b11BcCCeCA27C21BBAB43548961eD14d4D6D"),
         intrinsics_arbiter: address!("0x24aAFec3f86CAd330600dD2397DEB8498D44bfd9"),
-        intrinsics_arbiter_2: address!("0x51a28Ad45BE6eb6fd6D76af56a7D62ECd99547C7"),
         erc8004_arbiter: address!("0x67B23406dd9e9EA884B3d14746ef73106b1C35d6"),
         // Logical arbiters
         any_arbiter: address!("0xaaC3465f340C7A2841A120F81Ce6744cda00d263"),
@@ -35,10 +34,18 @@ pub const BASE_SEPOLIA_ADDRESSES: DefaultExtensionConfig = DefaultExtensionConfi
         time_equal_arbiter: address!("0x0E16A9f94aD457214d5e8AdD30c64D8c6FD4a416"),
         uid_arbiter: address!("0x0Be4E6D777D5C1AE3DDF338AF2398A279571511b"),
         // Confirmation arbiters (new naming convention)
-        exclusive_revocable_confirmation_arbiter: address!("0xBA0e678f4F1a62f5d737F9289B7e1F2F8580DD8D"),
-        exclusive_unrevocable_confirmation_arbiter: address!("0x141Bfd94A1C2B2728dF693657d1C7589b06A139E"),
-        nonexclusive_revocable_confirmation_arbiter: address!("0xB78A1870C5412EBa6042a5b1dE895E8f879AbeC6"),
-        nonexclusive_unrevocable_confirmation_arbiter: address!("0x74FaFAAEa1bA879E73Cd7e38ec6F3ff86554D4B7"),
+        exclusive_revocable_confirmation_arbiter: address!(
+            "0xBA0e678f4F1a62f5d737F9289B7e1F2F8580DD8D"
+        ),
+        exclusive_unrevocable_confirmation_arbiter: address!(
+            "0x141Bfd94A1C2B2728dF693657d1C7589b06A139E"
+        ),
+        nonexclusive_revocable_confirmation_arbiter: address!(
+            "0xB78A1870C5412EBa6042a5b1dE895E8f879AbeC6"
+        ),
+        nonexclusive_unrevocable_confirmation_arbiter: address!(
+            "0x74FaFAAEa1bA879E73Cd7e38ec6F3ff86554D4B7"
+        ),
     },
     string_obligation_addresses: StringObligationAddresses {
         eas: address!("0x4200000000000000000000000000000000000021"),
@@ -100,7 +107,6 @@ pub const ETHEREUM_SEPOLIA_ADDRESSES: DefaultExtensionConfig = DefaultExtensionC
         trivial_arbiter: address!("0x594E79466b6ac01C6416C929e428264a4bdF0C92"),
         trusted_oracle_arbiter: address!("0x3B2a812E3eb3B729D40d866Da16c2BB2b6cDd2f2"),
         intrinsics_arbiter: address!("0xaabdDAa76651d20922d1F561f924a40F6fE7710c"),
-        intrinsics_arbiter_2: address!("0xF486f9a62eeb085e99828e1D706bBA5dfC1bD1fD"),
         erc8004_arbiter: address!("0x367fEd55E65bd0FCCF8F966A04989AB61E1b5A49"),
         // Logical arbiters
         any_arbiter: address!("0xe968dFA581B8aBb94eC5F24d0b56163DE69511fD"),
@@ -119,10 +125,18 @@ pub const ETHEREUM_SEPOLIA_ADDRESSES: DefaultExtensionConfig = DefaultExtensionC
         time_equal_arbiter: address!("0x208385Fb349c01af2CfA8C6b86F633F6642718e2"),
         uid_arbiter: address!("0xae4fa2D5d7EDD6Aaf697dC0c98EDb921F0fEc058"),
         // Confirmation arbiters (new naming convention)
-        exclusive_revocable_confirmation_arbiter: address!("0x941044D43F9d75dfA8Ad24880B9B9cAD6e116a66"),
-        exclusive_unrevocable_confirmation_arbiter: address!("0x16aeE626D398B547eDD5fa4BdAA638524C92921d"),
-        nonexclusive_revocable_confirmation_arbiter: address!("0xe483EDA58b5f9Eba06A1ad0151dA5e4a5fFC8300"),
-        nonexclusive_unrevocable_confirmation_arbiter: address!("0x01666d869918aDDDED1B30eF2d36f3C990F09BDE"),
+        exclusive_revocable_confirmation_arbiter: address!(
+            "0x941044D43F9d75dfA8Ad24880B9B9cAD6e116a66"
+        ),
+        exclusive_unrevocable_confirmation_arbiter: address!(
+            "0x16aeE626D398B547eDD5fa4BdAA638524C92921d"
+        ),
+        nonexclusive_revocable_confirmation_arbiter: address!(
+            "0xe483EDA58b5f9Eba06A1ad0151dA5e4a5fFC8300"
+        ),
+        nonexclusive_unrevocable_confirmation_arbiter: address!(
+            "0x01666d869918aDDDED1B30eF2d36f3C990F09BDE"
+        ),
     },
     string_obligation_addresses: StringObligationAddresses {
         eas: address!("0xC2679fBD37d54388Ce493F1DB75320D236e1815e"),
@@ -184,7 +198,6 @@ pub const FILECOIN_CALIBRATION_ADDRESSES: DefaultExtensionConfig = DefaultExtens
         trivial_arbiter: address!("0xd56bd862e7bebd0bd7356603e9e52b32c241e2ae"),
         trusted_oracle_arbiter: address!("0x61dc9c2d757a1c9d0d38a281288d9ef918e77baa"),
         intrinsics_arbiter: address!("0x81dc8f2c5677b02afcafef34fa7e75d55dfaef20"),
-        intrinsics_arbiter_2: address!("0x7b20a4b25af2a2637c240622d6c3875dea609a64"),
         erc8004_arbiter: address!("0x3c1E21911C609714dBc0Ab90800c7aD8817B8e83"),
         // Logical arbiters
         any_arbiter: address!("0xb6890a8cb8cdefce11edc0314125b750f48bff1b"),
@@ -203,10 +216,18 @@ pub const FILECOIN_CALIBRATION_ADDRESSES: DefaultExtensionConfig = DefaultExtens
         time_equal_arbiter: address!("0x1c21a8fb4f69adb0ccdd22d8c125f8689bf227af"),
         uid_arbiter: address!("0xaa9aef96068f2be679ae8781a4fc33ff4798758f"),
         // Confirmation arbiters (new naming convention)
-        exclusive_revocable_confirmation_arbiter: address!("0xa740634e718c8727853d1e69963303d5cb8ea44c"),
-        exclusive_unrevocable_confirmation_arbiter: address!("0xb3d71c6f96cdd41e56dd9870b232225c379f2890"),
-        nonexclusive_revocable_confirmation_arbiter: address!("0x831b40ae79d391c7d56209802b9745fe0743dbf5"),
-        nonexclusive_unrevocable_confirmation_arbiter: address!("0xfeaa2fa295d1453ba382b7ee0e3f66c489a6d9bb"),
+        exclusive_revocable_confirmation_arbiter: address!(
+            "0xa740634e718c8727853d1e69963303d5cb8ea44c"
+        ),
+        exclusive_unrevocable_confirmation_arbiter: address!(
+            "0xb3d71c6f96cdd41e56dd9870b232225c379f2890"
+        ),
+        nonexclusive_revocable_confirmation_arbiter: address!(
+            "0x831b40ae79d391c7d56209802b9745fe0743dbf5"
+        ),
+        nonexclusive_unrevocable_confirmation_arbiter: address!(
+            "0xfeaa2fa295d1453ba382b7ee0e3f66c489a6d9bb"
+        ),
     },
     string_obligation_addresses: StringObligationAddresses {
         eas: address!("0x3c79a0225380fB6F3CB990FfC4E3D5aF4546b524"),
@@ -268,7 +289,6 @@ pub const GENLAYER_BRADBURY_ADDRESSES: DefaultExtensionConfig = DefaultExtension
         trivial_arbiter: address!("0x847F69d27E4F1A8a115aCa3F4358B079706dc9CE"),
         trusted_oracle_arbiter: address!("0xe968dFA581B8aBb94eC5F24d0b56163DE69511fD"),
         intrinsics_arbiter: address!("0xBE7fE4d7CEb2140eeBdf01e12D198AEBAdC1F54D"),
-        intrinsics_arbiter_2: address!("0x01666d869918aDDDED1B30eF2d36f3C990F09BDE"),
         erc8004_arbiter: address!("0xe483EDA58b5f9Eba06A1ad0151dA5e4a5fFC8300"),
         // Logical arbiters
         any_arbiter: address!("0xF486f9a62eeb085e99828e1D706bBA5dfC1bD1fD"),
@@ -287,10 +307,18 @@ pub const GENLAYER_BRADBURY_ADDRESSES: DefaultExtensionConfig = DefaultExtension
         time_equal_arbiter: address!("0xC51C938f5497be8157DAf8CCc3Eb11Afb8b752C0"),
         uid_arbiter: address!("0x05d9Aa2A6AE38619b864Ff7f87A8f94301ecAB42"),
         // Confirmation arbiters (new naming convention)
-        exclusive_revocable_confirmation_arbiter: address!("0x309509db364526C7aE202eA9ED94a398a0819d38"),
-        exclusive_unrevocable_confirmation_arbiter: address!("0x6CC4068d471E96A1669097918e18017f5764f72a"),
-        nonexclusive_revocable_confirmation_arbiter: address!("0x941044D43F9d75dfA8Ad24880B9B9cAD6e116a66"),
-        nonexclusive_unrevocable_confirmation_arbiter: address!("0x16aeE626D398B547eDD5fa4BdAA638524C92921d"),
+        exclusive_revocable_confirmation_arbiter: address!(
+            "0x309509db364526C7aE202eA9ED94a398a0819d38"
+        ),
+        exclusive_unrevocable_confirmation_arbiter: address!(
+            "0x6CC4068d471E96A1669097918e18017f5764f72a"
+        ),
+        nonexclusive_revocable_confirmation_arbiter: address!(
+            "0x941044D43F9d75dfA8Ad24880B9B9cAD6e116a66"
+        ),
+        nonexclusive_unrevocable_confirmation_arbiter: address!(
+            "0x16aeE626D398B547eDD5fa4BdAA638524C92921d"
+        ),
     },
     string_obligation_addresses: StringObligationAddresses {
         eas: address!("0xaC18Fa0DE3123215404a0C5f6d02ed9B2D0D0d98"),
@@ -352,7 +380,6 @@ pub const ETHEREUM_ADDRESSES: DefaultExtensionConfig = DefaultExtensionConfig {
         trivial_arbiter: address!("0x594E79466b6ac01C6416C929e428264a4bdF0C92"),
         trusted_oracle_arbiter: address!("0x3B2a812E3eb3B729D40d866Da16c2BB2b6cDd2f2"),
         intrinsics_arbiter: address!("0xaabdDAa76651d20922d1F561f924a40F6fE7710c"),
-        intrinsics_arbiter_2: address!("0xF486f9a62eeb085e99828e1D706bBA5dfC1bD1fD"),
         erc8004_arbiter: address!("0xBE7fE4d7CEb2140eeBdf01e12D198AEBAdC1F54D"),
         // Logical arbiters
         any_arbiter: address!("0xe968dFA581B8aBb94eC5F24d0b56163DE69511fD"),
@@ -371,10 +398,18 @@ pub const ETHEREUM_ADDRESSES: DefaultExtensionConfig = DefaultExtensionConfig {
         time_equal_arbiter: address!("0x208385Fb349c01af2CfA8C6b86F633F6642718e2"),
         uid_arbiter: address!("0xae4fa2D5d7EDD6Aaf697dC0c98EDb921F0fEc058"),
         // Confirmation arbiters (new naming convention)
-        exclusive_revocable_confirmation_arbiter: address!("0x941044D43F9d75dfA8Ad24880B9B9cAD6e116a66"),
-        exclusive_unrevocable_confirmation_arbiter: address!("0x16aeE626D398B547eDD5fa4BdAA638524C92921d"),
-        nonexclusive_revocable_confirmation_arbiter: address!("0xe483EDA58b5f9Eba06A1ad0151dA5e4a5fFC8300"),
-        nonexclusive_unrevocable_confirmation_arbiter: address!("0x01666d869918aDDDED1B30eF2d36f3C990F09BDE"),
+        exclusive_revocable_confirmation_arbiter: address!(
+            "0x941044D43F9d75dfA8Ad24880B9B9cAD6e116a66"
+        ),
+        exclusive_unrevocable_confirmation_arbiter: address!(
+            "0x16aeE626D398B547eDD5fa4BdAA638524C92921d"
+        ),
+        nonexclusive_revocable_confirmation_arbiter: address!(
+            "0xe483EDA58b5f9Eba06A1ad0151dA5e4a5fFC8300"
+        ),
+        nonexclusive_unrevocable_confirmation_arbiter: address!(
+            "0x01666d869918aDDDED1B30eF2d36f3C990F09BDE"
+        ),
     },
     string_obligation_addresses: StringObligationAddresses {
         eas: address!("0xA1207F3BBa224E2c9c3c6D5aF63D0eb1582Ce587"),

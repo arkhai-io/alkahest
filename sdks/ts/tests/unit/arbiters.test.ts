@@ -4,7 +4,7 @@
  * This file contains tests for the arbiter client functionality, including:
  * - TrivialArbiter
  * - TrustedOracleArbiter
- * - IntrinsicsArbiter2
+ * - SchemaArbiter
  * - AnyArbiter
  * - AllArbiter
  *
@@ -13,7 +13,6 @@
 
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { generatePrivateKey, privateKeyToAddress } from "viem/accounts";
-import { abi as intrinsicsArbiter2Abi } from "../../src/contracts/arbiters/IntrinsicsArbiter2";
 import { abi as allArbiterAbi } from "../../src/contracts/arbiters/logical/AllArbiter";
 import { abi as anyArbiterAbi } from "../../src/contracts/arbiters/logical/AnyArbiter";
 // Import contract artifacts needed for tests
@@ -350,96 +349,11 @@ describe("Arbiters Tests", () => {
     });
   });
 
-  describe("IntrinsicsArbiter2", () => {
-    // Test schema hash
-    const schema = "0x1234567890123456789012345678901234567890123456789012345678901234" as const;
-
-    test("testEncodeDecodeIntrinsics2Demand", () => {
-      // Create demand data
-      const demandData = { schema };
-
-      // Encode the demand data
-      const encodedDemand = aliceClient.arbiters.general.intrinsics2.encodeDemand(demandData);
-
-      // Decode the encoded demand data
-      const decodedDemand = aliceClient.arbiters.general.intrinsics2.decodeDemand(encodedDemand);
-
-      // Verify the decoded data matches the original
-      expect(decodedDemand.schema).toBe(schema);
-    });
-
-    test("testCheckObligationWithMatchingSchema", async () => {
-      // Create a test attestation with matching schema
-      const attestation = {
-        uid: "0x1111111111111111111111111111111111111111111111111111111111111111" as const,
-        schema,
-        time: BigInt(Math.floor(Date.now() / 1000)),
-        expirationTime: 0n,
-        revocationTime: 0n,
-        refUID: "0x0000000000000000000000000000000000000000000000000000000000000000" as const,
-        recipient: "0x0000000000000000000000000000000000000000" as const,
-        attester: "0x0000000000000000000000000000000000000000" as const,
-        revocable: true,
-        data: "0x" as const,
-      };
-
-      // Create demand data with matching schema
-      const demandData = { schema };
-      const demand = aliceClient.arbiters.general.intrinsics2.encodeDemand(demandData);
-      const counteroffer = "0x0000000000000000000000000000000000000000000000000000000000000000" as const;
-
-      // Check statement should return true for matching schema
-      const result = await testClient.readContract({
-        address: testContext.addresses.intrinsicsArbiter2,
-        abi: intrinsicsArbiter2Abi.abi,
-        functionName: "checkObligation",
-        args: [attestation, demand, counteroffer],
-      });
-
-      expect(result).toBe(true);
-    });
-
-    test("testCheckObligationWithNonMatchingSchema", async () => {
-      // Create a test attestation with different schema
-      const differentSchema = "0x5555555555555555555555555555555555555555555555555555555555555555" as const;
-      const attestation = {
-        uid: "0x0000000000000000000000000000000000000000000000000000000000000000" as const,
-        schema: differentSchema,
-        time: BigInt(Math.floor(Date.now() / 1000)),
-        expirationTime: 0n,
-        revocationTime: 0n,
-        refUID: "0x0000000000000000000000000000000000000000000000000000000000000000" as const,
-        recipient: "0x0000000000000000000000000000000000000000" as const,
-        attester: "0x0000000000000000000000000000000000000000" as const,
-        revocable: true,
-        data: "0x" as const,
-      };
-
-      // Demand data with original schema
-      const demandData = { schema };
-      const demand = aliceClient.arbiters.general.intrinsics2.encodeDemand(demandData);
-      const counteroffer = "0x0000000000000000000000000000000000000000000000000000000000000000" as const;
-
-      // Should fail with "SchemaMismatch" error
-      try {
-        await testClient.readContract({
-          address: testContext.addresses.intrinsicsArbiter2,
-          abi: intrinsicsArbiter2Abi.abi,
-          functionName: "checkObligation",
-          args: [attestation, demand, counteroffer],
-        });
-        expect(false).toBe(true); // Should not reach here
-      } catch (error) {
-        expect((error as any).toString()).toContain("InvalidSchema");
-      }
-    });
-  });
-
   describe("AnyArbiter", () => {
     test("testEncodeDecodeMultiArbiterDemand", () => {
       // Create multi arbiter demand data
       const demandData = {
-        arbiters: [testContext.addresses.trivialArbiter, testContext.addresses.intrinsicsArbiter2],
+        arbiters: [testContext.addresses.trivialArbiter, testContext.addresses.schemaArbiter],
         demands: ["0x1234" as const, "0x5678" as const],
       };
 
@@ -471,16 +385,16 @@ describe("Arbiters Tests", () => {
         data: "0x" as const,
       };
 
-      // Create demand with TrivialArbiter (always returns true) and IntrinsicsArbiter2 with wrong schema
-      const intrinsics2Demand = aliceClient.arbiters.general.intrinsics2.encodeDemand({
+      // Create demand with TrivialArbiter (always returns true) and SchemaArbiter with wrong schema
+      const schemaDemand = aliceClient.arbiters.attestationProperties.schema.encodeDemand({
         schema: "0x1234567890123456789012345678901234567890123456789012345678901234" as const,
       });
 
       const demandData = {
-        arbiters: [testContext.addresses.trivialArbiter, testContext.addresses.intrinsicsArbiter2],
+        arbiters: [testContext.addresses.trivialArbiter, testContext.addresses.schemaArbiter],
         demands: [
           "0x" as const, // Empty demand for TrivialArbiter
-          intrinsics2Demand, // Will fail since schema doesn't match
+          schemaDemand, // Will fail since schema doesn't match
         ],
       };
 
@@ -520,15 +434,15 @@ describe("Arbiters Tests", () => {
         data: "0x" as const,
       });
 
-      // Set up IntrinsicsArbiter2 with wrong schema (will fail)
-      const intrinsics2Demand = aliceClient.arbiters.general.intrinsics2.encodeDemand({
+      // Set up SchemaArbiter with wrong schema (will fail)
+      const schemaDemand = aliceClient.arbiters.attestationProperties.schema.encodeDemand({
         schema: "0x1234567890123456789012345678901234567890123456789012345678901234" as const,
       });
 
       // Create AnyArbiter demand with both failing arbiters
       const demandData = {
-        arbiters: [testContext.addresses.trustedOracleArbiter, testContext.addresses.intrinsicsArbiter2],
-        demands: [oracleDemand, intrinsics2Demand],
+        arbiters: [testContext.addresses.trustedOracleArbiter, testContext.addresses.schemaArbiter],
+        demands: [oracleDemand, schemaDemand],
       };
 
       const demand = aliceClient.arbiters.logical.any.encodeDemand(demandData);
@@ -550,7 +464,7 @@ describe("Arbiters Tests", () => {
     test("testEncodeDecodeMultiArbiterDemand", () => {
       // Same as AnyArbiter test, both use the same encoding
       const demandData = {
-        arbiters: [testContext.addresses.trivialArbiter, testContext.addresses.intrinsicsArbiter2],
+        arbiters: [testContext.addresses.trivialArbiter, testContext.addresses.schemaArbiter],
         demands: ["0x1234" as const, "0x5678" as const],
       };
 
@@ -580,16 +494,16 @@ describe("Arbiters Tests", () => {
         data: "0x" as const,
       };
 
-      // Create demand with TrivialArbiter and IntrinsicsArbiter2 that both return true
-      const intrinsics2Demand = aliceClient.arbiters.general.intrinsics2.encodeDemand({
+      // Create demand with TrivialArbiter and SchemaArbiter that both return true
+      const schemaDemand = aliceClient.arbiters.attestationProperties.schema.encodeDemand({
         schema,
       });
 
       const demandData = {
-        arbiters: [testContext.addresses.trivialArbiter, testContext.addresses.intrinsicsArbiter2],
+        arbiters: [testContext.addresses.trivialArbiter, testContext.addresses.schemaArbiter],
         demands: [
           "0x" as const, // Empty demand for TrivialArbiter (always true)
-          intrinsics2Demand, // Matching schema for IntrinsicsArbiter2 (true)
+          schemaDemand, // Matching schema for SchemaArbiter (true)
         ],
       };
 
@@ -622,8 +536,8 @@ describe("Arbiters Tests", () => {
         data: "0x" as const,
       };
 
-      // Set up intrinsics2 demand with wrong schema (will fail)
-      const intrinsics2Demand = aliceClient.arbiters.general.intrinsics2.encodeDemand({
+      // Set up schema demand with wrong schema (will fail)
+      const schemaDemand = aliceClient.arbiters.attestationProperties.schema.encodeDemand({
         schema: "0x1234567890123456789012345678901234567890123456789012345678901234" as const,
       });
 
@@ -631,9 +545,9 @@ describe("Arbiters Tests", () => {
       const demandData = {
         arbiters: [
           testContext.addresses.trivialArbiter, // Always returns true
-          testContext.addresses.intrinsicsArbiter2, // Will return false with wrong schema
+          testContext.addresses.schemaArbiter, // Will return false with wrong schema
         ],
-        demands: ["0x" as const, intrinsics2Demand],
+        demands: ["0x" as const, schemaDemand],
       };
 
       const demand = aliceClient.arbiters.logical.all.encodeDemand(demandData);

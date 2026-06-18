@@ -7,9 +7,7 @@ use alloy::{
     network::{EthereumWallet, TransactionBuilder, TxSigner},
     node_bindings::AnvilInstance,
     primitives::{Address, Signature, U256},
-    providers::{
-        Provider, ProviderBuilder, WsConnect,
-    },
+    providers::{Provider, ProviderBuilder, WsConnect},
     rpc::types::TransactionRequest,
     signers::local::PrivateKeySigner,
 };
@@ -24,8 +22,7 @@ use crate::{
     },
     contracts::{
         arbiters::{
-            TrivialArbiter, TrustedOracleArbiter, IntrinsicsArbiter, IntrinsicsArbiter2,
-            logical::{AllArbiter, AnyArbiter},
+            IntrinsicsArbiter, TrivialArbiter, TrustedOracleArbiter,
             attestation_properties::{
                 AttesterArbiter, ExpirationTimeAfterArbiter, ExpirationTimeBeforeArbiter,
                 ExpirationTimeEqualArbiter, RecipientArbiter, RefUidArbiter, RevocableArbiter,
@@ -33,24 +30,31 @@ use crate::{
             },
             confirmation::{
                 ExclusiveRevocableConfirmationArbiter, ExclusiveUnrevocableConfirmationArbiter,
-                NonexclusiveRevocableConfirmationArbiter, NonexclusiveUnrevocableConfirmationArbiter,
+                NonexclusiveRevocableConfirmationArbiter,
+                NonexclusiveUnrevocableConfirmationArbiter,
             },
+            logical::{AllArbiter, AnyArbiter},
         },
         obligations::{
+            CommitRevealObligation,
+            // Payment obligations are at root of obligations module
+            ERC20PaymentObligation,
+            ERC721PaymentObligation,
+            ERC1155PaymentObligation,
+            NativeTokenPaymentObligation,
+            StringObligation,
+            TokenBundlePaymentObligation,
             escrow::default_escrow::{
-                AttestationEscrowObligation, AttestationEscrowObligation2, ERC20EscrowObligation, ERC721EscrowObligation,
-                ERC1155EscrowObligation, NativeTokenEscrowObligation, TokenBundleEscrowObligation,
+                AttestationEscrowObligation, AttestationEscrowObligation2, ERC20EscrowObligation,
+                ERC721EscrowObligation, ERC1155EscrowObligation, NativeTokenEscrowObligation,
+                TokenBundleEscrowObligation,
             },
             escrow::unconditional::{
-                UnconditionalAttestationEscrowObligation, UnconditionalAttestationEscrowObligation2,
-                UnconditionalERC20EscrowObligation, UnconditionalERC721EscrowObligation,
-                UnconditionalERC1155EscrowObligation, UnconditionalNativeTokenEscrowObligation,
-                UnconditionalTokenBundleEscrowObligation,
+                UnconditionalAttestationEscrowObligation,
+                UnconditionalAttestationEscrowObligation2, UnconditionalERC20EscrowObligation,
+                UnconditionalERC721EscrowObligation, UnconditionalERC1155EscrowObligation,
+                UnconditionalNativeTokenEscrowObligation, UnconditionalTokenBundleEscrowObligation,
             },
-            // Payment obligations are at root of obligations module
-            ERC20PaymentObligation, ERC721PaymentObligation, ERC1155PaymentObligation,
-            NativeTokenPaymentObligation, TokenBundlePaymentObligation, StringObligation,
-            CommitRevealObligation,
         },
         utils::{
             AttestationBarterUtils, ERC20BarterUtils, ERC721BarterUtils, ERC1155BarterUtils,
@@ -110,9 +114,9 @@ pub async fn get_wallet_provider<T: TxSigner<Signature> + Sync + Send + 'static>
                 .await?
         }
         TransportScheme::Http => {
-            let url = rpc_url.parse::<url::Url>().map_err(|e| {
-                eyre::eyre!("Failed to parse HTTP RPC URL '{}': {}", rpc_url, e)
-            })?;
+            let url = rpc_url
+                .parse::<url::Url>()
+                .map_err(|e| eyre::eyre!("Failed to parse HTTP RPC URL '{}': {}", rpc_url, e))?;
             ProviderBuilder::new()
                 .with_simple_nonce_management()
                 .wallet(wallet)
@@ -135,9 +139,9 @@ pub async fn get_public_provider(rpc_url: impl ToString) -> eyre::Result<PublicP
             ProviderBuilder::new().connect_ws(ws).await?
         }
         TransportScheme::Http => {
-            let url = rpc_url.parse::<url::Url>().map_err(|e| {
-                eyre::eyre!("Failed to parse HTTP RPC URL '{}': {}", rpc_url, e)
-            })?;
+            let url = rpc_url
+                .parse::<url::Url>()
+                .map_err(|e| eyre::eyre!("Failed to parse HTTP RPC URL '{}': {}", rpc_url, e))?;
             ProviderBuilder::new().connect_http(url)
         }
     };
@@ -198,7 +202,9 @@ pub async fn wait_for_first_log(
         }
     }
 
-    Err(eyre::eyre!("Stream ended before any matching log was received"))
+    Err(eyre::eyre!(
+        "Stream ended before any matching log was received"
+    ))
 }
 
 /// True when the test suite was started with `ALKAHEST_TEST_TRANSPORT=http`.
@@ -292,9 +298,7 @@ pub async fn setup_test_environment() -> eyre::Result<TestContext> {
         let _: bool = god_provider
             .raw_request("evm_revert".into(), [*snapshot])
             .await?;
-        let new_snapshot: U256 = god_provider
-            .raw_request("evm_snapshot".into(), ())
-            .await?;
+        let new_snapshot: U256 = god_provider.raw_request("evm_snapshot".into(), ()).await?;
         *snapshot = new_snapshot;
     }
 
@@ -305,8 +309,14 @@ pub async fn setup_test_environment() -> eyre::Result<TestContext> {
     let charlie = PrivateKeySigner::random();
 
     let funding = U256::from(10_u128).pow(U256::from(20)); // 100 ETH
-    for (label, to) in [("alice", alice.address()), ("bob", bob.address()), ("charlie", charlie.address())] {
-        let tx = TransactionRequest::default().with_to(to).with_value(funding);
+    for (label, to) in [
+        ("alice", alice.address()),
+        ("bob", bob.address()),
+        ("charlie", charlie.address()),
+    ] {
+        let tx = TransactionRequest::default()
+            .with_to(to)
+            .with_value(funding);
         god_provider
             .send_transaction(tx)
             .await?
@@ -386,7 +396,6 @@ async fn build_shared_env() -> eyre::Result<SharedTestEnv> {
     let trusted_oracle_arbiter =
         TrustedOracleArbiter::deploy(&god_provider, eas.address().clone()).await?;
     let intrinsics_arbiter = IntrinsicsArbiter::deploy(&god_provider).await?;
-    let intrinsics_arbiter_2 = IntrinsicsArbiter2::deploy(&god_provider).await?;
     let any_arbiter = AnyArbiter::deploy(&god_provider).await?;
     let all_arbiter = AllArbiter::deploy(&god_provider).await?;
 
@@ -408,11 +417,14 @@ async fn build_shared_env() -> eyre::Result<SharedTestEnv> {
     let exclusive_revocable_confirmation_arbiter =
         ExclusiveRevocableConfirmationArbiter::deploy(&god_provider, eas.address().clone()).await?;
     let exclusive_unrevocable_confirmation_arbiter =
-        ExclusiveUnrevocableConfirmationArbiter::deploy(&god_provider, eas.address().clone()).await?;
+        ExclusiveUnrevocableConfirmationArbiter::deploy(&god_provider, eas.address().clone())
+            .await?;
     let nonexclusive_revocable_confirmation_arbiter =
-        NonexclusiveRevocableConfirmationArbiter::deploy(&god_provider, eas.address().clone()).await?;
+        NonexclusiveRevocableConfirmationArbiter::deploy(&god_provider, eas.address().clone())
+            .await?;
     let nonexclusive_unrevocable_confirmation_arbiter =
-        NonexclusiveUnrevocableConfirmationArbiter::deploy(&god_provider, eas.address().clone()).await?;
+        NonexclusiveUnrevocableConfirmationArbiter::deploy(&god_provider, eas.address().clone())
+            .await?;
 
     macro_rules! deploy_obligation {
         ($name:ident) => {
@@ -440,13 +452,20 @@ async fn build_shared_env() -> eyre::Result<SharedTestEnv> {
     let native_token_payment_obligation = deploy_obligation!(NativeTokenPaymentObligation);
 
     // Deploy unconditional obligations
-    let unconditional_attestation_escrow_obligation = deploy_obligation!(UnconditionalAttestationEscrowObligation);
-    let unconditional_attestation_escrow_obligation_2 = deploy_obligation!(UnconditionalAttestationEscrowObligation2);
-    let unconditional_bundle_escrow_obligation = deploy_obligation!(UnconditionalTokenBundleEscrowObligation);
-    let unconditional_erc20_escrow_obligation = deploy_obligation!(UnconditionalERC20EscrowObligation);
-    let unconditional_erc721_escrow_obligation = deploy_obligation!(UnconditionalERC721EscrowObligation);
-    let unconditional_erc1155_escrow_obligation = deploy_obligation!(UnconditionalERC1155EscrowObligation);
-    let unconditional_native_token_escrow_obligation = deploy_obligation!(UnconditionalNativeTokenEscrowObligation);
+    let unconditional_attestation_escrow_obligation =
+        deploy_obligation!(UnconditionalAttestationEscrowObligation);
+    let unconditional_attestation_escrow_obligation_2 =
+        deploy_obligation!(UnconditionalAttestationEscrowObligation2);
+    let unconditional_bundle_escrow_obligation =
+        deploy_obligation!(UnconditionalTokenBundleEscrowObligation);
+    let unconditional_erc20_escrow_obligation =
+        deploy_obligation!(UnconditionalERC20EscrowObligation);
+    let unconditional_erc721_escrow_obligation =
+        deploy_obligation!(UnconditionalERC721EscrowObligation);
+    let unconditional_erc1155_escrow_obligation =
+        deploy_obligation!(UnconditionalERC1155EscrowObligation);
+    let unconditional_native_token_escrow_obligation =
+        deploy_obligation!(UnconditionalNativeTokenEscrowObligation);
 
     let string_obligation = StringObligation::deploy(
         &god_provider,
@@ -459,8 +478,8 @@ async fn build_shared_env() -> eyre::Result<SharedTestEnv> {
         &god_provider,
         eas.address().clone(),
         schema_registry.address().clone(),
-        U256::from(3600u64),                    // 1 hour deadline
-        Address::ZERO,                          // burn slashed bonds
+        U256::from(3600u64), // 1 hour deadline
+        Address::ZERO,       // burn slashed bonds
     )
     .await?;
 
@@ -549,7 +568,6 @@ async fn build_shared_env() -> eyre::Result<SharedTestEnv> {
             trivial_arbiter: trivial_arbiter.address().clone(),
             trusted_oracle_arbiter: trusted_oracle_arbiter.address().clone(),
             intrinsics_arbiter: intrinsics_arbiter.address().clone(),
-            intrinsics_arbiter_2: intrinsics_arbiter_2.address().clone(),
             erc8004_arbiter: Address::ZERO, // Not deployed in test environment
             any_arbiter: any_arbiter.address().clone(),
             all_arbiter: all_arbiter.address().clone(),
@@ -567,10 +585,20 @@ async fn build_shared_env() -> eyre::Result<SharedTestEnv> {
             time_equal_arbiter: time_equal_arbiter.address().clone(),
             uid_arbiter: uid_arbiter.address().clone(),
             // Confirmation arbiters
-            exclusive_revocable_confirmation_arbiter: exclusive_revocable_confirmation_arbiter.address().clone(),
-            exclusive_unrevocable_confirmation_arbiter: exclusive_unrevocable_confirmation_arbiter.address().clone(),
-            nonexclusive_revocable_confirmation_arbiter: nonexclusive_revocable_confirmation_arbiter.address().clone(),
-            nonexclusive_unrevocable_confirmation_arbiter: nonexclusive_unrevocable_confirmation_arbiter.address().clone(),
+            exclusive_revocable_confirmation_arbiter: exclusive_revocable_confirmation_arbiter
+                .address()
+                .clone(),
+            exclusive_unrevocable_confirmation_arbiter: exclusive_unrevocable_confirmation_arbiter
+                .address()
+                .clone(),
+            nonexclusive_revocable_confirmation_arbiter:
+                nonexclusive_revocable_confirmation_arbiter
+                    .address()
+                    .clone(),
+            nonexclusive_unrevocable_confirmation_arbiter:
+                nonexclusive_unrevocable_confirmation_arbiter
+                    .address()
+                    .clone(),
         },
         string_obligation_addresses: StringObligationAddresses {
             eas: eas.address().clone(),
@@ -584,35 +612,45 @@ async fn build_shared_env() -> eyre::Result<SharedTestEnv> {
             eas: eas.address().clone(),
             barter_utils: erc20_barter_utils.address().clone(),
             escrow_obligation_default: erc20_escrow_obligation.address().clone(),
-            escrow_obligation_unconditional: unconditional_erc20_escrow_obligation.address().clone(),
+            escrow_obligation_unconditional: unconditional_erc20_escrow_obligation
+                .address()
+                .clone(),
             payment_obligation: erc20_payment_obligation.address().clone(),
         },
         erc721_addresses: Erc721Addresses {
             eas: eas.address().clone(),
             barter_utils: erc721_barter_utils.address().clone(),
             escrow_obligation_default: erc721_escrow_obligation.address().clone(),
-            escrow_obligation_unconditional: unconditional_erc721_escrow_obligation.address().clone(),
+            escrow_obligation_unconditional: unconditional_erc721_escrow_obligation
+                .address()
+                .clone(),
             payment_obligation: erc721_payment_obligation.address().clone(),
         },
         erc1155_addresses: Erc1155Addresses {
             eas: eas.address().clone(),
             barter_utils: erc1155_barter_utils.address().clone(),
             escrow_obligation_default: erc1155_escrow_obligation.address().clone(),
-            escrow_obligation_unconditional: unconditional_erc1155_escrow_obligation.address().clone(),
+            escrow_obligation_unconditional: unconditional_erc1155_escrow_obligation
+                .address()
+                .clone(),
             payment_obligation: erc1155_payment_obligation.address().clone(),
         },
         native_token_addresses: NativeTokenAddresses {
             eas: eas.address().clone(),
             barter_utils: native_token_barter_utils.address().clone(),
             escrow_obligation_default: native_token_escrow_obligation.address().clone(),
-            escrow_obligation_unconditional: unconditional_native_token_escrow_obligation.address().clone(),
+            escrow_obligation_unconditional: unconditional_native_token_escrow_obligation
+                .address()
+                .clone(),
             payment_obligation: native_token_payment_obligation.address().clone(),
         },
         token_bundle_addresses: TokenBundleAddresses {
             eas: eas.address().clone(),
             barter_utils: bundle_barter_utils.address().clone(),
             escrow_obligation_default: bundle_escrow_obligation.address().clone(),
-            escrow_obligation_unconditional: unconditional_bundle_escrow_obligation.address().clone(),
+            escrow_obligation_unconditional: unconditional_bundle_escrow_obligation
+                .address()
+                .clone(),
             payment_obligation: bundle_payment_obligation.address().clone(),
         },
         attestation_addresses: AttestationAddresses {
@@ -620,9 +658,13 @@ async fn build_shared_env() -> eyre::Result<SharedTestEnv> {
             eas_schema_registry: schema_registry.address().clone(),
             barter_utils: attestation_barter_utils.address().clone(),
             escrow_obligation_default: attestation_escrow_obligation.address().clone(),
-            escrow_obligation_unconditional: unconditional_attestation_escrow_obligation.address().clone(),
+            escrow_obligation_unconditional: unconditional_attestation_escrow_obligation
+                .address()
+                .clone(),
             escrow_obligation_2_default: attestation_escrow_obligation_2.address().clone(),
-            escrow_obligation_2_unconditional: unconditional_attestation_escrow_obligation_2.address().clone(),
+            escrow_obligation_2_unconditional: unconditional_attestation_escrow_obligation_2
+                .address()
+                .clone(),
         },
     };
 
@@ -639,9 +681,7 @@ async fn build_shared_env() -> eyre::Result<SharedTestEnv> {
     // Use the local god_provider for this single call; it will be dropped
     // when this function returns. Per-test code creates fresh providers
     // because long-lived alloy ws backend tasks can die between tests.
-    let snapshot_id: U256 = god_provider
-        .raw_request("evm_snapshot".into(), ())
-        .await?;
+    let snapshot_id: U256 = god_provider.raw_request("evm_snapshot".into(), ()).await?;
     drop(god_provider);
     drop(god_provider_);
 

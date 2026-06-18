@@ -7,7 +7,7 @@ import type { ViemClient } from "../../../utils";
  * A basic intrinsics arbiter that validates attestation intrinsics (not expired, not revoked).
  * This arbiter does not use DemandData - it's a simple pass-through validator.
  *
- * Use IntrinsicsArbiter2 if you need schema validation.
+ * Compose with SchemaArbiter via AllArbiter if you need schema validation.
  */
 export const makeIntrinsicsArbiterClient = (viemClient: ViemClient, addresses: ChainAddresses) => {
   return {

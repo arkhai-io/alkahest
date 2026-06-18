@@ -5,7 +5,9 @@
 
 use alkahest_rs::{
     clients::arbiters::{DecodedAllArbiterDemandData, DecodedAnyArbiterDemandData, DecodedDemand},
-    contracts::arbiters::logical::{AllArbiter as AllArbiterContract, AnyArbiter as AnyArbiterContract},
+    contracts::arbiters::logical::{
+        AllArbiter as AllArbiterContract, AnyArbiter as AnyArbiterContract,
+    },
     extensions::ArbitersModule,
 };
 use alloy::sol_types::SolValue;
@@ -74,8 +76,9 @@ impl AllArbiter {
     /// Decode AllArbiter demand data from raw bytes into structured format
     pub fn decode(&self, demand_bytes: Vec<u8>) -> PyResult<PyDecodedAllArbiterDemandData> {
         let demand: AllArbiterContract::DemandData =
-            AllArbiterContract::DemandData::abi_decode(&demand_bytes)
-                .map_err(|e| map_eyre_to_pyerr(eyre::eyre!("Failed to decode AllArbiter demand: {}", e)))?;
+            AllArbiterContract::DemandData::abi_decode(&demand_bytes).map_err(|e| {
+                map_eyre_to_pyerr(eyre::eyre!("Failed to decode AllArbiter demand: {}", e))
+            })?;
         let decoded = self
             .inner
             .decode_all_arbiter_demands(demand)
@@ -88,15 +91,18 @@ impl AllArbiter {
     pub fn encode(arbiters: Vec<String>, demands: Vec<Vec<u8>>) -> PyResult<Vec<u8>> {
         let arbiter_addresses: Vec<alloy::primitives::Address> = arbiters
             .iter()
-            .map(|s| s.parse().map_err(|e| {
-                pyo3::PyErr::new::<pyo3::exceptions::PyValueError, _>(format!("Invalid address: {}", e))
-            }))
+            .map(|s| {
+                s.parse().map_err(|e| {
+                    pyo3::PyErr::new::<pyo3::exceptions::PyValueError, _>(format!(
+                        "Invalid address: {}",
+                        e
+                    ))
+                })
+            })
             .collect::<PyResult<Vec<_>>>()?;
 
-        let demand_bytes: Vec<alloy::primitives::Bytes> = demands
-            .into_iter()
-            .map(|d| d.into())
-            .collect();
+        let demand_bytes: Vec<alloy::primitives::Bytes> =
+            demands.into_iter().map(|d| d.into()).collect();
 
         let demand_data = AllArbiterContract::DemandData {
             arbiters: arbiter_addresses,
@@ -130,8 +136,9 @@ impl AnyArbiter {
     /// Decode AnyArbiter demand data from raw bytes into structured format
     pub fn decode(&self, demand_bytes: Vec<u8>) -> PyResult<PyDecodedAnyArbiterDemandData> {
         let demand: AnyArbiterContract::DemandData =
-            AnyArbiterContract::DemandData::abi_decode(&demand_bytes)
-                .map_err(|e| map_eyre_to_pyerr(eyre::eyre!("Failed to decode AnyArbiter demand: {}", e)))?;
+            AnyArbiterContract::DemandData::abi_decode(&demand_bytes).map_err(|e| {
+                map_eyre_to_pyerr(eyre::eyre!("Failed to decode AnyArbiter demand: {}", e))
+            })?;
         let decoded = self
             .inner
             .decode_any_arbiter_demands(demand)
@@ -144,15 +151,18 @@ impl AnyArbiter {
     pub fn encode(arbiters: Vec<String>, demands: Vec<Vec<u8>>) -> PyResult<Vec<u8>> {
         let arbiter_addresses: Vec<alloy::primitives::Address> = arbiters
             .iter()
-            .map(|s| s.parse().map_err(|e| {
-                pyo3::PyErr::new::<pyo3::exceptions::PyValueError, _>(format!("Invalid address: {}", e))
-            }))
+            .map(|s| {
+                s.parse().map_err(|e| {
+                    pyo3::PyErr::new::<pyo3::exceptions::PyValueError, _>(format!(
+                        "Invalid address: {}",
+                        e
+                    ))
+                })
+            })
             .collect::<PyResult<Vec<_>>>()?;
 
-        let demand_bytes: Vec<alloy::primitives::Bytes> = demands
-            .into_iter()
-            .map(|d| d.into())
-            .collect();
+        let demand_bytes: Vec<alloy::primitives::Bytes> =
+            demands.into_iter().map(|d| d.into()).collect();
 
         let demand_data = AnyArbiterContract::DemandData {
             arbiters: arbiter_addresses,
@@ -187,8 +197,16 @@ impl PyDecodedAllArbiterDemandData {
 impl From<DecodedAllArbiterDemandData> for PyDecodedAllArbiterDemandData {
     fn from(decoded: DecodedAllArbiterDemandData) -> Self {
         Self {
-            arbiters: decoded.arbiters.iter().map(|a| format!("{:?}", a)).collect(),
-            demands: decoded.demands.into_iter().map(PyDecodedDemand::from).collect(),
+            arbiters: decoded
+                .arbiters
+                .iter()
+                .map(|a| format!("{:?}", a))
+                .collect(),
+            demands: decoded
+                .demands
+                .into_iter()
+                .map(PyDecodedDemand::from)
+                .collect(),
         }
     }
 }
@@ -217,8 +235,16 @@ impl PyDecodedAnyArbiterDemandData {
 impl From<DecodedAnyArbiterDemandData> for PyDecodedAnyArbiterDemandData {
     fn from(decoded: DecodedAnyArbiterDemandData) -> Self {
         Self {
-            arbiters: decoded.arbiters.iter().map(|a| format!("{:?}", a)).collect(),
-            demands: decoded.demands.into_iter().map(PyDecodedDemand::from).collect(),
+            arbiters: decoded
+                .arbiters
+                .iter()
+                .map(|a| format!("{:?}", a))
+                .collect(),
+            demands: decoded
+                .demands
+                .into_iter()
+                .map(PyDecodedDemand::from)
+                .collect(),
         }
     }
 }
@@ -253,10 +279,6 @@ impl From<DecodedDemand> for PyDecodedDemand {
             },
             DecodedDemand::TrustedOracle(data) => Self {
                 demand_type: "TrustedOracle".to_string(),
-                raw_data: Some(data.abi_encode()),
-            },
-            DecodedDemand::IntrinsicsArbiter2(data) => Self {
-                demand_type: "IntrinsicsArbiter2".to_string(),
                 raw_data: Some(data.abi_encode()),
             },
             DecodedDemand::ERC8004Arbiter(data) => Self {

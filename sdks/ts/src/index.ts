@@ -232,7 +232,6 @@ export const makeMinimalClient = (
     trivialArbiter: contractAddresses?.trivialArbiter || baseAddresses?.trivialArbiter || zeroAddress,
     trustedOracleArbiter: contractAddresses?.trustedOracleArbiter || baseAddresses?.trustedOracleArbiter || zeroAddress,
     intrinsicsArbiter: contractAddresses?.intrinsicsArbiter || baseAddresses?.intrinsicsArbiter || zeroAddress,
-    intrinsicsArbiter2: contractAddresses?.intrinsicsArbiter2 || baseAddresses?.intrinsicsArbiter2 || zeroAddress,
     anyArbiter: contractAddresses?.anyArbiter || baseAddresses?.anyArbiter || zeroAddress,
     allArbiter: contractAddresses?.allArbiter || baseAddresses?.allArbiter || zeroAddress,
     erc8004Arbiter: contractAddresses?.erc8004Arbiter || baseAddresses?.erc8004Arbiter || zeroAddress,

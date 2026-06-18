@@ -101,7 +101,6 @@ Barter utils combine escrow + payment into atomic single-transaction swaps.
 | AllArbiter | `0x0D95c1Cd62cd9C7cCCB237a3Ae08aA61Ed83381f` |
 | AnyArbiter | `0xaaC3465f340C7A2841A120F81Ce6744cda00d263` |
 | IntrinsicsArbiter | `0x24aAFec3f86CAd330600dD2397DEB8498D44bfd9` |
-| IntrinsicsArbiter2 | `0x51a28Ad45BE6eb6fd6D76af56a7D62ECd99547C7` |
 | ERC8004Arbiter | `0x67B23406dd9e9EA884B3d14746ef73106b1C35d6` |
 | ExclusiveRevocableConfirmationArbiter | `0xBA0e678f4F1a62f5d737F9289B7e1F2F8580DD8D` |
 | ExclusiveUnrevocableConfirmationArbiter | `0x141Bfd94A1C2B2728dF693657d1C7589b06A139E` |
@@ -151,7 +150,6 @@ Barter utils combine escrow + payment into atomic single-transaction swaps.
 | AllArbiter | `0x847F69d27E4F1A8a115aCa3F4358B079706dc9CE` |
 | AnyArbiter | `0xe968dFA581B8aBb94eC5F24d0b56163DE69511fD` |
 | IntrinsicsArbiter | `0xaabdDAa76651d20922d1F561f924a40F6fE7710c` |
-| IntrinsicsArbiter2 | `0xF486f9a62eeb085e99828e1D706bBA5dfC1bD1fD` |
 | ERC8004Arbiter | `0x367fEd55E65bd0FCCF8F966A04989AB61E1b5A49` |
 | ExclusiveRevocableConfirmationArbiter | `0x941044D43F9d75dfA8Ad24880B9B9cAD6e116a66` |
 | ExclusiveUnrevocableConfirmationArbiter | `0x16aeE626D398B547eDD5fa4BdAA638524C92921d` |
@@ -201,7 +199,6 @@ Barter utils combine escrow + payment into atomic single-transaction swaps.
 | AllArbiter | `0x49026902790a8ecb427f335ca0d097c7c5795d13` |
 | AnyArbiter | `0xb6890a8cb8cdefce11edc0314125b750f48bff1b` |
 | IntrinsicsArbiter | `0x81dc8f2c5677b02afcafef34fa7e75d55dfaef20` |
-| IntrinsicsArbiter2 | `0x7b20a4b25af2a2637c240622d6c3875dea609a64` |
 | ERC8004Arbiter | `0x3c1E21911C609714dBc0Ab90800c7aD8817B8e83` |
 | ExclusiveRevocableConfirmationArbiter | `0xa740634e718c8727853d1e69963303d5cb8ea44c` |
 | ExclusiveUnrevocableConfirmationArbiter | `0xb3d71c6f96cdd41e56dd9870b232225c379f2890` |
@@ -251,7 +248,6 @@ Barter utils combine escrow + payment into atomic single-transaction swaps.
 | AllArbiter | `0x847F69d27E4F1A8a115aCa3F4358B079706dc9CE` |
 | AnyArbiter | `0xe968dFA581B8aBb94eC5F24d0b56163DE69511fD` |
 | IntrinsicsArbiter | `0xaabdDAa76651d20922d1F561f924a40F6fE7710c` |
-| IntrinsicsArbiter2 | `0xF486f9a62eeb085e99828e1D706bBA5dfC1bD1fD` |
 | ERC8004Arbiter | `0xBE7fE4d7CEb2140eeBdf01e12D198AEBAdC1F54D` |
 | ExclusiveRevocableConfirmationArbiter | `0x941044D43F9d75dfA8Ad24880B9B9cAD6e116a66` |
 | ExclusiveUnrevocableConfirmationArbiter | `0x16aeE626D398B547eDD5fa4BdAA638524C92921d` |

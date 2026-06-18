@@ -24,7 +24,6 @@
   "expirationTimeBeforeArbiter": "0x698008cC7F4714D331Aa27278BfE6B74FA925cF7",
   "expirationTimeEqualArbiter": "0x4d05EA86C2C0af7CA94dc71Da45aba9368e664e4",
   "intrinsicsArbiter": "0x24aAFec3f86CAd330600dD2397DEB8498D44bfd9",
-  "intrinsicsArbiter2": "0x51a28Ad45BE6eb6fd6D76af56a7D62ECd99547C7",
   "nativeTokenBarterUtils": "0xaaB70Cfc37C5E73e185E2976609A82Ba22A4310d",
   "nativeTokenEscrowObligation": "0x8a1172D32B8cEf14094cF1E7d6F3d1A36D949FDe",
   "nativeTokenPaymentObligation": "0xAB1E9714fbD4f9B5546e891B7Ba392b08c44c37A",

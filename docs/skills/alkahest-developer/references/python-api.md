@@ -158,7 +158,6 @@ client
     ├── trivial_arbiter_address() -> str
     ├── trusted_oracle_arbiter_address() -> str
     ├── intrinsics_arbiter_address() -> str
-    ├── intrinsics_arbiter_2_address() -> str
     ├── erc8004_arbiter_address() -> str
     ├── any_arbiter_address() -> str
     ├── all_arbiter_address() -> str
@@ -202,7 +201,6 @@ decoded = PyCommitRevealObligationData.decode(encoded_bytes)
 ```python
 from alkahest_py import (
     PyTrustedOracleArbiterDemandData,
-    IntrinsicsArbiter2DemandData,     # schema (with encode/decode)
     ERC8004ArbiterDemandData,         # validation_registry, validator_address, min_response
     AttesterArbiterDemandData,
     RecipientArbiterDemandData,

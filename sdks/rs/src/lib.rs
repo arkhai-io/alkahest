@@ -36,11 +36,11 @@ pub mod utils;
 // Re-export contract types from client modules
 pub use clients::arbiters::ArbitersContract;
 pub use clients::attestation::AttestationContract;
+pub use clients::commit_reveal_obligation::CommitRevealObligationContract;
 pub use clients::erc20::Erc20Contract;
 pub use clients::erc721::Erc721Contract;
 pub use clients::erc1155::Erc1155Contract;
 pub use clients::native_token::NativeTokenContract;
-pub use clients::commit_reveal_obligation::CommitRevealObligationContract;
 pub use clients::string_obligation::StringObligationContract;
 pub use clients::token_bundle::TokenBundleContract;
 pub use extensions::ContractModule;
@@ -319,7 +319,9 @@ impl<Extensions: AlkahestExtension> AlkahestClient<Extensions> {
                 self.attestation().addresses.eas_schema_registry
             }
             AttestationContract::BarterUtils => self.attestation().addresses.barter_utils,
-            AttestationContract::EscrowObligation => self.attestation().addresses.escrow_obligation_default,
+            AttestationContract::EscrowObligation => {
+                self.attestation().addresses.escrow_obligation_default
+            }
             AttestationContract::EscrowObligation2 => {
                 self.attestation().addresses.escrow_obligation_2_default
             }
@@ -347,9 +349,7 @@ impl<Extensions: AlkahestExtension> AlkahestClient<Extensions> {
     {
         match contract {
             CommitRevealObligationContract::Eas => self.commit_reveal().addresses.eas,
-            CommitRevealObligationContract::Obligation => {
-                self.commit_reveal().addresses.obligation
-            }
+            CommitRevealObligationContract::Obligation => self.commit_reveal().addresses.obligation,
         }
     }
 
@@ -365,7 +365,6 @@ impl<Extensions: AlkahestExtension> AlkahestClient<Extensions> {
                 self.arbiters().addresses.trusted_oracle_arbiter
             }
             ArbitersContract::IntrinsicsArbiter => self.arbiters().addresses.intrinsics_arbiter,
-            ArbitersContract::IntrinsicsArbiter2 => self.arbiters().addresses.intrinsics_arbiter_2,
             ArbitersContract::ERC8004Arbiter => self.arbiters().addresses.erc8004_arbiter,
             ArbitersContract::AnyArbiter => self.arbiters().addresses.any_arbiter,
             ArbitersContract::AllArbiter => self.arbiters().addresses.all_arbiter,
@@ -575,7 +574,10 @@ mod tests {
 
         // Test specific contract addresses
         assert_ne!(config.erc20_addresses.barter_utils, Address::ZERO);
-        assert_ne!(config.erc20_addresses.escrow_obligation_default, Address::ZERO);
+        assert_ne!(
+            config.erc20_addresses.escrow_obligation_default,
+            Address::ZERO
+        );
         assert_ne!(config.erc20_addresses.payment_obligation, Address::ZERO);
     }
 

@@ -93,7 +93,7 @@ export const createDecodersFromAddresses = (addresses: ChainAddresses): Decoders
   }
 
   // Note: Confirmation arbiters don't have DemandData - they are action-based (confirm/revoke)
-  // TrivialArbiter, IntrinsicsArbiter, IntrinsicsArbiter2 don't have DemandData either
+  // TrivialArbiter and IntrinsicsArbiter don't have DemandData either
 
   return decoders;
 };

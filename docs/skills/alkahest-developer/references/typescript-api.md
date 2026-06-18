@@ -73,9 +73,6 @@ client
 ├── arbiters
 │   ├── general
 │   │   ├── intrinsics               // (no methods — use address only)
-│   │   ├── intrinsics2
-│   │   │   ├── encodeDemand({ schema })
-│   │   │   └── decodeDemand(bytes)   // => { schema }
 │   │   └── trustedOracle
 │   │       ├── encodeDemand({ oracle, data })
 │   │       ├── decodeDemand(bytes)   // => { oracle, data }

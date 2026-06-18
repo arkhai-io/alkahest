@@ -31,7 +31,6 @@ from .alkahest_py import (
     PyArbitrationMode as ArbitrationMode,
     # Arbiter DemandData types
     PyTrustedOracleArbiterDemandData as TrustedOracleArbiterDemandData,
-    IntrinsicsArbiter2DemandData as IntrinsicsArbiter2DemandData,
     ERC8004ArbiterDemandData as ERC8004ArbiterDemandData,
     AttesterArbiterDemandData as AttesterArbiterDemandData,
     RecipientArbiterDemandData as RecipientArbiterDemandData,
@@ -100,7 +99,6 @@ __all__ = [
     "ArbitrationMode",
     # Arbiter DemandData types
     "TrustedOracleArbiterDemandData",
-    "IntrinsicsArbiter2DemandData",
     "ERC8004ArbiterDemandData",
     "AttesterArbiterDemandData",
     "RecipientArbiterDemandData",

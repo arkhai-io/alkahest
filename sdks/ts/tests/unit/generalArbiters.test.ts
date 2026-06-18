@@ -2,7 +2,7 @@
  * General Arbiters Unit Tests
  *
  * Tests for the arbiters client functionality, including:
- * - IntrinsicsArbiter2: Schema-based validation
+ * - SchemaArbiter: Schema-based validation
  * - TrustedOracleArbiter: Oracle-based decision making with arbitration requests
  * - RecipientArbiter: Recipient-based validation (replaces TrustedPartyArbiter)
  * - UidArbiter: UID-based validation (replaces SpecificAttestationArbiter)
@@ -13,9 +13,9 @@ import { encodeAbiParameters, parseAbiParameters } from "viem";
 import { generatePrivateKey, privateKeyToAddress } from "viem/accounts";
 import { makeClient } from "../../src";
 import { abi as recipientArbiterAbi } from "../../src/contracts/arbiters/attestation-properties/RecipientArbiter";
+import { abi as schemaArbiterAbi } from "../../src/contracts/arbiters/attestation-properties/SchemaArbiter";
 import { abi as uidArbiterAbi } from "../../src/contracts/arbiters/attestation-properties/UidArbiter";
 // Import contract artifacts needed for tests
-import { abi as intrinsicsArbiter2Abi } from "../../src/contracts/arbiters/IntrinsicsArbiter2";
 import { abi as trustedOracleArbiterAbi } from "../../src/contracts/arbiters/TrustedOracleArbiter";
 import { setupTestEnvironment, type TestContext } from "../utils/setup";
 import { teardownTestEnvironment } from "../utils/teardownTestEnvironment";
@@ -73,26 +73,26 @@ describe("General Arbiters Tests", () => {
     ...overrides,
   });
 
-  describe("IntrinsicsArbiter2", () => {
+  describe("SchemaArbiter", () => {
     const targetSchema = "0x1234567890123456789012345678901234567890123456789012345678901234" as const;
 
-    test("should encode and decode IntrinsicsArbiter2 demand data correctly", () => {
+    test("should encode and decode SchemaArbiter demand data correctly", () => {
       const originalDemand = { schema: targetSchema };
 
-      const encoded = aliceClient.arbiters.general.intrinsics2.encodeDemand(originalDemand);
-      const decoded = aliceClient.arbiters.general.intrinsics2.decodeDemand(encoded);
+      const encoded = aliceClient.arbiters.attestationProperties.schema.encodeDemand(originalDemand);
+      const decoded = aliceClient.arbiters.attestationProperties.schema.decodeDemand(encoded);
 
       expect(decoded.schema).toBe(originalDemand.schema);
     });
 
     test("should validate attestation with matching schema", async () => {
       const attestation = createTestAttestation({ schema: targetSchema });
-      const demand = aliceClient.arbiters.general.intrinsics2.encodeDemand({ schema: targetSchema });
+      const demand = aliceClient.arbiters.attestationProperties.schema.encodeDemand({ schema: targetSchema });
       const counteroffer = "0x0000000000000000000000000000000000000000000000000000000000000000" as const;
 
       const result = await testClient.readContract({
-        address: testContext.addresses.intrinsicsArbiter2,
-        abi: intrinsicsArbiter2Abi.abi,
+        address: testContext.addresses.schemaArbiter,
+        abi: schemaArbiterAbi.abi,
         functionName: "checkObligation",
         args: [attestation, demand, counteroffer],
       });
@@ -103,19 +103,19 @@ describe("General Arbiters Tests", () => {
     test("should reject attestation with non-matching schema", async () => {
       const wrongSchema = "0x9999999999999999999999999999999999999999999999999999999999999999" as const;
       const attestation = createTestAttestation({ schema: wrongSchema });
-      const demand = aliceClient.arbiters.general.intrinsics2.encodeDemand({ schema: targetSchema });
+      const demand = aliceClient.arbiters.attestationProperties.schema.encodeDemand({ schema: targetSchema });
       const counteroffer = "0x0000000000000000000000000000000000000000000000000000000000000000" as const;
 
       try {
         await testClient.readContract({
-          address: testContext.addresses.intrinsicsArbiter2,
-          abi: intrinsicsArbiter2Abi.abi,
+          address: testContext.addresses.schemaArbiter,
+          abi: schemaArbiterAbi.abi,
           functionName: "checkObligation",
           args: [attestation, demand, counteroffer],
         });
         expect(false).toBe(true); // Should not reach here
       } catch (error) {
-        expect((error as any).toString()).toContain("InvalidSchema");
+        expect((error as any).toString()).toContain("SchemaMismatched");
       }
     });
 
@@ -126,7 +126,7 @@ describe("General Arbiters Tests", () => {
       const manualEncoded = encodeAbiParameters(parseAbiParameters("(bytes32 schema)"), [demand]);
 
       // SDK encoding
-      const sdkEncoded = aliceClient.arbiters.general.intrinsics2.encodeDemand(demand);
+      const sdkEncoded = aliceClient.arbiters.attestationProperties.schema.encodeDemand(demand);
 
       expect(sdkEncoded).toBe(manualEncoded);
     });
@@ -443,7 +443,7 @@ describe("General Arbiters Tests", () => {
   describe("Error handling", () => {
     test("should throw error for invalid hex data", () => {
       expect(() => {
-        aliceClient.arbiters.general.intrinsics2.decodeDemand("0x123" as `0x${string}`);
+        aliceClient.arbiters.attestationProperties.schema.decodeDemand("0x123" as `0x${string}`);
       }).toThrow();
     });
 

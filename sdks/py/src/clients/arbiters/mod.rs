@@ -12,11 +12,7 @@ pub mod logical;
 pub mod trusted_oracle;
 
 use alkahest_rs::{
-    contracts::arbiters::{
-        ERC8004Arbiter as ERC8004ArbiterContract,
-        IntrinsicsArbiter2 as IntrinsicsArbiter2Contract,
-    },
-    extensions::ArbitersModule,
+    contracts::arbiters::ERC8004Arbiter as ERC8004ArbiterContract, extensions::ArbitersModule,
 };
 use alloy::sol_types::SolValue;
 use pyo3::{pyclass, pymethods, PyResult};
@@ -25,9 +21,8 @@ use crate::error_handling::map_eyre_to_pyerr;
 
 // Re-export main types for backwards compatibility
 pub use trusted_oracle::{
-    OracleClient, PyArbitrationMode, PyAttestationWithDemand, PyDecision,
-    PyOracleAddresses, PyOracleAttestation, PyTrustedOracleArbiterDemandData,
-    TrustedOracle,
+    OracleClient, PyArbitrationMode, PyAttestationWithDemand, PyDecision, PyOracleAddresses,
+    PyOracleAttestation, PyTrustedOracleArbiterDemandData, TrustedOracle,
 };
 
 // Re-export confirmation types
@@ -47,16 +42,32 @@ pub use logical::{
 
 // Re-export attestation properties types
 pub use attestation_properties::{
-    AttestationProperties, AttesterArbiter, ExpirationTimeAfterArbiter,
-    ExpirationTimeBeforeArbiter, ExpirationTimeEqualArbiter, RecipientArbiter, RefUidArbiter,
-    RevocableArbiter, SchemaArbiter, TimeAfterArbiter, TimeBeforeArbiter, TimeEqualArbiter,
-    UidArbiter,
+    AttestationProperties,
+    AttesterArbiter,
     // DemandData types
-    AttesterArbiterDemandData, ExpirationTimeAfterArbiterDemandData,
-    ExpirationTimeBeforeArbiterDemandData, ExpirationTimeEqualArbiterDemandData,
-    RecipientArbiterDemandData, RefUidArbiterDemandData, RevocableArbiterDemandData,
-    SchemaArbiterDemandData, TimeAfterArbiterDemandData, TimeBeforeArbiterDemandData,
-    TimeEqualArbiterDemandData, UidArbiterDemandData,
+    AttesterArbiterDemandData,
+    ExpirationTimeAfterArbiter,
+    ExpirationTimeAfterArbiterDemandData,
+    ExpirationTimeBeforeArbiter,
+    ExpirationTimeBeforeArbiterDemandData,
+    ExpirationTimeEqualArbiter,
+    ExpirationTimeEqualArbiterDemandData,
+    RecipientArbiter,
+    RecipientArbiterDemandData,
+    RefUidArbiter,
+    RefUidArbiterDemandData,
+    RevocableArbiter,
+    RevocableArbiterDemandData,
+    SchemaArbiter,
+    SchemaArbiterDemandData,
+    TimeAfterArbiter,
+    TimeAfterArbiterDemandData,
+    TimeBeforeArbiter,
+    TimeBeforeArbiterDemandData,
+    TimeEqualArbiter,
+    TimeEqualArbiterDemandData,
+    UidArbiter,
+    UidArbiterDemandData,
 };
 
 /// Python representation of ArbitrationMade event
@@ -149,11 +160,6 @@ impl ArbitersClient {
         format!("{:?}", self.inner.addresses.intrinsics_arbiter)
     }
 
-    /// Get the IntrinsicsArbiter2 address
-    pub fn intrinsics_arbiter_2_address(&self) -> String {
-        format!("{:?}", self.inner.addresses.intrinsics_arbiter_2)
-    }
-
     /// Get the ERC8004Arbiter address
     pub fn erc8004_arbiter_address(&self) -> String {
         format!("{:?}", self.inner.addresses.erc8004_arbiter)
@@ -178,51 +184,6 @@ impl ArbitersClient {
 // =============================================================================
 // Core Arbiter DemandData Types
 // =============================================================================
-
-// ===== IntrinsicsArbiter2DemandData =====
-
-/// Python representation of IntrinsicsArbiter2 DemandData
-///
-/// IntrinsicsArbiter2 validates that an attestation has a specific schema.
-#[pyclass]
-#[derive(Clone)]
-pub struct IntrinsicsArbiter2DemandData {
-    #[pyo3(get)]
-    pub schema: String,
-}
-
-#[pymethods]
-impl IntrinsicsArbiter2DemandData {
-    #[new]
-    pub fn new(schema: String) -> Self {
-        Self { schema }
-    }
-
-    fn __repr__(&self) -> String {
-        format!("IntrinsicsArbiter2DemandData(schema='{}')", self.schema)
-    }
-
-    #[staticmethod]
-    pub fn decode(demand_bytes: Vec<u8>) -> PyResult<IntrinsicsArbiter2DemandData> {
-        let decoded = IntrinsicsArbiter2Contract::DemandData::abi_decode(&demand_bytes)
-            .map_err(|e| map_eyre_to_pyerr(eyre::eyre!("Failed to decode: {}", e)))?;
-        Ok(IntrinsicsArbiter2DemandData {
-            schema: format!("{:?}", decoded.schema),
-        })
-    }
-
-    #[staticmethod]
-    pub fn encode(demand_data: &IntrinsicsArbiter2DemandData) -> PyResult<Vec<u8>> {
-        let schema: alloy::primitives::FixedBytes<32> = demand_data.schema.parse()
-            .map_err(|e| map_eyre_to_pyerr(eyre::eyre!("Invalid bytes32: {}", e)))?;
-        let rust_data = IntrinsicsArbiter2Contract::DemandData { schema };
-        Ok(rust_data.abi_encode())
-    }
-
-    pub fn encode_self(&self) -> PyResult<Vec<u8>> {
-        IntrinsicsArbiter2DemandData::encode(self)
-    }
-}
 
 // ===== ERC8004ArbiterDemandData =====
 
@@ -274,10 +235,15 @@ impl ERC8004ArbiterDemandData {
 
     #[staticmethod]
     pub fn encode(demand_data: &ERC8004ArbiterDemandData) -> PyResult<Vec<u8>> {
-        let validation_registry: alloy::primitives::Address = demand_data.validation_registry.parse()
+        let validation_registry: alloy::primitives::Address = demand_data
+            .validation_registry
+            .parse()
             .map_err(|e| map_eyre_to_pyerr(eyre::eyre!("Invalid address: {}", e)))?;
-        let validator_address: alloy::primitives::Address = demand_data.validator_address.parse()
-            .map_err(|e| map_eyre_to_pyerr(eyre::eyre!("Invalid address: {}", e)))?;
+        let validator_address: alloy::primitives::Address =
+            demand_data
+                .validator_address
+                .parse()
+                .map_err(|e| map_eyre_to_pyerr(eyre::eyre!("Invalid address: {}", e)))?;
         let rust_data = ERC8004ArbiterContract::DemandData {
             validationRegistry: validation_registry,
             validatorAddress: validator_address,

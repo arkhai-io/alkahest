@@ -82,14 +82,6 @@ pub mod arbiters {
         #[allow(missing_docs)]
         #[sol(rpc)]
         #[derive(Debug)]
-        IntrinsicsArbiter2,
-        "src/contracts/arbiters/IntrinsicsArbiter2.json"
-    );
-
-    sol!(
-        #[allow(missing_docs)]
-        #[sol(rpc)]
-        #[derive(Debug)]
         ERC8004Arbiter,
         "src/contracts/arbiters/ERC8004Arbiter.json"
     );
@@ -299,15 +291,14 @@ pub mod obligations {
             NativeTokenPaymentObligation,
             "src/contracts/obligations/payment/NativeTokenPaymentObligation.json"
         );
-
     }
 
     // Re-export payment obligations for convenience
     pub use payment::ERC20PaymentObligation;
     pub use payment::ERC721PaymentObligation;
     pub use payment::ERC1155PaymentObligation;
-    pub use payment::TokenBundlePaymentObligation;
     pub use payment::NativeTokenPaymentObligation;
+    pub use payment::TokenBundlePaymentObligation;
 
     use alloy::sol;
     sol!(
@@ -529,10 +520,10 @@ pub mod utils {
     }
 
     // Re-export the main contract types for convenience
+    pub use attestation::AttestationBarterUtils;
     pub use erc20::ERC20BarterUtils;
     pub use erc721::ERC721BarterUtils;
     pub use erc1155::ERC1155BarterUtils;
-    pub use token_bundle::TokenBundleBarterUtils;
     pub use native_token::NativeTokenBarterUtils;
-    pub use attestation::AttestationBarterUtils;
+    pub use token_bundle::TokenBundleBarterUtils;
 }

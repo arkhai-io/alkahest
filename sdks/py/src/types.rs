@@ -44,7 +44,6 @@ pub struct ArbitersAddresses {
     pub trivial_arbiter: String,
     pub trusted_oracle_arbiter: String,
     pub intrinsics_arbiter: String,
-    pub intrinsics_arbiter_2: String,
     pub erc8004_arbiter: String,
     pub any_arbiter: String,
     pub all_arbiter: String,
@@ -149,7 +148,9 @@ macro_rules! try_from_address_config {
                     eas: parse_address!(eas),
                     barter_utils: parse_address!(barter_utils),
                     escrow_obligation_default: parse_address!(escrow_obligation_default),
-                    escrow_obligation_unconditional: parse_address!(escrow_obligation_unconditional),
+                    escrow_obligation_unconditional: parse_address!(
+                        escrow_obligation_unconditional
+                    ),
                     payment_obligation: parse_address!(payment_obligation),
                 })
             }
@@ -225,19 +226,42 @@ impl TryFrom<DefaultExtensionConfig> for alkahest_rs::DefaultExtensionConfig {
 
     fn try_from(value: DefaultExtensionConfig) -> PyResult<Self> {
         Ok(Self {
-            erc20_addresses: value.erc20_addresses.and_then(|x| x.try_into().ok()).unwrap_or_default(),
-            erc721_addresses: value.erc721_addresses.and_then(|x| x.try_into().ok()).unwrap_or_default(),
-            erc1155_addresses: value.erc1155_addresses.and_then(|x| x.try_into().ok()).unwrap_or_default(),
-            native_token_addresses: value.native_token_addresses.and_then(|x| x.try_into().ok()).unwrap_or_default(),
-            token_bundle_addresses: value.token_bundle_addresses.and_then(|x| x.try_into().ok()).unwrap_or_default(),
-            attestation_addresses: value.attestation_addresses.and_then(|x| x.try_into().ok()).unwrap_or_default(),
-            arbiters_addresses: value.arbiters_addresses.and_then(|x| x.try_into().ok()).unwrap_or_default(),
+            erc20_addresses: value
+                .erc20_addresses
+                .and_then(|x| x.try_into().ok())
+                .unwrap_or_default(),
+            erc721_addresses: value
+                .erc721_addresses
+                .and_then(|x| x.try_into().ok())
+                .unwrap_or_default(),
+            erc1155_addresses: value
+                .erc1155_addresses
+                .and_then(|x| x.try_into().ok())
+                .unwrap_or_default(),
+            native_token_addresses: value
+                .native_token_addresses
+                .and_then(|x| x.try_into().ok())
+                .unwrap_or_default(),
+            token_bundle_addresses: value
+                .token_bundle_addresses
+                .and_then(|x| x.try_into().ok())
+                .unwrap_or_default(),
+            attestation_addresses: value
+                .attestation_addresses
+                .and_then(|x| x.try_into().ok())
+                .unwrap_or_default(),
+            arbiters_addresses: value
+                .arbiters_addresses
+                .and_then(|x| x.try_into().ok())
+                .unwrap_or_default(),
             string_obligation_addresses: value
                 .string_obligation_addresses
-                .and_then(|x| x.try_into().ok()).unwrap_or_default(),
+                .and_then(|x| x.try_into().ok())
+                .unwrap_or_default(),
             commit_reveal_obligation_addresses: value
                 .commit_reveal_obligation_addresses
-                .and_then(|x| x.try_into().ok()).unwrap_or_default(),
+                .and_then(|x| x.try_into().ok())
+                .unwrap_or_default(),
         })
     }
 }
@@ -261,7 +285,6 @@ impl TryFrom<ArbitersAddresses> for alkahest_rs::clients::arbiters::ArbitersAddr
             trivial_arbiter: parse_address!(trivial_arbiter),
             trusted_oracle_arbiter: parse_address!(trusted_oracle_arbiter),
             intrinsics_arbiter: parse_address!(intrinsics_arbiter),
-            intrinsics_arbiter_2: parse_address!(intrinsics_arbiter_2),
             erc8004_arbiter: parse_address!(erc8004_arbiter),
             any_arbiter: parse_address!(any_arbiter),
             all_arbiter: parse_address!(all_arbiter),
@@ -277,10 +300,18 @@ impl TryFrom<ArbitersAddresses> for alkahest_rs::clients::arbiters::ArbitersAddr
             time_before_arbiter: parse_address!(time_before_arbiter),
             time_equal_arbiter: parse_address!(time_equal_arbiter),
             uid_arbiter: parse_address!(uid_arbiter),
-            exclusive_revocable_confirmation_arbiter: parse_address!(exclusive_revocable_confirmation_arbiter),
-            exclusive_unrevocable_confirmation_arbiter: parse_address!(exclusive_unrevocable_confirmation_arbiter),
-            nonexclusive_revocable_confirmation_arbiter: parse_address!(nonexclusive_revocable_confirmation_arbiter),
-            nonexclusive_unrevocable_confirmation_arbiter: parse_address!(nonexclusive_unrevocable_confirmation_arbiter),
+            exclusive_revocable_confirmation_arbiter: parse_address!(
+                exclusive_revocable_confirmation_arbiter
+            ),
+            exclusive_unrevocable_confirmation_arbiter: parse_address!(
+                exclusive_unrevocable_confirmation_arbiter
+            ),
+            nonexclusive_revocable_confirmation_arbiter: parse_address!(
+                nonexclusive_revocable_confirmation_arbiter
+            ),
+            nonexclusive_unrevocable_confirmation_arbiter: parse_address!(
+                nonexclusive_unrevocable_confirmation_arbiter
+            ),
         })
     }
 }
@@ -559,12 +590,20 @@ impl From<&alkahest_rs::DefaultExtensionConfig> for PyDefaultExtensionConfig {
             erc20_addresses: Some(PyErc20Addresses::from(&data.erc20_addresses)),
             erc721_addresses: Some(PyErc721Addresses::from(&data.erc721_addresses)),
             erc1155_addresses: Some(PyErc1155Addresses::from(&data.erc1155_addresses)),
-            native_token_addresses: Some(PyNativeTokenAddresses::from(&data.native_token_addresses)),
-            token_bundle_addresses: Some(PyTokenBundleAddresses::from(&data.token_bundle_addresses)),
+            native_token_addresses: Some(PyNativeTokenAddresses::from(
+                &data.native_token_addresses,
+            )),
+            token_bundle_addresses: Some(PyTokenBundleAddresses::from(
+                &data.token_bundle_addresses,
+            )),
             attestation_addresses: Some(PyAttestationAddresses::from(&data.attestation_addresses)),
             arbiters_addresses: Some(PyArbitersAddresses::from(&data.arbiters_addresses)),
-            string_obligation_addresses: Some(PyStringObligationAddresses::from(&data.string_obligation_addresses)),
-            commit_reveal_obligation_addresses: Some(PyCommitRevealObligationAddresses::from(&data.commit_reveal_obligation_addresses)),
+            string_obligation_addresses: Some(PyStringObligationAddresses::from(
+                &data.string_obligation_addresses,
+            )),
+            commit_reveal_obligation_addresses: Some(PyCommitRevealObligationAddresses::from(
+                &data.commit_reveal_obligation_addresses,
+            )),
         }
     }
 }
@@ -588,7 +627,9 @@ impl PyDefaultExtensionConfig {
         let cfg: &alkahest_rs::DefaultExtensionConfig = match normalized.as_str() {
             "base_sepolia" => &alkahest_rs::addresses::BASE_SEPOLIA_ADDRESSES,
             "ethereum_sepolia" => &alkahest_rs::addresses::ETHEREUM_SEPOLIA_ADDRESSES,
-            "ethereum_mainnet" | "ethereum" | "mainnet" => &alkahest_rs::addresses::ETHEREUM_ADDRESSES,
+            "ethereum_mainnet" | "ethereum" | "mainnet" => {
+                &alkahest_rs::addresses::ETHEREUM_ADDRESSES
+            }
             "filecoin_calibration" => &alkahest_rs::addresses::FILECOIN_CALIBRATION_ADDRESSES,
             "genlayer_bradbury" => &alkahest_rs::addresses::GENLAYER_BRADBURY_ADDRESSES,
             other => {
@@ -671,7 +712,10 @@ macro_rules! py_address_struct {
                     eas: format!("{:?}", data.eas),
                     barter_utils: format!("{:?}", data.barter_utils),
                     escrow_obligation_default: format!("{:?}", data.escrow_obligation_default),
-                    escrow_obligation_unconditional: format!("{:?}", data.escrow_obligation_unconditional),
+                    escrow_obligation_unconditional: format!(
+                        "{:?}",
+                        data.escrow_obligation_unconditional
+                    ),
                     payment_obligation: format!("{:?}", data.payment_obligation),
                 }
             }
@@ -752,7 +796,10 @@ impl From<&alkahest_rs::clients::attestation::AttestationAddresses> for PyAttest
             escrow_obligation_default: format!("{:?}", data.escrow_obligation_default),
             escrow_obligation_unconditional: format!("{:?}", data.escrow_obligation_unconditional),
             escrow_obligation_2_default: format!("{:?}", data.escrow_obligation_2_default),
-            escrow_obligation_2_unconditional: format!("{:?}", data.escrow_obligation_2_unconditional),
+            escrow_obligation_2_unconditional: format!(
+                "{:?}",
+                data.escrow_obligation_2_unconditional
+            ),
         }
     }
 }
@@ -767,8 +814,6 @@ pub struct PyArbitersAddresses {
     pub trusted_oracle_arbiter: String,
     #[pyo3(get)]
     pub intrinsics_arbiter: String,
-    #[pyo3(get)]
-    pub intrinsics_arbiter_2: String,
     #[pyo3(get)]
     pub erc8004_arbiter: String,
     #[pyo3(get)]
@@ -816,7 +861,6 @@ impl From<&alkahest_rs::clients::arbiters::ArbitersAddresses> for PyArbitersAddr
             trivial_arbiter: format!("{:?}", data.trivial_arbiter),
             trusted_oracle_arbiter: format!("{:?}", data.trusted_oracle_arbiter),
             intrinsics_arbiter: format!("{:?}", data.intrinsics_arbiter),
-            intrinsics_arbiter_2: format!("{:?}", data.intrinsics_arbiter_2),
             erc8004_arbiter: format!("{:?}", data.erc8004_arbiter),
             any_arbiter: format!("{:?}", data.any_arbiter),
             all_arbiter: format!("{:?}", data.all_arbiter),
@@ -832,10 +876,22 @@ impl From<&alkahest_rs::clients::arbiters::ArbitersAddresses> for PyArbitersAddr
             time_before_arbiter: format!("{:?}", data.time_before_arbiter),
             time_equal_arbiter: format!("{:?}", data.time_equal_arbiter),
             uid_arbiter: format!("{:?}", data.uid_arbiter),
-            exclusive_revocable_confirmation_arbiter: format!("{:?}", data.exclusive_revocable_confirmation_arbiter),
-            exclusive_unrevocable_confirmation_arbiter: format!("{:?}", data.exclusive_unrevocable_confirmation_arbiter),
-            nonexclusive_revocable_confirmation_arbiter: format!("{:?}", data.nonexclusive_revocable_confirmation_arbiter),
-            nonexclusive_unrevocable_confirmation_arbiter: format!("{:?}", data.nonexclusive_unrevocable_confirmation_arbiter),
+            exclusive_revocable_confirmation_arbiter: format!(
+                "{:?}",
+                data.exclusive_revocable_confirmation_arbiter
+            ),
+            exclusive_unrevocable_confirmation_arbiter: format!(
+                "{:?}",
+                data.exclusive_unrevocable_confirmation_arbiter
+            ),
+            nonexclusive_revocable_confirmation_arbiter: format!(
+                "{:?}",
+                data.nonexclusive_revocable_confirmation_arbiter
+            ),
+            nonexclusive_unrevocable_confirmation_arbiter: format!(
+                "{:?}",
+                data.nonexclusive_unrevocable_confirmation_arbiter
+            ),
         }
     }
 }

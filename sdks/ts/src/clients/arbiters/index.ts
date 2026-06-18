@@ -12,7 +12,6 @@ import { AllArbiter, AnyArbiter, makeLogicalArbitersClient } from "./logical";
  *
  * API structure:
  * - client.arbiters.general.intrinsics (no DemandData)
- * - client.arbiters.general.intrinsics2.encodeDemand(...) (schema-based)
  * - client.arbiters.general.trustedOracle.arbitrate(...)
  * - client.arbiters.logical.any.encodeDemand(...)
  * - client.arbiters.logical.all.decodeDemand(...)
@@ -100,11 +99,8 @@ export { decodeDemand as decodeUidDemand, encodeDemand as encodeUidDemand } from
 export {
   type ArbitrationMode,
   type AttestationWithDemand,
-  decodeIntrinsics2Demand,
   decodeTrustedOracleDemand,
-  encodeIntrinsics2Demand,
   encodeTrustedOracleDemand,
-  type IntrinsicsArbiter2DemandData,
   type TrustedOracleArbiterDemandData,
 } from "./general";
 // Re-export types and static functions from logical arbiters

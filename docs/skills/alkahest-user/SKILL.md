@@ -247,10 +247,6 @@ The `arbiter encode-demand` command encodes demand data for any arbiter type:
 alkahest arbiter encode-demand --type trusted-oracle \
   --oracle 0xORACLE --data 0x
 
-# IntrinsicsArbiter2 (schema check)
-alkahest arbiter encode-demand --type intrinsics2 \
-  --schema 0xSCHEMA_UID
-
 # Attestation property arbiters
 alkahest arbiter encode-demand --type recipient --recipient 0xADDRESS
 alkahest arbiter encode-demand --type attester --attester 0xADDRESS
@@ -265,7 +261,7 @@ alkahest arbiter encode-demand --type any \
   --demands '[{"arbiter":"0xARB1","demand":"0xDEM1"},{"arbiter":"0xARB2","demand":"0xDEM2"}]'
 ```
 
-Available `--type` values: `trusted-oracle`, `intrinsics2`, `all`, `any`, `recipient`, `attester`, `schema`, `uid`, `ref-uid`, `revocable`, `time-after`, `time-before`, `time-equal`, `expiration-time-after`, `expiration-time-before`, `expiration-time-equal`.
+Available `--type` values: `trusted-oracle`, `all`, `any`, `recipient`, `attester`, `schema`, `uid`, `ref-uid`, `revocable`, `time-after`, `time-before`, `time-equal`, `expiration-time-after`, `expiration-time-before`, `expiration-time-equal`.
 
 ### Decoding demands
 

@@ -46,7 +46,6 @@ import {TrustedOracleArbiter} from "@src/arbiters/TrustedOracleArbiter.sol";
 import {AllArbiter} from "@src/arbiters/logical/AllArbiter.sol";
 import {AnyArbiter} from "@src/arbiters/logical/AnyArbiter.sol";
 import {IntrinsicsArbiter} from "@src/arbiters/IntrinsicsArbiter.sol";
-import {IntrinsicsArbiter2} from "@src/arbiters/IntrinsicsArbiter2.sol";
 import {ERC8004Arbiter} from "@src/arbiters/ERC8004Arbiter.sol";
 
 // Confirmation Arbiters
@@ -129,7 +128,6 @@ contract Deploy is Script {
         AllArbiter allArbiter = new AllArbiter();
         AnyArbiter anyArbiter = new AnyArbiter();
         IntrinsicsArbiter intrinsicsArbiter = new IntrinsicsArbiter();
-        IntrinsicsArbiter2 intrinsicsArbiter2 = new IntrinsicsArbiter2();
         ERC8004Arbiter erc8004Arbiter = new ERC8004Arbiter();
 
         // Deploy Confirmation Arbiters
@@ -304,7 +302,6 @@ contract Deploy is Script {
         console.log("AllArbiter:", address(allArbiter));
         console.log("AnyArbiter:", address(anyArbiter));
         console.log("IntrinsicsArbiter:", address(intrinsicsArbiter));
-        console.log("IntrinsicsArbiter2:", address(intrinsicsArbiter2));
         console.log("ERC8004Arbiter:", address(erc8004Arbiter));
 
         console.log("\nConfirmation Arbiters:");
@@ -389,7 +386,6 @@ contract Deploy is Script {
         vm.serializeAddress(deploymentJson, "allArbiter", address(allArbiter));
         vm.serializeAddress(deploymentJson, "anyArbiter", address(anyArbiter));
         vm.serializeAddress(deploymentJson, "intrinsicsArbiter", address(intrinsicsArbiter));
-        vm.serializeAddress(deploymentJson, "intrinsicsArbiter2", address(intrinsicsArbiter2));
         vm.serializeAddress(deploymentJson, "erc8004Arbiter", address(erc8004Arbiter));
 
         // Add Confirmation Arbiters

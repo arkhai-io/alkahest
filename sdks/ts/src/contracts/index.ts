@@ -20,7 +20,6 @@ export * as NonexclusiveRevocableConfirmationArbiter from "./arbiters/confirmati
 export * as NonexclusiveUnrevocableConfirmationArbiter from "./arbiters/confirmation/NonexclusiveUnrevocableConfirmationArbiter";
 export * as ERC8004Arbiter from "./arbiters/ERC8004Arbiter";
 export * as IntrinsicsArbiter from "./arbiters/IntrinsicsArbiter";
-export * as IntrinsicsArbiter2 from "./arbiters/IntrinsicsArbiter2";
 // Logical arbiters
 export * as AllArbiter from "./arbiters/logical/AllArbiter";
 export * as AnyArbiter from "./arbiters/logical/AnyArbiter";

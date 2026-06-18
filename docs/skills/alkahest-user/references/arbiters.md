@@ -38,21 +38,6 @@ const demand = {
 };
 ```
 
-### IntrinsicsArbiter2
-
-Validates intrinsics (not expired, not revoked) AND that the fulfillment's schema matches.
-
-**Demand data:** `{ schema: bytes32 }`
-
-```typescript
-const demand = {
-  arbiter: client.contractAddresses.intrinsicsArbiter2,
-  demand: client.arbiters.general.intrinsics2.encodeDemand({
-    schema: "0x...", // required schema UID
-  }),
-};
-```
-
 ### TrustedOracleArbiter
 
 Asynchronous arbitration — an oracle submits a decision on-chain.
