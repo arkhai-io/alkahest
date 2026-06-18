@@ -51,6 +51,8 @@ Tracking notes for `arkhai-io-alkahest-2026-04-13-analysis.md`.
 - #7 related: recipient binding in `HookEscrowObligation.checkObligation`: not addressed by default because open-claim semantics are intentional. If an escrow creator wants only a specific recipient to claim, compose a recipient/identity arbiter such as `RecipientArbiter`.
 - #11 `TokenBundleSplitterUnvalidated` split-total / output-bounds issues: accepted behavior for the explicitly unvalidated splitter. The over-allocation path can only drain balances already stranded in the splitter, not assets still held by other escrow contracts, and there is no recovery mechanism for those stranded balances.
 - #15 Splitter unconditional collection after third-party pre-collection: accepted as a low-incentive liveness edge case rather than a security issue. A third party needs an already-valid splitter-recipient fulfillment and posted oracle decision, and can only race the intended flow to move funds to the splitter, not to themselves. Adding distribute-only fallback semantics would require custody/accounting complexity or risk paying from commingled balances.
+- Second report #2 Splitter self-recipient splits / missing withdrawal: accepted as oracle-controlled distribution behavior. Split recipients are entirely the splitter oracle's responsibility, and guarding `address(this)` would be an arbitrary blacklist special case. Existing zero-address recipient guards were removed for consistency because intentional burn/blackhole recipients are also oracle policy.
+  Commit: `19cf58e179deb9c7f50bd68b6b13b95757344299 fix(splitters): leave recipient policy to oracle`
 
 ## Deferred
 
@@ -59,7 +61,6 @@ Tracking notes for `arkhai-io-alkahest-2026-04-13-analysis.md`.
 
 ## Remaining Untriaged
 
-- Second report section #2 Splitter self-recipient splits / missing withdrawal.
 - Second report section #4 TokenBundleSplitter ERC721 index bounds.
 - Second report section #5 Splitter `requestArbitration` event payload.
 - Second report section #6 Splitter missing payable receive for refunding fulfillments.
