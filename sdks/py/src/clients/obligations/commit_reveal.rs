@@ -123,26 +123,6 @@ impl CommitRevealObligationClient {
         })
     }
 
-    pub fn reclaim_bond<'py>(
-        &self,
-        py: pyo3::Python<'py>,
-        obligation_uid: String,
-    ) -> PyResult<pyo3::Bound<'py, pyo3::PyAny>> {
-        let inner = self.inner.clone();
-        pyo3_async_runtimes::tokio::future_into_py(py, async move {
-            let obligation_uid: FixedBytes<32> =
-                obligation_uid.parse().map_err(map_parse_to_pyerr)?;
-            let receipt = inner
-                .reclaim_bond(obligation_uid)
-                .await
-                .map_err(map_eyre_to_pyerr)?;
-            Ok(format!(
-                "0x{}",
-                alloy::hex::encode(receipt.transaction_hash.as_slice())
-            ))
-        })
-    }
-
     pub fn slash_bond<'py>(
         &self,
         py: pyo3::Python<'py>,

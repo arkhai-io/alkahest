@@ -1,0 +1,853 @@
+{
+  "abi": [
+    {
+      "type": "function",
+      "name": "decodeHookData",
+      "inputs": [
+        {
+          "name": "data",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "tuple",
+          "internalType": "struct ERC1155EscrowHook.HookData",
+          "components": [
+            {
+              "name": "token",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "tokenId",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "amount",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ]
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "type": "function",
+      "name": "deposits",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "encodeHookData",
+      "inputs": [
+        {
+          "name": "hookData",
+          "type": "tuple",
+          "internalType": "struct ERC1155EscrowHook.HookData",
+          "components": [
+            {
+              "name": "token",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "tokenId",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "amount",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "type": "function",
+      "name": "onERC1155BatchReceived",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        },
+        {
+          "name": "",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        },
+        {
+          "name": "",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes4",
+          "internalType": "bytes4"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "onERC1155Received",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes4",
+          "internalType": "bytes4"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "onLock",
+      "inputs": [
+        {
+          "name": "data",
+          "type": "bytes",
+          "internalType": "bytes"
+        },
+        {
+          "name": "from",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "payable"
+    },
+    {
+      "type": "function",
+      "name": "onRelease",
+      "inputs": [
+        {
+          "name": "data",
+          "type": "bytes",
+          "internalType": "bytes"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "onReturn",
+      "inputs": [
+        {
+          "name": "data",
+          "type": "bytes",
+          "internalType": "bytes"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "supportsInterface",
+      "inputs": [
+        {
+          "name": "interfaceId",
+          "type": "bytes4",
+          "internalType": "bytes4"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "error",
+      "name": "ERC1155TransferFailed",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "from",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenId",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "InsufficientDeposit",
+      "inputs": [
+        {
+          "name": "caller",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenId",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "requested",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "available",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "NoDeposit",
+      "inputs": [
+        {
+          "name": "caller",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenId",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "UnexpectedNativeValue",
+      "inputs": []
+    }
+  ],
+  "bytecode": {
+    "object": "0x608080604052346015576109ea908161001a8239f35b5f80fdfe6080806040526004361015610012575f80fd5b5f905f3560e01c90816301ffc9a71461054b575080631a6a5893146102695780631dc8160b146102c55780635d93a3fc1461026e5780638b9d453914610269578063bc197c81146101d0578063e765fef51461015b578063f23a6e61146101045763f73085df14610081575f80fd5b346101015760203660031901126101015760043567ffffffffffffffff81116100ff576060916100b86100da92369060040161059e565b9091604080516100c781610820565b8281528260208201520152810190610930565b6040805182516001600160a01b03168152602080840151908201529181015190820152f35b505b80fd5b50346101015760a03660031901126101015761011e6105cc565b506101276105e2565b5060843567ffffffffffffffff81116100ff576101489036906004016108da565b5060405163f23a6e6160e01b8152602090f35b50346101015760603660031901126101015760408051602081016001600160a01b036101856105cc565b168152602435838301526044356060830152606082526101a6608083610850565b8251938492602084525180928160208601528585015e828201840152601f01601f19168101030190f35b50346101015760a0366003190112610101576101ea6105cc565b506101f36105e2565b5060443567ffffffffffffffff81116100ff57610214903690600401610872565b5060643567ffffffffffffffff81116100ff57610235903690600401610872565b5060843567ffffffffffffffff81116100ff576102569036906004016108da565b5060405163bc197c8160e01b8152602090f35b61064f565b503461010157606036600319011261010157604060209161028d6105cc565b6102956105e2565b6001600160a01b03918216835282855283832091165f908152908452829020604435825283522054604051908152f35b506102cf366105f8565b50913461053c576102e291810190610930565b805160208083018051604051627eeac760e11b815230600482015260248101919091529094939092909190839060449082906001600160a01b03165afa918215610531575f926104fd575b50805184516040830180519094926001600160a01b03169190823b156104d157604051637921219560e11b81526001600160a01b03881660048201523060248201526044810192909252606482015260a060848201525f60a482018190529091829060c490829084905af190816104e8575b506103d85750519251905160405163334a7d1b60e21b81529384936103d493913091906001600160a01b031660048701610974565b0390fd5b81518551604051627eeac760e11b81523060048201526024810191909152929594929190602090839060449082906001600160a01b03165afa9182156104dd5787926104a3575b50835161042b916109a7565b116104725750513384526020848152604080862094516001600160a01b03165f9081529482529384902092518552919091529082208054909161046d916109a7565b905580f35b83519251915160405163334a7d1b60e21b81529384936103d49390913091906001600160a01b031660048701610974565b9091506020813d6020116104d5575b816104bf60209383610850565b810103126104d157519061042b61041f565b5f80fd5b3d91506104b2565b6040513d89823e3d90fd5b6104f59197505f90610850565b5f955f61039f565b9091506020813d602011610529575b8161051960209383610850565b810103126104d15751905f61032d565b3d915061050c565b6040513d5f823e3d90fd5b63e0aeda7d60e01b5f5260045ffd5b346104d15760203660031901126104d1576004359063ffffffff60e01b82168092036104d157602091630271189760e51b811490811561058d575b5015158152f35b6301ffc9a760e01b14905083610586565b9181601f840112156104d15782359167ffffffffffffffff83116104d157602083818601950101116104d157565b600435906001600160a01b03821682036104d157565b602435906001600160a01b03821682036104d157565b60606003198201126104d1576004359067ffffffffffffffff82116104d1576106239160040161059e565b90916024356001600160a01b03811681036104d157906044356001600160a01b03811681036104d15790565b346104d15761066c610660366105f8565b50929190810190610930565b335f9081526020818152604080832084516001600160a01b0316845282528083208483018051855292528220549092909182156107f657604082019283518082106107b75750835181039081116107a357335f525f60205260405f2060018060a01b0384511660018060a01b03165f5260205260405f2085515f5260205260405f205560018060a01b0382511684518451823b156104d157604051637921219560e11b81523060048201526001600160a01b03891660248201526044810192909252606482015260a060848201525f60a482018190529091829060c490829084905af1908161078e575b5061078b5750519151905160405163334a7d1b60e21b81529384936103d493919030906001600160a01b031660048701610974565b80f35b61079b9192505f90610850565b5f905f610756565b634e487b7160e01b5f52601160045260245ffd5b92518551604051637b5793f360e11b81523360048201526001600160a01b0390921660248301526044820152606481019390935260848301525060a490fd5b81518451637bbf8f6560e11b5f908152336004526001600160a01b03909216602452604452606490fd5b6060810190811067ffffffffffffffff82111761083c57604052565b634e487b7160e01b5f52604160045260245ffd5b90601f8019910116810190811067ffffffffffffffff82111761083c57604052565b9080601f830112156104d15781359167ffffffffffffffff831161083c578260051b90604051936108a66020840186610850565b84526020808501928201019283116104d157602001905b8282106108ca5750505090565b81358152602091820191016108bd565b81601f820112156104d15780359067ffffffffffffffff821161083c576040519261090f601f8401601f191660200185610850565b828452602083830101116104d157815f926020809301838601378301015290565b908160609103126104d1576040519061094882610820565b8035906001600160a01b03821682036104d1576040918352602081013560208401520135604082015290565b6001600160a01b039182168152918116602083015290911660408201526060810191909152608081019190915260a00190565b919082018092116107a35756fea2646970667358221220d00c298927cbe7baf7c51f8a24b139c53b45bb6f8e84cc313dbd90afa9fd781964736f6c634300081b0033",
+    "sourceMap": "623:3752:89:-:0;;;;;;;;;;;;;;;;;",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x6080806040526004361015610012575f80fd5b5f905f3560e01c90816301ffc9a71461054b575080631a6a5893146102695780631dc8160b146102c55780635d93a3fc1461026e5780638b9d453914610269578063bc197c81146101d0578063e765fef51461015b578063f23a6e61146101045763f73085df14610081575f80fd5b346101015760203660031901126101015760043567ffffffffffffffff81116100ff576060916100b86100da92369060040161059e565b9091604080516100c781610820565b8281528260208201520152810190610930565b6040805182516001600160a01b03168152602080840151908201529181015190820152f35b505b80fd5b50346101015760a03660031901126101015761011e6105cc565b506101276105e2565b5060843567ffffffffffffffff81116100ff576101489036906004016108da565b5060405163f23a6e6160e01b8152602090f35b50346101015760603660031901126101015760408051602081016001600160a01b036101856105cc565b168152602435838301526044356060830152606082526101a6608083610850565b8251938492602084525180928160208601528585015e828201840152601f01601f19168101030190f35b50346101015760a0366003190112610101576101ea6105cc565b506101f36105e2565b5060443567ffffffffffffffff81116100ff57610214903690600401610872565b5060643567ffffffffffffffff81116100ff57610235903690600401610872565b5060843567ffffffffffffffff81116100ff576102569036906004016108da565b5060405163bc197c8160e01b8152602090f35b61064f565b503461010157606036600319011261010157604060209161028d6105cc565b6102956105e2565b6001600160a01b03918216835282855283832091165f908152908452829020604435825283522054604051908152f35b506102cf366105f8565b50913461053c576102e291810190610930565b805160208083018051604051627eeac760e11b815230600482015260248101919091529094939092909190839060449082906001600160a01b03165afa918215610531575f926104fd575b50805184516040830180519094926001600160a01b03169190823b156104d157604051637921219560e11b81526001600160a01b03881660048201523060248201526044810192909252606482015260a060848201525f60a482018190529091829060c490829084905af190816104e8575b506103d85750519251905160405163334a7d1b60e21b81529384936103d493913091906001600160a01b031660048701610974565b0390fd5b81518551604051627eeac760e11b81523060048201526024810191909152929594929190602090839060449082906001600160a01b03165afa9182156104dd5787926104a3575b50835161042b916109a7565b116104725750513384526020848152604080862094516001600160a01b03165f9081529482529384902092518552919091529082208054909161046d916109a7565b905580f35b83519251915160405163334a7d1b60e21b81529384936103d49390913091906001600160a01b031660048701610974565b9091506020813d6020116104d5575b816104bf60209383610850565b810103126104d157519061042b61041f565b5f80fd5b3d91506104b2565b6040513d89823e3d90fd5b6104f59197505f90610850565b5f955f61039f565b9091506020813d602011610529575b8161051960209383610850565b810103126104d15751905f61032d565b3d915061050c565b6040513d5f823e3d90fd5b63e0aeda7d60e01b5f5260045ffd5b346104d15760203660031901126104d1576004359063ffffffff60e01b82168092036104d157602091630271189760e51b811490811561058d575b5015158152f35b6301ffc9a760e01b14905083610586565b9181601f840112156104d15782359167ffffffffffffffff83116104d157602083818601950101116104d157565b600435906001600160a01b03821682036104d157565b602435906001600160a01b03821682036104d157565b60606003198201126104d1576004359067ffffffffffffffff82116104d1576106239160040161059e565b90916024356001600160a01b03811681036104d157906044356001600160a01b03811681036104d15790565b346104d15761066c610660366105f8565b50929190810190610930565b335f9081526020818152604080832084516001600160a01b0316845282528083208483018051855292528220549092909182156107f657604082019283518082106107b75750835181039081116107a357335f525f60205260405f2060018060a01b0384511660018060a01b03165f5260205260405f2085515f5260205260405f205560018060a01b0382511684518451823b156104d157604051637921219560e11b81523060048201526001600160a01b03891660248201526044810192909252606482015260a060848201525f60a482018190529091829060c490829084905af1908161078e575b5061078b5750519151905160405163334a7d1b60e21b81529384936103d493919030906001600160a01b031660048701610974565b80f35b61079b9192505f90610850565b5f905f610756565b634e487b7160e01b5f52601160045260245ffd5b92518551604051637b5793f360e11b81523360048201526001600160a01b0390921660248301526044820152606481019390935260848301525060a490fd5b81518451637bbf8f6560e11b5f908152336004526001600160a01b03909216602452604452606490fd5b6060810190811067ffffffffffffffff82111761083c57604052565b634e487b7160e01b5f52604160045260245ffd5b90601f8019910116810190811067ffffffffffffffff82111761083c57604052565b9080601f830112156104d15781359167ffffffffffffffff831161083c578260051b90604051936108a66020840186610850565b84526020808501928201019283116104d157602001905b8282106108ca5750505090565b81358152602091820191016108bd565b81601f820112156104d15780359067ffffffffffffffff821161083c576040519261090f601f8401601f191660200185610850565b828452602083830101116104d157815f926020809301838601378301015290565b908160609103126104d1576040519061094882610820565b8035906001600160a01b03821682036104d1576040918352602081013560208401520135604082015290565b6001600160a01b039182168152918116602083015290911660408201526060810191909152608081019190915260a00190565b919082018092116107a35756fea2646970667358221220d00c298927cbe7baf7c51f8a24b139c53b45bb6f8e84cc313dbd90afa9fd781964736f6c634300081b0033",
+    "sourceMap": "623:3752:89:-:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;623:3752:89;;;;;;;;;;;;;;4338:28;623:3752;;;;;;:::i;:::-;;;;;;;;;:::i;:::-;;;;;;;;;;;4338:28;;;;:::i;:::-;623:3752;;;;;-1:-1:-1;;;;;623:3752:89;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;623:3752:89;;;;;;:::i;:::-;;;;:::i;:::-;;;;;;;;;;;;;;;;:::i;:::-;-1:-1:-1;623:3752:89;;-1:-1:-1;;;623:3752:89;;;;;;;;;;;;-1:-1:-1;;623:3752:89;;;;;;;4203:20;;;-1:-1:-1;;;;;623:3752:89;;:::i;:::-;;;;;;;;;;;;;;;;;4203:20;;;;;;:::i;:::-;623:3752;;;;;4203:20;623:3752;;;;;;4203:20;623:3752;;;;;;;;;;;;;;;-1:-1:-1;;623:3752:89;;;;;;;;;;;;;;-1:-1:-1;;623:3752:89;;;;;;:::i;:::-;;;;:::i;:::-;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;:::i;:::-;-1:-1:-1;623:3752:89;;-1:-1:-1;;;623:3752:89;;;;;;;:::i;:::-;;;;;;;-1:-1:-1;;623:3752:89;;;;;;;;;:::i;:::-;;;:::i;:::-;-1:-1:-1;;;;;623:3752:89;;;;;;;;;;;;;-1:-1:-1;623:3752:89;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;1568:9;;;1564:62;;1663:28;;;;;;:::i;:::-;623:3752;;1775:15;;;;623:3752;;;;-1:-1:-1;;;1726:65:89;;1768:4;623:3752;1726:65;;623:3752;;;;;;;;1775:15;;;623:3752;;;;1775:15;623:3752;;;;;;-1:-1:-1;;;;;623:3752:89;1726:65;;;;;;;623:3752;1726:65;;;623:3752;-1:-1:-1;623:3752:89;;;;;1885:14;;623:3752;;1885:14;;623:3752;-1:-1:-1;;;;;623:3752:89;;;1806:98;;;;;623:3752;;-1:-1:-1;;;1806:98:89;;-1:-1:-1;;;;;623:3752:89;;;1806:98;;623:3752;1768:4;623:3752;;;;;;;;;;;;;;;;;;;;-1:-1:-1;623:3752:89;;;;;;;;;;;;;;-1:-1:-1;;1806:98:89;;;;;;623:3752;-1:-1:-1;1802:242:89;;-1:-1:-1;623:3752:89;;;;;;;-1:-1:-1;;;1943:90:89;;623:3752;;;1943:90;;623:3752;1768:4;;1943:90;-1:-1:-1;;;;;623:3752:89;;1943:90;;;:::i;:::-;;;;1802:242;623:3752;;;;;;-1:-1:-1;;;2077:65:89;;1768:4;623:3752;2077:65;;623:3752;;;;;;;;;;;1802:242;623:3752;;1775:15;;623:3752;;;;;;-1:-1:-1;;;;;623:3752:89;2077:65;;;;;;;;;;;1802:242;-1:-1:-1;623:3752:89;;2172:30;;;:::i;:::-;-1:-1:-1;2153:173:89;;-1:-1:-1;623:3752:89;2345:10;623:3752;;1775:15;623:3752;;;;;;;;;-1:-1:-1;;;;;623:3752:89;-1:-1:-1;623:3752:89;;;;;;;;;;;;;;;;;;;;;;;;;2336:70;;;:::i;:::-;623:3752;;;;2153:173;623:3752;;;;;;;;-1:-1:-1;;;2225:90:89;;623:3752;;;2225:90;;623:3752;;1768:4;;623:3752;-1:-1:-1;;;;;623:3752:89;;2225:90;;;:::i;2077:65::-;;;;1775:15;2077:65;;1775:15;2077:65;;;;;;623:3752;2077:65;;;:::i;:::-;;;623:3752;;;;;;2172:30;2077:65;;623:3752;-1:-1:-1;623:3752:89;;2077:65;;;-1:-1:-1;2077:65:89;;;623:3752;;;;;;;;;1806:98;;;;;623:3752;1806:98;;:::i;:::-;623:3752;1806:98;;;;1726:65;;;;1775:15;1726:65;;1775:15;1726:65;;;;;;623:3752;1726:65;;;:::i;:::-;;;623:3752;;;;;1726:65;;;;;;;-1:-1:-1;1726:65:89;;;623:3752;;;;;;;;;1564:62;1591:35;;;623:3752;1591:35;623:3752;;1591:35;623:3752;;;;;;-1:-1:-1;;623:3752:89;;;;;;;;;;;;;;;;;;;-1:-1:-1;;;766:49:44;;;:89;;;;623:3752:89;;;;;;;766:89:44;-1:-1:-1;;;829:40:73;;-1:-1:-1;766:89:44;;;623:3752:89;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::o;:::-;;;;-1:-1:-1;;;;;623:3752:89;;;;;;:::o;:::-;;;;-1:-1:-1;;;;;623:3752:89;;;;;;:::o;:::-;;-1:-1:-1;;623:3752:89;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;-1:-1:-1;;;;;623:3752:89;;;;;;;;;-1:-1:-1;;;;;623:3752:89;;;;;;;:::o;:::-;;;;3039:28;623:3752;;;:::i;:::-;3039:28;;;;;;;;:::i;:::-;3107:10;3098:8;623:3752;;;;;;;;;;;;;-1:-1:-1;;;;;623:3752:89;;;;;;;;3134:15;;;623:3752;;;;;;;;;3134:15;;623:3752;;3164:14;;3160:105;;623:3752;3290:14;;623:3752;;;3278:26;;;3274:154;;623:3752;;;;;;;;;;3107:10;3098:8;623:3752;3098:8;623:3752;;;3098:8;623:3752;;;;;;;;;;;;;;;3098:8;623:3752;;;;3098:8;623:3752;;;3098:8;623:3752;;;;3098:8;623:3752;;;;;;;;;;;;;;3534:96;;;;;623:3752;;-1:-1:-1;;;3534:96:89;;3583:4;623:3752;3534:96;;623:3752;-1:-1:-1;;;;;623:3752:89;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;623:3752:89;;;;;;;;;;;;;;-1:-1:-1;;3534:96:89;;;;;;623:3752;-1:-1:-1;3530:238:89;;-1:-1:-1;623:3752:89;;;;;;;-1:-1:-1;;;3669:88:89;;623:3752;;;3669:88;;623:3752;1943:90;3583:4;;-1:-1:-1;;;;;623:3752:89;;3669:88;;;:::i;3530:238::-;623:3752;;3534:96;;;;;3098:8;3534:96;;:::i;:::-;3098:8;3534:96;;;;623:3752;;;;3098:8;623:3752;;;;;3098:8;623:3752;3274:154;623:3752;;;;;;-1:-1:-1;;;3327:90:89;;3107:10;623:3752;3327:90;;623:3752;-1:-1:-1;;;;;623:3752:89;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;3327:90:89;;;3160:105;623:3752;;;;-1:-1:-1;;;3098:8:89;3201:53;;;3107:10;623:3752;;-1:-1:-1;;;;;623:3752:89;;;;;;;;;3201:53;623:3752;;;;;;;;;;;;;;;:::o;:::-;;;;-1:-1:-1;623:3752:89;;;;;-1:-1:-1;623:3752:89;;;;4203:20;;623:3752;;;;;;;;;;;;;;;;:::o;:::-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::o;:::-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;4203:20;623:3752;;-1:-1:-1;;623:3752:89;;;;;:::i;:::-;;;;;;;;;;;;;-1:-1:-1;623:3752:89;;;;;;;;;;;;;;:::o;:::-;;;;;;;;;;;;;;;:::i;:::-;;;;-1:-1:-1;;;;;623:3752:89;;;;;;;;;;;;;;;;;;;;;;;;;:::o;:::-;-1:-1:-1;;;;;623:3752:89;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::o;:::-;;;;;;;;;;:::o",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "decodeHookData(bytes)": "f73085df",
+    "deposits(address,address,uint256)": "5d93a3fc",
+    "encodeHookData((address,uint256,uint256))": "e765fef5",
+    "onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)": "bc197c81",
+    "onERC1155Received(address,address,uint256,uint256,bytes)": "f23a6e61",
+    "onLock(bytes,address,address)": "1dc8160b",
+    "onRelease(bytes,address,address)": "1a6a5893",
+    "onReturn(bytes,address,address)": "8b9d4539",
+    "supportsInterface(bytes4)": "01ffc9a7"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.27+commit.40a35a09\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"ERC1155TransferFailed\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"caller\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"requested\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"available\",\"type\":\"uint256\"}],\"name\":\"InsufficientDeposit\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"caller\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"NoDeposit\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"UnexpectedNativeValue\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"}],\"name\":\"decodeHookData\",\"outputs\":[{\"components\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"internalType\":\"struct ERC1155EscrowHook.HookData\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"pure\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"deposits\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"internalType\":\"struct ERC1155EscrowHook.HookData\",\"name\":\"hookData\",\"type\":\"tuple\"}],\"name\":\"encodeHookData\",\"outputs\":[{\"internalType\":\"bytes\",\"name\":\"\",\"type\":\"bytes\"}],\"stateMutability\":\"pure\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"},{\"internalType\":\"uint256[]\",\"name\":\"\",\"type\":\"uint256[]\"},{\"internalType\":\"uint256[]\",\"name\":\"\",\"type\":\"uint256[]\"},{\"internalType\":\"bytes\",\"name\":\"\",\"type\":\"bytes\"}],\"name\":\"onERC1155BatchReceived\",\"outputs\":[{\"internalType\":\"bytes4\",\"name\":\"\",\"type\":\"bytes4\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"\",\"type\":\"bytes\"}],\"name\":\"onERC1155Received\",\"outputs\":[{\"internalType\":\"bytes4\",\"name\":\"\",\"type\":\"bytes4\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"},{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"onLock\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"onRelease\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"onReturn\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes4\",\"name\":\"interfaceId\",\"type\":\"bytes4\"}],\"name\":\"supportsInterface\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"details\":\"hookData is abi.encode(HookData).      Deposits are tracked per-caller per-token per-tokenId.      Users must call setApprovalForAll on the ERC1155 contract      for this hook before the obligation calls onLock.\",\"kind\":\"dev\",\"methods\":{\"supportsInterface(bytes4)\":{\"details\":\"Returns true if this contract implements the interface defined by `interfaceId`. See the corresponding https://eips.ethereum.org/EIPS/eip-165#how-interfaces-are-identified[ERC section] to learn more about how these ids are created. This function call must use less than 30 000 gas.\"}},\"title\":\"ERC1155EscrowHook\",\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"deposits(address,address,uint256)\":{\"notice\":\"Tracks deposits: caller \\u2192 token \\u2192 tokenId \\u2192 amount held.\"}},\"notice\":\"An IEscrowHook that escrows ERC1155 tokens (single id + amount).\",\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/obligations/escrow/hook-based/hooks/ERC1155EscrowHook.sol\":\"ERC1155EscrowHook\"},\"evmVersion\":\"prague\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@eas/=lib/eas-contracts/contracts/\",\":@erc8004/=lib/erc-8004-contracts/contracts/\",\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@src/=src/\",\":@test/=test/\",\":ds-test/=lib/openzeppelin-contracts/lib/forge-std/lib/ds-test/src/\",\":eas-contracts/=lib/eas-contracts/contracts/\",\":erc-8004-contracts/=lib/erc-8004-contracts/contracts/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":eth-gas-reporter/=lib/eas-contracts/node_modules/eth-gas-reporter/\",\":forge-std/=lib/forge-std/src/\",\":halmos-cheatcodes/=lib/openzeppelin-contracts/lib/halmos-cheatcodes/src/\",\":hardhat-deploy/=lib/eas-contracts/node_modules/hardhat-deploy/\",\":hardhat/=lib/eas-contracts/node_modules/hardhat/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\"],\"viaIR\":true},\"sources\":{\"lib/openzeppelin-contracts/contracts/token/ERC1155/IERC1155.sol\":{\"keccak256\":\"0xf189f9b417fe1931e1ab706838aff1128528694a9fcdb5ff7665197f2ca57d09\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://2ff0143c836c8c9f85d13708733c09e21251395847fccfb518bf3b556726a840\",\"dweb:/ipfs/QmP69sjjrQrhYAsvCSSB69Bx66SiUPdQUqdzMYnf4wANHm\"]},\"lib/openzeppelin-contracts/contracts/token/ERC1155/IERC1155Receiver.sol\":{\"keccak256\":\"0x6ec6d7fce29668ede560c7d2e10f9d10de3473f5298e431e70a5767db42fa620\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://ac0139e51874aeec0730d040e57993187541777eb01d5939c06d5d2b986a54e8\",\"dweb:/ipfs/QmZbMbdPzusXuX9FGkyArV8hgzKLBZaL5RzMtCdCawtwPF\"]},\"lib/openzeppelin-contracts/contracts/token/ERC1155/utils/ERC1155Holder.sol\":{\"keccak256\":\"0x8727aacfc1f069266528eef6380f351d4d4d907b56715e799e0a6bc2d1362db7\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://aa0dcc5e88b91ae16e4d08c3e43af2e9cacfc98bdd9b4eb015f8b022a8efca5c\",\"dweb:/ipfs/QmS5NxwRNqCsc6Te4a18nKU51tCh8RjkF4ATJvZms48Y4X\"]},\"lib/openzeppelin-contracts/contracts/utils/introspection/ERC165.sol\":{\"keccak256\":\"0x2d9dc2fe26180f74c11c13663647d38e259e45f95eb88f57b61d2160b0109d3e\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://81233d1f98060113d9922180bb0f14f8335856fe9f339134b09335e9f678c377\",\"dweb:/ipfs/QmWh6R35SarhAn4z2wH8SU456jJSYL2FgucfTFgbHJJN4E\"]},\"lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol\":{\"keccak256\":\"0x8891738ffe910f0cf2da09566928589bf5d63f4524dd734fd9cedbac3274dd5c\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://971f954442df5c2ef5b5ebf1eb245d7105d9fbacc7386ee5c796df1d45b21617\",\"dweb:/ipfs/QmadRjHbkicwqwwh61raUEapaVEtaLMcYbQZWs9gUkgj3u\"]},\"src/obligations/escrow/hook-based/IEscrowHook.sol\":{\"keccak256\":\"0x9937854ef875b24d7a2b961f8188bb380bfc385796a2dece839856a515eeeca0\",\"license\":\"UNLICENSED\",\"urls\":[\"bzz-raw://d12dc1ef365e83189196d3d026b71ed899d8c8758dfabb33b5d9b4305898f606\",\"dweb:/ipfs/QmW8QpxkbXY9U3VVkrKx17cci5pAnWePehEfp8Zr6Ya4rM\"]},\"src/obligations/escrow/hook-based/hooks/ERC1155EscrowHook.sol\":{\"keccak256\":\"0x86c0a74f69d53d6d8056e91f93db27be476ad4315387f351ad96986d3d6e12b6\",\"license\":\"UNLICENSED\",\"urls\":[\"bzz-raw://2ba23a4a90378fe2979807cdc15e8dbc1fcc3dc353ccd4a749b00a2c5d0c6533\",\"dweb:/ipfs/QmV7phkveqpnRDjLwqdojjQqQVrhREcEh5VuhE9ypGHaCQ\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.27+commit.40a35a09"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "token",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "from",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
+            }
+          ],
+          "type": "error",
+          "name": "ERC1155TransferFailed"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "caller",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "token",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "requested",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "available",
+              "type": "uint256"
+            }
+          ],
+          "type": "error",
+          "name": "InsufficientDeposit"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "caller",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "token",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            }
+          ],
+          "type": "error",
+          "name": "NoDeposit"
+        },
+        {
+          "inputs": [],
+          "type": "error",
+          "name": "UnexpectedNativeValue"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes",
+              "name": "data",
+              "type": "bytes"
+            }
+          ],
+          "stateMutability": "pure",
+          "type": "function",
+          "name": "decodeHookData",
+          "outputs": [
+            {
+              "internalType": "struct ERC1155EscrowHook.HookData",
+              "name": "",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "address",
+                  "name": "token",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "tokenId",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amount",
+                  "type": "uint256"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "deposits",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "struct ERC1155EscrowHook.HookData",
+              "name": "hookData",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "address",
+                  "name": "token",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "tokenId",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amount",
+                  "type": "uint256"
+                }
+              ]
+            }
+          ],
+          "stateMutability": "pure",
+          "type": "function",
+          "name": "encodeHookData",
+          "outputs": [
+            {
+              "internalType": "bytes",
+              "name": "",
+              "type": "bytes"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256[]",
+              "name": "",
+              "type": "uint256[]"
+            },
+            {
+              "internalType": "uint256[]",
+              "name": "",
+              "type": "uint256[]"
+            },
+            {
+              "internalType": "bytes",
+              "name": "",
+              "type": "bytes"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "onERC1155BatchReceived",
+          "outputs": [
+            {
+              "internalType": "bytes4",
+              "name": "",
+              "type": "bytes4"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bytes",
+              "name": "",
+              "type": "bytes"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "onERC1155Received",
+          "outputs": [
+            {
+              "internalType": "bytes4",
+              "name": "",
+              "type": "bytes4"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes",
+              "name": "data",
+              "type": "bytes"
+            },
+            {
+              "internalType": "address",
+              "name": "from",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "payable",
+          "type": "function",
+          "name": "onLock"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes",
+              "name": "data",
+              "type": "bytes"
+            },
+            {
+              "internalType": "address",
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "onRelease"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes",
+              "name": "data",
+              "type": "bytes"
+            },
+            {
+              "internalType": "address",
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "onReturn"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes4",
+              "name": "interfaceId",
+              "type": "bytes4"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "supportsInterface",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "supportsInterface(bytes4)": {
+            "details": "Returns true if this contract implements the interface defined by `interfaceId`. See the corresponding https://eips.ethereum.org/EIPS/eip-165#how-interfaces-are-identified[ERC section] to learn more about how these ids are created. This function call must use less than 30 000 gas."
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {
+          "deposits(address,address,uint256)": {
+            "notice": "Tracks deposits: caller → token → tokenId → amount held."
+          }
+        },
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        "@eas/=lib/eas-contracts/contracts/",
+        "@erc8004/=lib/erc-8004-contracts/contracts/",
+        "@openzeppelin/=lib/openzeppelin-contracts/",
+        "@src/=src/",
+        "@test/=test/",
+        "ds-test/=lib/openzeppelin-contracts/lib/forge-std/lib/ds-test/src/",
+        "eas-contracts/=lib/eas-contracts/contracts/",
+        "erc-8004-contracts/=lib/erc-8004-contracts/contracts/",
+        "erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        "eth-gas-reporter/=lib/eas-contracts/node_modules/eth-gas-reporter/",
+        "forge-std/=lib/forge-std/src/",
+        "halmos-cheatcodes/=lib/openzeppelin-contracts/lib/halmos-cheatcodes/src/",
+        "hardhat-deploy/=lib/eas-contracts/node_modules/hardhat-deploy/",
+        "hardhat/=lib/eas-contracts/node_modules/hardhat/",
+        "openzeppelin-contracts/=lib/openzeppelin-contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/obligations/escrow/hook-based/hooks/ERC1155EscrowHook.sol": "ERC1155EscrowHook"
+      },
+      "evmVersion": "prague",
+      "libraries": {},
+      "viaIR": true
+    },
+    "sources": {
+      "lib/openzeppelin-contracts/contracts/token/ERC1155/IERC1155.sol": {
+        "keccak256": "0xf189f9b417fe1931e1ab706838aff1128528694a9fcdb5ff7665197f2ca57d09",
+        "urls": [
+          "bzz-raw://2ff0143c836c8c9f85d13708733c09e21251395847fccfb518bf3b556726a840",
+          "dweb:/ipfs/QmP69sjjrQrhYAsvCSSB69Bx66SiUPdQUqdzMYnf4wANHm"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/token/ERC1155/IERC1155Receiver.sol": {
+        "keccak256": "0x6ec6d7fce29668ede560c7d2e10f9d10de3473f5298e431e70a5767db42fa620",
+        "urls": [
+          "bzz-raw://ac0139e51874aeec0730d040e57993187541777eb01d5939c06d5d2b986a54e8",
+          "dweb:/ipfs/QmZbMbdPzusXuX9FGkyArV8hgzKLBZaL5RzMtCdCawtwPF"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/token/ERC1155/utils/ERC1155Holder.sol": {
+        "keccak256": "0x8727aacfc1f069266528eef6380f351d4d4d907b56715e799e0a6bc2d1362db7",
+        "urls": [
+          "bzz-raw://aa0dcc5e88b91ae16e4d08c3e43af2e9cacfc98bdd9b4eb015f8b022a8efca5c",
+          "dweb:/ipfs/QmS5NxwRNqCsc6Te4a18nKU51tCh8RjkF4ATJvZms48Y4X"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/utils/introspection/ERC165.sol": {
+        "keccak256": "0x2d9dc2fe26180f74c11c13663647d38e259e45f95eb88f57b61d2160b0109d3e",
+        "urls": [
+          "bzz-raw://81233d1f98060113d9922180bb0f14f8335856fe9f339134b09335e9f678c377",
+          "dweb:/ipfs/QmWh6R35SarhAn4z2wH8SU456jJSYL2FgucfTFgbHJJN4E"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol": {
+        "keccak256": "0x8891738ffe910f0cf2da09566928589bf5d63f4524dd734fd9cedbac3274dd5c",
+        "urls": [
+          "bzz-raw://971f954442df5c2ef5b5ebf1eb245d7105d9fbacc7386ee5c796df1d45b21617",
+          "dweb:/ipfs/QmadRjHbkicwqwwh61raUEapaVEtaLMcYbQZWs9gUkgj3u"
+        ],
+        "license": "MIT"
+      },
+      "src/obligations/escrow/hook-based/IEscrowHook.sol": {
+        "keccak256": "0x9937854ef875b24d7a2b961f8188bb380bfc385796a2dece839856a515eeeca0",
+        "urls": [
+          "bzz-raw://d12dc1ef365e83189196d3d026b71ed899d8c8758dfabb33b5d9b4305898f606",
+          "dweb:/ipfs/QmW8QpxkbXY9U3VVkrKx17cci5pAnWePehEfp8Zr6Ya4rM"
+        ],
+        "license": "UNLICENSED"
+      },
+      "src/obligations/escrow/hook-based/hooks/ERC1155EscrowHook.sol": {
+        "keccak256": "0x86c0a74f69d53d6d8056e91f93db27be476ad4315387f351ad96986d3d6e12b6",
+        "urls": [
+          "bzz-raw://2ba23a4a90378fe2979807cdc15e8dbc1fcc3dc353ccd4a749b00a2c5d0c6533",
+          "dweb:/ipfs/QmV7phkveqpnRDjLwqdojjQqQVrhREcEh5VuhE9ypGHaCQ"
+        ],
+        "license": "UNLICENSED"
+      }
+    },
+    "version": 1
+  },
+  "id": 89
+}

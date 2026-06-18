@@ -3,21 +3,17 @@ use alkahest_rs::{
         NativeTokenPaymentObligation,
         escrow::non_tierable::NativeTokenEscrowObligation,
     },
-    utils::setup_test_environment,
 };
 use alloy::{
-    primitives::{Bytes, U256},
+    primitives::{address, Bytes, U256},
     sol_types::SolValue,
 };
 use eyre::Result;
 
 #[tokio::test]
 async fn test_decode_escrow_obligation() -> Result<()> {
-    // test setup
-    let test = setup_test_environment().await?;
-
     // Create sample obligation data
-    let arbiter = test.addresses.erc20_addresses.payment_obligation;
+    let arbiter = address!("0x1234567890123456789012345678901234567890");
     let demand = Bytes::from(vec![1, 2, 3, 4]); // sample demand data
     let amount: U256 = 100.try_into()?;
 
@@ -43,12 +39,9 @@ async fn test_decode_escrow_obligation() -> Result<()> {
 
 #[tokio::test]
 async fn test_decode_payment_obligation() -> Result<()> {
-    // test setup
-    let test = setup_test_environment().await?;
-
     // Create sample obligation data
     let amount: U256 = 100.try_into()?;
-    let payee = test.alice.address();
+    let payee = address!("0x2345678901234567890123456789012345678901");
 
     let payment_data = NativeTokenPaymentObligation::ObligationData { amount, payee };
 

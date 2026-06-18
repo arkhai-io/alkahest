@@ -118,6 +118,19 @@ async def test_slashed_bond_recipient(env, alice_client):
     assert len(recipient) == 42
 
 
+async def commit_payload(env, cr_client, ref_uid, payload, salt, schema, claimer):
+    commitment = await cr_client.compute_commitment(
+        ref_uid=ref_uid,
+        claimer=claimer,
+        payload=payload,
+        salt=salt,
+        schema=schema,
+    )
+    tx_hash = await cr_client.commit(commitment)
+    assert tx_hash.startswith("0x")
+    return commitment
+
+
 @pytest.mark.asyncio
 async def test_do_obligation(env, alice_client):
     """Test creating a commit-reveal obligation."""
@@ -126,8 +139,12 @@ async def test_do_obligation(env, alice_client):
     salt = "0x" + "aa" * 32
     schema = "0x" + "00" * 32
     payload = b"test obligation payload"
+    ref_uid = "0x" + "00" * 32
 
-    uid = await cr_client.do_obligation(payload, salt, schema)
+    await commit_payload(env, cr_client, ref_uid, payload, salt, schema, env.alice)
+    await env.god_wallet_provider.anvil_mine(1)
+
+    uid = await cr_client.do_obligation(payload, salt, schema, ref_uid=ref_uid)
     assert uid.startswith("0x")
     assert len(uid) == 66
 
@@ -140,8 +157,12 @@ async def test_get_obligation(env, alice_client):
     salt = "0x" + "bb" * 32
     schema = "0x" + "00" * 32
     payload = b"retrieve me"
+    ref_uid = "0x" + "00" * 32
 
-    uid = await cr_client.do_obligation(payload, salt, schema)
+    await commit_payload(env, cr_client, ref_uid, payload, salt, schema, env.alice)
+    await env.god_wallet_provider.anvil_mine(1)
+
+    uid = await cr_client.do_obligation(payload, salt, schema, ref_uid=ref_uid)
 
     result = await cr_client.get_obligation(uid)
     attestation = result["attestation"]
@@ -161,8 +182,7 @@ async def test_compute_commitment(env, alice_client, bob_client):
     salt = "0x" + "cc" * 32
     schema = "0x" + "00" * 32
     payload = b"commitment test"
-
-    ref_uid = await cr_client.do_obligation(payload, salt, schema)
+    ref_uid = "0x" + "33" * 32
 
     commitment = await cr_client.compute_commitment(
         ref_uid=ref_uid,
@@ -185,8 +205,7 @@ async def test_commit_and_get_commitment(env, alice_client, bob_client):
     salt = "0x" + "dd" * 32
     schema = "0x" + "00" * 32
     payload = b"commit flow test"
-
-    ref_uid = await alice_cr.do_obligation(payload, salt, schema)
+    ref_uid = "0x" + "44" * 32
 
     commitment = await bob_cr.compute_commitment(
         ref_uid=ref_uid,
@@ -214,8 +233,7 @@ async def test_is_commitment_claimed_false_before_reveal(env, alice_client, bob_
     salt = "0x" + "ee" * 32
     schema = "0x" + "00" * 32
     payload = b"claim check"
-
-    ref_uid = await alice_cr.do_obligation(payload, salt, schema)
+    ref_uid = "0x" + "55" * 32
 
     commitment = await bob_cr.compute_commitment(
         ref_uid=ref_uid,
@@ -232,16 +250,15 @@ async def test_is_commitment_claimed_false_before_reveal(env, alice_client, bob_
 
 
 @pytest.mark.asyncio
-async def test_reclaim_bond_after_reveal(env, alice_client, bob_client):
-    """Test reclaiming bond after committing and revealing."""
+async def test_bond_reclaimed_after_reveal(env, alice_client, bob_client):
+    """Test that revealing atomically reclaims the bond."""
     alice_cr = alice_client.commit_reveal
     bob_cr = bob_client.commit_reveal
 
     salt = "0x" + "ff" * 32
     schema = "0x" + "00" * 32
     payload = b"reclaim test"
-
-    ref_uid = await alice_cr.do_obligation(payload, salt, schema)
+    ref_uid = "0x" + "00" * 32
 
     commitment = await bob_cr.compute_commitment(
         ref_uid=ref_uid,
@@ -252,14 +269,11 @@ async def test_reclaim_bond_after_reveal(env, alice_client, bob_client):
     )
 
     await bob_cr.commit(commitment)
+    await env.god_wallet_provider.anvil_mine(1)
 
-    # Bob reveals (creates fulfillment attestation)
+    # Bob reveals (creates fulfillment attestation and reclaims bond)
     fulfillment_uid = await bob_cr.do_obligation(payload, salt, schema, ref_uid=ref_uid)
     assert fulfillment_uid.startswith("0x")
-
-    # Bob reclaims bond using the fulfillment UID
-    tx_hash = await bob_cr.reclaim_bond(fulfillment_uid)
-    assert tx_hash.startswith("0x")
 
     # Verify commitment is now claimed
     claimed = await bob_cr.is_commitment_claimed(commitment)
@@ -270,7 +284,7 @@ async def test_reclaim_bond_after_reveal(env, alice_client, bob_client):
 
 @pytest.mark.asyncio
 async def test_full_lifecycle_escrow_commit_reveal_collect(env, alice_client, bob_client):
-    """Full lifecycle: Alice escrows → Bob commits → reveals → collects escrow → reclaims bond."""
+    """Full lifecycle: Alice escrows → Bob commits → reveals/reclaims → collects escrow."""
     alice_cr = alice_client.commit_reveal
     bob_cr = bob_client.commit_reveal
 
@@ -318,19 +332,15 @@ async def test_full_lifecycle_escrow_commit_reveal_collect(env, alice_client, bo
     assert fulfillment_uid.startswith("0x")
     assert len(fulfillment_uid) == 66
 
+    # Reveal atomically reclaims the bond
+    claimed = await bob_cr.is_commitment_claimed(commitment)
+    assert claimed is True
+
     # 4. Bob collects the escrowed native tokens
     collect_tx = await bob_client.native_token.escrow.non_tierable.collect(
         escrow_uid, fulfillment_uid
     )
     assert collect_tx.startswith("0x")
-
-    # 5. Bob reclaims bond
-    reclaim_tx = await bob_cr.reclaim_bond(fulfillment_uid)
-    assert reclaim_tx.startswith("0x")
-
-    # Verify commitment is now claimed
-    claimed = await bob_cr.is_commitment_claimed(commitment)
-    assert claimed is True
 
 
 @pytest.mark.asyncio

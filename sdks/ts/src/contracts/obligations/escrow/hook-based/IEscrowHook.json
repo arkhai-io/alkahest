@@ -1,0 +1,261 @@
+{
+  "abi": [
+    {
+      "type": "function",
+      "name": "onLock",
+      "inputs": [
+        {
+          "name": "data",
+          "type": "bytes",
+          "internalType": "bytes"
+        },
+        {
+          "name": "from",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "escrow",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "payable"
+    },
+    {
+      "type": "function",
+      "name": "onRelease",
+      "inputs": [
+        {
+          "name": "data",
+          "type": "bytes",
+          "internalType": "bytes"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "escrow",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "onReturn",
+      "inputs": [
+        {
+          "name": "data",
+          "type": "bytes",
+          "internalType": "bytes"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "escrow",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "error",
+      "name": "UnexpectedNativeValue",
+      "inputs": []
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "onLock(bytes,address,address)": "1dc8160b",
+    "onRelease(bytes,address,address)": "1a6a5893",
+    "onReturn(bytes,address,address)": "8b9d4539"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.27+commit.40a35a09\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"UnexpectedNativeValue\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"},{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"escrow\",\"type\":\"address\"}],\"name\":\"onLock\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"escrow\",\"type\":\"address\"}],\"name\":\"onRelease\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"escrow\",\"type\":\"address\"}],\"name\":\"onReturn\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"details\":\"Each hook encapsulates a single escrow concern (e.g. \\\"hold 100 USDC\\\").      The HookEscrowObligation calls these during the escrow lifecycle.      `data` is opaque, hook-specific configuration (e.g. token + amount).      Security model: hooks hold assets and track deposits per-caller      (msg.sender). No authorization mapping is needed \\u2014 the caller's      deposit balance is the implicit permission to release.\",\"kind\":\"dev\",\"methods\":{\"onLock(bytes,address,address)\":{\"params\":{\"data\":\"Hook-specific parameters (e.g. token address, amount).\",\"escrow\":\"The escrow obligation contract that initiated the lock.\",\"from\":\"The address providing the assets.\"}},\"onRelease(bytes,address,address)\":{\"params\":{\"data\":\"The same hook data that was passed to onLock.\",\"escrow\":\"The escrow obligation contract that initiated the release.\",\"to\":\"The address receiving the assets.\"}},\"onReturn(bytes,address,address)\":{\"params\":{\"data\":\"The same hook data that was passed to onLock.\",\"escrow\":\"The escrow obligation contract that initiated the return.\",\"to\":\"The address to return assets to (original creator).\"}}},\"title\":\"IEscrowHook\",\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"onLock(bytes,address,address)\":{\"notice\":\"Lock assets into escrow on behalf of `from`.\"},\"onRelease(bytes,address,address)\":{\"notice\":\"Release escrowed assets to the fulfiller.\"},\"onReturn(bytes,address,address)\":{\"notice\":\"Return escrowed assets to the original owner on expiry.\"}},\"notice\":\"Interface for composable escrow actions.\",\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/obligations/escrow/hook-based/IEscrowHook.sol\":\"IEscrowHook\"},\"evmVersion\":\"prague\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@eas/=lib/eas-contracts/contracts/\",\":@erc8004/=lib/erc-8004-contracts/contracts/\",\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@src/=src/\",\":@test/=test/\",\":ds-test/=lib/openzeppelin-contracts/lib/forge-std/lib/ds-test/src/\",\":eas-contracts/=lib/eas-contracts/contracts/\",\":erc-8004-contracts/=lib/erc-8004-contracts/contracts/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":eth-gas-reporter/=lib/eas-contracts/node_modules/eth-gas-reporter/\",\":forge-std/=lib/forge-std/src/\",\":halmos-cheatcodes/=lib/openzeppelin-contracts/lib/halmos-cheatcodes/src/\",\":hardhat-deploy/=lib/eas-contracts/node_modules/hardhat-deploy/\",\":hardhat/=lib/eas-contracts/node_modules/hardhat/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\"],\"viaIR\":true},\"sources\":{\"src/obligations/escrow/hook-based/IEscrowHook.sol\":{\"keccak256\":\"0x9937854ef875b24d7a2b961f8188bb380bfc385796a2dece839856a515eeeca0\",\"license\":\"UNLICENSED\",\"urls\":[\"bzz-raw://d12dc1ef365e83189196d3d026b71ed899d8c8758dfabb33b5d9b4305898f606\",\"dweb:/ipfs/QmW8QpxkbXY9U3VVkrKx17cci5pAnWePehEfp8Zr6Ya4rM\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.27+commit.40a35a09"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [],
+          "type": "error",
+          "name": "UnexpectedNativeValue"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes",
+              "name": "data",
+              "type": "bytes"
+            },
+            {
+              "internalType": "address",
+              "name": "from",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "escrow",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "payable",
+          "type": "function",
+          "name": "onLock"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes",
+              "name": "data",
+              "type": "bytes"
+            },
+            {
+              "internalType": "address",
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "escrow",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "onRelease"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes",
+              "name": "data",
+              "type": "bytes"
+            },
+            {
+              "internalType": "address",
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "escrow",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "onReturn"
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "onLock(bytes,address,address)": {
+            "params": {
+              "data": "Hook-specific parameters (e.g. token address, amount).",
+              "escrow": "The escrow obligation contract that initiated the lock.",
+              "from": "The address providing the assets."
+            }
+          },
+          "onRelease(bytes,address,address)": {
+            "params": {
+              "data": "The same hook data that was passed to onLock.",
+              "escrow": "The escrow obligation contract that initiated the release.",
+              "to": "The address receiving the assets."
+            }
+          },
+          "onReturn(bytes,address,address)": {
+            "params": {
+              "data": "The same hook data that was passed to onLock.",
+              "escrow": "The escrow obligation contract that initiated the return.",
+              "to": "The address to return assets to (original creator)."
+            }
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {
+          "onLock(bytes,address,address)": {
+            "notice": "Lock assets into escrow on behalf of `from`."
+          },
+          "onRelease(bytes,address,address)": {
+            "notice": "Release escrowed assets to the fulfiller."
+          },
+          "onReturn(bytes,address,address)": {
+            "notice": "Return escrowed assets to the original owner on expiry."
+          }
+        },
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        "@eas/=lib/eas-contracts/contracts/",
+        "@erc8004/=lib/erc-8004-contracts/contracts/",
+        "@openzeppelin/=lib/openzeppelin-contracts/",
+        "@src/=src/",
+        "@test/=test/",
+        "ds-test/=lib/openzeppelin-contracts/lib/forge-std/lib/ds-test/src/",
+        "eas-contracts/=lib/eas-contracts/contracts/",
+        "erc-8004-contracts/=lib/erc-8004-contracts/contracts/",
+        "erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        "eth-gas-reporter/=lib/eas-contracts/node_modules/eth-gas-reporter/",
+        "forge-std/=lib/forge-std/src/",
+        "halmos-cheatcodes/=lib/openzeppelin-contracts/lib/halmos-cheatcodes/src/",
+        "hardhat-deploy/=lib/eas-contracts/node_modules/hardhat-deploy/",
+        "hardhat/=lib/eas-contracts/node_modules/hardhat/",
+        "openzeppelin-contracts/=lib/openzeppelin-contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/obligations/escrow/hook-based/IEscrowHook.sol": "IEscrowHook"
+      },
+      "evmVersion": "prague",
+      "libraries": {},
+      "viaIR": true
+    },
+    "sources": {
+      "src/obligations/escrow/hook-based/IEscrowHook.sol": {
+        "keccak256": "0x9937854ef875b24d7a2b961f8188bb380bfc385796a2dece839856a515eeeca0",
+        "urls": [
+          "bzz-raw://d12dc1ef365e83189196d3d026b71ed899d8c8758dfabb33b5d9b4305898f606",
+          "dweb:/ipfs/QmW8QpxkbXY9U3VVkrKx17cci5pAnWePehEfp8Zr6Ya4rM"
+        ],
+        "license": "UNLICENSED"
+      }
+    },
+    "version": 1
+  },
+  "id": 85
+}

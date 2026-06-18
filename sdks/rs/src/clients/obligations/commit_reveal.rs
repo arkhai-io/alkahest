@@ -160,25 +160,6 @@ impl CommitRevealObligationModule {
         Ok(result)
     }
 
-    pub async fn reclaim_bond(
-        &self,
-        obligation_uid: FixedBytes<32>,
-    ) -> eyre::Result<TransactionReceipt> {
-        let contract = contracts::obligations::CommitRevealObligation::new(
-            self.addresses.obligation,
-            &*self.wallet_provider,
-        );
-
-        let receipt = contract
-            .reclaimBond(obligation_uid)
-            .send()
-            .await?
-            .get_receipt()
-            .await?;
-
-        Ok(receipt)
-    }
-
     pub async fn slash_bond(
         &self,
         commitment: FixedBytes<32>,

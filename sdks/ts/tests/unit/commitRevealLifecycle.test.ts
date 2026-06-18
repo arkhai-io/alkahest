@@ -32,7 +32,7 @@ describe("CommitReveal Lifecycle Tests", () => {
     await teardownTestEnvironment(testContext);
   });
 
-  test("full lifecycle: escrow → commit → reveal → collect → reclaim bond", async () => {
+  test("full lifecycle: escrow → commit → reveal/reclaim → collect", async () => {
     const escrowAmount = parseEther("2.0");
     const payload = toHex("hello from bob");
     const salt = ("0x" + "aa".repeat(32)) as `0x${string}`;
@@ -70,13 +70,18 @@ describe("CommitReveal Lifecycle Tests", () => {
     expect((committer as string).toLowerCase()).toBe(bob.toLowerCase());
 
     // ── 3. Bob reveals (creates fulfillment attestation referencing escrow) ──
-    // Anvil automining: each tx gets its own block, so commit and reveal are in different blocks.
+    await testClient.mine({ blocks: 1 });
+
     const { attested: revealAttested } = await bobClient.commitReveal.doObligation(
       obligationData,
       escrowUid,
     );
     const fulfillmentUid = revealAttested.uid;
     expect(fulfillmentUid).not.toBe("0x" + "00".repeat(32));
+
+    // Reveal atomically reclaims the bond.
+    const claimed = await bobClient.commitReveal.isCommitmentClaimed(commitment);
+    expect(claimed).toBe(true);
 
     // ── 4. Bob collects the escrowed native tokens ──
     const bobBalanceBefore = await testClient.getBalance({ address: bob });
@@ -91,14 +96,6 @@ describe("CommitReveal Lifecycle Tests", () => {
     // Bob's balance should increase (escrow amount minus gas)
     // We can't check exact amount due to gas, but net should be positive
     expect(bobBalanceAfter).toBeGreaterThan(bobBalanceBefore);
-
-    // ── 5. Bob reclaims bond ──
-    const { hash: reclaimHash } = await bobClient.commitReveal.reclaimBond(fulfillmentUid);
-    await testClient.waitForTransactionReceipt({ hash: reclaimHash });
-
-    // Verify commitment is now claimed
-    const claimed = await bobClient.commitReveal.isCommitmentClaimed(commitment);
-    expect(claimed).toBe(true);
   });
 
   test("bond slashing: commit without reveal → slash after deadline", async () => {

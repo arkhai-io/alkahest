@@ -60,7 +60,7 @@ describe("General Arbiters Tests", () => {
 
   // Helper function to create a test attestation
   const createTestAttestation = (overrides = {}) => ({
-    uid: "0x0000000000000000000000000000000000000000000000000000000000000000" as const,
+    uid: "0x1111111111111111111111111111111111111111111111111111111111111111" as const,
     schema: "0x1234567890123456789012345678901234567890123456789012345678901234" as const,
     time: BigInt(Math.floor(Date.now() / 1000)),
     expirationTime: 0n,
