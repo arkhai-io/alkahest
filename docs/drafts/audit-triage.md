@@ -42,6 +42,8 @@ Tracking notes for `arkhai-io-alkahest-2026-04-13-analysis.md`.
   Commits: `6348408ead79fd85ea9a73eb295f1394061c51f2 fix(hooks): reject direct native transfers`, `d9ffc71094db7eefd49ae38f8d4be349196161a2 fix(native): remove unnecessary raw receivers`
 - Second report #4 `TokenBundleSplitter` ERC721 index bounds: addressed for the validated splitter by always running ERC721 assignment validation, including zero-ERC721 escrows, so non-empty ERC721 indices are rejected with `InvalidERC721Index`. The unvalidated splitter remains oracle/operator responsibility by design.
   Commit: `09e498aebe056151b3dd690ec0cb8dfd13de0b6d fix(splitters): validate empty erc721 assignments`
+- Second report #6 Splitter missing payable `receive` for refunding fulfillments: addressed by applying the generic-forwarder native refund proxy pattern to `ERC20Splitter` and `ERC1155Splitter`. All splitter `createFulfillment` paths that forward `msg.value` to arbitrary obligations now accept native refunds and return post-call balance increases to the external fulfiller.
+  Commit: `b7c4aac06bdeb240cbb3b287753306b79381945c fix(splitters): proxy native fulfillment refunds`
 - Default escrow checks follow-up: documented proposed default/unconditional escrow split before implementation.
   Doc: `docs/drafts/audit-follow-ups.md`
 
@@ -65,5 +67,4 @@ Tracking notes for `arkhai-io-alkahest-2026-04-13-analysis.md`.
 
 ## Remaining Untriaged
 
-- Second report section #6 Splitter missing payable receive for refunding fulfillments.
 - Second report section #7 BaseObligation payable raw entrypoint footgun.
