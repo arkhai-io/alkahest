@@ -381,21 +381,8 @@ contract TokenBundleEscrowObligation is BaseEscrowObligation, IArbiter, ERC1155H
     /// Failed transfers emit events but do not revert. The escrow will be marked as collected
     /// even if some tokens remain stuck. This can result in permanent loss of stuck tokens.
     function unsafePartiallyCollectEscrow(bytes32 _escrow, bytes32 _fulfillment) external nonReentrant returns (bool) {
-        Attestation memory escrow;
-        Attestation memory fulfillment;
-
-        // Get attestations with error handling
-        try eas.getAttestation(_escrow) returns (Attestation memory attestationResult) {
-            escrow = attestationResult;
-        } catch {
-            revert AttestationNotFound(_escrow);
-        }
-
-        try eas.getAttestation(_fulfillment) returns (Attestation memory attestationResult) {
-            fulfillment = attestationResult;
-        } catch {
-            revert AttestationNotFound(_fulfillment);
-        }
+        Attestation memory escrow = _getExistingAttestation(_escrow);
+        Attestation memory fulfillment = _getExistingAttestation(_fulfillment);
 
         // Validate escrow uses correct schema
         if (escrow.schema != ATTESTATION_SCHEMA) {
@@ -435,14 +422,7 @@ contract TokenBundleEscrowObligation is BaseEscrowObligation, IArbiter, ERC1155H
     /// Failed transfers emit events but do not revert. The escrow will be marked as reclaimed
     /// even if some tokens remain stuck. This can result in permanent loss of stuck tokens.
     function unsafePartiallyReclaimExpired(bytes32 uid) external nonReentrant returns (bool) {
-        Attestation memory attestation;
-
-        // Get attestation with error handling
-        try eas.getAttestation(uid) returns (Attestation memory result) {
-            attestation = result;
-        } catch {
-            revert AttestationNotFound(uid);
-        }
+        Attestation memory attestation = _getExistingAttestation(uid);
 
         // Validate attestation uses correct schema
         if (attestation.schema != ATTESTATION_SCHEMA) {
