@@ -55,6 +55,8 @@ Tracking notes for `arkhai-io-alkahest-2026-04-13-analysis.md`.
 - #15 Splitter unconditional collection after third-party pre-collection: accepted as a low-incentive liveness edge case rather than a security issue. A third party needs an already-valid splitter-recipient fulfillment and posted oracle decision, and can only race the intended flow to move funds to the splitter, not to themselves. Adding distribute-only fallback semantics would require custody/accounting complexity or risk paying from commingled balances.
 - Second report #2 Splitter self-recipient splits / missing withdrawal: accepted as oracle-controlled distribution behavior. Split recipients are entirely the splitter oracle's responsibility, and guarding `address(this)` would be an arbitrary blacklist special case. Existing zero-address recipient guards were removed for consistency because intentional burn/blackhole recipients are also oracle policy.
   Commit: `19cf58e179deb9c7f50bd68b6b13b95757344299 fix(splitters): leave recipient policy to oracle`
+- Second report #5 Splitter `requestArbitration` event payload: accepted as an off-chain integration hazard rather than an on-chain issue. Splitter contracts cannot generally validate or derive the relevant oracle/demand payload when the splitter is nested inside `AllArbiter`, `AnyArbiter`, or future composite arbiters. SDKs and indexers should treat splitter request events as hints and re-read the canonical escrow attestation from EAS before deciding.
+  Follow-up doc: `docs/drafts/escrow-default-checks-plan.md`
 
 ## Deferred
 
@@ -63,6 +65,5 @@ Tracking notes for `arkhai-io-alkahest-2026-04-13-analysis.md`.
 
 ## Remaining Untriaged
 
-- Second report section #5 Splitter `requestArbitration` event payload.
 - Second report section #6 Splitter missing payable receive for refunding fulfillments.
 - Second report section #7 BaseObligation payable raw entrypoint footgun.

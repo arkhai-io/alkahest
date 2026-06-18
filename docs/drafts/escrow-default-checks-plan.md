@@ -74,3 +74,14 @@ global contract setting. This is a larger API change because `commit(bytes32)`
 does not reveal the escrow UID, recipient, data hash, or demand terms at commit
 time. A per-demand version should add typed commit context or otherwise bind the
 committed bond terms into the commitment and verify them during reveal.
+
+## Splitter Arbitration Requests in SDKs
+
+Splitter `requestArbitration` events include caller-supplied oracle and demand
+payloads. Those payloads are useful as hints, but they are not canonical when a
+splitter is nested inside logical arbiters such as `AllArbiter` or `AnyArbiter`.
+
+SDK and indexer code should re-read the escrow attestation from EAS, interpret
+the configured arbiter/demand tree, and decide whether the request is relevant
+before prompting or submitting oracle decisions. They should not treat the event
+payload alone as authorization or as the canonical splitter demand.
