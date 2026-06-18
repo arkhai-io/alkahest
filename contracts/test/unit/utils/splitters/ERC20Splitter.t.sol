@@ -6,7 +6,7 @@ import {ERC20Splitter} from "@src/utils/splitters/ERC20Splitter.sol";
 import {SplitterVerification} from "@src/utils/splitters/SplitterVerification.sol";
 import {ERC20EscrowObligation} from "@src/obligations/escrow/default/ERC20EscrowObligation.sol";
 import {StringObligation} from "@src/obligations/StringObligation.sol";
-import {AttestationContext, BaseObligation} from "@src/BaseObligation.sol";
+import {BaseObligation} from "@src/BaseObligation.sol";
 import {BaseEscrowObligation} from "@src/BaseEscrowObligation.sol";
 import {IEAS, Attestation, AttestationRequest, AttestationRequestData} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
@@ -45,8 +45,8 @@ contract ERC20SplitterRefundingStringObligation is StringObligation {
         refundAmount = _refundAmount;
     }
 
-    function _afterAttest(AttestationContext memory context) internal override {
-        (bool success,) = payable(context.payer).call{value: refundAmount}("");
+    function _afterAttest(Attestation memory attestation) internal override {
+        (bool success,) = payable(attestation.recipient).call{value: refundAmount}("");
         require(success, "refund failed");
     }
 }

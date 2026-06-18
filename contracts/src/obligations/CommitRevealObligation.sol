@@ -5,7 +5,7 @@ import {Attestation} from "@eas/Common.sol";
 import {IEAS} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {AttestationContext, BaseObligation} from "../BaseObligation.sol";
+import {BaseObligation} from "../BaseObligation.sol";
 import {IArbiter} from "../IArbiter.sol";
 import {ArbiterUtils} from "../ArbiterUtils.sol";
 
@@ -156,19 +156,20 @@ contract CommitRevealObligation is BaseObligation, IArbiter, Ownable {
 
     /// @dev After the attestation is created, validate the commitment, enforce
     ///      the deadline, and reclaim the bond atomically.
-    function _afterAttest(AttestationContext memory context) internal override {
-        bytes32 revealedCommitment = keccak256(abi.encode(context.refUID, context.recipient, keccak256(context.data)));
+    function _afterAttest(Attestation memory attestation) internal override {
+        bytes32 revealedCommitment =
+            keccak256(abi.encode(attestation.refUID, attestation.recipient, keccak256(attestation.data)));
 
         CommitInfo memory info = commitments[revealedCommitment];
 
         // Commitment must exist
         if (info.committer == address(0)) {
-            revert CommitmentMissing(revealedCommitment, context.recipient);
+            revert CommitmentMissing(revealedCommitment, attestation.recipient);
         }
 
         // Commitment must be from a prior block (anti-frontrun)
         if (info.commitBlock >= block.number) {
-            revert CommitmentTooRecent(revealedCommitment, context.recipient);
+            revert CommitmentTooRecent(revealedCommitment, attestation.recipient);
         }
 
         // Reveal must be within the deadline
@@ -188,7 +189,7 @@ contract CommitRevealObligation is BaseObligation, IArbiter, Ownable {
         (bool success,) = info.committer.call{value: amount}("");
         if (!success) revert BondTransferFailed(info.committer, amount);
 
-        emit BondReclaimed(context.uid, info.committer, amount);
+        emit BondReclaimed(attestation.uid, info.committer, amount);
     }
 
     // ---------------------------------------------------------------------

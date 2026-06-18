@@ -7,17 +7,6 @@ import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {Attestation} from "@eas/Common.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-struct AttestationContext {
-    bytes32 uid;
-    bytes32 schema;
-    address attester;
-    address payer;
-    address recipient;
-    uint64 expirationTime;
-    bytes32 refUID;
-    bytes data;
-}
-
 abstract contract BaseObligation is BaseAttester, ReentrancyGuard {
     constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, string memory schema, bool revocable)
         BaseAttester(_eas, _schemaRegistry, schema, revocable)
@@ -42,14 +31,16 @@ abstract contract BaseObligation is BaseAttester, ReentrancyGuard {
         _beforeAttest(data, msg.sender, recipient);
         uid_ = _attest(data, recipient, expirationTime, refUID);
         _afterAttest(
-            AttestationContext({
+            Attestation({
                 uid: uid_,
                 schema: ATTESTATION_SCHEMA,
-                attester: address(this),
-                payer: msg.sender,
-                recipient: recipient,
+                time: uint64(block.timestamp),
                 expirationTime: expirationTime,
+                revocationTime: 0,
                 refUID: refUID,
+                recipient: recipient,
+                attester: address(this),
+                revocable: true,
                 data: data
             })
         );
@@ -58,5 +49,5 @@ abstract contract BaseObligation is BaseAttester, ReentrancyGuard {
     // Hooks for obligations to implement
     function _beforeAttest(bytes memory data, address payer, address recipient) internal virtual {}
 
-    function _afterAttest(AttestationContext memory context) internal virtual {}
+    function _afterAttest(Attestation memory attestation) internal virtual {}
 }

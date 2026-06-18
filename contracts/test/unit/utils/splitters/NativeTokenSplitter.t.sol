@@ -5,7 +5,6 @@ import "forge-std/Test.sol";
 import {NativeTokenSplitter} from "@src/utils/splitters/NativeTokenSplitter.sol";
 import {NativeTokenEscrowObligation} from "@src/obligations/escrow/default/NativeTokenEscrowObligation.sol";
 import {StringObligation} from "@src/obligations/StringObligation.sol";
-import {AttestationContext} from "@src/BaseObligation.sol";
 import {IEAS, Attestation} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 
@@ -20,8 +19,8 @@ contract NativeSplitterRefundingStringObligation is StringObligation {
         refundAmount = _refundAmount;
     }
 
-    function _afterAttest(AttestationContext memory context) internal override {
-        (bool success,) = payable(context.payer).call{value: refundAmount}("");
+    function _afterAttest(Attestation memory attestation) internal override {
+        (bool success,) = payable(attestation.recipient).call{value: refundAmount}("");
         require(success, "refund failed");
     }
 }

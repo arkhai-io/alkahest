@@ -2,7 +2,7 @@
 pragma solidity ^0.8.26;
 
 import "forge-std/Test.sol";
-import {AttestationContext, BaseObligation} from "@src/BaseObligation.sol";
+import {BaseObligation} from "@src/BaseObligation.sol";
 import {BaseAttester} from "@src/BaseAttester.sol";
 import {SchemaResolver} from "@eas/resolver/SchemaResolver.sol";
 import {IEAS, Attestation, AttestationRequest, AttestationRequestData} from "@eas/IEAS.sol";
@@ -19,7 +19,6 @@ contract MockBaseObligation is BaseObligation {
     address public lastBeforeAttestRecipient;
     bytes32 public lastAfterAttestUid;
     bytes public lastAfterAttestData;
-    address public lastAfterAttestPayer;
     address public lastAfterAttestRecipient;
 
     constructor(IEAS _eas, ISchemaRegistry _schemaRegistry)
@@ -34,12 +33,11 @@ contract MockBaseObligation is BaseObligation {
         lastBeforeAttestRecipient = recipient;
     }
 
-    function _afterAttest(AttestationContext memory context) internal override {
+    function _afterAttest(Attestation memory attestation) internal override {
         afterAttestCalled = true;
-        lastAfterAttestUid = context.uid;
-        lastAfterAttestData = context.data;
-        lastAfterAttestPayer = context.payer;
-        lastAfterAttestRecipient = context.recipient;
+        lastAfterAttestUid = attestation.uid;
+        lastAfterAttestData = attestation.data;
+        lastAfterAttestRecipient = attestation.recipient;
     }
 
     // Public wrapper for onAttest for testing
@@ -61,7 +59,6 @@ contract MockBaseObligation is BaseObligation {
         lastBeforeAttestRecipient = address(0);
         lastAfterAttestUid = bytes32(0);
         lastAfterAttestData = "";
-        lastAfterAttestPayer = address(0);
         lastAfterAttestRecipient = address(0);
     }
 
@@ -131,7 +128,6 @@ contract BaseObligationTest is Test {
 
         assertEq(baseObligation.lastAfterAttestUid(), expectedUID, "After UID should match");
         assertEq(baseObligation.lastAfterAttestData(), testData, "After data should match");
-        assertEq(baseObligation.lastAfterAttestPayer(), testUser, "After payer should match");
         assertEq(baseObligation.lastAfterAttestRecipient(), testUser, "After recipient should match");
     }
 

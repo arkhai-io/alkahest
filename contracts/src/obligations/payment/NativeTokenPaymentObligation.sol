@@ -10,7 +10,7 @@ import {
     RevocationRequestData
 } from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
-import {AttestationContext, BaseObligation} from "../../BaseObligation.sol";
+import {BaseObligation} from "../../BaseObligation.sol";
 import {IArbiter} from "../../IArbiter.sol";
 import {ArbiterUtils} from "../../ArbiterUtils.sol";
 
@@ -77,8 +77,8 @@ contract NativeTokenPaymentObligation is BaseObligation, IArbiter {
         }
     }
 
-    function _afterAttest(AttestationContext memory context) internal override {
-        emit PaymentMade(context.uid, context.recipient);
+    function _afterAttest(Attestation memory attestation) internal override {
+        emit PaymentMade(attestation.uid, attestation.recipient);
     }
 
     function checkObligation(Attestation memory obligation, bytes memory demand, bytes32 fulfilling)
