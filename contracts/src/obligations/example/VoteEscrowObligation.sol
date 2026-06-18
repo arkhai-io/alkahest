@@ -16,16 +16,9 @@ interface IVotingContract {
 
     function castVote(uint256 proposalId, uint8 support) external;
 
-    function castVoteWithReason(
-        uint256 proposalId,
-        uint8 support,
-        string calldata reason
-    ) external;
+    function castVoteWithReason(uint256 proposalId, uint8 support, string calldata reason) external;
 
-    function hasVoted(
-        uint256 proposalId,
-        address account
-    ) external view returns (bool);
+    function hasVoted(uint256 proposalId, address account) external view returns (bool);
 }
 
 /// @title VoteEscrowObligation
@@ -53,11 +46,7 @@ contract VoteEscrowObligation is BaseEscrowObligation {
     mapping(bytes32 => bytes32) public attestationToDataHash;
 
     // Events
-    event VoteDelegated(
-        bytes32 indexed escrowId,
-        address indexed voter,
-        address indexed votingContract
-    );
+    event VoteDelegated(bytes32 indexed escrowId, address indexed voter, address indexed votingContract);
     event VoteCast(bytes32 indexed escrowId, uint256 proposalId, uint8 support);
     event VoteReturned(bytes32 indexed escrowId, address indexed voter);
 
@@ -66,10 +55,7 @@ contract VoteEscrowObligation is BaseEscrowObligation {
     error NoActiveEscrow(bytes32 escrowId);
     error VoteAlreadyCast(uint256 proposalId);
 
-    constructor(
-        IEAS _eas,
-        ISchemaRegistry _schemaRegistry
-    )
+    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry)
         BaseEscrowObligation(
             _eas,
             _schemaRegistry,
@@ -81,50 +67,32 @@ contract VoteEscrowObligation is BaseEscrowObligation {
     /// @notice Encode obligation data for creating an escrow
     /// @param data The obligation data to encode
     /// @return The ABI-encoded obligation data
-    function encodeObligationData(
-        ObligationData memory data
-    ) public pure returns (bytes memory) {
-        return
-            abi.encode(
-                data.votingContract,
-                data.proposalId,
-                data.support,
-                data.arbiter,
-                data.demand
-            );
+    function encodeObligationData(ObligationData memory data) public pure returns (bytes memory) {
+        return abi.encode(data.votingContract, data.proposalId, data.support, data.arbiter, data.demand);
     }
 
     /// @notice Decode obligation data from bytes
     /// @param data The encoded obligation data
     /// @return The decoded obligation data struct
-    function decodeObligationData(
-        bytes memory data
-    ) public pure returns (ObligationData memory) {
-        (
-            address votingContract,
-            uint256 proposalId,
-            uint8 support,
-            address arbiter,
-            bytes memory demand
-        ) = abi.decode(data, (address, uint256, uint8, address, bytes));
+    function decodeObligationData(bytes memory data) public pure returns (ObligationData memory) {
+        (address votingContract, uint256 proposalId, uint8 support, address arbiter, bytes memory demand) =
+            abi.decode(data, (address, uint256, uint8, address, bytes));
 
-        return
-            ObligationData({
-                votingContract: votingContract,
-                proposalId: proposalId,
-                support: support,
-                arbiter: arbiter,
-                demand: demand
-            });
+        return ObligationData({
+            votingContract: votingContract, proposalId: proposalId, support: support, arbiter: arbiter, demand: demand
+        });
     }
 
     /// @notice Extract arbiter and demand from encoded data
     /// @param data The encoded obligation data
     /// @return arbiter The arbiter address
     /// @return demand The demand bytes
-    function extractArbiterAndDemand(
-        bytes memory data
-    ) public pure override returns (address arbiter, bytes memory demand) {
+    function extractArbiterAndDemand(bytes memory data)
+        public
+        pure
+        override
+        returns (address arbiter, bytes memory demand)
+    {
         ObligationData memory obligation = decodeObligationData(data);
         return (obligation.arbiter, obligation.demand);
     }
@@ -144,18 +112,14 @@ contract VoteEscrowObligation is BaseEscrowObligation {
         bytes32 dataHash = keccak256(data);
 
         // Get the voting contract
-        IVotingContract votingContract = IVotingContract(
-            obligation.votingContract
-        );
+        IVotingContract votingContract = IVotingContract(obligation.votingContract);
 
         // Get current delegate
         address currentDelegate = votingContract.delegates(from);
 
         // Check that the user has delegated to this contract
         if (currentDelegate != address(this)) {
-            revert(
-                "Must delegate voting power to escrow contract before creating escrow"
-            );
+            revert("Must delegate voting power to escrow contract before creating escrow");
         }
 
         // Store who they delegated to BEFORE delegating to us
@@ -176,11 +140,11 @@ contract VoteEscrowObligation is BaseEscrowObligation {
     /// @param to The address receiving the benefit (fulfiller)
     /// @param fulfillmentUid The UID of the fulfillment attestation
     /// @return result Encoded result data
-    function _releaseEscrow(
-        bytes memory escrowData,
-        address to,
-        bytes32 fulfillmentUid
-    ) internal override returns (bytes memory result) {
+    function _releaseEscrow(bytes memory escrowData, address to, bytes32 fulfillmentUid)
+        internal
+        override
+        returns (bytes memory result)
+    {
         ObligationData memory obligation = decodeObligationData(escrowData);
 
         // Get the data hash for this escrow
@@ -193,9 +157,7 @@ contract VoteEscrowObligation is BaseEscrowObligation {
         address voter = escrowedVoter[dataHash];
 
         // Cast the vote using the delegated voting power
-        IVotingContract votingContract = IVotingContract(
-            obligation.votingContract
-        );
+        IVotingContract votingContract = IVotingContract(obligation.votingContract);
 
         // Check if already voted (safety check)
         if (votingContract.hasVoted(obligation.proposalId, address(this))) {
@@ -205,18 +167,11 @@ contract VoteEscrowObligation is BaseEscrowObligation {
         // Cast the vote with a reason indicating it's on behalf of the original voter
         string memory reason = string(
             abi.encodePacked(
-                "Vote cast on behalf of ",
-                _toHexString(voter),
-                " via escrow ",
-                _bytes32ToHexString(dataHash)
+                "Vote cast on behalf of ", _toHexString(voter), " via escrow ", _bytes32ToHexString(dataHash)
             )
         );
 
-        votingContract.castVoteWithReason(
-            obligation.proposalId,
-            obligation.support,
-            reason
-        );
+        votingContract.castVoteWithReason(obligation.proposalId, obligation.support, reason);
 
         emit VoteCast(dataHash, obligation.proposalId, obligation.support);
 
@@ -266,9 +221,7 @@ contract VoteEscrowObligation is BaseEscrowObligation {
     }
 
     /// @notice Helper to convert bytes32 to hex string
-    function _bytes32ToHexString(
-        bytes32 value
-    ) private pure returns (string memory) {
+    function _bytes32ToHexString(bytes32 value) private pure returns (string memory) {
         bytes memory buffer = new bytes(66);
         buffer[0] = "0";
         buffer[1] = "x";
@@ -293,10 +246,7 @@ contract VoteEscrowObligation is BaseEscrowObligation {
     /// @param data The encoded obligation data
     /// @param expirationTime The expiration timestamp (0 for no expiration)
     /// @return uid The attestation UID
-    function doObligation(
-        bytes calldata data,
-        uint64 expirationTime
-    ) external returns (bytes32 uid) {
+    function doObligation(bytes calldata data, uint64 expirationTime) external returns (bytes32 uid) {
         uid = doObligationRaw(data, expirationTime, bytes32(0));
         // Store mapping from attestation UID to data hash
         bytes32 dataHash = keccak256(data);
@@ -308,10 +258,7 @@ contract VoteEscrowObligation is BaseEscrowObligation {
     /// @param obligationData The typed obligation data
     /// @param expirationTime The expiration timestamp (0 for no expiration)
     /// @return uid The attestation UID
-    function doObligation(
-        ObligationData memory obligationData,
-        uint64 expirationTime
-    ) external returns (bytes32 uid) {
+    function doObligation(ObligationData memory obligationData, uint64 expirationTime) external returns (bytes32 uid) {
         bytes memory encodedData = encodeObligationData(obligationData);
         // Call this contract's doObligation(bytes, uint64) externally to convert memory to calldata
         uid = this.doObligation(encodedData, expirationTime);
@@ -319,48 +266,26 @@ contract VoteEscrowObligation is BaseEscrowObligation {
     }
 
     /// @notice Get escrow details by data hash
-    function getEscrowDetails(
-        bytes32 dataHash
-    )
+    function getEscrowDetails(bytes32 dataHash)
         external
         view
-        returns (
-            address voter,
-            ObligationData memory data,
-            address prevDelegate
-        )
+        returns (address voter, ObligationData memory data, address prevDelegate)
     {
-        return (
-            escrowedVoter[dataHash],
-            escrowedData[dataHash],
-            previousDelegate[dataHash]
-        );
+        return (escrowedVoter[dataHash], escrowedData[dataHash], previousDelegate[dataHash]);
     }
 
     /// @notice Get escrow details by attestation UID
-    function getEscrowDetailsByUID(
-        bytes32 uid
-    )
+    function getEscrowDetailsByUID(bytes32 uid)
         external
         view
-        returns (
-            address voter,
-            ObligationData memory data,
-            address prevDelegate
-        )
+        returns (address voter, ObligationData memory data, address prevDelegate)
     {
         bytes32 dataHash = attestationToDataHash[uid];
-        return (
-            escrowedVoter[dataHash],
-            escrowedData[dataHash],
-            previousDelegate[dataHash]
-        );
+        return (escrowedVoter[dataHash], escrowedData[dataHash], previousDelegate[dataHash]);
     }
 
     /// @notice Check if a voter has an active escrow
-    function hasActiveEscrow(
-        address voter
-    ) external view returns (bool, bytes32) {
+    function hasActiveEscrow(address voter) external view returns (bool, bytes32) {
         bytes32 dataHash = activeEscrow[voter];
         return (dataHash != bytes32(0), dataHash);
     }

@@ -4,7 +4,14 @@ pragma solidity ^0.8.26;
 import {Test, console2} from "forge-std/Test.sol";
 import {MajorityVoteArbiter} from "../../src/arbiters/example/MajorityVoteArbiter.sol";
 import {IArbiter} from "../../src/IArbiter.sol";
-import {IEAS, Attestation, AttestationRequest, AttestationRequestData, RevocationRequest, RevocationRequestData} from "@eas/IEAS.sol";
+import {
+    IEAS,
+    Attestation,
+    AttestationRequest,
+    AttestationRequestData,
+    RevocationRequest,
+    RevocationRequestData
+} from "@eas/IEAS.sol";
 import {ISchemaRegistry, SchemaRecord} from "@eas/ISchemaRegistry.sol";
 import {ISchemaResolver} from "@eas/resolver/ISchemaResolver.sol";
 import {EASDeployer} from "../utils/EASDeployer.sol";
@@ -26,26 +33,11 @@ contract MajorityVoteArbiterTest is Test {
     bytes32 public testSchema;
     bytes32 public testObligationUID;
 
-    event VoteCast(
-        bytes32 indexed obligation,
-        address indexed voter,
-        bool vote,
-        uint256 yesVotes,
-        uint256 noVotes
-    );
+    event VoteCast(bytes32 indexed obligation, address indexed voter, bool vote, uint256 yesVotes, uint256 noVotes);
 
-    event ArbitrationRequested(
-        bytes32 indexed obligation,
-        address[] voters,
-        uint256 quorum
-    );
+    event ArbitrationRequested(bytes32 indexed obligation, address[] voters, uint256 quorum);
 
-    event ArbitrationComplete(
-        bytes32 indexed obligation,
-        bool decision,
-        uint256 yesVotes,
-        uint256 noVotes
-    );
+    event ArbitrationComplete(bytes32 indexed obligation, bool decision, uint256 yesVotes, uint256 noVotes);
 
     function setUp() public {
         // Deploy EAS infrastructure locally
@@ -88,10 +80,7 @@ contract MajorityVoteArbiterTest is Test {
             value: 0
         });
 
-        AttestationRequest memory request = AttestationRequest({
-            schema: testSchema,
-            data: attestationData
-        });
+        AttestationRequest memory request = AttestationRequest({schema: testSchema, data: attestationData});
 
         testObligationUID = eas.attest(request);
     }
@@ -105,8 +94,8 @@ contract MajorityVoteArbiterTest is Test {
         uint256 quorum = 2;
         bytes memory additionalData = abi.encode("voting on test obligation");
 
-        MajorityVoteArbiter.DemandData memory demandData = MajorityVoteArbiter
-            .DemandData({voters: voters, quorum: quorum, data: additionalData});
+        MajorityVoteArbiter.DemandData memory demandData =
+            MajorityVoteArbiter.DemandData({voters: voters, quorum: quorum, data: additionalData});
         bytes memory encodedDemand = abi.encode(demandData);
 
         // Request arbitration
@@ -117,9 +106,7 @@ contract MajorityVoteArbiterTest is Test {
 
         // Initially, obligation should not pass
         Attestation memory obligation = eas.getAttestation(testObligationUID);
-        assertFalse(
-            arbiter.checkObligation(obligation, encodedDemand, bytes32(0))
-        );
+        assertFalse(arbiter.checkObligation(obligation, encodedDemand, bytes32(0)));
 
         // First vote (yes)
         vm.prank(voter1);
@@ -128,16 +115,12 @@ contract MajorityVoteArbiterTest is Test {
         arbiter.castVote(testObligationUID, true, encodedDemand);
 
         // Check vote was recorded
-        (uint256 yesVotes, uint256 noVotes) = arbiter.getVoteCount(
-            testObligationUID
-        );
+        (uint256 yesVotes, uint256 noVotes) = arbiter.getVoteCount(testObligationUID);
         assertEq(yesVotes, 1);
         assertEq(noVotes, 0);
 
         // Still not enough votes to pass
-        assertFalse(
-            arbiter.checkObligation(obligation, encodedDemand, bytes32(0))
-        );
+        assertFalse(arbiter.checkObligation(obligation, encodedDemand, bytes32(0)));
 
         // Second vote (yes) - should reach quorum
         vm.prank(voter2);
@@ -148,9 +131,7 @@ contract MajorityVoteArbiterTest is Test {
         arbiter.castVote(testObligationUID, true, encodedDemand);
 
         // Now should pass
-        assertTrue(
-            arbiter.checkObligation(obligation, encodedDemand, bytes32(0))
-        );
+        assertTrue(arbiter.checkObligation(obligation, encodedDemand, bytes32(0)));
 
         // Check final vote count
         (yesVotes, noVotes) = arbiter.getVoteCount(testObligationUID);
@@ -168,8 +149,8 @@ contract MajorityVoteArbiterTest is Test {
         voters[4] = voter5;
         uint256 quorum = 3;
 
-        MajorityVoteArbiter.DemandData memory demandData = MajorityVoteArbiter
-            .DemandData({voters: voters, quorum: quorum, data: ""});
+        MajorityVoteArbiter.DemandData memory demandData =
+            MajorityVoteArbiter.DemandData({voters: voters, quorum: quorum, data: ""});
         bytes memory encodedDemand = abi.encode(demandData);
 
         // Vote no with enough votes to prevent quorum (3 no votes means quorum can't be reached)
@@ -187,15 +168,10 @@ contract MajorityVoteArbiterTest is Test {
 
         // Should not pass
         Attestation memory obligation = eas.getAttestation(testObligationUID);
-        assertFalse(
-            arbiter.checkObligation(obligation, encodedDemand, bytes32(0))
-        );
+        assertFalse(arbiter.checkObligation(obligation, encodedDemand, bytes32(0)));
 
         // Check voting is complete
-        (bool complete, bool approved) = arbiter.isVotingComplete(
-            testObligationUID,
-            encodedDemand
-        );
+        (bool complete, bool approved) = arbiter.isVotingComplete(testObligationUID, encodedDemand);
         assertTrue(complete);
         assertFalse(approved);
     }
@@ -205,8 +181,8 @@ contract MajorityVoteArbiterTest is Test {
         voters[0] = voter1;
         voters[1] = voter2;
 
-        MajorityVoteArbiter.DemandData memory demandData = MajorityVoteArbiter
-            .DemandData({voters: voters, quorum: 2, data: ""});
+        MajorityVoteArbiter.DemandData memory demandData =
+            MajorityVoteArbiter.DemandData({voters: voters, quorum: 2, data: ""});
         bytes memory encodedDemand = abi.encode(demandData);
 
         // Unauthorized voter should be rejected
@@ -220,8 +196,8 @@ contract MajorityVoteArbiterTest is Test {
         voters[0] = voter1;
         voters[1] = voter2;
 
-        MajorityVoteArbiter.DemandData memory demandData = MajorityVoteArbiter
-            .DemandData({voters: voters, quorum: 2, data: ""});
+        MajorityVoteArbiter.DemandData memory demandData =
+            MajorityVoteArbiter.DemandData({voters: voters, quorum: 2, data: ""});
         bytes memory encodedDemand = abi.encode(demandData);
 
         // First vote should succeed
@@ -240,9 +216,7 @@ contract MajorityVoteArbiterTest is Test {
 
         // Random address should not be able to request arbitration
         vm.prank(unauthorizedVoter);
-        vm.expectRevert(
-            MajorityVoteArbiter.UnauthorizedArbitrationRequest.selector
-        );
+        vm.expectRevert(MajorityVoteArbiter.UnauthorizedArbitrationRequest.selector);
         arbiter.requestArbitration(testObligationUID, voters, 1);
 
         // Attester should be able to request
@@ -285,15 +259,12 @@ contract MajorityVoteArbiterTest is Test {
         voters[0] = voter1;
         voters[1] = voter2;
 
-        MajorityVoteArbiter.DemandData memory demandData = MajorityVoteArbiter
-            .DemandData({voters: voters, quorum: 1, data: ""});
+        MajorityVoteArbiter.DemandData memory demandData =
+            MajorityVoteArbiter.DemandData({voters: voters, quorum: 1, data: ""});
         bytes memory encodedDemand = abi.encode(demandData);
 
         // Check initial status
-        (bool hasVoted, bool vote) = arbiter.getVoterStatus(
-            testObligationUID,
-            voter1
-        );
+        (bool hasVoted, bool vote) = arbiter.getVoterStatus(testObligationUID, voter1);
         assertFalse(hasVoted);
         assertFalse(vote); // Default value
 
@@ -321,12 +292,11 @@ contract MajorityVoteArbiterTest is Test {
         voters[1] = voter2;
         bytes memory additionalData = abi.encode("test data");
 
-        MajorityVoteArbiter.DemandData memory originalData = MajorityVoteArbiter
-            .DemandData({voters: voters, quorum: 2, data: additionalData});
+        MajorityVoteArbiter.DemandData memory originalData =
+            MajorityVoteArbiter.DemandData({voters: voters, quorum: 2, data: additionalData});
 
         bytes memory encoded = abi.encode(originalData);
-        MajorityVoteArbiter.DemandData memory decoded = arbiter
-            .decodeDemandData(encoded);
+        MajorityVoteArbiter.DemandData memory decoded = arbiter.decodeDemandData(encoded);
 
         assertEq(decoded.voters.length, 2);
         assertEq(decoded.voters[0], voter1);
@@ -345,8 +315,8 @@ contract MajorityVoteArbiterTest is Test {
         voters[4] = voter5;
         uint256 quorum = 3;
 
-        MajorityVoteArbiter.DemandData memory demandData = MajorityVoteArbiter
-            .DemandData({voters: voters, quorum: quorum, data: ""});
+        MajorityVoteArbiter.DemandData memory demandData =
+            MajorityVoteArbiter.DemandData({voters: voters, quorum: quorum, data: ""});
         bytes memory encodedDemand = abi.encode(demandData);
 
         // Cast votes: 3 yes, 2 no
@@ -370,14 +340,10 @@ contract MajorityVoteArbiterTest is Test {
 
         // Should pass
         Attestation memory obligation = eas.getAttestation(testObligationUID);
-        assertTrue(
-            arbiter.checkObligation(obligation, encodedDemand, bytes32(0))
-        );
+        assertTrue(arbiter.checkObligation(obligation, encodedDemand, bytes32(0)));
 
         // Verify final counts
-        (uint256 yesVotes, uint256 noVotes) = arbiter.getVoteCount(
-            testObligationUID
-        );
+        (uint256 yesVotes, uint256 noVotes) = arbiter.getVoteCount(testObligationUID);
         assertEq(yesVotes, 3);
         assertEq(noVotes, 2);
     }
@@ -394,10 +360,7 @@ contract MajorityVoteArbiterTest is Test {
             value: 0
         });
 
-        AttestationRequest memory request = AttestationRequest({
-            schema: testSchema,
-            data: attestationData
-        });
+        AttestationRequest memory request = AttestationRequest({schema: testSchema, data: attestationData});
 
         bytes32 expiringUID = eas.attest(request);
 
@@ -406,8 +369,8 @@ contract MajorityVoteArbiterTest is Test {
         voters[0] = voter1;
         voters[1] = voter2;
 
-        MajorityVoteArbiter.DemandData memory demandData = MajorityVoteArbiter
-            .DemandData({voters: voters, quorum: 2, data: ""});
+        MajorityVoteArbiter.DemandData memory demandData =
+            MajorityVoteArbiter.DemandData({voters: voters, quorum: 2, data: ""});
         bytes memory encodedDemand = abi.encode(demandData);
 
         // Vote to reach quorum
@@ -418,18 +381,14 @@ contract MajorityVoteArbiterTest is Test {
 
         // Should pass before expiration
         Attestation memory obligation = eas.getAttestation(expiringUID);
-        assertTrue(
-            arbiter.checkObligation(obligation, encodedDemand, bytes32(0))
-        );
+        assertTrue(arbiter.checkObligation(obligation, encodedDemand, bytes32(0)));
 
         // Fast forward past expiration
         vm.warp(block.timestamp + 2 hours);
 
         // Semantic arbiter ignores expiration; use IntrinsicsArbiter when liveness is required.
         obligation = eas.getAttestation(expiringUID);
-        assertTrue(
-            arbiter.checkObligation(obligation, encodedDemand, bytes32(0))
-        );
+        assertTrue(arbiter.checkObligation(obligation, encodedDemand, bytes32(0)));
     }
 
     function testCheckObligationIgnoresRevokedAttestation() public {
@@ -444,10 +403,7 @@ contract MajorityVoteArbiterTest is Test {
             value: 0
         });
 
-        AttestationRequest memory request = AttestationRequest({
-            schema: testSchema,
-            data: attestationData
-        });
+        AttestationRequest memory request = AttestationRequest({schema: testSchema, data: attestationData});
 
         bytes32 revocableUID = eas.attest(request);
 
@@ -455,8 +411,8 @@ contract MajorityVoteArbiterTest is Test {
         address[] memory voters = new address[](1);
         voters[0] = voter1;
 
-        MajorityVoteArbiter.DemandData memory demandData = MajorityVoteArbiter
-            .DemandData({voters: voters, quorum: 1, data: ""});
+        MajorityVoteArbiter.DemandData memory demandData =
+            MajorityVoteArbiter.DemandData({voters: voters, quorum: 1, data: ""});
         bytes memory encodedDemand = abi.encode(demandData);
 
         // Vote to reach quorum
@@ -465,23 +421,14 @@ contract MajorityVoteArbiterTest is Test {
 
         // Should pass before revocation
         Attestation memory obligation = eas.getAttestation(revocableUID);
-        assertTrue(
-            arbiter.checkObligation(obligation, encodedDemand, bytes32(0))
-        );
+        assertTrue(arbiter.checkObligation(obligation, encodedDemand, bytes32(0)));
 
         // Revoke the attestation
         vm.prank(attester);
-        eas.revoke(
-            RevocationRequest({
-                schema: testSchema,
-                data: RevocationRequestData({uid: revocableUID, value: 0})
-            })
-        );
+        eas.revoke(RevocationRequest({schema: testSchema, data: RevocationRequestData({uid: revocableUID, value: 0})}));
 
         // Semantic arbiter ignores revocation; use IntrinsicsArbiter when liveness is required.
         obligation = eas.getAttestation(revocableUID);
-        assertTrue(
-            arbiter.checkObligation(obligation, encodedDemand, bytes32(0))
-        );
+        assertTrue(arbiter.checkObligation(obligation, encodedDemand, bytes32(0)));
     }
 }

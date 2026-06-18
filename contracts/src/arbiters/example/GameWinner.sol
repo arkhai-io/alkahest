@@ -62,11 +62,7 @@ contract GameWinner is IArbiter {
      * @param _gameWinnerSchema The schema UID for game winner attestations
      * @param _trustedGameContract The address of the trusted game contract that issues winner attestations
      */
-    constructor(
-        IEAS _eas,
-        bytes32 _gameWinnerSchema,
-        address _trustedGameContract
-    ) {
+    constructor(IEAS _eas, bytes32 _gameWinnerSchema, address _trustedGameContract) {
         require(address(_eas) != address(0), "Invalid EAS address");
         require(_gameWinnerSchema != bytes32(0), "Invalid schema");
         require(_trustedGameContract != address(0), "Invalid game contract");
@@ -83,11 +79,12 @@ contract GameWinner is IArbiter {
      * @param fulfilling Optional reference to what this obligation is fulfilling
      * @return bool True if the attestation proves valid winner status for the claim
      */
-    function checkObligation(
-        Attestation memory obligation,
-        bytes memory demand,
-        bytes32 fulfilling
-    ) external view override returns (bool) {
+    function checkObligation(Attestation memory obligation, bytes memory demand, bytes32 fulfilling)
+        external
+        view
+        override
+        returns (bool)
+    {
         // Check basic attestation validity
 
         // Verify the attestation uses the correct schema
@@ -102,10 +99,7 @@ contract GameWinner is IArbiter {
         }
 
         // Decode the attestation data
-        GameWinnerData memory winnerData = abi.decode(
-            obligation.data,
-            (GameWinnerData)
-        );
+        GameWinnerData memory winnerData = abi.decode(obligation.data, (GameWinnerData));
 
         // Decode the demand requirements
         ClaimDemand memory claimDemand = abi.decode(demand, (ClaimDemand));
@@ -114,17 +108,12 @@ contract GameWinner is IArbiter {
         if (winnerData.gameId != claimDemand.gameId) return false;
 
         // Check minimum score requirement if specified
-        if (
-            claimDemand.minScore > 0 && winnerData.score < claimDemand.minScore
-        ) {
+        if (claimDemand.minScore > 0 && winnerData.score < claimDemand.minScore) {
             return false;
         }
 
         // Check validity timestamp if specified
-        if (
-            claimDemand.validAfter > 0 &&
-            winnerData.timestamp < claimDemand.validAfter
-        ) {
+        if (claimDemand.validAfter > 0 && winnerData.timestamp < claimDemand.validAfter) {
             return false;
         }
 
@@ -142,16 +131,12 @@ contract GameWinner is IArbiter {
      * @param claimDemand The claim requirements to check against
      * @return bool True if the attestation is valid for the claim
      */
-    function validateWinnerAttestation(
-        bytes32 attestationUID,
-        ClaimDemand memory claimDemand
-    ) external view returns (bool) {
+    function validateWinnerAttestation(bytes32 attestationUID, ClaimDemand memory claimDemand)
+        external
+        view
+        returns (bool)
+    {
         Attestation memory attestation = eas.getAttestation(attestationUID);
-        return
-            this.checkObligation(
-                attestation,
-                abi.encode(claimDemand),
-                bytes32(0)
-            );
+        return this.checkObligation(attestation, abi.encode(claimDemand), bytes32(0));
     }
 }

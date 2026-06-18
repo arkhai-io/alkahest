@@ -29,9 +29,7 @@ contract SchemaArbiterTest is Test {
         });
 
         // Create demand data with matching schema
-        SchemaArbiter.DemandData memory demandData = SchemaArbiter.DemandData({
-            schema: schemaId
-        });
+        SchemaArbiter.DemandData memory demandData = SchemaArbiter.DemandData({schema: schemaId});
         bytes memory demand = abi.encode(demandData);
 
         // Check obligation should return true
@@ -55,9 +53,7 @@ contract SchemaArbiterTest is Test {
         });
 
         // Create demand data with schema
-        SchemaArbiter.DemandData memory demandData = SchemaArbiter.DemandData({
-            schema: schemaId
-        });
+        SchemaArbiter.DemandData memory demandData = SchemaArbiter.DemandData({schema: schemaId});
         bytes memory demand = abi.encode(demandData);
 
         // Check obligation should revert with SchemaMismatched
@@ -67,14 +63,12 @@ contract SchemaArbiterTest is Test {
 
     function testDecodeDemandData() public {
         // Create demand data
-        SchemaArbiter.DemandData memory expectedDemandData = SchemaArbiter.DemandData({
-            schema: schemaId
-        });
-        
+        SchemaArbiter.DemandData memory expectedDemandData = SchemaArbiter.DemandData({schema: schemaId});
+
         bytes memory encodedData = abi.encode(expectedDemandData);
-        
+
         SchemaArbiter.DemandData memory decodedData = arbiter.decodeDemandData(encodedData);
-        
+
         assertEq(decodedData.schema, expectedDemandData.schema, "Schema should match");
     }
 }

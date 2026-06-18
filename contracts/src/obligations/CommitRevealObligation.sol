@@ -157,8 +157,7 @@ contract CommitRevealObligation is BaseObligation, IArbiter, Ownable {
     /// @dev After the attestation is created, validate the commitment, enforce
     ///      the deadline, and reclaim the bond atomically.
     function _afterAttest(AttestationContext memory context) internal override {
-        bytes32 revealedCommitment =
-            keccak256(abi.encode(context.refUID, context.recipient, keccak256(context.data)));
+        bytes32 revealedCommitment = keccak256(abi.encode(context.refUID, context.recipient, keccak256(context.data)));
 
         CommitInfo memory info = commitments[revealedCommitment];
 

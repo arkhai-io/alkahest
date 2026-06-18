@@ -16,12 +16,7 @@ contract MockGame {
     IEAS public immutable eas;
     bytes32 public immutable schemaUID;
 
-    event GameWon(
-        bytes32 indexed gameId,
-        address indexed winner,
-        uint256 score,
-        bytes32 attestationUID
-    );
+    event GameWon(bytes32 indexed gameId, address indexed winner, uint256 score, bytes32 attestationUID);
 
     constructor(IEAS _eas, bytes32 _schemaUID) {
         eas = _eas;
@@ -31,18 +26,9 @@ contract MockGame {
     /**
      * @notice Issues a winner attestation for a game
      */
-    function attestWinner(
-        bytes32 gameId,
-        address winner,
-        uint256 score
-    ) external returns (bytes32) {
-        GameWinner.GameWinnerData memory winnerData = GameWinner
-            .GameWinnerData({
-                gameId: gameId,
-                winner: winner,
-                timestamp: block.timestamp,
-                score: score
-            });
+    function attestWinner(bytes32 gameId, address winner, uint256 score) external returns (bytes32) {
+        GameWinner.GameWinnerData memory winnerData =
+            GameWinner.GameWinnerData({gameId: gameId, winner: winner, timestamp: block.timestamp, score: score});
 
         AttestationRequest memory request = AttestationRequest({
             schema: schemaUID,
@@ -90,8 +76,7 @@ contract GameWinnerTest is Test {
         charlie = vm.addr(CHARLIE_PRIVATE_KEY);
 
         // Register game winner schema
-        string
-            memory schema = "bytes32 gameId,address winner,uint256 timestamp,uint256 score";
+        string memory schema = "bytes32 gameId,address winner,uint256 timestamp,uint256 score";
         gameWinnerSchemaUID = schemaRegistry.register(
             schema,
             ISchemaResolver(address(0)), // no resolver
@@ -102,11 +87,7 @@ contract GameWinnerTest is Test {
         mockGame = new MockGame(eas, gameWinnerSchemaUID);
 
         // Deploy GameWinner arbiter
-        gameWinnerArbiter = new GameWinner(
-            eas,
-            gameWinnerSchemaUID,
-            address(mockGame)
-        );
+        gameWinnerArbiter = new GameWinner(eas, gameWinnerSchemaUID, address(mockGame));
 
         // Fund test accounts
         vm.deal(alice, 10 ether);
@@ -120,9 +101,7 @@ contract GameWinnerTest is Test {
         bytes32 attestationUID = mockGame.attestWinner(GAME_ID_1, alice, 1000);
 
         // Get the attestation
-        Attestation memory winnerAttestation = eas.getAttestation(
-            attestationUID
-        );
+        Attestation memory winnerAttestation = eas.getAttestation(attestationUID);
 
         // Create claim demand
         GameWinner.ClaimDemand memory demand = GameWinner.ClaimDemand({
@@ -132,11 +111,7 @@ contract GameWinnerTest is Test {
         });
 
         // Check if arbiter validates the winner
-        bool result = gameWinnerArbiter.checkObligation(
-            winnerAttestation,
-            abi.encode(demand),
-            bytes32(0)
-        );
+        bool result = gameWinnerArbiter.checkObligation(winnerAttestation, abi.encode(demand), bytes32(0));
 
         assertTrue(result, "Valid winner should be able to claim");
     }
@@ -146,9 +121,7 @@ contract GameWinnerTest is Test {
         vm.prank(address(mockGame));
         bytes32 attestationUID = mockGame.attestWinner(GAME_ID_1, alice, 1000);
 
-        Attestation memory winnerAttestation = eas.getAttestation(
-            attestationUID
-        );
+        Attestation memory winnerAttestation = eas.getAttestation(attestationUID);
 
         // Try to claim for game 2 (wrong game)
         GameWinner.ClaimDemand memory demand = GameWinner.ClaimDemand({
@@ -157,11 +130,7 @@ contract GameWinnerTest is Test {
             validAfter: 0
         });
 
-        bool result = gameWinnerArbiter.checkObligation(
-            winnerAttestation,
-            abi.encode(demand),
-            bytes32(0)
-        );
+        bool result = gameWinnerArbiter.checkObligation(winnerAttestation, abi.encode(demand), bytes32(0));
 
         assertFalse(result, "Should reject claim for wrong game ID");
     }
@@ -171,9 +140,7 @@ contract GameWinnerTest is Test {
         vm.prank(address(mockGame));
         bytes32 attestationUID = mockGame.attestWinner(GAME_ID_1, bob, 300);
 
-        Attestation memory winnerAttestation = eas.getAttestation(
-            attestationUID
-        );
+        Attestation memory winnerAttestation = eas.getAttestation(attestationUID);
 
         // Demand requires minimum score of 500
         GameWinner.ClaimDemand memory demand = GameWinner.ClaimDemand({
@@ -182,11 +149,7 @@ contract GameWinnerTest is Test {
             validAfter: 0
         });
 
-        bool result = gameWinnerArbiter.checkObligation(
-            winnerAttestation,
-            abi.encode(demand),
-            bytes32(0)
-        );
+        bool result = gameWinnerArbiter.checkObligation(winnerAttestation, abi.encode(demand), bytes32(0));
 
         assertFalse(result, "Should reject claim with insufficient score");
     }
@@ -200,15 +163,9 @@ contract GameWinnerTest is Test {
 
         // Charlie wins game at current time
         vm.prank(address(mockGame));
-        bytes32 attestationUID = mockGame.attestWinner(
-            GAME_ID_1,
-            charlie,
-            1500
-        );
+        bytes32 attestationUID = mockGame.attestWinner(GAME_ID_1, charlie, 1500);
 
-        Attestation memory winnerAttestation = eas.getAttestation(
-            attestationUID
-        );
+        Attestation memory winnerAttestation = eas.getAttestation(attestationUID);
 
         // Demand requires win to be after a past timestamp (should pass)
         GameWinner.ClaimDemand memory demand = GameWinner.ClaimDemand({
@@ -217,16 +174,9 @@ contract GameWinnerTest is Test {
             validAfter: initialTime - 1 hours // Past timestamp - should pass
         });
 
-        bool result = gameWinnerArbiter.checkObligation(
-            winnerAttestation,
-            abi.encode(demand),
-            bytes32(0)
-        );
+        bool result = gameWinnerArbiter.checkObligation(winnerAttestation, abi.encode(demand), bytes32(0));
 
-        assertTrue(
-            result,
-            "Should accept claim when win timestamp is after validAfter"
-        );
+        assertTrue(result, "Should accept claim when win timestamp is after validAfter");
 
         // Now test with future validAfter requirement
         GameWinner.ClaimDemand memory futureDemand = GameWinner.ClaimDemand({
@@ -235,27 +185,15 @@ contract GameWinnerTest is Test {
             validAfter: block.timestamp + 1 hours // Future timestamp - should fail
         });
 
-        bool futureResult = gameWinnerArbiter.checkObligation(
-            winnerAttestation,
-            abi.encode(futureDemand),
-            bytes32(0)
-        );
+        bool futureResult = gameWinnerArbiter.checkObligation(winnerAttestation, abi.encode(futureDemand), bytes32(0));
 
-        assertFalse(
-            futureResult,
-            "Should reject claim when win timestamp is before validAfter"
-        );
+        assertFalse(futureResult, "Should reject claim when win timestamp is before validAfter");
     }
 
     function testUntrustedAttester() public {
         // Create attestation from untrusted source (not the game contract)
-        GameWinner.GameWinnerData memory winnerData = GameWinner
-            .GameWinnerData({
-                gameId: GAME_ID_1,
-                winner: alice,
-                timestamp: block.timestamp,
-                score: 2000
-            });
+        GameWinner.GameWinnerData memory winnerData =
+            GameWinner.GameWinnerData({gameId: GAME_ID_1, winner: alice, timestamp: block.timestamp, score: 2000});
 
         // Alice tries to attest herself as winner (not through game contract)
         vm.prank(alice);
@@ -272,21 +210,11 @@ contract GameWinnerTest is Test {
         });
 
         bytes32 fakeAttestationUID = eas.attest(request);
-        Attestation memory fakeAttestation = eas.getAttestation(
-            fakeAttestationUID
-        );
+        Attestation memory fakeAttestation = eas.getAttestation(fakeAttestationUID);
 
-        GameWinner.ClaimDemand memory demand = GameWinner.ClaimDemand({
-            gameId: GAME_ID_1,
-            minScore: 0,
-            validAfter: 0
-        });
+        GameWinner.ClaimDemand memory demand = GameWinner.ClaimDemand({gameId: GAME_ID_1, minScore: 0, validAfter: 0});
 
-        bool result = gameWinnerArbiter.checkObligation(
-            fakeAttestation,
-            abi.encode(demand),
-            bytes32(0)
-        );
+        bool result = gameWinnerArbiter.checkObligation(fakeAttestation, abi.encode(demand), bytes32(0));
 
         assertFalse(result, "Should reject attestation from untrusted source");
     }
@@ -294,11 +222,7 @@ contract GameWinnerTest is Test {
     function testWrongSchema() public {
         // Register a different schema
         string memory wrongSchema = "string data";
-        bytes32 wrongSchemaUID = schemaRegistry.register(
-            wrongSchema,
-            ISchemaResolver(address(0)),
-            true
-        );
+        bytes32 wrongSchemaUID = schemaRegistry.register(wrongSchema, ISchemaResolver(address(0)), true);
 
         // Create attestation with wrong schema
         vm.prank(alice);
@@ -315,21 +239,11 @@ contract GameWinnerTest is Test {
         });
 
         bytes32 wrongAttestationUID = eas.attest(request);
-        Attestation memory wrongAttestation = eas.getAttestation(
-            wrongAttestationUID
-        );
+        Attestation memory wrongAttestation = eas.getAttestation(wrongAttestationUID);
 
-        GameWinner.ClaimDemand memory demand = GameWinner.ClaimDemand({
-            gameId: GAME_ID_1,
-            minScore: 0,
-            validAfter: 0
-        });
+        GameWinner.ClaimDemand memory demand = GameWinner.ClaimDemand({gameId: GAME_ID_1, minScore: 0, validAfter: 0});
 
-        bool result = gameWinnerArbiter.checkObligation(
-            wrongAttestation,
-            abi.encode(demand),
-            bytes32(0)
-        );
+        bool result = gameWinnerArbiter.checkObligation(wrongAttestation, abi.encode(demand), bytes32(0));
 
         assertFalse(result, "Should reject attestation with wrong schema");
     }
@@ -352,31 +266,15 @@ contract GameWinnerTest is Test {
             attester: address(mockGame),
             revocable: true,
             data: abi.encode(
-                GameWinner.GameWinnerData({
-                    gameId: GAME_ID_1,
-                    winner: bob,
-                    timestamp: block.timestamp,
-                    score: 1000
-                })
+                GameWinner.GameWinnerData({gameId: GAME_ID_1, winner: bob, timestamp: block.timestamp, score: 1000})
             )
         });
 
-        GameWinner.ClaimDemand memory demand = GameWinner.ClaimDemand({
-            gameId: GAME_ID_1,
-            minScore: 0,
-            validAfter: 0
-        });
+        GameWinner.ClaimDemand memory demand = GameWinner.ClaimDemand({gameId: GAME_ID_1, minScore: 0, validAfter: 0});
 
-        bool result = gameWinnerArbiter.checkObligation(
-            tamperedAttestation,
-            abi.encode(demand),
-            bytes32(0)
-        );
+        bool result = gameWinnerArbiter.checkObligation(tamperedAttestation, abi.encode(demand), bytes32(0));
 
-        assertFalse(
-            result,
-            "Should reject when recipient doesn't match winner"
-        );
+        assertFalse(result, "Should reject when recipient doesn't match winner");
     }
 
     function testFulfillingValidation() public {
@@ -390,12 +288,7 @@ contract GameWinnerTest is Test {
                 revocable: true,
                 refUID: bytes32(0),
                 data: abi.encode(
-                    GameWinner.GameWinnerData({
-                        gameId: GAME_ID_1,
-                        winner: bob,
-                        timestamp: block.timestamp,
-                        score: 500
-                    })
+                    GameWinner.GameWinnerData({gameId: GAME_ID_1, winner: bob, timestamp: block.timestamp, score: 500})
                 ),
                 value: 0
             })
@@ -403,13 +296,8 @@ contract GameWinnerTest is Test {
         bytes32 escrowUID = eas.attest(escrowRequest);
 
         // Alice wins game
-        GameWinner.GameWinnerData memory winnerData = GameWinner
-            .GameWinnerData({
-                gameId: GAME_ID_1,
-                winner: alice,
-                timestamp: block.timestamp,
-                score: 1500
-            });
+        GameWinner.GameWinnerData memory winnerData =
+            GameWinner.GameWinnerData({gameId: GAME_ID_1, winner: alice, timestamp: block.timestamp, score: 1500});
 
         // Create attestation with reference to escrow
         AttestationRequest memory request = AttestationRequest({
@@ -426,34 +314,17 @@ contract GameWinnerTest is Test {
 
         vm.prank(address(mockGame));
         bytes32 attestationUID = eas.attest(request);
-        Attestation memory winnerAttestation = eas.getAttestation(
-            attestationUID
-        );
+        Attestation memory winnerAttestation = eas.getAttestation(attestationUID);
 
-        GameWinner.ClaimDemand memory demand = GameWinner.ClaimDemand({
-            gameId: GAME_ID_1,
-            minScore: 0,
-            validAfter: 0
-        });
+        GameWinner.ClaimDemand memory demand = GameWinner.ClaimDemand({gameId: GAME_ID_1, minScore: 0, validAfter: 0});
 
         // Check with matching fulfilling
-        bool resultMatching = gameWinnerArbiter.checkObligation(
-            winnerAttestation,
-            abi.encode(demand),
-            escrowUID
-        );
-        assertTrue(
-            resultMatching,
-            "Should validate with matching fulfilling"
-        );
+        bool resultMatching = gameWinnerArbiter.checkObligation(winnerAttestation, abi.encode(demand), escrowUID);
+        assertTrue(resultMatching, "Should validate with matching fulfilling");
 
         // Check with different fulfilling
         bytes32 wrongFulfilling = bytes32(uint256(123));
-        bool resultWrong = gameWinnerArbiter.checkObligation(
-            winnerAttestation,
-            abi.encode(demand),
-            wrongFulfilling
-        );
+        bool resultWrong = gameWinnerArbiter.checkObligation(winnerAttestation, abi.encode(demand), wrongFulfilling);
         assertFalse(resultWrong, "Should reject with wrong fulfilling");
     }
 
@@ -462,17 +333,11 @@ contract GameWinnerTest is Test {
         vm.prank(address(mockGame));
         bytes32 attestationUID = mockGame.attestWinner(GAME_ID_1, alice, 2000);
 
-        GameWinner.ClaimDemand memory validDemand = GameWinner.ClaimDemand({
-            gameId: GAME_ID_1,
-            minScore: 1000,
-            validAfter: 0
-        });
+        GameWinner.ClaimDemand memory validDemand =
+            GameWinner.ClaimDemand({gameId: GAME_ID_1, minScore: 1000, validAfter: 0});
 
         // Test helper function with valid demand
-        bool validResult = gameWinnerArbiter.validateWinnerAttestation(
-            attestationUID,
-            validDemand
-        );
+        bool validResult = gameWinnerArbiter.validateWinnerAttestation(attestationUID, validDemand);
         assertTrue(validResult, "Helper should validate correct attestation");
 
         GameWinner.ClaimDemand memory invalidDemand = GameWinner.ClaimDemand({
@@ -482,50 +347,28 @@ contract GameWinnerTest is Test {
         });
 
         // Test helper function with invalid demand
-        bool invalidResult = gameWinnerArbiter.validateWinnerAttestation(
-            attestationUID,
-            invalidDemand
-        );
+        bool invalidResult = gameWinnerArbiter.validateWinnerAttestation(attestationUID, invalidDemand);
         assertFalse(invalidResult, "Helper should reject incorrect demand");
     }
 
     function testMultipleWinnersForSameGame() public {
         // Both Alice and Bob win the same game (e.g., team game)
         vm.prank(address(mockGame));
-        bytes32 aliceAttestationUID = mockGame.attestWinner(
-            GAME_ID_1,
-            alice,
-            1500
-        );
+        bytes32 aliceAttestationUID = mockGame.attestWinner(GAME_ID_1, alice, 1500);
 
         vm.prank(address(mockGame));
         bytes32 bobAttestationUID = mockGame.attestWinner(GAME_ID_1, bob, 1400);
 
-        GameWinner.ClaimDemand memory demand = GameWinner.ClaimDemand({
-            gameId: GAME_ID_1,
-            minScore: 1000,
-            validAfter: 0
-        });
+        GameWinner.ClaimDemand memory demand =
+            GameWinner.ClaimDemand({gameId: GAME_ID_1, minScore: 1000, validAfter: 0});
 
         // Both should be able to claim
-        Attestation memory aliceAttestation = eas.getAttestation(
-            aliceAttestationUID
-        );
-        bool aliceResult = gameWinnerArbiter.checkObligation(
-            aliceAttestation,
-            abi.encode(demand),
-            bytes32(0)
-        );
+        Attestation memory aliceAttestation = eas.getAttestation(aliceAttestationUID);
+        bool aliceResult = gameWinnerArbiter.checkObligation(aliceAttestation, abi.encode(demand), bytes32(0));
         assertTrue(aliceResult, "Alice should be able to claim");
 
-        Attestation memory bobAttestation = eas.getAttestation(
-            bobAttestationUID
-        );
-        bool bobResult = gameWinnerArbiter.checkObligation(
-            bobAttestation,
-            abi.encode(demand),
-            bytes32(0)
-        );
+        Attestation memory bobAttestation = eas.getAttestation(bobAttestationUID);
+        bool bobResult = gameWinnerArbiter.checkObligation(bobAttestation, abi.encode(demand), bytes32(0));
         assertTrue(bobResult, "Bob should be able to claim");
     }
 
@@ -546,25 +389,14 @@ contract GameWinnerTest is Test {
             revocable: true,
             data: abi.encode(
                 GameWinner.GameWinnerData({
-                    gameId: GAME_ID_1,
-                    winner: alice,
-                    timestamp: block.timestamp - 2 days,
-                    score: 1000
+                    gameId: GAME_ID_1, winner: alice, timestamp: block.timestamp - 2 days, score: 1000
                 })
             )
         });
 
-        GameWinner.ClaimDemand memory demand = GameWinner.ClaimDemand({
-            gameId: GAME_ID_1,
-            minScore: 0,
-            validAfter: 0
-        });
+        GameWinner.ClaimDemand memory demand = GameWinner.ClaimDemand({gameId: GAME_ID_1, minScore: 0, validAfter: 0});
 
-        bool result = gameWinnerArbiter.checkObligation(
-            expiredAttestation,
-            abi.encode(demand),
-            bytes32(0)
-        );
+        bool result = gameWinnerArbiter.checkObligation(expiredAttestation, abi.encode(demand), bytes32(0));
 
         assertTrue(result, "Semantic arbiter should ignore expiration");
     }
@@ -582,26 +414,13 @@ contract GameWinnerTest is Test {
             attester: address(mockGame),
             revocable: true,
             data: abi.encode(
-                GameWinner.GameWinnerData({
-                    gameId: GAME_ID_1,
-                    winner: alice,
-                    timestamp: block.timestamp,
-                    score: 1000
-                })
+                GameWinner.GameWinnerData({gameId: GAME_ID_1, winner: alice, timestamp: block.timestamp, score: 1000})
             )
         });
 
-        GameWinner.ClaimDemand memory demand = GameWinner.ClaimDemand({
-            gameId: GAME_ID_1,
-            minScore: 0,
-            validAfter: 0
-        });
+        GameWinner.ClaimDemand memory demand = GameWinner.ClaimDemand({gameId: GAME_ID_1, minScore: 0, validAfter: 0});
 
-        bool result = gameWinnerArbiter.checkObligation(
-            revokedAttestation,
-            abi.encode(demand),
-            bytes32(0)
-        );
+        bool result = gameWinnerArbiter.checkObligation(revokedAttestation, abi.encode(demand), bytes32(0));
 
         assertTrue(result, "Semantic arbiter should ignore revocation");
     }

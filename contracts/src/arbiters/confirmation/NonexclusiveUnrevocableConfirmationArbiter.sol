@@ -9,15 +9,8 @@ import {ArbiterUtils} from "../../ArbiterUtils.sol";
 contract NonexclusiveUnrevocableConfirmationArbiter is IArbiter {
     using ArbiterUtils for Attestation;
 
-    event ConfirmationMade(
-        bytes32 indexed fulfillment,
-        bytes32 indexed escrow
-    );
-    event ConfirmationRequested(
-        bytes32 indexed fulfillment,
-        address indexed confirmer,
-        bytes32 indexed escrow
-    );
+    event ConfirmationMade(bytes32 indexed fulfillment, bytes32 indexed escrow);
+    event ConfirmationRequested(bytes32 indexed fulfillment, address indexed confirmer, bytes32 indexed escrow);
 
     error UnauthorizedConfirmationRequest();
     error UnauthorizedConfirmation();
@@ -44,25 +37,26 @@ contract NonexclusiveUnrevocableConfirmationArbiter is IArbiter {
 
     function requestConfirmation(bytes32 _fulfillment, bytes32 _escrow) public {
         Attestation memory fulfillment = eas.getAttestation(_fulfillment);
-        if (
-            fulfillment.attester != msg.sender &&
-            fulfillment.recipient != msg.sender
-        ) revert UnauthorizedConfirmationRequest();
+        if (fulfillment.attester != msg.sender && fulfillment.recipient != msg.sender) {
+            revert UnauthorizedConfirmationRequest();
+        }
 
         Attestation memory escrow = eas.getAttestation(_escrow);
 
-        emit ConfirmationRequested(
-            _fulfillment,
-            escrow.recipient,
-            _escrow
-        );
+        emit ConfirmationRequested(_fulfillment, escrow.recipient, _escrow);
     }
 
     function checkObligation(
         Attestation memory fulfillment,
-        bytes memory /*demand*/,
+        bytes memory,
+        /*demand*/
         bytes32 fulfilling
-    ) public view override returns (bool) {
+    )
+        public
+        view
+        override
+        returns (bool)
+    {
         return confirmations[fulfillment.uid][fulfilling];
     }
 }

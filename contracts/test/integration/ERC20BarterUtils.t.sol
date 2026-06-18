@@ -19,10 +19,7 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import {EASDeployer} from "@test/utils/EASDeployer.sol";
 
 contract MockERC20Permit is ERC20Permit {
-    constructor(
-        string memory name,
-        string memory symbol
-    ) ERC20(name, symbol) ERC20Permit(name) {
+    constructor(string memory name, string memory symbol) ERC20(name, symbol) ERC20Permit(name) {
         _mint(msg.sender, 1000000 * 10 ** 18);
     }
 }
@@ -98,11 +95,7 @@ contract ERC20BarterUtilsIntegrationTest is Test {
         vm.startPrank(alice);
         erc1155TokenA.approve(address(barterUtils), bidAmount);
         bytes32 buyAttestation = barterUtils.buyErc20ForErc20(
-            address(erc1155TokenA),
-            bidAmount,
-            address(erc1155TokenB),
-            askAmount,
-            expiration
+            address(erc1155TokenA), bidAmount, address(erc1155TokenB), askAmount, expiration
         );
         vm.stopPrank();
 
@@ -113,38 +106,14 @@ contract ERC20BarterUtilsIntegrationTest is Test {
         vm.stopPrank();
 
         // Verify attestations
-        assertNotEq(
-            buyAttestation,
-            bytes32(0),
-            "Buy attestation should be created"
-        );
-        assertNotEq(
-            sellAttestation,
-            bytes32(0),
-            "Sell attestation should be created"
-        );
+        assertNotEq(buyAttestation, bytes32(0), "Buy attestation should be created");
+        assertNotEq(sellAttestation, bytes32(0), "Sell attestation should be created");
 
         // Check final balances
-        assertEq(
-            erc1155TokenA.balanceOf(alice),
-            900 * 10 ** 18,
-            "Alice should have 900 Token A"
-        );
-        assertEq(
-            erc1155TokenA.balanceOf(bob),
-            100 * 10 ** 18,
-            "Bob should have 100 Token A"
-        );
-        assertEq(
-            erc1155TokenB.balanceOf(alice),
-            200 * 10 ** 18,
-            "Alice should have 200 Token B"
-        );
-        assertEq(
-            erc1155TokenB.balanceOf(bob),
-            800 * 10 ** 18,
-            "Bob should have 800 Token B"
-        );
+        assertEq(erc1155TokenA.balanceOf(alice), 900 * 10 ** 18, "Alice should have 900 Token A");
+        assertEq(erc1155TokenA.balanceOf(bob), 100 * 10 ** 18, "Bob should have 100 Token A");
+        assertEq(erc1155TokenB.balanceOf(alice), 200 * 10 ** 18, "Alice should have 200 Token B");
+        assertEq(erc1155TokenB.balanceOf(bob), 800 * 10 ** 18, "Bob should have 800 Token B");
     }
 
     function testFullTradeWithPermits() public {
@@ -154,50 +123,22 @@ contract ERC20BarterUtilsIntegrationTest is Test {
         uint256 deadline = block.timestamp + 1;
 
         // Alice creates buy order with permit
-        (uint8 v1, bytes32 r1, bytes32 s1) = _getPermitSignature(
-            erc1155TokenA,
-            ALICE_PRIVATE_KEY,
-            address(barterUtils),
-            bidAmount,
-            deadline
-        );
+        (uint8 v1, bytes32 r1, bytes32 s1) =
+            _getPermitSignature(erc1155TokenA, ALICE_PRIVATE_KEY, address(barterUtils), bidAmount, deadline);
 
         vm.prank(alice);
         bytes32 buyAttestation = barterUtils.permitAndBuyErc20ForErc20(
-            address(erc1155TokenA),
-            bidAmount,
-            address(erc1155TokenB),
-            askAmount,
-            expiration,
-            deadline,
-            v1,
-            r1,
-            s1
+            address(erc1155TokenA), bidAmount, address(erc1155TokenB), askAmount, expiration, deadline, v1, r1, s1
         );
 
         // Bob fulfills with permit
-        (uint8 v2, bytes32 r2, bytes32 s2) = _getPermitSignature(
-            erc1155TokenB,
-            BOB_PRIVATE_KEY,
-            address(barterUtils),
-            askAmount,
-            deadline
-        );
+        (uint8 v2, bytes32 r2, bytes32 s2) =
+            _getPermitSignature(erc1155TokenB, BOB_PRIVATE_KEY, address(barterUtils), askAmount, deadline);
 
         vm.prank(bob);
-        bytes32 sellAttestation = barterUtils.permitAndPayErc20ForErc20(
-            buyAttestation,
-            deadline,
-            v2,
-            r2,
-            s2
-        );
+        bytes32 sellAttestation = barterUtils.permitAndPayErc20ForErc20(buyAttestation, deadline, v2, r2, s2);
 
-        assertNotEq(
-            sellAttestation,
-            bytes32(0),
-            "Sell attestation should be created"
-        );
+        assertNotEq(sellAttestation, bytes32(0), "Sell attestation should be created");
 
         // Check final balances
         assertEq(erc1155TokenA.balanceOf(alice), 900 * 10 ** 18);
@@ -213,20 +154,11 @@ contract ERC20BarterUtilsIntegrationTest is Test {
         uint256 deadline = block.timestamp + 1;
 
         // First create the buy order with proper permit signature
-        (uint8 v1, bytes32 r1, bytes32 s1) = _getPermitSignature(
-            erc1155TokenA,
-            ALICE_PRIVATE_KEY,
-            address(barterUtils),
-            bidAmount,
-            deadline
-        );
+        (uint8 v1, bytes32 r1, bytes32 s1) =
+            _getPermitSignature(erc1155TokenA, ALICE_PRIVATE_KEY, address(barterUtils), bidAmount, deadline);
 
-        ERC20PaymentObligation.ObligationData
-            memory demand = ERC20PaymentObligation.ObligationData({
-                token: address(erc1155TokenB),
-                amount: askAmount,
-                payee: alice
-            });
+        ERC20PaymentObligation.ObligationData memory demand =
+            ERC20PaymentObligation.ObligationData({token: address(erc1155TokenB), amount: askAmount, payee: alice});
 
         vm.prank(alice);
         bytes32 buyAttestation = barterUtils.permitAndBuyWithErc20(
@@ -242,13 +174,8 @@ contract ERC20BarterUtilsIntegrationTest is Test {
         );
 
         // Bob fulfills with permit
-        (uint8 v2, bytes32 r2, bytes32 s2) = _getPermitSignature(
-            erc1155TokenB,
-            BOB_PRIVATE_KEY,
-            address(barterUtils),
-            askAmount,
-            deadline
-        );
+        (uint8 v2, bytes32 r2, bytes32 s2) =
+            _getPermitSignature(erc1155TokenB, BOB_PRIVATE_KEY, address(barterUtils), askAmount, deadline);
 
         vm.prank(bob);
         bytes32 sellAttestation = barterUtils.permitAndPayWithErc20(
@@ -264,33 +191,14 @@ contract ERC20BarterUtilsIntegrationTest is Test {
 
         // Make the payment collection
         vm.prank(bob);
-        bool success = escrowObligation.collectEscrow(
-            buyAttestation,
-            sellAttestation
-        );
+        bool success = escrowObligation.collectEscrow(buyAttestation, sellAttestation);
         assertTrue(success, "Payment collection should succeed");
 
         // Verify final balances
-        assertEq(
-            erc1155TokenA.balanceOf(alice),
-            900 * 10 ** 18,
-            "Alice should have 900 Token A"
-        );
-        assertEq(
-            erc1155TokenA.balanceOf(bob),
-            100 * 10 ** 18,
-            "Bob should have 100 Token A"
-        );
-        assertEq(
-            erc1155TokenB.balanceOf(alice),
-            200 * 10 ** 18,
-            "Alice should have 200 Token B"
-        );
-        assertEq(
-            erc1155TokenB.balanceOf(bob),
-            800 * 10 ** 18,
-            "Bob should have 800 Token B"
-        );
+        assertEq(erc1155TokenA.balanceOf(alice), 900 * 10 ** 18, "Alice should have 900 Token A");
+        assertEq(erc1155TokenA.balanceOf(bob), 100 * 10 ** 18, "Bob should have 100 Token A");
+        assertEq(erc1155TokenB.balanceOf(alice), 200 * 10 ** 18, "Alice should have 200 Token B");
+        assertEq(erc1155TokenB.balanceOf(bob), 800 * 10 ** 18, "Bob should have 800 Token B");
     }
 
     function _getPermitSignature(
@@ -305,20 +213,9 @@ contract ERC20BarterUtilsIntegrationTest is Test {
         );
 
         address owner = vm.addr(ownerPrivateKey);
-        bytes32 structHash = keccak256(
-            abi.encode(
-                permitTypehash,
-                owner,
-                spender,
-                value,
-                token.nonces(owner),
-                deadline
-            )
-        );
+        bytes32 structHash = keccak256(abi.encode(permitTypehash, owner, spender, value, token.nonces(owner), deadline));
 
-        bytes32 digest = keccak256(
-            abi.encodePacked("\x19\x01", token.DOMAIN_SEPARATOR(), structHash)
-        );
+        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", token.DOMAIN_SEPARATOR(), structHash));
 
         (v, r, s) = vm.sign(ownerPrivateKey, digest);
     }

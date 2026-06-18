@@ -28,9 +28,7 @@ contract RevocableArbiterTest is Test {
         });
 
         // Create demand data requiring revocable attestation
-        RevocableArbiter.DemandData memory demandData = RevocableArbiter.DemandData({
-            revocable: true
-        });
+        RevocableArbiter.DemandData memory demandData = RevocableArbiter.DemandData({revocable: true});
         bytes memory demand = abi.encode(demandData);
 
         // Check obligation should return true
@@ -54,9 +52,7 @@ contract RevocableArbiterTest is Test {
         });
 
         // Create demand data requiring non-revocable attestation
-        RevocableArbiter.DemandData memory demandData = RevocableArbiter.DemandData({
-            revocable: false
-        });
+        RevocableArbiter.DemandData memory demandData = RevocableArbiter.DemandData({revocable: false});
         bytes memory demand = abi.encode(demandData);
 
         // Check obligation should return true
@@ -80,9 +76,7 @@ contract RevocableArbiterTest is Test {
         });
 
         // Create demand data requiring non-revocable attestation
-        RevocableArbiter.DemandData memory demandData = RevocableArbiter.DemandData({
-            revocable: false
-        });
+        RevocableArbiter.DemandData memory demandData = RevocableArbiter.DemandData({revocable: false});
         bytes memory demand = abi.encode(demandData);
 
         // Check obligation should revert with RevocabilityMismatched
@@ -91,14 +85,12 @@ contract RevocableArbiterTest is Test {
     }
 
     function testDecodeDemandData() public {
-        RevocableArbiter.DemandData memory expectedDemandData = RevocableArbiter.DemandData({
-            revocable: true
-        });
-        
+        RevocableArbiter.DemandData memory expectedDemandData = RevocableArbiter.DemandData({revocable: true});
+
         bytes memory encodedData = abi.encode(expectedDemandData);
-        
+
         RevocableArbiter.DemandData memory decodedData = arbiter.decodeDemandData(encodedData);
-        
+
         assertEq(decodedData.revocable, expectedDemandData.revocable, "Revocable status should match");
     }
 }

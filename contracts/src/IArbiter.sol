@@ -3,9 +3,8 @@ pragma solidity ^0.8.26;
 import {Attestation} from "@eas/Common.sol";
 
 interface IArbiter {
-    function checkObligation(
-        Attestation memory obligation,
-        bytes memory demand,
-        bytes32 fulfilling
-    ) external view returns (bool);
+    function checkObligation(Attestation memory obligation, bytes memory demand, bytes32 fulfilling)
+        external
+        view
+        returns (bool);
 }

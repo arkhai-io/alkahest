@@ -104,41 +104,28 @@ contract ApiCallExample1Test is Test {
         bytes memory innerDemand = abi.encode(API_QUERY);
 
         // Create TrustedOracleArbiter demand
-        TrustedOracleArbiter.DemandData memory demandData = TrustedOracleArbiter
-            .DemandData({oracle: charlie, data: innerDemand});
+        TrustedOracleArbiter.DemandData memory demandData =
+            TrustedOracleArbiter.DemandData({oracle: charlie, data: innerDemand});
         bytes memory demand = abi.encode(demandData);
 
         // Approve and create escrow
         paymentToken.approve(address(erc20EscrowObligation), PAYMENT_AMOUNT);
 
-        ERC20EscrowObligation.ObligationData
-            memory escrowData = ERC20EscrowObligation.ObligationData({
-                token: address(paymentToken),
-                amount: PAYMENT_AMOUNT,
-                arbiter: address(trustedOracleArbiter),
-                demand: demand
-            });
+        ERC20EscrowObligation.ObligationData memory escrowData = ERC20EscrowObligation.ObligationData({
+            token: address(paymentToken), amount: PAYMENT_AMOUNT, arbiter: address(trustedOracleArbiter), demand: demand
+        });
 
-        bytes32 escrowUid = erc20EscrowObligation.doObligation(
-            escrowData,
-            uint64(block.timestamp + 1 days)
-        );
+        bytes32 escrowUid = erc20EscrowObligation.doObligation(escrowData, uint64(block.timestamp + 1 days));
         vm.stopPrank();
 
-        assertEq(
-            paymentToken.balanceOf(address(erc20EscrowObligation)),
-            PAYMENT_AMOUNT,
-            "Escrow should hold payment"
-        );
+        assertEq(paymentToken.balanceOf(address(erc20EscrowObligation)), PAYMENT_AMOUNT, "Escrow should hold payment");
 
         // Step 2: Bob submits API result using StringObligation
         vm.startPrank(bob);
-        StringObligation.ObligationData memory resultData = StringObligation.ObligationData({item: API_RESULT, schema: bytes32(0)});
+        StringObligation.ObligationData memory resultData =
+            StringObligation.ObligationData({item: API_RESULT, schema: bytes32(0)});
 
-        bytes32 fulfillmentUid = stringObligation.doObligation(
-            resultData,
-            escrowUid
-        );
+        bytes32 fulfillmentUid = stringObligation.doObligation(resultData, escrowUid);
 
         // Request arbitration from oracle
         trustedOracleArbiter.requestArbitration(fulfillmentUid, charlie, innerDemand);
@@ -161,16 +148,8 @@ contract ApiCallExample1Test is Test {
         vm.prank(bob);
         erc20EscrowObligation.collectEscrow(escrowUid, fulfillmentUid);
 
-        assertEq(
-            paymentToken.balanceOf(bob),
-            bobBalanceBefore + PAYMENT_AMOUNT,
-            "Bob should receive payment"
-        );
-        assertEq(
-            paymentToken.balanceOf(address(erc20EscrowObligation)),
-            0,
-            "Escrow should be empty"
-        );
+        assertEq(paymentToken.balanceOf(bob), bobBalanceBefore + PAYMENT_AMOUNT, "Bob should receive payment");
+        assertEq(paymentToken.balanceOf(address(erc20EscrowObligation)), 0, "Escrow should be empty");
     }
 
     /**
@@ -181,30 +160,22 @@ contract ApiCallExample1Test is Test {
         // Create escrow with Charlie as oracle
         vm.startPrank(alice);
         bytes memory innerDemand = abi.encode(API_QUERY);
-        TrustedOracleArbiter.DemandData memory demandData = TrustedOracleArbiter
-            .DemandData({oracle: charlie, data: innerDemand});
+        TrustedOracleArbiter.DemandData memory demandData =
+            TrustedOracleArbiter.DemandData({oracle: charlie, data: innerDemand});
         bytes memory demand = abi.encode(demandData);
 
         paymentToken.approve(address(erc20EscrowObligation), PAYMENT_AMOUNT);
-        ERC20EscrowObligation.ObligationData
-            memory escrowData = ERC20EscrowObligation.ObligationData({
-                token: address(paymentToken),
-                amount: PAYMENT_AMOUNT,
-                arbiter: address(trustedOracleArbiter),
-                demand: demand
-            });
+        ERC20EscrowObligation.ObligationData memory escrowData = ERC20EscrowObligation.ObligationData({
+            token: address(paymentToken), amount: PAYMENT_AMOUNT, arbiter: address(trustedOracleArbiter), demand: demand
+        });
 
-        bytes32 escrowUid = erc20EscrowObligation.doObligation(
-            escrowData,
-            uint64(block.timestamp + 1 days)
-        );
+        bytes32 escrowUid = erc20EscrowObligation.doObligation(escrowData, uint64(block.timestamp + 1 days));
         vm.stopPrank();
 
         // Bob submits result
         vm.prank(bob);
         bytes32 fulfillmentUid = stringObligation.doObligation(
-            StringObligation.ObligationData({item: API_RESULT, schema: bytes32(0)}),
-            escrowUid
+            StringObligation.ObligationData({item: API_RESULT, schema: bytes32(0)}), escrowUid
         );
 
         // Bob (not the oracle) tries to validate - this should work but won't be recognized
@@ -223,11 +194,7 @@ contract ApiCallExample1Test is Test {
         vm.prank(bob);
         erc20EscrowObligation.collectEscrow(escrowUid, fulfillmentUid);
 
-        assertGt(
-            paymentToken.balanceOf(bob),
-            0,
-            "Bob should receive payment after correct oracle validation"
-        );
+        assertGt(paymentToken.balanceOf(bob), 0, "Bob should receive payment after correct oracle validation");
     }
 
     /**
@@ -237,12 +204,8 @@ contract ApiCallExample1Test is Test {
     function test_OracleRejectsInvalidResult() public {
         // Create escrow
         vm.startPrank(alice);
-        bytes memory demand = abi.encode(
-            TrustedOracleArbiter.DemandData({
-                oracle: charlie,
-                data: abi.encode(API_QUERY)
-            })
-        );
+        bytes memory demand =
+            abi.encode(TrustedOracleArbiter.DemandData({oracle: charlie, data: abi.encode(API_QUERY)}));
 
         paymentToken.approve(address(erc20EscrowObligation), PAYMENT_AMOUNT);
         bytes32 escrowUid = erc20EscrowObligation.doObligation(
@@ -259,8 +222,7 @@ contract ApiCallExample1Test is Test {
         // Bob submits wrong result
         vm.prank(bob);
         bytes32 fulfillmentUid = stringObligation.doObligation(
-            StringObligation.ObligationData({item: "wrong result", schema: bytes32(0)}),
-            escrowUid
+            StringObligation.ObligationData({item: "wrong result", schema: bytes32(0)}), escrowUid
         );
 
         // Charlie validates as false
@@ -286,12 +248,8 @@ contract ApiCallExample1Test is Test {
     function test_ReclaimExpiredEscrow() public {
         // Create escrow with short expiration
         vm.startPrank(alice);
-        bytes memory demand = abi.encode(
-            TrustedOracleArbiter.DemandData({
-                oracle: charlie,
-                data: abi.encode(API_QUERY)
-            })
-        );
+        bytes memory demand =
+            abi.encode(TrustedOracleArbiter.DemandData({oracle: charlie, data: abi.encode(API_QUERY)}));
 
         paymentToken.approve(address(erc20EscrowObligation), PAYMENT_AMOUNT);
         bytes32 escrowUid = erc20EscrowObligation.doObligation(
@@ -314,9 +272,7 @@ contract ApiCallExample1Test is Test {
         erc20EscrowObligation.reclaimExpired(escrowUid);
 
         assertEq(
-            paymentToken.balanceOf(alice),
-            aliceBalanceBefore + PAYMENT_AMOUNT,
-            "Alice should reclaim full payment"
+            paymentToken.balanceOf(alice), aliceBalanceBefore + PAYMENT_AMOUNT, "Alice should reclaim full payment"
         );
     }
 }

@@ -15,16 +15,9 @@ contract TrustedOracleArbiter is IArbiter {
     }
 
     event ArbitrationMade(
-        bytes32 indexed decisionKey,
-        bytes32 indexed obligation,
-        address indexed oracle,
-        bool decision
+        bytes32 indexed decisionKey, bytes32 indexed obligation, address indexed oracle, bool decision
     );
-    event ArbitrationRequested(
-        bytes32 indexed obligation,
-        address indexed oracle,
-        bytes demand
-    );
+    event ArbitrationRequested(bytes32 indexed obligation, address indexed oracle, bytes demand);
 
     error UnauthorizedArbitrationRequest();
 
@@ -43,10 +36,9 @@ contract TrustedOracleArbiter is IArbiter {
 
     function requestArbitration(bytes32 _obligation, address oracle, bytes memory demand) public {
         Attestation memory obligation = eas.getAttestation(_obligation);
-        if (
-            obligation.attester != msg.sender &&
-            obligation.recipient != msg.sender
-        ) revert UnauthorizedArbitrationRequest();
+        if (obligation.attester != msg.sender && obligation.recipient != msg.sender) {
+            revert UnauthorizedArbitrationRequest();
+        }
 
         emit ArbitrationRequested(_obligation, oracle, demand);
     }
@@ -55,15 +47,18 @@ contract TrustedOracleArbiter is IArbiter {
         Attestation memory obligation,
         bytes memory demand,
         bytes32 /*fulfilling*/
-    ) public view override returns (bool) {
+    )
+        public
+        view
+        override
+        returns (bool)
+    {
         DemandData memory demand_ = abi.decode(demand, (DemandData));
         bytes32 decisionKey = keccak256(abi.encodePacked(obligation.uid, demand_.data));
         return decisions[demand_.oracle][decisionKey];
     }
 
-    function decodeDemandData(
-        bytes calldata data
-    ) public pure returns (DemandData memory) {
+    function decodeDemandData(bytes calldata data) public pure returns (DemandData memory) {
         return abi.decode(data, (DemandData));
     }
 }

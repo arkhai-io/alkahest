@@ -14,30 +14,23 @@ contract AttestationBarterUtils is SchemaResolver {
 
     mapping(bytes32 => address) public schemaResolvers;
 
-    event SchemaRegistered(
-        bytes32 indexed schemaId,
-        string schema,
-        address resolver
-    );
+    event SchemaRegistered(bytes32 indexed schemaId, string schema, address resolver);
 
     error InvalidResolver();
     error InvalidSchema();
 
-    constructor(
-        IEAS _eas,
-        ISchemaRegistry _schemaRegistry,
-        AttestationEscrowObligation2 _escrowContract
-    ) SchemaResolver(_eas) {
+    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, AttestationEscrowObligation2 _escrowContract)
+        SchemaResolver(_eas)
+    {
         eas = _eas;
         schemaRegistry = _schemaRegistry;
         escrowContract = _escrowContract;
     }
 
-    function registerSchema(
-        string calldata schema,
-        SchemaResolver resolver,
-        bool revocable
-    ) external returns (bytes32) {
+    function registerSchema(string calldata schema, SchemaResolver resolver, bool revocable)
+        external
+        returns (bytes32)
+    {
         bytes32 schemaId = schemaRegistry.register(schema, resolver, revocable);
         schemaResolvers[schemaId] = address(resolver);
         emit SchemaRegistered(schemaId, schema, address(resolver));
@@ -52,20 +45,19 @@ contract AttestationBarterUtils is SchemaResolver {
         bytes32 refUID,
         bytes calldata data
     ) external returns (bytes32) {
-        return
-            eas.attest(
-                AttestationRequest({
-                    schema: schema,
-                    data: AttestationRequestData({
-                        recipient: recipient,
-                        expirationTime: expirationTime,
-                        revocable: revocable,
-                        refUID: refUID,
-                        data: data,
-                        value: 0
-                    })
+        return eas.attest(
+            AttestationRequest({
+                schema: schema,
+                data: AttestationRequestData({
+                    recipient: recipient,
+                    expirationTime: expirationTime,
+                    revocable: revocable,
+                    refUID: refUID,
+                    data: data,
+                    value: 0
                 })
-            );
+            })
+        );
     }
 
     function attestAndCreateEscrow(
@@ -78,33 +70,40 @@ contract AttestationBarterUtils is SchemaResolver {
         attestationUid = eas.attest(attestationRequest);
 
         // Then create the escrow obligation
-        AttestationEscrowObligation2.ObligationData
-            memory escrowData = AttestationEscrowObligation2.ObligationData({
-                attestationUid: attestationUid,
-                arbiter: arbiter,
-                demand: demand
-            });
+        AttestationEscrowObligation2.ObligationData memory escrowData = AttestationEscrowObligation2.ObligationData({
+            attestationUid: attestationUid, arbiter: arbiter, demand: demand
+        });
 
         escrowUid = escrowContract.doObligation(escrowData, expiration);
     }
 
     function onAttest(
-        Attestation calldata /* attestation */,
+        Attestation calldata,
+        /* attestation */
         uint256
-    ) internal pure override returns (bool) {
+    )
+        internal
+        pure
+        override
+        returns (bool)
+    {
         return true; // Allow all attestations
     }
 
     function onRevoke(
-        Attestation calldata /* attestation */,
+        Attestation calldata,
+        /* attestation */
         uint256
-    ) internal pure override returns (bool) {
+    )
+        internal
+        pure
+        override
+        returns (bool)
+    {
         return true; // Allow all revocations
     }
 
-    function getSchema(
-        bytes32 schemaId
-    ) external view returns (SchemaRecord memory) {
+    function getSchema(bytes32 schemaId) external view returns (SchemaRecord memory) {
         return schemaRegistry.getSchema(schemaId);
     }
 }

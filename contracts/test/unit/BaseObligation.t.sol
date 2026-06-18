@@ -22,17 +22,12 @@ contract MockBaseObligation is BaseObligation {
     address public lastAfterAttestPayer;
     address public lastAfterAttestRecipient;
 
-    constructor(
-        IEAS _eas,
-        ISchemaRegistry _schemaRegistry
-    ) BaseObligation(_eas, _schemaRegistry, "string data", true) {}
+    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry)
+        BaseObligation(_eas, _schemaRegistry, "string data", true)
+    {}
 
     // Override hooks to track calls
-    function _beforeAttest(
-        bytes memory data,
-        address payer,
-        address recipient
-    ) internal override {
+    function _beforeAttest(bytes memory data, address payer, address recipient) internal override {
         beforeAttestCalled = true;
         lastBeforeAttestData = data;
         lastBeforeAttestPayer = payer;
@@ -48,18 +43,12 @@ contract MockBaseObligation is BaseObligation {
     }
 
     // Public wrapper for onAttest for testing
-    function testOnAttest(
-        Attestation calldata attestation,
-        uint256 value
-    ) public view returns (bool) {
+    function testOnAttest(Attestation calldata attestation, uint256 value) public view returns (bool) {
         return onAttest(attestation, value);
     }
 
     // Public wrapper for onRevoke for testing
-    function testOnRevoke(
-        Attestation calldata attestation,
-        uint256 value
-    ) public view returns (bool) {
+    function testOnRevoke(Attestation calldata attestation, uint256 value) public view returns (bool) {
         return onRevoke(attestation, value);
     }
 
@@ -77,12 +66,10 @@ contract MockBaseObligation is BaseObligation {
     }
 
     // Public wrapper for _doObligationForRaw for testing
-    function doObligationForRaw(
-        bytes memory data,
-        uint64 expirationTime,
-        address recipient,
-        bytes32 refUID
-    ) public returns (bytes32) {
+    function doObligationForRaw(bytes memory data, uint64 expirationTime, address recipient, bytes32 refUID)
+        public
+        returns (bytes32)
+    {
         return _doObligationForRaw(data, expirationTime, recipient, refUID);
     }
 }
@@ -124,17 +111,9 @@ contract BaseObligationTest is Test {
 
         // Mock the eas.attest call to return a UID
         bytes32 expectedUID = keccak256("test_uid");
-        vm.mockCall(
-            address(eas),
-            abi.encodeWithSelector(IEAS.attest.selector),
-            abi.encode(expectedUID)
-        );
+        vm.mockCall(address(eas), abi.encodeWithSelector(IEAS.attest.selector), abi.encode(expectedUID));
 
-        bytes32 uid = baseObligation.doObligationRaw(
-            testData,
-            expirationTime,
-            refUID
-        );
+        bytes32 uid = baseObligation.doObligationRaw(testData, expirationTime, refUID);
 
         vm.stopPrank();
 
@@ -142,52 +121,18 @@ contract BaseObligationTest is Test {
         assertEq(uid, expectedUID, "UID should match expected");
 
         // Verify hooks were called
-        assertTrue(
-            baseObligation.beforeAttestCalled(),
-            "beforeAttest should be called"
-        );
-        assertTrue(
-            baseObligation.afterAttestCalled(),
-            "afterAttest should be called"
-        );
+        assertTrue(baseObligation.beforeAttestCalled(), "beforeAttest should be called");
+        assertTrue(baseObligation.afterAttestCalled(), "afterAttest should be called");
 
         // Verify hook parameters
-        assertEq(
-            baseObligation.lastBeforeAttestData(),
-            testData,
-            "Before data should match"
-        );
-        assertEq(
-            baseObligation.lastBeforeAttestPayer(),
-            testUser,
-            "Before payer should match"
-        );
-        assertEq(
-            baseObligation.lastBeforeAttestRecipient(),
-            testUser,
-            "Before recipient should match"
-        );
+        assertEq(baseObligation.lastBeforeAttestData(), testData, "Before data should match");
+        assertEq(baseObligation.lastBeforeAttestPayer(), testUser, "Before payer should match");
+        assertEq(baseObligation.lastBeforeAttestRecipient(), testUser, "Before recipient should match");
 
-        assertEq(
-            baseObligation.lastAfterAttestUid(),
-            expectedUID,
-            "After UID should match"
-        );
-        assertEq(
-            baseObligation.lastAfterAttestData(),
-            testData,
-            "After data should match"
-        );
-        assertEq(
-            baseObligation.lastAfterAttestPayer(),
-            testUser,
-            "After payer should match"
-        );
-        assertEq(
-            baseObligation.lastAfterAttestRecipient(),
-            testUser,
-            "After recipient should match"
-        );
+        assertEq(baseObligation.lastAfterAttestUid(), expectedUID, "After UID should match");
+        assertEq(baseObligation.lastAfterAttestData(), testData, "After data should match");
+        assertEq(baseObligation.lastAfterAttestPayer(), testUser, "After payer should match");
+        assertEq(baseObligation.lastAfterAttestRecipient(), testUser, "After recipient should match");
     }
 
     function testDoObligationForRaw() public {
@@ -199,11 +144,7 @@ contract BaseObligationTest is Test {
 
         // Mock the eas.attest call to return a UID
         bytes32 expectedUID = keccak256("test_uid_for");
-        vm.mockCall(
-            address(eas),
-            abi.encodeWithSelector(IEAS.attest.selector),
-            abi.encode(expectedUID)
-        );
+        vm.mockCall(address(eas), abi.encodeWithSelector(IEAS.attest.selector), abi.encode(expectedUID));
 
         bytes32 uid = baseObligation.doObligationForRaw(
             testData,
@@ -218,21 +159,9 @@ contract BaseObligationTest is Test {
         assertEq(uid, expectedUID, "UID should match expected");
 
         // Verify hooks were called with correct parameters
-        assertEq(
-            baseObligation.lastBeforeAttestPayer(),
-            testUser,
-            "Before payer should match"
-        );
-        assertEq(
-            baseObligation.lastBeforeAttestRecipient(),
-            testRecipient,
-            "Before recipient should match"
-        );
-        assertEq(
-            baseObligation.lastAfterAttestRecipient(),
-            testRecipient,
-            "After recipient should match"
-        );
+        assertEq(baseObligation.lastBeforeAttestPayer(), testUser, "Before payer should match");
+        assertEq(baseObligation.lastBeforeAttestRecipient(), testRecipient, "Before recipient should match");
+        assertEq(baseObligation.lastAfterAttestRecipient(), testRecipient, "After recipient should match");
     }
 
     function testOnAttest() public {
@@ -265,12 +194,10 @@ contract BaseObligationTest is Test {
         });
 
         assertTrue(
-            baseObligation.testOnAttest(validAttestation, 0),
-            "onAttest should return true for valid attestation"
+            baseObligation.testOnAttest(validAttestation, 0), "onAttest should return true for valid attestation"
         );
         assertFalse(
-            baseObligation.testOnAttest(invalidAttestation, 0),
-            "onAttest should return false for invalid attestation"
+            baseObligation.testOnAttest(invalidAttestation, 0), "onAttest should return false for invalid attestation"
         );
     }
 
@@ -304,12 +231,10 @@ contract BaseObligationTest is Test {
         });
 
         assertTrue(
-            baseObligation.testOnRevoke(validAttestation, 0),
-            "onRevoke should return true for valid attestation"
+            baseObligation.testOnRevoke(validAttestation, 0), "onRevoke should return true for valid attestation"
         );
         assertFalse(
-            baseObligation.testOnRevoke(invalidAttestation, 0),
-            "onRevoke should return false for invalid attestation"
+            baseObligation.testOnRevoke(invalidAttestation, 0), "onRevoke should return false for invalid attestation"
         );
     }
 
@@ -323,34 +248,18 @@ contract BaseObligationTest is Test {
 
         // Mock the eas.attest call
         bytes32 expectedUID = keccak256("hook_test_uid");
-        vm.mockCall(
-            address(eas),
-            abi.encodeWithSelector(IEAS.attest.selector),
-            abi.encode(expectedUID)
-        );
+        vm.mockCall(address(eas), abi.encodeWithSelector(IEAS.attest.selector), abi.encode(expectedUID));
 
         // Ensure hooks are not called yet
-        assertFalse(
-            baseObligation.beforeAttestCalled(),
-            "beforeAttest should not be called yet"
-        );
-        assertFalse(
-            baseObligation.afterAttestCalled(),
-            "afterAttest should not be called yet"
-        );
+        assertFalse(baseObligation.beforeAttestCalled(), "beforeAttest should not be called yet");
+        assertFalse(baseObligation.afterAttestCalled(), "afterAttest should not be called yet");
 
         // Call doObligationRaw
         baseObligation.doObligationRaw(testData, 0, bytes32(0));
 
         // Verify both hooks were called
-        assertTrue(
-            baseObligation.beforeAttestCalled(),
-            "beforeAttest should be called"
-        );
-        assertTrue(
-            baseObligation.afterAttestCalled(),
-            "afterAttest should be called"
-        );
+        assertTrue(baseObligation.beforeAttestCalled(), "beforeAttest should be called");
+        assertTrue(baseObligation.afterAttestCalled(), "afterAttest should be called");
 
         vm.stopPrank();
     }

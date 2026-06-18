@@ -33,26 +33,11 @@ contract MajorityVoteArbiter is IArbiter {
         mapping(address => bool) vote;
     }
 
-    event VoteCast(
-        bytes32 indexed obligation,
-        address indexed voter,
-        bool vote,
-        uint256 yesVotes,
-        uint256 noVotes
-    );
+    event VoteCast(bytes32 indexed obligation, address indexed voter, bool vote, uint256 yesVotes, uint256 noVotes);
 
-    event ArbitrationRequested(
-        bytes32 indexed obligation,
-        address[] voters,
-        uint256 quorum
-    );
+    event ArbitrationRequested(bytes32 indexed obligation, address[] voters, uint256 quorum);
 
-    event ArbitrationComplete(
-        bytes32 indexed obligation,
-        bool decision,
-        uint256 yesVotes,
-        uint256 noVotes
-    );
+    event ArbitrationComplete(bytes32 indexed obligation, bool decision, uint256 yesVotes, uint256 noVotes);
 
     error UnauthorizedVoter();
     error AlreadyVoted();
@@ -73,11 +58,7 @@ contract MajorityVoteArbiter is IArbiter {
      * @param vote True if the voter believes the obligation satisfies requirements, false otherwise
      * @param demandData The encoded DemandData containing voters and quorum
      */
-    function castVote(
-        bytes32 obligation,
-        bool vote,
-        bytes calldata demandData
-    ) external {
+    function castVote(bytes32 obligation, bool vote, bytes calldata demandData) external {
         DemandData memory demand = abi.decode(demandData, (DemandData));
 
         // Check if sender is an authorized voter
@@ -105,30 +86,14 @@ contract MajorityVoteArbiter is IArbiter {
             status.noVotes++;
         }
 
-        emit VoteCast(
-            obligation,
-            msg.sender,
-            vote,
-            status.yesVotes,
-            status.noVotes
-        );
+        emit VoteCast(obligation, msg.sender, vote, status.yesVotes, status.noVotes);
 
         // Check if voting is complete (quorum reached for either decision)
         if (status.yesVotes >= demand.quorum) {
-            emit ArbitrationComplete(
-                obligation,
-                true,
-                status.yesVotes,
-                status.noVotes
-            );
+            emit ArbitrationComplete(obligation, true, status.yesVotes, status.noVotes);
         } else if (status.noVotes > demand.voters.length - demand.quorum) {
             // If no votes exceed the number that would prevent reaching quorum
-            emit ArbitrationComplete(
-                obligation,
-                false,
-                status.yesVotes,
-                status.noVotes
-            );
+            emit ArbitrationComplete(obligation, false, status.yesVotes, status.noVotes);
         }
     }
 
@@ -138,21 +103,16 @@ contract MajorityVoteArbiter is IArbiter {
      * @param voters List of authorized voters
      * @param quorum Minimum number of votes required for approval
      */
-    function requestArbitration(
-        bytes32 _obligation,
-        address[] calldata voters,
-        uint256 quorum
-    ) external {
+    function requestArbitration(bytes32 _obligation, address[] calldata voters, uint256 quorum) external {
         // Validate inputs
         if (voters.length == 0) revert NoVoters();
         if (quorum == 0 || quorum > voters.length) revert InvalidQuorum();
 
         // Only attester or recipient can request arbitration
         Attestation memory obligation = eas.getAttestation(_obligation);
-        if (
-            obligation.attester != msg.sender &&
-            obligation.recipient != msg.sender
-        ) revert UnauthorizedArbitrationRequest();
+        if (obligation.attester != msg.sender && obligation.recipient != msg.sender) {
+            revert UnauthorizedArbitrationRequest();
+        }
 
         emit ArbitrationRequested(_obligation, voters, quorum);
     }
@@ -167,17 +127,19 @@ contract MajorityVoteArbiter is IArbiter {
         Attestation memory obligation,
         bytes memory demand,
         bytes32 /* fulfilling */
-    ) public view override returns (bool) {
+    )
+        public
+        view
+        override
+        returns (bool)
+    {
         // Validate attestation integrity
 
         DemandData memory demandData = abi.decode(demand, (DemandData));
 
         // Validate demand data
         if (demandData.voters.length == 0) return false;
-        if (
-            demandData.quorum == 0 ||
-            demandData.quorum > demandData.voters.length
-        ) {
+        if (demandData.quorum == 0 || demandData.quorum > demandData.voters.length) {
             return false;
         }
 
@@ -193,9 +155,7 @@ contract MajorityVoteArbiter is IArbiter {
      * @return yesVotes Number of yes votes
      * @return noVotes Number of no votes
      */
-    function getVoteCount(
-        bytes32 obligation
-    ) external view returns (uint256 yesVotes, uint256 noVotes) {
+    function getVoteCount(bytes32 obligation) external view returns (uint256 yesVotes, uint256 noVotes) {
         VoteStatus storage status = voteStatuses[obligation];
         return (status.yesVotes, status.noVotes);
     }
@@ -207,10 +167,7 @@ contract MajorityVoteArbiter is IArbiter {
      * @return hasVoted True if the voter has cast a vote
      * @return vote The vote value (only valid if hasVoted is true)
      */
-    function getVoterStatus(
-        bytes32 obligation,
-        address voter
-    ) external view returns (bool hasVoted, bool vote) {
+    function getVoterStatus(bytes32 obligation, address voter) external view returns (bool hasVoted, bool vote) {
         VoteStatus storage status = voteStatuses[obligation];
         return (status.hasVoted[voter], status.vote[voter]);
     }
@@ -220,9 +177,7 @@ contract MajorityVoteArbiter is IArbiter {
      * @param data Encoded demand data
      * @return Decoded DemandData struct
      */
-    function decodeDemandData(
-        bytes calldata data
-    ) external pure returns (DemandData memory) {
+    function decodeDemandData(bytes calldata data) external pure returns (DemandData memory) {
         return abi.decode(data, (DemandData));
     }
 
@@ -233,10 +188,11 @@ contract MajorityVoteArbiter is IArbiter {
      * @return complete True if voting has reached a decisive outcome
      * @return approved True if the obligation was approved (only valid if complete is true)
      */
-    function isVotingComplete(
-        bytes32 obligation,
-        bytes calldata demandData
-    ) external view returns (bool complete, bool approved) {
+    function isVotingComplete(bytes32 obligation, bytes calldata demandData)
+        external
+        view
+        returns (bool complete, bool approved)
+    {
         DemandData memory demand = abi.decode(demandData, (DemandData));
         VoteStatus storage status = voteStatuses[obligation];
 

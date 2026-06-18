@@ -29,9 +29,7 @@ contract RefUidArbiterTest is Test {
         });
 
         // Create demand data with matching refUID
-        RefUidArbiter.DemandData memory demandData = RefUidArbiter.DemandData({
-            refUID: refUid
-        });
+        RefUidArbiter.DemandData memory demandData = RefUidArbiter.DemandData({refUID: refUid});
         bytes memory demand = abi.encode(demandData);
 
         // Check obligation should return true
@@ -55,9 +53,7 @@ contract RefUidArbiterTest is Test {
         });
 
         // Create demand data with refUID
-        RefUidArbiter.DemandData memory demandData = RefUidArbiter.DemandData({
-            refUID: refUid
-        });
+        RefUidArbiter.DemandData memory demandData = RefUidArbiter.DemandData({refUID: refUid});
         bytes memory demand = abi.encode(demandData);
 
         // Check obligation should revert with RefUidMismatched
@@ -67,14 +63,12 @@ contract RefUidArbiterTest is Test {
 
     function testDecodeDemandData() public {
         // Create demand data
-        RefUidArbiter.DemandData memory expectedDemandData = RefUidArbiter.DemandData({
-            refUID: refUid
-        });
-        
+        RefUidArbiter.DemandData memory expectedDemandData = RefUidArbiter.DemandData({refUID: refUid});
+
         bytes memory encodedData = abi.encode(expectedDemandData);
-        
+
         RefUidArbiter.DemandData memory decodedData = arbiter.decodeDemandData(encodedData);
-        
+
         assertEq(decodedData.refUID, expectedDemandData.refUID, "RefUID should match");
     }
 }

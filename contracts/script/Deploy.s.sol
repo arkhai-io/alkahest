@@ -50,10 +50,18 @@ import {IntrinsicsArbiter2} from "@src/arbiters/IntrinsicsArbiter2.sol";
 import {ERC8004Arbiter} from "@src/arbiters/ERC8004Arbiter.sol";
 
 // Confirmation Arbiters
-import {NonexclusiveUnrevocableConfirmationArbiter} from "@src/arbiters/confirmation/NonexclusiveUnrevocableConfirmationArbiter.sol";
-import {NonexclusiveRevocableConfirmationArbiter} from "@src/arbiters/confirmation/NonexclusiveRevocableConfirmationArbiter.sol";
-import {ExclusiveUnrevocableConfirmationArbiter} from "@src/arbiters/confirmation/ExclusiveUnrevocableConfirmationArbiter.sol";
-import {ExclusiveRevocableConfirmationArbiter} from "@src/arbiters/confirmation/ExclusiveRevocableConfirmationArbiter.sol";
+import {
+    NonexclusiveUnrevocableConfirmationArbiter
+} from "@src/arbiters/confirmation/NonexclusiveUnrevocableConfirmationArbiter.sol";
+import {
+    NonexclusiveRevocableConfirmationArbiter
+} from "@src/arbiters/confirmation/NonexclusiveRevocableConfirmationArbiter.sol";
+import {
+    ExclusiveUnrevocableConfirmationArbiter
+} from "@src/arbiters/confirmation/ExclusiveUnrevocableConfirmationArbiter.sol";
+import {
+    ExclusiveRevocableConfirmationArbiter
+} from "@src/arbiters/confirmation/ExclusiveRevocableConfirmationArbiter.sol";
 
 // Attestation Property Arbiters
 import {AttesterArbiter} from "@src/arbiters/attestation-properties/AttesterArbiter.sol";
@@ -96,7 +104,10 @@ contract Deploy is Script {
         bool shouldDeploySR = keccak256(abi.encodePacked(easSrAddressStr)) == keccak256(abi.encodePacked("deploy"));
 
         if (shouldDeployEAS || shouldDeploySR) {
-            require(shouldDeployEAS && shouldDeploySR, "Both EAS_ADDRESS and EAS_SR_ADDRESS must be 'deploy' or both must be addresses");
+            require(
+                shouldDeployEAS && shouldDeploySR,
+                "Both EAS_ADDRESS and EAS_SR_ADDRESS must be 'deploy' or both must be addresses"
+            );
 
             EASDeployer easDeployer = new EASDeployer();
             (IEAS eas, ISchemaRegistry schemaRegistry) = easDeployer.deployEAS();
@@ -111,9 +122,7 @@ contract Deploy is Script {
         // SpecificAttestationArbiter specificArbiter = new SpecificAttestationArbiter();
         // TrustedPartyArbiter trustedPartyArbiter = new TrustedPartyArbiter();
         TrivialArbiter trivialArbiter = new TrivialArbiter();
-        TrustedOracleArbiter trustedOracleArbiter = new TrustedOracleArbiter(
-            IEAS(easAddress)
-        );
+        TrustedOracleArbiter trustedOracleArbiter = new TrustedOracleArbiter(IEAS(easAddress));
 
         // Deploy Additional Arbiters
         AllArbiter allArbiter = new AllArbiter();
@@ -123,18 +132,14 @@ contract Deploy is Script {
         ERC8004Arbiter erc8004Arbiter = new ERC8004Arbiter();
 
         // Deploy Confirmation Arbiters
-        NonexclusiveUnrevocableConfirmationArbiter nonexclusiveUnrevocableConfirmationArbiter = new NonexclusiveUnrevocableConfirmationArbiter(
-            IEAS(easAddress)
-        );
-        NonexclusiveRevocableConfirmationArbiter nonexclusiveRevocableConfirmationArbiter = new NonexclusiveRevocableConfirmationArbiter(
-            IEAS(easAddress)
-        );
-        ExclusiveUnrevocableConfirmationArbiter exclusiveUnrevocableConfirmationArbiter = new ExclusiveUnrevocableConfirmationArbiter(
-            IEAS(easAddress)
-        );
-        ExclusiveRevocableConfirmationArbiter exclusiveRevocableConfirmationArbiter = new ExclusiveRevocableConfirmationArbiter(
-            IEAS(easAddress)
-        );
+        NonexclusiveUnrevocableConfirmationArbiter nonexclusiveUnrevocableConfirmationArbiter =
+            new NonexclusiveUnrevocableConfirmationArbiter(IEAS(easAddress));
+        NonexclusiveRevocableConfirmationArbiter nonexclusiveRevocableConfirmationArbiter =
+            new NonexclusiveRevocableConfirmationArbiter(IEAS(easAddress));
+        ExclusiveUnrevocableConfirmationArbiter exclusiveUnrevocableConfirmationArbiter =
+            new ExclusiveUnrevocableConfirmationArbiter(IEAS(easAddress));
+        ExclusiveRevocableConfirmationArbiter exclusiveRevocableConfirmationArbiter =
+            new ExclusiveRevocableConfirmationArbiter(IEAS(easAddress));
 
         // Deploy Attestation Property Arbiters
         AttesterArbiter attesterArbiter = new AttesterArbiter();
@@ -151,29 +156,23 @@ contract Deploy is Script {
         UidArbiter uidArbiter = new UidArbiter();
 
         // Deploy StringObligation
-        StringObligation stringObligation = new StringObligation(
-            IEAS(easAddress),
-            ISchemaRegistry(schemaRegistryAddress)
-        );
+        StringObligation stringObligation =
+            new StringObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
 
         // Deploy CommitRevealObligation
         CommitRevealObligation commitRevealObligation = new CommitRevealObligation(
             IEAS(easAddress),
             ISchemaRegistry(schemaRegistryAddress),
-            0.005 ether,    // bondAmount
-            24 hours,       // commitDeadline
+            0.005 ether, // bondAmount
+            24 hours, // commitDeadline
             0x07dD7186410Aa0fe85670531FC6EFc9cd980c558 // slashedBondRecipient (treasury)
         );
 
         // Deploy ERC20 contracts
-        ERC20EscrowObligation erc20Escrow = new ERC20EscrowObligation(
-            IEAS(easAddress),
-            ISchemaRegistry(schemaRegistryAddress)
-        );
-        ERC20PaymentObligation erc20Payment = new ERC20PaymentObligation(
-            IEAS(easAddress),
-            ISchemaRegistry(schemaRegistryAddress)
-        );
+        ERC20EscrowObligation erc20Escrow =
+            new ERC20EscrowObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
+        ERC20PaymentObligation erc20Payment =
+            new ERC20PaymentObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
         // ERC20BarterUtils erc20BarterUtils = new ERC20BarterUtils(
         //     IEAS(easAddress),
         //     erc20Escrow,
@@ -181,14 +180,10 @@ contract Deploy is Script {
         // );
 
         // Deploy ERC721 contracts
-        ERC721EscrowObligation erc721Escrow = new ERC721EscrowObligation(
-            IEAS(easAddress),
-            ISchemaRegistry(schemaRegistryAddress)
-        );
-        ERC721PaymentObligation erc721Payment = new ERC721PaymentObligation(
-            IEAS(easAddress),
-            ISchemaRegistry(schemaRegistryAddress)
-        );
+        ERC721EscrowObligation erc721Escrow =
+            new ERC721EscrowObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
+        ERC721PaymentObligation erc721Payment =
+            new ERC721PaymentObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
         // ERC721BarterUtils erc721BarterUtils = new ERC721BarterUtils(
         //     IEAS(easAddress),
         //     erc721Escrow,
@@ -196,14 +191,10 @@ contract Deploy is Script {
         // );
 
         // Deploy ERC1155 contracts
-        ERC1155EscrowObligation erc1155Escrow = new ERC1155EscrowObligation(
-            IEAS(easAddress),
-            ISchemaRegistry(schemaRegistryAddress)
-        );
-        ERC1155PaymentObligation erc1155Payment = new ERC1155PaymentObligation(
-            IEAS(easAddress),
-            ISchemaRegistry(schemaRegistryAddress)
-        );
+        ERC1155EscrowObligation erc1155Escrow =
+            new ERC1155EscrowObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
+        ERC1155PaymentObligation erc1155Payment =
+            new ERC1155PaymentObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
         // ERC1155BarterUtils erc1155BarterUtils = new ERC1155BarterUtils(
         //     IEAS(easAddress),
         //     erc1155Escrow,
@@ -211,29 +202,18 @@ contract Deploy is Script {
         // );
 
         // Deploy TokenBundle contracts
-        TokenBundleEscrowObligation bundleEscrow = new TokenBundleEscrowObligation(
-                IEAS(easAddress),
-                ISchemaRegistry(schemaRegistryAddress)
-            );
-        TokenBundlePaymentObligation bundlePayment = new TokenBundlePaymentObligation(
-                IEAS(easAddress),
-                ISchemaRegistry(schemaRegistryAddress)
-            );
-        TokenBundleBarterUtils bundleBarterUtils = new TokenBundleBarterUtils(
-            IEAS(easAddress),
-            bundleEscrow,
-            bundlePayment
-        );
+        TokenBundleEscrowObligation bundleEscrow =
+            new TokenBundleEscrowObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
+        TokenBundlePaymentObligation bundlePayment =
+            new TokenBundlePaymentObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
+        TokenBundleBarterUtils bundleBarterUtils =
+            new TokenBundleBarterUtils(IEAS(easAddress), bundleEscrow, bundlePayment);
 
         // Deploy Native Token contracts
-        NativeTokenEscrowObligation nativeEscrow = new NativeTokenEscrowObligation(
-                IEAS(easAddress),
-                ISchemaRegistry(schemaRegistryAddress)
-            );
-        NativeTokenPaymentObligation nativePayment = new NativeTokenPaymentObligation(
-                IEAS(easAddress),
-                ISchemaRegistry(schemaRegistryAddress)
-            );
+        NativeTokenEscrowObligation nativeEscrow =
+            new NativeTokenEscrowObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
+        NativeTokenPaymentObligation nativePayment =
+            new NativeTokenPaymentObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
 
         // Deploy barter utils contracts
         ERC20BarterUtils erc20BarterUtils = new ERC20BarterUtils(
@@ -293,19 +273,12 @@ contract Deploy is Script {
         );
 
         // Deploy attestation barter contracts
-        AttestationEscrowObligation attestationEscrow = new AttestationEscrowObligation(
-                IEAS(easAddress),
-                ISchemaRegistry(schemaRegistryAddress)
-            );
-        AttestationEscrowObligation2 attestationEscrow2 = new AttestationEscrowObligation2(
-                IEAS(easAddress),
-                ISchemaRegistry(schemaRegistryAddress)
-            );
-        AttestationBarterUtils attestationBarterUtils = new AttestationBarterUtils(
-                IEAS(easAddress),
-                ISchemaRegistry(schemaRegistryAddress),
-                attestationEscrow2
-            );
+        AttestationEscrowObligation attestationEscrow =
+            new AttestationEscrowObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
+        AttestationEscrowObligation2 attestationEscrow2 =
+            new AttestationEscrowObligation2(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
+        AttestationBarterUtils attestationBarterUtils =
+            new AttestationBarterUtils(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress), attestationEscrow2);
 
         vm.stopBroadcast();
 
@@ -380,10 +353,7 @@ contract Deploy is Script {
 
         console.log("\nAttestation Barter Contracts:");
         console.log("AttestationEscrowObligation:", address(attestationEscrow));
-        console.log(
-            "AttestationEscrowObligation2:",
-            address(attestationEscrow2)
-        );
+        console.log("AttestationEscrowObligation2:", address(attestationEscrow2));
         console.log("AttestationBarterUtils:", address(attestationBarterUtils));
 
         // Create JSON with deployed addresses
@@ -391,11 +361,7 @@ contract Deploy is Script {
 
         // Add EAS addresses
         vm.serializeAddress(deploymentJson, "eas", easAddress);
-        vm.serializeAddress(
-            deploymentJson,
-            "easSchemaRegistry",
-            schemaRegistryAddress
-        );
+        vm.serializeAddress(deploymentJson, "easSchemaRegistry", schemaRegistryAddress);
 
         // Add arbiter addresses
         // vm.serializeAddress(
@@ -408,35 +374,15 @@ contract Deploy is Script {
         //     "trustedPartyArbiter",
         //     address(trustedPartyArbiter)
         // );
-        vm.serializeAddress(
-            deploymentJson,
-            "trivialArbiter",
-            address(trivialArbiter)
-        );
-        vm.serializeAddress(
-            deploymentJson,
-            "trustedOracleArbiter",
-            address(trustedOracleArbiter)
-        );
+        vm.serializeAddress(deploymentJson, "trivialArbiter", address(trivialArbiter));
+        vm.serializeAddress(deploymentJson, "trustedOracleArbiter", address(trustedOracleArbiter));
 
         // Add Additional Arbiters
         vm.serializeAddress(deploymentJson, "allArbiter", address(allArbiter));
         vm.serializeAddress(deploymentJson, "anyArbiter", address(anyArbiter));
-        vm.serializeAddress(
-            deploymentJson,
-            "intrinsicsArbiter",
-            address(intrinsicsArbiter)
-        );
-        vm.serializeAddress(
-            deploymentJson,
-            "intrinsicsArbiter2",
-            address(intrinsicsArbiter2)
-        );
-        vm.serializeAddress(
-            deploymentJson,
-            "erc8004Arbiter",
-            address(erc8004Arbiter)
-        );
+        vm.serializeAddress(deploymentJson, "intrinsicsArbiter", address(intrinsicsArbiter));
+        vm.serializeAddress(deploymentJson, "intrinsicsArbiter2", address(intrinsicsArbiter2));
+        vm.serializeAddress(deploymentJson, "erc8004Arbiter", address(erc8004Arbiter));
 
         // Add Confirmation Arbiters
         vm.serializeAddress(
@@ -450,14 +396,10 @@ contract Deploy is Script {
             address(nonexclusiveRevocableConfirmationArbiter)
         );
         vm.serializeAddress(
-            deploymentJson,
-            "exclusiveUnrevocableConfirmationArbiter",
-            address(exclusiveUnrevocableConfirmationArbiter)
+            deploymentJson, "exclusiveUnrevocableConfirmationArbiter", address(exclusiveUnrevocableConfirmationArbiter)
         );
         vm.serializeAddress(
-            deploymentJson,
-            "exclusiveRevocableConfirmationArbiter",
-            address(exclusiveRevocableConfirmationArbiter)
+            deploymentJson, "exclusiveRevocableConfirmationArbiter", address(exclusiveRevocableConfirmationArbiter)
         );
 
         // Add Attestation Property Arbiters
@@ -475,130 +417,47 @@ contract Deploy is Script {
         vm.serializeAddress(deploymentJson, "uidArbiter", address(uidArbiter));
 
         // Add string obligation
-        vm.serializeAddress(
-            deploymentJson,
-            "stringObligation",
-            address(stringObligation)
-        );
+        vm.serializeAddress(deploymentJson, "stringObligation", address(stringObligation));
 
         // Add commit reveal obligation
-        vm.serializeAddress(
-            deploymentJson,
-            "commitRevealObligation",
-            address(commitRevealObligation)
-        );
+        vm.serializeAddress(deploymentJson, "commitRevealObligation", address(commitRevealObligation));
 
         // Add ERC20 addresses
-        vm.serializeAddress(
-            deploymentJson,
-            "erc20EscrowObligation",
-            address(erc20Escrow)
-        );
-        vm.serializeAddress(
-            deploymentJson,
-            "erc20PaymentObligation",
-            address(erc20Payment)
-        );
+        vm.serializeAddress(deploymentJson, "erc20EscrowObligation", address(erc20Escrow));
+        vm.serializeAddress(deploymentJson, "erc20PaymentObligation", address(erc20Payment));
 
         // Add ERC721 addresses
-        vm.serializeAddress(
-            deploymentJson,
-            "erc721EscrowObligation",
-            address(erc721Escrow)
-        );
-        vm.serializeAddress(
-            deploymentJson,
-            "erc721PaymentObligation",
-            address(erc721Payment)
-        );
+        vm.serializeAddress(deploymentJson, "erc721EscrowObligation", address(erc721Escrow));
+        vm.serializeAddress(deploymentJson, "erc721PaymentObligation", address(erc721Payment));
 
         // Add ERC1155 addresses
-        vm.serializeAddress(
-            deploymentJson,
-            "erc1155EscrowObligation",
-            address(erc1155Escrow)
-        );
-        vm.serializeAddress(
-            deploymentJson,
-            "erc1155PaymentObligation",
-            address(erc1155Payment)
-        );
+        vm.serializeAddress(deploymentJson, "erc1155EscrowObligation", address(erc1155Escrow));
+        vm.serializeAddress(deploymentJson, "erc1155PaymentObligation", address(erc1155Payment));
 
         // Add TokenBundle addresses
-        vm.serializeAddress(
-            deploymentJson,
-            "tokenBundleEscrowObligation",
-            address(bundleEscrow)
-        );
-        vm.serializeAddress(
-            deploymentJson,
-            "tokenBundlePaymentObligation",
-            address(bundlePayment)
-        );
-        vm.serializeAddress(
-            deploymentJson,
-            "tokenBundleBarterUtils",
-            address(bundleBarterUtils)
-        );
+        vm.serializeAddress(deploymentJson, "tokenBundleEscrowObligation", address(bundleEscrow));
+        vm.serializeAddress(deploymentJson, "tokenBundlePaymentObligation", address(bundlePayment));
+        vm.serializeAddress(deploymentJson, "tokenBundleBarterUtils", address(bundleBarterUtils));
 
         // Add BarterUtils addresses (using CrossToken contracts)
-        vm.serializeAddress(
-            deploymentJson,
-            "erc20BarterUtils",
-            address(erc20BarterUtils)
-        );
-        vm.serializeAddress(
-            deploymentJson,
-            "erc721BarterUtils",
-            address(erc721BarterUtils)
-        );
-        vm.serializeAddress(
-            deploymentJson,
-            "erc1155BarterUtils",
-            address(erc1155BarterUtils)
-        );
-        vm.serializeAddress(
-            deploymentJson,
-            "nativeTokenBarterUtils",
-            address(nativeBarterUtils)
-        );
+        vm.serializeAddress(deploymentJson, "erc20BarterUtils", address(erc20BarterUtils));
+        vm.serializeAddress(deploymentJson, "erc721BarterUtils", address(erc721BarterUtils));
+        vm.serializeAddress(deploymentJson, "erc1155BarterUtils", address(erc1155BarterUtils));
+        vm.serializeAddress(deploymentJson, "nativeTokenBarterUtils", address(nativeBarterUtils));
 
         // Add Native Token addresses
-        vm.serializeAddress(
-            deploymentJson,
-            "nativeTokenEscrowObligation",
-            address(nativeEscrow)
-        );
-        vm.serializeAddress(
-            deploymentJson,
-            "nativeTokenPaymentObligation",
-            address(nativePayment)
-        );
+        vm.serializeAddress(deploymentJson, "nativeTokenEscrowObligation", address(nativeEscrow));
+        vm.serializeAddress(deploymentJson, "nativeTokenPaymentObligation", address(nativePayment));
 
         // Add Attestation addresses
-        vm.serializeAddress(
-            deploymentJson,
-            "attestationEscrowObligation",
-            address(attestationEscrow)
-        );
-        vm.serializeAddress(
-            deploymentJson,
-            "attestationEscrowObligation2",
-            address(attestationEscrow2)
-        );
-        string memory finalJson = vm.serializeAddress(
-            deploymentJson,
-            "attestationBarterUtils",
-            address(attestationBarterUtils)
-        );
+        vm.serializeAddress(deploymentJson, "attestationEscrowObligation", address(attestationEscrow));
+        vm.serializeAddress(deploymentJson, "attestationEscrowObligation2", address(attestationEscrow2));
+        string memory finalJson =
+            vm.serializeAddress(deploymentJson, "attestationBarterUtils", address(attestationBarterUtils));
 
         // Generate timestamp for filename
         uint256 timestamp = block.timestamp;
-        string memory filename = string.concat(
-            "./deployments/deployment_",
-            vm.toString(timestamp),
-            ".json"
-        );
+        string memory filename = string.concat("./deployments/deployment_", vm.toString(timestamp), ".json");
 
         // Write JSON to file
         vm.writeJson(finalJson, filename);

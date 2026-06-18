@@ -26,19 +26,9 @@ contract ERC20EscrowHook is IEscrowHook {
     /// @notice Tracks deposits: caller (obligation) → token → amount held.
     mapping(address => mapping(address => uint256)) public deposits;
 
-    error ERC20TransferFailed(
-        address token,
-        address from,
-        address to,
-        uint256 amount
-    );
+    error ERC20TransferFailed(address token, address from, address to, uint256 amount);
     error NoDeposit(address caller, address token);
-    error InsufficientDeposit(
-        address caller,
-        address token,
-        uint256 requested,
-        uint256 available
-    );
+    error InsufficientDeposit(address caller, address token, uint256 requested, uint256 available);
 
     // ──────────────────────────────────────────────
 
@@ -46,28 +36,23 @@ contract ERC20EscrowHook is IEscrowHook {
         bytes calldata data,
         address from,
         address /* escrow */
-    ) external payable override {
+    )
+        external
+        payable
+        override
+    {
         if (msg.value != 0) revert IEscrowHook.UnexpectedNativeValue();
 
         HookData memory decoded = abi.decode(data, (HookData));
 
         uint256 balanceBefore = IERC20(decoded.token).balanceOf(address(this));
 
-        bool success = IERC20(decoded.token).trySafeTransferFrom(
-            from,
-            address(this),
-            decoded.amount
-        );
+        bool success = IERC20(decoded.token).trySafeTransferFrom(from, address(this), decoded.amount);
 
         uint256 balanceAfter = IERC20(decoded.token).balanceOf(address(this));
 
         if (!success || balanceAfter < balanceBefore + decoded.amount) {
-            revert ERC20TransferFailed(
-                decoded.token,
-                from,
-                address(this),
-                decoded.amount
-            );
+            revert ERC20TransferFailed(decoded.token, from, address(this), decoded.amount);
         }
 
         deposits[msg.sender][decoded.token] += decoded.amount;
@@ -77,7 +62,10 @@ contract ERC20EscrowHook is IEscrowHook {
         bytes calldata data,
         address to,
         address /* escrow */
-    ) external override {
+    )
+        external
+        override
+    {
         _transferOut(data, to);
     }
 
@@ -85,7 +73,10 @@ contract ERC20EscrowHook is IEscrowHook {
         bytes calldata data,
         address to,
         address /* escrow */
-    ) external override {
+    )
+        external
+        override
+    {
         _transferOut(data, to);
     }
 
@@ -99,32 +90,19 @@ contract ERC20EscrowHook is IEscrowHook {
             revert NoDeposit(msg.sender, decoded.token);
         }
         if (available < decoded.amount) {
-            revert InsufficientDeposit(
-                msg.sender,
-                decoded.token,
-                decoded.amount,
-                available
-            );
+            revert InsufficientDeposit(msg.sender, decoded.token, decoded.amount, available);
         }
 
         deposits[msg.sender][decoded.token] = available - decoded.amount;
 
         uint256 balanceBefore = IERC20(decoded.token).balanceOf(to);
 
-        bool success = IERC20(decoded.token).trySafeTransfer(
-            to,
-            decoded.amount
-        );
+        bool success = IERC20(decoded.token).trySafeTransfer(to, decoded.amount);
 
         uint256 balanceAfter = IERC20(decoded.token).balanceOf(to);
 
         if (!success || balanceAfter < balanceBefore + decoded.amount) {
-            revert ERC20TransferFailed(
-                decoded.token,
-                address(this),
-                to,
-                decoded.amount
-            );
+            revert ERC20TransferFailed(decoded.token, address(this), to, decoded.amount);
         }
     }
 
@@ -132,15 +110,11 @@ contract ERC20EscrowHook is IEscrowHook {
     // Encoding helpers
     // ──────────────────────────────────────────────
 
-    function encodeHookData(
-        HookData calldata hookData
-    ) external pure returns (bytes memory) {
+    function encodeHookData(HookData calldata hookData) external pure returns (bytes memory) {
         return abi.encode(hookData);
     }
 
-    function decodeHookData(
-        bytes calldata data
-    ) external pure returns (HookData memory) {
+    function decodeHookData(bytes calldata data) external pure returns (HookData memory) {
         return abi.decode(data, (HookData));
     }
 }

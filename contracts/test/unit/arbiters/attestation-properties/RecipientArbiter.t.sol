@@ -29,9 +29,7 @@ contract RecipientArbiterTest is Test {
         });
 
         // Create demand data with matching recipient
-        RecipientArbiter.DemandData memory demandData = RecipientArbiter.DemandData({
-            recipient: recipient
-        });
+        RecipientArbiter.DemandData memory demandData = RecipientArbiter.DemandData({recipient: recipient});
         bytes memory demand = abi.encode(demandData);
 
         // Check obligation should return true
@@ -55,9 +53,7 @@ contract RecipientArbiterTest is Test {
         });
 
         // Create demand data with recipient
-        RecipientArbiter.DemandData memory demandData = RecipientArbiter.DemandData({
-            recipient: recipient
-        });
+        RecipientArbiter.DemandData memory demandData = RecipientArbiter.DemandData({recipient: recipient});
         bytes memory demand = abi.encode(demandData);
 
         // Check obligation should revert with RecipientMismatched
@@ -67,14 +63,12 @@ contract RecipientArbiterTest is Test {
 
     function testDecodeDemandData() public {
         // Create demand data
-        RecipientArbiter.DemandData memory expectedDemandData = RecipientArbiter.DemandData({
-            recipient: recipient
-        });
-        
+        RecipientArbiter.DemandData memory expectedDemandData = RecipientArbiter.DemandData({recipient: recipient});
+
         bytes memory encodedData = abi.encode(expectedDemandData);
-        
+
         RecipientArbiter.DemandData memory decodedData = arbiter.decodeDemandData(encodedData);
-        
+
         assertEq(decodedData.recipient, expectedDemandData.recipient, "Recipient should match");
     }
 }

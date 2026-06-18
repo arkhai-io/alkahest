@@ -59,11 +59,7 @@ contract ApiCallExample2Test is Test {
     }
 
     ApiQuery weatherQuery =
-        ApiQuery({
-            endpoint: "https://api.weather.com/v1/location/NYC",
-            method: "GET",
-            params: "units=fahrenheit"
-        });
+        ApiQuery({endpoint: "https://api.weather.com/v1/location/NYC", method: "GET", params: "units=fahrenheit"});
 
     uint256 constant PAYMENT_AMOUNT = 100 * 10 ** 18;
 
@@ -113,12 +109,7 @@ contract ApiCallExample2Test is Test {
 
         // Encode structured query for oracle validation
         bytes memory innerDemand = abi.encode(weatherQuery);
-        bytes memory demand = abi.encode(
-            TrustedOracleArbiter.DemandData({
-                oracle: charlie,
-                data: innerDemand
-            })
-        );
+        bytes memory demand = abi.encode(TrustedOracleArbiter.DemandData({oracle: charlie, data: innerDemand}));
 
         paymentToken.approve(address(erc20EscrowObligation), PAYMENT_AMOUNT);
         bytes32 escrowUid = erc20EscrowObligation.doObligation(
@@ -136,36 +127,25 @@ contract ApiCallExample2Test is Test {
         vm.startPrank(bob);
 
         // The specialized contract enforces structure
-        ApiResultObligation.ObligationData
-            memory resultData = ApiResultObligation.ObligationData({
-                endpoint: weatherQuery.endpoint,
-                method: "GET",
-                statusCode: 200,
-                headers: "Content-Type: application/json",
-                body: '{"temperature": "72", "unit": "fahrenheit"}',
-                timestamp: block.timestamp
-            });
+        ApiResultObligation.ObligationData memory resultData = ApiResultObligation.ObligationData({
+            endpoint: weatherQuery.endpoint,
+            method: "GET",
+            statusCode: 200,
+            headers: "Content-Type: application/json",
+            body: '{"temperature": "72", "unit": "fahrenheit"}',
+            timestamp: block.timestamp
+        });
 
-        bytes32 fulfillmentUid = apiResultObligation.doObligation(
-            resultData,
-            escrowUid
-        );
+        bytes32 fulfillmentUid = apiResultObligation.doObligation(resultData, escrowUid);
 
         // Request arbitration
         trustedOracleArbiter.requestArbitration(fulfillmentUid, charlie, innerDemand);
         vm.stopPrank();
 
         // Verify structured data was stored correctly
-        ApiResultObligation.ObligationData
-            memory storedResult = apiResultObligation.getObligationData(
-                fulfillmentUid
-            );
+        ApiResultObligation.ObligationData memory storedResult = apiResultObligation.getObligationData(fulfillmentUid);
 
-        assertEq(
-            storedResult.endpoint,
-            weatherQuery.endpoint,
-            "Endpoint should match"
-        );
+        assertEq(storedResult.endpoint, weatherQuery.endpoint, "Endpoint should match");
         assertEq(storedResult.statusCode, 200, "Status code should be 200");
         assertTrue(storedResult.timestamp > 0, "Timestamp should be set");
 
@@ -189,12 +169,8 @@ contract ApiCallExample2Test is Test {
     function test_ConvenienceMethodsPattern() public {
         // Create escrow
         vm.startPrank(alice);
-        bytes memory demand = abi.encode(
-            TrustedOracleArbiter.DemandData({
-                oracle: charlie,
-                data: abi.encode(weatherQuery)
-            })
-        );
+        bytes memory demand =
+            abi.encode(TrustedOracleArbiter.DemandData({oracle: charlie, data: abi.encode(weatherQuery)}));
 
         paymentToken.approve(address(erc20EscrowObligation), PAYMENT_AMOUNT);
         bytes32 escrowUid = erc20EscrowObligation.doObligation(
@@ -210,23 +186,15 @@ contract ApiCallExample2Test is Test {
 
         // Bob uses simplified submission (defaults to GET, 200 status)
         vm.prank(bob);
-        bytes32 fulfillmentUid = apiResultObligation.doSimpleObligation(
-            weatherQuery.endpoint,
-            '{"temperature": "72"}',
-            escrowUid
-        );
+        bytes32 fulfillmentUid =
+            apiResultObligation.doSimpleObligation(weatherQuery.endpoint, '{"temperature": "72"}', escrowUid);
 
         // Verify defaults were applied correctly
-        ApiResultObligation.ObligationData memory result = apiResultObligation
-            .getObligationData(fulfillmentUid);
+        ApiResultObligation.ObligationData memory result = apiResultObligation.getObligationData(fulfillmentUid);
 
         assertEq(result.method, "GET", "Should default to GET");
         assertEq(result.statusCode, 200, "Should default to 200");
-        assertEq(
-            result.headers,
-            "Content-Type: application/json",
-            "Should have default headers"
-        );
+        assertEq(result.headers, "Content-Type: application/json", "Should have default headers");
     }
 
     /**
@@ -237,12 +205,8 @@ contract ApiCallExample2Test is Test {
     function test_SpecializedValidationHelpers() public {
         // Setup escrow and fulfillment
         vm.startPrank(alice);
-        bytes memory demand = abi.encode(
-            TrustedOracleArbiter.DemandData({
-                oracle: charlie,
-                data: abi.encode(weatherQuery)
-            })
-        );
+        bytes memory demand =
+            abi.encode(TrustedOracleArbiter.DemandData({oracle: charlie, data: abi.encode(weatherQuery)}));
 
         paymentToken.approve(address(erc20EscrowObligation), PAYMENT_AMOUNT);
         bytes32 escrowUid = erc20EscrowObligation.doObligation(
@@ -271,29 +235,15 @@ contract ApiCallExample2Test is Test {
         );
 
         // Test specialized helper functions
-        assertTrue(
-            apiResultObligation.isSuccessfulCall(fulfillmentUid),
-            "Should identify successful status code"
-        );
+        assertTrue(apiResultObligation.isSuccessfulCall(fulfillmentUid), "Should identify successful status code");
 
-        string memory body = apiResultObligation.getResponseBody(
-            fulfillmentUid
-        );
+        string memory body = apiResultObligation.getResponseBody(fulfillmentUid);
         assertEq(body, '{"temperature": "72"}', "Should retrieve body");
 
-        assertTrue(
-            apiResultObligation.matchesEndpoint(
-                fulfillmentUid,
-                weatherQuery.endpoint
-            ),
-            "Should match endpoint"
-        );
+        assertTrue(apiResultObligation.matchesEndpoint(fulfillmentUid, weatherQuery.endpoint), "Should match endpoint");
 
         assertFalse(
-            apiResultObligation.matchesEndpoint(
-                fulfillmentUid,
-                "https://different.com"
-            ),
+            apiResultObligation.matchesEndpoint(fulfillmentUid, "https://different.com"),
             "Should not match different endpoint"
         );
     }
@@ -305,12 +255,8 @@ contract ApiCallExample2Test is Test {
     function test_StructuredValidationFailure() public {
         // Create escrow
         vm.startPrank(alice);
-        bytes memory demand = abi.encode(
-            TrustedOracleArbiter.DemandData({
-                oracle: charlie,
-                data: abi.encode(weatherQuery)
-            })
-        );
+        bytes memory demand =
+            abi.encode(TrustedOracleArbiter.DemandData({oracle: charlie, data: abi.encode(weatherQuery)}));
 
         paymentToken.approve(address(erc20EscrowObligation), PAYMENT_AMOUNT);
         bytes32 escrowUid = erc20EscrowObligation.doObligation(
@@ -339,10 +285,7 @@ contract ApiCallExample2Test is Test {
         );
 
         // Oracle can check the structured status code
-        assertFalse(
-            apiResultObligation.isSuccessfulCall(fulfillmentUid),
-            "Should identify error status"
-        );
+        assertFalse(apiResultObligation.isSuccessfulCall(fulfillmentUid), "Should identify error status");
 
         // Oracle rejects based on error status
         vm.prank(charlie);

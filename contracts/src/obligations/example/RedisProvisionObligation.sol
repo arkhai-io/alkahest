@@ -2,7 +2,13 @@
 pragma solidity ^0.8.26;
 
 import {Attestation} from "@eas/Common.sol";
-import {IEAS, AttestationRequest, AttestationRequestData, RevocationRequest, RevocationRequestData} from "@eas/IEAS.sol";
+import {
+    IEAS,
+    AttestationRequest,
+    AttestationRequestData,
+    RevocationRequest,
+    RevocationRequestData
+} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {BaseObligation} from "../../BaseObligation.sol";
 import {IArbiter} from "../../IArbiter.sol";
@@ -41,10 +47,7 @@ contract RedisProvisionObligation is BaseObligation, IArbiter {
 
     error UnauthorizedCall();
 
-    constructor(
-        IEAS _eas,
-        ISchemaRegistry _schemaRegistry
-    )
+    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry)
         BaseObligation(
             _eas,
             _schemaRegistry,
@@ -53,30 +56,14 @@ contract RedisProvisionObligation is BaseObligation, IArbiter {
         )
     {}
 
-    function doObligation(
-        ObligationData calldata data,
-        uint64 expirationTime
-    ) public returns (bytes32) {
+    function doObligation(ObligationData calldata data, uint64 expirationTime) public returns (bytes32) {
         bytes memory encodedData = abi.encode(data);
-        return
-            _doObligationForRaw(
-                encodedData,
-                expirationTime,
-
-                msg.sender,
-                bytes32(0)
-            );
+        return _doObligationForRaw(encodedData, expirationTime, msg.sender, bytes32(0));
     }
 
-    function reviseStatement(
-        bytes32 obligationUID,
-        ChangeData calldata changeData
-    ) public returns (bytes32) {
+    function reviseStatement(bytes32 obligationUID, ChangeData calldata changeData) public returns (bytes32) {
         Attestation memory obligation = _getAttestation(obligationUID);
-        ObligationData memory obligationData = abi.decode(
-            obligation.data,
-            (ObligationData)
-        );
+        ObligationData memory obligationData = abi.decode(obligation.data, (ObligationData));
 
         if (obligation.recipient != msg.sender) revert UnauthorizedCall();
 
@@ -94,42 +81,30 @@ contract RedisProvisionObligation is BaseObligation, IArbiter {
         }
 
         eas.revoke(
-            RevocationRequest({
-                schema: ATTESTATION_SCHEMA,
-                data: RevocationRequestData({uid: obligationUID, value: 0})
-            })
+            RevocationRequest({schema: ATTESTATION_SCHEMA, data: RevocationRequestData({uid: obligationUID, value: 0})})
         );
 
-        return
-            _attest(
-                abi.encode(obligationData),
-                msg.sender,
-                obligation.expirationTime,
-                obligationUID
-            );
+        return _attest(abi.encode(obligationData), msg.sender, obligation.expirationTime, obligationUID);
     }
 
     function checkObligation(
         Attestation memory obligation,
         bytes memory demand,
         bytes32 /* fulfilling */
-    ) public view override returns (bool) {
+    )
+        public
+        view
+        override
+        returns (bool)
+    {
         if (obligation.schema != ATTESTATION_SCHEMA) return false;
 
         DemandData memory demandData = abi.decode(demand, (DemandData));
-        ObligationData memory obligationData = abi.decode(
-            obligation.data,
-            (ObligationData)
-        );
+        ObligationData memory obligationData = abi.decode(obligation.data, (ObligationData));
 
-        return
-            demandData.replaces == obligation.refUID &&
-            demandData.expiration <= obligation.expirationTime &&
-            demandData.user == obligationData.user &&
-            demandData.capacity <= obligationData.capacity &&
-            demandData.egress <= obligationData.egress &&
-            demandData.cpus <= obligationData.cpus &&
-            keccak256(bytes(demandData.serverName)) ==
-            keccak256(bytes(obligationData.serverName));
+        return demandData.replaces == obligation.refUID && demandData.expiration <= obligation.expirationTime
+            && demandData.user == obligationData.user && demandData.capacity <= obligationData.capacity
+            && demandData.egress <= obligationData.egress && demandData.cpus <= obligationData.cpus
+            && keccak256(bytes(demandData.serverName)) == keccak256(bytes(obligationData.serverName));
     }
 }

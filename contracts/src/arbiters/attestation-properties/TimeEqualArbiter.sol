@@ -18,16 +18,19 @@ contract TimeEqualArbiter is IArbiter {
         Attestation memory obligation,
         bytes memory demand,
         bytes32 /*fulfilling*/
-    ) public pure override returns (bool) {
+    )
+        public
+        pure
+        override
+        returns (bool)
+    {
         DemandData memory demand_ = abi.decode(demand, (DemandData));
         if (obligation.time != demand_.time) revert TimeNotEqual();
 
         return true;
     }
 
-    function decodeDemandData(
-        bytes calldata data
-    ) public pure returns (DemandData memory) {
+    function decodeDemandData(bytes calldata data) public pure returns (DemandData memory) {
         return abi.decode(data, (DemandData));
     }
 }

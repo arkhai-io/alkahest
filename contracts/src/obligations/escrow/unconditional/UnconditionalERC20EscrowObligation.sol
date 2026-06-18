@@ -21,30 +21,22 @@ contract UnconditionalERC20EscrowObligation is BaseEscrowObligationUnconditional
         uint256 amount;
     }
 
-    error ERC20TransferFailed(
-        address token,
-        address from,
-        address to,
-        uint256 amount
-    );
+    error ERC20TransferFailed(address token, address from, address to, uint256 amount);
 
-    constructor(
-        IEAS _eas,
-        ISchemaRegistry _schemaRegistry
-    )
+    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry)
         BaseEscrowObligationUnconditional(
-            _eas,
-            _schemaRegistry,
-            "address arbiter, bytes demand, address token, uint256 amount",
-            true
+            _eas, _schemaRegistry, "address arbiter, bytes demand, address token, uint256 amount", true
         )
     {}
 
     // Extract arbiter and demand from encoded data
 
-    function extractArbiterAndDemand(
-        bytes memory data
-    ) public pure override returns (address arbiter, bytes memory demand) {
+    function extractArbiterAndDemand(bytes memory data)
+        public
+        pure
+        override
+        returns (address arbiter, bytes memory demand)
+    {
         ObligationData memory decoded = abi.decode(data, (ObligationData));
         return (decoded.arbiter, decoded.demand);
     }
@@ -56,23 +48,14 @@ contract UnconditionalERC20EscrowObligation is BaseEscrowObligationUnconditional
         // Check balance before transfer
         uint256 balanceBefore = IERC20(decoded.token).balanceOf(address(this));
 
-        bool success = IERC20(decoded.token).trySafeTransferFrom(
-            from,
-            address(this),
-            decoded.amount
-        );
+        bool success = IERC20(decoded.token).trySafeTransferFrom(from, address(this), decoded.amount);
 
         // Check balance after transfer
         uint256 balanceAfter = IERC20(decoded.token).balanceOf(address(this));
 
         // Verify the actual amount transferred
         if (!success || balanceAfter < balanceBefore + decoded.amount) {
-            revert ERC20TransferFailed(
-                decoded.token,
-                from,
-                address(this),
-                decoded.amount
-            );
+            revert ERC20TransferFailed(decoded.token, from, address(this), decoded.amount);
         }
     }
 
@@ -81,11 +64,12 @@ contract UnconditionalERC20EscrowObligation is BaseEscrowObligationUnconditional
         bytes memory escrowData,
         address to,
         bytes32 /* fulfillmentUid */
-    ) internal override returns (bytes memory) {
-        ObligationData memory decoded = abi.decode(
-            escrowData,
-            (ObligationData)
-        );
+    )
+        internal
+        override
+        returns (bytes memory)
+    {
+        ObligationData memory decoded = abi.decode(escrowData, (ObligationData));
 
         // Check balance before transfer
         uint256 balanceBefore = IERC20(decoded.token).balanceOf(to);
@@ -97,12 +81,7 @@ contract UnconditionalERC20EscrowObligation is BaseEscrowObligationUnconditional
 
         // Verify the actual amount transferred
         if (!success || balanceAfter < balanceBefore + decoded.amount) {
-            revert ERC20TransferFailed(
-                decoded.token,
-                address(this),
-                to,
-                decoded.amount
-            );
+            revert ERC20TransferFailed(decoded.token, address(this), to, decoded.amount);
         }
 
         return ""; // Token escrows don't return anything
@@ -118,70 +97,44 @@ contract UnconditionalERC20EscrowObligation is BaseEscrowObligationUnconditional
         Attestation memory obligation,
         bytes memory demand,
         bytes32 /* fulfilling */
-    ) public view override returns (bool) {
+    )
+        public
+        view
+        override
+        returns (bool)
+    {
         if (obligation.schema != ATTESTATION_SCHEMA) return false;
 
-        ObligationData memory payment = abi.decode(
-            obligation.data,
-            (ObligationData)
-        );
+        ObligationData memory payment = abi.decode(obligation.data, (ObligationData));
         ObligationData memory demandData = abi.decode(demand, (ObligationData));
 
-        return
-            payment.token == demandData.token &&
-            payment.amount >= demandData.amount &&
-            payment.arbiter == demandData.arbiter &&
-            keccak256(payment.demand) == keccak256(demandData.demand);
+        return payment.token == demandData.token && payment.amount >= demandData.amount
+            && payment.arbiter == demandData.arbiter && keccak256(payment.demand) == keccak256(demandData.demand);
     }
 
     // Typed convenience methods
-    function doObligation(
-        ObligationData calldata data,
-        uint64 expirationTime
-    ) external returns (bytes32) {
-        return
-            _doObligationForRaw(
-                abi.encode(data),
-                expirationTime,
-
-                msg.sender,
-                bytes32(0)
-            );
+    function doObligation(ObligationData calldata data, uint64 expirationTime) external returns (bytes32) {
+        return _doObligationForRaw(abi.encode(data), expirationTime, msg.sender, bytes32(0));
     }
 
-    function doObligationFor(
-        ObligationData calldata data,
-        uint64 expirationTime,
-        address recipient
-    ) external returns (bytes32) {
-        return
-            _doObligationForRaw(
-                abi.encode(data),
-                expirationTime,
-
-                recipient,
-                bytes32(0)
-            );
+    function doObligationFor(ObligationData calldata data, uint64 expirationTime, address recipient)
+        external
+        returns (bytes32)
+    {
+        return _doObligationForRaw(abi.encode(data), expirationTime, recipient, bytes32(0));
     }
 
-    function collectEscrow(
-        bytes32 escrow,
-        bytes32 fulfillment
-    ) external returns (bool) {
+    function collectEscrow(bytes32 escrow, bytes32 fulfillment) external returns (bool) {
         collectEscrowRaw(escrow, fulfillment);
         return true;
     }
 
-    function getObligationData(
-        bytes32 uid
-    ) public view returns (ObligationData memory) {
+    function getObligationData(bytes32 uid) public view returns (ObligationData memory) {
         Attestation memory attestation = _getAttestation(uid);
         return abi.decode(attestation.data, (ObligationData));
     }
 
-    function decodeObligationData(
-        bytes calldata data
-    ) public pure returns (ObligationData memory) {
+    function decodeObligationData(bytes calldata data) public pure returns (ObligationData memory) {
         return abi.decode(data, (ObligationData));
     }
 }

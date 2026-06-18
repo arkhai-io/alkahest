@@ -34,16 +34,8 @@ contract VoteEscrowObligationTest is Test {
 
     // Events to test
     event EscrowMade(bytes32 indexed escrow, address indexed buyer);
-    event EscrowCollected(
-        bytes32 indexed escrow,
-        bytes32 indexed fulfillment,
-        address indexed fulfiller
-    );
-    event VoteDelegated(
-        bytes32 indexed escrowId,
-        address indexed voter,
-        address indexed votingContract
-    );
+    event EscrowCollected(bytes32 indexed escrow, bytes32 indexed fulfillment, address indexed fulfiller);
+    event VoteDelegated(bytes32 indexed escrowId, address indexed voter, address indexed votingContract);
     event VoteCast(bytes32 indexed escrowId, uint256 proposalId, uint8 support);
     event VoteReturned(bytes32 indexed escrowId, address indexed voter);
 
@@ -83,18 +75,15 @@ contract VoteEscrowObligationTest is Test {
         vm.startPrank(alice);
 
         // Prepare escrow data
-        VoteEscrowObligation.ObligationData
-            memory obligationData = VoteEscrowObligation.ObligationData({
-                votingContract: address(votingContract),
-                proposalId: PROPOSAL_ID,
-                support: VOTE_FOR,
-                arbiter: address(trivialArbiter),
-                demand: abi.encode("Vote for proposal 42")
-            });
+        VoteEscrowObligation.ObligationData memory obligationData = VoteEscrowObligation.ObligationData({
+            votingContract: address(votingContract),
+            proposalId: PROPOSAL_ID,
+            support: VOTE_FOR,
+            arbiter: address(trivialArbiter),
+            demand: abi.encode("Vote for proposal 42")
+        });
 
-        bytes memory encodedData = voteEscrow.encodeObligationData(
-            obligationData
-        );
+        bytes memory encodedData = voteEscrow.encodeObligationData(obligationData);
 
         // Alice delegates to the escrow contract before creating escrow
         votingContract.delegate(address(voteEscrow));
@@ -104,22 +93,12 @@ contract VoteEscrowObligationTest is Test {
         assertNotEq(escrowUid, bytes32(0), "Escrow UID should not be zero");
 
         // Verify delegation happened
-        assertEq(
-            votingContract.delegates(alice),
-            address(voteEscrow),
-            "Alice should have delegated to escrow contract"
-        );
+        assertEq(votingContract.delegates(alice), address(voteEscrow), "Alice should have delegated to escrow contract");
 
         // Verify alice has active escrow
-        (bool hasEscrow, bytes32 activeEscrowId) = voteEscrow.hasActiveEscrow(
-            alice
-        );
+        (bool hasEscrow, bytes32 activeEscrowId) = voteEscrow.hasActiveEscrow(alice);
         assertTrue(hasEscrow, "Alice should have active escrow");
-        assertNotEq(
-            activeEscrowId,
-            bytes32(0),
-            "Active escrow ID should not be zero"
-        );
+        assertNotEq(activeEscrowId, bytes32(0), "Active escrow ID should not be zero");
 
         vm.stopPrank();
 
@@ -129,27 +108,16 @@ contract VoteEscrowObligationTest is Test {
         // Create fulfillment attestation via StringObligation
         bytes32 fulfillmentUid = stringObligation.doObligation(
             StringObligation.ObligationData({item: "Vote for proposal 42", schema: bytes32(0)}),
-            escrowUid  // Reference the escrow for default pattern
+            escrowUid // Reference the escrow for default pattern
         );
-        assertNotEq(
-            fulfillmentUid,
-            bytes32(0),
-            "Fulfillment UID should not be zero"
-        );
+        assertNotEq(fulfillmentUid, bytes32(0), "Fulfillment UID should not be zero");
 
         // Step 3: Bob collects the escrow using the fulfillment
-        bytes memory result = voteEscrow.collectEscrowRaw(
-            escrowUid,
-            fulfillmentUid
-        );
+        bytes memory result = voteEscrow.collectEscrowRaw(escrowUid, fulfillmentUid);
 
         // Decode the result to verify vote was cast
-        (
-            uint256 proposalId,
-            uint8 support,
-            address fulfiller,
-            address voter
-        ) = abi.decode(result, (uint256, uint8, address, address));
+        (uint256 proposalId, uint8 support, address fulfiller, address voter) =
+            abi.decode(result, (uint256, uint8, address, address));
 
         assertEq(proposalId, PROPOSAL_ID, "Proposal ID should match");
         assertEq(support, VOTE_FOR, "Vote should be FOR");
@@ -157,14 +125,10 @@ contract VoteEscrowObligationTest is Test {
         assertEq(voter, alice, "Voter should be Alice");
 
         // Verify vote was actually cast
-        assertTrue(
-            votingContract.hasVoted(PROPOSAL_ID, address(voteEscrow)),
-            "VoteEscrow contract should have voted"
-        );
+        assertTrue(votingContract.hasVoted(PROPOSAL_ID, address(voteEscrow)), "VoteEscrow contract should have voted");
 
         // Check vote counts
-        (uint256 against, uint256 for_, uint256 abstain) = votingContract
-            .getProposalVotes(PROPOSAL_ID);
+        (uint256 against, uint256 for_, uint256 abstain) = votingContract.getProposalVotes(PROPOSAL_ID);
         assertEq(for_, 100, "For votes should be 100 (Alice's voting power)");
         assertEq(against, 0, "Against votes should be 0");
         assertEq(abstain, 0, "Abstain votes should be 0");
@@ -172,7 +136,7 @@ contract VoteEscrowObligationTest is Test {
         vm.stopPrank();
 
         // Step 4: Verify alice no longer has active escrow
-        (hasEscrow, ) = voteEscrow.hasActiveEscrow(alice);
+        (hasEscrow,) = voteEscrow.hasActiveEscrow(alice);
         assertFalse(hasEscrow, "Alice should no longer have active escrow");
     }
 
@@ -182,33 +146,23 @@ contract VoteEscrowObligationTest is Test {
         // Create escrow with 1 hour expiration
         uint64 expirationTime = uint64(block.timestamp + 1 hours);
 
-        VoteEscrowObligation.ObligationData
-            memory obligationData = VoteEscrowObligation.ObligationData({
-                votingContract: address(votingContract),
-                proposalId: PROPOSAL_ID,
-                support: VOTE_AGAINST,
-                arbiter: address(trivialArbiter),
-                demand: abi.encode("Vote against proposal")
-            });
+        VoteEscrowObligation.ObligationData memory obligationData = VoteEscrowObligation.ObligationData({
+            votingContract: address(votingContract),
+            proposalId: PROPOSAL_ID,
+            support: VOTE_AGAINST,
+            arbiter: address(trivialArbiter),
+            demand: abi.encode("Vote against proposal")
+        });
 
-        bytes memory encodedData = voteEscrow.encodeObligationData(
-            obligationData
-        );
+        bytes memory encodedData = voteEscrow.encodeObligationData(obligationData);
 
         // Delegate and create escrow
         votingContract.delegate(address(voteEscrow));
-        bytes32 escrowUid = voteEscrow.doObligation(
-            encodedData,
-            expirationTime
-        );
+        bytes32 escrowUid = voteEscrow.doObligation(encodedData, expirationTime);
 
         // Verify escrow created
         Attestation memory attestation = eas.getAttestation(escrowUid);
-        assertEq(
-            attestation.expirationTime,
-            expirationTime,
-            "Expiration should be set"
-        );
+        assertEq(attestation.expirationTime, expirationTime, "Expiration should be set");
 
         vm.stopPrank();
 
@@ -223,26 +177,17 @@ contract VoteEscrowObligationTest is Test {
         // After reclaim, alice must manually re-delegate (contract can't do it automatically)
         // Verify she still delegates to the escrow contract
         assertEq(
-            votingContract.delegates(alice),
-            address(voteEscrow),
-            "Alice should still delegate to escrow after reclaim"
+            votingContract.delegates(alice), address(voteEscrow), "Alice should still delegate to escrow after reclaim"
         );
 
         // Alice manually delegates back to herself
         votingContract.delegate(alice);
 
         // Now verify delegation returned to alice (self-delegation)
-        assertEq(
-            votingContract.delegates(alice),
-            alice,
-            "Alice should have self-delegation after manual re-delegation"
-        );
+        assertEq(votingContract.delegates(alice), alice, "Alice should have self-delegation after manual re-delegation");
 
         // Verify vote was never cast
-        assertFalse(
-            votingContract.hasVoted(PROPOSAL_ID, address(voteEscrow)),
-            "Vote should not have been cast"
-        );
+        assertFalse(votingContract.hasVoted(PROPOSAL_ID, address(voteEscrow)), "Vote should not have been cast");
 
         vm.stopPrank();
     }
@@ -250,18 +195,15 @@ contract VoteEscrowObligationTest is Test {
     function testCannotCreateMultipleActiveEscrows() public {
         vm.startPrank(alice);
 
-        VoteEscrowObligation.ObligationData
-            memory obligationData = VoteEscrowObligation.ObligationData({
-                votingContract: address(votingContract),
-                proposalId: PROPOSAL_ID,
-                support: VOTE_FOR,
-                arbiter: address(trivialArbiter),
-                demand: abi.encode("First escrow")
-            });
+        VoteEscrowObligation.ObligationData memory obligationData = VoteEscrowObligation.ObligationData({
+            votingContract: address(votingContract),
+            proposalId: PROPOSAL_ID,
+            support: VOTE_FOR,
+            arbiter: address(trivialArbiter),
+            demand: abi.encode("First escrow")
+        });
 
-        bytes memory encodedData = voteEscrow.encodeObligationData(
-            obligationData
-        );
+        bytes memory encodedData = voteEscrow.encodeObligationData(obligationData);
 
         // Create first escrow
         votingContract.delegate(address(voteEscrow));
@@ -276,11 +218,7 @@ contract VoteEscrowObligationTest is Test {
         encodedData = voteEscrow.encodeObligationData(obligationData);
 
         vm.expectRevert(
-            abi.encodeWithSelector(
-                VoteEscrowObligation.VoterHasActiveEscrow.selector,
-                alice,
-                activeEscrowId
-            )
+            abi.encodeWithSelector(VoteEscrowObligation.VoterHasActiveEscrow.selector, alice, activeEscrowId)
         );
         voteEscrow.doObligation(encodedData, 0);
 
@@ -291,40 +229,26 @@ contract VoteEscrowObligationTest is Test {
         // Alice delegates to Bob first (but this won't be tracked)
         vm.startPrank(alice);
         votingContract.delegate(bob);
-        assertEq(
-            votingContract.delegates(alice),
-            bob,
-            "Alice should delegate to Bob"
-        );
+        assertEq(votingContract.delegates(alice), bob, "Alice should delegate to Bob");
 
         // Create vote escrow
-        VoteEscrowObligation.ObligationData
-            memory obligationData = VoteEscrowObligation.ObligationData({
-                votingContract: address(votingContract),
-                proposalId: PROPOSAL_ID,
-                support: VOTE_ABSTAIN,
-                arbiter: address(trivialArbiter),
-                demand: abi.encode("Abstain vote")
-            });
+        VoteEscrowObligation.ObligationData memory obligationData = VoteEscrowObligation.ObligationData({
+            votingContract: address(votingContract),
+            proposalId: PROPOSAL_ID,
+            support: VOTE_ABSTAIN,
+            arbiter: address(trivialArbiter),
+            demand: abi.encode("Abstain vote")
+        });
 
-        bytes memory encodedData = voteEscrow.encodeObligationData(
-            obligationData
-        );
+        bytes memory encodedData = voteEscrow.encodeObligationData(obligationData);
 
         // Delegate to escrow before creating escrow
         votingContract.delegate(address(voteEscrow));
 
         // This will store alice as previous delegate (since we can't track Bob)
-        bytes32 escrowUid = voteEscrow.doObligation(
-            encodedData,
-            uint64(block.timestamp + 1 hours)
-        );
+        bytes32 escrowUid = voteEscrow.doObligation(encodedData, uint64(block.timestamp + 1 hours));
 
-        assertEq(
-            votingContract.delegates(alice),
-            address(voteEscrow),
-            "Should delegate to escrow"
-        );
+        assertEq(votingContract.delegates(alice), address(voteEscrow), "Should delegate to escrow");
 
         vm.stopPrank();
 
@@ -336,20 +260,14 @@ contract VoteEscrowObligationTest is Test {
 
         // After reclaim, alice still delegates to escrow (contract can't change it)
         assertEq(
-            votingContract.delegates(alice),
-            address(voteEscrow),
-            "Alice should still delegate to escrow after reclaim"
+            votingContract.delegates(alice), address(voteEscrow), "Alice should still delegate to escrow after reclaim"
         );
 
         // Alice must manually delegate back to herself
         votingContract.delegate(alice);
 
         // Now verify delegation returned to self
-        assertEq(
-            votingContract.delegates(alice),
-            alice,
-            "Delegation should return to self after manual re-delegation"
-        );
+        assertEq(votingContract.delegates(alice), alice, "Delegation should return to self after manual re-delegation");
 
         vm.stopPrank();
     }
@@ -358,18 +276,15 @@ contract VoteEscrowObligationTest is Test {
         vm.startPrank(alice);
 
         // Create and execute escrow
-        VoteEscrowObligation.ObligationData
-            memory obligationData = VoteEscrowObligation.ObligationData({
-                votingContract: address(votingContract),
-                proposalId: PROPOSAL_ID,
-                support: VOTE_FOR,
-                arbiter: address(trivialArbiter),
-                demand: abi.encode("Test vote")
-            });
+        VoteEscrowObligation.ObligationData memory obligationData = VoteEscrowObligation.ObligationData({
+            votingContract: address(votingContract),
+            proposalId: PROPOSAL_ID,
+            support: VOTE_FOR,
+            arbiter: address(trivialArbiter),
+            demand: abi.encode("Test vote")
+        });
 
-        bytes memory encodedData = voteEscrow.encodeObligationData(
-            obligationData
-        );
+        bytes memory encodedData = voteEscrow.encodeObligationData(obligationData);
         votingContract.delegate(address(voteEscrow));
         bytes32 escrowUid = voteEscrow.doObligation(encodedData, 0);
 
@@ -382,7 +297,7 @@ contract VoteEscrowObligationTest is Test {
         vm.startPrank(bob);
         bytes32 fulfillmentUid = stringObligation.doObligation(
             StringObligation.ObligationData({item: "Test vote", schema: bytes32(0)}),
-            escrowUid  // Reference the escrow for default pattern
+            escrowUid // Reference the escrow for default pattern
         );
 
         // The vote cast event should include metadata about the escrow data hash
@@ -398,18 +313,15 @@ contract VoteEscrowObligationTest is Test {
         vm.startPrank(alice);
 
         // Setup escrow
-        VoteEscrowObligation.ObligationData
-            memory obligationData = VoteEscrowObligation.ObligationData({
-                votingContract: address(votingContract),
-                proposalId: PROPOSAL_ID,
-                support: VOTE_FOR,
-                arbiter: address(trivialArbiter),
-                demand: abi.encode("Vote once")
-            });
+        VoteEscrowObligation.ObligationData memory obligationData = VoteEscrowObligation.ObligationData({
+            votingContract: address(votingContract),
+            proposalId: PROPOSAL_ID,
+            support: VOTE_FOR,
+            arbiter: address(trivialArbiter),
+            demand: abi.encode("Vote once")
+        });
 
-        bytes memory encodedData = voteEscrow.encodeObligationData(
-            obligationData
-        );
+        bytes memory encodedData = voteEscrow.encodeObligationData(obligationData);
         votingContract.delegate(address(voteEscrow));
         bytes32 escrowUid = voteEscrow.doObligation(encodedData, 0);
 
@@ -419,7 +331,7 @@ contract VoteEscrowObligationTest is Test {
         vm.startPrank(bob);
         bytes32 fulfillmentUid = stringObligation.doObligation(
             StringObligation.ObligationData({item: "Vote once", schema: bytes32(0)}),
-            escrowUid  // Reference the escrow for default pattern
+            escrowUid // Reference the escrow for default pattern
         );
         voteEscrow.collectEscrowRaw(escrowUid, fulfillmentUid);
         vm.stopPrank();
@@ -434,62 +346,45 @@ contract VoteEscrowObligationTest is Test {
         vm.startPrank(bob);
         bytes32 secondFulfillmentUid = stringObligation.doObligation(
             StringObligation.ObligationData({item: "Vote once", schema: bytes32(0)}),
-            secondEscrowUid  // Reference the second escrow for default pattern
+            secondEscrowUid // Reference the second escrow for default pattern
         );
 
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                VoteEscrowObligation.VoteAlreadyCast.selector,
-                PROPOSAL_ID
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(VoteEscrowObligation.VoteAlreadyCast.selector, PROPOSAL_ID));
         voteEscrow.collectEscrowRaw(secondEscrowUid, secondFulfillmentUid);
 
         vm.stopPrank();
     }
 
     function testEncodeDecodeObligationData() public {
-        VoteEscrowObligation.ObligationData
-            memory original = VoteEscrowObligation.ObligationData({
-                votingContract: address(votingContract),
-                proposalId: 999,
-                support: VOTE_ABSTAIN,
-                arbiter: address(trivialArbiter),
-                demand: abi.encode("Complex demand", 123, true)
-            });
+        VoteEscrowObligation.ObligationData memory original = VoteEscrowObligation.ObligationData({
+            votingContract: address(votingContract),
+            proposalId: 999,
+            support: VOTE_ABSTAIN,
+            arbiter: address(trivialArbiter),
+            demand: abi.encode("Complex demand", 123, true)
+        });
 
         bytes memory encoded = voteEscrow.encodeObligationData(original);
-        VoteEscrowObligation.ObligationData memory decoded = voteEscrow
-            .decodeObligationData(encoded);
+        VoteEscrowObligation.ObligationData memory decoded = voteEscrow.decodeObligationData(encoded);
 
-        assertEq(
-            decoded.votingContract,
-            original.votingContract,
-            "Voting contract should match"
-        );
-        assertEq(
-            decoded.proposalId,
-            original.proposalId,
-            "Proposal ID should match"
-        );
+        assertEq(decoded.votingContract, original.votingContract, "Voting contract should match");
+        assertEq(decoded.proposalId, original.proposalId, "Proposal ID should match");
         assertEq(decoded.support, original.support, "Support should match");
         assertEq(decoded.arbiter, original.arbiter, "Arbiter should match");
         assertEq(decoded.demand, original.demand, "Demand should match");
     }
 
     function testExtractArbiterAndDemand() public {
-        VoteEscrowObligation.ObligationData
-            memory obligationData = VoteEscrowObligation.ObligationData({
-                votingContract: address(votingContract),
-                proposalId: PROPOSAL_ID,
-                support: VOTE_FOR,
-                arbiter: address(trivialArbiter),
-                demand: abi.encode("Extract test")
-            });
+        VoteEscrowObligation.ObligationData memory obligationData = VoteEscrowObligation.ObligationData({
+            votingContract: address(votingContract),
+            proposalId: PROPOSAL_ID,
+            support: VOTE_FOR,
+            arbiter: address(trivialArbiter),
+            demand: abi.encode("Extract test")
+        });
 
         bytes memory encoded = voteEscrow.encodeObligationData(obligationData);
-        (address arbiter, bytes memory demand) = voteEscrow
-            .extractArbiterAndDemand(encoded);
+        (address arbiter, bytes memory demand) = voteEscrow.extractArbiterAndDemand(encoded);
 
         assertEq(arbiter, address(trivialArbiter), "Arbiter should match");
         assertEq(demand, abi.encode("Extract test"), "Demand should match");
@@ -499,18 +394,15 @@ contract VoteEscrowObligationTest is Test {
         vm.startPrank(alice);
 
         // Create escrow
-        VoteEscrowObligation.ObligationData
-            memory obligationData = VoteEscrowObligation.ObligationData({
-                votingContract: address(votingContract),
-                proposalId: PROPOSAL_ID,
-                support: VOTE_FOR,
-                arbiter: address(trivialArbiter),
-                demand: abi.encode("Details test")
-            });
+        VoteEscrowObligation.ObligationData memory obligationData = VoteEscrowObligation.ObligationData({
+            votingContract: address(votingContract),
+            proposalId: PROPOSAL_ID,
+            support: VOTE_FOR,
+            arbiter: address(trivialArbiter),
+            demand: abi.encode("Details test")
+        });
 
-        bytes memory encodedData = voteEscrow.encodeObligationData(
-            obligationData
-        );
+        bytes memory encodedData = voteEscrow.encodeObligationData(obligationData);
         votingContract.delegate(address(voteEscrow));
         voteEscrow.doObligation(encodedData, 0);
 
@@ -518,31 +410,16 @@ contract VoteEscrowObligationTest is Test {
         (, bytes32 escrowId) = voteEscrow.hasActiveEscrow(alice);
 
         // Get escrow details
-        (
-            address voter,
-            VoteEscrowObligation.ObligationData memory data,
-            address prevDelegate
-        ) = voteEscrow.getEscrowDetails(escrowId);
+        (address voter, VoteEscrowObligation.ObligationData memory data, address prevDelegate) =
+            voteEscrow.getEscrowDetails(escrowId);
 
         assertEq(voter, alice, "Voter should be Alice");
-        assertEq(
-            data.votingContract,
-            obligationData.votingContract,
-            "Voting contract should match"
-        );
-        assertEq(
-            data.proposalId,
-            obligationData.proposalId,
-            "Proposal ID should match"
-        );
+        assertEq(data.votingContract, obligationData.votingContract, "Voting contract should match");
+        assertEq(data.proposalId, obligationData.proposalId, "Proposal ID should match");
         assertEq(data.support, obligationData.support, "Support should match");
         assertEq(data.arbiter, obligationData.arbiter, "Arbiter should match");
         assertEq(data.demand, obligationData.demand, "Demand should match");
-        assertEq(
-            prevDelegate,
-            alice,
-            "Previous delegate should be Alice (self)"
-        );
+        assertEq(prevDelegate, alice, "Previous delegate should be Alice (self)");
 
         vm.stopPrank();
     }

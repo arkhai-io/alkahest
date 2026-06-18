@@ -12,9 +12,7 @@ import {ERC8004Deployer} from "@test/utils/ERC8004Deployer.sol";
 
 // Interfaces for the ERC-8004 contracts
 interface IIdentityRegistry {
-    function register(
-        string calldata agentURI
-    ) external returns (uint256 agentId);
+    function register(string calldata agentURI) external returns (uint256 agentId);
 
     function ownerOf(uint256 agentId) external view returns (address);
 
@@ -37,9 +35,7 @@ interface IValidationRegistry {
         string calldata tag
     ) external;
 
-    function getValidationStatus(
-        bytes32 requestHash
-    )
+    function getValidationStatus(bytes32 requestHash)
         external
         view
         returns (
@@ -72,15 +68,12 @@ contract ERC8004ArbiterTest is Test {
         // Deploy ERC-8004 upgradeable contracts via proxy
         ERC8004Deployer erc8004Deployer = new ERC8004Deployer();
 
-        address identityAddr = erc8004Deployer.deployUpgradeable(
-            "IdentityRegistryUpgradeable",
-            abi.encodeWithSignature("initialize()")
-        );
+        address identityAddr =
+            erc8004Deployer.deployUpgradeable("IdentityRegistryUpgradeable", abi.encodeWithSignature("initialize()"));
         identityRegistry = IIdentityRegistry(identityAddr);
 
         address validationAddr = erc8004Deployer.deployUpgradeable(
-            "ValidationRegistryUpgradeable",
-            abi.encodeWithSignature("initialize(address)", identityAddr)
+            "ValidationRegistryUpgradeable", abi.encodeWithSignature("initialize(address)", identityAddr)
         );
         validationRegistry = IValidationRegistry(validationAddr);
 
@@ -89,26 +82,14 @@ contract ERC8004ArbiterTest is Test {
         agentId = identityRegistry.register("ipfs://test-agent");
 
         // Compute requestHash for tests to use
-        requestHash = keccak256(
-            abi.encodePacked(
-                validator,
-                agentId,
-                "ipfs://validation-request",
-                block.timestamp,
-                agentOwner
-            )
-        );
+        requestHash =
+            keccak256(abi.encodePacked(validator, agentId, "ipfs://validation-request", block.timestamp, agentOwner));
     }
 
     function testCheckObligationSuccess() public {
         // Create validation request
         vm.prank(agentOwner);
-        validationRegistry.validationRequest(
-            validator,
-            agentId,
-            "ipfs://validation-request",
-            requestHash
-        );
+        validationRegistry.validationRequest(validator, agentId, "ipfs://validation-request", requestHash);
 
         // Validator provides response that meets minimum requirement
         vm.prank(validator);
@@ -134,12 +115,9 @@ contract ERC8004ArbiterTest is Test {
             data: bytes("")
         });
 
-        ERC8004Arbiter.DemandData memory demandData = ERC8004Arbiter
-            .DemandData({
-                validationRegistry: address(validationRegistry),
-                validatorAddress: validator,
-                minResponse: 50
-            });
+        ERC8004Arbiter.DemandData memory demandData = ERC8004Arbiter.DemandData({
+            validationRegistry: address(validationRegistry), validatorAddress: validator, minResponse: 50
+        });
         bytes memory demand = abi.encode(demandData);
 
         // Should return true since response (75) >= minResponse (50) and refUID matches
@@ -149,12 +127,7 @@ contract ERC8004ArbiterTest is Test {
     function testCheckObligationWrongRefUID() public {
         // Create validation request
         vm.prank(agentOwner);
-        validationRegistry.validationRequest(
-            validator,
-            agentId,
-            "ipfs://validation-request",
-            requestHash
-        );
+        validationRegistry.validationRequest(validator, agentId, "ipfs://validation-request", requestHash);
 
         // Validator provides response that meets minimum requirement
         vm.prank(validator);
@@ -180,12 +153,9 @@ contract ERC8004ArbiterTest is Test {
             data: bytes("")
         });
 
-        ERC8004Arbiter.DemandData memory demandData = ERC8004Arbiter
-            .DemandData({
-                validationRegistry: address(validationRegistry),
-                validatorAddress: validator,
-                minResponse: 50
-            });
+        ERC8004Arbiter.DemandData memory demandData = ERC8004Arbiter.DemandData({
+            validationRegistry: address(validationRegistry), validatorAddress: validator, minResponse: 50
+        });
         bytes memory demand = abi.encode(demandData);
 
         bytes32 expectedRefUID = bytes32(uint256(99999));
@@ -198,12 +168,7 @@ contract ERC8004ArbiterTest is Test {
     function testCheckObligationInsufficientResponse() public {
         // Create validation request
         vm.prank(agentOwner);
-        validationRegistry.validationRequest(
-            validator,
-            agentId,
-            "ipfs://validation-request",
-            requestHash
-        );
+        validationRegistry.validationRequest(validator, agentId, "ipfs://validation-request", requestHash);
 
         // Validator provides response below minimum requirement
         vm.prank(validator);
@@ -229,12 +194,9 @@ contract ERC8004ArbiterTest is Test {
             data: bytes("")
         });
 
-        ERC8004Arbiter.DemandData memory demandData = ERC8004Arbiter
-            .DemandData({
-                validationRegistry: address(validationRegistry),
-                validatorAddress: validator,
-                minResponse: 50
-            });
+        ERC8004Arbiter.DemandData memory demandData = ERC8004Arbiter.DemandData({
+            validationRegistry: address(validationRegistry), validatorAddress: validator, minResponse: 50
+        });
         bytes memory demand = abi.encode(demandData);
 
         // Should revert since response (30) < minResponse (50)
@@ -245,22 +207,11 @@ contract ERC8004ArbiterTest is Test {
     function testCheckObligationWrongValidator() public {
         // Create validation request
         vm.prank(agentOwner);
-        validationRegistry.validationRequest(
-            validator,
-            agentId,
-            "ipfs://validation-request",
-            requestHash
-        );
+        validationRegistry.validationRequest(validator, agentId, "ipfs://validation-request", requestHash);
 
         // Validator provides response
         vm.prank(validator);
-        validationRegistry.validationResponse(
-            requestHash,
-            75,
-            "",
-            bytes32(0),
-            ""
-        );
+        validationRegistry.validationResponse(requestHash, 75, "", bytes32(0), "");
 
         bytes32 escrowUid = bytes32(uint256(54321));
         Attestation memory attestation = Attestation({
@@ -278,12 +229,9 @@ contract ERC8004ArbiterTest is Test {
 
         // Create demand with different validator address
         address wrongValidator = address(0x999);
-        ERC8004Arbiter.DemandData memory demandData = ERC8004Arbiter
-            .DemandData({
-                validationRegistry: address(validationRegistry),
-                validatorAddress: wrongValidator,
-                minResponse: 50
-            });
+        ERC8004Arbiter.DemandData memory demandData = ERC8004Arbiter.DemandData({
+            validationRegistry: address(validationRegistry), validatorAddress: wrongValidator, minResponse: 50
+        });
         bytes memory demand = abi.encode(demandData);
 
         // Should revert since validator addresses don't match
@@ -295,33 +243,19 @@ contract ERC8004ArbiterTest is Test {
         // Deploy a second set of ERC-8004 contracts
         ERC8004Deployer erc8004Deployer = new ERC8004Deployer();
 
-        address identityAddr2 = erc8004Deployer.deployUpgradeable(
-            "IdentityRegistryUpgradeable",
-            abi.encodeWithSignature("initialize()")
-        );
+        address identityAddr2 =
+            erc8004Deployer.deployUpgradeable("IdentityRegistryUpgradeable", abi.encodeWithSignature("initialize()"));
         address wrongRegistry = erc8004Deployer.deployUpgradeable(
-            "ValidationRegistryUpgradeable",
-            abi.encodeWithSignature("initialize(address)", identityAddr2)
+            "ValidationRegistryUpgradeable", abi.encodeWithSignature("initialize(address)", identityAddr2)
         );
 
         // Create validation request in the REAL registry
         vm.prank(agentOwner);
-        validationRegistry.validationRequest(
-            validator,
-            agentId,
-            "ipfs://validation-request",
-            requestHash
-        );
+        validationRegistry.validationRequest(validator, agentId, "ipfs://validation-request", requestHash);
 
         // Validator provides response in REAL registry
         vm.prank(validator);
-        validationRegistry.validationResponse(
-            requestHash,
-            75,
-            "",
-            bytes32(0),
-            ""
-        );
+        validationRegistry.validationResponse(requestHash, 75, "", bytes32(0), "");
 
         bytes32 escrowUid = bytes32(uint256(54321));
         Attestation memory attestation = Attestation({
@@ -338,12 +272,9 @@ contract ERC8004ArbiterTest is Test {
         });
 
         // Create demand with WRONG registry address (validation doesn't exist there)
-        ERC8004Arbiter.DemandData memory demandData = ERC8004Arbiter
-            .DemandData({
-                validationRegistry: wrongRegistry,
-                validatorAddress: validator,
-                minResponse: 50
-            });
+        ERC8004Arbiter.DemandData memory demandData = ERC8004Arbiter.DemandData({
+            validationRegistry: wrongRegistry, validatorAddress: validator, minResponse: 50
+        });
         bytes memory demand = abi.encode(demandData);
 
         // Should revert since the wrong registry won't have the validation

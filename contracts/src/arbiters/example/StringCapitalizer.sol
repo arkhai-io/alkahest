@@ -30,11 +30,12 @@ contract StringCapitalizer is IArbiter {
      * @param fulfilling Optional reference UID for what this obligation is fulfilling
      * @return bool True if the obligation contains the properly capitalized version of the demand string
      */
-    function checkObligation(
-        Attestation memory obligation,
-        bytes memory demand,
-        bytes32 fulfilling
-    ) external view override returns (bool) {
+    function checkObligation(Attestation memory obligation, bytes memory demand, bytes32 fulfilling)
+        external
+        view
+        override
+        returns (bool)
+    {
         // Check basic attestation validity
 
         // Check if the obligation references what it's fulfilling (if provided)
@@ -43,10 +44,8 @@ contract StringCapitalizer is IArbiter {
         }
 
         // Decode the obligation data to get the potentially capitalized string
-        StringObligation.ObligationData memory obligationData = abi.decode(
-            obligation.data,
-            (StringObligation.ObligationData)
-        );
+        StringObligation.ObligationData memory obligationData =
+            abi.decode(obligation.data, (StringObligation.ObligationData));
 
         // Decode the demand data to get the original query string
         DemandData memory demandData = abi.decode(demand, (DemandData));
@@ -61,10 +60,7 @@ contract StringCapitalizer is IArbiter {
      * @param result The potentially capitalized string
      * @return bool True if result is the properly capitalized version of query
      */
-    function _isCapitalized(
-        string memory query,
-        string memory result
-    ) internal pure returns (bool) {
+    function _isCapitalized(string memory query, string memory result) internal pure returns (bool) {
         bytes memory queryBytes = bytes(query);
         bytes memory resultBytes = bytes(result);
 

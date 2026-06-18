@@ -43,27 +43,15 @@ contract ApiCallExample2 {
 
     // Events
     event StructuredApiQueryCreated(
-        bytes32 indexed escrowUid,
-        address indexed requester,
-        string endpoint,
-        string method,
-        address oracle
+        bytes32 indexed escrowUid, address indexed requester, string endpoint, string method, address oracle
     );
 
     event StructuredApiResultSubmitted(
-        bytes32 indexed fulfillmentUid,
-        address indexed provider,
-        string endpoint,
-        uint16 statusCode,
-        bytes32 escrowUid
+        bytes32 indexed fulfillmentUid, address indexed provider, string endpoint, uint16 statusCode, bytes32 escrowUid
     );
 
     event DetailedValidation(
-        bytes32 indexed fulfillmentUid,
-        bool endpointMatch,
-        bool statusMatch,
-        bool timeMatch,
-        bool overall
+        bytes32 indexed fulfillmentUid, bool endpointMatch, bool statusMatch, bool timeMatch, bool overall
     );
 
     constructor(
@@ -105,32 +93,19 @@ contract ApiCallExample2 {
         bytes memory innerDemand = abi.encode(query);
 
         // Create TrustedOracleArbiter demand
-        TrustedOracleArbiter.DemandData memory demandData = TrustedOracleArbiter
-            .DemandData({oracle: oracle, data: innerDemand});
+        TrustedOracleArbiter.DemandData memory demandData =
+            TrustedOracleArbiter.DemandData({oracle: oracle, data: innerDemand});
         bytes memory demand = abi.encode(demandData);
 
         // Note: Caller must approve token transfer to erc20EscrowObligation before calling
 
-        ERC20EscrowObligation.ObligationData
-            memory escrowData = ERC20EscrowObligation.ObligationData({
-                token: address(paymentToken),
-                amount: paymentAmount,
-                arbiter: address(trustedOracleArbiter),
-                demand: demand
-            });
+        ERC20EscrowObligation.ObligationData memory escrowData = ERC20EscrowObligation.ObligationData({
+            token: address(paymentToken), amount: paymentAmount, arbiter: address(trustedOracleArbiter), demand: demand
+        });
 
-        escrowUid = erc20EscrowObligation.doObligation(
-            escrowData,
-            expirationTime
-        );
+        escrowUid = erc20EscrowObligation.doObligation(escrowData, expirationTime);
 
-        emit StructuredApiQueryCreated(
-            escrowUid,
-            msg.sender,
-            query.endpoint,
-            query.method,
-            oracle
-        );
+        emit StructuredApiQueryCreated(escrowUid, msg.sender, query.endpoint, query.method, oracle);
 
         return escrowUid;
     }
@@ -153,28 +128,18 @@ contract ApiCallExample2 {
         string calldata body,
         bytes32 escrowUid
     ) external returns (bytes32 fulfillmentUid) {
-        ApiResultObligation.ObligationData
-            memory resultData = ApiResultObligation.ObligationData({
-                endpoint: endpoint,
-                method: method,
-                statusCode: statusCode,
-                headers: headers,
-                body: body,
-                timestamp: block.timestamp
-            });
+        ApiResultObligation.ObligationData memory resultData = ApiResultObligation.ObligationData({
+            endpoint: endpoint,
+            method: method,
+            statusCode: statusCode,
+            headers: headers,
+            body: body,
+            timestamp: block.timestamp
+        });
 
-        fulfillmentUid = apiResultObligation.doObligation(
-            resultData,
-            escrowUid
-        );
+        fulfillmentUid = apiResultObligation.doObligation(resultData, escrowUid);
 
-        emit StructuredApiResultSubmitted(
-            fulfillmentUid,
-            msg.sender,
-            endpoint,
-            statusCode,
-            escrowUid
-        );
+        emit StructuredApiResultSubmitted(fulfillmentUid, msg.sender, endpoint, statusCode, escrowUid);
 
         return fulfillmentUid;
     }
@@ -186,13 +151,11 @@ contract ApiCallExample2 {
      * @param escrowUid The escrow being fulfilled
      * @return fulfillmentUid The attestation UID
      */
-    function submitSimpleApiResult(
-        string calldata endpoint,
-        string calldata body,
-        bytes32 escrowUid
-    ) external returns (bytes32 fulfillmentUid) {
-        return
-            apiResultObligation.doSimpleObligation(endpoint, body, escrowUid);
+    function submitSimpleApiResult(string calldata endpoint, string calldata body, bytes32 escrowUid)
+        external
+        returns (bytes32 fulfillmentUid)
+    {
+        return apiResultObligation.doSimpleObligation(endpoint, body, escrowUid);
     }
 
     /**
@@ -201,21 +164,13 @@ contract ApiCallExample2 {
      * @param escrowUid The original escrow
      * @param performDetailedCheck Whether to perform detailed validation
      */
-    function validateStructuredResult(
-        bytes32 fulfillmentUid,
-        bytes32 escrowUid,
-        bool performDetailedCheck
-    ) external {
+    function validateStructuredResult(bytes32 fulfillmentUid, bytes32 escrowUid, bool performDetailedCheck) external {
         // Get escrow and verify oracle
         Attestation memory escrow = eas.getAttestation(escrowUid);
-        ERC20EscrowObligation.ObligationData memory escrowData = abi.decode(
-            escrow.data,
-            (ERC20EscrowObligation.ObligationData)
-        );
-        TrustedOracleArbiter.DemandData memory demandData = abi.decode(
-            escrowData.demand,
-            (TrustedOracleArbiter.DemandData)
-        );
+        ERC20EscrowObligation.ObligationData memory escrowData =
+            abi.decode(escrow.data, (ERC20EscrowObligation.ObligationData));
+        TrustedOracleArbiter.DemandData memory demandData =
+            abi.decode(escrowData.demand, (TrustedOracleArbiter.DemandData));
 
         require(msg.sender == demandData.oracle, "Only designated oracle");
 
@@ -226,29 +181,17 @@ contract ApiCallExample2 {
             ApiQuery memory query = abi.decode(demandData.data, (ApiQuery));
 
             // Get the fulfillment
-            ApiResultObligation.ObligationData
-                memory result = apiResultObligation.getObligationData(
-                    fulfillmentUid
-                );
+            ApiResultObligation.ObligationData memory result = apiResultObligation.getObligationData(fulfillmentUid);
 
             // Detailed validation
-            bool endpointMatch = keccak256(bytes(result.endpoint)) ==
-                keccak256(bytes(query.endpoint));
-            bool methodMatch = keccak256(bytes(result.method)) ==
-                keccak256(bytes(query.method));
-            bool statusMatch = query.expectedStatusCode == 0 ||
-                result.statusCode == query.expectedStatusCode;
+            bool endpointMatch = keccak256(bytes(result.endpoint)) == keccak256(bytes(query.endpoint));
+            bool methodMatch = keccak256(bytes(result.method)) == keccak256(bytes(query.method));
+            bool statusMatch = query.expectedStatusCode == 0 || result.statusCode == query.expectedStatusCode;
             bool timeMatch = result.timestamp <= escrow.time + query.timeout;
 
             isValid = endpointMatch && methodMatch && statusMatch && timeMatch;
 
-            emit DetailedValidation(
-                fulfillmentUid,
-                endpointMatch,
-                statusMatch,
-                timeMatch,
-                isValid
-            );
+            emit DetailedValidation(fulfillmentUid, endpointMatch, statusMatch, timeMatch, isValid);
         }
 
         trustedOracleArbiter.arbitrate(fulfillmentUid, demandData.data, isValid);
@@ -257,11 +200,7 @@ contract ApiCallExample2 {
     /**
      * @notice Request arbitration for a fulfillment
      */
-    function requestArbitration(
-        bytes32 fulfillmentUid,
-        address oracle,
-        bytes memory demand
-    ) external {
+    function requestArbitration(bytes32 fulfillmentUid, address oracle, bytes memory demand) external {
         trustedOracleArbiter.requestArbitration(fulfillmentUid, oracle, demand);
     }
 
@@ -277,18 +216,12 @@ contract ApiCallExample2 {
      * @param escrowUid The escrow attestation UID
      * @return query The structured API query
      */
-    function getStructuredQuery(
-        bytes32 escrowUid
-    ) external view returns (ApiQuery memory query) {
+    function getStructuredQuery(bytes32 escrowUid) external view returns (ApiQuery memory query) {
         Attestation memory escrow = eas.getAttestation(escrowUid);
-        ERC20EscrowObligation.ObligationData memory escrowData = abi.decode(
-            escrow.data,
-            (ERC20EscrowObligation.ObligationData)
-        );
-        TrustedOracleArbiter.DemandData memory demandData = abi.decode(
-            escrowData.demand,
-            (TrustedOracleArbiter.DemandData)
-        );
+        ERC20EscrowObligation.ObligationData memory escrowData =
+            abi.decode(escrow.data, (ERC20EscrowObligation.ObligationData));
+        TrustedOracleArbiter.DemandData memory demandData =
+            abi.decode(escrowData.demand, (TrustedOracleArbiter.DemandData));
         query = abi.decode(demandData.data, (ApiQuery));
     }
 
@@ -298,20 +231,13 @@ contract ApiCallExample2 {
      * @param escrowUid The escrow with the query
      * @return matches Whether the fulfillment matches the query
      */
-    function checkFulfillmentMatch(
-        bytes32 fulfillmentUid,
-        bytes32 escrowUid
-    ) external view returns (bool matches) {
+    function checkFulfillmentMatch(bytes32 fulfillmentUid, bytes32 escrowUid) external view returns (bool matches) {
         ApiQuery memory query = this.getStructuredQuery(escrowUid);
-        ApiResultObligation.ObligationData memory result = apiResultObligation
-            .getObligationData(fulfillmentUid);
+        ApiResultObligation.ObligationData memory result = apiResultObligation.getObligationData(fulfillmentUid);
 
-        return
-            keccak256(bytes(result.endpoint)) ==
-            keccak256(bytes(query.endpoint)) &&
-            keccak256(bytes(result.method)) == keccak256(bytes(query.method)) &&
-            (query.expectedStatusCode == 0 ||
-                result.statusCode == query.expectedStatusCode);
+        return keccak256(bytes(result.endpoint)) == keccak256(bytes(query.endpoint))
+            && keccak256(bytes(result.method)) == keccak256(bytes(query.method))
+            && (query.expectedStatusCode == 0 || result.statusCode == query.expectedStatusCode);
     }
 
     /**
@@ -320,33 +246,23 @@ contract ApiCallExample2 {
      * @param escrowUids Corresponding escrow UIDs
      * @param decisions Validation decisions for each
      */
-    function batchValidate(
-        bytes32[] calldata fulfillmentUids,
-        bytes32[] calldata escrowUids,
-        bool[] calldata decisions
-    ) external {
+    function batchValidate(bytes32[] calldata fulfillmentUids, bytes32[] calldata escrowUids, bool[] calldata decisions)
+        external
+    {
         require(
-            fulfillmentUids.length == escrowUids.length &&
-                fulfillmentUids.length == decisions.length,
+            fulfillmentUids.length == escrowUids.length && fulfillmentUids.length == decisions.length,
             "Array length mismatch"
         );
 
         for (uint256 i = 0; i < fulfillmentUids.length; i++) {
             // Verify oracle for each
             Attestation memory escrow = eas.getAttestation(escrowUids[i]);
-            ERC20EscrowObligation.ObligationData memory escrowData = abi.decode(
-                escrow.data,
-                (ERC20EscrowObligation.ObligationData)
-            );
-            TrustedOracleArbiter.DemandData memory demandData = abi.decode(
-                escrowData.demand,
-                (TrustedOracleArbiter.DemandData)
-            );
+            ERC20EscrowObligation.ObligationData memory escrowData =
+                abi.decode(escrow.data, (ERC20EscrowObligation.ObligationData));
+            TrustedOracleArbiter.DemandData memory demandData =
+                abi.decode(escrowData.demand, (TrustedOracleArbiter.DemandData));
 
-            require(
-                msg.sender == demandData.oracle,
-                "Unauthorized for this escrow"
-            );
+            require(msg.sender == demandData.oracle, "Unauthorized for this escrow");
 
             trustedOracleArbiter.arbitrate(fulfillmentUids[i], demandData.data, decisions[i]);
         }

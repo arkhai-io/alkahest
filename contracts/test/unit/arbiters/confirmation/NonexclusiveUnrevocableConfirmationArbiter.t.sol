@@ -6,7 +6,9 @@ import {Attestation, AttestationRequest, AttestationRequestData} from "@eas/IEAS
 import {IEAS} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {ISchemaResolver} from "@eas/resolver/ISchemaResolver.sol";
-import {NonexclusiveUnrevocableConfirmationArbiter} from "@src/arbiters/confirmation/NonexclusiveUnrevocableConfirmationArbiter.sol";
+import {
+    NonexclusiveUnrevocableConfirmationArbiter
+} from "@src/arbiters/confirmation/NonexclusiveUnrevocableConfirmationArbiter.sol";
 import {EASDeployer} from "@test/utils/EASDeployer.sol";
 
 contract NonexclusiveUnrevocableConfirmationArbiterTest is Test {
@@ -25,26 +27,24 @@ contract NonexclusiveUnrevocableConfirmationArbiterTest is Test {
         arbiter = new NonexclusiveUnrevocableConfirmationArbiter(eas);
 
         // Register a test schema
-        testSchema = schemaRegistry.register(
-            "string item, bytes32 schema",
-            ISchemaResolver(address(0)),
-            true
-        );
+        testSchema = schemaRegistry.register("string item, bytes32 schema", ISchemaResolver(address(0)), true);
     }
 
     function _createAttestation(address attester, address recipient, bytes32 refUID) internal returns (bytes32) {
         vm.prank(attester);
-        return eas.attest(AttestationRequest({
-            schema: testSchema,
-            data: AttestationRequestData({
-                recipient: recipient,
-                expirationTime: 0,
-                revocable: true,
-                refUID: refUID,
-                data: abi.encode("test"),
-                value: 0
+        return eas.attest(
+            AttestationRequest({
+                schema: testSchema,
+                data: AttestationRequestData({
+                    recipient: recipient,
+                    expirationTime: 0,
+                    revocable: true,
+                    refUID: refUID,
+                    data: abi.encode("test"),
+                    value: 0
+                })
             })
-        }));
+        );
     }
 
     function testConfirm() public {

@@ -19,22 +19,21 @@ abstract contract BaseAttester is SchemaResolver {
 
     error NotFromThisAttester();
 
-    constructor(
-        IEAS _eas,
-        ISchemaRegistry _schemaRegistry,
-        string memory schema,
-        bool revocable
-    ) SchemaResolver(_eas) {
+    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, string memory schema, bool revocable) SchemaResolver(_eas) {
         eas = _eas;
         schemaRegistry = _schemaRegistry;
-        ATTESTATION_SCHEMA =
-            schemaRegistry.registerOrReuse(schema, ISchemaResolver(address(this)), revocable);
+        ATTESTATION_SCHEMA = schemaRegistry.registerOrReuse(schema, ISchemaResolver(address(this)), revocable);
     }
 
     function onAttest(
         Attestation calldata attestation,
         uint256 /* value */
-    ) internal view override returns (bool) {
+    )
+        internal
+        view
+        override
+        returns (bool)
+    {
         // only this contract can attest
         return attestation.attester == address(this);
     }
@@ -42,7 +41,12 @@ abstract contract BaseAttester is SchemaResolver {
     function onRevoke(
         Attestation calldata attestation,
         uint256 /* value */
-    ) internal view override returns (bool) {
+    )
+        internal
+        view
+        override
+        returns (bool)
+    {
         // only this contract can revoke
         return attestation.attester == address(this);
     }
@@ -52,33 +56,29 @@ abstract contract BaseAttester is SchemaResolver {
     }
 
     // Internal helper for creating attestations
-    function _attest(
-        bytes memory data,
-        address recipient,
-        uint64 expirationTime,
-        bytes32 refUID
-    ) internal returns (bytes32) {
-        return
-            eas.attest(
-                AttestationRequest({
-                    schema: ATTESTATION_SCHEMA,
-                    data: AttestationRequestData({
-                        recipient: recipient,
-                        expirationTime: expirationTime,
-                        revocable: true,
-                        refUID: refUID,
-                        data: data,
-                        value: 0
-                    })
+    function _attest(bytes memory data, address recipient, uint64 expirationTime, bytes32 refUID)
+        internal
+        returns (bytes32)
+    {
+        return eas.attest(
+            AttestationRequest({
+                schema: ATTESTATION_SCHEMA,
+                data: AttestationRequestData({
+                    recipient: recipient,
+                    expirationTime: expirationTime,
+                    revocable: true,
+                    refUID: refUID,
+                    data: data,
+                    value: 0
                 })
-            );
+            })
+        );
     }
 
-    function _getAttestation(
-        bytes32 uid
-    ) internal view returns (Attestation memory attestation_) {
+    function _getAttestation(bytes32 uid) internal view returns (Attestation memory attestation_) {
         attestation_ = eas.getAttestation(uid);
-        if (attestation_.schema != ATTESTATION_SCHEMA)
+        if (attestation_.schema != ATTESTATION_SCHEMA) {
             revert NotFromThisAttester();
+        }
     }
 }

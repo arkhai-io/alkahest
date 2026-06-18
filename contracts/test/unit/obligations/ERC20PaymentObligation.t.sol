@@ -51,11 +51,7 @@ contract ERC20PaymentObligationTest is Test {
         // Verify schema details
         SchemaRecord memory schema = paymentObligation.getSchema();
         assertEq(schema.uid, schemaId, "Schema UID should match");
-        assertEq(
-            schema.schema,
-            "address token, uint256 amount, address payee",
-            "Schema string should match"
-        );
+        assertEq(schema.schema, "address token, uint256 amount, address payee", "Schema string should match");
     }
 
     function testDoObligation() public {
@@ -67,12 +63,8 @@ contract ERC20PaymentObligationTest is Test {
         token.approve(address(paymentObligation), amount);
 
         // Make payment
-        ERC20PaymentObligation.ObligationData
-            memory data = ERC20PaymentObligation.ObligationData({
-                token: address(token),
-                amount: amount,
-                payee: payee
-            });
+        ERC20PaymentObligation.ObligationData memory data =
+            ERC20PaymentObligation.ObligationData({token: address(token), amount: amount, payee: payee});
 
         bytes32 attestationId = paymentObligation.doObligation(data, refUID);
         vm.stopPrank();
@@ -82,25 +74,13 @@ contract ERC20PaymentObligationTest is Test {
 
         // Verify attestation details
         Attestation memory attestation = eas.getAttestation(attestationId);
-        assertEq(
-            attestation.schema,
-            paymentObligation.ATTESTATION_SCHEMA(),
-            "Schema should match"
-        );
+        assertEq(attestation.schema, paymentObligation.ATTESTATION_SCHEMA(), "Schema should match");
         assertEq(attestation.recipient, payer, "Recipient should be the payer");
         assertEq(attestation.refUID, refUID, "RefUID should match");
 
         // Verify token transfer
-        assertEq(
-            token.balanceOf(payee),
-            amount,
-            "Payee should have received tokens"
-        );
-        assertEq(
-            token.balanceOf(payer),
-            900 * 10 ** 18,
-            "Payer should have sent tokens"
-        );
+        assertEq(token.balanceOf(payee), amount, "Payee should have received tokens");
+        assertEq(token.balanceOf(payer), 900 * 10 ** 18, "Payer should have sent tokens");
     }
 
     function testDoObligationFor() public {
@@ -114,47 +94,23 @@ contract ERC20PaymentObligationTest is Test {
         vm.stopPrank();
 
         // Make payment on behalf of payer
-        ERC20PaymentObligation.ObligationData
-            memory data = ERC20PaymentObligation.ObligationData({
-                token: address(token),
-                amount: amount,
-                payee: payee
-            });
+        ERC20PaymentObligation.ObligationData memory data =
+            ERC20PaymentObligation.ObligationData({token: address(token), amount: amount, payee: payee});
 
         vm.prank(payer);
-        bytes32 attestationId = paymentObligation.doObligationFor(
-            data,
-            recipient,
-            refUID
-        );
+        bytes32 attestationId = paymentObligation.doObligationFor(data, recipient, refUID);
 
         // Verify attestation exists
         assertNotEq(attestationId, bytes32(0), "Attestation should be created");
 
         // Verify attestation details
         Attestation memory attestation = eas.getAttestation(attestationId);
-        assertEq(
-            attestation.schema,
-            paymentObligation.ATTESTATION_SCHEMA(),
-            "Schema should match"
-        );
-        assertEq(
-            attestation.recipient,
-            recipient,
-            "Recipient should be the specified recipient"
-        );
+        assertEq(attestation.schema, paymentObligation.ATTESTATION_SCHEMA(), "Schema should match");
+        assertEq(attestation.recipient, recipient, "Recipient should be the specified recipient");
 
         // Verify token transfer
-        assertEq(
-            token.balanceOf(payee),
-            amount,
-            "Payee should have received tokens"
-        );
-        assertEq(
-            token.balanceOf(payer),
-            850 * 10 ** 18,
-            "Payer should have sent tokens"
-        );
+        assertEq(token.balanceOf(payee), amount, "Payee should have received tokens");
+        assertEq(token.balanceOf(payer), 850 * 10 ** 18, "Payer should have sent tokens");
     }
 
     function testCheckObligation() public {
@@ -166,12 +122,8 @@ contract ERC20PaymentObligationTest is Test {
         token.approve(address(paymentObligation), amount);
 
         // Make payment
-        ERC20PaymentObligation.ObligationData
-            memory data = ERC20PaymentObligation.ObligationData({
-                token: address(token),
-                amount: amount,
-                payee: payee
-            });
+        ERC20PaymentObligation.ObligationData memory data =
+            ERC20PaymentObligation.ObligationData({token: address(token), amount: amount, payee: payee});
 
         bytes32 attestationId = paymentObligation.doObligation(data, refUID);
         vm.stopPrank();
@@ -180,100 +132,50 @@ contract ERC20PaymentObligationTest is Test {
         Attestation memory attestation = eas.getAttestation(attestationId);
 
         // Test exact match demand
-        ERC20PaymentObligation.ObligationData
-            memory exactDemand = ERC20PaymentObligation.ObligationData({
-                token: address(token),
-                amount: amount,
-                payee: payee
-            });
+        ERC20PaymentObligation.ObligationData memory exactDemand =
+            ERC20PaymentObligation.ObligationData({token: address(token), amount: amount, payee: payee});
 
-        bool exactMatch = paymentObligation.checkObligation(
-            attestation,
-            abi.encode(exactDemand),
-            refUID
-        );
+        bool exactMatch = paymentObligation.checkObligation(attestation, abi.encode(exactDemand), refUID);
         assertTrue(exactMatch, "Should match exact demand");
 
         // Test lower amount demand
-        ERC20PaymentObligation.ObligationData
-            memory lowerDemand = ERC20PaymentObligation.ObligationData({
-                token: address(token),
-                amount: amount - 50 * 10 ** 18,
-                payee: payee
-            });
+        ERC20PaymentObligation.ObligationData memory lowerDemand = ERC20PaymentObligation.ObligationData({
+            token: address(token), amount: amount - 50 * 10 ** 18, payee: payee
+        });
 
-        bool lowerMatch = paymentObligation.checkObligation(
-            attestation,
-            abi.encode(lowerDemand),
-            refUID
-        );
+        bool lowerMatch = paymentObligation.checkObligation(attestation, abi.encode(lowerDemand), refUID);
         assertTrue(lowerMatch, "Should match lower amount demand");
 
         // Test higher amount demand (should fail)
-        ERC20PaymentObligation.ObligationData
-            memory higherDemand = ERC20PaymentObligation.ObligationData({
-                token: address(token),
-                amount: amount + 50 * 10 ** 18,
-                payee: payee
-            });
+        ERC20PaymentObligation.ObligationData memory higherDemand = ERC20PaymentObligation.ObligationData({
+            token: address(token), amount: amount + 50 * 10 ** 18, payee: payee
+        });
 
-        bool higherMatch = paymentObligation.checkObligation(
-            attestation,
-            abi.encode(higherDemand),
-            refUID
-        );
+        bool higherMatch = paymentObligation.checkObligation(attestation, abi.encode(higherDemand), refUID);
         assertFalse(higherMatch, "Should not match higher amount demand");
 
         // Test different token demand (should fail)
         MockERC20 differentToken = new MockERC20();
-        ERC20PaymentObligation.ObligationData
-            memory differentTokenDemand = ERC20PaymentObligation
-                .ObligationData({
-                    token: address(differentToken),
-                    amount: amount,
-                    payee: payee
-                });
+        ERC20PaymentObligation.ObligationData memory differentTokenDemand =
+            ERC20PaymentObligation.ObligationData({token: address(differentToken), amount: amount, payee: payee});
 
-        bool differentTokenMatch = paymentObligation.checkObligation(
-            attestation,
-            abi.encode(differentTokenDemand),
-            refUID
-        );
-        assertFalse(
-            differentTokenMatch,
-            "Should not match different token demand"
-        );
+        bool differentTokenMatch =
+            paymentObligation.checkObligation(attestation, abi.encode(differentTokenDemand), refUID);
+        assertFalse(differentTokenMatch, "Should not match different token demand");
 
         // Test different payee demand (should fail)
-        ERC20PaymentObligation.ObligationData
-            memory differentPayeeDemand = ERC20PaymentObligation
-                .ObligationData({
-                    token: address(token),
-                    amount: amount,
-                    payee: makeAddr("differentPayee")
-                });
+        ERC20PaymentObligation.ObligationData memory differentPayeeDemand = ERC20PaymentObligation.ObligationData({
+            token: address(token), amount: amount, payee: makeAddr("differentPayee")
+        });
 
-        bool differentPayeeMatch = paymentObligation.checkObligation(
-            attestation,
-            abi.encode(differentPayeeDemand),
-            refUID
-        );
-        assertFalse(
-            differentPayeeMatch,
-            "Should not match different payee demand"
-        );
+        bool differentPayeeMatch =
+            paymentObligation.checkObligation(attestation, abi.encode(differentPayeeDemand), refUID);
+        assertFalse(differentPayeeMatch, "Should not match different payee demand");
 
         // Test wrong refUID (should fail)
         bytes32 wrongRefUID = bytes32(uint256(999));
-        bool wrongRefMatch = paymentObligation.checkObligation(
-            attestation,
-            abi.encode(exactDemand),
-            wrongRefUID
-        );
-        assertFalse(
-            wrongRefMatch,
-            "Should not match with wrong refUID"
-        );
+        bool wrongRefMatch = paymentObligation.checkObligation(attestation, abi.encode(exactDemand), wrongRefUID);
+        assertFalse(wrongRefMatch, "Should not match with wrong refUID");
     }
 
     function testInvalidPaymentReverts() public {
@@ -285,12 +187,8 @@ contract ERC20PaymentObligationTest is Test {
         token.approve(address(paymentObligation), amount);
 
         // Try to make payment with insufficient balance
-        ERC20PaymentObligation.ObligationData
-            memory data = ERC20PaymentObligation.ObligationData({
-                token: address(token),
-                amount: amount,
-                payee: payee
-            });
+        ERC20PaymentObligation.ObligationData memory data =
+            ERC20PaymentObligation.ObligationData({token: address(token), amount: amount, payee: payee});
 
         vm.expectRevert();
         paymentObligation.doObligation(data, refUID);

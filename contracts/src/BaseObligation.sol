@@ -19,33 +19,26 @@ struct AttestationContext {
 }
 
 abstract contract BaseObligation is BaseAttester, ReentrancyGuard {
-    constructor(
-        IEAS _eas,
-        ISchemaRegistry _schemaRegistry,
-        string memory schema,
-        bool revocable
-    ) BaseAttester(_eas, _schemaRegistry, schema, revocable) {}
+    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, string memory schema, bool revocable)
+        BaseAttester(_eas, _schemaRegistry, schema, revocable)
+    {}
 
     // Base implementation with raw bytes
-    function doObligationRaw(
-        bytes calldata data,
-        uint64 expirationTime,
-        bytes32 refUID
-    ) public payable virtual returns (bytes32 uid_) {
-        uid_ = _doObligationForRaw(
-            data,
-            expirationTime,
-            msg.sender,
-            refUID
-        );
+    function doObligationRaw(bytes calldata data, uint64 expirationTime, bytes32 refUID)
+        public
+        payable
+        virtual
+        returns (bytes32 uid_)
+    {
+        uid_ = _doObligationForRaw(data, expirationTime, msg.sender, refUID);
     }
 
-    function _doObligationForRaw(
-        bytes memory data,
-        uint64 expirationTime,
-        address recipient,
-        bytes32 refUID
-    ) internal virtual nonReentrant returns (bytes32 uid_) {
+    function _doObligationForRaw(bytes memory data, uint64 expirationTime, address recipient, bytes32 refUID)
+        internal
+        virtual
+        nonReentrant
+        returns (bytes32 uid_)
+    {
         _beforeAttest(data, msg.sender, recipient);
         uid_ = _attest(data, recipient, expirationTime, refUID);
         _afterAttest(
@@ -63,11 +56,7 @@ abstract contract BaseObligation is BaseAttester, ReentrancyGuard {
     }
 
     // Hooks for obligations to implement
-    function _beforeAttest(
-        bytes memory data,
-        address payer,
-        address recipient
-    ) internal virtual {}
+    function _beforeAttest(bytes memory data, address payer, address recipient) internal virtual {}
 
     function _afterAttest(AttestationContext memory context) internal virtual {}
 }

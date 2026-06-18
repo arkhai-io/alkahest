@@ -34,11 +34,7 @@ contract AttestationBarterUtilsTest is Test {
 
         // Deploy contracts
         escrowContract = new AttestationEscrowObligation2(eas, schemaRegistry);
-        barterUtils = new AttestationBarterUtils(
-            eas,
-            schemaRegistry,
-            escrowContract
-        );
+        barterUtils = new AttestationBarterUtils(eas, schemaRegistry, escrowContract);
 
         // Register test schema
         testSchema = barterUtils.registerSchema(TEST_SCHEMA, barterUtils, true);
@@ -46,36 +42,22 @@ contract AttestationBarterUtilsTest is Test {
 
     function testRegisterSchema() public {
         string memory schema = "uint256 value";
-        bytes32 schemaId = barterUtils.registerSchema(
-            schema,
-            barterUtils,
-            true
-        );
+        bytes32 schemaId = barterUtils.registerSchema(schema, barterUtils, true);
 
         // Verify schema registration
         assertNotEq(schemaId, bytes32(0), "Schema should be registered");
 
         // Verify schema resolver mapping
         address resolver = barterUtils.schemaResolvers(schemaId);
-        assertNotEq(
-            resolver,
-            address(0),
-            "Schema resolver should be set correctly"
-        );
+        assertNotEq(resolver, address(0), "Schema resolver should be set correctly");
     }
 
     function testAttest() public {
         bytes memory data = abi.encode(true);
 
         vm.prank(alice);
-        bytes32 attestationId = barterUtils.attest(
-            testSchema,
-            bob,
-            uint64(block.timestamp + 1 days),
-            true,
-            bytes32(0),
-            data
-        );
+        bytes32 attestationId =
+            barterUtils.attest(testSchema, bob, uint64(block.timestamp + 1 days), true, bytes32(0), data);
 
         assertNotEq(attestationId, bytes32(0), "Attestation should be created");
     }
@@ -85,50 +67,34 @@ contract AttestationBarterUtilsTest is Test {
         bytes memory demandData = abi.encode(false);
 
         vm.prank(alice);
-        (bytes32 attestationUid, bytes32 escrowUid) = barterUtils
-            .attestAndCreateEscrow(
-                AttestationRequest({
-                    schema: testSchema,
-                    data: AttestationRequestData({
-                        recipient: bob,
-                        expirationTime: uint64(block.timestamp + 1 days),
-                        revocable: false,
-                        refUID: 0,
-                        data: attestationData,
-                        value: 0
-                    })
-                }),
-                address(this), // arbiter
-                demandData,
-                uint64(block.timestamp + 2 days) // escrow expiration
-            );
+        (bytes32 attestationUid, bytes32 escrowUid) = barterUtils.attestAndCreateEscrow(
+            AttestationRequest({
+                schema: testSchema,
+                data: AttestationRequestData({
+                    recipient: bob,
+                    expirationTime: uint64(block.timestamp + 1 days),
+                    revocable: false,
+                    refUID: 0,
+                    data: attestationData,
+                    value: 0
+                })
+            }),
+            address(this), // arbiter
+            demandData,
+            uint64(block.timestamp + 2 days) // escrow expiration
+        );
 
         // Verify both UIDs are valid
-        assertNotEq(
-            attestationUid,
-            bytes32(0),
-            "Attestation should be created"
-        );
+        assertNotEq(attestationUid, bytes32(0), "Attestation should be created");
         assertNotEq(escrowUid, bytes32(0), "Escrow should be created");
 
         // Verify attestation details
-        AttestationEscrowObligation2.ObligationData memory escrowData = abi
-            .decode(
-                eas.getAttestation(escrowUid).data,
-                (AttestationEscrowObligation2.ObligationData)
-            );
+        AttestationEscrowObligation2.ObligationData memory escrowData =
+            abi.decode(eas.getAttestation(escrowUid).data, (AttestationEscrowObligation2.ObligationData));
 
-        assertEq(
-            escrowData.attestationUid,
-            attestationUid,
-            "Attestation UID should match"
-        );
+        assertEq(escrowData.attestationUid, attestationUid, "Attestation UID should match");
         assertEq(escrowData.arbiter, address(this), "Arbiter should match");
-        assertEq(
-            keccak256(escrowData.demand),
-            keccak256(demandData),
-            "Demand data should match"
-        );
+        assertEq(keccak256(escrowData.demand), keccak256(demandData), "Demand data should match");
     }
 
     function testGetSchema() public view {
@@ -147,11 +113,7 @@ contract AttestationBarterUtilsTest is Test {
         // to access the exposed function in a test contract
 
         // Deploy a test contract that exposes onAttest
-        AttestationBarterUtilsHarness harness = new AttestationBarterUtilsHarness(
-                eas,
-                schemaRegistry,
-                escrowContract
-            );
+        AttestationBarterUtilsHarness harness = new AttestationBarterUtilsHarness(eas, schemaRegistry, escrowContract);
 
         bool result = harness.exposedOnAttest(mockAttestation, 0);
         assertTrue(result, "onAttest should return true");
@@ -163,11 +125,7 @@ contract AttestationBarterUtilsTest is Test {
         // The actual contents don't matter since onRevoke returns true unconditionally
 
         // Deploy a test contract that exposes onRevoke
-        AttestationBarterUtilsHarness harness = new AttestationBarterUtilsHarness(
-                eas,
-                schemaRegistry,
-                escrowContract
-            );
+        AttestationBarterUtilsHarness harness = new AttestationBarterUtilsHarness(eas, schemaRegistry, escrowContract);
 
         bool result = harness.exposedOnRevoke(mockAttestation, 0);
         assertTrue(result, "onRevoke should return true");
@@ -176,23 +134,15 @@ contract AttestationBarterUtilsTest is Test {
 
 // Helper contract to test internal functions
 contract AttestationBarterUtilsHarness is AttestationBarterUtils {
-    constructor(
-        IEAS _eas,
-        ISchemaRegistry _schemaRegistry,
-        AttestationEscrowObligation2 _escrowContract
-    ) AttestationBarterUtils(_eas, _schemaRegistry, _escrowContract) {}
+    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, AttestationEscrowObligation2 _escrowContract)
+        AttestationBarterUtils(_eas, _schemaRegistry, _escrowContract)
+    {}
 
-    function exposedOnAttest(
-        Attestation calldata attestation,
-        uint256 value
-    ) external pure returns (bool) {
+    function exposedOnAttest(Attestation calldata attestation, uint256 value) external pure returns (bool) {
         return onAttest(attestation, value);
     }
 
-    function exposedOnRevoke(
-        Attestation calldata attestation,
-        uint256 value
-    ) external pure returns (bool) {
+    function exposedOnRevoke(Attestation calldata attestation, uint256 value) external pure returns (bool) {
         return onRevoke(attestation, value);
     }
 }

@@ -6,9 +6,7 @@ import {IArbiter} from "../IArbiter.sol";
 import {ArbiterUtils} from "../ArbiterUtils.sol";
 
 interface IValidationRegistry {
-    function getValidationStatus(
-        bytes32 requestHash
-    )
+    function getValidationStatus(bytes32 requestHash)
         external
         view
         returns (
@@ -50,16 +48,18 @@ contract ERC8004Arbiter is IArbiter {
      * @param fulfilling The escrow UID that this obligation must reference
      * @return bool True if the validation response >= minResponse
      */
-    function checkObligation(
-        Attestation memory obligation,
-        bytes memory demand,
-        bytes32 fulfilling
-    ) public view override returns (bool) {
+    function checkObligation(Attestation memory obligation, bytes memory demand, bytes32 fulfilling)
+        public
+        view
+        override
+        returns (bool)
+    {
         DemandData memory demand_ = abi.decode(demand, (DemandData));
 
         // Ensure obligation references what it's fulfilling
-        if (obligation.refUID != fulfilling)
+        if (obligation.refUID != fulfilling) {
             revert FulfillmentMustReferenceEscrow();
+        }
 
         // Validate minResponse is in valid range
         if (demand_.minResponse > 100) revert InvalidMinResponse();
@@ -68,25 +68,21 @@ contract ERC8004Arbiter is IArbiter {
         bytes32 requestHash = obligation.uid;
 
         // Query the ValidationRegistry
-        IValidationRegistry registry = IValidationRegistry(
-            demand_.validationRegistry
-        );
+        IValidationRegistry registry = IValidationRegistry(demand_.validationRegistry);
         (
-            address validatorAddress,
-            , // agentId (unused)
-            uint8 response,
-            , // responseHash (unused)
+            address validatorAddress,, // agentId (unused)
+            uint8 response,, // responseHash (unused)
             , // tag (unused)
-
-        ) = // lastUpdate (unused)
-            registry.getValidationStatus(requestHash);
+            // lastUpdate (unused)
+        ) = registry.getValidationStatus(requestHash);
 
         // Check if validation exists (validatorAddress != address(0))
         if (validatorAddress == address(0)) revert ValidationNotFound();
 
         // Check if validator matches expected validator
-        if (validatorAddress != demand_.validatorAddress)
+        if (validatorAddress != demand_.validatorAddress) {
             revert ValidatorMismatch();
+        }
 
         // Check if response meets minimum requirement
         if (response < demand_.minResponse) revert ResponseBelowMinimum();
@@ -99,9 +95,7 @@ contract ERC8004Arbiter is IArbiter {
      * @param data ABI-encoded DemandData
      * @return DemandData struct
      */
-    function decodeDemandData(
-        bytes calldata data
-    ) public pure returns (DemandData memory) {
+    function decodeDemandData(bytes calldata data) public pure returns (DemandData memory) {
         return abi.decode(data, (DemandData));
     }
 }

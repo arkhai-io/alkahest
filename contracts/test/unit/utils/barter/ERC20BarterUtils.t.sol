@@ -22,10 +22,7 @@ import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import {EASDeployer} from "@test/utils/EASDeployer.sol";
 
 contract MockERC20Permit is ERC20Permit {
-    constructor(
-        string memory name,
-        string memory symbol
-    ) ERC20(name, symbol) ERC20Permit(name) {
+    constructor(string memory name, string memory symbol) ERC20(name, symbol) ERC20Permit(name) {
         _mint(msg.sender, 1000000 * 10 ** 18);
     }
 }
@@ -132,20 +129,11 @@ contract ERC20BarterUtilsUnitTest is Test {
 
         vm.startPrank(alice);
         erc20TokenA.approve(address(barterUtils), bidAmount);
-        bytes32 buyAttestation = barterUtils.buyErc20ForErc20(
-            address(erc20TokenA),
-            bidAmount,
-            address(erc20TokenB),
-            askAmount,
-            expiration
-        );
+        bytes32 buyAttestation =
+            barterUtils.buyErc20ForErc20(address(erc20TokenA), bidAmount, address(erc20TokenB), askAmount, expiration);
         vm.stopPrank();
 
-        assertNotEq(
-            buyAttestation,
-            bytes32(0),
-            "Buy attestation should be created"
-        );
+        assertNotEq(buyAttestation, bytes32(0), "Buy attestation should be created");
     }
 
     function testPermitAndBuyErc20ForErc20() public {
@@ -154,61 +142,27 @@ contract ERC20BarterUtilsUnitTest is Test {
         uint64 expiration = uint64(block.timestamp + 1 days);
         uint256 deadline = block.timestamp + 1;
 
-        (uint8 v, bytes32 r, bytes32 s) = _getPermitSignature(
-            erc20TokenA,
-            ALICE_PRIVATE_KEY,
-            address(barterUtils),
-            bidAmount,
-            deadline
-        );
+        (uint8 v, bytes32 r, bytes32 s) =
+            _getPermitSignature(erc20TokenA, ALICE_PRIVATE_KEY, address(barterUtils), bidAmount, deadline);
 
         vm.prank(alice);
         bytes32 buyAttestation = barterUtils.permitAndBuyErc20ForErc20(
-            address(erc20TokenA),
-            bidAmount,
-            address(erc20TokenB),
-            askAmount,
-            expiration,
-            deadline,
-            v,
-            r,
-            s
+            address(erc20TokenA), bidAmount, address(erc20TokenB), askAmount, expiration, deadline, v, r, s
         );
 
-        assertNotEq(
-            buyAttestation,
-            bytes32(0),
-            "Buy attestation should be created"
-        );
+        assertNotEq(buyAttestation, bytes32(0), "Buy attestation should be created");
     }
 
     function testPermitSignatureValidation() public {
         uint256 amount = 100 * 10 ** 18;
         uint256 deadline = block.timestamp + 1;
 
-        (uint8 v, bytes32 r, bytes32 s) = _getPermitSignature(
-            erc20TokenA,
-            ALICE_PRIVATE_KEY,
-            address(barterUtils),
-            amount,
-            deadline
-        );
+        (uint8 v, bytes32 r, bytes32 s) =
+            _getPermitSignature(erc20TokenA, ALICE_PRIVATE_KEY, address(barterUtils), amount, deadline);
 
-        erc20TokenA.permit(
-            alice,
-            address(barterUtils),
-            amount,
-            deadline,
-            v,
-            r,
-            s
-        );
+        erc20TokenA.permit(alice, address(barterUtils), amount, deadline, v, r, s);
 
-        assertEq(
-            erc20TokenA.allowance(alice, address(barterUtils)),
-            amount,
-            "Permit should have set allowance"
-        );
+        assertEq(erc20TokenA.allowance(alice, address(barterUtils)), amount, "Permit should have set allowance");
     }
 
     function test_RevertWhen_PermitExpired() public {
@@ -217,28 +171,15 @@ contract ERC20BarterUtilsUnitTest is Test {
         uint64 expiration = uint64(block.timestamp + 1 days);
         uint256 deadline = block.timestamp + 1;
 
-        (uint8 v, bytes32 r, bytes32 s) = _getPermitSignature(
-            erc20TokenA,
-            ALICE_PRIVATE_KEY,
-            address(barterUtils),
-            bidAmount,
-            deadline
-        );
+        (uint8 v, bytes32 r, bytes32 s) =
+            _getPermitSignature(erc20TokenA, ALICE_PRIVATE_KEY, address(barterUtils), bidAmount, deadline);
 
         vm.warp(block.timestamp + 2);
 
         vm.prank(alice);
         vm.expectRevert();
         barterUtils.permitAndBuyErc20ForErc20(
-            address(erc20TokenA),
-            bidAmount,
-            address(erc20TokenB),
-            askAmount,
-            expiration,
-            deadline,
-            v,
-            r,
-            s
+            address(erc20TokenA), bidAmount, address(erc20TokenB), askAmount, expiration, deadline, v, r, s
         );
     }
 
@@ -249,63 +190,29 @@ contract ERC20BarterUtilsUnitTest is Test {
         uint64 expiration = uint64(block.timestamp + 1 days);
         uint256 deadline = block.timestamp + 1;
 
-        (uint8 v, bytes32 r, bytes32 s) = _getPermitSignature(
-            erc20TokenA,
-            ALICE_PRIVATE_KEY,
-            address(barterUtils),
-            amount,
-            deadline
-        );
+        (uint8 v, bytes32 r, bytes32 s) =
+            _getPermitSignature(erc20TokenA, ALICE_PRIVATE_KEY, address(barterUtils), amount, deadline);
 
         vm.prank(alice);
         bytes32 escrowId = barterUtils.permitAndBuyWithErc20(
-            address(erc20TokenA),
-            amount,
-            arbiter,
-            demand,
-            expiration,
-            deadline,
-            v,
-            r,
-            s
+            address(erc20TokenA), amount, arbiter, demand, expiration, deadline, v, r, s
         );
 
-        assertNotEq(
-            escrowId,
-            bytes32(0),
-            "Escrow attestation should be created"
-        );
+        assertNotEq(escrowId, bytes32(0), "Escrow attestation should be created");
     }
 
     function testPermitAndPayWithErc20() public {
         uint256 amount = 100 * 10 ** 18;
         uint256 deadline = block.timestamp + 1;
 
-        (uint8 v, bytes32 r, bytes32 s) = _getPermitSignature(
-            erc20TokenA,
-            ALICE_PRIVATE_KEY,
-            address(barterUtils),
-            amount,
-            deadline
-        );
+        (uint8 v, bytes32 r, bytes32 s) =
+            _getPermitSignature(erc20TokenA, ALICE_PRIVATE_KEY, address(barterUtils), amount, deadline);
 
         vm.prank(alice);
-        bytes32 paymentId = barterUtils.permitAndPayWithErc20(
-            address(erc20TokenA),
-            amount,
-            bob,
-            bytes32(0),
-            deadline,
-            v,
-            r,
-            s
-        );
+        bytes32 paymentId =
+            barterUtils.permitAndPayWithErc20(address(erc20TokenA), amount, bob, bytes32(0), deadline, v, r, s);
 
-        assertNotEq(
-            paymentId,
-            bytes32(0),
-            "Payment attestation should be created"
-        );
+        assertNotEq(paymentId, bytes32(0), "Payment attestation should be created");
     }
 
     function testPayErc20ForErc20() public {
@@ -316,13 +223,8 @@ contract ERC20BarterUtilsUnitTest is Test {
 
         vm.startPrank(alice);
         erc20TokenA.approve(address(barterUtils), bidAmount);
-        bytes32 buyAttestation = barterUtils.buyErc20ForErc20(
-            address(erc20TokenA),
-            bidAmount,
-            address(erc20TokenB),
-            askAmount,
-            expiration
-        );
+        bytes32 buyAttestation =
+            barterUtils.buyErc20ForErc20(address(erc20TokenA), bidAmount, address(erc20TokenB), askAmount, expiration);
         vm.stopPrank();
 
         // Now pay for it
@@ -331,23 +233,11 @@ contract ERC20BarterUtilsUnitTest is Test {
         bytes32 sellAttestation = barterUtils.payErc20ForErc20(buyAttestation);
         vm.stopPrank();
 
-        assertNotEq(
-            sellAttestation,
-            bytes32(0),
-            "Sell attestation should be created"
-        );
+        assertNotEq(sellAttestation, bytes32(0), "Sell attestation should be created");
 
         // Verify the payment went through
-        assertEq(
-            erc20TokenA.balanceOf(bob),
-            bidAmount,
-            "Bob should have received Token A"
-        );
-        assertEq(
-            erc20TokenB.balanceOf(alice),
-            askAmount,
-            "Alice should have received Token B"
-        );
+        assertEq(erc20TokenA.balanceOf(bob), bidAmount, "Bob should have received Token A");
+        assertEq(erc20TokenB.balanceOf(alice), askAmount, "Alice should have received Token B");
     }
 
     function testPermitAndPayErc20ForErc20() public {
@@ -358,52 +248,24 @@ contract ERC20BarterUtilsUnitTest is Test {
 
         vm.startPrank(alice);
         erc20TokenA.approve(address(barterUtils), bidAmount);
-        bytes32 buyAttestation = barterUtils.buyErc20ForErc20(
-            address(erc20TokenA),
-            bidAmount,
-            address(erc20TokenB),
-            askAmount,
-            expiration
-        );
+        bytes32 buyAttestation =
+            barterUtils.buyErc20ForErc20(address(erc20TokenA), bidAmount, address(erc20TokenB), askAmount, expiration);
         vm.stopPrank();
 
         // Now pay for it using permit
         uint256 deadline = block.timestamp + 1;
 
-        (uint8 v, bytes32 r, bytes32 s) = _getPermitSignature(
-            erc20TokenB,
-            BOB_PRIVATE_KEY,
-            address(barterUtils),
-            askAmount,
-            deadline
-        );
+        (uint8 v, bytes32 r, bytes32 s) =
+            _getPermitSignature(erc20TokenB, BOB_PRIVATE_KEY, address(barterUtils), askAmount, deadline);
 
         vm.prank(bob);
-        bytes32 sellAttestation = barterUtils.permitAndPayErc20ForErc20(
-            buyAttestation,
-            deadline,
-            v,
-            r,
-            s
-        );
+        bytes32 sellAttestation = barterUtils.permitAndPayErc20ForErc20(buyAttestation, deadline, v, r, s);
 
-        assertNotEq(
-            sellAttestation,
-            bytes32(0),
-            "Sell attestation should be created"
-        );
+        assertNotEq(sellAttestation, bytes32(0), "Sell attestation should be created");
 
         // Verify the payment went through
-        assertEq(
-            erc20TokenA.balanceOf(bob),
-            bidAmount,
-            "Bob should have received Token A"
-        );
-        assertEq(
-            erc20TokenB.balanceOf(alice),
-            askAmount,
-            "Alice should have received Token B"
-        );
+        assertEq(erc20TokenA.balanceOf(bob), bidAmount, "Bob should have received Token A");
+        assertEq(erc20TokenB.balanceOf(alice), askAmount, "Alice should have received Token B");
     }
 
     function test_RevertWhen_PaymentCollectionFails() public {
@@ -414,13 +276,8 @@ contract ERC20BarterUtilsUnitTest is Test {
 
         vm.startPrank(alice);
         erc20TokenA.approve(address(barterUtils), bidAmount);
-        bytes32 buyAttestation = barterUtils.buyErc20ForErc20(
-            address(erc20TokenA),
-            bidAmount,
-            address(erc20TokenB),
-            askAmount,
-            expiration
-        );
+        bytes32 buyAttestation =
+            barterUtils.buyErc20ForErc20(address(erc20TokenA), bidAmount, address(erc20TokenB), askAmount, expiration);
         vm.stopPrank();
 
         // Now try to pay for it, but Bob doesn't have enough tokens
@@ -443,20 +300,9 @@ contract ERC20BarterUtilsUnitTest is Test {
         );
 
         address owner = vm.addr(ownerPrivateKey);
-        bytes32 structHash = keccak256(
-            abi.encode(
-                permitTypehash,
-                owner,
-                spender,
-                value,
-                token.nonces(owner),
-                deadline
-            )
-        );
+        bytes32 structHash = keccak256(abi.encode(permitTypehash, owner, spender, value, token.nonces(owner), deadline));
 
-        bytes32 digest = keccak256(
-            abi.encodePacked("\x19\x01", token.DOMAIN_SEPARATOR(), structHash)
-        );
+        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", token.DOMAIN_SEPARATOR(), structHash));
 
         (v, r, s) = vm.sign(ownerPrivateKey, digest);
     }
@@ -472,51 +318,27 @@ contract ERC20BarterUtilsUnitTest is Test {
         vm.startPrank(alice);
         erc20TokenA.approve(address(barterUtils), bidAmount);
         bytes32 buyAttestation = barterUtils.buyErc721WithErc20(
-            address(erc20TokenA),
-            bidAmount,
-            address(askErc721Token),
-            erc721TokenId,
-            expiration
+            address(erc20TokenA), bidAmount, address(askErc721Token), erc721TokenId, expiration
         );
         vm.stopPrank();
 
-        assertNotEq(
-            buyAttestation,
-            bytes32(0),
-            "Buy attestation should be created"
-        );
+        assertNotEq(buyAttestation, bytes32(0), "Buy attestation should be created");
 
         // Validate the attestation data
         Attestation memory bid = eas.getAttestation(buyAttestation);
-        ERC20EscrowObligation.ObligationData memory escrowData = abi.decode(
-            bid.data,
-            (ERC20EscrowObligation.ObligationData)
-        );
+        ERC20EscrowObligation.ObligationData memory escrowData =
+            abi.decode(bid.data, (ERC20EscrowObligation.ObligationData));
 
         assertEq(escrowData.token, address(erc20TokenA), "Token should match");
         assertEq(escrowData.amount, bidAmount, "Amount should match");
-        assertEq(
-            escrowData.arbiter,
-            address(erc721Payment),
-            "Arbiter should be ERC721 payment"
-        );
+        assertEq(escrowData.arbiter, address(erc721Payment), "Arbiter should be ERC721 payment");
 
         // Validate the demand data
-        ERC721PaymentObligation.ObligationData memory demandData = abi.decode(
-            escrowData.demand,
-            (ERC721PaymentObligation.ObligationData)
-        );
+        ERC721PaymentObligation.ObligationData memory demandData =
+            abi.decode(escrowData.demand, (ERC721PaymentObligation.ObligationData));
 
-        assertEq(
-            demandData.token,
-            address(askErc721Token),
-            "ERC721 token should match"
-        );
-        assertEq(
-            demandData.tokenId,
-            erc721TokenId,
-            "ERC721 tokenId should match"
-        );
+        assertEq(demandData.token, address(askErc721Token), "ERC721 token should match");
+        assertEq(demandData.tokenId, erc721TokenId, "ERC721 tokenId should match");
     }
 
     function testPayERC20ForERC721() public {
@@ -539,9 +361,7 @@ contract ERC20BarterUtilsUnitTest is Test {
                 arbiter: address(paymentObligation),
                 demand: abi.encode(
                     ERC20PaymentObligation.ObligationData({
-                        token: address(erc20TokenA),
-                        amount: askAmount,
-                        payee: alice
+                        token: address(erc20TokenA), amount: askAmount, payee: alice
                     })
                 )
             }),
@@ -559,23 +379,11 @@ contract ERC20BarterUtilsUnitTest is Test {
         bytes32 payAttestation = barterUtils.payErc20ForErc721(sellAttestation);
         vm.stopPrank();
 
-        assertNotEq(
-            payAttestation,
-            bytes32(0),
-            "Pay attestation should be created"
-        );
+        assertNotEq(payAttestation, bytes32(0), "Pay attestation should be created");
 
         // Verify token transfers
-        assertEq(
-            erc20TokenA.balanceOf(alice),
-            1000 * 10 ** 18 + askAmount,
-            "Alice should receive ERC20 tokens"
-        );
-        assertEq(
-            askErc721Token.ownerOf(erc721TokenId),
-            bob,
-            "Bob should receive ERC721 token"
-        );
+        assertEq(erc20TokenA.balanceOf(alice), 1000 * 10 ** 18 + askAmount, "Alice should receive ERC20 tokens");
+        assertEq(askErc721Token.ownerOf(erc721TokenId), bob, "Bob should receive ERC721 token");
     }
 
     function testPermitAndBuyERC721WithERC20() public {
@@ -591,9 +399,7 @@ contract ERC20BarterUtilsUnitTest is Test {
                 erc20TokenA.DOMAIN_SEPARATOR(),
                 keccak256(
                     abi.encode(
-                        keccak256(
-                            "Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)"
-                        ),
+                        keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)"),
                         alice,
                         address(barterUtils),
                         bidAmount,
@@ -604,29 +410,14 @@ contract ERC20BarterUtilsUnitTest is Test {
             )
         );
 
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
-            ALICE_PRIVATE_KEY,
-            permitHash
-        );
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(ALICE_PRIVATE_KEY, permitHash);
 
         vm.prank(alice);
         bytes32 buyAttestation = barterUtils.permitAndBuyErc721WithErc20(
-            address(erc20TokenA),
-            bidAmount,
-            address(askErc721Token),
-            erc721TokenId,
-            expiration,
-            deadline,
-            v,
-            r,
-            s
+            address(erc20TokenA), bidAmount, address(askErc721Token), erc721TokenId, expiration, deadline, v, r, s
         );
 
-        assertNotEq(
-            buyAttestation,
-            bytes32(0),
-            "Buy attestation should be created"
-        );
+        assertNotEq(buyAttestation, bytes32(0), "Buy attestation should be created");
     }
 
     function testPermitAndPayERC20ForERC721() public {
@@ -649,9 +440,7 @@ contract ERC20BarterUtilsUnitTest is Test {
                 arbiter: address(paymentObligation),
                 demand: abi.encode(
                     ERC20PaymentObligation.ObligationData({
-                        token: address(erc20TokenA),
-                        amount: bidAmount,
-                        payee: carol
+                        token: address(erc20TokenA), amount: bidAmount, payee: carol
                     })
                 )
             }),
@@ -670,9 +459,7 @@ contract ERC20BarterUtilsUnitTest is Test {
                 erc20TokenA.DOMAIN_SEPARATOR(),
                 keccak256(
                     abi.encode(
-                        keccak256(
-                            "Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)"
-                        ),
+                        keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)"),
                         bob,
                         address(barterUtils),
                         bidAmount,
@@ -686,31 +473,13 @@ contract ERC20BarterUtilsUnitTest is Test {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(BOB_PRIVATE_KEY, permitHash);
 
         vm.prank(bob);
-        bytes32 payAttestation = barterUtils.permitAndPayErc20ForErc721(
-            sellAttestation,
-            deadline,
-            v,
-            r,
-            s
-        );
+        bytes32 payAttestation = barterUtils.permitAndPayErc20ForErc721(sellAttestation, deadline, v, r, s);
 
-        assertNotEq(
-            payAttestation,
-            bytes32(0),
-            "Pay attestation should be created"
-        );
+        assertNotEq(payAttestation, bytes32(0), "Pay attestation should be created");
 
         // Verify token transfers
-        assertEq(
-            erc20TokenA.balanceOf(carol),
-            bidAmount,
-            "Carol should receive ERC20 tokens"
-        );
-        assertEq(
-            askErc721Token.ownerOf(erc721TokenIdForSale),
-            bob,
-            "Bob should receive ERC721 token"
-        );
+        assertEq(erc20TokenA.balanceOf(carol), bidAmount, "Carol should receive ERC20 tokens");
+        assertEq(askErc721Token.ownerOf(erc721TokenIdForSale), bob, "Bob should receive ERC721 token");
     }
 
     // Testing ERC1155 with ERC20
@@ -723,20 +492,11 @@ contract ERC20BarterUtilsUnitTest is Test {
         vm.startPrank(alice);
         erc20TokenA.approve(address(barterUtils), bidAmount);
         bytes32 buyAttestation = barterUtils.buyErc1155WithErc20(
-            address(erc20TokenA),
-            bidAmount,
-            address(askErc1155Token),
-            erc1155TokenId,
-            erc1155Amount,
-            expiration
+            address(erc20TokenA), bidAmount, address(askErc1155Token), erc1155TokenId, erc1155Amount, expiration
         );
         vm.stopPrank();
 
-        assertNotEq(
-            buyAttestation,
-            bytes32(0),
-            "Buy attestation should be created"
-        );
+        assertNotEq(buyAttestation, bytes32(0), "Buy attestation should be created");
     }
 
     function testPayERC20ForERC1155() public {
@@ -760,9 +520,7 @@ contract ERC20BarterUtilsUnitTest is Test {
                 arbiter: address(paymentObligation),
                 demand: abi.encode(
                     ERC20PaymentObligation.ObligationData({
-                        token: address(erc20TokenA),
-                        amount: askAmount,
-                        payee: alice
+                        token: address(erc20TokenA), amount: askAmount, payee: alice
                     })
                 )
             }),
@@ -777,27 +535,15 @@ contract ERC20BarterUtilsUnitTest is Test {
         // Bob fulfills the order by paying ERC20
         vm.startPrank(bob);
         erc20TokenA.approve(address(barterUtils), askAmount);
-        bytes32 payAttestation = barterUtils.payErc20ForErc1155(
-            sellAttestation
-        );
+        bytes32 payAttestation = barterUtils.payErc20ForErc1155(sellAttestation);
         vm.stopPrank();
 
-        assertNotEq(
-            payAttestation,
-            bytes32(0),
-            "Pay attestation should be created"
-        );
+        assertNotEq(payAttestation, bytes32(0), "Pay attestation should be created");
 
         // Verify token transfers
+        assertEq(erc20TokenA.balanceOf(alice), 1000 * 10 ** 18 + askAmount, "Alice should receive ERC20 tokens");
         assertEq(
-            erc20TokenA.balanceOf(alice),
-            1000 * 10 ** 18 + askAmount,
-            "Alice should receive ERC20 tokens"
-        );
-        assertEq(
-            askErc1155Token.balanceOf(bob, erc1155TokenId),
-            100 + erc1155Amount,
-            "Bob should receive ERC1155 tokens"
+            askErc1155Token.balanceOf(bob, erc1155TokenId), 100 + erc1155Amount, "Bob should receive ERC1155 tokens"
         );
     }
 
@@ -814,12 +560,7 @@ contract ERC20BarterUtilsUnitTest is Test {
         erc20TokenA.approve(address(barterUtils), erc20Amount);
 
         // Create buy order (offering ERC20 for ETH)
-        bytes32 escrowId = barterUtils.buyEthWithErc20(
-            address(erc20TokenA),
-            erc20Amount,
-            ethAmount,
-            expiration
-        );
+        bytes32 escrowId = barterUtils.buyEthWithErc20(address(erc20TokenA), erc20Amount, ethAmount, expiration);
 
         vm.stopPrank();
 
@@ -831,11 +572,7 @@ contract ERC20BarterUtilsUnitTest is Test {
 
         // Bob needs to create a native token payment obligation
         bytes32 paymentId = nativePayment.doObligation{value: ethAmount}(
-            NativeTokenPaymentObligation.ObligationData({
-                amount: ethAmount,
-                payee: alice
-            }),
-            escrowId
+            NativeTokenPaymentObligation.ObligationData({amount: ethAmount, payee: alice}), escrowId
         );
 
         // Collect the escrow through the ERC20 escrow contract
@@ -861,9 +598,7 @@ contract ERC20BarterUtilsUnitTest is Test {
                 arbiter: address(paymentObligation),
                 demand: abi.encode(
                     ERC20PaymentObligation.ObligationData({
-                        token: address(erc20TokenA),
-                        amount: erc20Amount,
-                        payee: bob
+                        token: address(erc20TokenA), amount: erc20Amount, payee: bob
                     })
                 ),
                 amount: ethAmount
@@ -901,9 +636,7 @@ contract ERC20BarterUtilsUnitTest is Test {
                 erc20TokenA.DOMAIN_SEPARATOR(),
                 keccak256(
                     abi.encode(
-                        keccak256(
-                            "Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)"
-                        ),
+                        keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)"),
                         alice,
                         address(barterUtils),
                         erc20Amount,
@@ -914,23 +647,13 @@ contract ERC20BarterUtilsUnitTest is Test {
             )
         );
 
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
-            ALICE_PRIVATE_KEY,
-            permitHash
-        );
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(ALICE_PRIVATE_KEY, permitHash);
 
         vm.prank(alice);
 
         // Create buy order with permit
         bytes32 escrowId = barterUtils.permitAndBuyEthWithErc20(
-            address(erc20TokenA),
-            erc20Amount,
-            ethAmount,
-            expiration,
-            deadline,
-            v,
-            r,
-            s
+            address(erc20TokenA), erc20Amount, ethAmount, expiration, deadline, v, r, s
         );
 
         // Verify the escrow was created
@@ -952,9 +675,7 @@ contract ERC20BarterUtilsUnitTest is Test {
                 arbiter: address(paymentObligation),
                 demand: abi.encode(
                     ERC20PaymentObligation.ObligationData({
-                        token: address(erc20TokenA),
-                        amount: erc20Amount,
-                        payee: bob
+                        token: address(erc20TokenA), amount: erc20Amount, payee: bob
                     })
                 ),
                 amount: ethAmount
@@ -971,9 +692,7 @@ contract ERC20BarterUtilsUnitTest is Test {
                 erc20TokenA.DOMAIN_SEPARATOR(),
                 keccak256(
                     abi.encode(
-                        keccak256(
-                            "Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)"
-                        ),
+                        keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)"),
                         alice,
                         address(barterUtils),
                         erc20Amount,
@@ -984,21 +703,12 @@ contract ERC20BarterUtilsUnitTest is Test {
             )
         );
 
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
-            ALICE_PRIVATE_KEY,
-            permitHash
-        );
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(ALICE_PRIVATE_KEY, permitHash);
 
         vm.prank(alice);
 
         // Fulfill with permit
-        bytes32 paymentId = barterUtils.permitAndPayErc20ForEth(
-            escrowId,
-            deadline,
-            v,
-            r,
-            s
-        );
+        bytes32 paymentId = barterUtils.permitAndPayErc20ForEth(escrowId, deadline, v, r, s);
 
         // Verify the swap completed
         assertEq(alice.balance, ethAmount);

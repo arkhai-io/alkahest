@@ -14,10 +14,7 @@ import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import {EASDeployer} from "@test/utils/EASDeployer.sol";
 
 contract MockERC20Permit is ERC20Permit {
-    constructor(
-        string memory name,
-        string memory symbol
-    ) ERC20(name, symbol) ERC20Permit(name) {
+    constructor(string memory name, string memory symbol) ERC20(name, symbol) ERC20Permit(name) {
         _mint(msg.sender, 1000000 * 10 ** 18);
     }
 }
@@ -93,11 +90,7 @@ contract TokenBundleBarterUtilsUnitTest is Test {
         bundlePayment = new TokenBundlePaymentObligation(eas, schemaRegistry);
 
         // Deploy barter utils contract
-        barterUtils = new TokenBundleBarterUtils(
-            eas,
-            bundleEscrow,
-            bundlePayment
-        );
+        barterUtils = new TokenBundleBarterUtils(eas, bundleEscrow, bundlePayment);
 
         // Setup initial token balances
         // Alice's tokens
@@ -114,24 +107,19 @@ contract TokenBundleBarterUtilsUnitTest is Test {
     }
 
     // Helper function to create a bundle for Alice
-    function createAliceBundle()
-        internal
-        view
-        returns (TokenBundleEscrowObligation.ObligationData memory)
-    {
-        TokenBundleEscrowObligation.ObligationData memory bundle = TokenBundleEscrowObligation
-            .ObligationData({
-                arbiter: address(0), // Will be set by the barter functions
-                demand: "", // Will be set by the barter functions
-                nativeAmount: 0,
-                erc20Tokens: new address[](1),
-                erc20Amounts: new uint256[](1),
-                erc721Tokens: new address[](1),
-                erc721TokenIds: new uint256[](1),
-                erc1155Tokens: new address[](1),
-                erc1155TokenIds: new uint256[](1),
-                erc1155Amounts: new uint256[](1)
-            });
+    function createAliceBundle() internal view returns (TokenBundleEscrowObligation.ObligationData memory) {
+        TokenBundleEscrowObligation.ObligationData memory bundle = TokenBundleEscrowObligation.ObligationData({
+            arbiter: address(0), // Will be set by the barter functions
+            demand: "", // Will be set by the barter functions
+            nativeAmount: 0,
+            erc20Tokens: new address[](1),
+            erc20Amounts: new uint256[](1),
+            erc721Tokens: new address[](1),
+            erc721TokenIds: new uint256[](1),
+            erc1155Tokens: new address[](1),
+            erc1155TokenIds: new uint256[](1),
+            erc1155Amounts: new uint256[](1)
+        });
 
         bundle.erc20Tokens[0] = address(erc20TokenA);
         bundle.erc20Amounts[0] = erc20AmountA;
@@ -145,23 +133,18 @@ contract TokenBundleBarterUtilsUnitTest is Test {
     }
 
     // Helper function to create a bundle for Bob as payment
-    function createBobBundle()
-        internal
-        view
-        returns (TokenBundlePaymentObligation.ObligationData memory)
-    {
-        TokenBundlePaymentObligation.ObligationData
-            memory bundle = TokenBundlePaymentObligation.ObligationData({
-                nativeAmount: 0,
-                erc20Tokens: new address[](1),
-                erc20Amounts: new uint256[](1),
-                erc721Tokens: new address[](1),
-                erc721TokenIds: new uint256[](1),
-                erc1155Tokens: new address[](1),
-                erc1155TokenIds: new uint256[](1),
-                erc1155Amounts: new uint256[](1),
-                payee: alice
-            });
+    function createBobBundle() internal view returns (TokenBundlePaymentObligation.ObligationData memory) {
+        TokenBundlePaymentObligation.ObligationData memory bundle = TokenBundlePaymentObligation.ObligationData({
+            nativeAmount: 0,
+            erc20Tokens: new address[](1),
+            erc20Amounts: new uint256[](1),
+            erc721Tokens: new address[](1),
+            erc721TokenIds: new uint256[](1),
+            erc1155Tokens: new address[](1),
+            erc1155TokenIds: new uint256[](1),
+            erc1155Amounts: new uint256[](1),
+            payee: alice
+        });
 
         bundle.erc20Tokens[0] = address(erc20TokenB);
         bundle.erc20Amounts[0] = erc20AmountB;
@@ -187,20 +170,9 @@ contract TokenBundleBarterUtilsUnitTest is Test {
         );
 
         address owner = vm.addr(ownerPrivateKey);
-        bytes32 structHash = keccak256(
-            abi.encode(
-                permitTypehash,
-                owner,
-                spender,
-                value,
-                token.nonces(owner),
-                deadline
-            )
-        );
+        bytes32 structHash = keccak256(abi.encode(permitTypehash, owner, spender, value, token.nonces(owner), deadline));
 
-        bytes32 digest = keccak256(
-            abi.encodePacked("\x19\x01", token.DOMAIN_SEPARATOR(), structHash)
-        );
+        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", token.DOMAIN_SEPARATOR(), structHash));
 
         (v, r, s) = vm.sign(ownerPrivateKey, digest);
     }
@@ -208,10 +180,8 @@ contract TokenBundleBarterUtilsUnitTest is Test {
     function testBuyBundleForBundle() public {
         uint64 expiration = uint64(block.timestamp + 1 days);
 
-        TokenBundleEscrowObligation.ObligationData
-            memory aliceBundle = createAliceBundle();
-        TokenBundlePaymentObligation.ObligationData
-            memory bobBundle = createBobBundle();
+        TokenBundleEscrowObligation.ObligationData memory aliceBundle = createAliceBundle();
+        TokenBundlePaymentObligation.ObligationData memory bobBundle = createBobBundle();
 
         // Approve tokens
         vm.startPrank(alice);
@@ -219,90 +189,35 @@ contract TokenBundleBarterUtilsUnitTest is Test {
         erc721TokenA.approve(address(barterUtils), aliceErc721Id);
         erc1155TokenA.setApprovalForAll(address(barterUtils), true);
 
-        bytes32 buyAttestation = barterUtils.buyBundleForBundle(
-            aliceBundle,
-            bobBundle,
-            expiration
-        );
+        bytes32 buyAttestation = barterUtils.buyBundleForBundle(aliceBundle, bobBundle, expiration);
         vm.stopPrank();
 
-        assertNotEq(
-            buyAttestation,
-            bytes32(0),
-            "Buy attestation should be created"
-        );
+        assertNotEq(buyAttestation, bytes32(0), "Buy attestation should be created");
 
         // Validate the attestation data
         Attestation memory bid = eas.getAttestation(buyAttestation);
-        TokenBundleEscrowObligation.ObligationData memory escrowData = abi
-            .decode(bid.data, (TokenBundleEscrowObligation.ObligationData));
+        TokenBundleEscrowObligation.ObligationData memory escrowData =
+            abi.decode(bid.data, (TokenBundleEscrowObligation.ObligationData));
 
-        assertEq(
-            escrowData.erc20Tokens[0],
-            address(erc20TokenA),
-            "ERC20 token should match"
-        );
-        assertEq(
-            escrowData.erc20Amounts[0],
-            erc20AmountA,
-            "ERC20 amount should match"
-        );
-        assertEq(
-            escrowData.erc721Tokens[0],
-            address(erc721TokenA),
-            "ERC721 token should match"
-        );
-        assertEq(
-            escrowData.erc721TokenIds[0],
-            aliceErc721Id,
-            "ERC721 tokenId should match"
-        );
-        assertEq(
-            escrowData.erc1155Tokens[0],
-            address(erc1155TokenA),
-            "ERC1155 token should match"
-        );
-        assertEq(
-            escrowData.arbiter,
-            address(bundlePayment),
-            "Arbiter should be bundlePayment"
-        );
+        assertEq(escrowData.erc20Tokens[0], address(erc20TokenA), "ERC20 token should match");
+        assertEq(escrowData.erc20Amounts[0], erc20AmountA, "ERC20 amount should match");
+        assertEq(escrowData.erc721Tokens[0], address(erc721TokenA), "ERC721 token should match");
+        assertEq(escrowData.erc721TokenIds[0], aliceErc721Id, "ERC721 tokenId should match");
+        assertEq(escrowData.erc1155Tokens[0], address(erc1155TokenA), "ERC1155 token should match");
+        assertEq(escrowData.arbiter, address(bundlePayment), "Arbiter should be bundlePayment");
 
         // Extract the demand data
-        TokenBundlePaymentObligation.ObligationData memory demandData = abi
-            .decode(
-                escrowData.demand,
-                (TokenBundlePaymentObligation.ObligationData)
-            );
+        TokenBundlePaymentObligation.ObligationData memory demandData =
+            abi.decode(escrowData.demand, (TokenBundlePaymentObligation.ObligationData));
 
-        assertEq(
-            demandData.erc20Tokens[0],
-            address(erc20TokenB),
-            "Demand ERC20 token should match"
-        );
-        assertEq(
-            demandData.erc721Tokens[0],
-            address(erc721TokenB),
-            "Demand ERC721 token should match"
-        );
-        assertEq(
-            demandData.erc1155Tokens[0],
-            address(erc1155TokenB),
-            "Demand ERC1155 token should match"
-        );
+        assertEq(demandData.erc20Tokens[0], address(erc20TokenB), "Demand ERC20 token should match");
+        assertEq(demandData.erc721Tokens[0], address(erc721TokenB), "Demand ERC721 token should match");
+        assertEq(demandData.erc1155Tokens[0], address(erc1155TokenB), "Demand ERC1155 token should match");
         assertEq(demandData.payee, alice, "Payee should be Alice");
 
         // Verify that Alice's tokens are now in escrow
-        assertEq(
-            erc20TokenA.balanceOf(address(bundleEscrow)),
-            erc20AmountA,
-            "ERC20 tokens should be in escrow"
-        );
-        assertEq(
-            erc721TokenA.ownerOf(aliceErc721Id),
-            address(bundleEscrow),
-            "ERC721 should be in escrow"
-        );
+        assertEq(erc20TokenA.balanceOf(address(bundleEscrow)), erc20AmountA, "ERC20 tokens should be in escrow");
+        assertEq(erc721TokenA.ownerOf(aliceErc721Id), address(bundleEscrow), "ERC721 should be in escrow");
         assertEq(
             erc1155TokenA.balanceOf(address(bundleEscrow), erc1155TokenIdA),
             erc1155TokenAmountA,
@@ -313,34 +228,20 @@ contract TokenBundleBarterUtilsUnitTest is Test {
     function testPayBundleForBundle() public {
         uint64 expiration = uint64(block.timestamp + 1 days);
 
-        TokenBundleEscrowObligation.ObligationData
-            memory aliceBundle = createAliceBundle();
-        TokenBundlePaymentObligation.ObligationData
-            memory bobBundle = createBobBundle();
+        TokenBundleEscrowObligation.ObligationData memory aliceBundle = createAliceBundle();
+        TokenBundlePaymentObligation.ObligationData memory bobBundle = createBobBundle();
 
         // Alice creates bid
         vm.startPrank(alice);
         erc20TokenA.approve(address(barterUtils), erc20AmountA);
         erc721TokenA.approve(address(barterUtils), aliceErc721Id);
         erc1155TokenA.setApprovalForAll(address(barterUtils), true);
-        bytes32 buyAttestation = barterUtils.buyBundleForBundle(
-            aliceBundle,
-            bobBundle,
-            expiration
-        );
+        bytes32 buyAttestation = barterUtils.buyBundleForBundle(aliceBundle, bobBundle, expiration);
         vm.stopPrank();
 
         // Verify initial escrow state
-        assertEq(
-            erc20TokenA.balanceOf(address(bundleEscrow)),
-            erc20AmountA,
-            "ERC20 tokens should be in escrow"
-        );
-        assertEq(
-            erc721TokenA.ownerOf(aliceErc721Id),
-            address(bundleEscrow),
-            "ERC721 should be in escrow"
-        );
+        assertEq(erc20TokenA.balanceOf(address(bundleEscrow)), erc20AmountA, "ERC20 tokens should be in escrow");
+        assertEq(erc721TokenA.ownerOf(aliceErc721Id), address(bundleEscrow), "ERC721 should be in escrow");
         assertEq(
             erc1155TokenA.balanceOf(address(bundleEscrow), erc1155TokenIdA),
             erc1155TokenAmountA,
@@ -355,24 +256,12 @@ contract TokenBundleBarterUtilsUnitTest is Test {
         bytes32 payAttestation = barterUtils.payBundleForBundle(buyAttestation);
         vm.stopPrank();
 
-        assertNotEq(
-            payAttestation,
-            bytes32(0),
-            "Pay attestation should be created"
-        );
+        assertNotEq(payAttestation, bytes32(0), "Pay attestation should be created");
 
         // Verify the exchange happened
         // Alice should have Bob's tokens
-        assertEq(
-            erc20TokenB.balanceOf(alice),
-            erc20AmountB,
-            "Alice should have Bob's ERC20 tokens"
-        );
-        assertEq(
-            erc721TokenB.ownerOf(bobErc721Id),
-            alice,
-            "Alice should have Bob's ERC721 token"
-        );
+        assertEq(erc20TokenB.balanceOf(alice), erc20AmountB, "Alice should have Bob's ERC20 tokens");
+        assertEq(erc721TokenB.ownerOf(bobErc721Id), alice, "Alice should have Bob's ERC721 token");
         assertEq(
             erc1155TokenB.balanceOf(alice, erc1155TokenIdB),
             erc1155TokenAmountB,
@@ -380,28 +269,14 @@ contract TokenBundleBarterUtilsUnitTest is Test {
         );
 
         // Bob should have Alice's tokens
+        assertEq(erc20TokenA.balanceOf(bob), erc20AmountA, "Bob should have Alice's ERC20 tokens");
+        assertEq(erc721TokenA.ownerOf(aliceErc721Id), bob, "Bob should have Alice's ERC721 token");
         assertEq(
-            erc20TokenA.balanceOf(bob),
-            erc20AmountA,
-            "Bob should have Alice's ERC20 tokens"
-        );
-        assertEq(
-            erc721TokenA.ownerOf(aliceErc721Id),
-            bob,
-            "Bob should have Alice's ERC721 token"
-        );
-        assertEq(
-            erc1155TokenA.balanceOf(bob, erc1155TokenIdA),
-            erc1155TokenAmountA,
-            "Bob should have Alice's ERC1155 tokens"
+            erc1155TokenA.balanceOf(bob, erc1155TokenIdA), erc1155TokenAmountA, "Bob should have Alice's ERC1155 tokens"
         );
 
         // Escrow should be empty
-        assertEq(
-            erc20TokenA.balanceOf(address(bundleEscrow)),
-            0,
-            "Escrow should have no ERC20 tokens left"
-        );
+        assertEq(erc20TokenA.balanceOf(address(bundleEscrow)), 0, "Escrow should have no ERC20 tokens left");
         assertEq(
             erc1155TokenA.balanceOf(address(bundleEscrow), erc1155TokenIdA),
             0,
@@ -413,28 +288,15 @@ contract TokenBundleBarterUtilsUnitTest is Test {
         uint64 expiration = uint64(block.timestamp + 1 days);
         uint256 deadline = block.timestamp + 1 days;
 
-        TokenBundleEscrowObligation.ObligationData
-            memory aliceBundle = createAliceBundle();
+        TokenBundleEscrowObligation.ObligationData memory aliceBundle = createAliceBundle();
 
         // Create permit signature for Alice's ERC20 token
-        (uint8 v, bytes32 r, bytes32 s) = _getPermitSignature(
-            erc20TokenA,
-            ALICE_PRIVATE_KEY,
-            address(barterUtils),
-            erc20AmountA,
-            deadline
-        );
+        (uint8 v, bytes32 r, bytes32 s) =
+            _getPermitSignature(erc20TokenA, ALICE_PRIVATE_KEY, address(barterUtils), erc20AmountA, deadline);
 
-        TokenBundleBarterUtils.ERC20PermitSignature[]
-            memory permits = new TokenBundleBarterUtils.ERC20PermitSignature[](
-                1
-            );
-        permits[0] = TokenBundleBarterUtils.ERC20PermitSignature({
-            v: v,
-            r: r,
-            s: s,
-            deadline: deadline
-        });
+        TokenBundleBarterUtils.ERC20PermitSignature[] memory permits =
+            new TokenBundleBarterUtils.ERC20PermitSignature[](1);
+        permits[0] = TokenBundleBarterUtils.ERC20PermitSignature({v: v, r: r, s: s, deadline: deadline});
 
         // Alice creates escrow with permit
         vm.startPrank(alice);
@@ -442,30 +304,14 @@ contract TokenBundleBarterUtilsUnitTest is Test {
         erc721TokenA.approve(address(barterUtils), aliceErc721Id);
         erc1155TokenA.setApprovalForAll(address(barterUtils), true);
 
-        bytes32 escrowAttestation = barterUtils.permitAndEscrowBundle(
-            aliceBundle,
-            expiration,
-            permits
-        );
+        bytes32 escrowAttestation = barterUtils.permitAndEscrowBundle(aliceBundle, expiration, permits);
         vm.stopPrank();
 
-        assertNotEq(
-            escrowAttestation,
-            bytes32(0),
-            "Escrow attestation should be created"
-        );
+        assertNotEq(escrowAttestation, bytes32(0), "Escrow attestation should be created");
 
         // Verify that Alice's tokens are now in escrow
-        assertEq(
-            erc20TokenA.balanceOf(address(bundleEscrow)),
-            erc20AmountA,
-            "ERC20 tokens should be in escrow"
-        );
-        assertEq(
-            erc721TokenA.ownerOf(aliceErc721Id),
-            address(bundleEscrow),
-            "ERC721 should be in escrow"
-        );
+        assertEq(erc20TokenA.balanceOf(address(bundleEscrow)), erc20AmountA, "ERC20 tokens should be in escrow");
+        assertEq(erc721TokenA.ownerOf(aliceErc721Id), address(bundleEscrow), "ERC721 should be in escrow");
         assertEq(
             erc1155TokenA.balanceOf(address(bundleEscrow), erc1155TokenIdA),
             erc1155TokenAmountA,
@@ -477,28 +323,15 @@ contract TokenBundleBarterUtilsUnitTest is Test {
         // No expiration needed for this test
         uint256 deadline = block.timestamp + 1 days;
 
-        TokenBundlePaymentObligation.ObligationData
-            memory bobBundle = createBobBundle();
+        TokenBundlePaymentObligation.ObligationData memory bobBundle = createBobBundle();
 
         // Create permit signature for Bob's ERC20 token
-        (uint8 v, bytes32 r, bytes32 s) = _getPermitSignature(
-            erc20TokenB,
-            BOB_PRIVATE_KEY,
-            address(barterUtils),
-            erc20AmountB,
-            deadline
-        );
+        (uint8 v, bytes32 r, bytes32 s) =
+            _getPermitSignature(erc20TokenB, BOB_PRIVATE_KEY, address(barterUtils), erc20AmountB, deadline);
 
-        TokenBundleBarterUtils.ERC20PermitSignature[]
-            memory permits = new TokenBundleBarterUtils.ERC20PermitSignature[](
-                1
-            );
-        permits[0] = TokenBundleBarterUtils.ERC20PermitSignature({
-            v: v,
-            r: r,
-            s: s,
-            deadline: deadline
-        });
+        TokenBundleBarterUtils.ERC20PermitSignature[] memory permits =
+            new TokenBundleBarterUtils.ERC20PermitSignature[](1);
+        permits[0] = TokenBundleBarterUtils.ERC20PermitSignature({v: v, r: r, s: s, deadline: deadline});
 
         // Bob creates payment with permit
         vm.startPrank(bob);
@@ -506,41 +339,19 @@ contract TokenBundleBarterUtilsUnitTest is Test {
         erc721TokenB.approve(address(barterUtils), bobErc721Id);
         erc1155TokenB.setApprovalForAll(address(barterUtils), true);
 
-        bytes32 payAttestation = barterUtils.permitAndPayBundle(
-            bobBundle, bytes32(0),
-            permits
-        );
+        bytes32 payAttestation = barterUtils.permitAndPayBundle(bobBundle, bytes32(0), permits);
         vm.stopPrank();
 
-        assertNotEq(
-            payAttestation,
-            bytes32(0),
-            "Payment attestation should be created"
-        );
+        assertNotEq(payAttestation, bytes32(0), "Payment attestation should be created");
 
         // Verify the attestation
         Attestation memory payment = eas.getAttestation(payAttestation);
-        TokenBundlePaymentObligation.ObligationData memory paymentData = abi
-            .decode(
-                payment.data,
-                (TokenBundlePaymentObligation.ObligationData)
-            );
+        TokenBundlePaymentObligation.ObligationData memory paymentData =
+            abi.decode(payment.data, (TokenBundlePaymentObligation.ObligationData));
 
-        assertEq(
-            paymentData.erc20Tokens[0],
-            address(erc20TokenB),
-            "ERC20 token should match"
-        );
-        assertEq(
-            paymentData.erc20Amounts[0],
-            erc20AmountB,
-            "ERC20 amount should match"
-        );
-        assertEq(
-            paymentData.erc721Tokens[0],
-            address(erc721TokenB),
-            "ERC721 token should match"
-        );
+        assertEq(paymentData.erc20Tokens[0], address(erc20TokenB), "ERC20 token should match");
+        assertEq(paymentData.erc20Amounts[0], erc20AmountB, "ERC20 amount should match");
+        assertEq(paymentData.erc721Tokens[0], address(erc721TokenB), "ERC721 token should match");
         assertEq(paymentData.payee, alice, "Payee should match");
     }
 
@@ -548,30 +359,16 @@ contract TokenBundleBarterUtilsUnitTest is Test {
         uint64 expiration = uint64(block.timestamp + 1 days);
         uint256 deadline = block.timestamp + 1 days;
 
-        TokenBundleEscrowObligation.ObligationData
-            memory aliceBundle = createAliceBundle();
-        TokenBundlePaymentObligation.ObligationData
-            memory bobBundle = createBobBundle();
+        TokenBundleEscrowObligation.ObligationData memory aliceBundle = createAliceBundle();
+        TokenBundlePaymentObligation.ObligationData memory bobBundle = createBobBundle();
 
         // Create permit signature for Alice's ERC20 token
-        (uint8 v, bytes32 r, bytes32 s) = _getPermitSignature(
-            erc20TokenA,
-            ALICE_PRIVATE_KEY,
-            address(barterUtils),
-            erc20AmountA,
-            deadline
-        );
+        (uint8 v, bytes32 r, bytes32 s) =
+            _getPermitSignature(erc20TokenA, ALICE_PRIVATE_KEY, address(barterUtils), erc20AmountA, deadline);
 
-        TokenBundleBarterUtils.ERC20PermitSignature[]
-            memory permits = new TokenBundleBarterUtils.ERC20PermitSignature[](
-                1
-            );
-        permits[0] = TokenBundleBarterUtils.ERC20PermitSignature({
-            v: v,
-            r: r,
-            s: s,
-            deadline: deadline
-        });
+        TokenBundleBarterUtils.ERC20PermitSignature[] memory permits =
+            new TokenBundleBarterUtils.ERC20PermitSignature[](1);
+        permits[0] = TokenBundleBarterUtils.ERC20PermitSignature({v: v, r: r, s: s, deadline: deadline});
 
         // Alice creates bid with permit
         vm.startPrank(alice);
@@ -579,31 +376,14 @@ contract TokenBundleBarterUtilsUnitTest is Test {
         erc721TokenA.approve(address(barterUtils), aliceErc721Id);
         erc1155TokenA.setApprovalForAll(address(barterUtils), true);
 
-        bytes32 buyAttestation = barterUtils.permitAndEscrowBundleForBundle(
-            aliceBundle,
-            bobBundle,
-            expiration,
-            permits
-        );
+        bytes32 buyAttestation = barterUtils.permitAndEscrowBundleForBundle(aliceBundle, bobBundle, expiration, permits);
         vm.stopPrank();
 
-        assertNotEq(
-            buyAttestation,
-            bytes32(0),
-            "Buy attestation should be created"
-        );
+        assertNotEq(buyAttestation, bytes32(0), "Buy attestation should be created");
 
         // Verify that Alice's tokens are now in escrow
-        assertEq(
-            erc20TokenA.balanceOf(address(bundleEscrow)),
-            erc20AmountA,
-            "ERC20 tokens should be in escrow"
-        );
-        assertEq(
-            erc721TokenA.ownerOf(aliceErc721Id),
-            address(bundleEscrow),
-            "ERC721 should be in escrow"
-        );
+        assertEq(erc20TokenA.balanceOf(address(bundleEscrow)), erc20AmountA, "ERC20 tokens should be in escrow");
+        assertEq(erc721TokenA.ownerOf(aliceErc721Id), address(bundleEscrow), "ERC721 should be in escrow");
         assertEq(
             erc1155TokenA.balanceOf(address(bundleEscrow), erc1155TokenIdA),
             erc1155TokenAmountA,
@@ -615,42 +395,24 @@ contract TokenBundleBarterUtilsUnitTest is Test {
         uint64 expiration = uint64(block.timestamp + 1 days);
         uint256 deadline = block.timestamp + 1 days;
 
-        TokenBundleEscrowObligation.ObligationData
-            memory aliceBundle = createAliceBundle();
-        TokenBundlePaymentObligation.ObligationData
-            memory bobBundle = createBobBundle();
+        TokenBundleEscrowObligation.ObligationData memory aliceBundle = createAliceBundle();
+        TokenBundlePaymentObligation.ObligationData memory bobBundle = createBobBundle();
 
         // Alice creates bid
         vm.startPrank(alice);
         erc20TokenA.approve(address(barterUtils), erc20AmountA);
         erc721TokenA.approve(address(barterUtils), aliceErc721Id);
         erc1155TokenA.setApprovalForAll(address(barterUtils), true);
-        bytes32 buyAttestation = barterUtils.buyBundleForBundle(
-            aliceBundle,
-            bobBundle,
-            expiration
-        );
+        bytes32 buyAttestation = barterUtils.buyBundleForBundle(aliceBundle, bobBundle, expiration);
         vm.stopPrank();
 
         // Create permit signature for Bob's ERC20 token
-        (uint8 v, bytes32 r, bytes32 s) = _getPermitSignature(
-            erc20TokenB,
-            BOB_PRIVATE_KEY,
-            address(barterUtils),
-            erc20AmountB,
-            deadline
-        );
+        (uint8 v, bytes32 r, bytes32 s) =
+            _getPermitSignature(erc20TokenB, BOB_PRIVATE_KEY, address(barterUtils), erc20AmountB, deadline);
 
-        TokenBundleBarterUtils.ERC20PermitSignature[]
-            memory permits = new TokenBundleBarterUtils.ERC20PermitSignature[](
-                1
-            );
-        permits[0] = TokenBundleBarterUtils.ERC20PermitSignature({
-            v: v,
-            r: r,
-            s: s,
-            deadline: deadline
-        });
+        TokenBundleBarterUtils.ERC20PermitSignature[] memory permits =
+            new TokenBundleBarterUtils.ERC20PermitSignature[](1);
+        permits[0] = TokenBundleBarterUtils.ERC20PermitSignature({v: v, r: r, s: s, deadline: deadline});
 
         // Bob fulfills Alice's bid with permit
         vm.startPrank(bob);
@@ -658,30 +420,15 @@ contract TokenBundleBarterUtilsUnitTest is Test {
         erc721TokenB.approve(address(barterUtils), bobErc721Id);
         erc1155TokenB.setApprovalForAll(address(barterUtils), true);
 
-        bytes32 payAttestation = barterUtils.permitAndPayBundleForBundle(
-            buyAttestation,
-            permits
-        );
+        bytes32 payAttestation = barterUtils.permitAndPayBundleForBundle(buyAttestation, permits);
         vm.stopPrank();
 
-        assertNotEq(
-            payAttestation,
-            bytes32(0),
-            "Pay attestation should be created"
-        );
+        assertNotEq(payAttestation, bytes32(0), "Pay attestation should be created");
 
         // Verify the exchange happened
         // Alice should have Bob's tokens
-        assertEq(
-            erc20TokenB.balanceOf(alice),
-            erc20AmountB,
-            "Alice should have Bob's ERC20 tokens"
-        );
-        assertEq(
-            erc721TokenB.ownerOf(bobErc721Id),
-            alice,
-            "Alice should have Bob's ERC721 token"
-        );
+        assertEq(erc20TokenB.balanceOf(alice), erc20AmountB, "Alice should have Bob's ERC20 tokens");
+        assertEq(erc721TokenB.ownerOf(bobErc721Id), alice, "Alice should have Bob's ERC721 token");
         assertEq(
             erc1155TokenB.balanceOf(alice, erc1155TokenIdB),
             erc1155TokenAmountB,
@@ -689,20 +436,10 @@ contract TokenBundleBarterUtilsUnitTest is Test {
         );
 
         // Bob should have Alice's tokens
+        assertEq(erc20TokenA.balanceOf(bob), erc20AmountA, "Bob should have Alice's ERC20 tokens");
+        assertEq(erc721TokenA.ownerOf(aliceErc721Id), bob, "Bob should have Alice's ERC721 token");
         assertEq(
-            erc20TokenA.balanceOf(bob),
-            erc20AmountA,
-            "Bob should have Alice's ERC20 tokens"
-        );
-        assertEq(
-            erc721TokenA.ownerOf(aliceErc721Id),
-            bob,
-            "Bob should have Alice's ERC721 token"
-        );
-        assertEq(
-            erc1155TokenA.balanceOf(bob, erc1155TokenIdA),
-            erc1155TokenAmountA,
-            "Bob should have Alice's ERC1155 tokens"
+            erc1155TokenA.balanceOf(bob, erc1155TokenIdA), erc1155TokenAmountA, "Bob should have Alice's ERC1155 tokens"
         );
     }
 
@@ -710,10 +447,8 @@ contract TokenBundleBarterUtilsUnitTest is Test {
     function test_RevertWhen_TokenNotApproved() public {
         uint64 expiration = uint64(block.timestamp + 1 days);
 
-        TokenBundleEscrowObligation.ObligationData
-            memory aliceBundle = createAliceBundle();
-        TokenBundlePaymentObligation.ObligationData
-            memory bobBundle = createBobBundle();
+        TokenBundleEscrowObligation.ObligationData memory aliceBundle = createAliceBundle();
+        TokenBundlePaymentObligation.ObligationData memory bobBundle = createBobBundle();
 
         // Alice tries to make bid without approving tokens
         vm.startPrank(alice);
@@ -725,21 +460,15 @@ contract TokenBundleBarterUtilsUnitTest is Test {
     function test_RevertWhen_PaymentFails() public {
         uint64 expiration = uint64(block.timestamp + 1 days);
 
-        TokenBundleEscrowObligation.ObligationData
-            memory aliceBundle = createAliceBundle();
-        TokenBundlePaymentObligation.ObligationData
-            memory bobBundle = createBobBundle();
+        TokenBundleEscrowObligation.ObligationData memory aliceBundle = createAliceBundle();
+        TokenBundlePaymentObligation.ObligationData memory bobBundle = createBobBundle();
 
         // Alice creates bid
         vm.startPrank(alice);
         erc20TokenA.approve(address(barterUtils), erc20AmountA);
         erc721TokenA.approve(address(barterUtils), aliceErc721Id);
         erc1155TokenA.setApprovalForAll(address(barterUtils), true);
-        bytes32 buyAttestation = barterUtils.buyBundleForBundle(
-            aliceBundle,
-            bobBundle,
-            expiration
-        );
+        bytes32 buyAttestation = barterUtils.buyBundleForBundle(aliceBundle, bobBundle, expiration);
         vm.stopPrank();
 
         // Bob tries to fulfill without approving tokens
@@ -753,24 +482,15 @@ contract TokenBundleBarterUtilsUnitTest is Test {
         uint64 expiration = uint64(block.timestamp + 1 days);
         uint256 deadline = block.timestamp + 1 days;
 
-        TokenBundleEscrowObligation.ObligationData
-            memory aliceBundle = createAliceBundle();
+        TokenBundleEscrowObligation.ObligationData memory aliceBundle = createAliceBundle();
 
         // We don't need the result of the permit signature for this test
         // Just need to call the function to avoid compiler warnings
-        _getPermitSignature(
-            erc20TokenA,
-            ALICE_PRIVATE_KEY,
-            address(barterUtils),
-            erc20AmountA,
-            deadline
-        );
+        _getPermitSignature(erc20TokenA, ALICE_PRIVATE_KEY, address(barterUtils), erc20AmountA, deadline);
 
         // No need to create valid permits, we're testing the error case
-        TokenBundleBarterUtils.ERC20PermitSignature[]
-            memory permits = new TokenBundleBarterUtils.ERC20PermitSignature[](
-                0
-            );
+        TokenBundleBarterUtils.ERC20PermitSignature[] memory permits =
+            new TokenBundleBarterUtils.ERC20PermitSignature[](0);
 
         // Alice tries to create escrow with invalid permit length
         vm.startPrank(alice);
@@ -783,21 +503,15 @@ contract TokenBundleBarterUtilsUnitTest is Test {
         // Create a bid with short expiration
         uint64 expiration = uint64(block.timestamp + 10 minutes);
 
-        TokenBundleEscrowObligation.ObligationData
-            memory aliceBundle = createAliceBundle();
-        TokenBundlePaymentObligation.ObligationData
-            memory bobBundle = createBobBundle();
+        TokenBundleEscrowObligation.ObligationData memory aliceBundle = createAliceBundle();
+        TokenBundlePaymentObligation.ObligationData memory bobBundle = createBobBundle();
 
         // Alice creates bid
         vm.startPrank(alice);
         erc20TokenA.approve(address(barterUtils), erc20AmountA);
         erc721TokenA.approve(address(barterUtils), aliceErc721Id);
         erc1155TokenA.setApprovalForAll(address(barterUtils), true);
-        bytes32 buyAttestation = barterUtils.buyBundleForBundle(
-            aliceBundle,
-            bobBundle,
-            expiration
-        );
+        bytes32 buyAttestation = barterUtils.buyBundleForBundle(aliceBundle, bobBundle, expiration);
         vm.stopPrank();
 
         // Warp time past expiration

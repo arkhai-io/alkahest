@@ -29,9 +29,7 @@ contract UidArbiterTest is Test {
         });
 
         // Create demand data with matching UID
-        UidArbiter.DemandData memory demandData = UidArbiter.DemandData({
-            uid: uid
-        });
+        UidArbiter.DemandData memory demandData = UidArbiter.DemandData({uid: uid});
         bytes memory demand = abi.encode(demandData);
 
         // Check obligation should return true
@@ -56,9 +54,7 @@ contract UidArbiterTest is Test {
         });
 
         // Create demand data with non-matching UID
-        UidArbiter.DemandData memory demandData = UidArbiter.DemandData({
-            uid: bytes32(uint256(2))
-        });
+        UidArbiter.DemandData memory demandData = UidArbiter.DemandData({uid: bytes32(uint256(2))});
         bytes memory demand = abi.encode(demandData);
 
         // Check obligation should revert with UidMismatched
@@ -68,14 +64,12 @@ contract UidArbiterTest is Test {
 
     function testDecodeDemandData() public {
         // Create demand data
-        UidArbiter.DemandData memory expectedDemandData = UidArbiter.DemandData({
-            uid: bytes32(uint256(123))
-        });
-        
+        UidArbiter.DemandData memory expectedDemandData = UidArbiter.DemandData({uid: bytes32(uint256(123))});
+
         bytes memory encodedData = abi.encode(expectedDemandData);
-        
+
         UidArbiter.DemandData memory decodedData = arbiter.decodeDemandData(encodedData);
-        
+
         assertEq(decodedData.uid, expectedDemandData.uid, "UID should match");
     }
 }

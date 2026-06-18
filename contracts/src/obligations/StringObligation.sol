@@ -12,34 +12,21 @@ contract StringObligation is BaseObligation {
         bytes32 schema; // arbitrary tag describing the payload format
     }
 
-    constructor(
-        IEAS _eas,
-        ISchemaRegistry _schemaRegistry
-    ) BaseObligation(_eas, _schemaRegistry, "string item, bytes32 schema", true) {}
+    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry)
+        BaseObligation(_eas, _schemaRegistry, "string item, bytes32 schema", true)
+    {}
 
-    function doObligation(
-        ObligationData calldata data,
-        bytes32 refUID
-    ) public returns (bytes32 uid_) {
+    function doObligation(ObligationData calldata data, bytes32 refUID) public returns (bytes32 uid_) {
         bytes memory encodedData = abi.encode(data);
-        uid_ = _doObligationForRaw(
-            encodedData,
-            0,
-            msg.sender,
-            refUID
-        );
+        uid_ = _doObligationForRaw(encodedData, 0, msg.sender, refUID);
     }
 
-    function getObligationData(
-        bytes32 uid
-    ) public view returns (ObligationData memory) {
+    function getObligationData(bytes32 uid) public view returns (ObligationData memory) {
         Attestation memory attestation = _getAttestation(uid);
         return abi.decode(attestation.data, (ObligationData));
     }
 
-    function decodeObligationData(
-        bytes calldata data
-    ) public pure returns (ObligationData memory) {
+    function decodeObligationData(bytes calldata data) public pure returns (ObligationData memory) {
         return abi.decode(data, (ObligationData));
     }
 }

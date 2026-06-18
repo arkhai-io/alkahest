@@ -25,9 +25,7 @@ contract MockERC20 is ERC20 {
 
 // Interfaces for the ERC-8004 contracts
 interface IIdentityRegistry {
-    function register(
-        string calldata agentURI
-    ) external returns (uint256 agentId);
+    function register(string calldata agentURI) external returns (uint256 agentId);
 
     function ownerOf(uint256 agentId) external view returns (address);
 
@@ -50,9 +48,7 @@ interface IValidationRegistry {
         string calldata tag
     ) external;
 
-    function getValidationStatus(
-        bytes32 requestHash
-    )
+    function getValidationStatus(bytes32 requestHash)
         external
         view
         returns (
@@ -114,15 +110,12 @@ contract ERC8004IntegrationTest is Test {
         // Deploy ERC-8004 upgradeable contracts via proxy
         ERC8004Deployer erc8004Deployer = new ERC8004Deployer();
 
-        address identityAddr = erc8004Deployer.deployUpgradeable(
-            "IdentityRegistryUpgradeable",
-            abi.encodeWithSignature("initialize()")
-        );
+        address identityAddr =
+            erc8004Deployer.deployUpgradeable("IdentityRegistryUpgradeable", abi.encodeWithSignature("initialize()"));
         identityRegistry = IIdentityRegistry(identityAddr);
 
         address validationAddr = erc8004Deployer.deployUpgradeable(
-            "ValidationRegistryUpgradeable",
-            abi.encodeWithSignature("initialize(address)", identityAddr)
+            "ValidationRegistryUpgradeable", abi.encodeWithSignature("initialize(address)", identityAddr)
         );
         validationRegistry = IValidationRegistry(validationAddr);
 
@@ -139,39 +132,21 @@ contract ERC8004IntegrationTest is Test {
         vm.startPrank(alice);
         token.approve(address(escrowObligation), ESCROW_AMOUNT);
 
-        ERC8004Arbiter.DemandData memory demandData = ERC8004Arbiter
-            .DemandData({
-                validationRegistry: address(validationRegistry),
-                validatorAddress: charlie,
-                minResponse: MIN_RESPONSE
-            });
+        ERC8004Arbiter.DemandData memory demandData = ERC8004Arbiter.DemandData({
+            validationRegistry: address(validationRegistry), validatorAddress: charlie, minResponse: MIN_RESPONSE
+        });
 
-        ERC20EscrowObligation.ObligationData
-            memory obligationData = ERC20EscrowObligation.ObligationData({
-                arbiter: address(arbiter),
-                demand: abi.encode(demandData),
-                token: address(token),
-                amount: ESCROW_AMOUNT
-            });
+        ERC20EscrowObligation.ObligationData memory obligationData = ERC20EscrowObligation.ObligationData({
+            arbiter: address(arbiter), demand: abi.encode(demandData), token: address(token), amount: ESCROW_AMOUNT
+        });
 
         uint64 expiration = uint64(block.timestamp + EXPIRATION_TIME);
-        bytes32 escrowUid = escrowObligation.doObligation(
-            obligationData,
-            expiration
-        );
+        bytes32 escrowUid = escrowObligation.doObligation(obligationData, expiration);
         vm.stopPrank();
 
         // Verify escrow was created
-        assertEq(
-            token.balanceOf(address(escrowObligation)),
-            ESCROW_AMOUNT,
-            "Escrow should hold tokens"
-        );
-        assertEq(
-            token.balanceOf(alice),
-            900 * 10 ** 18,
-            "Alice should have sent tokens"
-        );
+        assertEq(token.balanceOf(address(escrowObligation)), ESCROW_AMOUNT, "Escrow should hold tokens");
+        assertEq(token.balanceOf(alice), 900 * 10 ** 18, "Alice should have sent tokens");
 
         // === Step 2: Bob creates a fulfillment obligation ===
         vm.prank(bob);
@@ -181,34 +156,19 @@ contract ERC8004IntegrationTest is Test {
         );
 
         // Verify fulfillment obligation was created
-        Attestation memory fulfillmentAttestation = eas.getAttestation(
-            fulfillmentUid
-        );
+        Attestation memory fulfillmentAttestation = eas.getAttestation(fulfillmentUid);
         assertEq(
             fulfillmentAttestation.attester,
             address(fulfillmentObligation),
             "Fulfillment should be attested by StringObligation contract"
         );
-        assertEq(
-            fulfillmentAttestation.recipient,
-            bob,
-            "Bob should be the recipient"
-        );
-        assertEq(
-            fulfillmentAttestation.refUID,
-            escrowUid,
-            "Fulfillment should reference escrow"
-        );
+        assertEq(fulfillmentAttestation.recipient, bob, "Bob should be the recipient");
+        assertEq(fulfillmentAttestation.refUID, escrowUid, "Fulfillment should reference escrow");
 
         // === Step 3: Bob requests validation for the fulfillment ===
         vm.prank(bob);
         bytes32 requestHash = fulfillmentUid; // Use fulfillment UID as request hash
-        validationRegistry.validationRequest(
-            charlie,
-            bobAgentId,
-            "ipfs://validation-request",
-            requestHash
-        );
+        validationRegistry.validationRequest(charlie, bobAgentId, "ipfs://validation-request", requestHash);
 
         // === Step 4: Charlie validates with a passing score ===
         vm.prank(charlie);
@@ -221,14 +181,8 @@ contract ERC8004IntegrationTest is Test {
         );
 
         // Verify validation was recorded
-        (
-            address validatorAddress,
-            uint256 agentId,
-            uint8 response,
-            ,
-            ,
-
-        ) = validationRegistry.getValidationStatus(requestHash);
+        (address validatorAddress, uint256 agentId, uint8 response,,,) =
+            validationRegistry.getValidationStatus(requestHash);
         assertEq(validatorAddress, charlie, "Validator should be Charlie");
         assertEq(agentId, bobAgentId, "Agent should be Bob");
         assertEq(response, 75, "Response should be 75");
@@ -237,24 +191,13 @@ contract ERC8004IntegrationTest is Test {
         uint256 bobBalanceBefore = token.balanceOf(bob);
 
         vm.prank(bob);
-        bool success = escrowObligation.collectEscrow(
-            escrowUid,
-            fulfillmentUid
-        );
+        bool success = escrowObligation.collectEscrow(escrowUid, fulfillmentUid);
 
         assertTrue(success, "Escrow collection should succeed");
 
         // Verify tokens were transferred to Bob
-        assertEq(
-            token.balanceOf(bob),
-            bobBalanceBefore + ESCROW_AMOUNT,
-            "Bob should have received tokens"
-        );
-        assertEq(
-            token.balanceOf(address(escrowObligation)),
-            0,
-            "Escrow should be empty"
-        );
+        assertEq(token.balanceOf(bob), bobBalanceBefore + ESCROW_AMOUNT, "Bob should have received tokens");
+        assertEq(token.balanceOf(address(escrowObligation)), 0, "Escrow should be empty");
     }
 
     function testRevertWhen_ValidationBelowMinimum() public {
@@ -262,44 +205,28 @@ contract ERC8004IntegrationTest is Test {
         vm.startPrank(alice);
         token.approve(address(escrowObligation), ESCROW_AMOUNT);
 
-        ERC8004Arbiter.DemandData memory demandData = ERC8004Arbiter
-            .DemandData({
-                validationRegistry: address(validationRegistry),
-                validatorAddress: charlie,
-                minResponse: MIN_RESPONSE
-            });
+        ERC8004Arbiter.DemandData memory demandData = ERC8004Arbiter.DemandData({
+            validationRegistry: address(validationRegistry), validatorAddress: charlie, minResponse: MIN_RESPONSE
+        });
 
-        ERC20EscrowObligation.ObligationData
-            memory obligationData = ERC20EscrowObligation.ObligationData({
-                arbiter: address(arbiter),
-                demand: abi.encode(demandData),
-                token: address(token),
-                amount: ESCROW_AMOUNT
-            });
+        ERC20EscrowObligation.ObligationData memory obligationData = ERC20EscrowObligation.ObligationData({
+            arbiter: address(arbiter), demand: abi.encode(demandData), token: address(token), amount: ESCROW_AMOUNT
+        });
 
         uint64 expiration = uint64(block.timestamp + EXPIRATION_TIME);
-        bytes32 escrowUid = escrowObligation.doObligation(
-            obligationData,
-            expiration
-        );
+        bytes32 escrowUid = escrowObligation.doObligation(obligationData, expiration);
         vm.stopPrank();
 
         // === Step 2: Bob creates a fulfillment obligation ===
         vm.prank(bob);
         bytes32 fulfillmentUid = fulfillmentObligation.doObligation(
-            StringObligation.ObligationData({item: "<fulfillment data>", schema: bytes32(0)}),
-            escrowUid
+            StringObligation.ObligationData({item: "<fulfillment data>", schema: bytes32(0)}), escrowUid
         );
 
         // === Step 3: Bob requests validation for the fulfillment ===
         vm.prank(bob);
         bytes32 requestHash = fulfillmentUid;
-        validationRegistry.validationRequest(
-            charlie,
-            bobAgentId,
-            "ipfs://validation-request",
-            requestHash
-        );
+        validationRegistry.validationRequest(charlie, bobAgentId, "ipfs://validation-request", requestHash);
 
         // === Step 4: Charlie validates with a FAILING score ===
         vm.prank(charlie);
@@ -312,9 +239,7 @@ contract ERC8004IntegrationTest is Test {
         );
 
         // Verify validation was recorded with low score
-        (, , uint8 response, , , ) = validationRegistry.getValidationStatus(
-            requestHash
-        );
+        (,, uint8 response,,,) = validationRegistry.getValidationStatus(requestHash);
         assertEq(response, 30, "Response should be 30");
 
         // === Step 5: Bob attempts to claim Alice's escrow (should fail) ===
@@ -323,11 +248,7 @@ contract ERC8004IntegrationTest is Test {
         escrowObligation.collectEscrow(escrowUid, fulfillmentUid);
 
         // Verify tokens remain in escrow
-        assertEq(
-            token.balanceOf(address(escrowObligation)),
-            ESCROW_AMOUNT,
-            "Escrow should still hold tokens"
-        );
+        assertEq(token.balanceOf(address(escrowObligation)), ESCROW_AMOUNT, "Escrow should still hold tokens");
         assertEq(token.balanceOf(bob), 0, "Bob should not have received tokens");
     }
 
@@ -336,44 +257,28 @@ contract ERC8004IntegrationTest is Test {
         vm.startPrank(alice);
         token.approve(address(escrowObligation), ESCROW_AMOUNT);
 
-        ERC8004Arbiter.DemandData memory demandData = ERC8004Arbiter
-            .DemandData({
-                validationRegistry: address(validationRegistry),
-                validatorAddress: charlie,
-                minResponse: MIN_RESPONSE
-            });
+        ERC8004Arbiter.DemandData memory demandData = ERC8004Arbiter.DemandData({
+            validationRegistry: address(validationRegistry), validatorAddress: charlie, minResponse: MIN_RESPONSE
+        });
 
-        ERC20EscrowObligation.ObligationData
-            memory obligationData = ERC20EscrowObligation.ObligationData({
-                arbiter: address(arbiter),
-                demand: abi.encode(demandData),
-                token: address(token),
-                amount: ESCROW_AMOUNT
-            });
+        ERC20EscrowObligation.ObligationData memory obligationData = ERC20EscrowObligation.ObligationData({
+            arbiter: address(arbiter), demand: abi.encode(demandData), token: address(token), amount: ESCROW_AMOUNT
+        });
 
         uint64 expiration = uint64(block.timestamp + EXPIRATION_TIME);
-        bytes32 escrowUid = escrowObligation.doObligation(
-            obligationData,
-            expiration
-        );
+        bytes32 escrowUid = escrowObligation.doObligation(obligationData, expiration);
         vm.stopPrank();
 
         // === Step 2: Bob creates a fulfillment obligation ===
         vm.prank(bob);
         bytes32 fulfillmentUid = fulfillmentObligation.doObligation(
-            StringObligation.ObligationData({item: "<fulfillment data>", schema: bytes32(0)}),
-            escrowUid
+            StringObligation.ObligationData({item: "<fulfillment data>", schema: bytes32(0)}), escrowUid
         );
 
         // === Step 3: Bob requests validation ===
         vm.prank(bob);
         bytes32 requestHash = fulfillmentUid;
-        validationRegistry.validationRequest(
-            charlie,
-            bobAgentId,
-            "ipfs://validation-request",
-            requestHash
-        );
+        validationRegistry.validationRequest(charlie, bobAgentId, "ipfs://validation-request", requestHash);
 
         // === Step 4: Charlie validates with EXACT minimum score ===
         vm.prank(charlie);
@@ -389,17 +294,10 @@ contract ERC8004IntegrationTest is Test {
         uint256 bobBalanceBefore = token.balanceOf(bob);
 
         vm.prank(bob);
-        bool success = escrowObligation.collectEscrow(
-            escrowUid,
-            fulfillmentUid
-        );
+        bool success = escrowObligation.collectEscrow(escrowUid, fulfillmentUid);
 
         assertTrue(success, "Escrow collection should succeed");
-        assertEq(
-            token.balanceOf(bob),
-            bobBalanceBefore + ESCROW_AMOUNT,
-            "Bob should have received tokens"
-        );
+        assertEq(token.balanceOf(bob), bobBalanceBefore + ESCROW_AMOUNT, "Bob should have received tokens");
     }
 
     function testJustBelowMinimumValidationFails() public {
@@ -407,44 +305,28 @@ contract ERC8004IntegrationTest is Test {
         vm.startPrank(alice);
         token.approve(address(escrowObligation), ESCROW_AMOUNT);
 
-        ERC8004Arbiter.DemandData memory demandData = ERC8004Arbiter
-            .DemandData({
-                validationRegistry: address(validationRegistry),
-                validatorAddress: charlie,
-                minResponse: MIN_RESPONSE
-            });
+        ERC8004Arbiter.DemandData memory demandData = ERC8004Arbiter.DemandData({
+            validationRegistry: address(validationRegistry), validatorAddress: charlie, minResponse: MIN_RESPONSE
+        });
 
-        ERC20EscrowObligation.ObligationData
-            memory obligationData = ERC20EscrowObligation.ObligationData({
-                arbiter: address(arbiter),
-                demand: abi.encode(demandData),
-                token: address(token),
-                amount: ESCROW_AMOUNT
-            });
+        ERC20EscrowObligation.ObligationData memory obligationData = ERC20EscrowObligation.ObligationData({
+            arbiter: address(arbiter), demand: abi.encode(demandData), token: address(token), amount: ESCROW_AMOUNT
+        });
 
         uint64 expiration = uint64(block.timestamp + EXPIRATION_TIME);
-        bytes32 escrowUid = escrowObligation.doObligation(
-            obligationData,
-            expiration
-        );
+        bytes32 escrowUid = escrowObligation.doObligation(obligationData, expiration);
         vm.stopPrank();
 
         // === Step 2: Bob creates a fulfillment obligation ===
         vm.prank(bob);
         bytes32 fulfillmentUid = fulfillmentObligation.doObligation(
-            StringObligation.ObligationData({item: "<fulfillment data>", schema: bytes32(0)}),
-            escrowUid
+            StringObligation.ObligationData({item: "<fulfillment data>", schema: bytes32(0)}), escrowUid
         );
 
         // === Step 3: Bob requests validation ===
         vm.prank(bob);
         bytes32 requestHash = fulfillmentUid;
-        validationRegistry.validationRequest(
-            charlie,
-            bobAgentId,
-            "ipfs://validation-request",
-            requestHash
-        );
+        validationRegistry.validationRequest(charlie, bobAgentId, "ipfs://validation-request", requestHash);
 
         // === Step 4: Charlie validates with score just below minimum ===
         vm.prank(charlie);
@@ -462,10 +344,6 @@ contract ERC8004IntegrationTest is Test {
         escrowObligation.collectEscrow(escrowUid, fulfillmentUid);
 
         // Verify tokens remain in escrow
-        assertEq(
-            token.balanceOf(address(escrowObligation)),
-            ESCROW_AMOUNT,
-            "Escrow should still hold tokens"
-        );
+        assertEq(token.balanceOf(address(escrowObligation)), ESCROW_AMOUNT, "Escrow should still hold tokens");
     }
 }

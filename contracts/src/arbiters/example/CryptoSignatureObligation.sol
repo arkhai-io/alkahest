@@ -56,15 +56,9 @@ contract CryptoSignatureObligation is BaseObligation, IArbiter {
         string metadata;
     }
 
-    constructor(
-        IEAS _eas,
-        ISchemaRegistry _schemaRegistry
-    )
+    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry)
         BaseObligation(
-            _eas,
-            _schemaRegistry,
-            "bytes signature,address signerAddress,uint256 timestamp,string metadata",
-            true
+            _eas, _schemaRegistry, "bytes signature,address signerAddress,uint256 timestamp,string metadata", true
         )
     {}
 
@@ -74,17 +68,9 @@ contract CryptoSignatureObligation is BaseObligation, IArbiter {
      * @param refUID Reference to the escrow being fulfilled
      * @return uid The UID of the created attestation
      */
-    function doObligation(
-        ObligationData calldata data,
-        bytes32 refUID
-    ) public returns (bytes32 uid) {
+    function doObligation(ObligationData calldata data, bytes32 refUID) public returns (bytes32 uid) {
         bytes memory encodedData = encodeObligationData(data);
-        uid = _doObligationForRaw(
-            encodedData,
-            0,
-            msg.sender,
-            refUID
-        );
+        uid = _doObligationForRaw(encodedData, 0, msg.sender, refUID);
     }
 
     /**
@@ -95,15 +81,12 @@ contract CryptoSignatureObligation is BaseObligation, IArbiter {
      * @param refUID Reference to the escrow being fulfilled
      * @return uid The UID of the created attestation
      */
-    function signAndFulfill(
-        bytes32 challenge,
-        string calldata metadata,
-        bytes32 refUID
-    ) external returns (bytes32 uid) {
+    function signAndFulfill(bytes32 challenge, string calldata metadata, bytes32 refUID)
+        external
+        returns (bytes32 uid)
+    {
         // Create a simple Ethereum signed message hash
-        bytes32 messageHash = keccak256(
-            abi.encodePacked("\x19Ethereum Signed Message:\n32", challenge)
-        );
+        bytes32 messageHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", challenge));
 
         // Since we're calling from a contract, we can't actually sign
         // In a real implementation, this would be done off-chain
@@ -111,20 +94,11 @@ contract CryptoSignatureObligation is BaseObligation, IArbiter {
         bytes memory signature = abi.encodePacked(messageHash, msg.sender);
 
         ObligationData memory data = ObligationData({
-            signature: signature,
-            signerAddress: msg.sender,
-            timestamp: block.timestamp,
-            metadata: metadata
+            signature: signature, signerAddress: msg.sender, timestamp: block.timestamp, metadata: metadata
         });
 
         bytes memory encodedData = encodeObligationData(data);
-        return
-            _doObligationForRaw(
-                encodedData,
-                0,
-                msg.sender,
-                refUID
-            );
+        return _doObligationForRaw(encodedData, 0, msg.sender, refUID);
     }
 
     /**
@@ -134,11 +108,12 @@ contract CryptoSignatureObligation is BaseObligation, IArbiter {
      * @param fulfilling Optional reference UID for what this obligation is fulfilling
      * @return bool True if the signature is valid for the specified challenge
      */
-    function checkObligation(
-        Attestation memory obligation,
-        bytes memory demand,
-        bytes32 fulfilling
-    ) external view override returns (bool) {
+    function checkObligation(Attestation memory obligation, bytes memory demand, bytes32 fulfilling)
+        external
+        view
+        override
+        returns (bool)
+    {
         // Check basic attestation validity
 
         // Check reference if specified
@@ -150,9 +125,7 @@ contract CryptoSignatureObligation is BaseObligation, IArbiter {
         DemandData memory demandData = abi.decode(demand, (DemandData));
 
         // Decode the obligation to get the signature
-        ObligationData memory obligationData = decodeObligationData(
-            obligation.data
-        );
+        ObligationData memory obligationData = decodeObligationData(obligation.data);
 
         // Verify the signer matches the required public key
         if (obligationData.signerAddress != demandData.publicKey) {
@@ -160,13 +133,7 @@ contract CryptoSignatureObligation is BaseObligation, IArbiter {
         }
 
         // Verify the signature
-        return
-            _verifySignature(
-                demandData.challenge,
-                obligationData.signature,
-                demandData.publicKey,
-                demandData.domain
-            );
+        return _verifySignature(demandData.challenge, obligationData.signature, demandData.publicKey, demandData.domain);
     }
 
     /**
@@ -177,12 +144,11 @@ contract CryptoSignatureObligation is BaseObligation, IArbiter {
      * @param domain Optional domain for EIP-712 signatures
      * @return bool True if the signature is valid
      */
-    function _verifySignature(
-        bytes32 challenge,
-        bytes memory signature,
-        address expectedSigner,
-        string memory domain
-    ) internal pure returns (bool) {
+    function _verifySignature(bytes32 challenge, bytes memory signature, address expectedSigner, string memory domain)
+        internal
+        pure
+        returns (bool)
+    {
         if (signature.length != 65) {
             return false;
         }
@@ -206,25 +172,16 @@ contract CryptoSignatureObligation is BaseObligation, IArbiter {
         bytes32 messageHash;
         if (bytes(domain).length > 0) {
             // EIP-712 style with domain
-            messageHash = keccak256(
-                abi.encodePacked(
-                    "\x19\x01",
-                    keccak256(bytes(domain)),
-                    challenge
-                )
-            );
+            messageHash = keccak256(abi.encodePacked("\x19\x01", keccak256(bytes(domain)), challenge));
         } else {
             // Simple Ethereum signed message
-            messageHash = keccak256(
-                abi.encodePacked("\x19Ethereum Signed Message:\n32", challenge)
-            );
+            messageHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", challenge));
         }
 
         // Recover the signer
         address recoveredSigner = ecrecover(messageHash, v, r, s);
 
-        return
-            recoveredSigner == expectedSigner && recoveredSigner != address(0);
+        return recoveredSigner == expectedSigner && recoveredSigner != address(0);
     }
 
     /**
@@ -234,19 +191,12 @@ contract CryptoSignatureObligation is BaseObligation, IArbiter {
      * @param domain Optional domain separator
      * @return Encoded demand data
      */
-    function encodeDemand(
-        address publicKey,
-        bytes32 challenge,
-        string memory domain
-    ) public pure returns (bytes memory) {
-        return
-            abi.encode(
-                DemandData({
-                    publicKey: publicKey,
-                    challenge: challenge,
-                    domain: domain
-                })
-            );
+    function encodeDemand(address publicKey, bytes32 challenge, string memory domain)
+        public
+        pure
+        returns (bytes memory)
+    {
+        return abi.encode(DemandData({publicKey: publicKey, challenge: challenge, domain: domain}));
     }
 
     /**
@@ -254,16 +204,8 @@ contract CryptoSignatureObligation is BaseObligation, IArbiter {
      * @param data The obligation data to encode
      * @return Encoded data
      */
-    function encodeObligationData(
-        ObligationData memory data
-    ) public pure returns (bytes memory) {
-        return
-            abi.encode(
-                data.signature,
-                data.signerAddress,
-                data.timestamp,
-                data.metadata
-            );
+    function encodeObligationData(ObligationData memory data) public pure returns (bytes memory) {
+        return abi.encode(data.signature, data.signerAddress, data.timestamp, data.metadata);
     }
 
     /**
@@ -271,22 +213,13 @@ contract CryptoSignatureObligation is BaseObligation, IArbiter {
      * @param data The encoded data
      * @return Decoded obligation data
      */
-    function decodeObligationData(
-        bytes memory data
-    ) public pure returns (ObligationData memory) {
-        (
-            bytes memory signature,
-            address signerAddress,
-            uint256 timestamp,
-            string memory metadata
-        ) = abi.decode(data, (bytes, address, uint256, string));
+    function decodeObligationData(bytes memory data) public pure returns (ObligationData memory) {
+        (bytes memory signature, address signerAddress, uint256 timestamp, string memory metadata) =
+            abi.decode(data, (bytes, address, uint256, string));
 
         return
             ObligationData({
-                signature: signature,
-                signerAddress: signerAddress,
-                timestamp: timestamp,
-                metadata: metadata
+                signature: signature, signerAddress: signerAddress, timestamp: timestamp, metadata: metadata
             });
     }
 
@@ -295,9 +228,7 @@ contract CryptoSignatureObligation is BaseObligation, IArbiter {
      * @param uid The attestation UID
      * @return The decoded obligation data
      */
-    function getObligationData(
-        bytes32 uid
-    ) public view returns (ObligationData memory) {
+    function getObligationData(bytes32 uid) public view returns (ObligationData memory) {
         Attestation memory attestation = _getAttestation(uid);
         return decodeObligationData(attestation.data);
     }
@@ -310,11 +241,11 @@ contract CryptoSignatureObligation is BaseObligation, IArbiter {
      * @param signature The signature to verify
      * @return valid True if the signature is valid
      */
-    function verifySignatureHelper(
-        address publicKey,
-        bytes32 challenge,
-        bytes calldata signature
-    ) external pure returns (bool valid) {
+    function verifySignatureHelper(address publicKey, bytes32 challenge, bytes calldata signature)
+        external
+        pure
+        returns (bool valid)
+    {
         return _verifySignature(challenge, signature, publicKey, "");
     }
 
@@ -325,19 +256,7 @@ contract CryptoSignatureObligation is BaseObligation, IArbiter {
      * @param nonce A nonce to ensure uniqueness
      * @return challenge The generated challenge
      */
-    function generateChallenge(
-        bytes calldata context,
-        uint256 nonce
-    ) external view returns (bytes32 challenge) {
-        return
-            keccak256(
-                abi.encodePacked(
-                    context,
-                    nonce,
-                    block.timestamp,
-                    block.chainid,
-                    address(this)
-                )
-            );
+    function generateChallenge(bytes calldata context, uint256 nonce) external view returns (bytes32 challenge) {
+        return keccak256(abi.encodePacked(context, nonce, block.timestamp, block.chainid, address(this)));
     }
 }

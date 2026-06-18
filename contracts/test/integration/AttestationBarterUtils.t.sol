@@ -33,11 +33,7 @@ contract AttestationBarterUtilsIntegrationTest is Test {
 
         // Deploy contracts
         escrowContract = new AttestationEscrowObligation2(eas, schemaRegistry);
-        barterUtils = new AttestationBarterUtils(
-            eas,
-            schemaRegistry,
-            escrowContract
-        );
+        barterUtils = new AttestationBarterUtils(eas, schemaRegistry, escrowContract);
 
         // Register test schema
         testSchema = barterUtils.registerSchema(TEST_SCHEMA, barterUtils, true);
@@ -48,49 +44,33 @@ contract AttestationBarterUtilsIntegrationTest is Test {
         bytes memory demandData = abi.encode(false);
 
         vm.prank(alice);
-        (bytes32 attestationUid, bytes32 escrowUid) = barterUtils
-            .attestAndCreateEscrow(
-                AttestationRequest({
-                    schema: testSchema,
-                    data: AttestationRequestData({
-                        recipient: bob,
-                        expirationTime: uint64(block.timestamp + 1 days),
-                        revocable: false,
-                        refUID: 0,
-                        data: attestationData,
-                        value: 0
-                    })
-                }),
-                address(this), // arbiter
-                demandData,
-                uint64(block.timestamp + 2 days) // escrow expiration
-            );
+        (bytes32 attestationUid, bytes32 escrowUid) = barterUtils.attestAndCreateEscrow(
+            AttestationRequest({
+                schema: testSchema,
+                data: AttestationRequestData({
+                    recipient: bob,
+                    expirationTime: uint64(block.timestamp + 1 days),
+                    revocable: false,
+                    refUID: 0,
+                    data: attestationData,
+                    value: 0
+                })
+            }),
+            address(this), // arbiter
+            demandData,
+            uint64(block.timestamp + 2 days) // escrow expiration
+        );
 
         // Verify both UIDs are valid
-        assertNotEq(
-            attestationUid,
-            bytes32(0),
-            "Attestation should be created"
-        );
+        assertNotEq(attestationUid, bytes32(0), "Attestation should be created");
         assertNotEq(escrowUid, bytes32(0), "Escrow should be created");
 
         // Verify attestation details
-        AttestationEscrowObligation2.ObligationData memory escrowData = abi
-            .decode(
-                eas.getAttestation(escrowUid).data,
-                (AttestationEscrowObligation2.ObligationData)
-            );
+        AttestationEscrowObligation2.ObligationData memory escrowData =
+            abi.decode(eas.getAttestation(escrowUid).data, (AttestationEscrowObligation2.ObligationData));
 
-        assertEq(
-            escrowData.attestationUid,
-            attestationUid,
-            "Attestation UID should match"
-        );
+        assertEq(escrowData.attestationUid, attestationUid, "Attestation UID should match");
         assertEq(escrowData.arbiter, address(this), "Arbiter should match");
-        assertEq(
-            keccak256(escrowData.demand),
-            keccak256(demandData),
-            "Demand data should match"
-        );
+        assertEq(keccak256(escrowData.demand), keccak256(demandData), "Demand data should match");
     }
 }

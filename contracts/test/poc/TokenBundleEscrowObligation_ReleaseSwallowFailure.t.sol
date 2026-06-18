@@ -90,16 +90,15 @@ contract TokenBundleEscrowObligation_ReleaseSwallowFailure_POC is Test {
         // Create fulfillment whose recipient is a contract that rejects ETH and is not an ERC1155Receiver.
         // Default requires fulfillment.refUID == escrowUid.
         vm.prank(address(badRecipient));
-        bytes32 fulfillmentUid =
-            stringObligation.doObligation(StringObligation.ObligationData({item: "fulfillment", schema: bytes32(0)}), escrowUid);
+        bytes32 fulfillmentUid = stringObligation.doObligation(
+            StringObligation.ObligationData({item: "fulfillment", schema: bytes32(0)}), escrowUid
+        );
 
         // NOW: Collect should REVERT because native token transfer fails
         vm.startPrank(bob);
         vm.expectRevert(
             abi.encodeWithSelector(
-                TokenBundleEscrowObligation.NativeTokenTransferFailed.selector,
-                address(badRecipient),
-                nativeAmount
+                TokenBundleEscrowObligation.NativeTokenTransferFailed.selector, address(badRecipient), nativeAmount
             )
         );
         escrow.collectEscrow(escrowUid, fulfillmentUid);
@@ -161,24 +160,19 @@ contract TokenBundleEscrowObligation_ReleaseSwallowFailure_POC is Test {
 
         // Create fulfillment whose recipient is a contract that rejects ETH and is not an ERC1155Receiver.
         vm.prank(address(badRecipient));
-        bytes32 fulfillmentUid =
-            stringObligation.doObligation(StringObligation.ObligationData({item: "fulfillment", schema: bytes32(0)}), escrowUid);
+        bytes32 fulfillmentUid = stringObligation.doObligation(
+            StringObligation.ObligationData({item: "fulfillment", schema: bytes32(0)}), escrowUid
+        );
 
         // unsafePartiallyCollectEscrow allows partial collection (user's last resort choice)
         vm.startPrank(bob);
 
         // Expect events for failed transfers
         vm.expectEmit(true, false, false, true);
-        emit TokenBundleEscrowObligation.NativeTokenTransferFailedOnRelease(
-            address(badRecipient),
-            nativeAmount
-        );
+        emit TokenBundleEscrowObligation.NativeTokenTransferFailedOnRelease(address(badRecipient), nativeAmount);
         vm.expectEmit(true, false, false, true);
         emit TokenBundleEscrowObligation.ERC1155TransferFailedOnRelease(
-            address(token),
-            address(badRecipient),
-            tokenId,
-            amount
+            address(token), address(badRecipient), tokenId, amount
         );
 
         bool ok = escrow.unsafePartiallyCollectEscrow(escrowUid, fulfillmentUid);

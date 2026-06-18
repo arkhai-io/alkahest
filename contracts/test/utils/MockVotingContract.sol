@@ -25,18 +25,8 @@ contract MockVotingContract is IVotingContract {
     mapping(uint256 => bool) public proposalExists;
 
     // Events
-    event DelegateChanged(
-        address indexed delegator,
-        address indexed fromDelegate,
-        address indexed toDelegate
-    );
-    event VoteCast(
-        address indexed voter,
-        uint256 proposalId,
-        uint8 support,
-        uint256 weight,
-        string reason
-    );
+    event DelegateChanged(address indexed delegator, address indexed fromDelegate, address indexed toDelegate);
+    event VoteCast(address indexed voter, uint256 proposalId, uint8 support, uint256 weight, string reason);
 
     constructor() {
         // Initialize some voting power for testing
@@ -85,18 +75,14 @@ contract MockVotingContract is IVotingContract {
     }
 
     /// @notice Get the current delegate for an account
-    function delegates(
-        address account
-    ) external view override returns (address) {
+    function delegates(address account) external view override returns (address) {
         address current = _delegates[account];
         // If no delegation set, they delegate to themselves by default
         return current == address(0) ? account : current;
     }
 
     /// @notice Get voting power of an account
-    function getVotes(
-        address account
-    ) external view override returns (uint256) {
+    function getVotes(address account) external view override returns (uint256) {
         // In a real implementation, this would calculate based on delegations
         // For testing, we'll use direct voting power
         uint256 directPower = _votingPower[account];
@@ -115,20 +101,12 @@ contract MockVotingContract is IVotingContract {
     }
 
     /// @notice Cast a vote with a reason
-    function castVoteWithReason(
-        uint256 proposalId,
-        uint8 support,
-        string calldata reason
-    ) external override {
+    function castVoteWithReason(uint256 proposalId, uint8 support, string calldata reason) external override {
         _castVoteInternal(proposalId, support, reason);
     }
 
     /// @notice Internal function to handle vote casting
-    function _castVoteInternal(
-        uint256 proposalId,
-        uint8 support,
-        string memory reason
-    ) internal {
+    function _castVoteInternal(uint256 proposalId, uint8 support, string memory reason) internal {
         require(proposalExists[proposalId], "Proposal does not exist");
         require(!_hasVoted[proposalId][msg.sender], "Already voted");
         require(support <= 2, "Invalid vote type");
@@ -147,10 +125,7 @@ contract MockVotingContract is IVotingContract {
     }
 
     /// @notice Check if an account has voted on a proposal
-    function hasVoted(
-        uint256 proposalId,
-        address account
-    ) external view override returns (bool) {
+    function hasVoted(uint256 proposalId, address account) external view override returns (bool) {
         return _hasVoted[proposalId][account];
     }
 
@@ -162,9 +137,7 @@ contract MockVotingContract is IVotingContract {
     }
 
     /// @notice Get aggregated voting power including delegations
-    function _getAggregatedVotingPower(
-        address account
-    ) internal view returns (uint256) {
+    function _getAggregatedVotingPower(address account) internal view returns (uint256) {
         uint256 totalPower = 0;
 
         // Add power from all accounts that delegated to this account
@@ -187,9 +160,11 @@ contract MockVotingContract is IVotingContract {
     }
 
     /// @notice Get vote results for a proposal (for testing)
-    function getProposalVotes(
-        uint256 proposalId
-    ) external view returns (uint256 against, uint256 for_, uint256 abstain) {
+    function getProposalVotes(uint256 proposalId)
+        external
+        view
+        returns (uint256 against, uint256 for_, uint256 abstain)
+    {
         return (
             voteCounts[proposalId][0], // Against
             voteCounts[proposalId][1], // For
@@ -202,9 +177,7 @@ contract MockVotingContract is IVotingContract {
         _hasVoted[proposalId][voter] = false;
         uint8 previousVote = voteChoice[proposalId][voter];
         if (_hasVoted[proposalId][voter]) {
-            voteCounts[proposalId][previousVote] -= _getAggregatedVotingPower(
-                voter
-            );
+            voteCounts[proposalId][previousVote] -= _getAggregatedVotingPower(voter);
         }
         delete voteChoice[proposalId][voter];
     }

@@ -32,8 +32,7 @@ contract TimeEqualArbiterTest is Test {
         });
 
         // Create demand data with matching time
-        TimeEqualArbiter.DemandData memory demandData = TimeEqualArbiter
-            .DemandData({time: timestampValue});
+        TimeEqualArbiter.DemandData memory demandData = TimeEqualArbiter.DemandData({time: timestampValue});
         bytes memory demand = abi.encode(demandData);
 
         // Check obligation should return true
@@ -57,8 +56,7 @@ contract TimeEqualArbiterTest is Test {
         });
 
         // Create demand data with a specific time
-        TimeEqualArbiter.DemandData memory demandData = TimeEqualArbiter
-            .DemandData({time: timestampValue});
+        TimeEqualArbiter.DemandData memory demandData = TimeEqualArbiter.DemandData({time: timestampValue});
         bytes memory demand = abi.encode(demandData);
 
         // Check obligation should revert with TimeNotEqual
@@ -67,18 +65,12 @@ contract TimeEqualArbiterTest is Test {
     }
 
     function testDecodeDemandData() public {
-        TimeEqualArbiter.DemandData memory expectedDemandData = TimeEqualArbiter
-            .DemandData({time: timestampValue});
+        TimeEqualArbiter.DemandData memory expectedDemandData = TimeEqualArbiter.DemandData({time: timestampValue});
 
         bytes memory encodedData = abi.encode(expectedDemandData);
 
-        TimeEqualArbiter.DemandData memory decodedData = arbiter
-            .decodeDemandData(encodedData);
+        TimeEqualArbiter.DemandData memory decodedData = arbiter.decodeDemandData(encodedData);
 
-        assertEq(
-            decodedData.time,
-            expectedDemandData.time,
-            "Time should match"
-        );
+        assertEq(decodedData.time, expectedDemandData.time, "Time should match");
     }
 }

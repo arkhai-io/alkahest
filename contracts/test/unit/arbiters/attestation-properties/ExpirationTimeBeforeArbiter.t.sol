@@ -32,18 +32,13 @@ contract ExpirationTimeBeforeArbiterTest is Test {
         });
 
         // Create demand data with expiration time threshold
-        ExpirationTimeBeforeArbiter.DemandData
-            memory demandData = ExpirationTimeBeforeArbiter.DemandData({
-                expirationTime: expirationTimeThreshold
-            });
+        ExpirationTimeBeforeArbiter.DemandData memory demandData =
+            ExpirationTimeBeforeArbiter.DemandData({expirationTime: expirationTimeThreshold});
         bytes memory demand = abi.encode(demandData);
 
         // Check obligation should return true
         bool result = arbiter.checkObligation(attestation, demand, bytes32(0));
-        assertTrue(
-            result,
-            "Should accept attestation with expiration time before threshold"
-        );
+        assertTrue(result, "Should accept attestation with expiration time before threshold");
     }
 
     function testCheckObligationWithExpirationTimeAfterThreshold() public {
@@ -62,34 +57,23 @@ contract ExpirationTimeBeforeArbiterTest is Test {
         });
 
         // Create demand data with expiration time threshold
-        ExpirationTimeBeforeArbiter.DemandData
-            memory demandData = ExpirationTimeBeforeArbiter.DemandData({
-                expirationTime: expirationTimeThreshold
-            });
+        ExpirationTimeBeforeArbiter.DemandData memory demandData =
+            ExpirationTimeBeforeArbiter.DemandData({expirationTime: expirationTimeThreshold});
         bytes memory demand = abi.encode(demandData);
 
         // Check obligation should revert with ExpirationTimeNotBefore
-        vm.expectRevert(
-            ExpirationTimeBeforeArbiter.ExpirationTimeNotBefore.selector
-        );
+        vm.expectRevert(ExpirationTimeBeforeArbiter.ExpirationTimeNotBefore.selector);
         arbiter.checkObligation(attestation, demand, bytes32(0));
     }
 
     function testDecodeDemandData() public {
-        ExpirationTimeBeforeArbiter.DemandData
-            memory expectedDemandData = ExpirationTimeBeforeArbiter.DemandData({
-                expirationTime: expirationTimeThreshold
-            });
+        ExpirationTimeBeforeArbiter.DemandData memory expectedDemandData =
+            ExpirationTimeBeforeArbiter.DemandData({expirationTime: expirationTimeThreshold});
 
         bytes memory encodedData = abi.encode(expectedDemandData);
 
-        ExpirationTimeBeforeArbiter.DemandData memory decodedData = arbiter
-            .decodeDemandData(encodedData);
+        ExpirationTimeBeforeArbiter.DemandData memory decodedData = arbiter.decodeDemandData(encodedData);
 
-        assertEq(
-            decodedData.expirationTime,
-            expectedDemandData.expirationTime,
-            "Expiration time should match"
-        );
+        assertEq(decodedData.expirationTime, expectedDemandData.expirationTime, "Expiration time should match");
     }
 }

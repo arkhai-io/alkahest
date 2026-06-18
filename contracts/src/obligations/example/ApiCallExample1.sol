@@ -25,17 +25,9 @@ contract ApiCallExample1 {
     ERC20EscrowObligation public immutable erc20EscrowObligation;
 
     // Events for tracking the flow
-    event ApiQueryCreated(
-        bytes32 indexed escrowUid,
-        address indexed requester,
-        string query,
-        address oracle
-    );
+    event ApiQueryCreated(bytes32 indexed escrowUid, address indexed requester, string query, address oracle);
     event ApiResultSubmitted(
-        bytes32 indexed fulfillmentUid,
-        address indexed provider,
-        string result,
-        bytes32 escrowUid
+        bytes32 indexed fulfillmentUid, address indexed provider, string result, bytes32 escrowUid
     );
     event ApiResultValidated(bytes32 indexed fulfillmentUid, bool isValid);
 
@@ -73,25 +65,18 @@ contract ApiCallExample1 {
         bytes memory innerDemand = abi.encode(apiQuery);
 
         // Create the TrustedOracleArbiter demand
-        TrustedOracleArbiter.DemandData memory demandData = TrustedOracleArbiter
-            .DemandData({oracle: oracle, data: innerDemand});
+        TrustedOracleArbiter.DemandData memory demandData =
+            TrustedOracleArbiter.DemandData({oracle: oracle, data: innerDemand});
         bytes memory demand = abi.encode(demandData);
 
         // Note: Caller must approve token transfer to erc20EscrowObligation before calling
 
         // Create the escrow
-        ERC20EscrowObligation.ObligationData
-            memory escrowData = ERC20EscrowObligation.ObligationData({
-                token: address(paymentToken),
-                amount: paymentAmount,
-                arbiter: address(trustedOracleArbiter),
-                demand: demand
-            });
+        ERC20EscrowObligation.ObligationData memory escrowData = ERC20EscrowObligation.ObligationData({
+            token: address(paymentToken), amount: paymentAmount, arbiter: address(trustedOracleArbiter), demand: demand
+        });
 
-        escrowUid = erc20EscrowObligation.doObligation(
-            escrowData,
-            expirationTime
-        );
+        escrowUid = erc20EscrowObligation.doObligation(escrowData, expirationTime);
 
         emit ApiQueryCreated(escrowUid, msg.sender, apiQuery, oracle);
         return escrowUid;
@@ -103,21 +88,14 @@ contract ApiCallExample1 {
      * @param escrowUid The escrow being fulfilled
      * @return fulfillmentUid The attestation UID of the submitted result
      */
-    function submitApiResult(
-        string calldata apiResult,
-        bytes32 escrowUid
-    ) external returns (bytes32 fulfillmentUid) {
+    function submitApiResult(string calldata apiResult, bytes32 escrowUid) external returns (bytes32 fulfillmentUid) {
         // Submit the result via StringObligation with reference to the escrow
-        StringObligation.ObligationData memory resultData = StringObligation.ObligationData({item: apiResult, schema: bytes32(0)});
+        StringObligation.ObligationData memory resultData =
+            StringObligation.ObligationData({item: apiResult, schema: bytes32(0)});
 
         fulfillmentUid = stringObligation.doObligation(resultData, escrowUid);
 
-        emit ApiResultSubmitted(
-            fulfillmentUid,
-            msg.sender,
-            apiResult,
-            escrowUid
-        );
+        emit ApiResultSubmitted(fulfillmentUid, msg.sender, apiResult, escrowUid);
         return fulfillmentUid;
     }
 
@@ -127,11 +105,7 @@ contract ApiCallExample1 {
      * @param oracle The oracle address (must match the one in the demand)
      * @param demand The demand data for context
      */
-    function requestArbitration(
-        bytes32 fulfillmentUid,
-        address oracle,
-        bytes memory demand
-    ) external {
+    function requestArbitration(bytes32 fulfillmentUid, address oracle, bytes memory demand) external {
         trustedOracleArbiter.requestArbitration(fulfillmentUid, oracle, demand);
     }
 
@@ -141,30 +115,19 @@ contract ApiCallExample1 {
      * @param escrowUid The original escrow
      * @param isValid Whether the result is valid
      */
-    function validateApiResult(
-        bytes32 fulfillmentUid,
-        bytes32 escrowUid,
-        bool isValid
-    ) external {
+    function validateApiResult(bytes32 fulfillmentUid, bytes32 escrowUid, bool isValid) external {
         // Get the escrow attestation to verify the oracle
         Attestation memory escrow = eas.getAttestation(escrowUid);
 
         // Decode the escrow to get the demand
-        ERC20EscrowObligation.ObligationData memory escrowData = abi.decode(
-            escrow.data,
-            (ERC20EscrowObligation.ObligationData)
-        );
+        ERC20EscrowObligation.ObligationData memory escrowData =
+            abi.decode(escrow.data, (ERC20EscrowObligation.ObligationData));
 
         // Decode the demand to verify oracle
-        TrustedOracleArbiter.DemandData memory demandData = abi.decode(
-            escrowData.demand,
-            (TrustedOracleArbiter.DemandData)
-        );
+        TrustedOracleArbiter.DemandData memory demandData =
+            abi.decode(escrowData.demand, (TrustedOracleArbiter.DemandData));
 
-        require(
-            msg.sender == demandData.oracle,
-            "Only designated oracle can validate"
-        );
+        require(msg.sender == demandData.oracle, "Only designated oracle can validate");
 
         // Submit the arbitration decision
         trustedOracleArbiter.arbitrate(fulfillmentUid, demandData.data, isValid);
@@ -186,18 +149,12 @@ contract ApiCallExample1 {
      * @param escrowUid The escrow attestation UID
      * @return query The API query string
      */
-    function getApiQuery(
-        bytes32 escrowUid
-    ) external view returns (string memory query) {
+    function getApiQuery(bytes32 escrowUid) external view returns (string memory query) {
         Attestation memory escrow = eas.getAttestation(escrowUid);
-        ERC20EscrowObligation.ObligationData memory escrowData = abi.decode(
-            escrow.data,
-            (ERC20EscrowObligation.ObligationData)
-        );
-        TrustedOracleArbiter.DemandData memory demandData = abi.decode(
-            escrowData.demand,
-            (TrustedOracleArbiter.DemandData)
-        );
+        ERC20EscrowObligation.ObligationData memory escrowData =
+            abi.decode(escrow.data, (ERC20EscrowObligation.ObligationData));
+        TrustedOracleArbiter.DemandData memory demandData =
+            abi.decode(escrowData.demand, (TrustedOracleArbiter.DemandData));
         query = abi.decode(demandData.data, (string));
     }
 
@@ -206,14 +163,10 @@ contract ApiCallExample1 {
      * @param fulfillmentUid The fulfillment attestation UID
      * @return result The API result string
      */
-    function getApiResult(
-        bytes32 fulfillmentUid
-    ) external view returns (string memory result) {
+    function getApiResult(bytes32 fulfillmentUid) external view returns (string memory result) {
         Attestation memory fulfillment = eas.getAttestation(fulfillmentUid);
-        StringObligation.ObligationData memory resultData = abi.decode(
-            fulfillment.data,
-            (StringObligation.ObligationData)
-        );
+        StringObligation.ObligationData memory resultData =
+            abi.decode(fulfillment.data, (StringObligation.ObligationData));
         result = resultData.item;
     }
 }
@@ -251,21 +204,15 @@ contract ApiOracleValidator {
         Attestation memory escrow = eas.getAttestation(escrowUid);
 
         // Extract and decode the query
-        ERC20EscrowObligation.ObligationData memory escrowData = abi.decode(
-            escrow.data,
-            (ERC20EscrowObligation.ObligationData)
-        );
-        TrustedOracleArbiter.DemandData memory demandData = abi.decode(
-            escrowData.demand,
-            (TrustedOracleArbiter.DemandData)
-        );
+        ERC20EscrowObligation.ObligationData memory escrowData =
+            abi.decode(escrow.data, (ERC20EscrowObligation.ObligationData));
+        TrustedOracleArbiter.DemandData memory demandData =
+            abi.decode(escrowData.demand, (TrustedOracleArbiter.DemandData));
         string memory query = abi.decode(demandData.data, (string));
 
         // Extract the result
-        StringObligation.ObligationData memory resultData = abi.decode(
-            fulfillment.data,
-            (StringObligation.ObligationData)
-        );
+        StringObligation.ObligationData memory resultData =
+            abi.decode(fulfillment.data, (StringObligation.ObligationData));
         string memory result = resultData.item;
 
         // Simple validation: check if query is valid and result is non-empty
@@ -287,33 +234,27 @@ contract ApiOracleValidator {
         emit ValidationPerformed(fulfillmentUid, isValid);
     }
 
-    function _startsWith(
-        string memory str,
-        string memory prefix
-    ) private pure returns (bool) {
+    function _startsWith(string memory str, string memory prefix) private pure returns (bool) {
         bytes memory strBytes = bytes(str);
         bytes memory prefixBytes = bytes(prefix);
 
         if (strBytes.length < prefixBytes.length) return false;
 
-        for (uint i = 0; i < prefixBytes.length; i++) {
+        for (uint256 i = 0; i < prefixBytes.length; i++) {
             if (strBytes[i] != prefixBytes[i]) return false;
         }
         return true;
     }
 
-    function _contains(
-        string memory str,
-        string memory substr
-    ) private pure returns (bool) {
+    function _contains(string memory str, string memory substr) private pure returns (bool) {
         bytes memory strBytes = bytes(str);
         bytes memory substrBytes = bytes(substr);
 
         if (strBytes.length < substrBytes.length) return false;
 
-        for (uint i = 0; i <= strBytes.length - substrBytes.length; i++) {
+        for (uint256 i = 0; i <= strBytes.length - substrBytes.length; i++) {
             bool found = true;
-            for (uint j = 0; j < substrBytes.length; j++) {
+            for (uint256 j = 0; j < substrBytes.length; j++) {
                 if (strBytes[i + j] != substrBytes[j]) {
                     found = false;
                     break;
@@ -324,9 +265,7 @@ contract ApiOracleValidator {
         return false;
     }
 
-    function _containsWeatherData(
-        string memory result
-    ) private pure returns (bool) {
+    function _containsWeatherData(string memory result) private pure returns (bool) {
         // Check if result contains temperature indicator
         return _contains(result, "degrees") || _contains(result, "temp");
     }
@@ -336,7 +275,7 @@ contract ApiOracleValidator {
         bytes memory resultBytes = bytes(result);
         bool hasDigit = false;
 
-        for (uint i = 0; i < resultBytes.length; i++) {
+        for (uint256 i = 0; i < resultBytes.length; i++) {
             if (resultBytes[i] >= 0x30 && resultBytes[i] <= 0x39) {
                 // 0-9
                 hasDigit = true;

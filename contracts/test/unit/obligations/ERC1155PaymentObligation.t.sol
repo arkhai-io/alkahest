@@ -18,11 +18,7 @@ contract MockERC1155 is ERC1155 {
         _mint(to, id, amount, "");
     }
 
-    function mintBatch(
-        address to,
-        uint256[] memory ids,
-        uint256[] memory amounts
-    ) public {
+    function mintBatch(address to, uint256[] memory ids, uint256[] memory amounts) public {
         _mintBatch(to, ids, amounts, "");
     }
 }
@@ -61,9 +57,7 @@ contract ERC1155PaymentObligationTest is Test {
         SchemaRecord memory schema = paymentObligation.getSchema();
         assertEq(schema.uid, schemaId, "Schema UID should match");
         assertEq(
-            schema.schema,
-            "address token, uint256 tokenId, uint256 amount, address payee",
-            "Schema string should match"
+            schema.schema, "address token, uint256 tokenId, uint256 amount, address payee", "Schema string should match"
         );
     }
 
@@ -73,13 +67,9 @@ contract ERC1155PaymentObligationTest is Test {
         token.setApprovalForAll(address(paymentObligation), true);
 
         // Make payment
-        ERC1155PaymentObligation.ObligationData
-            memory data = ERC1155PaymentObligation.ObligationData({
-                token: address(token),
-                tokenId: tokenId,
-                amount: erc1155TokenAmount,
-                payee: payee
-            });
+        ERC1155PaymentObligation.ObligationData memory data = ERC1155PaymentObligation.ObligationData({
+            token: address(token), tokenId: tokenId, amount: erc1155TokenAmount, payee: payee
+        });
 
         bytes32 attestationId = paymentObligation.doObligation(data, bytes32(0));
         vm.stopPrank();
@@ -89,24 +79,12 @@ contract ERC1155PaymentObligationTest is Test {
 
         // Verify attestation details
         Attestation memory attestation = eas.getAttestation(attestationId);
-        assertEq(
-            attestation.schema,
-            paymentObligation.ATTESTATION_SCHEMA(),
-            "Schema should match"
-        );
+        assertEq(attestation.schema, paymentObligation.ATTESTATION_SCHEMA(), "Schema should match");
         assertEq(attestation.recipient, payer, "Recipient should be the payer");
 
         // Verify token transfer
-        assertEq(
-            token.balanceOf(payee, tokenId),
-            erc1155TokenAmount,
-            "Payee should have received tokens"
-        );
-        assertEq(
-            token.balanceOf(payer, tokenId),
-            0,
-            "Payer should have sent tokens"
-        );
+        assertEq(token.balanceOf(payee, tokenId), erc1155TokenAmount, "Payee should have received tokens");
+        assertEq(token.balanceOf(payer, tokenId), 0, "Payer should have sent tokens");
     }
 
     function testDoObligationFor() public {
@@ -116,49 +94,26 @@ contract ERC1155PaymentObligationTest is Test {
         vm.stopPrank();
 
         // Make payment on behalf of payer
-        ERC1155PaymentObligation.ObligationData
-            memory data = ERC1155PaymentObligation.ObligationData({
-                token: address(token),
-                tokenId: tokenId,
-                amount: erc1155TokenAmount,
-                payee: payee
-            });
+        ERC1155PaymentObligation.ObligationData memory data = ERC1155PaymentObligation.ObligationData({
+            token: address(token), tokenId: tokenId, amount: erc1155TokenAmount, payee: payee
+        });
 
         address recipient = makeAddr("recipient");
 
         vm.prank(payer);
-        bytes32 attestationId = paymentObligation.doObligationFor(
-            data,
-            recipient
-        , bytes32(0));
+        bytes32 attestationId = paymentObligation.doObligationFor(data, recipient, bytes32(0));
 
         // Verify attestation exists
         assertNotEq(attestationId, bytes32(0), "Attestation should be created");
 
         // Verify attestation details
         Attestation memory attestation = eas.getAttestation(attestationId);
-        assertEq(
-            attestation.schema,
-            paymentObligation.ATTESTATION_SCHEMA(),
-            "Schema should match"
-        );
-        assertEq(
-            attestation.recipient,
-            recipient,
-            "Recipient should be the specified recipient"
-        );
+        assertEq(attestation.schema, paymentObligation.ATTESTATION_SCHEMA(), "Schema should match");
+        assertEq(attestation.recipient, recipient, "Recipient should be the specified recipient");
 
         // Verify token transfer
-        assertEq(
-            token.balanceOf(payee, tokenId),
-            erc1155TokenAmount,
-            "Payee should have received tokens"
-        );
-        assertEq(
-            token.balanceOf(payer, tokenId),
-            0,
-            "Payer should have sent tokens"
-        );
+        assertEq(token.balanceOf(payee, tokenId), erc1155TokenAmount, "Payee should have received tokens");
+        assertEq(token.balanceOf(payer, tokenId), 0, "Payer should have sent tokens");
     }
 
     function testPartialAmount() public {
@@ -169,13 +124,9 @@ contract ERC1155PaymentObligationTest is Test {
         token.setApprovalForAll(address(paymentObligation), true);
 
         // Make payment with partial amount
-        ERC1155PaymentObligation.ObligationData
-            memory data = ERC1155PaymentObligation.ObligationData({
-                token: address(token),
-                tokenId: tokenId,
-                amount: partialAmount,
-                payee: payee
-            });
+        ERC1155PaymentObligation.ObligationData memory data = ERC1155PaymentObligation.ObligationData({
+            token: address(token), tokenId: tokenId, amount: partialAmount, payee: payee
+        });
 
         bytes32 attestationId = paymentObligation.doObligation(data, bytes32(0));
         vm.stopPrank();
@@ -184,11 +135,7 @@ contract ERC1155PaymentObligationTest is Test {
         assertNotEq(attestationId, bytes32(0), "Attestation should be created");
 
         // Verify token transfer
-        assertEq(
-            token.balanceOf(payee, tokenId),
-            partialAmount,
-            "Payee should have received partial tokens"
-        );
+        assertEq(token.balanceOf(payee, tokenId), partialAmount, "Payee should have received partial tokens");
         assertEq(
             token.balanceOf(payer, tokenId),
             erc1155TokenAmount - partialAmount,
@@ -201,13 +148,9 @@ contract ERC1155PaymentObligationTest is Test {
         vm.startPrank(payer);
         token.setApprovalForAll(address(paymentObligation), true);
 
-        ERC1155PaymentObligation.ObligationData
-            memory data = ERC1155PaymentObligation.ObligationData({
-                token: address(token),
-                tokenId: tokenId,
-                amount: erc1155TokenAmount,
-                payee: payee
-            });
+        ERC1155PaymentObligation.ObligationData memory data = ERC1155PaymentObligation.ObligationData({
+            token: address(token), tokenId: tokenId, amount: erc1155TokenAmount, payee: payee
+        });
 
         bytes32 attestationId = paymentObligation.doObligation(data, bytes32(0));
         vm.stopPrank();
@@ -216,113 +159,57 @@ contract ERC1155PaymentObligationTest is Test {
         Attestation memory attestation = eas.getAttestation(attestationId);
 
         // Test exact match demand
-        ERC1155PaymentObligation.ObligationData
-            memory exactDemand = ERC1155PaymentObligation.ObligationData({
-                token: address(token),
-                tokenId: tokenId,
-                amount: erc1155TokenAmount,
-                payee: payee
-            });
+        ERC1155PaymentObligation.ObligationData memory exactDemand = ERC1155PaymentObligation.ObligationData({
+            token: address(token), tokenId: tokenId, amount: erc1155TokenAmount, payee: payee
+        });
 
-        bool exactMatch = paymentObligation.checkObligation(
-            attestation,
-            abi.encode(exactDemand),
-            bytes32(0)
-        );
+        bool exactMatch = paymentObligation.checkObligation(attestation, abi.encode(exactDemand), bytes32(0));
         assertTrue(exactMatch, "Should match exact demand");
 
         // Test lower amount demand (should succeed)
-        ERC1155PaymentObligation.ObligationData
-            memory lowerDemand = ERC1155PaymentObligation.ObligationData({
-                token: address(token),
-                tokenId: tokenId,
-                amount: erc1155TokenAmount - 50,
-                payee: payee
-            });
+        ERC1155PaymentObligation.ObligationData memory lowerDemand = ERC1155PaymentObligation.ObligationData({
+            token: address(token), tokenId: tokenId, amount: erc1155TokenAmount - 50, payee: payee
+        });
 
-        bool lowerMatch = paymentObligation.checkObligation(
-            attestation,
-            abi.encode(lowerDemand),
-            bytes32(0)
-        );
+        bool lowerMatch = paymentObligation.checkObligation(attestation, abi.encode(lowerDemand), bytes32(0));
         assertTrue(lowerMatch, "Should match lower amount demand");
 
         // Test higher amount demand (should fail)
-        ERC1155PaymentObligation.ObligationData
-            memory higherDemand = ERC1155PaymentObligation.ObligationData({
-                token: address(token),
-                tokenId: tokenId,
-                amount: erc1155TokenAmount + 50,
-                payee: payee
-            });
+        ERC1155PaymentObligation.ObligationData memory higherDemand = ERC1155PaymentObligation.ObligationData({
+            token: address(token), tokenId: tokenId, amount: erc1155TokenAmount + 50, payee: payee
+        });
 
-        bool higherMatch = paymentObligation.checkObligation(
-            attestation,
-            abi.encode(higherDemand),
-            bytes32(0)
-        );
+        bool higherMatch = paymentObligation.checkObligation(attestation, abi.encode(higherDemand), bytes32(0));
         assertFalse(higherMatch, "Should not match higher amount demand");
 
         // Test different token ID demand (should fail)
-        ERC1155PaymentObligation.ObligationData
-            memory differentIdDemand = ERC1155PaymentObligation.ObligationData({
-                token: address(token),
-                tokenId: tokenId + 1,
-                amount: erc1155TokenAmount,
-                payee: payee
-            });
+        ERC1155PaymentObligation.ObligationData memory differentIdDemand = ERC1155PaymentObligation.ObligationData({
+            token: address(token), tokenId: tokenId + 1, amount: erc1155TokenAmount, payee: payee
+        });
 
-        bool differentIdMatch = paymentObligation.checkObligation(
-            attestation,
-            abi.encode(differentIdDemand),
-            bytes32(0)
-        );
-        assertFalse(
-            differentIdMatch,
-            "Should not match different token ID demand"
-        );
+        bool differentIdMatch =
+            paymentObligation.checkObligation(attestation, abi.encode(differentIdDemand), bytes32(0));
+        assertFalse(differentIdMatch, "Should not match different token ID demand");
 
         // Test different token contract demand (should fail)
         MockERC1155 differentToken = new MockERC1155();
-        ERC1155PaymentObligation.ObligationData
-            memory differentTokenDemand = ERC1155PaymentObligation
-                .ObligationData({
-                    token: address(differentToken),
-                    tokenId: tokenId,
-                    amount: erc1155TokenAmount,
-                    payee: payee
-                });
+        ERC1155PaymentObligation.ObligationData memory differentTokenDemand = ERC1155PaymentObligation.ObligationData({
+            token: address(differentToken), tokenId: tokenId, amount: erc1155TokenAmount, payee: payee
+        });
 
-        bool differentTokenMatch = paymentObligation.checkObligation(
-            attestation,
-            abi.encode(differentTokenDemand),
-            bytes32(0)
-        );
-        assertFalse(
-            differentTokenMatch,
-            "Should not match different token demand"
-        );
+        bool differentTokenMatch =
+            paymentObligation.checkObligation(attestation, abi.encode(differentTokenDemand), bytes32(0));
+        assertFalse(differentTokenMatch, "Should not match different token demand");
 
         // Test different payee demand (should fail)
         address differentPayee = makeAddr("differentPayee");
-        ERC1155PaymentObligation.ObligationData
-            memory differentPayeeDemand = ERC1155PaymentObligation
-                .ObligationData({
-                    token: address(token),
-                    tokenId: tokenId,
-                    amount: erc1155TokenAmount,
-                    payee: differentPayee
-                });
+        ERC1155PaymentObligation.ObligationData memory differentPayeeDemand = ERC1155PaymentObligation.ObligationData({
+            token: address(token), tokenId: tokenId, amount: erc1155TokenAmount, payee: differentPayee
+        });
 
-        bool differentPayeeMatch = paymentObligation.checkObligation(
-            attestation,
-            abi.encode(differentPayeeDemand),
-            bytes32(0)
-        );
-        assertFalse(
-            differentPayeeMatch,
-            "Should not match different payee demand"
-        );
+        bool differentPayeeMatch =
+            paymentObligation.checkObligation(attestation, abi.encode(differentPayeeDemand), bytes32(0));
+        assertFalse(differentPayeeMatch, "Should not match different payee demand");
     }
 
     function testWrongDataAttestation() public {
@@ -330,13 +217,9 @@ contract ERC1155PaymentObligationTest is Test {
         vm.startPrank(payer);
         token.setApprovalForAll(address(paymentObligation), true);
 
-        ERC1155PaymentObligation.ObligationData
-            memory data = ERC1155PaymentObligation.ObligationData({
-                token: address(token),
-                tokenId: tokenId,
-                amount: erc1155TokenAmount,
-                payee: payee
-            });
+        ERC1155PaymentObligation.ObligationData memory data = ERC1155PaymentObligation.ObligationData({
+            token: address(token), tokenId: tokenId, amount: erc1155TokenAmount, payee: payee
+        });
 
         bytes32 attestationId = paymentObligation.doObligation(data, bytes32(0));
         vm.stopPrank();
@@ -346,23 +229,12 @@ contract ERC1155PaymentObligationTest is Test {
 
         // Test with different demand - should fail because data doesn't match
         MockERC1155 differentToken = new MockERC1155();
-        ERC1155PaymentObligation.ObligationData
-            memory differentDemand = ERC1155PaymentObligation.ObligationData({
-                token: address(differentToken),
-                tokenId: 999,
-                amount: 999,
-                payee: makeAddr("differentPayee")
-            });
+        ERC1155PaymentObligation.ObligationData memory differentDemand = ERC1155PaymentObligation.ObligationData({
+            token: address(differentToken), tokenId: 999, amount: 999, payee: makeAddr("differentPayee")
+        });
 
-        bool result = paymentObligation.checkObligation(
-            attestation,
-            abi.encode(differentDemand),
-            bytes32(0)
-        );
-        assertFalse(
-            result,
-            "Should not match attestation with different token, tokenId, amount, and payee"
-        );
+        bool result = paymentObligation.checkObligation(attestation, abi.encode(differentDemand), bytes32(0));
+        assertFalse(result, "Should not match attestation with different token, tokenId, amount, and payee");
     }
 
     function testTransferFailureReverts() public {
@@ -372,13 +244,9 @@ contract ERC1155PaymentObligationTest is Test {
         token.mint(otherOwner, otherTokenId, erc1155TokenAmount);
 
         // Try to create payment with a token that hasn't been approved for transfer
-        ERC1155PaymentObligation.ObligationData
-            memory data = ERC1155PaymentObligation.ObligationData({
-                token: address(token),
-                tokenId: otherTokenId,
-                amount: erc1155TokenAmount,
-                payee: payee
-            });
+        ERC1155PaymentObligation.ObligationData memory data = ERC1155PaymentObligation.ObligationData({
+            token: address(token), tokenId: otherTokenId, amount: erc1155TokenAmount, payee: payee
+        });
 
         // Should revert because the token transfer will fail
         vm.prank(otherOwner);
@@ -397,60 +265,28 @@ contract ERC1155PaymentObligationTest is Test {
         token.setApprovalForAll(address(paymentObligation), true);
 
         // Make first payment
-        ERC1155PaymentObligation.ObligationData
-            memory data1 = ERC1155PaymentObligation.ObligationData({
-                token: address(token),
-                tokenId: tokenId,
-                amount: erc1155TokenAmount,
-                payee: payee
-            });
+        ERC1155PaymentObligation.ObligationData memory data1 = ERC1155PaymentObligation.ObligationData({
+            token: address(token), tokenId: tokenId, amount: erc1155TokenAmount, payee: payee
+        });
 
         bytes32 attestationId1 = paymentObligation.doObligation(data1, bytes32(0));
 
         // Make second payment
-        ERC1155PaymentObligation.ObligationData
-            memory data2 = ERC1155PaymentObligation.ObligationData({
-                token: address(token),
-                tokenId: tokenId2,
-                amount: erc1155TokenAmount2,
-                payee: payee
-            });
+        ERC1155PaymentObligation.ObligationData memory data2 = ERC1155PaymentObligation.ObligationData({
+            token: address(token), tokenId: tokenId2, amount: erc1155TokenAmount2, payee: payee
+        });
 
         bytes32 attestationId2 = paymentObligation.doObligation(data2, bytes32(0));
         vm.stopPrank();
 
         // Verify both attestations exist
-        assertNotEq(
-            attestationId1,
-            bytes32(0),
-            "First attestation should be created"
-        );
-        assertNotEq(
-            attestationId2,
-            bytes32(0),
-            "Second attestation should be created"
-        );
+        assertNotEq(attestationId1, bytes32(0), "First attestation should be created");
+        assertNotEq(attestationId2, bytes32(0), "Second attestation should be created");
 
         // Verify token transfers for both IDs
-        assertEq(
-            token.balanceOf(payee, tokenId),
-            erc1155TokenAmount,
-            "Payee should have received first token"
-        );
-        assertEq(
-            token.balanceOf(payee, tokenId2),
-            erc1155TokenAmount2,
-            "Payee should have received second token"
-        );
-        assertEq(
-            token.balanceOf(payer, tokenId),
-            0,
-            "Payer should have sent all of first token"
-        );
-        assertEq(
-            token.balanceOf(payer, tokenId2),
-            0,
-            "Payer should have sent all of second token"
-        );
+        assertEq(token.balanceOf(payee, tokenId), erc1155TokenAmount, "Payee should have received first token");
+        assertEq(token.balanceOf(payee, tokenId2), erc1155TokenAmount2, "Payee should have received second token");
+        assertEq(token.balanceOf(payer, tokenId), 0, "Payer should have sent all of first token");
+        assertEq(token.balanceOf(payer, tokenId2), 0, "Payer should have sent all of second token");
     }
 }

@@ -22,40 +22,25 @@ contract StringResultObligation is BaseObligation, IArbiter {
     error InvalidResultAttestation();
     error InvalidDemand();
 
-    constructor(
-        IEAS _eas,
-        ISchemaRegistry _schemaRegistry
-    ) BaseObligation(_eas, _schemaRegistry, "string result", true) {}
+    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry)
+        BaseObligation(_eas, _schemaRegistry, "string result", true)
+    {}
 
-    function doObligation(
-        ObligationData calldata data,
-        bytes32 refUID
-    ) public returns (bytes32) {
+    function doObligation(ObligationData calldata data, bytes32 refUID) public returns (bytes32) {
         bytes memory encodedData = abi.encode(data);
-        return
-            _doObligationForRaw(
-                encodedData,
-                0,
-                msg.sender,
-                refUID
-            );
+        return _doObligationForRaw(encodedData, 0, msg.sender, refUID);
     }
 
     function checkObligation(
         Attestation memory obligation,
-        bytes memory demand /* (string query) */,
+        bytes memory demand,
+        /* (string query) */
         bytes32 fulfilling
     ) public view override returns (bool) {
-
         // Check if the obligation is intended to fulfill the specific escrow
-        if (
-            obligation.refUID != bytes32(0) && obligation.refUID != fulfilling
-        ) return false;
+        if (obligation.refUID != bytes32(0) && obligation.refUID != fulfilling) return false;
 
-        ObligationData memory result = abi.decode(
-            obligation.data,
-            (ObligationData)
-        );
+        ObligationData memory result = abi.decode(obligation.data, (ObligationData));
         DemandData memory demandData = abi.decode(demand, (DemandData));
 
         // Only compare the length of the query and result

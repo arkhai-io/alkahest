@@ -29,9 +29,7 @@ contract AttesterArbiterTest is Test {
         });
 
         // Create demand data with matching attester
-        AttesterArbiter.DemandData memory demandData = AttesterArbiter.DemandData({
-            attester: attester
-        });
+        AttesterArbiter.DemandData memory demandData = AttesterArbiter.DemandData({attester: attester});
         bytes memory demand = abi.encode(demandData);
 
         // Check obligation should return true
@@ -55,9 +53,7 @@ contract AttesterArbiterTest is Test {
         });
 
         // Create demand data with attester
-        AttesterArbiter.DemandData memory demandData = AttesterArbiter.DemandData({
-            attester: attester
-        });
+        AttesterArbiter.DemandData memory demandData = AttesterArbiter.DemandData({attester: attester});
         bytes memory demand = abi.encode(demandData);
 
         // Check obligation should revert with AttesterMismatched
@@ -67,14 +63,12 @@ contract AttesterArbiterTest is Test {
 
     function testDecodeDemandData() public {
         // Create demand data
-        AttesterArbiter.DemandData memory expectedDemandData = AttesterArbiter.DemandData({
-            attester: attester
-        });
-        
+        AttesterArbiter.DemandData memory expectedDemandData = AttesterArbiter.DemandData({attester: attester});
+
         bytes memory encodedData = abi.encode(expectedDemandData);
-        
+
         AttesterArbiter.DemandData memory decodedData = arbiter.decodeDemandData(encodedData);
-        
+
         assertEq(decodedData.attester, expectedDemandData.attester, "Attester should match");
     }
 }

@@ -17,10 +17,8 @@ contract DeployStringObligation is Script {
         vm.startBroadcast(deployerPrivateKey);
 
         // Deploy
-        StringObligation stringObligation = new StringObligation(
-            IEAS(easAddress),
-            ISchemaRegistry(schemaRegistryAddress)
-        );
+        StringObligation stringObligation =
+            new StringObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
 
         vm.stopBroadcast();
 

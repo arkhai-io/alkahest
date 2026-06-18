@@ -32,17 +32,9 @@ contract ApiResultObligation is BaseObligation {
     }
 
     // Events
-    event ApiResultSubmitted(
-        bytes32 indexed uid,
-        address indexed submitter,
-        string endpoint,
-        uint16 statusCode
-    );
+    event ApiResultSubmitted(bytes32 indexed uid, address indexed submitter, string endpoint, uint16 statusCode);
 
-    constructor(
-        IEAS _eas,
-        ISchemaRegistry _schemaRegistry
-    )
+    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry)
         BaseObligation(
             _eas,
             _schemaRegistry,
@@ -57,10 +49,7 @@ contract ApiResultObligation is BaseObligation {
      * @param refUID Reference to the escrow/demand being fulfilled
      * @return uid The attestation UID of the submitted result
      */
-    function doObligation(
-        ObligationData memory data,
-        bytes32 refUID
-    ) public returns (bytes32 uid) {
+    function doObligation(ObligationData memory data, bytes32 refUID) public returns (bytes32 uid) {
         // Validate basic data
         require(bytes(data.endpoint).length > 0, "Endpoint cannot be empty");
         require(bytes(data.method).length > 0, "Method cannot be empty");
@@ -76,12 +65,7 @@ contract ApiResultObligation is BaseObligation {
             refUID
         );
 
-        emit ApiResultSubmitted(
-            uid,
-            msg.sender,
-            data.endpoint,
-            data.statusCode
-        );
+        emit ApiResultSubmitted(uid, msg.sender, data.endpoint, data.statusCode);
 
         return uid;
     }
@@ -93,11 +77,10 @@ contract ApiResultObligation is BaseObligation {
      * @param refUID Reference to the escrow/demand
      * @return uid The attestation UID
      */
-    function doSimpleObligation(
-        string calldata endpoint,
-        string calldata body,
-        bytes32 refUID
-    ) external returns (bytes32 uid) {
+    function doSimpleObligation(string calldata endpoint, string calldata body, bytes32 refUID)
+        external
+        returns (bytes32 uid)
+    {
         ObligationData memory data = ObligationData({
             endpoint: endpoint,
             method: "GET",
@@ -115,18 +98,8 @@ contract ApiResultObligation is BaseObligation {
      * @param data The obligation data to encode
      * @return The encoded data
      */
-    function encodeObligationData(
-        ObligationData memory data
-    ) public pure returns (bytes memory) {
-        return
-            abi.encode(
-                data.endpoint,
-                data.method,
-                data.statusCode,
-                data.headers,
-                data.body,
-                data.timestamp
-            );
+    function encodeObligationData(ObligationData memory data) public pure returns (bytes memory) {
+        return abi.encode(data.endpoint, data.method, data.statusCode, data.headers, data.body, data.timestamp);
     }
 
     /**
@@ -134,9 +107,7 @@ contract ApiResultObligation is BaseObligation {
      * @param encodedData The encoded data
      * @return data The decoded obligation data
      */
-    function decodeObligationData(
-        bytes memory encodedData
-    ) public pure returns (ObligationData memory data) {
+    function decodeObligationData(bytes memory encodedData) public pure returns (ObligationData memory data) {
         (
             string memory endpoint,
             string memory method,
@@ -144,20 +115,16 @@ contract ApiResultObligation is BaseObligation {
             string memory headers,
             string memory body,
             uint256 timestamp
-        ) = abi.decode(
-                encodedData,
-                (string, string, uint16, string, string, uint256)
-            );
+        ) = abi.decode(encodedData, (string, string, uint16, string, string, uint256));
 
-        return
-            ObligationData({
-                endpoint: endpoint,
-                method: method,
-                statusCode: statusCode,
-                headers: headers,
-                body: body,
-                timestamp: timestamp
-            });
+        return ObligationData({
+            endpoint: endpoint,
+            method: method,
+            statusCode: statusCode,
+            headers: headers,
+            body: body,
+            timestamp: timestamp
+        });
     }
 
     /**
@@ -165,9 +132,7 @@ contract ApiResultObligation is BaseObligation {
      * @param uid The attestation UID
      * @return data The obligation data
      */
-    function getObligationData(
-        bytes32 uid
-    ) external view returns (ObligationData memory data) {
+    function getObligationData(bytes32 uid) external view returns (ObligationData memory data) {
         Attestation memory attestation = _getAttestation(uid);
         return decodeObligationData(attestation.data);
     }
@@ -177,9 +142,7 @@ contract ApiResultObligation is BaseObligation {
      * @param uid The attestation UID
      * @return success True if status code is 200-299
      */
-    function isSuccessfulCall(
-        bytes32 uid
-    ) external view returns (bool success) {
+    function isSuccessfulCall(bytes32 uid) external view returns (bool success) {
         Attestation memory attestation = _getAttestation(uid);
         ObligationData memory data = decodeObligationData(attestation.data);
         return data.statusCode >= 200 && data.statusCode < 300;
@@ -190,9 +153,7 @@ contract ApiResultObligation is BaseObligation {
      * @param uid The attestation UID
      * @return body The response body
      */
-    function getResponseBody(
-        bytes32 uid
-    ) external view returns (string memory body) {
+    function getResponseBody(bytes32 uid) external view returns (string memory body) {
         Attestation memory attestation = _getAttestation(uid);
         ObligationData memory data = decodeObligationData(attestation.data);
         return data.body;
@@ -204,10 +165,7 @@ contract ApiResultObligation is BaseObligation {
      * @param endpoint The endpoint to check
      * @return matches True if the attestation is for the specified endpoint
      */
-    function matchesEndpoint(
-        bytes32 uid,
-        string calldata endpoint
-    ) external view returns (bool matches) {
+    function matchesEndpoint(bytes32 uid, string calldata endpoint) external view returns (bool matches) {
         Attestation memory attestation = _getAttestation(uid);
         ObligationData memory data = decodeObligationData(attestation.data);
         return keccak256(bytes(data.endpoint)) == keccak256(bytes(endpoint));
@@ -219,10 +177,10 @@ contract ApiResultObligation is BaseObligation {
      * @param refUID Reference to the escrow/demand
      * @return uids Array of attestation UIDs
      */
-    function batchDoObligation(
-        ObligationData[] memory results,
-        bytes32 refUID
-    ) external returns (bytes32[] memory uids) {
+    function batchDoObligation(ObligationData[] memory results, bytes32 refUID)
+        external
+        returns (bytes32[] memory uids)
+    {
         uids = new bytes32[](results.length);
 
         for (uint256 i = 0; i < results.length; i++) {

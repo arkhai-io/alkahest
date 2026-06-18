@@ -32,16 +32,12 @@ contract TimeBeforeArbiterTest is Test {
         });
 
         // Create demand data with time threshold
-        TimeBeforeArbiter.DemandData memory demandData = TimeBeforeArbiter
-            .DemandData({time: timestampThreshold});
+        TimeBeforeArbiter.DemandData memory demandData = TimeBeforeArbiter.DemandData({time: timestampThreshold});
         bytes memory demand = abi.encode(demandData);
 
         // Check obligation should return true
         bool result = arbiter.checkObligation(attestation, demand, bytes32(0));
-        assertTrue(
-            result,
-            "Should accept attestation with time before threshold"
-        );
+        assertTrue(result, "Should accept attestation with time before threshold");
     }
 
     function testCheckObligationWithTimeAfterThreshold() public {
@@ -60,8 +56,7 @@ contract TimeBeforeArbiterTest is Test {
         });
 
         // Create demand data with time threshold
-        TimeBeforeArbiter.DemandData memory demandData = TimeBeforeArbiter
-            .DemandData({time: timestampThreshold});
+        TimeBeforeArbiter.DemandData memory demandData = TimeBeforeArbiter.DemandData({time: timestampThreshold});
         bytes memory demand = abi.encode(demandData);
 
         // Check obligation should revert with TimeNotBefore
@@ -85,33 +80,22 @@ contract TimeBeforeArbiterTest is Test {
         });
 
         // Create demand data with 0 (sentinel value meaning "no constraint")
-        TimeBeforeArbiter.DemandData memory demandData = TimeBeforeArbiter
-            .DemandData({time: 0});
+        TimeBeforeArbiter.DemandData memory demandData = TimeBeforeArbiter.DemandData({time: 0});
         bytes memory demand = abi.encode(demandData);
 
         // Check obligation should return true (0 means "before nothing" - no constraint)
         bool result = arbiter.checkObligation(attestation, demand, bytes32(0));
-        assertTrue(
-            result,
-            "Should accept any attestation when demand time is 0 (sentinel)"
-        );
+        assertTrue(result, "Should accept any attestation when demand time is 0 (sentinel)");
     }
 
     function testDecodeDemandData() public {
-        TimeBeforeArbiter.DemandData
-            memory expectedDemandData = TimeBeforeArbiter.DemandData({
-                time: timestampThreshold
-            });
+        TimeBeforeArbiter.DemandData memory expectedDemandData =
+            TimeBeforeArbiter.DemandData({time: timestampThreshold});
 
         bytes memory encodedData = abi.encode(expectedDemandData);
 
-        TimeBeforeArbiter.DemandData memory decodedData = arbiter
-            .decodeDemandData(encodedData);
+        TimeBeforeArbiter.DemandData memory decodedData = arbiter.decodeDemandData(encodedData);
 
-        assertEq(
-            decodedData.time,
-            expectedDemandData.time,
-            "Time should match"
-        );
+        assertEq(decodedData.time, expectedDemandData.time, "Time should match");
     }
 }

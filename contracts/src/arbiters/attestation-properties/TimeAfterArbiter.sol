@@ -18,18 +18,22 @@ contract TimeAfterArbiter is IArbiter {
         Attestation memory obligation,
         bytes memory demand,
         bytes32 /*fulfilling*/
-    ) public pure override returns (bool) {
+    )
+        public
+        pure
+        override
+        returns (bool)
+    {
         DemandData memory demand_ = abi.decode(demand, (DemandData));
         // 0 is a sentinel value meaning "after anything" (no constraint)
-        if (demand_.time != 0 && obligation.time < demand_.time)
+        if (demand_.time != 0 && obligation.time < demand_.time) {
             revert TimeNotAfter();
+        }
 
         return true;
     }
 
-    function decodeDemandData(
-        bytes calldata data
-    ) public pure returns (DemandData memory) {
+    function decodeDemandData(bytes calldata data) public pure returns (DemandData memory) {
         return abi.decode(data, (DemandData));
     }
 }

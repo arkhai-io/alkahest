@@ -37,17 +37,11 @@ contract StringObligationTest is Test {
 
     function testConstructorReusesExistingSchema() public {
         address predicted = vm.computeCreateAddress(address(this), vm.getNonce(address(this)));
-        bytes32 expectedSchema = SchemaRegistryUtils.getUID(
-            "string item, bytes32 schema",
-            ISchemaResolver(predicted),
-            true
-        );
+        bytes32 expectedSchema =
+            SchemaRegistryUtils.getUID("string item, bytes32 schema", ISchemaResolver(predicted), true);
 
-        bytes32 registeredSchema = schemaRegistry.register(
-            "string item, bytes32 schema",
-            ISchemaResolver(predicted),
-            true
-        );
+        bytes32 registeredSchema =
+            schemaRegistry.register("string item, bytes32 schema", ISchemaResolver(predicted), true);
         assertEq(registeredSchema, expectedSchema);
 
         StringObligation reusedSchemaObligation = new StringObligation(eas, schemaRegistry);
@@ -57,7 +51,8 @@ contract StringObligationTest is Test {
 
     function testDoObligation() public {
         // Setup test data
-        StringObligation.ObligationData memory data = StringObligation.ObligationData({item: "Test String Data", schema: bytes32(0)});
+        StringObligation.ObligationData memory data =
+            StringObligation.ObligationData({item: "Test String Data", schema: bytes32(0)});
 
         // Make an obligation
         vm.prank(testUser);
@@ -67,26 +62,12 @@ contract StringObligationTest is Test {
 
         // Verify attestation details
         Attestation memory attestation = eas.getAttestation(attestationId);
-        assertEq(
-            attestation.schema,
-            stringObligation.ATTESTATION_SCHEMA(),
-            "Schema should match"
-        );
-        assertEq(
-            attestation.recipient,
-            testUser,
-            "Recipient should be the test user"
-        );
+        assertEq(attestation.schema, stringObligation.ATTESTATION_SCHEMA(), "Schema should match");
+        assertEq(attestation.recipient, testUser, "Recipient should be the test user");
 
         // Decode and verify data
-        StringObligation.ObligationData memory decodedData = abi.decode(
-            attestation.data,
-            (StringObligation.ObligationData)
-        );
-        assertEq(
-            decodedData.item,
-            "Test String Data",
-            "Statement data should match"
-        );
+        StringObligation.ObligationData memory decodedData =
+            abi.decode(attestation.data, (StringObligation.ObligationData));
+        assertEq(decodedData.item, "Test String Data", "Statement data should match");
     }
 }

@@ -22,29 +22,21 @@ contract AttestationEscrowObligation2 is BaseEscrowObligation, IArbiter {
         bytes32 attestationUid; // Reference to the pre-made attestation
     }
 
-    constructor(
-        IEAS _eas,
-        ISchemaRegistry _schemaRegistry
-    )
-        BaseEscrowObligation(
-            _eas,
-            _schemaRegistry,
-            "address arbiter, bytes demand, bytes32 attestationUid",
-            true
-        )
+    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry)
+        BaseEscrowObligation(_eas, _schemaRegistry, "address arbiter, bytes demand, bytes32 attestationUid", true)
     {
         // Register the validation schema
-        VALIDATION_SCHEMA = _schemaRegistry.registerOrReuse(
-            "bytes32 validatedAttestationUid",
-            ISchemaResolver(address(this)),
-            true
-        );
+        VALIDATION_SCHEMA =
+            _schemaRegistry.registerOrReuse("bytes32 validatedAttestationUid", ISchemaResolver(address(this)), true);
     }
 
     // Extract arbiter and demand from encoded data
-    function extractArbiterAndDemand(
-        bytes memory data
-    ) public pure override returns (address arbiter, bytes memory demand) {
+    function extractArbiterAndDemand(bytes memory data)
+        public
+        pure
+        override
+        returns (address arbiter, bytes memory demand)
+    {
         ObligationData memory decoded = abi.decode(data, (ObligationData));
         return (decoded.arbiter, decoded.demand);
     }
@@ -55,15 +47,8 @@ contract AttestationEscrowObligation2 is BaseEscrowObligation, IArbiter {
     }
 
     // Create validation attestation
-    function _releaseEscrow(
-        bytes memory escrowData,
-        address to,
-        bytes32
-    ) internal override returns (bytes memory) {
-        ObligationData memory decoded = abi.decode(
-            escrowData,
-            (ObligationData)
-        );
+    function _releaseEscrow(bytes memory escrowData, address to, bytes32) internal override returns (bytes memory) {
+        ObligationData memory decoded = abi.decode(escrowData, (ObligationData));
 
         // Create validation attestation
         bytes32 validationUid = eas.attest(
@@ -93,69 +78,44 @@ contract AttestationEscrowObligation2 is BaseEscrowObligation, IArbiter {
         Attestation memory obligation,
         bytes memory demand,
         bytes32 /* fulfilling */
-    ) public view override returns (bool) {
+    )
+        public
+        view
+        override
+        returns (bool)
+    {
         if (obligation.schema != ATTESTATION_SCHEMA) return false;
 
-        ObligationData memory escrow = abi.decode(
-            obligation.data,
-            (ObligationData)
-        );
+        ObligationData memory escrow = abi.decode(obligation.data, (ObligationData));
         ObligationData memory demandData = abi.decode(demand, (ObligationData));
 
-        return
-            escrow.attestationUid == demandData.attestationUid &&
-            escrow.arbiter == demandData.arbiter &&
-            keccak256(escrow.demand) == keccak256(demandData.demand);
+        return escrow.attestationUid == demandData.attestationUid && escrow.arbiter == demandData.arbiter
+            && keccak256(escrow.demand) == keccak256(demandData.demand);
     }
 
     // Typed convenience methods
-    function doObligation(
-        ObligationData calldata data,
-        uint64 expirationTime
-    ) external returns (bytes32) {
-        return
-            _doObligationForRaw(
-                abi.encode(data),
-                expirationTime,
-
-                msg.sender,
-                bytes32(0)
-            );
+    function doObligation(ObligationData calldata data, uint64 expirationTime) external returns (bytes32) {
+        return _doObligationForRaw(abi.encode(data), expirationTime, msg.sender, bytes32(0));
     }
 
-    function doObligationFor(
-        ObligationData calldata data,
-        uint64 expirationTime,
-        address recipient
-    ) external returns (bytes32) {
-        return
-            _doObligationForRaw(
-                abi.encode(data),
-                expirationTime,
-
-                recipient,
-                bytes32(0)
-            );
+    function doObligationFor(ObligationData calldata data, uint64 expirationTime, address recipient)
+        external
+        returns (bytes32)
+    {
+        return _doObligationForRaw(abi.encode(data), expirationTime, recipient, bytes32(0));
     }
 
-    function collectEscrow(
-        bytes32 escrow,
-        bytes32 fulfillment
-    ) external returns (bytes32) {
+    function collectEscrow(bytes32 escrow, bytes32 fulfillment) external returns (bytes32) {
         bytes memory result = collectEscrowRaw(escrow, fulfillment);
         return abi.decode(result, (bytes32));
     }
 
-    function getObligationData(
-        bytes32 uid
-    ) public view returns (ObligationData memory) {
+    function getObligationData(bytes32 uid) public view returns (ObligationData memory) {
         Attestation memory attestation = _getAttestation(uid);
         return abi.decode(attestation.data, (ObligationData));
     }
 
-    function decodeObligationData(
-        bytes calldata data
-    ) public pure returns (ObligationData memory) {
+    function decodeObligationData(bytes calldata data) public pure returns (ObligationData memory) {
         return abi.decode(data, (ObligationData));
     }
 }

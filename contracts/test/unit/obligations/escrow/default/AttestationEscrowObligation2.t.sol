@@ -7,7 +7,14 @@ import {BaseEscrowObligation} from "@src/BaseEscrowObligation.sol";
 import {StringObligation} from "@src/obligations/StringObligation.sol";
 import {IArbiter} from "@src/IArbiter.sol";
 import {MockArbiter} from "../../fixtures/MockArbiter.sol";
-import {IEAS, Attestation, AttestationRequest, AttestationRequestData, RevocationRequest, RevocationRequestData} from "@eas/IEAS.sol";
+import {
+    IEAS,
+    Attestation,
+    AttestationRequest,
+    AttestationRequestData,
+    RevocationRequest,
+    RevocationRequestData
+} from "@eas/IEAS.sol";
 import {ISchemaRegistry, SchemaRecord} from "@eas/ISchemaRegistry.sol";
 import {ISchemaResolver} from "@eas/resolver/ISchemaResolver.sol";
 import {EASDeployer} from "@test/utils/EASDeployer.sol";
@@ -35,10 +42,7 @@ contract AttestationEscrowObligation2Test is Test {
         EASDeployer easDeployer = new EASDeployer();
         (eas, schemaRegistry) = easDeployer.deployEAS();
 
-        escrowObligation = new AttestationEscrowObligation2(
-            eas,
-            schemaRegistry
-        );
+        escrowObligation = new AttestationEscrowObligation2(eas, schemaRegistry);
         stringObligation = new StringObligation(eas, schemaRegistry);
         mockArbiter = new MockArbiter(true);
         rejectingArbiter = new MockArbiter(false);
@@ -49,11 +53,7 @@ contract AttestationEscrowObligation2Test is Test {
 
         // Register a test schema for our tests
         vm.prank(address(this));
-        testSchemaId = schemaRegistry.register(
-            "string testData",
-            ISchemaResolver(address(0)),
-            true
-        ); // Make schema revocable
+        testSchemaId = schemaRegistry.register("string testData", ISchemaResolver(address(0)), true); // Make schema revocable
 
         // Create a pre-existing attestation
         vm.prank(attester);
@@ -80,45 +80,24 @@ contract AttestationEscrowObligation2Test is Test {
         // Verify schema details
         SchemaRecord memory schema = escrowObligation.getSchema();
         assertEq(schema.uid, schemaId, "Schema UID should match");
-        assertEq(
-            schema.schema,
-            "address arbiter, bytes demand, bytes32 attestationUid",
-            "Schema string should match"
-        );
+        assertEq(schema.schema, "address arbiter, bytes demand, bytes32 attestationUid", "Schema string should match");
 
         // Verify validation schema
         bytes32 validationSchemaId = escrowObligation.VALIDATION_SCHEMA();
-        assertNotEq(
-            validationSchemaId,
-            bytes32(0),
-            "Validation schema should be registered"
-        );
+        assertNotEq(validationSchemaId, bytes32(0), "Validation schema should be registered");
 
-        SchemaRecord memory validationSchema = schemaRegistry.getSchema(
-            validationSchemaId
-        );
-        assertEq(
-            validationSchema.uid,
-            validationSchemaId,
-            "Validation schema UID should match"
-        );
-        assertEq(
-            validationSchema.schema,
-            "bytes32 validatedAttestationUid",
-            "Validation schema string should match"
-        );
+        SchemaRecord memory validationSchema = schemaRegistry.getSchema(validationSchemaId);
+        assertEq(validationSchema.uid, validationSchemaId, "Validation schema UID should match");
+        assertEq(validationSchema.schema, "bytes32 validatedAttestationUid", "Validation schema string should match");
     }
 
     function testMakeStatement() public {
         vm.startPrank(requester);
 
         // Create the obligation data
-        AttestationEscrowObligation2.ObligationData
-            memory data = AttestationEscrowObligation2.ObligationData({
-                attestationUid: preExistingAttestationId,
-                arbiter: address(mockArbiter),
-                demand: abi.encode("test demand")
-            });
+        AttestationEscrowObligation2.ObligationData memory data = AttestationEscrowObligation2.ObligationData({
+            attestationUid: preExistingAttestationId, arbiter: address(mockArbiter), demand: abi.encode("test demand")
+        });
 
         uint64 expiration = uint64(block.timestamp + EXPIRATION_TIME);
         bytes32 uid = escrowObligation.doObligation(data, expiration);
@@ -129,85 +108,40 @@ contract AttestationEscrowObligation2Test is Test {
 
         // Verify attestation details
         Attestation memory attestation = eas.getAttestation(uid);
-        assertEq(
-            attestation.schema,
-            escrowObligation.ATTESTATION_SCHEMA(),
-            "Schema should match"
-        );
-        assertEq(
-            attestation.recipient,
-            requester,
-            "Recipient should be the requester"
-        );
+        assertEq(attestation.schema, escrowObligation.ATTESTATION_SCHEMA(), "Schema should match");
+        assertEq(attestation.recipient, requester, "Recipient should be the requester");
 
         // Verify attestation data
-        AttestationEscrowObligation2.ObligationData memory storedData = abi
-            .decode(
-                attestation.data,
-                (AttestationEscrowObligation2.ObligationData)
-            );
-        assertEq(
-            storedData.attestationUid,
-            preExistingAttestationId,
-            "Attestation UID should match"
-        );
-        assertEq(
-            storedData.arbiter,
-            address(mockArbiter),
-            "Arbiter should match"
-        );
+        AttestationEscrowObligation2.ObligationData memory storedData =
+            abi.decode(attestation.data, (AttestationEscrowObligation2.ObligationData));
+        assertEq(storedData.attestationUid, preExistingAttestationId, "Attestation UID should match");
+        assertEq(storedData.arbiter, address(mockArbiter), "Arbiter should match");
     }
 
     function testDoObligationFor() public {
         // Create the obligation data
-        AttestationEscrowObligation2.ObligationData
-            memory data = AttestationEscrowObligation2.ObligationData({
-                attestationUid: preExistingAttestationId,
-                arbiter: address(mockArbiter),
-                demand: abi.encode("test demand")
-            });
+        AttestationEscrowObligation2.ObligationData memory data = AttestationEscrowObligation2.ObligationData({
+            attestationUid: preExistingAttestationId, arbiter: address(mockArbiter), demand: abi.encode("test demand")
+        });
 
         uint64 expiration = uint64(block.timestamp + EXPIRATION_TIME);
 
         vm.prank(address(this));
-        bytes32 uid = escrowObligation.doObligationFor(
-            data,
-            expiration,
-            recipient
-        );
+        bytes32 uid = escrowObligation.doObligationFor(data, expiration, recipient);
 
         // Verify attestation exists
         assertNotEq(uid, bytes32(0), "Attestation should be created");
 
         // Verify attestation details
         Attestation memory attestation = eas.getAttestation(uid);
-        assertEq(
-            attestation.schema,
-            escrowObligation.ATTESTATION_SCHEMA(),
-            "Schema should match"
-        );
-        assertEq(
-            attestation.recipient,
-            recipient,
-            "Recipient should be the specified recipient"
-        );
+        assertEq(attestation.schema, escrowObligation.ATTESTATION_SCHEMA(), "Schema should match");
+        assertEq(attestation.recipient, recipient, "Recipient should be the specified recipient");
 
         // Verify attestation data
-        AttestationEscrowObligation2.ObligationData memory storedData = abi
-            .decode(
-                attestation.data,
-                (AttestationEscrowObligation2.ObligationData)
-            );
-        assertEq(
-            storedData.attestationUid,
-            preExistingAttestationId,
-            "Attestation UID should match"
-        );
-        assertEq(
-            storedData.arbiter,
-            address(mockArbiter),
-            "Arbiter should match"
-        );
+        AttestationEscrowObligation2.ObligationData memory storedData =
+            abi.decode(attestation.data, (AttestationEscrowObligation2.ObligationData));
+        assertEq(storedData.attestationUid, preExistingAttestationId, "Attestation UID should match");
+        assertEq(storedData.arbiter, address(mockArbiter), "Arbiter should match");
     }
 
     function testCollectEscrow() public {
@@ -215,12 +149,9 @@ contract AttestationEscrowObligation2Test is Test {
         vm.startPrank(requester);
 
         // Create the obligation data
-        AttestationEscrowObligation2.ObligationData
-            memory data = AttestationEscrowObligation2.ObligationData({
-                attestationUid: preExistingAttestationId,
-                arbiter: address(mockArbiter),
-                demand: abi.encode("test demand")
-            });
+        AttestationEscrowObligation2.ObligationData memory data = AttestationEscrowObligation2.ObligationData({
+            attestationUid: preExistingAttestationId, arbiter: address(mockArbiter), demand: abi.encode("test demand")
+        });
 
         uint64 expiration = uint64(block.timestamp + EXPIRATION_TIME);
         bytes32 escrowUid = escrowObligation.doObligation(data, expiration);
@@ -228,39 +159,26 @@ contract AttestationEscrowObligation2Test is Test {
 
         // Create a fulfillment attestation from the attester using StringObligation
         vm.prank(attester);
-        StringObligation.ObligationData memory stringData = StringObligation.ObligationData({item: "fulfillment data", schema: bytes32(0)});
+        StringObligation.ObligationData memory stringData =
+            StringObligation.ObligationData({item: "fulfillment data", schema: bytes32(0)});
 
-        bytes32 fulfillmentUid = stringObligation.doObligation(
-            stringData,
-            escrowUid
-        );
+        bytes32 fulfillmentUid = stringObligation.doObligation(stringData, escrowUid);
 
         // Collect payment
         vm.prank(attester);
-        bytes32 validationUid = escrowObligation.collectEscrow(
-            escrowUid,
-            fulfillmentUid
-        );
+        bytes32 validationUid = escrowObligation.collectEscrow(escrowUid, fulfillmentUid);
 
-        assertNotEq(
-            validationUid,
-            bytes32(0),
-            "Validation UID should not be empty"
-        );
+        assertNotEq(validationUid, bytes32(0), "Validation UID should not be empty");
 
         // Verify that the validation attestation was created
-        Attestation memory validationAttestation = eas.getAttestation(
-            validationUid
-        );
+        Attestation memory validationAttestation = eas.getAttestation(validationUid);
         assertEq(
             validationAttestation.schema,
             escrowObligation.VALIDATION_SCHEMA(),
             "Validation attestation should have the validation schema"
         );
         assertEq(
-            validationAttestation.recipient,
-            attester,
-            "Validation attestation should have the attester as recipient"
+            validationAttestation.recipient, attester, "Validation attestation should have the attester as recipient"
         );
         assertEq(
             validationAttestation.refUID,
@@ -270,10 +188,7 @@ contract AttestationEscrowObligation2Test is Test {
 
         // Verify that the escrowed attestation was revoked
         Attestation memory revokedEscrow = eas.getAttestation(escrowUid);
-        assertTrue(
-            revokedEscrow.revocationTime > 0,
-            "Escrow attestation should be revoked"
-        );
+        assertTrue(revokedEscrow.revocationTime > 0, "Escrow attestation should be revoked");
     }
 
     function testCollectEscrowWithRejectedFulfillment() public {
@@ -281,12 +196,11 @@ contract AttestationEscrowObligation2Test is Test {
         vm.startPrank(requester);
 
         // Create the obligation data with rejecting arbiter
-        AttestationEscrowObligation2.ObligationData
-            memory data = AttestationEscrowObligation2.ObligationData({
-                attestationUid: preExistingAttestationId,
-                arbiter: address(rejectingArbiter),
-                demand: abi.encode("test demand")
-            });
+        AttestationEscrowObligation2.ObligationData memory data = AttestationEscrowObligation2.ObligationData({
+            attestationUid: preExistingAttestationId,
+            arbiter: address(rejectingArbiter),
+            demand: abi.encode("test demand")
+        });
 
         uint64 expiration = uint64(block.timestamp + EXPIRATION_TIME);
         bytes32 escrowUid = escrowObligation.doObligation(data, expiration);
@@ -294,12 +208,10 @@ contract AttestationEscrowObligation2Test is Test {
 
         // Create a fulfillment attestation from the attester using StringObligation
         vm.prank(attester);
-        StringObligation.ObligationData memory stringData = StringObligation.ObligationData({item: "fulfillment data", schema: bytes32(0)});
+        StringObligation.ObligationData memory stringData =
+            StringObligation.ObligationData({item: "fulfillment data", schema: bytes32(0)});
 
-        bytes32 fulfillmentUid = stringObligation.doObligation(
-            stringData,
-            escrowUid
-        );
+        bytes32 fulfillmentUid = stringObligation.doObligation(stringData, escrowUid);
 
         // Try to collect payment, should revert with InvalidFulfillment
         vm.prank(attester);
@@ -309,12 +221,11 @@ contract AttestationEscrowObligation2Test is Test {
 
     function testCheckObligation() public {
         // Create obligation data
-        AttestationEscrowObligation2.ObligationData
-            memory escrowData = AttestationEscrowObligation2.ObligationData({
-                attestationUid: preExistingAttestationId,
-                arbiter: address(mockArbiter),
-                demand: abi.encode("specific demand")
-            });
+        AttestationEscrowObligation2.ObligationData memory escrowData = AttestationEscrowObligation2.ObligationData({
+            attestationUid: preExistingAttestationId,
+            arbiter: address(mockArbiter),
+            demand: abi.encode("specific demand")
+        });
 
         // Create an attestation with makeStatement instead of direct EAS call
         vm.prank(requester);
@@ -323,18 +234,13 @@ contract AttestationEscrowObligation2Test is Test {
         Attestation memory attestation = eas.getAttestation(attestationId);
 
         // Test exact match
-        AttestationEscrowObligation2.ObligationData
-            memory exactDemand = AttestationEscrowObligation2.ObligationData({
-                attestationUid: preExistingAttestationId,
-                arbiter: address(mockArbiter),
-                demand: abi.encode("specific demand")
-            });
+        AttestationEscrowObligation2.ObligationData memory exactDemand = AttestationEscrowObligation2.ObligationData({
+            attestationUid: preExistingAttestationId,
+            arbiter: address(mockArbiter),
+            demand: abi.encode("specific demand")
+        });
 
-        bool exactMatch = escrowObligation.checkObligation(
-            attestation,
-            abi.encode(exactDemand),
-            bytes32(0)
-        );
+        bool exactMatch = escrowObligation.checkObligation(attestation, abi.encode(exactDemand), bytes32(0));
         assertTrue(exactMatch, "Should match exact demand");
 
         // Test different attestation UID (should fail)
@@ -354,57 +260,39 @@ contract AttestationEscrowObligation2Test is Test {
             })
         );
 
-        AttestationEscrowObligation2.ObligationData
-            memory differentUidDemand = AttestationEscrowObligation2
-                .ObligationData({
-                    attestationUid: differentAttestationId,
-                    arbiter: address(mockArbiter),
-                    demand: abi.encode("specific demand")
-                });
+        AttestationEscrowObligation2.ObligationData memory differentUidDemand =
+            AttestationEscrowObligation2.ObligationData({
+                attestationUid: differentAttestationId,
+                arbiter: address(mockArbiter),
+                demand: abi.encode("specific demand")
+            });
 
-        bool differentUidMatch = escrowObligation.checkObligation(
-            attestation,
-            abi.encode(differentUidDemand),
-            bytes32(0)
-        );
-        assertFalse(
-            differentUidMatch,
-            "Should not match different attestation UID"
-        );
+        bool differentUidMatch =
+            escrowObligation.checkObligation(attestation, abi.encode(differentUidDemand), bytes32(0));
+        assertFalse(differentUidMatch, "Should not match different attestation UID");
 
         // Test different arbiter (should fail)
-        AttestationEscrowObligation2.ObligationData
-            memory differentArbiterDemand = AttestationEscrowObligation2
-                .ObligationData({
-                    attestationUid: preExistingAttestationId,
-                    arbiter: address(rejectingArbiter),
-                    demand: abi.encode("specific demand")
-                });
+        AttestationEscrowObligation2.ObligationData memory differentArbiterDemand =
+            AttestationEscrowObligation2.ObligationData({
+                attestationUid: preExistingAttestationId,
+                arbiter: address(rejectingArbiter),
+                demand: abi.encode("specific demand")
+            });
 
-        bool differentArbiterMatch = escrowObligation.checkObligation(
-            attestation,
-            abi.encode(differentArbiterDemand),
-            bytes32(0)
-        );
-        assertFalse(
-            differentArbiterMatch,
-            "Should not match different arbiter"
-        );
+        bool differentArbiterMatch =
+            escrowObligation.checkObligation(attestation, abi.encode(differentArbiterDemand), bytes32(0));
+        assertFalse(differentArbiterMatch, "Should not match different arbiter");
 
         // Test different demand (should fail)
-        AttestationEscrowObligation2.ObligationData
-            memory differentDemandData = AttestationEscrowObligation2
-                .ObligationData({
-                    attestationUid: preExistingAttestationId,
-                    arbiter: address(mockArbiter),
-                    demand: abi.encode("different demand")
-                });
+        AttestationEscrowObligation2.ObligationData memory differentDemandData =
+            AttestationEscrowObligation2.ObligationData({
+                attestationUid: preExistingAttestationId,
+                arbiter: address(mockArbiter),
+                demand: abi.encode("different demand")
+            });
 
-        bool differentDemandMatch = escrowObligation.checkObligation(
-            attestation,
-            abi.encode(differentDemandData),
-            bytes32(0)
-        );
+        bool differentDemandMatch =
+            escrowObligation.checkObligation(attestation, abi.encode(differentDemandData), bytes32(0));
         assertFalse(differentDemandMatch, "Should not match different demand");
     }
 
@@ -415,11 +303,12 @@ contract AttestationEscrowObligation2Test is Test {
         // Create a fulfillment attestation using StringObligation
         // Note: fulfillment doesn't reference anything since the escrow doesn't exist yet
         vm.prank(attester);
-        StringObligation.ObligationData memory stringData = StringObligation.ObligationData({item: "fulfillment data", schema: bytes32(0)});
+        StringObligation.ObligationData memory stringData =
+            StringObligation.ObligationData({item: "fulfillment data", schema: bytes32(0)});
 
         bytes32 fulfillmentUid = stringObligation.doObligation(
             stringData,
-            bytes32(0)  // No reference since we're testing invalid escrow
+            bytes32(0) // No reference since we're testing invalid escrow
         );
 
         // Try to collect payment with an invalid escrow attestation
@@ -427,9 +316,6 @@ contract AttestationEscrowObligation2Test is Test {
         // Just expect any revert instead of a specific error code, since the revert data
         // isn't being properly encoded for some reason
         vm.expectRevert();
-        escrowObligation.collectEscrow(
-            nonExistentAttestationId,
-            fulfillmentUid
-        );
+        escrowObligation.collectEscrow(nonExistentAttestationId, fulfillmentUid);
     }
 }

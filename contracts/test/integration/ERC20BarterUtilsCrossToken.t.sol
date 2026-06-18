@@ -21,10 +21,7 @@ import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import {EASDeployer} from "@test/utils/EASDeployer.sol";
 
 contract MockERC20Permit is ERC20Permit {
-    constructor(
-        string memory name,
-        string memory symbol
-    ) ERC20(name, symbol) ERC20Permit(name) {
+    constructor(string memory name, string memory symbol) ERC20(name, symbol) ERC20Permit(name) {
         _mint(msg.sender, 1000000 * 10 ** 18);
     }
 }
@@ -116,7 +113,8 @@ contract ERC20BarterUtilsCrossTokenTest is Test {
 
         // Setup initial token balances
         bidToken.transfer(alice, 1000 * 10 ** 18);
-        /* uint256 nftId = */ erc721Token.mint(bob);
+        /* uint256 nftId = */
+        erc721Token.mint(bob);
         erc1155Token.mint(bob, 1, 100);
     }
 
@@ -128,45 +126,25 @@ contract ERC20BarterUtilsCrossTokenTest is Test {
         // Alice makes bid
         vm.startPrank(alice);
         bidToken.approve(address(barterUtils), bidAmount);
-        bytes32 buyAttestation = barterUtils.buyErc721WithErc20(
-            address(bidToken),
-            bidAmount,
-            address(erc721Token),
-            nftId,
-            expiration
-        );
+        bytes32 buyAttestation =
+            barterUtils.buyErc721WithErc20(address(bidToken), bidAmount, address(erc721Token), nftId, expiration);
         vm.stopPrank();
 
         // Bob accepts by transferring NFT
         vm.startPrank(bob);
         erc721Token.approve(address(erc721Payment), nftId);
         bytes32 sellAttestation = erc721Payment.doObligation(
-            ERC721PaymentObligation.ObligationData({
-                token: address(erc721Token),
-                tokenId: nftId,
-                payee: alice
-            }),
+            ERC721PaymentObligation.ObligationData({token: address(erc721Token), tokenId: nftId, payee: alice}),
             buyAttestation
         );
 
         // Collect payment
-        bool success = escrowObligation.collectEscrow(
-            buyAttestation,
-            sellAttestation
-        );
+        bool success = escrowObligation.collectEscrow(buyAttestation, sellAttestation);
         vm.stopPrank();
 
         assertTrue(success, "Payment collection should succeed");
-        assertEq(
-            erc721Token.ownerOf(nftId),
-            alice,
-            "Alice should own the ERC721"
-        );
-        assertEq(
-            bidToken.balanceOf(bob),
-            bidAmount,
-            "Bob should receive bid amount"
-        );
+        assertEq(erc721Token.ownerOf(nftId), alice, "Alice should own the ERC721");
+        assertEq(bidToken.balanceOf(bob), bidAmount, "Bob should receive bid amount");
     }
 
     function testBuyERC1155WithERC20() public {
@@ -179,12 +157,7 @@ contract ERC20BarterUtilsCrossTokenTest is Test {
         vm.startPrank(alice);
         bidToken.approve(address(barterUtils), bidAmount);
         bytes32 buyAttestation = barterUtils.buyErc1155WithErc20(
-            address(bidToken),
-            bidAmount,
-            address(erc1155Token),
-            tokenId,
-            amount,
-            expiration
+            address(bidToken), bidAmount, address(erc1155Token), tokenId, amount, expiration
         );
         vm.stopPrank();
 
@@ -193,32 +166,18 @@ contract ERC20BarterUtilsCrossTokenTest is Test {
         erc1155Token.setApprovalForAll(address(erc1155Payment), true);
         bytes32 sellAttestation = erc1155Payment.doObligation(
             ERC1155PaymentObligation.ObligationData({
-                token: address(erc1155Token),
-                tokenId: tokenId,
-                amount: amount,
-                payee: alice
+                token: address(erc1155Token), tokenId: tokenId, amount: amount, payee: alice
             }),
             buyAttestation
         );
 
         // Collect payment
-        bool success = escrowObligation.collectEscrow(
-            buyAttestation,
-            sellAttestation
-        );
+        bool success = escrowObligation.collectEscrow(buyAttestation, sellAttestation);
         vm.stopPrank();
 
         assertTrue(success, "Payment collection should succeed");
-        assertEq(
-            erc1155Token.balanceOf(alice, tokenId),
-            amount,
-            "Alice should receive tokens"
-        );
-        assertEq(
-            bidToken.balanceOf(bob),
-            bidAmount,
-            "Bob should receive bid amount"
-        );
+        assertEq(erc1155Token.balanceOf(alice, tokenId), amount, "Alice should receive tokens");
+        assertEq(bidToken.balanceOf(bob), bidAmount, "Bob should receive bid amount");
     }
 
     function testPermitAndBuyERC721() public {
@@ -228,57 +187,29 @@ contract ERC20BarterUtilsCrossTokenTest is Test {
         uint256 deadline = block.timestamp + 1;
 
         // Get permit signature
-        (uint8 v, bytes32 r, bytes32 s) = _getPermitSignature(
-            bidToken,
-            ALICE_PRIVATE_KEY,
-            address(barterUtils),
-            bidAmount,
-            deadline
-        );
+        (uint8 v, bytes32 r, bytes32 s) =
+            _getPermitSignature(bidToken, ALICE_PRIVATE_KEY, address(barterUtils), bidAmount, deadline);
 
         // Alice makes bid with permit
         vm.prank(alice);
         bytes32 buyAttestation = barterUtils.permitAndBuyErc721WithErc20(
-            address(bidToken),
-            bidAmount,
-            address(erc721Token),
-            nftId,
-            expiration,
-            deadline,
-            v,
-            r,
-            s
+            address(bidToken), bidAmount, address(erc721Token), nftId, expiration, deadline, v, r, s
         );
 
         // Bob accepts
         vm.startPrank(bob);
         erc721Token.approve(address(erc721Payment), nftId);
         bytes32 sellAttestation = erc721Payment.doObligation(
-            ERC721PaymentObligation.ObligationData({
-                token: address(erc721Token),
-                tokenId: nftId,
-                payee: alice
-            }),
+            ERC721PaymentObligation.ObligationData({token: address(erc721Token), tokenId: nftId, payee: alice}),
             buyAttestation
         );
 
-        bool success = escrowObligation.collectEscrow(
-            buyAttestation,
-            sellAttestation
-        );
+        bool success = escrowObligation.collectEscrow(buyAttestation, sellAttestation);
         vm.stopPrank();
 
         assertTrue(success, "Payment collection should succeed");
-        assertEq(
-            erc721Token.ownerOf(nftId),
-            alice,
-            "Alice should own the ERC721"
-        );
-        assertEq(
-            bidToken.balanceOf(bob),
-            bidAmount,
-            "Bob should receive bid amount"
-        );
+        assertEq(erc721Token.ownerOf(nftId), alice, "Alice should own the ERC721");
+        assertEq(bidToken.balanceOf(bob), bidAmount, "Bob should receive bid amount");
     }
 
     function _getPermitSignature(
@@ -293,20 +224,9 @@ contract ERC20BarterUtilsCrossTokenTest is Test {
         );
 
         address owner = vm.addr(ownerPrivateKey);
-        bytes32 structHash = keccak256(
-            abi.encode(
-                permitTypehash,
-                owner,
-                spender,
-                value,
-                token.nonces(owner),
-                deadline
-            )
-        );
+        bytes32 structHash = keccak256(abi.encode(permitTypehash, owner, spender, value, token.nonces(owner), deadline));
 
-        bytes32 digest = keccak256(
-            abi.encodePacked("\x19\x01", token.DOMAIN_SEPARATOR(), structHash)
-        );
+        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", token.DOMAIN_SEPARATOR(), structHash));
 
         (v, r, s) = vm.sign(ownerPrivateKey, digest);
     }

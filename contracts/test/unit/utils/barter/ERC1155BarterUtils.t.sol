@@ -148,53 +148,25 @@ contract ERC1155BarterUtilsUnitTest is Test {
         );
         vm.stopPrank();
 
-        assertNotEq(
-            buyAttestation,
-            bytes32(0),
-            "Buy attestation should be created"
-        );
+        assertNotEq(buyAttestation, bytes32(0), "Buy attestation should be created");
 
         // Validate the attestation data
         Attestation memory bid = eas.getAttestation(buyAttestation);
-        ERC1155EscrowObligation.ObligationData memory escrowData = abi.decode(
-            bid.data,
-            (ERC1155EscrowObligation.ObligationData)
-        );
+        ERC1155EscrowObligation.ObligationData memory escrowData =
+            abi.decode(bid.data, (ERC1155EscrowObligation.ObligationData));
 
-        assertEq(
-            escrowData.token,
-            address(erc1155TokenA),
-            "Token should match"
-        );
+        assertEq(escrowData.token, address(erc1155TokenA), "Token should match");
         assertEq(escrowData.tokenId, aliceTokenId, "TokenId should match");
-        assertEq(
-            escrowData.amount,
-            aliceTokenAmount,
-            "Token amount should match"
-        );
-        assertEq(
-            escrowData.arbiter,
-            address(paymentObligation),
-            "Arbiter should be payment obligation"
-        );
+        assertEq(escrowData.amount, aliceTokenAmount, "Token amount should match");
+        assertEq(escrowData.arbiter, address(paymentObligation), "Arbiter should be payment obligation");
 
         // Extract the demand data
-        ERC1155PaymentObligation.ObligationData memory demandData = abi.decode(
-            escrowData.demand,
-            (ERC1155PaymentObligation.ObligationData)
-        );
+        ERC1155PaymentObligation.ObligationData memory demandData =
+            abi.decode(escrowData.demand, (ERC1155PaymentObligation.ObligationData));
 
-        assertEq(
-            demandData.token,
-            address(erc1155TokenB),
-            "Demand token should match"
-        );
+        assertEq(demandData.token, address(erc1155TokenB), "Demand token should match");
         assertEq(demandData.tokenId, bobTokenId, "Demand tokenId should match");
-        assertEq(
-            demandData.amount,
-            bobTokenAmount,
-            "Demand token amount should match"
-        );
+        assertEq(demandData.amount, bobTokenAmount, "Demand token amount should match");
         assertEq(demandData.payee, alice, "Payee should be Alice");
 
         // Verify that Alice's tokens are now escrowed
@@ -203,11 +175,7 @@ contract ERC1155BarterUtilsUnitTest is Test {
             aliceTokenAmount,
             "Tokens should be in escrow"
         );
-        assertEq(
-            erc1155TokenA.balanceOf(alice, aliceTokenId),
-            0,
-            "Alice should have no tokens left"
-        );
+        assertEq(erc1155TokenA.balanceOf(alice, aliceTokenId), 0, "Alice should have no tokens left");
     }
 
     function testPayErc1155ForErc1155() public {
@@ -229,48 +197,25 @@ contract ERC1155BarterUtilsUnitTest is Test {
 
         // Initial token balances (after escrow)
         assertEq(erc1155TokenA.balanceOf(alice, aliceTokenId), 0);
-        assertEq(
-            erc1155TokenA.balanceOf(address(escrowObligation), aliceTokenId),
-            aliceTokenAmount
-        );
+        assertEq(erc1155TokenA.balanceOf(address(escrowObligation), aliceTokenId), aliceTokenAmount);
         assertEq(erc1155TokenB.balanceOf(bob, bobTokenId), bobTokenAmount);
         assertEq(erc1155TokenB.balanceOf(alice, bobTokenId), 0);
 
         // Now Bob fulfills the request
         vm.startPrank(bob);
         erc1155TokenB.setApprovalForAll(address(barterUtils), true);
-        bytes32 payAttestation = barterUtils.payErc1155ForErc1155(
-            buyAttestation
-        );
+        bytes32 payAttestation = barterUtils.payErc1155ForErc1155(buyAttestation);
         vm.stopPrank();
 
-        assertNotEq(
-            payAttestation,
-            bytes32(0),
-            "Pay attestation should be created"
-        );
+        assertNotEq(payAttestation, bytes32(0), "Pay attestation should be created");
 
         // Verify the exchange happened
+        assertEq(erc1155TokenA.balanceOf(bob, aliceTokenId), aliceTokenAmount, "Bob should now have Alice's tokens");
+        assertEq(erc1155TokenB.balanceOf(alice, bobTokenId), bobTokenAmount, "Alice should now have Bob's tokens");
         assertEq(
-            erc1155TokenA.balanceOf(bob, aliceTokenId),
-            aliceTokenAmount,
-            "Bob should now have Alice's tokens"
+            erc1155TokenA.balanceOf(address(escrowObligation), aliceTokenId), 0, "Escrow should have released tokens"
         );
-        assertEq(
-            erc1155TokenB.balanceOf(alice, bobTokenId),
-            bobTokenAmount,
-            "Alice should now have Bob's tokens"
-        );
-        assertEq(
-            erc1155TokenA.balanceOf(address(escrowObligation), aliceTokenId),
-            0,
-            "Escrow should have released tokens"
-        );
-        assertEq(
-            erc1155TokenB.balanceOf(bob, bobTokenId),
-            0,
-            "Bob should have no tokens left"
-        );
+        assertEq(erc1155TokenB.balanceOf(bob, bobTokenId), 0, "Bob should have no tokens left");
     }
 
     function testDemandDataExtraction() public {
@@ -291,15 +236,11 @@ contract ERC1155BarterUtilsUnitTest is Test {
 
         // Extract the attestation and manually decode it
         Attestation memory bid = eas.getAttestation(buyAttestation);
-        ERC1155EscrowObligation.ObligationData memory escrowData = abi.decode(
-            bid.data,
-            (ERC1155EscrowObligation.ObligationData)
-        );
+        ERC1155EscrowObligation.ObligationData memory escrowData =
+            abi.decode(bid.data, (ERC1155EscrowObligation.ObligationData));
 
-        ERC1155PaymentObligation.ObligationData memory demand = abi.decode(
-            escrowData.demand,
-            (ERC1155PaymentObligation.ObligationData)
-        );
+        ERC1155PaymentObligation.ObligationData memory demand =
+            abi.decode(escrowData.demand, (ERC1155PaymentObligation.ObligationData));
 
         // Verify the demand data matches what we expect
         assertEq(demand.token, address(erc1155TokenB), "Token should match");
@@ -365,13 +306,7 @@ contract ERC1155BarterUtilsUnitTest is Test {
         // Bob transfers his tokens to someone else
         address thirdParty = makeAddr("third-party");
         vm.startPrank(bob);
-        erc1155TokenB.safeTransferFrom(
-            bob,
-            thirdParty,
-            bobTokenId,
-            bobTokenAmount,
-            ""
-        );
+        erc1155TokenB.safeTransferFrom(bob, thirdParty, bobTokenId, bobTokenAmount, "");
         vm.stopPrank();
 
         // Bob tries to fulfill request with tokens he no longer owns
@@ -424,20 +359,11 @@ contract ERC1155BarterUtilsUnitTest is Test {
         vm.startPrank(alice);
         erc1155TokenA.setApprovalForAll(address(barterUtils), true);
         bytes32 buyAttestation = barterUtils.buyErc20WithErc1155(
-            address(erc1155TokenA),
-            aliceTokenId,
-            aliceTokenAmount / 2,
-            address(erc20Token),
-            askAmount,
-            expiration
+            address(erc1155TokenA), aliceTokenId, aliceTokenAmount / 2, address(erc20Token), askAmount, expiration
         );
         vm.stopPrank();
 
-        assertNotEq(
-            buyAttestation,
-            bytes32(0),
-            "Buy attestation should be created"
-        );
+        assertNotEq(buyAttestation, bytes32(0), "Buy attestation should be created");
     }
 
     function testPayErc1155ForErc20() public {
@@ -456,10 +382,7 @@ contract ERC1155BarterUtilsUnitTest is Test {
                 arbiter: address(paymentObligation),
                 demand: abi.encode(
                     ERC1155PaymentObligation.ObligationData({
-                        token: address(erc1155TokenB),
-                        tokenId: bobTokenId,
-                        amount: erc1155Amount,
-                        payee: alice
+                        token: address(erc1155TokenB), tokenId: bobTokenId, amount: erc1155Amount, payee: alice
                     })
                 )
             }),
@@ -474,23 +397,11 @@ contract ERC1155BarterUtilsUnitTest is Test {
         bytes32 payAttestation = barterUtils.payErc1155ForErc20(aliceSellOrder);
         vm.stopPrank();
 
-        assertNotEq(
-            payAttestation,
-            bytes32(0),
-            "Pay attestation should be created"
-        );
+        assertNotEq(payAttestation, bytes32(0), "Pay attestation should be created");
 
         // Verify token transfers
-        assertEq(
-            erc20Token.balanceOf(bob),
-            500 * 10 ** 18 + askAmount,
-            "Bob should receive ERC20 tokens"
-        );
-        assertEq(
-            erc1155TokenB.balanceOf(alice, bobTokenId),
-            erc1155Amount,
-            "Alice should receive ERC1155 tokens"
-        );
+        assertEq(erc20Token.balanceOf(bob), 500 * 10 ** 18 + askAmount, "Bob should receive ERC20 tokens");
+        assertEq(erc1155TokenB.balanceOf(alice, bobTokenId), erc1155Amount, "Alice should receive ERC1155 tokens");
     }
 
     function testBuyErc721WithErc1155() public {
@@ -500,20 +411,11 @@ contract ERC1155BarterUtilsUnitTest is Test {
         vm.startPrank(alice);
         erc1155TokenA.setApprovalForAll(address(barterUtils), true);
         bytes32 buyAttestation = barterUtils.buyErc721WithErc1155(
-            address(erc1155TokenA),
-            aliceTokenId,
-            aliceTokenAmount / 2,
-            address(erc721Token),
-            erc721TokenId,
-            expiration
+            address(erc1155TokenA), aliceTokenId, aliceTokenAmount / 2, address(erc721Token), erc721TokenId, expiration
         );
         vm.stopPrank();
 
-        assertNotEq(
-            buyAttestation,
-            bytes32(0),
-            "Buy attestation should be created"
-        );
+        assertNotEq(buyAttestation, bytes32(0), "Buy attestation should be created");
     }
 
     function testPayErc1155ForErc721() public {
@@ -531,10 +433,7 @@ contract ERC1155BarterUtilsUnitTest is Test {
                 arbiter: address(paymentObligation),
                 demand: abi.encode(
                     ERC1155PaymentObligation.ObligationData({
-                        token: address(erc1155TokenB),
-                        tokenId: bobTokenId,
-                        amount: erc1155Amount,
-                        payee: alice
+                        token: address(erc1155TokenB), tokenId: bobTokenId, amount: erc1155Amount, payee: alice
                     })
                 )
             }),
@@ -546,28 +445,14 @@ contract ERC1155BarterUtilsUnitTest is Test {
         // Bob fulfills the order
         vm.startPrank(bob);
         erc1155TokenB.setApprovalForAll(address(barterUtils), true);
-        bytes32 payAttestation = barterUtils.payErc1155ForErc721(
-            aliceSellOrder
-        );
+        bytes32 payAttestation = barterUtils.payErc1155ForErc721(aliceSellOrder);
         vm.stopPrank();
 
-        assertNotEq(
-            payAttestation,
-            bytes32(0),
-            "Pay attestation should be created"
-        );
+        assertNotEq(payAttestation, bytes32(0), "Pay attestation should be created");
 
         // Verify token transfers
-        assertEq(
-            erc721Token.ownerOf(erc721TokenId),
-            bob,
-            "Bob should receive ERC721 token"
-        );
-        assertEq(
-            erc1155TokenB.balanceOf(alice, bobTokenId),
-            erc1155Amount,
-            "Alice should receive ERC1155 tokens"
-        );
+        assertEq(erc721Token.ownerOf(erc721TokenId), bob, "Bob should receive ERC721 token");
+        assertEq(erc1155TokenB.balanceOf(alice, bobTokenId), erc1155Amount, "Alice should receive ERC1155 tokens");
     }
 
     function testBuyBundleWithErc1155() public {
@@ -605,11 +490,8 @@ contract ERC1155BarterUtilsUnitTest is Test {
         );
 
         // Set up the demand data properly
-        TokenBundlePaymentObligation.ObligationData memory demandData = abi
-            .decode(
-                bundleData.demand,
-                (TokenBundlePaymentObligation.ObligationData)
-            );
+        TokenBundlePaymentObligation.ObligationData memory demandData =
+            abi.decode(bundleData.demand, (TokenBundlePaymentObligation.ObligationData));
         demandData.erc1155Tokens[0] = address(erc1155TokenA);
         demandData.erc1155TokenIds[0] = aliceTokenId;
         demandData.erc1155Amounts[0] = aliceTokenAmount / 2;
@@ -618,19 +500,11 @@ contract ERC1155BarterUtilsUnitTest is Test {
         vm.startPrank(alice);
         erc1155TokenA.setApprovalForAll(address(barterUtils), true);
         bytes32 buyAttestation = barterUtils.buyBundleWithErc1155(
-            address(erc1155TokenA),
-            aliceTokenId,
-            aliceTokenAmount / 2,
-            demandData,
-            expiration
+            address(erc1155TokenA), aliceTokenId, aliceTokenAmount / 2, demandData, expiration
         );
         vm.stopPrank();
 
-        assertNotEq(
-            buyAttestation,
-            bytes32(0),
-            "Buy attestation should be created"
-        );
+        assertNotEq(buyAttestation, bytes32(0), "Buy attestation should be created");
     }
 
     function testPayErc1155ForBundle() public {
@@ -655,10 +529,7 @@ contract ERC1155BarterUtilsUnitTest is Test {
         bundleData.arbiter = address(paymentObligation);
         bundleData.demand = abi.encode(
             ERC1155PaymentObligation.ObligationData({
-                token: address(erc1155TokenB),
-                tokenId: bobTokenId,
-                amount: bobTokenAmount / 2,
-                payee: alice
+                token: address(erc1155TokenB), tokenId: bobTokenId, amount: bobTokenAmount / 2, payee: alice
             })
         );
 
@@ -666,55 +537,28 @@ contract ERC1155BarterUtilsUnitTest is Test {
         vm.startPrank(alice);
         erc20Token.approve(address(bundleEscrow), 50 * 10 ** 18);
         erc721Token.approve(address(bundleEscrow), 1);
-        bytes32 aliceBundleEscrow = bundleEscrow.doObligationFor(
-            bundleData,
-            expiration,
-            alice
-        );
+        bytes32 aliceBundleEscrow = bundleEscrow.doObligationFor(bundleData, expiration, alice);
         vm.stopPrank();
 
         // Bob fulfills with his ERC1155
         vm.startPrank(bob);
         erc1155TokenB.setApprovalForAll(address(barterUtils), true);
-        bytes32 payAttestation = barterUtils.payErc1155ForBundle(
-            aliceBundleEscrow
-        );
+        bytes32 payAttestation = barterUtils.payErc1155ForBundle(aliceBundleEscrow);
         vm.stopPrank();
 
-        assertNotEq(
-            payAttestation,
-            bytes32(0),
-            "Pay attestation should be created"
-        );
+        assertNotEq(payAttestation, bytes32(0), "Pay attestation should be created");
 
         // Verify token transfers
-        assertEq(
-            erc20Token.balanceOf(bob),
-            500 * 10 ** 18 + 50 * 10 ** 18,
-            "Bob should receive ERC20 tokens"
-        );
-        assertEq(
-            erc721Token.ownerOf(1),
-            bob,
-            "Bob should receive ERC721 token"
-        );
-        assertEq(
-            erc1155TokenB.balanceOf(alice, bobTokenId),
-            bobTokenAmount / 2,
-            "Alice should receive ERC1155 tokens"
-        );
+        assertEq(erc20Token.balanceOf(bob), 500 * 10 ** 18 + 50 * 10 ** 18, "Bob should receive ERC20 tokens");
+        assertEq(erc721Token.ownerOf(1), bob, "Bob should receive ERC721 token");
+        assertEq(erc1155TokenB.balanceOf(alice, bobTokenId), bobTokenAmount / 2, "Alice should receive ERC1155 tokens");
     }
 
     function test_RevertWhen_AttestationNotFoundCrossToken() public {
         bytes32 fakeAttestation = keccak256("fake");
 
         vm.prank(alice);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                ERC1155BarterUtils.AttestationNotFound.selector,
-                fakeAttestation
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(ERC1155BarterUtils.AttestationNotFound.selector, fakeAttestation));
         barterUtils.payErc1155ForErc20(fakeAttestation);
     }
 
@@ -766,10 +610,7 @@ contract ERC1155BarterUtilsUnitTest is Test {
                 arbiter: address(paymentObligation),
                 demand: abi.encode(
                     ERC1155PaymentObligation.ObligationData({
-                        token: address(erc1155TokenB),
-                        tokenId: bobTokenId,
-                        amount: 25,
-                        payee: alice
+                        token: address(erc1155TokenB), tokenId: bobTokenId, amount: 25, payee: alice
                     })
                 )
             }),
@@ -845,29 +686,19 @@ contract ERC1155BarterUtilsUnitTest is Test {
         erc1155TokenA.setApprovalForAll(address(barterUtils), true);
 
         // Alice creates buy order: offering ERC1155 for ETH
-        bytes32 buyAttestation = barterUtils.buyEthWithErc1155(
-            address(erc1155TokenA),
-            erc1155TokenId,
-            erc1155Amount,
-            askAmount,
-            expiration
-        );
+        bytes32 buyAttestation =
+            barterUtils.buyEthWithErc1155(address(erc1155TokenA), erc1155TokenId, erc1155Amount, askAmount, expiration);
         vm.stopPrank();
 
         // Check that the ERC1155 tokens are now held in escrow
-        assertEq(
-            erc1155TokenA.balanceOf(address(escrowObligation), erc1155TokenId),
-            erc1155Amount
-        );
+        assertEq(erc1155TokenA.balanceOf(address(escrowObligation), erc1155TokenId), erc1155Amount);
 
         // Verify attestation data
         Attestation memory attestation = eas.getAttestation(buyAttestation);
         assertEq(attestation.recipient, alice);
 
-        ERC1155EscrowObligation.ObligationData memory escrowData = abi.decode(
-            attestation.data,
-            (ERC1155EscrowObligation.ObligationData)
-        );
+        ERC1155EscrowObligation.ObligationData memory escrowData =
+            abi.decode(attestation.data, (ERC1155EscrowObligation.ObligationData));
         assertEq(escrowData.token, address(erc1155TokenA));
         assertEq(escrowData.tokenId, erc1155TokenId);
         assertEq(escrowData.amount, erc1155Amount);
@@ -885,13 +716,8 @@ contract ERC1155BarterUtilsUnitTest is Test {
         erc1155TokenA.mint(alice, erc1155TokenId, erc1155Amount);
         erc1155TokenA.setApprovalForAll(address(barterUtils), true);
 
-        bytes32 buyAttestation = barterUtils.buyEthWithErc1155(
-            address(erc1155TokenA),
-            erc1155TokenId,
-            erc1155Amount,
-            askAmount,
-            expiration
-        );
+        bytes32 buyAttestation =
+            barterUtils.buyEthWithErc1155(address(erc1155TokenA), erc1155TokenId, erc1155Amount, askAmount, expiration);
         vm.stopPrank();
 
         // Bob fulfills the order by paying ETH
@@ -901,9 +727,7 @@ contract ERC1155BarterUtilsUnitTest is Test {
         uint256 bobBalanceBefore = bob.balance;
         uint256 aliceBalanceBefore = alice.balance;
 
-        bytes32 sellAttestation = barterUtils.payEthForErc1155{
-            value: askAmount
-        }(buyAttestation);
+        bytes32 sellAttestation = barterUtils.payEthForErc1155{value: askAmount}(buyAttestation);
         vm.stopPrank();
 
         // Verify the ERC1155 tokens were transferred to Bob
@@ -934,10 +758,7 @@ contract ERC1155BarterUtilsUnitTest is Test {
                 arbiter: address(paymentObligation),
                 demand: abi.encode(
                     ERC1155PaymentObligation.ObligationData({
-                        token: address(erc1155TokenA),
-                        tokenId: erc1155TokenId,
-                        amount: erc1155Amount,
-                        payee: bob
+                        token: address(erc1155TokenA), tokenId: erc1155TokenId, amount: erc1155Amount, payee: bob
                     })
                 ),
                 amount: askAmount
@@ -980,13 +801,8 @@ contract ERC1155BarterUtilsUnitTest is Test {
         erc1155TokenA.mint(alice, erc1155TokenId, erc1155Amount);
         erc1155TokenA.setApprovalForAll(address(barterUtils), true);
 
-        bytes32 buyAttestation = barterUtils.buyEthWithErc1155(
-            address(erc1155TokenA),
-            erc1155TokenId,
-            erc1155Amount,
-            askAmount,
-            expiration
-        );
+        bytes32 buyAttestation =
+            barterUtils.buyEthWithErc1155(address(erc1155TokenA), erc1155TokenId, erc1155Amount, askAmount, expiration);
         vm.stopPrank();
 
         // Bob tries to fulfill with insufficient ETH

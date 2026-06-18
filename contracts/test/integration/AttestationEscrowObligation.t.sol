@@ -18,11 +18,7 @@ contract MockArbiter is IArbiter {
         shouldPass = _shouldPass;
     }
 
-    function checkObligation(
-        Attestation memory,
-        bytes memory,
-        bytes32
-    ) external view returns (bool) {
+    function checkObligation(Attestation memory, bytes memory, bytes32) external view returns (bool) {
         return shouldPass;
     }
 }
@@ -66,18 +62,12 @@ contract AttestationEscrowObligationTest is Test {
             })
         });
 
-        AttestationEscrowObligation.ObligationData
-            memory obligationData = AttestationEscrowObligation.ObligationData({
-                attestation: attestationRequest,
-                arbiter: address(mockArbiter),
-                demand: abi.encode("Test demand")
-            });
+        AttestationEscrowObligation.ObligationData memory obligationData = AttestationEscrowObligation.ObligationData({
+            attestation: attestationRequest, arbiter: address(mockArbiter), demand: abi.encode("Test demand")
+        });
 
         vm.prank(alice);
-        bytes32 escrowId = escrowObligation.doObligation(
-            obligationData,
-            uint64(block.timestamp + 1 days)
-        );
+        bytes32 escrowId = escrowObligation.doObligation(obligationData, uint64(block.timestamp + 1 days));
 
         assertNotEq(escrowId, bytes32(0), "Escrow should be created");
     }
@@ -96,36 +86,24 @@ contract AttestationEscrowObligationTest is Test {
             })
         });
 
-        AttestationEscrowObligation.ObligationData
-            memory obligationData = AttestationEscrowObligation.ObligationData({
-                attestation: attestationRequest,
-                arbiter: address(mockArbiter),
-                demand: abi.encode("Test demand")
-            });
+        AttestationEscrowObligation.ObligationData memory obligationData = AttestationEscrowObligation.ObligationData({
+            attestation: attestationRequest, arbiter: address(mockArbiter), demand: abi.encode("Test demand")
+        });
 
         vm.prank(alice);
-        bytes32 escrowId = escrowObligation.doObligation(
-            obligationData,
-            uint64(block.timestamp + 1 days)
-        );
+        bytes32 escrowId = escrowObligation.doObligation(obligationData, uint64(block.timestamp + 1 days));
 
         // Create fulfillment attestation using StringObligation that references the escrow
-        StringObligation stringObligation = new StringObligation(
-            eas,
-            schemaRegistry
-        );
+        StringObligation stringObligation = new StringObligation(eas, schemaRegistry);
 
         vm.prank(bob);
         bytes32 fulfillmentId = stringObligation.doObligation(
             StringObligation.ObligationData({item: "Test demand", schema: bytes32(0)}),
-            escrowId  // Reference the escrow for default pattern
+            escrowId // Reference the escrow for default pattern
         );
 
         vm.prank(bob);
-        bytes32 resultId = escrowObligation.collectEscrow(
-            escrowId,
-            fulfillmentId
-        );
+        bytes32 resultId = escrowObligation.collectEscrow(escrowId, fulfillmentId);
 
         assertNotEq(resultId, bytes32(0), "Payment collection should succeed");
     }
@@ -144,25 +122,16 @@ contract AttestationEscrowObligationTest is Test {
             })
         });
 
-        AttestationEscrowObligation.ObligationData
-            memory obligationData = AttestationEscrowObligation.ObligationData({
-                attestation: attestationRequest,
-                arbiter: address(failingArbiter),
-                demand: abi.encode("Test demand")
-            });
+        AttestationEscrowObligation.ObligationData memory obligationData = AttestationEscrowObligation.ObligationData({
+            attestation: attestationRequest, arbiter: address(failingArbiter), demand: abi.encode("Test demand")
+        });
 
         vm.prank(alice);
-        bytes32 escrowId = escrowObligation.doObligation(
-            obligationData,
-            uint64(block.timestamp + 1 days)
-        );
+        bytes32 escrowId = escrowObligation.doObligation(obligationData, uint64(block.timestamp + 1 days));
 
         // Create fulfillment attestation through the escrow contract
         vm.prank(bob);
-        bytes32 fulfillmentId = escrowObligation.doObligation(
-            obligationData,
-            uint64(block.timestamp + 1 days)
-        );
+        bytes32 fulfillmentId = escrowObligation.doObligation(obligationData, uint64(block.timestamp + 1 days));
 
         vm.prank(bob);
         vm.expectRevert(BaseEscrowObligation.InvalidFulfillment.selector);
@@ -188,26 +157,16 @@ contract AttestationEscrowObligationTest is Test {
             })
         });
 
-        AttestationEscrowObligation.ObligationData
-            memory obligationData = AttestationEscrowObligation.ObligationData({
-                attestation: attestationRequest,
-                arbiter: address(mockArbiter),
-                demand: abi.encode("Test demand")
-            });
+        AttestationEscrowObligation.ObligationData memory obligationData = AttestationEscrowObligation.ObligationData({
+            attestation: attestationRequest, arbiter: address(mockArbiter), demand: abi.encode("Test demand")
+        });
 
         vm.prank(alice);
-        bytes32 attestationId = escrowObligation.doObligation(
-            obligationData,
-            uint64(block.timestamp + 1 days)
-        );
+        bytes32 attestationId = escrowObligation.doObligation(obligationData, uint64(block.timestamp + 1 days));
 
         Attestation memory attestation = eas.getAttestation(attestationId);
 
-        bool isValid = escrowObligation.checkObligation(
-            attestation,
-            abi.encode(obligationData),
-            bytes32(0)
-        );
+        bool isValid = escrowObligation.checkObligation(attestation, abi.encode(obligationData), bytes32(0));
 
         assertTrue(isValid, "Statement check should pass for valid data");
     }

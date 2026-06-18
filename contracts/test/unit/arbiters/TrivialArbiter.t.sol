@@ -38,14 +38,7 @@ contract TrivialArbiterTest is Test {
         attestation.uid = bytes32(uint256(1));
         demand = abi.encode("some data");
 
-        result = arbiter.checkObligation(
-            attestation,
-            demand,
-            bytes32(uint256(42))
-        );
-        assertTrue(
-            result,
-            "TrivialArbiter should always return true regardless of inputs"
-        );
+        result = arbiter.checkObligation(attestation, demand, bytes32(uint256(42)));
+        assertTrue(result, "TrivialArbiter should always return true regardless of inputs");
     }
 }

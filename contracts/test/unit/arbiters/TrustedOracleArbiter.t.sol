@@ -29,26 +29,24 @@ contract TrustedOracleArbiterTest is Test {
         arbiter = new TrustedOracleArbiter(eas);
 
         // Register a test schema
-        testSchema = schemaRegistry.register(
-            "string item, bytes32 schema",
-            ISchemaResolver(address(0)),
-            true
-        );
+        testSchema = schemaRegistry.register("string item, bytes32 schema", ISchemaResolver(address(0)), true);
     }
 
     function _createAttestation(address _attester, address _recipient, bytes32 refUID) internal returns (bytes32) {
         vm.prank(_attester);
-        return eas.attest(AttestationRequest({
-            schema: testSchema,
-            data: AttestationRequestData({
-                recipient: _recipient,
-                expirationTime: 0,
-                revocable: true,
-                refUID: refUID,
-                data: abi.encode("test"),
-                value: 0
+        return eas.attest(
+            AttestationRequest({
+                schema: testSchema,
+                data: AttestationRequestData({
+                    recipient: _recipient,
+                    expirationTime: 0,
+                    revocable: true,
+                    refUID: refUID,
+                    data: abi.encode("test"),
+                    value: 0
+                })
             })
-        }));
+        );
     }
 
     function testConstructor() public {
@@ -71,8 +69,8 @@ contract TrustedOracleArbiterTest is Test {
             data: bytes("")
         });
 
-        TrustedOracleArbiter.DemandData memory demandData = TrustedOracleArbiter
-            .DemandData({oracle: oracle, data: bytes("")});
+        TrustedOracleArbiter.DemandData memory demandData =
+            TrustedOracleArbiter.DemandData({oracle: oracle, data: bytes("")});
         bytes memory demand = abi.encode(demandData);
 
         // Should return false initially since no decision has been made
@@ -100,12 +98,7 @@ contract TrustedOracleArbiterTest is Test {
                     revocable: true,
                     data: bytes("")
                 }),
-                abi.encode(
-                    TrustedOracleArbiter.DemandData({
-                        oracle: oracle,
-                        data: demandData
-                    })
-                ),
+                abi.encode(TrustedOracleArbiter.DemandData({oracle: oracle, data: demandData})),
                 bytes32(0)
             )
         );
@@ -133,12 +126,7 @@ contract TrustedOracleArbiterTest is Test {
                     revocable: true,
                     data: bytes("")
                 }),
-                abi.encode(
-                    TrustedOracleArbiter.DemandData({
-                        oracle: oracle,
-                        data: demandData
-                    })
-                ),
+                abi.encode(TrustedOracleArbiter.DemandData({oracle: oracle, data: demandData})),
                 bytes32(0)
             )
         );
@@ -180,12 +168,7 @@ contract TrustedOracleArbiterTest is Test {
         assertTrue(
             arbiter.checkObligation(
                 attestation,
-                abi.encode(
-                    TrustedOracleArbiter.DemandData({
-                        oracle: oracle1,
-                        data: demandData
-                    })
-                ),
+                abi.encode(TrustedOracleArbiter.DemandData({oracle: oracle1, data: demandData})),
                 bytes32(0)
             )
         );
@@ -194,12 +177,7 @@ contract TrustedOracleArbiterTest is Test {
         assertFalse(
             arbiter.checkObligation(
                 attestation,
-                abi.encode(
-                    TrustedOracleArbiter.DemandData({
-                        oracle: oracle2,
-                        data: demandData
-                    })
-                ),
+                abi.encode(TrustedOracleArbiter.DemandData({oracle: oracle2, data: demandData})),
                 bytes32(0)
             )
         );
@@ -228,12 +206,7 @@ contract TrustedOracleArbiterTest is Test {
         assertFalse(
             arbiter.checkObligation(
                 attestation,
-                abi.encode(
-                    TrustedOracleArbiter.DemandData({
-                        oracle: newOracle,
-                        data: bytes("")
-                    })
-                ),
+                abi.encode(TrustedOracleArbiter.DemandData({oracle: newOracle, data: bytes("")})),
                 bytes32(0)
             )
         );
@@ -269,12 +242,7 @@ contract TrustedOracleArbiterTest is Test {
         assertTrue(
             arbiter.checkObligation(
                 attestation,
-                abi.encode(
-                    TrustedOracleArbiter.DemandData({
-                        oracle: oracle,
-                        data: demandData1
-                    })
-                ),
+                abi.encode(TrustedOracleArbiter.DemandData({oracle: oracle, data: demandData1})),
                 bytes32(0)
             )
         );
@@ -283,12 +251,7 @@ contract TrustedOracleArbiterTest is Test {
         assertFalse(
             arbiter.checkObligation(
                 attestation,
-                abi.encode(
-                    TrustedOracleArbiter.DemandData({
-                        oracle: oracle,
-                        data: demandData2
-                    })
-                ),
+                abi.encode(TrustedOracleArbiter.DemandData({oracle: oracle, data: demandData2})),
                 bytes32(0)
             )
         );
