@@ -36,6 +36,8 @@ Tracking notes for `arkhai-io-alkahest-2026-04-13-analysis.md`.
   Commit: `b38ac88a97ec3f68a5f506175100fec6aba10978 fix(commit-reveal): snapshot bond amount epochs`
 - #19 NativeTokenSplitter payer misdirection during `createFulfillment`: addressed by refunding native balance increases during payable splitter fulfillment creation back to the external fulfiller in `NativeTokenSplitter` and `TokenBundleSplitterBase`.
   Commit: `4263e23155a59acd58dae497f7a982b6e5d89fa1 fix(splitters): refund fulfillment native rebates`
+- #20 Not-found handling / error classification: addressed by replacing unreachable `EAS.getAttestation` try/catch handling with explicit zero/mismatched UID checks in base escrow collection/reclaim paths and token-bundle unsafe partial paths.
+  Commit: `e2b9c47c150d1ed9fadec5b1c0376868e1bdc17c fix(escrow): classify missing attestations`
 - Default escrow checks follow-up: documented proposed default/unconditional escrow split before implementation.
   Doc: `docs/drafts/escrow-default-checks-plan.md`
 
@@ -55,7 +57,6 @@ Tracking notes for `arkhai-io-alkahest-2026-04-13-analysis.md`.
 
 ## Remaining Untriaged
 
-- #20 Not-found handling / error classification.
 - Second report section #1 NativeTokenEscrowHook empty `receive`.
 - Second report section #2 Splitter self-recipient splits / missing withdrawal.
 - Second report section #4 TokenBundleSplitter ERC721 index bounds.
