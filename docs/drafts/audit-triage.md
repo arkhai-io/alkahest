@@ -59,6 +59,7 @@ Tracking notes for `arkhai-io-alkahest-2026-04-13-analysis.md`.
   Commit: `19cf58e179deb9c7f50bd68b6b13b95757344299 fix(splitters): leave recipient policy to oracle`
 - Second report #5 Splitter `requestArbitration` event payload: accepted as an off-chain integration hazard rather than an on-chain issue. Splitter contracts cannot generally validate or derive the relevant oracle/demand payload when the splitter is nested inside `AllArbiter`, `AnyArbiter`, or future composite arbiters. SDKs and indexers should treat splitter request events as hints and re-read the canonical escrow attestation from EAS before deciding.
   Follow-up doc: `docs/drafts/audit-follow-ups.md`
+- Second report #7 `BaseObligation.doObligationRaw` payable raw entrypoint: accepted as a caller self-misuse footgun rather than a security issue. Non-splitter direct native receives now revert via the inherited resolver behavior, and raw payable function calls are still needed for native-aware obligation flows. Adding a generic zero-value guard would require opt-out overrides across payable-compatible obligations for little security benefit.
 
 ## Deferred
 
@@ -67,4 +68,4 @@ Tracking notes for `arkhai-io-alkahest-2026-04-13-analysis.md`.
 
 ## Remaining Untriaged
 
-- Second report section #7 BaseObligation payable raw entrypoint footgun.
+None.
