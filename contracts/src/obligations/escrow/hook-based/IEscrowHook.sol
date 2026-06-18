@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.26;
 
+import {Attestation} from "@eas/Common.sol";
+
 /// @title IEscrowHook
 /// @notice Interface for composable escrow actions.
 /// @dev Each hook encapsulates a single escrow concern (e.g. "hold 100 USDC").
@@ -19,15 +21,21 @@ interface IEscrowHook {
     /// @param escrow The escrow obligation contract that initiated the lock.
     function onLock(bytes calldata data, address from, address escrow) external payable;
 
-    /// @notice Release escrowed assets to the fulfiller.
+    /// @notice Observe the escrow attestation after EAS has assigned its UID.
     /// @param data   The same hook data that was passed to onLock.
-    /// @param to     The address receiving the assets.
-    /// @param escrow The escrow obligation contract that initiated the release.
-    function onRelease(bytes calldata data, address to, address escrow) external;
+    /// @param escrow The full escrow attestation.
+    function onAttest(bytes calldata data, Attestation calldata escrow) external;
+
+    /// @notice Release escrowed assets to the fulfiller.
+    /// @param data           The same hook data that was passed to onLock.
+    /// @param to             The address receiving the assets.
+    /// @param escrow         The full escrow attestation.
+    /// @param fulfillmentUid The fulfillment attestation UID.
+    function onRelease(bytes calldata data, address to, Attestation calldata escrow, bytes32 fulfillmentUid) external;
 
     /// @notice Return escrowed assets to the original owner on expiry.
     /// @param data   The same hook data that was passed to onLock.
     /// @param to     The address to return assets to (original creator).
-    /// @param escrow The escrow obligation contract that initiated the return.
-    function onReturn(bytes calldata data, address to, address escrow) external;
+    /// @param escrow The full escrow attestation.
+    function onReturn(bytes calldata data, address to, Attestation calldata escrow) external;
 }

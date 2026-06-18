@@ -65,7 +65,7 @@ contract UnconditionalERC1155EscrowObligation is BaseEscrowObligationUncondition
 
     // Transfer tokens to fulfiller
     function _releaseEscrow(
-        bytes memory escrowData,
+        Attestation memory escrow,
         address to,
         bytes32 /* fulfillmentUid */
     )
@@ -73,7 +73,7 @@ contract UnconditionalERC1155EscrowObligation is BaseEscrowObligationUncondition
         override
         returns (bytes memory)
     {
-        ObligationData memory decoded = abi.decode(escrowData, (ObligationData));
+        ObligationData memory decoded = abi.decode(escrow.data, (ObligationData));
 
         try IERC1155(decoded.token).safeTransferFrom(address(this), to, decoded.tokenId, decoded.amount, "") {
         // Transfer succeeded
@@ -86,8 +86,8 @@ contract UnconditionalERC1155EscrowObligation is BaseEscrowObligationUncondition
     }
 
     // Return tokens to original owner on expiry
-    function _returnEscrow(bytes memory data, address to) internal override {
-        _releaseEscrow(data, to, bytes32(0));
+    function _returnEscrow(Attestation memory escrow, address to) internal override {
+        _releaseEscrow(escrow, to, bytes32(0));
     }
 
     // Implement IArbiter

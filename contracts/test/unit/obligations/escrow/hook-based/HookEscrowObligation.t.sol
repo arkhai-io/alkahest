@@ -89,12 +89,27 @@ contract ForwardingERC1155HookReceiver is IERC1155Receiver {
 contract HookThief {
     function stealViaRelease(ERC20EscrowHook hook, address token, uint256 amount) external {
         bytes memory hookData = abi.encode(ERC20EscrowHook.HookData({token: token, amount: amount}));
-        hook.onRelease(hookData, msg.sender, address(this));
+        hook.onRelease(hookData, msg.sender, _dummyEscrow(), bytes32(0));
     }
 
     function stealViaReturn(ERC20EscrowHook hook, address token, uint256 amount) external {
         bytes memory hookData = abi.encode(ERC20EscrowHook.HookData({token: token, amount: amount}));
-        hook.onReturn(hookData, msg.sender, address(this));
+        hook.onReturn(hookData, msg.sender, _dummyEscrow());
+    }
+
+    function _dummyEscrow() internal view returns (Attestation memory) {
+        return Attestation({
+            uid: keccak256("escrow"),
+            schema: bytes32(0),
+            time: 0,
+            expirationTime: 0,
+            revocationTime: 0,
+            refUID: bytes32(0),
+            recipient: address(0),
+            attester: address(this),
+            revocable: true,
+            data: ""
+        });
     }
 }
 
@@ -113,7 +128,22 @@ contract OverdrawAttacker {
 
         // Try to release more than deposited
         bytes memory releaseData = abi.encode(ERC20EscrowHook.HookData({token: token, amount: withdrawAmount}));
-        hook.onRelease(releaseData, recipient, address(this));
+        hook.onRelease(releaseData, recipient, _dummyEscrow(), bytes32(0));
+    }
+
+    function _dummyEscrow() internal view returns (Attestation memory) {
+        return Attestation({
+            uid: keccak256("escrow"),
+            schema: bytes32(0),
+            time: 0,
+            expirationTime: 0,
+            revocationTime: 0,
+            refUID: bytes32(0),
+            recipient: address(0),
+            attester: address(this),
+            revocable: true,
+            data: ""
+        });
     }
 }
 
@@ -135,6 +165,21 @@ contract HookEscrowObligationTest is Test {
     address internal seller;
     uint256 constant AMOUNT = 100 * 10 ** 18;
     uint64 constant EXPIRATION = 365 days;
+
+    function _dummyEscrow() internal view returns (Attestation memory) {
+        return Attestation({
+            uid: keccak256("escrow"),
+            schema: bytes32(0),
+            time: 0,
+            expirationTime: 0,
+            revocationTime: 0,
+            refUID: bytes32(0),
+            recipient: address(0),
+            attester: address(this),
+            revocable: true,
+            data: ""
+        });
+    }
 
     function setUp() public {
         EASDeployer easDeployer = new EASDeployer();
@@ -319,7 +364,7 @@ contract HookEscrowObligationTest is Test {
         hook.onLock(data, buyer, address(escrow));
 
         vm.prank(address(escrow));
-        hook.onRelease(data, address(receiver), address(escrow));
+        hook.onRelease(data, address(receiver), _dummyEscrow(), bytes32(0));
 
         assertEq(erc1155.balanceOf(target, 1), 10);
         assertEq(erc1155.balanceOf(address(receiver), 1), 0);
@@ -698,6 +743,21 @@ contract HookEscrowAttackTest is Test {
     uint256 constant AMOUNT = 100 * 10 ** 18;
     uint64 constant EXPIRATION = 365 days;
 
+    function _dummyEscrow() internal view returns (Attestation memory) {
+        return Attestation({
+            uid: keccak256("escrow"),
+            schema: bytes32(0),
+            time: 0,
+            expirationTime: 0,
+            revocationTime: 0,
+            refUID: bytes32(0),
+            recipient: address(0),
+            attester: address(this),
+            revocable: true,
+            data: ""
+        });
+    }
+
     function setUp() public {
         EASDeployer easDeployer = new EASDeployer();
         (eas, schemaRegistry) = easDeployer.deployEAS();
@@ -813,7 +873,7 @@ contract HookEscrowAttackTest is Test {
 
         vm.prank(attacker);
         vm.expectRevert(abi.encodeWithSelector(ERC20EscrowHook.NoDeposit.selector, attacker, address(token)));
-        erc20Hook.onRelease(hookDatas[0], attacker, attacker);
+        erc20Hook.onRelease(hookDatas[0], attacker, _dummyEscrow(), bytes32(0));
 
         assertEq(token.balanceOf(address(erc20Hook)), AMOUNT);
     }
@@ -827,7 +887,7 @@ contract HookEscrowAttackTest is Test {
 
         vm.prank(attacker);
         vm.expectRevert(abi.encodeWithSelector(ERC20EscrowHook.NoDeposit.selector, attacker, address(token)));
-        erc20Hook.onRelease(hookData, attacker, attacker);
+        erc20Hook.onRelease(hookData, attacker, _dummyEscrow(), bytes32(0));
     }
 
     /// @notice POC: Attacker creates a second HookEscrowObligation instance
@@ -847,7 +907,10 @@ contract HookEscrowAttackTest is Test {
         vm.prank(address(escrow2));
         vm.expectRevert(abi.encodeWithSelector(ERC20EscrowHook.NoDeposit.selector, address(escrow2), address(token)));
         erc20Hook.onRelease(
-            abi.encode(ERC20EscrowHook.HookData({token: address(token), amount: AMOUNT})), attacker, address(escrow2)
+            abi.encode(ERC20EscrowHook.HookData({token: address(token), amount: AMOUNT})),
+            attacker,
+            _dummyEscrow(),
+            bytes32(0)
         );
 
         // Original deposits untouched
@@ -866,7 +929,10 @@ contract HookEscrowAttackTest is Test {
         vm.prank(attacker);
         vm.expectRevert();
         erc20Hook.onRelease(
-            abi.encode(ERC20EscrowHook.HookData({token: address(token), amount: AMOUNT})), attacker, attacker
+            abi.encode(ERC20EscrowHook.HookData({token: address(token), amount: AMOUNT})),
+            attacker,
+            _dummyEscrow(),
+            bytes32(0)
         );
 
         // Legitimate collection still works

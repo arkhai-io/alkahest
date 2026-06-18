@@ -2,6 +2,7 @@
 pragma solidity ^0.8.26;
 
 import {IEscrowHook} from "../IEscrowHook.sol";
+import {Attestation} from "@eas/Common.sol";
 
 /// @title NativeTokenEscrowHook
 /// @notice An IEscrowHook that escrows native ETH.
@@ -42,10 +43,13 @@ contract NativeTokenEscrowHook is IEscrowHook {
         deposits[msg.sender] += decoded.amount;
     }
 
+    function onAttest(bytes calldata, Attestation calldata) external override {}
+
     function onRelease(
         bytes calldata data,
         address to,
-        address /* escrow */
+        Attestation calldata, /* escrow */
+        bytes32 /* fulfillmentUid */
     )
         external
         override
@@ -56,7 +60,7 @@ contract NativeTokenEscrowHook is IEscrowHook {
     function onReturn(
         bytes calldata data,
         address to,
-        address /* escrow */
+        Attestation calldata /* escrow */
     )
         external
         override

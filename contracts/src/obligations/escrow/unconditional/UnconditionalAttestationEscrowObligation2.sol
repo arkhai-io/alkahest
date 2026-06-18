@@ -49,8 +49,8 @@ contract UnconditionalAttestationEscrowObligation2 is BaseEscrowObligationUncond
     }
 
     // Create validation attestation
-    function _releaseEscrow(bytes memory escrowData, address to, bytes32) internal override returns (bytes memory) {
-        ObligationData memory decoded = abi.decode(escrowData, (ObligationData));
+    function _releaseEscrow(Attestation memory escrow, address to, bytes32) internal override returns (bytes memory) {
+        ObligationData memory decoded = abi.decode(escrow.data, (ObligationData));
 
         // Create validation attestation
         bytes32 validationUid = eas.attest(
@@ -71,7 +71,7 @@ contract UnconditionalAttestationEscrowObligation2 is BaseEscrowObligationUncond
     }
 
     // No assets to return for attestation escrows
-    function _returnEscrow(bytes memory, address) internal override {
+    function _returnEscrow(Attestation memory, address) internal override {
         // No-op: attestations don't require returning assets
     }
 

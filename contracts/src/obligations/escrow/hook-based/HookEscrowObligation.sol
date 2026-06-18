@@ -56,23 +56,24 @@ contract HookEscrowObligation is BaseEscrowObligation, IArbiter {
         IEscrowHook(decoded.hook).onLock{value: msg.value}(decoded.hookData, from, address(this));
     }
 
-    function _releaseEscrow(
-        bytes memory escrowData,
-        address to,
-        bytes32 /* fulfillmentUid */
-    )
+    function _afterEscrowAttest(Attestation memory escrow) internal override {
+        ObligationData memory decoded = abi.decode(escrow.data, (ObligationData));
+        IEscrowHook(decoded.hook).onAttest(decoded.hookData, escrow);
+    }
+
+    function _releaseEscrow(Attestation memory escrow, address to, bytes32 fulfillmentUid)
         internal
         override
         returns (bytes memory)
     {
-        ObligationData memory decoded = abi.decode(escrowData, (ObligationData));
-        IEscrowHook(decoded.hook).onRelease(decoded.hookData, to, address(this));
+        ObligationData memory decoded = abi.decode(escrow.data, (ObligationData));
+        IEscrowHook(decoded.hook).onRelease(decoded.hookData, to, escrow, fulfillmentUid);
         return "";
     }
 
-    function _returnEscrow(bytes memory data, address to) internal override {
-        ObligationData memory decoded = abi.decode(data, (ObligationData));
-        IEscrowHook(decoded.hook).onReturn(decoded.hookData, to, address(this));
+    function _returnEscrow(Attestation memory escrow, address to) internal override {
+        ObligationData memory decoded = abi.decode(escrow.data, (ObligationData));
+        IEscrowHook(decoded.hook).onReturn(decoded.hookData, to, escrow);
     }
 
     // ──────────────────────────────────────────────

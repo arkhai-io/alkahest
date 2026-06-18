@@ -63,30 +63,35 @@ contract HooksEscrowObligation is BaseEscrowObligation, IArbiter {
         }
     }
 
-    function _releaseEscrow(
-        bytes memory escrowData,
-        address to,
-        bytes32 /* fulfillmentUid */
-    )
+    function _afterEscrowAttest(Attestation memory escrow) internal override {
+        ObligationData memory decoded = abi.decode(escrow.data, (ObligationData));
+        _validateLengths(decoded);
+
+        for (uint256 i; i < decoded.hooks.length; ++i) {
+            IEscrowHook(decoded.hooks[i]).onAttest(decoded.hookDatas[i], escrow);
+        }
+    }
+
+    function _releaseEscrow(Attestation memory escrow, address to, bytes32 fulfillmentUid)
         internal
         override
         returns (bytes memory)
     {
-        ObligationData memory decoded = abi.decode(escrowData, (ObligationData));
+        ObligationData memory decoded = abi.decode(escrow.data, (ObligationData));
         _validateLengths(decoded);
 
         for (uint256 i; i < decoded.hooks.length; ++i) {
-            IEscrowHook(decoded.hooks[i]).onRelease(decoded.hookDatas[i], to, address(this));
+            IEscrowHook(decoded.hooks[i]).onRelease(decoded.hookDatas[i], to, escrow, fulfillmentUid);
         }
         return "";
     }
 
-    function _returnEscrow(bytes memory data, address to) internal override {
-        ObligationData memory decoded = abi.decode(data, (ObligationData));
+    function _returnEscrow(Attestation memory escrow, address to) internal override {
+        ObligationData memory decoded = abi.decode(escrow.data, (ObligationData));
         _validateLengths(decoded);
 
         for (uint256 i; i < decoded.hooks.length; ++i) {
-            IEscrowHook(decoded.hooks[i]).onReturn(decoded.hookDatas[i], to, address(this));
+            IEscrowHook(decoded.hooks[i]).onReturn(decoded.hookDatas[i], to, escrow);
         }
     }
 

@@ -33,13 +33,13 @@ abstract contract BaseEscrowObligation is BaseObligation {
     function _lockEscrow(bytes memory data, address from) internal virtual;
 
     // Called when escrow is collected (after successful fulfillment check)
-    function _releaseEscrow(bytes memory escrowData, address to, bytes32 fulfillmentUid)
+    function _releaseEscrow(Attestation memory escrow, address to, bytes32 fulfillmentUid)
         internal
         virtual
         returns (bytes memory result);
 
     // Called when escrow expires and is reclaimed
-    function _returnEscrow(bytes memory data, address to) internal virtual;
+    function _returnEscrow(Attestation memory escrow, address to) internal virtual;
 
     // Called after EAS creates the escrow attestation and before EscrowMade is emitted
     function _afterEscrowAttest(Attestation memory attestation) internal virtual {}
@@ -90,7 +90,7 @@ abstract contract BaseEscrowObligation is BaseObligation {
         }
 
         // Execute the escrow release
-        bytes memory result = _releaseEscrow(escrow.data, fulfillment.recipient, _fulfillment);
+        bytes memory result = _releaseEscrow(escrow, fulfillment.recipient, _fulfillment);
 
         emit EscrowCollected(_escrow, _fulfillment, fulfillment.recipient);
         return result;
@@ -120,7 +120,7 @@ abstract contract BaseEscrowObligation is BaseObligation {
         }
 
         // Return escrowed value to original recipient
-        _returnEscrow(attestation.data, attestation.recipient);
+        _returnEscrow(attestation, attestation.recipient);
 
         return true;
     }

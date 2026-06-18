@@ -60,11 +60,14 @@ contract AttestationEscrowHook2 is IEscrowHook, SchemaResolver {
         pending[msg.sender][dataHash]++;
     }
 
+    function onAttest(bytes calldata, Attestation calldata) external override {}
+
     function onRelease(
         bytes calldata data,
         address,
         /* to */
-        address /* escrow */
+        Attestation calldata, /* escrow */
+        bytes32 /* fulfillmentUid */
     )
         external
         override
@@ -101,7 +104,7 @@ contract AttestationEscrowHook2 is IEscrowHook, SchemaResolver {
         bytes calldata data,
         address,
         /* to */
-        address /* escrow */
+        Attestation calldata /* escrow */
     )
         external
         override

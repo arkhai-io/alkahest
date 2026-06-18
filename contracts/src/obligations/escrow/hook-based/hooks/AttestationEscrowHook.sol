@@ -2,6 +2,7 @@
 pragma solidity ^0.8.26;
 
 import {IEscrowHook} from "../IEscrowHook.sol";
+import {Attestation} from "@eas/Common.sol";
 import {IEAS, AttestationRequest} from "@eas/IEAS.sol";
 
 /// @title AttestationEscrowHook
@@ -61,11 +62,14 @@ contract AttestationEscrowHook is IEscrowHook {
         pendingValue[msg.sender][dataHash] += requiredValue;
     }
 
+    function onAttest(bytes calldata, Attestation calldata) external override {}
+
     function onRelease(
         bytes calldata data,
         address,
         /* to */
-        address /* escrow */
+        Attestation calldata, /* escrow */
+        bytes32 /* fulfillmentUid */
     )
         external
         override
@@ -90,7 +94,7 @@ contract AttestationEscrowHook is IEscrowHook {
     function onReturn(
         bytes calldata data,
         address to,
-        address /* escrow */
+        Attestation calldata /* escrow */
     )
         external
         override

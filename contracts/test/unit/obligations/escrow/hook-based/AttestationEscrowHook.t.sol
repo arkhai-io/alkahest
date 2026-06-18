@@ -6,7 +6,7 @@ import "forge-std/Vm.sol";
 import {IEscrowHook} from "@src/obligations/escrow/hook-based/IEscrowHook.sol";
 import {AttestationEscrowHook} from "@src/obligations/escrow/hook-based/hooks/AttestationEscrowHook.sol";
 import {AttestationEscrowHook2} from "@src/obligations/escrow/hook-based/hooks/AttestationEscrowHook2.sol";
-import {IEAS, AttestationRequest, AttestationRequestData} from "@eas/IEAS.sol";
+import {IEAS, Attestation, AttestationRequest, AttestationRequestData} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {ISchemaResolver} from "@eas/resolver/ISchemaResolver.sol";
 import {SchemaRegistryUtils} from "@src/SchemaRegistryUtils.sol";
@@ -52,6 +52,21 @@ contract AttestationEscrowHookTest is Test {
         );
     }
 
+    function _dummyEscrow() internal view returns (Attestation memory) {
+        return Attestation({
+            uid: keccak256("escrow"),
+            schema: bytes32(0),
+            time: 0,
+            expirationTime: 0,
+            revocationTime: 0,
+            refUID: bytes32(0),
+            recipient: address(0),
+            attester: address(this),
+            revocable: true,
+            data: ""
+        });
+    }
+
     function testAttestationHookCountsIdenticalPendingLocks() public {
         bytes memory data = abi.encode(
             AttestationEscrowHook.HookData({
@@ -75,14 +90,14 @@ contract AttestationEscrowHookTest is Test {
         hook.onLock(data, caller, address(this));
         assertEq(hook.pending(caller, dataHash), 2);
 
-        hook.onRelease(data, recipient, address(this));
+        hook.onRelease(data, recipient, _dummyEscrow(), bytes32(0));
         assertEq(hook.pending(caller, dataHash), 1);
 
-        hook.onRelease(data, recipient, address(this));
+        hook.onRelease(data, recipient, _dummyEscrow(), bytes32(0));
         assertEq(hook.pending(caller, dataHash), 0);
 
         vm.expectRevert(abi.encodeWithSelector(AttestationEscrowHook.NoPendingAttestation.selector, caller, dataHash));
-        hook.onRelease(data, recipient, address(this));
+        hook.onRelease(data, recipient, _dummyEscrow(), bytes32(0));
         vm.stopPrank();
     }
 
@@ -136,7 +151,7 @@ contract AttestationEscrowHookTest is Test {
         assertEq(hook.pendingValue(caller, dataHash), 1 wei);
         assertEq(address(hook).balance, 1 wei);
 
-        hook.onRelease(data, recipient, address(this));
+        hook.onRelease(data, recipient, _dummyEscrow(), bytes32(0));
         assertEq(hook.pending(caller, dataHash), 0);
         assertEq(hook.pendingValue(caller, dataHash), 0);
         vm.stopPrank();
@@ -167,7 +182,7 @@ contract AttestationEscrowHookTest is Test {
 
         vm.startPrank(caller);
         hook.onLock{value: 1 wei}(data, caller, address(this));
-        hook.onReturn(data, caller, address(this));
+        hook.onReturn(data, caller, _dummyEscrow());
         vm.stopPrank();
 
         assertEq(caller.balance, balanceBefore);
@@ -196,9 +211,9 @@ contract AttestationEscrowHookTest is Test {
         vm.startPrank(caller);
         hook.onLock(data, caller, address(this));
         hook.onLock(data, caller, address(this));
-        hook.onReturn(data, caller, address(this));
+        hook.onReturn(data, caller, _dummyEscrow());
         assertEq(hook.pending(caller, dataHash), 1);
-        hook.onRelease(data, recipient, address(this));
+        hook.onRelease(data, recipient, _dummyEscrow(), bytes32(0));
         assertEq(hook.pending(caller, dataHash), 0);
         vm.stopPrank();
     }
@@ -213,14 +228,14 @@ contract AttestationEscrowHookTest is Test {
         hook2.onLock(data, caller, address(this));
         assertEq(hook2.pending(caller, dataHash), 2);
 
-        hook2.onRelease(data, recipient, address(this));
+        hook2.onRelease(data, recipient, _dummyEscrow(), bytes32(0));
         assertEq(hook2.pending(caller, dataHash), 1);
 
-        hook2.onRelease(data, recipient, address(this));
+        hook2.onRelease(data, recipient, _dummyEscrow(), bytes32(0));
         assertEq(hook2.pending(caller, dataHash), 0);
 
         vm.expectRevert(abi.encodeWithSelector(AttestationEscrowHook2.NoPendingValidation.selector, caller, dataHash));
-        hook2.onRelease(data, recipient, address(this));
+        hook2.onRelease(data, recipient, _dummyEscrow(), bytes32(0));
         vm.stopPrank();
     }
 
@@ -258,9 +273,9 @@ contract AttestationEscrowHookTest is Test {
         vm.startPrank(caller);
         hook2.onLock(data, caller, address(this));
         hook2.onLock(data, caller, address(this));
-        hook2.onReturn(data, caller, address(this));
+        hook2.onReturn(data, caller, _dummyEscrow());
         assertEq(hook2.pending(caller, dataHash), 1);
-        hook2.onRelease(data, recipient, address(this));
+        hook2.onRelease(data, recipient, _dummyEscrow(), bytes32(0));
         assertEq(hook2.pending(caller, dataHash), 0);
         vm.stopPrank();
     }
@@ -293,7 +308,7 @@ contract AttestationEscrowHookTest is Test {
         hook2.onLock(data, caller, address(this));
 
         vm.recordLogs();
-        hook2.onRelease(data, otherRecipient, address(this));
+        hook2.onRelease(data, otherRecipient, _dummyEscrow(), bytes32(0));
         Vm.Log[] memory logs = vm.getRecordedLogs();
         vm.stopPrank();
 

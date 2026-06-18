@@ -52,7 +52,7 @@ contract UnconditionalNativeTokenEscrowObligation is BaseEscrowObligationUncondi
 
     // Release native tokens to fulfiller
     function _releaseEscrow(
-        bytes memory escrowData,
+        Attestation memory escrow,
         address to,
         bytes32 /* fulfillmentUid */
     )
@@ -60,7 +60,7 @@ contract UnconditionalNativeTokenEscrowObligation is BaseEscrowObligationUncondi
         override
         returns (bytes memory)
     {
-        ObligationData memory decoded = abi.decode(escrowData, (ObligationData));
+        ObligationData memory decoded = abi.decode(escrow.data, (ObligationData));
 
         (bool success,) = payable(to).call{value: decoded.amount}("");
         if (!success) {
@@ -71,8 +71,8 @@ contract UnconditionalNativeTokenEscrowObligation is BaseEscrowObligationUncondi
     }
 
     // Return native tokens to original owner on expiry
-    function _returnEscrow(bytes memory data, address to) internal override {
-        _releaseEscrow(data, to, bytes32(0));
+    function _returnEscrow(Attestation memory escrow, address to) internal override {
+        _releaseEscrow(escrow, to, bytes32(0));
     }
 
     // Implement IArbiter

@@ -136,19 +136,19 @@ contract VoteEscrowObligation is BaseEscrowObligation {
     }
 
     /// @notice Release escrowed vote by casting it according to the obligation
-    /// @param escrowData The encoded obligation data
+    /// @param escrow The escrow attestation
     /// @param to The address receiving the benefit (fulfiller)
     /// @param fulfillmentUid The UID of the fulfillment attestation
     /// @return result Encoded result data
-    function _releaseEscrow(bytes memory escrowData, address to, bytes32 fulfillmentUid)
+    function _releaseEscrow(Attestation memory escrow, address to, bytes32 fulfillmentUid)
         internal
         override
         returns (bytes memory result)
     {
-        ObligationData memory obligation = decodeObligationData(escrowData);
+        ObligationData memory obligation = decodeObligationData(escrow.data);
 
         // Get the data hash for this escrow
-        bytes32 dataHash = keccak256(escrowData);
+        bytes32 dataHash = keccak256(escrow.data);
 
         if (escrowedVoter[dataHash] == address(0)) {
             revert NoActiveEscrow(dataHash);
@@ -184,13 +184,13 @@ contract VoteEscrowObligation is BaseEscrowObligation {
     }
 
     /// @notice Return voting power to original owner
-    /// @param data The encoded obligation data
+    /// @param escrow The escrow attestation
     /// @param to The address to return voting power to (original voter)
-    function _returnEscrow(bytes memory data, address to) internal override {
-        ObligationData memory obligation = decodeObligationData(data);
+    function _returnEscrow(Attestation memory escrow, address to) internal override {
+        ObligationData memory obligation = decodeObligationData(escrow.data);
 
         // Get the data hash for this escrow
-        bytes32 dataHash = keccak256(data);
+        bytes32 dataHash = keccak256(escrow.data);
 
         if (escrowedVoter[dataHash] != address(0)) {
             // Note: We cannot automatically return delegation because only the user

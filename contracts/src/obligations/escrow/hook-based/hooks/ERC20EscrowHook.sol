@@ -2,6 +2,7 @@
 pragma solidity ^0.8.26;
 
 import {IEscrowHook} from "../IEscrowHook.sol";
+import {Attestation} from "@eas/Common.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
@@ -58,10 +59,13 @@ contract ERC20EscrowHook is IEscrowHook {
         deposits[msg.sender][decoded.token] += decoded.amount;
     }
 
+    function onAttest(bytes calldata, Attestation calldata) external override {}
+
     function onRelease(
         bytes calldata data,
         address to,
-        address /* escrow */
+        Attestation calldata, /* escrow */
+        bytes32 /* fulfillmentUid */
     )
         external
         override
@@ -72,7 +76,7 @@ contract ERC20EscrowHook is IEscrowHook {
     function onReturn(
         bytes calldata data,
         address to,
-        address /* escrow */
+        Attestation calldata /* escrow */
     )
         external
         override

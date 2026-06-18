@@ -51,8 +51,8 @@ contract UnconditionalAttestationEscrowObligation is BaseEscrowObligationUncondi
     }
 
     // Create the escrowed attestation
-    function _releaseEscrow(bytes memory escrowData, address, bytes32) internal override returns (bytes memory) {
-        ObligationData memory decoded = abi.decode(escrowData, (ObligationData));
+    function _releaseEscrow(Attestation memory escrow, address, bytes32) internal override returns (bytes memory) {
+        ObligationData memory decoded = abi.decode(escrow.data, (ObligationData));
 
         bytes32 attestationUid;
         try eas.attest{value: decoded.attestation.data.value}(decoded.attestation) returns (bytes32 uid) {
@@ -65,8 +65,8 @@ contract UnconditionalAttestationEscrowObligation is BaseEscrowObligationUncondi
     }
 
     // No assets to return for attestation escrows
-    function _returnEscrow(bytes memory data, address to) internal override {
-        ObligationData memory decoded = abi.decode(data, (ObligationData));
+    function _returnEscrow(Attestation memory escrow, address to) internal override {
+        ObligationData memory decoded = abi.decode(escrow.data, (ObligationData));
         uint256 requiredValue = decoded.attestation.data.value;
         if (requiredValue != 0) {
             (bool success,) = payable(to).call{value: requiredValue}("");

@@ -64,7 +64,7 @@ contract ERC721EscrowObligation is BaseEscrowObligation, IArbiter {
 
     // Transfer token to fulfiller
     function _releaseEscrow(
-        bytes memory escrowData,
+        Attestation memory escrow,
         address to,
         bytes32 /* fulfillmentUid */
     )
@@ -72,7 +72,7 @@ contract ERC721EscrowObligation is BaseEscrowObligation, IArbiter {
         override
         returns (bytes memory)
     {
-        ObligationData memory decoded = abi.decode(escrowData, (ObligationData));
+        ObligationData memory decoded = abi.decode(escrow.data, (ObligationData));
 
         // Check ownership before transfer
         address ownerBefore = IERC721(decoded.token).ownerOf(decoded.tokenId);
@@ -97,8 +97,8 @@ contract ERC721EscrowObligation is BaseEscrowObligation, IArbiter {
     }
 
     // Return token to original owner on expiry
-    function _returnEscrow(bytes memory data, address to) internal override {
-        _releaseEscrow(data, to, bytes32(0));
+    function _returnEscrow(Attestation memory escrow, address to) internal override {
+        _releaseEscrow(escrow, to, bytes32(0));
     }
 
     // Implement IArbiter
