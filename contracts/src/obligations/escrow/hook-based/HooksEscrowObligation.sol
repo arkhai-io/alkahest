@@ -143,6 +143,4 @@ contract HooksEscrowObligation is BaseEscrowObligation, IArbiter {
         }
         if (decoded.hooks.length > MAX_HOOKS) revert TooManyHooks(decoded.hooks.length, MAX_HOOKS);
     }
-
-    receive() external payable override {}
 }

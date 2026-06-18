@@ -8,6 +8,7 @@ import {IEscrowHook} from "@src/obligations/escrow/hook-based/IEscrowHook.sol";
 import {ERC20EscrowHook} from "@src/obligations/escrow/hook-based/hooks/ERC20EscrowHook.sol";
 import {ERC721EscrowHook} from "@src/obligations/escrow/hook-based/hooks/ERC721EscrowHook.sol";
 import {ERC1155EscrowHook} from "@src/obligations/escrow/hook-based/hooks/ERC1155EscrowHook.sol";
+import {NativeTokenEscrowHook} from "@src/obligations/escrow/hook-based/hooks/NativeTokenEscrowHook.sol";
 import {BaseEscrowObligation} from "@src/BaseEscrowObligation.sol";
 import {StringObligation} from "@src/obligations/StringObligation.sol";
 import {IArbiter} from "@src/IArbiter.sol";
@@ -214,6 +215,43 @@ contract HookEscrowObligationTest is Test {
         // Attestation recipient is the buyer
         Attestation memory att = eas.getAttestation(uid);
         assertEq(att.recipient, buyer);
+    }
+
+    function testDirectNativeTransferToEscrowReverts() public {
+        vm.deal(buyer, 1 ether);
+
+        vm.prank(buyer);
+        (bool success,) = address(escrow).call{value: 1 ether}("");
+
+        assertFalse(success);
+        assertEq(address(escrow).balance, 0);
+    }
+
+    function testDirectNativeTransferToNativeHookReverts() public {
+        NativeTokenEscrowHook nativeHook = new NativeTokenEscrowHook();
+        vm.deal(buyer, 1 ether);
+
+        vm.prank(buyer);
+        (bool success,) = address(nativeHook).call{value: 1 ether}("");
+
+        assertFalse(success);
+        assertEq(address(nativeHook).balance, 0);
+    }
+
+    function testNativeHookLockStillAcceptsValueThroughEscrow() public {
+        NativeTokenEscrowHook nativeHook = new NativeTokenEscrowHook();
+        bytes memory hookData = abi.encode(NativeTokenEscrowHook.HookData({amount: 1 ether}));
+        HookEscrowObligation.ObligationData memory data = HookEscrowObligation.ObligationData({
+            arbiter: address(acceptArbiter), demand: abi.encode("test"), hook: address(nativeHook), hookData: hookData
+        });
+        vm.deal(buyer, 1 ether);
+
+        vm.prank(buyer);
+        bytes32 uid = escrow.doObligation{value: 1 ether}(data, uint64(block.timestamp + EXPIRATION));
+
+        assertNotEq(uid, bytes32(0));
+        assertEq(nativeHook.deposits(address(escrow)), 1 ether);
+        assertEq(address(nativeHook).balance, 1 ether);
     }
 
     function testDoObligationFor() public {
@@ -532,6 +570,45 @@ contract HooksEscrowObligationTest is Test {
         assertEq(tokenB.balanceOf(seller), AMOUNT_B);
         assertEq(tokenA.balanceOf(address(erc20Hook)), 0);
         assertEq(tokenB.balanceOf(address(erc20Hook)), 0);
+    }
+
+    function testDirectNativeTransferToMultiHookEscrowReverts() public {
+        vm.deal(buyer, 1 ether);
+
+        vm.prank(buyer);
+        (bool success,) = address(escrow).call{value: 1 ether}("");
+
+        assertFalse(success);
+        assertEq(address(escrow).balance, 0);
+    }
+
+    function testNativeHookBundleLockStillAcceptsValueThroughEscrow() public {
+        NativeTokenEscrowHook nativeHook = new NativeTokenEscrowHook();
+
+        address[] memory hooks = new address[](1);
+        hooks[0] = address(nativeHook);
+
+        bytes[] memory hookDatas = new bytes[](1);
+        hookDatas[0] = abi.encode(NativeTokenEscrowHook.HookData({amount: 1 ether}));
+
+        uint256[] memory values = new uint256[](1);
+        values[0] = 1 ether;
+
+        HooksEscrowObligation.ObligationData memory data = HooksEscrowObligation.ObligationData({
+            arbiter: address(acceptArbiter),
+            demand: abi.encode("native bundle"),
+            hooks: hooks,
+            hookDatas: hookDatas,
+            values: values
+        });
+        vm.deal(buyer, 1 ether);
+
+        vm.prank(buyer);
+        bytes32 uid = escrow.doObligation{value: 1 ether}(data, uint64(block.timestamp + EXPIRATION));
+
+        assertNotEq(uid, bytes32(0));
+        assertEq(nativeHook.deposits(address(escrow)), 1 ether);
+        assertEq(address(nativeHook).balance, 1 ether);
     }
 
     function testBundleReclaimExpired() public {

@@ -18,20 +18,21 @@ contract NativeTokenEscrowHook is IEscrowHook {
 
     error IncorrectPayment(uint256 expected, uint256 received);
     error NoDeposit(address caller);
-    error InsufficientDeposit(
-        address caller,
-        uint256 requested,
-        uint256 available
-    );
+    error InsufficientDeposit(address caller, uint256 requested, uint256 available);
     error NativeTokenTransferFailed(address to, uint256 amount);
 
     // ──────────────────────────────────────────────
 
     function onLock(
         bytes calldata data,
-        address /* from */,
+        address,
+        /* from */
         address /* escrow */
-    ) external payable override {
+    )
+        external
+        payable
+        override
+    {
         HookData memory decoded = abi.decode(data, (HookData));
 
         if (msg.value != decoded.amount) {
@@ -45,7 +46,10 @@ contract NativeTokenEscrowHook is IEscrowHook {
         bytes calldata data,
         address to,
         address /* escrow */
-    ) external override {
+    )
+        external
+        override
+    {
         _transferOut(data, to);
     }
 
@@ -53,7 +57,10 @@ contract NativeTokenEscrowHook is IEscrowHook {
         bytes calldata data,
         address to,
         address /* escrow */
-    ) external override {
+    )
+        external
+        override
+    {
         _transferOut(data, to);
     }
 
@@ -67,16 +74,12 @@ contract NativeTokenEscrowHook is IEscrowHook {
             revert NoDeposit(msg.sender);
         }
         if (available < decoded.amount) {
-            revert InsufficientDeposit(
-                msg.sender,
-                decoded.amount,
-                available
-            );
+            revert InsufficientDeposit(msg.sender, decoded.amount, available);
         }
 
         deposits[msg.sender] = available - decoded.amount;
 
-        (bool success, ) = payable(to).call{value: decoded.amount}("");
+        (bool success,) = payable(to).call{value: decoded.amount}("");
         if (!success) {
             revert NativeTokenTransferFailed(to, decoded.amount);
         }
@@ -86,17 +89,11 @@ contract NativeTokenEscrowHook is IEscrowHook {
     // Encoding helpers
     // ──────────────────────────────────────────────
 
-    function encodeHookData(
-        HookData calldata hookData
-    ) external pure returns (bytes memory) {
+    function encodeHookData(HookData calldata hookData) external pure returns (bytes memory) {
         return abi.encode(hookData);
     }
 
-    function decodeHookData(
-        bytes calldata data
-    ) external pure returns (HookData memory) {
+    function decodeHookData(bytes calldata data) external pure returns (HookData memory) {
         return abi.decode(data, (HookData));
     }
-
-    receive() external payable {}
 }

@@ -127,7 +127,4 @@ contract HookEscrowObligation is BaseEscrowObligation, IArbiter {
     function decodeObligationData(bytes calldata data) public pure returns (ObligationData memory) {
         return abi.decode(data, (ObligationData));
     }
-
-    // Allow contract to receive native tokens (for hooks that deal with ETH)
-    receive() external payable override {}
 }
