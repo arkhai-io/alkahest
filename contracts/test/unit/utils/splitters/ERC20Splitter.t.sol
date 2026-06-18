@@ -160,7 +160,7 @@ contract ERC20SplitterTest is Test {
         splitter.arbitrate(fulfillmentUid, escrowUid, splits);
     }
 
-    function testArbitrateRevertsZeroRecipient() public {
+    function testArbitrateAllowsZeroRecipient() public {
         bytes32 escrowUid = _createEscrow(buyer, AMOUNT, uint64(block.timestamp + EXPIRATION));
         bytes32 fulfillmentUid = _createFulfillmentViaSplitter(executor, escrowUid);
 
@@ -168,8 +168,12 @@ contract ERC20SplitterTest is Test {
         splits[0] = ERC20Splitter.Split({recipient: address(0), amount: AMOUNT});
 
         vm.prank(oracle);
-        vm.expectRevert(ERC20Splitter.ZeroRecipient.selector);
         splitter.arbitrate(fulfillmentUid, escrowUid, splits);
+
+        ERC20Splitter.Split[] memory stored = splitter.getSplits(oracle, fulfillmentUid, escrowUid);
+        assertEq(stored.length, 1);
+        assertEq(stored[0].recipient, address(0));
+        assertEq(stored[0].amount, AMOUNT);
     }
 
     function testArbitrateRevertsInvalidTotal() public {
@@ -306,12 +310,7 @@ contract ERC20SplitterTest is Test {
 
         vm.mockCall(
             address(stringObligation),
-            abi.encodeWithSignature(
-                "doObligationRaw(bytes,uint64,bytes32)",
-                obligationData,
-                uint64(0),
-                escrowUid
-            ),
+            abi.encodeWithSignature("doObligationRaw(bytes,uint64,bytes32)", obligationData, uint64(0), escrowUid),
             abi.encode(fulfillmentUid)
         );
 
@@ -422,10 +421,7 @@ contract ERC20SplitterTest is Test {
         bytes memory demand = abi.encode(ERC20Splitter.DemandData({oracle: oracle, data: bytes("")}));
         bytes memory fakeEscrowData = abi.encode(
             ERC20Splitter.EscrowObligationData({
-                arbiter: address(splitter),
-                demand: demand,
-                token: address(token),
-                amount: AMOUNT
+                arbiter: address(splitter), demand: demand, token: address(token), amount: AMOUNT
             })
         );
 

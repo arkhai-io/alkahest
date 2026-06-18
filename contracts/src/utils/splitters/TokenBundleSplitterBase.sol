@@ -75,7 +75,6 @@ abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155H
     error UnauthorizedArbitrationRequest();
     error EmptySplits();
     error TooManySplits(uint256 provided, uint256 max);
-    error ZeroRecipient();
     error NativeTokenTransferFailed(address to, uint256 amount);
     error ERC20TransferFailed(address token, address to, uint256 amount);
     error ERC721TransferFailed(address token, address to, uint256 tokenId);
@@ -108,7 +107,6 @@ abstract contract TokenBundleSplitterBase is IArbiter, ReentrancyGuard, ERC1155H
         if (splits.length > MAX_SPLITS) revert TooManySplits(splits.length, MAX_SPLITS);
         delete decisions[oracle][decisionKey];
         for (uint256 i; i < splits.length; ++i) {
-            if (splits[i].recipient == address(0)) revert ZeroRecipient();
             decisions[oracle][decisionKey].push();
             BundleSplit storage stored = decisions[oracle][decisionKey][i];
             stored.recipient = splits[i].recipient;

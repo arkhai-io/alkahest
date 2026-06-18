@@ -59,7 +59,6 @@ contract NativeTokenSplitter is IArbiter, ReentrancyGuard {
     error InvalidSplits(uint256 totalExpected, uint256 totalProvided);
     error EmptySplits();
     error TooManySplits(uint256 provided, uint256 max);
-    error ZeroRecipient();
     error NativeTokenTransferFailed(address to, uint256 amount);
     error NoFulfillerRecorded(bytes32 fulfillment);
     error InvalidFulfillmentUid();
@@ -86,7 +85,6 @@ contract NativeTokenSplitter is IArbiter, ReentrancyGuard {
         if (splits.length > MAX_SPLITS) revert TooManySplits(splits.length, MAX_SPLITS);
         uint256 total;
         for (uint256 i; i < splits.length; ++i) {
-            if (splits[i].recipient == address(0)) revert ZeroRecipient();
             total += splits[i].amount;
         }
         if (total != escrowData.amount) revert InvalidSplits(escrowData.amount, total);
