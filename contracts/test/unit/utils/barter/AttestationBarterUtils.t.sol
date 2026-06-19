@@ -3,7 +3,9 @@ pragma solidity ^0.8.26;
 
 import "forge-std/Test.sol";
 import {AttestationBarterUtils} from "@src/utils/barter/AttestationBarterUtils.sol";
-import {AttestationEscrowObligation2} from "@src/obligations/escrow/default/AttestationEscrowObligation2.sol";
+import {
+    AttestationReferenceEscrowObligation
+} from "@src/obligations/escrow/default/AttestationReferenceEscrowObligation.sol";
 import {IEAS, AttestationRequest, AttestationRequestData} from "@eas/IEAS.sol";
 import {ISchemaRegistry, SchemaRecord} from "@eas/ISchemaRegistry.sol";
 import {SchemaResolver} from "@eas/resolver/SchemaResolver.sol";
@@ -12,7 +14,7 @@ import {EASDeployer} from "@test/utils/EASDeployer.sol";
 
 contract AttestationBarterUtilsTest is Test {
     AttestationBarterUtils public barterUtils;
-    AttestationEscrowObligation2 public escrowContract;
+    AttestationReferenceEscrowObligation public escrowContract;
     IEAS public eas;
     ISchemaRegistry public schemaRegistry;
 
@@ -33,7 +35,7 @@ contract AttestationBarterUtilsTest is Test {
         bob = vm.addr(BOB_PRIVATE_KEY);
 
         // Deploy contracts
-        escrowContract = new AttestationEscrowObligation2(eas, schemaRegistry);
+        escrowContract = new AttestationReferenceEscrowObligation(eas, schemaRegistry);
         barterUtils = new AttestationBarterUtils(eas, schemaRegistry, escrowContract);
 
         // Register test schema
@@ -89,12 +91,14 @@ contract AttestationBarterUtilsTest is Test {
         assertNotEq(escrowUid, bytes32(0), "Escrow should be created");
 
         // Verify attestation details
-        AttestationEscrowObligation2.ObligationData memory escrowData =
-            abi.decode(eas.getAttestation(escrowUid).data, (AttestationEscrowObligation2.ObligationData));
+        AttestationReferenceEscrowObligation.ObligationData memory escrowData =
+            abi.decode(eas.getAttestation(escrowUid).data, (AttestationReferenceEscrowObligation.ObligationData));
 
         assertEq(escrowData.attestationUid, attestationUid, "Attestation UID should match");
         assertEq(escrowData.arbiter, address(this), "Arbiter should match");
         assertEq(keccak256(escrowData.demand), keccak256(demandData), "Demand data should match");
+        assertEq(escrowData.validationExpirationTime, 0, "Validation should not expire by default");
+        assertFalse(escrowData.validationRevocable, "Validation should not be revocable by default");
     }
 
     function testGetSchema() public view {
@@ -134,7 +138,7 @@ contract AttestationBarterUtilsTest is Test {
 
 // Helper contract to test internal functions
 contract AttestationBarterUtilsHarness is AttestationBarterUtils {
-    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, AttestationEscrowObligation2 _escrowContract)
+    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, AttestationReferenceEscrowObligation _escrowContract)
         AttestationBarterUtils(_eas, _schemaRegistry, _escrowContract)
     {}
 

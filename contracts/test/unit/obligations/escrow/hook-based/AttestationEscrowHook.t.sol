@@ -5,7 +5,9 @@ import "forge-std/Test.sol";
 import "forge-std/Vm.sol";
 import {IEscrowHook} from "@src/obligations/escrow/hook-based/IEscrowHook.sol";
 import {AttestationEscrowHook} from "@src/obligations/escrow/hook-based/hooks/AttestationEscrowHook.sol";
-import {AttestationEscrowHook2} from "@src/obligations/escrow/hook-based/hooks/AttestationEscrowHook2.sol";
+import {
+    AttestationReferenceEscrowHook
+} from "@src/obligations/escrow/hook-based/hooks/AttestationReferenceEscrowHook.sol";
 import {IEAS, Attestation, AttestationRequest, AttestationRequestData} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {ISchemaResolver} from "@eas/resolver/ISchemaResolver.sol";
@@ -17,7 +19,7 @@ contract AttestationEscrowHookTest is Test {
     IEAS public eas;
     ISchemaRegistry public schemaRegistry;
     AttestationEscrowHook public hook;
-    AttestationEscrowHook2 public hook2;
+    AttestationReferenceEscrowHook public hook2;
 
     address internal caller = makeAddr("caller");
     address internal recipient = makeAddr("recipient");
@@ -32,7 +34,7 @@ contract AttestationEscrowHookTest is Test {
         (eas, schemaRegistry) = easDeployer.deployEAS();
 
         hook = new AttestationEscrowHook(eas);
-        hook2 = new AttestationEscrowHook2(eas, schemaRegistry);
+        hook2 = new AttestationReferenceEscrowHook(eas, schemaRegistry);
 
         testSchema = schemaRegistry.register("string testData", ISchemaResolver(address(0)), true);
         payableResolver = new PayableResolver(eas);
@@ -219,8 +221,14 @@ contract AttestationEscrowHookTest is Test {
     }
 
     function testAttestationHook2CountsIdenticalPendingLocks() public {
-        bytes memory data =
-            abi.encode(AttestationEscrowHook2.HookData({attestationUid: existingAttestation, recipient: recipient}));
+        bytes memory data = abi.encode(
+            AttestationReferenceEscrowHook.HookData({
+                attestationUid: existingAttestation,
+                recipient: recipient,
+                validationExpirationTime: 0,
+                validationRevocable: false
+            })
+        );
         bytes32 dataHash = keccak256(data);
 
         vm.startPrank(caller);
@@ -234,14 +242,22 @@ contract AttestationEscrowHookTest is Test {
         hook2.onRelease(data, recipient, _dummyEscrow(), bytes32(0));
         assertEq(hook2.pending(caller, dataHash), 0);
 
-        vm.expectRevert(abi.encodeWithSelector(AttestationEscrowHook2.NoPendingValidation.selector, caller, dataHash));
+        vm.expectRevert(
+            abi.encodeWithSelector(AttestationReferenceEscrowHook.NoPendingValidation.selector, caller, dataHash)
+        );
         hook2.onRelease(data, recipient, _dummyEscrow(), bytes32(0));
         vm.stopPrank();
     }
 
     function testAttestationHook2RejectsNativeValueOnLock() public {
-        bytes memory data =
-            abi.encode(AttestationEscrowHook2.HookData({attestationUid: existingAttestation, recipient: recipient}));
+        bytes memory data = abi.encode(
+            AttestationReferenceEscrowHook.HookData({
+                attestationUid: existingAttestation,
+                recipient: recipient,
+                validationExpirationTime: 0,
+                validationRevocable: false
+            })
+        );
 
         vm.deal(caller, 1 ether);
         vm.prank(caller);
@@ -260,14 +276,20 @@ contract AttestationEscrowHookTest is Test {
             schemaRegistry.register("bytes32 validatedAttestationUid", ISchemaResolver(predicted), true);
         assertEq(registeredSchema, expectedSchema);
 
-        AttestationEscrowHook2 reusedSchemaHook = new AttestationEscrowHook2(eas, schemaRegistry);
+        AttestationReferenceEscrowHook reusedSchemaHook = new AttestationReferenceEscrowHook(eas, schemaRegistry);
         assertEq(reusedSchemaHook.VALIDATION_SCHEMA(), expectedSchema);
         assertEq(schemaRegistry.getSchema(expectedSchema).uid, expectedSchema);
     }
 
     function testAttestationHook2ReturnDecrementsOnePendingLock() public {
-        bytes memory data =
-            abi.encode(AttestationEscrowHook2.HookData({attestationUid: existingAttestation, recipient: recipient}));
+        bytes memory data = abi.encode(
+            AttestationReferenceEscrowHook.HookData({
+                attestationUid: existingAttestation,
+                recipient: recipient,
+                validationExpirationTime: 0,
+                validationRevocable: false
+            })
+        );
         bytes32 dataHash = keccak256(data);
 
         vm.startPrank(caller);
@@ -301,8 +323,14 @@ contract AttestationEscrowHookTest is Test {
     }
 
     function testAttestationHook2UsesEncodedRecipient() public {
-        bytes memory data =
-            abi.encode(AttestationEscrowHook2.HookData({attestationUid: existingAttestation, recipient: recipient}));
+        bytes memory data = abi.encode(
+            AttestationReferenceEscrowHook.HookData({
+                attestationUid: existingAttestation,
+                recipient: recipient,
+                validationExpirationTime: 0,
+                validationRevocable: false
+            })
+        );
 
         vm.startPrank(caller);
         hook2.onLock(data, caller, address(this));
@@ -321,6 +349,33 @@ contract AttestationEscrowHookTest is Test {
 
         assertEq(eas.getAttestation(uid).recipient, recipient);
         assertEq(eas.getAttestation(uid).refUID, existingAttestation);
+    }
+
+    function testAttestationHook2UsesValidationProperties() public {
+        uint64 validationExpiration = uint64(block.timestamp + 30 days);
+        bytes memory data = abi.encode(
+            AttestationReferenceEscrowHook.HookData({
+                attestationUid: existingAttestation,
+                recipient: recipient,
+                validationExpirationTime: validationExpiration,
+                validationRevocable: true
+            })
+        );
+
+        vm.startPrank(caller);
+        hook2.onLock(data, caller, address(this));
+
+        vm.recordLogs();
+        hook2.onRelease(data, recipient, _dummyEscrow(), bytes32(0));
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+        vm.stopPrank();
+
+        bytes32 uid = _findValidationUid(logs);
+        assertNotEq(uid, bytes32(0));
+
+        Attestation memory validation = eas.getAttestation(uid);
+        assertEq(validation.expirationTime, validationExpiration);
+        assertTrue(validation.revocable);
     }
 
     function _findValidationUid(Vm.Log[] memory logs) internal view returns (bytes32 uid) {

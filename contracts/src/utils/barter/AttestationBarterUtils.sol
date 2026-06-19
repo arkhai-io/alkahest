@@ -5,12 +5,14 @@ import {Attestation} from "@eas/Common.sol";
 import {IEAS, AttestationRequest, AttestationRequestData} from "@eas/IEAS.sol";
 import {ISchemaRegistry, SchemaRecord} from "@eas/ISchemaRegistry.sol";
 import {SchemaResolver} from "@eas/resolver/SchemaResolver.sol";
-import {AttestationEscrowObligation2} from "../../obligations/escrow/default/AttestationEscrowObligation2.sol";
+import {
+    AttestationReferenceEscrowObligation
+} from "../../obligations/escrow/default/AttestationReferenceEscrowObligation.sol";
 
 contract AttestationBarterUtils is SchemaResolver {
     IEAS public immutable eas;
     ISchemaRegistry public immutable schemaRegistry;
-    AttestationEscrowObligation2 public immutable escrowContract;
+    AttestationReferenceEscrowObligation public immutable escrowContract;
 
     mapping(bytes32 => address) public schemaResolvers;
 
@@ -19,7 +21,7 @@ contract AttestationBarterUtils is SchemaResolver {
     error InvalidResolver();
     error InvalidSchema();
 
-    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, AttestationEscrowObligation2 _escrowContract)
+    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, AttestationReferenceEscrowObligation _escrowContract)
         SchemaResolver(_eas)
     {
         eas = _eas;
@@ -70,9 +72,14 @@ contract AttestationBarterUtils is SchemaResolver {
         attestationUid = eas.attest(attestationRequest);
 
         // Then create the escrow obligation
-        AttestationEscrowObligation2.ObligationData memory escrowData = AttestationEscrowObligation2.ObligationData({
-            attestationUid: attestationUid, arbiter: arbiter, demand: demand
-        });
+        AttestationReferenceEscrowObligation.ObligationData memory escrowData =
+            AttestationReferenceEscrowObligation.ObligationData({
+                attestationUid: attestationUid,
+                arbiter: arbiter,
+                demand: demand,
+                validationExpirationTime: 0,
+                validationRevocable: false
+            });
 
         escrowUid = escrowContract.doObligation(escrowData, expiration);
     }

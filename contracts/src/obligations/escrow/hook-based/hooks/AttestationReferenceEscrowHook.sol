@@ -9,7 +9,7 @@ import {SchemaResolver} from "@eas/resolver/SchemaResolver.sol";
 import {Attestation} from "@eas/Common.sol";
 import {SchemaRegistryUtils} from "../../../../SchemaRegistryUtils.sol";
 
-/// @title AttestationEscrowHook2
+/// @title AttestationReferenceEscrowHook
 /// @notice An IEscrowHook that creates a validation attestation referencing
 ///         a pre-existing attestation on release.
 /// @dev hookData is abi.encode(HookData).
@@ -19,12 +19,14 @@ import {SchemaRegistryUtils} from "../../../../SchemaRegistryUtils.sol";
 ///
 ///      The validation schema is registered at deploy time. The attester
 ///      of the validation attestation is this hook contract.
-contract AttestationEscrowHook2 is IEscrowHook, SchemaResolver {
+contract AttestationReferenceEscrowHook is IEscrowHook, SchemaResolver {
     using SchemaRegistryUtils for ISchemaRegistry;
 
     struct HookData {
         bytes32 attestationUid;
         address recipient; // recipient of the validation attestation
+        uint64 validationExpirationTime;
+        bool validationRevocable;
     }
 
     IEAS public immutable eas;
@@ -87,8 +89,8 @@ contract AttestationEscrowHook2 is IEscrowHook, SchemaResolver {
                 schema: VALIDATION_SCHEMA,
                 data: AttestationRequestData({
                     recipient: decoded.recipient,
-                    expirationTime: 0,
-                    revocable: false,
+                    expirationTime: decoded.validationExpirationTime,
+                    revocable: decoded.validationRevocable,
                     refUID: decoded.attestationUid,
                     data: validationData,
                     value: 0

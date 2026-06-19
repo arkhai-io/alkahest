@@ -33,7 +33,9 @@ import {NativeTokenBarterUtils} from "@src/utils/barter/NativeTokenBarterUtils.s
 
 // Attestation Contracts
 import {AttestationEscrowObligation} from "@src/obligations/escrow/default/AttestationEscrowObligation.sol";
-import {AttestationEscrowObligation2} from "@src/obligations/escrow/default/AttestationEscrowObligation2.sol";
+import {
+    AttestationReferenceEscrowObligation
+} from "@src/obligations/escrow/default/AttestationReferenceEscrowObligation.sol";
 import {AttestationBarterUtils} from "@src/utils/barter/AttestationBarterUtils.sol";
 
 // Arbiter Contracts
@@ -280,8 +282,8 @@ contract Deploy is Script {
         // Deploy attestation barter contracts
         AttestationEscrowObligation attestationEscrow =
             new AttestationEscrowObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
-        AttestationEscrowObligation2 attestationEscrow2 =
-            new AttestationEscrowObligation2(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
+        AttestationReferenceEscrowObligation attestationEscrow2 =
+            new AttestationReferenceEscrowObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
         AttestationBarterUtils attestationBarterUtils =
             new AttestationBarterUtils(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress), attestationEscrow2);
 
@@ -358,7 +360,7 @@ contract Deploy is Script {
 
         console.log("\nAttestation Barter Contracts:");
         console.log("AttestationEscrowObligation:", address(attestationEscrow));
-        console.log("AttestationEscrowObligation2:", address(attestationEscrow2));
+        console.log("AttestationReferenceEscrowObligation:", address(attestationEscrow2));
         console.log("AttestationBarterUtils:", address(attestationBarterUtils));
 
         // Create JSON with deployed addresses
@@ -455,7 +457,7 @@ contract Deploy is Script {
 
         // Add Attestation addresses
         vm.serializeAddress(deploymentJson, "attestationEscrowObligation", address(attestationEscrow));
-        vm.serializeAddress(deploymentJson, "attestationEscrowObligation2", address(attestationEscrow2));
+        vm.serializeAddress(deploymentJson, "attestationReferenceEscrowObligation", address(attestationEscrow2));
         string memory finalJson =
             vm.serializeAddress(deploymentJson, "attestationBarterUtils", address(attestationBarterUtils));
 

@@ -16,12 +16,14 @@ abstract contract BaseAttester is SchemaResolver {
     ISchemaRegistry internal immutable schemaRegistry;
     IEAS internal immutable eas;
     bytes32 public immutable ATTESTATION_SCHEMA;
+    bool public immutable ATTESTATION_SCHEMA_REVOCABLE;
 
     error NotFromThisAttester();
 
     constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, string memory schema, bool revocable) SchemaResolver(_eas) {
         eas = _eas;
         schemaRegistry = _schemaRegistry;
+        ATTESTATION_SCHEMA_REVOCABLE = revocable;
         ATTESTATION_SCHEMA = schemaRegistry.registerOrReuse(schema, ISchemaResolver(address(this)), revocable);
     }
 
@@ -66,7 +68,7 @@ abstract contract BaseAttester is SchemaResolver {
                 data: AttestationRequestData({
                     recipient: recipient,
                     expirationTime: expirationTime,
-                    revocable: true,
+                    revocable: ATTESTATION_SCHEMA_REVOCABLE,
                     refUID: refUID,
                     data: data,
                     value: 0

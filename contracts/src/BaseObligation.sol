@@ -40,7 +40,7 @@ abstract contract BaseObligation is BaseAttester, ReentrancyGuard {
                 refUID: refUID,
                 recipient: recipient,
                 attester: address(this),
-                revocable: true,
+                revocable: ATTESTATION_SCHEMA_REVOCABLE,
                 data: data
             })
         );

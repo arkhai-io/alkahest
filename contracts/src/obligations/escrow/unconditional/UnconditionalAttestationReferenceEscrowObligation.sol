@@ -10,7 +10,7 @@ import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {ISchemaResolver} from "@eas/resolver/ISchemaResolver.sol";
 import {SchemaRegistryUtils} from "../../../SchemaRegistryUtils.sol";
 
-contract UnconditionalAttestationEscrowObligation2 is BaseEscrowObligationUnconditional, IArbiter {
+contract UnconditionalAttestationReferenceEscrowObligation is BaseEscrowObligationUnconditional, IArbiter {
     using ArbiterUtils for Attestation;
     using SchemaRegistryUtils for ISchemaRegistry;
 
@@ -20,11 +20,16 @@ contract UnconditionalAttestationEscrowObligation2 is BaseEscrowObligationUncond
         address arbiter;
         bytes demand;
         bytes32 attestationUid; // Reference to the pre-made attestation
+        uint64 validationExpirationTime;
+        bool validationRevocable;
     }
 
     constructor(IEAS _eas, ISchemaRegistry _schemaRegistry)
         BaseEscrowObligationUnconditional(
-            _eas, _schemaRegistry, "address arbiter, bytes demand, bytes32 attestationUid", true
+            _eas,
+            _schemaRegistry,
+            "address arbiter, bytes demand, bytes32 attestationUid, uint64 validationExpirationTime, bool validationRevocable",
+            true
         )
     {
         // Register the validation schema
@@ -58,8 +63,8 @@ contract UnconditionalAttestationEscrowObligation2 is BaseEscrowObligationUncond
                 schema: VALIDATION_SCHEMA,
                 data: AttestationRequestData({
                     recipient: to,
-                    expirationTime: 0, // Permanent
-                    revocable: false,
+                    expirationTime: decoded.validationExpirationTime,
+                    revocable: decoded.validationRevocable,
                     refUID: decoded.attestationUid,
                     data: abi.encode(decoded.attestationUid),
                     value: 0
@@ -91,7 +96,9 @@ contract UnconditionalAttestationEscrowObligation2 is BaseEscrowObligationUncond
         ObligationData memory escrow = abi.decode(obligation.data, (ObligationData));
         ObligationData memory demandData = abi.decode(demand, (ObligationData));
 
-        return escrow.attestationUid == demandData.attestationUid && escrow.arbiter == demandData.arbiter
+        return escrow.attestationUid == demandData.attestationUid
+            && escrow.validationExpirationTime == demandData.validationExpirationTime
+            && escrow.validationRevocable == demandData.validationRevocable && escrow.arbiter == demandData.arbiter
             && keccak256(escrow.demand) == keccak256(demandData.demand);
     }
 
