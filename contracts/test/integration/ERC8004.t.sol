@@ -132,8 +132,12 @@ contract ERC8004IntegrationTest is Test {
         vm.startPrank(alice);
         token.approve(address(escrowObligation), ESCROW_AMOUNT);
 
+        bytes memory validationData = bytes("ipfs://validation-request");
         ERC8004Arbiter.DemandData memory demandData = ERC8004Arbiter.DemandData({
-            validationRegistry: address(validationRegistry), validatorAddress: charlie, minResponse: MIN_RESPONSE
+            validationRegistry: address(validationRegistry),
+            validatorAddress: charlie,
+            minResponse: MIN_RESPONSE,
+            data: validationData
         });
 
         ERC20EscrowObligation.ObligationData memory obligationData = ERC20EscrowObligation.ObligationData({
@@ -166,8 +170,8 @@ contract ERC8004IntegrationTest is Test {
         assertEq(fulfillmentAttestation.refUID, escrowUid, "Fulfillment should reference escrow");
 
         // === Step 3: Bob requests validation for the fulfillment ===
+        bytes32 requestHash = arbiter.requestHashFor(fulfillmentUid, validationData);
         vm.prank(bob);
-        bytes32 requestHash = fulfillmentUid; // Use fulfillment UID as request hash
         validationRegistry.validationRequest(charlie, bobAgentId, "ipfs://validation-request", requestHash);
 
         // === Step 4: Charlie validates with a passing score ===
@@ -205,8 +209,12 @@ contract ERC8004IntegrationTest is Test {
         vm.startPrank(alice);
         token.approve(address(escrowObligation), ESCROW_AMOUNT);
 
+        bytes memory validationData = bytes("ipfs://validation-request");
         ERC8004Arbiter.DemandData memory demandData = ERC8004Arbiter.DemandData({
-            validationRegistry: address(validationRegistry), validatorAddress: charlie, minResponse: MIN_RESPONSE
+            validationRegistry: address(validationRegistry),
+            validatorAddress: charlie,
+            minResponse: MIN_RESPONSE,
+            data: validationData
         });
 
         ERC20EscrowObligation.ObligationData memory obligationData = ERC20EscrowObligation.ObligationData({
@@ -224,8 +232,8 @@ contract ERC8004IntegrationTest is Test {
         );
 
         // === Step 3: Bob requests validation for the fulfillment ===
+        bytes32 requestHash = arbiter.requestHashFor(fulfillmentUid, validationData);
         vm.prank(bob);
-        bytes32 requestHash = fulfillmentUid;
         validationRegistry.validationRequest(charlie, bobAgentId, "ipfs://validation-request", requestHash);
 
         // === Step 4: Charlie validates with a FAILING score ===
@@ -257,8 +265,12 @@ contract ERC8004IntegrationTest is Test {
         vm.startPrank(alice);
         token.approve(address(escrowObligation), ESCROW_AMOUNT);
 
+        bytes memory validationData = bytes("ipfs://validation-request");
         ERC8004Arbiter.DemandData memory demandData = ERC8004Arbiter.DemandData({
-            validationRegistry: address(validationRegistry), validatorAddress: charlie, minResponse: MIN_RESPONSE
+            validationRegistry: address(validationRegistry),
+            validatorAddress: charlie,
+            minResponse: MIN_RESPONSE,
+            data: validationData
         });
 
         ERC20EscrowObligation.ObligationData memory obligationData = ERC20EscrowObligation.ObligationData({
@@ -276,8 +288,8 @@ contract ERC8004IntegrationTest is Test {
         );
 
         // === Step 3: Bob requests validation ===
+        bytes32 requestHash = arbiter.requestHashFor(fulfillmentUid, validationData);
         vm.prank(bob);
-        bytes32 requestHash = fulfillmentUid;
         validationRegistry.validationRequest(charlie, bobAgentId, "ipfs://validation-request", requestHash);
 
         // === Step 4: Charlie validates with EXACT minimum score ===
@@ -305,8 +317,12 @@ contract ERC8004IntegrationTest is Test {
         vm.startPrank(alice);
         token.approve(address(escrowObligation), ESCROW_AMOUNT);
 
+        bytes memory validationData = bytes("ipfs://validation-request");
         ERC8004Arbiter.DemandData memory demandData = ERC8004Arbiter.DemandData({
-            validationRegistry: address(validationRegistry), validatorAddress: charlie, minResponse: MIN_RESPONSE
+            validationRegistry: address(validationRegistry),
+            validatorAddress: charlie,
+            minResponse: MIN_RESPONSE,
+            data: validationData
         });
 
         ERC20EscrowObligation.ObligationData memory obligationData = ERC20EscrowObligation.ObligationData({
@@ -324,8 +340,8 @@ contract ERC8004IntegrationTest is Test {
         );
 
         // === Step 3: Bob requests validation ===
+        bytes32 requestHash = arbiter.requestHashFor(fulfillmentUid, validationData);
         vm.prank(bob);
-        bytes32 requestHash = fulfillmentUid;
         validationRegistry.validationRequest(charlie, bobAgentId, "ipfs://validation-request", requestHash);
 
         // === Step 4: Charlie validates with score just below minimum ===

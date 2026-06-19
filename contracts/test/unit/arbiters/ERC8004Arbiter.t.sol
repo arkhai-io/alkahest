@@ -58,6 +58,8 @@ contract ERC8004ArbiterTest is Test {
     address agentOwner = address(0x456);
     address validator = address(0x123);
     uint256 agentId;
+    bytes validationData = bytes("ipfs://validation-request");
+    bytes32 fulfillmentUid;
     bytes32 requestHash;
 
     function setUp() public {
@@ -81,9 +83,8 @@ contract ERC8004ArbiterTest is Test {
         vm.prank(agentOwner);
         agentId = identityRegistry.register("ipfs://test-agent");
 
-        // Compute requestHash for tests to use
-        requestHash =
-            keccak256(abi.encodePacked(validator, agentId, "ipfs://validation-request", block.timestamp, agentOwner));
+        fulfillmentUid = keccak256("fulfillment uid");
+        requestHash = arbiter.requestHashFor(fulfillmentUid, validationData);
     }
 
     function testCheckObligationSuccess() public {
@@ -103,7 +104,7 @@ contract ERC8004ArbiterTest is Test {
 
         bytes32 escrowUid = bytes32(uint256(54321));
         Attestation memory attestation = Attestation({
-            uid: requestHash,
+            uid: fulfillmentUid,
             schema: bytes32(0),
             time: uint64(block.timestamp),
             expirationTime: uint64(0),
@@ -116,7 +117,10 @@ contract ERC8004ArbiterTest is Test {
         });
 
         ERC8004Arbiter.DemandData memory demandData = ERC8004Arbiter.DemandData({
-            validationRegistry: address(validationRegistry), validatorAddress: validator, minResponse: 50
+            validationRegistry: address(validationRegistry),
+            validatorAddress: validator,
+            minResponse: 50,
+            data: validationData
         });
         bytes memory demand = abi.encode(demandData);
 
@@ -141,7 +145,7 @@ contract ERC8004ArbiterTest is Test {
 
         bytes32 wrongRefUID = bytes32(uint256(12345));
         Attestation memory attestation = Attestation({
-            uid: requestHash,
+            uid: fulfillmentUid,
             schema: bytes32(0),
             time: uint64(block.timestamp),
             expirationTime: uint64(0),
@@ -154,7 +158,10 @@ contract ERC8004ArbiterTest is Test {
         });
 
         ERC8004Arbiter.DemandData memory demandData = ERC8004Arbiter.DemandData({
-            validationRegistry: address(validationRegistry), validatorAddress: validator, minResponse: 50
+            validationRegistry: address(validationRegistry),
+            validatorAddress: validator,
+            minResponse: 50,
+            data: validationData
         });
         bytes memory demand = abi.encode(demandData);
 
@@ -182,7 +189,7 @@ contract ERC8004ArbiterTest is Test {
 
         bytes32 escrowUid = bytes32(uint256(54321));
         Attestation memory attestation = Attestation({
-            uid: requestHash,
+            uid: fulfillmentUid,
             schema: bytes32(0),
             time: uint64(block.timestamp),
             expirationTime: uint64(0),
@@ -195,7 +202,10 @@ contract ERC8004ArbiterTest is Test {
         });
 
         ERC8004Arbiter.DemandData memory demandData = ERC8004Arbiter.DemandData({
-            validationRegistry: address(validationRegistry), validatorAddress: validator, minResponse: 50
+            validationRegistry: address(validationRegistry),
+            validatorAddress: validator,
+            minResponse: 50,
+            data: validationData
         });
         bytes memory demand = abi.encode(demandData);
 
@@ -215,7 +225,7 @@ contract ERC8004ArbiterTest is Test {
 
         bytes32 escrowUid = bytes32(uint256(54321));
         Attestation memory attestation = Attestation({
-            uid: requestHash,
+            uid: fulfillmentUid,
             schema: bytes32(0),
             time: uint64(block.timestamp),
             expirationTime: uint64(0),
@@ -230,12 +240,48 @@ contract ERC8004ArbiterTest is Test {
         // Create demand with different validator address
         address wrongValidator = address(0x999);
         ERC8004Arbiter.DemandData memory demandData = ERC8004Arbiter.DemandData({
-            validationRegistry: address(validationRegistry), validatorAddress: wrongValidator, minResponse: 50
+            validationRegistry: address(validationRegistry),
+            validatorAddress: wrongValidator,
+            minResponse: 50,
+            data: validationData
         });
         bytes memory demand = abi.encode(demandData);
 
         // Should revert since validator addresses don't match
         vm.expectRevert(ERC8004Arbiter.ValidatorMismatch.selector);
+        arbiter.checkObligation(attestation, demand, escrowUid);
+    }
+
+    function testCheckObligationWrongValidationData() public {
+        vm.prank(agentOwner);
+        validationRegistry.validationRequest(validator, agentId, "ipfs://validation-request", requestHash);
+
+        vm.prank(validator);
+        validationRegistry.validationResponse(requestHash, 75, "", bytes32(0), "");
+
+        bytes32 escrowUid = bytes32(uint256(54321));
+        Attestation memory attestation = Attestation({
+            uid: fulfillmentUid,
+            schema: bytes32(0),
+            time: uint64(block.timestamp),
+            expirationTime: uint64(0),
+            revocationTime: uint64(0),
+            refUID: escrowUid,
+            recipient: address(0),
+            attester: address(0),
+            revocable: true,
+            data: bytes("")
+        });
+
+        ERC8004Arbiter.DemandData memory demandData = ERC8004Arbiter.DemandData({
+            validationRegistry: address(validationRegistry),
+            validatorAddress: validator,
+            minResponse: 50,
+            data: bytes("different validation request")
+        });
+        bytes memory demand = abi.encode(demandData);
+
+        vm.expectRevert();
         arbiter.checkObligation(attestation, demand, escrowUid);
     }
 
@@ -259,7 +305,7 @@ contract ERC8004ArbiterTest is Test {
 
         bytes32 escrowUid = bytes32(uint256(54321));
         Attestation memory attestation = Attestation({
-            uid: requestHash,
+            uid: fulfillmentUid,
             schema: bytes32(0),
             time: uint64(block.timestamp),
             expirationTime: uint64(0),
@@ -273,7 +319,7 @@ contract ERC8004ArbiterTest is Test {
 
         // Create demand with WRONG registry address (validation doesn't exist there)
         ERC8004Arbiter.DemandData memory demandData = ERC8004Arbiter.DemandData({
-            validationRegistry: wrongRegistry, validatorAddress: validator, minResponse: 50
+            validationRegistry: wrongRegistry, validatorAddress: validator, minResponse: 50, data: validationData
         });
         bytes memory demand = abi.encode(demandData);
 

@@ -76,7 +76,9 @@ await client.arbiters.general.trustedOracle.arbitrateMany({
 
 Validates against an ERC-8004 ValidationRegistry.
 
-**Demand data:** `{ validationRegistry: address, validatorAddress: address, minResponse: uint8 }`
+**Demand data:** `{ validationRegistry: address, validatorAddress: address, minResponse: uint8, data: bytes }`
+
+The ERC-8004 validation request hash is `keccak256(abi.encode(fulfillmentUid, data))`.
 
 ## Attestation Property Arbiters
 
