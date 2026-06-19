@@ -212,6 +212,19 @@ available as explicit last-resort escape hatches, but can no longer be triggered
 permissionlessly by third parties. The escrow recipient must opt into the
 destructive partial path.
 
+### analysis(1): ERC-8004 Pending Request Threshold
+
+Status: fixed.
+
+Report item: `arkhai-io-alkahest-2026-04-13-analysis(1).md`, issue 8.
+
+Completed by `ced4c99c2439567d0a2424846df3f89192283538`.
+
+`ERC8004Arbiter` now requires `minResponse` to be in `1..100`. The vendored
+ERC-8004 validation registry does not expose `hasResponse` from
+`getValidationStatus`, so a response value of `0` cannot be safely distinguished
+from a pending validation request.
+
 ## Not Issues
 
 ### analysis(1): Example Contracts
