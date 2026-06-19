@@ -6,22 +6,6 @@ finished.
 
 ## Remaining
 
-### [ ] BarterUtils Surface Area
-
-The current BarterUtils contracts are useful as EOA atomic settlement routers:
-their `pay*` methods create the payment fulfillment and collect the matching
-escrow in the same transaction, which a plain client cannot replicate without a
-smart account or a router.
-
-The `buy*` methods are mostly typed escrow-creation conveniences over the core
-escrow contracts. Consider deprecating or removing those listing helpers and
-moving typed listing construction into the SDKs, while retaining only the
-atomic settlement helpers that cannot be reproduced client-side for EOAs.
-
-If this cleanup is done, update contract docs, SDK deploy/config surfaces, and
-examples together so BarterUtils are presented as optional atomic settlement
-routers rather than core protocol primitives.
-
 ### [ ] SDK Contract Coverage
 
 Generated raw bindings cover the deployable non-example contract surface, but
@@ -35,6 +19,21 @@ useful, its pure UID derivation can be mirrored later as an SDK helper rather
 than as a contract binding.
 
 ## Done
+
+### [x] BarterUtils Surface Area
+
+Completed by `0f13fd47bc9761b188d61adb187211aa7564b4fa`.
+
+BarterUtils contracts are now EOA atomic settlement routers. Their retained
+`pay*` methods create the payment fulfillment and collect the matching escrow
+in the same transaction, which a plain client cannot replicate without a smart
+account or router.
+
+The typed `buy*` escrow-creation conveniences were removed from the Solidity
+utilities and from the production SDK APIs. Escrows are created through the
+core escrow clients/contracts, while BarterUtils handle only the optional
+atomic settlement path. Deploy/config surfaces, generated bindings, docs, and
+tests were updated together.
 
 ### [x] ERC Conditional Escrow Alignment
 
