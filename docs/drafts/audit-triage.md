@@ -6,11 +6,165 @@ record remains stable over time.
 
 ## Fixed
 
+### analysis(1): Splitter Public Execute Reentrancy
+
+Status: fixed.
+
+Report item: `arkhai-io-alkahest-2026-04-13-analysis(1).md`, issue 1.
+
+Completed by `ed826e02d8a9b65403b2b052d0ceade8fc6ba229` and
+`173d34cc14104d8f77a8325fb1799f80ccf9655e`.
+
+The old public splitter `execute()` path was removed and replaced with
+`createFulfillment()`. Shared splitter orchestration now validates created
+fulfillments and records the fulfiller without exposing cross-function executor
+state.
+
+### analysis(1): Commit-Reveal Enforcement and Bond Accounting
+
+Status: fixed.
+
+Report items:
+
+- `arkhai-io-alkahest-2026-04-13-analysis(1).md`, issue 2.
+- `arkhai-io-alkahest-2026-04-13-analysis(1).md`, warning 1.
+
+Completed across:
+
+- `e73871ed463221978b964e3296c0d31bdfda2858`
+- `a11f8b568b48bfa80d0aae5da99aa514d7e47c87`
+- `b38ac88a97ec3f68a5f506175100fec6aba10978`
+- `fd47376bf09f917af30c0a9f70a283a654993908`
+
+Commit-reveal now enforces the reveal path, supports atomic reveal-and-collect
+for escrow settlement, snapshots or stores the relevant bond amount, and offers
+the per-demand/per-commit bond variant as the default
+`CommitRevealObligation`.
+
+### analysis(1): Splitter Fulfillment and Escrow Binding
+
+Status: fixed.
+
+Report items:
+
+- `arkhai-io-alkahest-2026-04-13-analysis(1).md`, issue 3.
+- `arkhai-io-alkahest-2026-04-13-analysis(1).md`, issue 10.
+- `arkhai-io-alkahest-2026-04-13-analysis(1).md`, warning 6.
+
+Completed across:
+
+- `7b49e0cac36dc1383f6bf67da5fcf2e23e20d479`
+- `e8527db30850b95b5f9b9a62f11b30b4e1bdbfe8`
+- `ef5c192410a134c2315251e838da1035df3fa5d1`
+- `4263e23155a59acd58dae497f7a982b6e5d89fa1`
+- `b7c4aac06bdeb240cbb3b287753306b79381945c`
+- `173d34cc14104d8f77a8325fb1799f80ccf9655e`
+
+Splitter decisions are keyed to `(fulfillment, escrow)`, created fulfillments
+are validated and bound to the splitter, escrow collection receipts are checked,
+and native-token refunds from fulfillment creation are proxied back to the
+fulfiller rather than becoming splitter-held surplus.
+
+### analysis(1): Splitter Array and Loop Bounds
+
+Status: fixed.
+
+Report items:
+
+- `arkhai-io-alkahest-2026-04-13-analysis(1).md`, issue 14.
+- `arkhai-io-alkahest-2026-04-13-analysis(1).md`, issue 22.
+- `arkhai-io-alkahest-2026-04-13-analysis(1).md`, issue 27.
+- `arkhai-io-alkahest-2026-04-13-analysis(1).md`, warning 4.
+
+Completed across:
+
+- `b723c646a9baa88c7131d88f3d62b06eab100de4`
+- `09e498aebe056151b3dd690ec0cb8dfd13de0b6d`
+- `eae63e650bf424fd2b98b2876959a2e57b992bfb`
+
+Stored settlement arrays and logical arbiter arrays are bounded, bundle splitter
+decision arrays are cleared correctly before replacement, and empty ERC721
+assignment edge cases are validated.
+
+### analysis(1): Attestation Hook Pending State and Binding
+
+Status: fixed.
+
+Report items:
+
+- `arkhai-io-alkahest-2026-04-13-analysis(1).md`, issue 8.
+- `arkhai-io-alkahest-2026-04-13-analysis(1).md`, warning 8.
+
+Completed across:
+
+- `2a1d31233104839760a8501232e9479f3daad678`
+- `ced931cd74d3a5fd35d82a1b40cd75c6f3ef3e28`
+- `26226a81e6ffb50898269200f89016e6ef476291`
+- `8f1cd403cd82f29b550cd53348d4c3e7df21a012`
+- `69b9048091d3ac2ef571620877a30cc66c2d8432`
+
+Attestation hook pending state now avoids single-bit collisions, validation
+attestations are bound to escrow lifecycle context, and hook-based escrows have
+post-attest context including the created EAS UID.
+
+### analysis(1): Paid Attestation Escrow Settlement
+
+Status: fixed.
+
+Report item: `arkhai-io-alkahest-2026-04-13-analysis(1).md`, issue 21.
+
+Completed by `a8439519c5a4b6083776e3b1e8cc73e44c5434ec`.
+
+Attestation escrow settlement supports paid EAS attestations so escrowed
+attestation delivery remains compatible with payable resolvers.
+
+### analysis(1): ERC1155 Escrow Receiver Forwarding
+
+Status: fixed.
+
+Report item: `arkhai-io-alkahest-2026-04-13-analysis(1).md`, issue 25.
+
+Completed by `5c03d3a3f00fe9dbcd06175806de80bf726c3b3e`.
+
+ERC1155 escrow release no longer relies on an invalid recipient post-transfer
+balance invariant that could fail when receivers forward tokens in their
+callback.
+
+### analysis(1): Raw Native Receivers
+
+Status: fixed.
+
+Report item: `arkhai-io-alkahest-2026-04-13-analysis(1).md`, warning 7.
+
+Completed across:
+
+- `6348408ead79fd85ea9a73eb295f1394061c51f2`
+- `d9ffc71094db7eefd49ae38f8d4be349196161a2`
+
+Unnecessary raw `receive()` entrypoints were removed or guarded so direct native
+token transfers do not create silent out-of-system balances.
+
+### analysis(1): Schema Reuse for Attestation Escrows
+
+Status: fixed.
+
+Report item: `arkhai-io-alkahest-2026-04-13-analysis(1).md`, issue 31.
+
+Completed by `ebe3abcf1b7ada0910ca61da8b641fd939d8757f`.
+
+Escrow contracts now reuse existing EAS schemas where possible rather than
+registering unnecessary duplicate schemas during construction.
+
 ### ERC-8004 Validation Binding
 
 Status: fixed.
 
 Completed by `49825afc14c68869934f24f74acfbccaf749e158`.
+
+Report items:
+
+- `arkhai-io-alkahest-2026-04-13-analysis(1).md`, issue 9.
+- `arkhai-io-alkahest-2026-04-13-analysis(1).md`, warning 3 request-hash variant.
 
 `ERC8004Arbiter.DemandData` now includes caller-supplied `bytes data`, and the
 ERC-8004 validation request hash is derived from the fulfillment UID and that
