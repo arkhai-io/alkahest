@@ -22,7 +22,7 @@ export type ChainAddresses = {
 
   attestationEscrowObligation: `0x${string}`;
   attestationReferenceEscrowObligation: `0x${string}`;
-  attestationBarterUtils: `0x${string}`;
+  atomicAttestationUtils: `0x${string}`;
 
   stringObligation: `0x${string}`;
   commitRevealObligation: `0x${string}`;

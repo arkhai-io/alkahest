@@ -58,6 +58,16 @@ export const getAttestation = async (
 };
 
 export const getAttestedEventFromTxHash = async (client: ViemClient, hash: `0x${string}`): Promise<any> => {
+  const events = await getAttestedEventsFromTxHash(client, hash);
+
+  if (!events[0]) {
+    throw new Error(`No Attested event found in transaction ${hash}`);
+  }
+
+  return events[0].args;
+};
+
+export const getAttestedEventsFromTxHash = async (client: ViemClient, hash: `0x${string}`): Promise<any[]> => {
   let tx;
   try {
     tx = await client.waitForTransactionReceipt({ hash });
@@ -70,11 +80,7 @@ export const getAttestedEventFromTxHash = async (client: ViemClient, hash: `0x${
     logs: tx.logs,
   });
 
-  if (events.length === 0 || !events[0]) {
-    throw new Error(`No Attested event found in transaction ${hash}`);
-  }
-
-  return events[0].args;
+  return events;
 };
 
 export const flattenTokenBundle = (bundle: TokenBundle): TokenBundleFlat => ({

@@ -57,7 +57,7 @@ use crate::{
                 UnconditionalTokenBundleEscrowObligation,
             },
         },
-        utils::{AtomicPaymentUtils, AttestationBarterUtils},
+        utils::{AtomicPaymentUtils, AtomicAttestationUtils},
     },
     fixtures::{EAS, MockERC20Permit, MockERC721, MockERC1155, SchemaRegistry},
     types::{PublicProvider, WalletProvider},
@@ -482,11 +482,10 @@ async fn build_shared_env() -> eyre::Result<SharedTestEnv> {
     )
     .await?;
 
-    // Deploy barter utils
-    let attestation_barter_utils = AttestationBarterUtils::deploy(
+    // Deploy atomic utils
+    let atomic_attestation_utils = AtomicAttestationUtils::deploy(
         &god_provider,
         eas.address().clone(),
-        schema_registry.address().clone(),
     )
     .await?;
     let atomic_payment_utils = AtomicPaymentUtils::deploy(
@@ -596,7 +595,7 @@ async fn build_shared_env() -> eyre::Result<SharedTestEnv> {
         attestation_addresses: AttestationAddresses {
             eas: eas.address().clone(),
             eas_schema_registry: schema_registry.address().clone(),
-            barter_utils: attestation_barter_utils.address().clone(),
+            barter_utils: atomic_attestation_utils.address().clone(),
             escrow_obligation_default: attestation_escrow_obligation.address().clone(),
             escrow_obligation_unconditional: unconditional_attestation_escrow_obligation
                 .address()

@@ -468,12 +468,12 @@ pub mod utils {
             #[allow(missing_docs)]
             #[sol(rpc)]
             #[derive(Debug)]
-            AttestationBarterUtils,
-            "src/contracts/utils/AttestationBarterUtils.json"
+            AtomicAttestationUtils,
+            "src/contracts/utils/AtomicAttestationUtils.json"
         );
     }
 
     // Re-export the main contract types for convenience
     pub use atomic_payment::AtomicPaymentUtils;
-    pub use attestation::AttestationBarterUtils;
+    pub use attestation::AtomicAttestationUtils;
 }

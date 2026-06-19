@@ -98,24 +98,20 @@ Tierable (a single fulfillment can claim multiple escrows whose conditions it sa
 - [MajorityVoteArbiter](src/arbiters/example/MajorityVoteArbiter.sol) - Requires majority agreement among voters
 - [GameWinner](src/arbiters/example/GameWinner.sol) - Validates game winner attestations from a trusted game contract
 
-### Barter Utilities
+### Atomic Utilities
 
 Helper contracts that combine escrow creation and fulfillment collection into single transactions:
-- [ERC20BarterUtils](src/utils/ERC20BarterUtils.sol)
-- [ERC721BarterUtils](src/utils/ERC721BarterUtils.sol)
-- [ERC1155BarterUtils](src/utils/ERC1155BarterUtils.sol)
-- [NativeTokenBarterUtils](src/utils/NativeTokenBarterUtils.sol)
-- [TokenBundleBarterUtils](src/utils/TokenBundleBarterUtils.sol)
-- [AttestationBarterUtils](src/utils/AttestationBarterUtils.sol)
+- [AtomicPaymentUtils](src/utils/atomic/AtomicPaymentUtils.sol)
+- [AtomicAttestationUtils](src/utils/atomic/AtomicAttestationUtils.sol)
 
 ## Integration Tests
 
 Integration tests demonstrate real-world usage patterns:
 
-- [ERC20BarterUtilsCrossToken](test/integration/ERC20BarterUtilsCrossToken.t.sol) - Trading different ERC20 tokens via barter utils
-- [ERC20BarterUtils](test/integration/ERC20BarterUtils.t.sol) - ERC20 barter utility flows
+- [ERC20BarterUtilsCrossToken](test/integration/ERC20BarterUtilsCrossToken.t.sol) - Trading different ERC20 tokens via atomic utilities
+- [ERC20BarterUtils](test/integration/ERC20BarterUtils.t.sol) - ERC20 atomic utility flows
 - [TokenBundleBarterUtils](test/integration/TokenBundleBarterUtils.t.sol) - Trading bundles of mixed token types
-- [AttestationBarterUtils](test/integration/AttestationBarterUtils.t.sol) - Trading attestations for tokens
+- [AtomicAttestationUtils](test/unit/utils/atomic/AtomicAttestationUtils.t.sol) - Atomically attesting and creating reference escrows
 - [AttestationEscrowObligation](test/integration/AttestationEscrowObligation.t.sol) - Escrowing attestations
 - [StringCapitalizer](test/integration/StringCapitalizer.t.sol) - Synchronous on-chain arbiter validating string capitalization
 - [CryptoSignatureObligation](test/integration/CryptoSignatureObligation.t.sol) - Arbiter validating cryptographic signatures to release escrow

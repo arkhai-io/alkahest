@@ -1,7 +1,7 @@
 {
   "allArbiter": "0x0Fb4b2C566EFD1A264709Dfb363D6f022E5DDd8F",
   "anyArbiter": "0x24afa9a8De66E4447717cd39440973878E8E45D3",
-  "attestationBarterUtils": "0x98D5bC7593143E55e9949da97603126CAe0BfD7F",
+  "atomicAttestationUtils": "0x0000000000000000000000000000000000000000",
   "attestationEscrowObligation": "0xbD90aF50Fb667724338EB8DA541f923F1822ac3C",
   "attestationEscrowObligation2": "0xbCCE130337F2D8029982a14471d8686AFceF20fF",
   "composingAttesterArbiter": "0xd89D75E0C94027f57a15AfaD4B7f3Ef34f674d41",

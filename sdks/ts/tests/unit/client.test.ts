@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { parseEther } from "viem";
+import { abi as easAbi } from "../../src/contracts/IEAS";
+import { abi as schemaRegistryAbi } from "../../src/contracts/eas/SchemaRegistry";
 import { setupTestEnvironment, type TestContext } from "../utils/setup";
 import { teardownTestEnvironment } from "../utils/teardownTestEnvironment";
 import { compareAddresses } from "../utils/tokenTestUtils";
@@ -50,12 +52,12 @@ describe("Client Tests", () => {
     // Generate a unique schema name to avoid AlreadyExists errors
     const uniqueSchemaName = `string testData${Date.now()}`;
 
-    // Register schema using the SDK function
-    const hash = await aliceClient.attestation.util.registerSchema(
-      uniqueSchemaName,
-      testContext.addresses.attestationBarterUtils,
-      true,
-    );
+    const hash = await aliceClient.viemClient.writeContract({
+      address: testContext.addresses.easSchemaRegistry,
+      abi: schemaRegistryAbi.abi,
+      functionName: "register",
+      args: [uniqueSchemaName, "0x0000000000000000000000000000000000000000", true],
+    });
 
     const receipt = await testClient.waitForTransactionReceipt({ hash });
 
@@ -63,6 +65,33 @@ describe("Client Tests", () => {
     const log = receipt.logs[0];
     if (!log) throw new Error("No log found in receipt");
     return log.topics[1] as `0x${string}`; // Force type to be 0x-prefixed string
+  }
+
+  async function createTestAttestation(
+    schema: `0x${string}`,
+    recipient: `0x${string}`,
+    data: `0x${string}`,
+  ) {
+    const hash = await aliceClient.viemClient.writeContract({
+      address: testContext.addresses.eas,
+      abi: easAbi.abi,
+      functionName: "attest",
+      args: [
+        {
+          schema,
+          data: {
+            recipient,
+            expirationTime: BigInt(Math.floor(Date.now() / 1000) + 86400),
+            revocable: true,
+            refUID: "0x0000000000000000000000000000000000000000000000000000000000000000",
+            data,
+            value: 0n,
+          },
+        },
+      ],
+    });
+    const attested = await aliceClient.getAttestedEventFromTxHash(hash);
+    return { hash, attested };
   }
 
   describe("Client Initialization", () => {
@@ -93,13 +122,10 @@ describe("Client Tests", () => {
       const testSchemaId = await registerTestSchema();
 
       // Create a test attestation to retrieve
-      const { attested: attestationData } = await aliceClient.attestation.util.createAttestation(
+      const { attested: attestationData } = await createTestAttestation(
         testSchemaId,
         bob,
-        BigInt(Math.floor(Date.now() / 1000) + 86400), // 1 day expiration
-        true, // revocable
-        "0x0000000000000000000000000000000000000000000000000000000000000000", // no ref
-        ("0x" + Buffer.from("test data").toString("hex")) as `0x${string}`, // data
+        ("0x" + Buffer.from("test data").toString("hex")) as `0x${string}`,
       );
 
       // Use the getAttestation function to retrieve it
@@ -109,7 +135,7 @@ describe("Client Tests", () => {
       expect(attestation.uid).toBe(attestationData.uid);
       expect(attestation.schema).toBe(testSchemaId);
       expect(attestation.recipient).toBe(bob);
-      expect(compareAddresses(attestation.attester, testContext.addresses.attestationBarterUtils)).toBe(true);
+      expect(compareAddresses(attestation.attester, alice)).toBe(true);
     });
   });
 
@@ -118,20 +144,17 @@ describe("Client Tests", () => {
       const testSchemaId = await registerTestSchema();
 
       // Create a test attestation to retrieve the event for
-      const { hash: txHash } = await aliceClient.attestation.util.createAttestation(
+      const { hash: txHash } = await createTestAttestation(
         testSchemaId,
         bob,
-        BigInt(Math.floor(Date.now() / 1000) + 86400), // 1 day expiration
-        true, // revocable
-        "0x0000000000000000000000000000000000000000000000000000000000000000", // no ref
-        ("0x" + Buffer.from("event test").toString("hex")) as `0x${string}`, // data
+        ("0x" + Buffer.from("event test").toString("hex")) as `0x${string}`,
       );
 
       // Get the attestation event using the transaction hash
       const attestEvent = await aliceClient.getAttestedEventFromTxHash(txHash);
 
       // Verify the event data is non-empty
-      expect(compareAddresses(attestEvent.attester, testContext.addresses.attestationBarterUtils)).toBe(true);
+      expect(compareAddresses(attestEvent.attester, alice)).toBe(true);
       expect(attestEvent.schemaUID).toBe(testSchemaId);
       expect(attestEvent.uid).toBeDefined();
       expect(attestEvent.uid).not.toBe("0x0000000000000000000000000000000000000000000000000000000000000000");

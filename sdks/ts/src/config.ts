@@ -21,7 +21,7 @@ export const contractAddresses: Record<string, ChainAddresses> = {
     tokenBundleEscrowObligation: "0x38e8E5684aFB24A88cD9B276032bCBD19C4b9d6e",
     tokenBundlePaymentObligation: "0xFa5446475De31fa3c6457E2b62EA5a8F8172Cd29",
 
-    attestationBarterUtils: "0x84D390BCd90d5f65D14ff66f6860DCa45e776666",
+    atomicAttestationUtils: "0x0000000000000000000000000000000000000000",
     attestationEscrowObligation: "0x9D133Cbd51270a2A410465F82dAFFD6c1C87322D",
     attestationReferenceEscrowObligation: "0xa076e9ca47f192E6AfB67817608E382074CF0Dcf",
 
@@ -78,7 +78,7 @@ export const contractAddresses: Record<string, ChainAddresses> = {
     tokenBundleEscrowObligation: "0x677Aa9e1CD9D05f57FbCa2327155EA7479ec7Ac3",
     tokenBundlePaymentObligation: "0x36Fcf1Ddee838a94B1358285A11e8bbbb90eD9A1",
 
-    attestationBarterUtils: "0x5E6602F080E9B37267aa52306c699ae54Cd71056",
+    atomicAttestationUtils: "0x0000000000000000000000000000000000000000",
     attestationEscrowObligation: "0x6eb7792D821f32914Be75901F1b4269B13Efad2e",
     attestationReferenceEscrowObligation: "0x1A7c6F951e0a33F4910dbe56a200Eb413AEca17b",
 
@@ -135,7 +135,7 @@ export const contractAddresses: Record<string, ChainAddresses> = {
     tokenBundleEscrowObligation: "0x902ac1997bd29a037263e0d80952c80d69d9afd4",
     tokenBundlePaymentObligation: "0xc1b02efec19a171ecbb7c8ad54b9617e80fdf40f",
 
-    attestationBarterUtils: "0xcda1e1ea425e31a789feffc8e3d90f839ff49c9f",
+    atomicAttestationUtils: "0x0000000000000000000000000000000000000000",
     attestationEscrowObligation: "0xd59c6c6cb025e76a0a1e706c62a9df38b04694e2",
     attestationReferenceEscrowObligation: "0xa22b4d9fe7a746d44be1e724bb1a26593bca2c1b",
 
@@ -192,7 +192,7 @@ export const contractAddresses: Record<string, ChainAddresses> = {
     tokenBundleEscrowObligation: "0xA7EacA68Bffc9443eA08fd58633Eeed3f5EE8A92",
     tokenBundlePaymentObligation: "0x9bA50DB048d1E5db034377abf97F92496D027C71",
 
-    attestationBarterUtils: "0x5bf1EE1fEC1bC25d20C4537f74bD0909B195DEBd",
+    atomicAttestationUtils: "0x0000000000000000000000000000000000000000",
     attestationEscrowObligation: "0x5E6602F080E9B37267aa52306c699ae54Cd71056",
     attestationReferenceEscrowObligation: "0x57D5165F9487F6E7bD6E6a24017FAdadc2b1D7D2",
 
@@ -249,7 +249,7 @@ export const contractAddresses: Record<string, ChainAddresses> = {
     tokenBundleEscrowObligation: "0x677Aa9e1CD9D05f57FbCa2327155EA7479ec7Ac3",
     tokenBundlePaymentObligation: "0x36Fcf1Ddee838a94B1358285A11e8bbbb90eD9A1",
 
-    attestationBarterUtils: "0x5E6602F080E9B37267aa52306c699ae54Cd71056",
+    atomicAttestationUtils: "0x0000000000000000000000000000000000000000",
     attestationEscrowObligation: "0x6eb7792D821f32914Be75901F1b4269B13Efad2e",
     attestationReferenceEscrowObligation: "0x1A7c6F951e0a33F4910dbe56a200Eb413AEca17b",
 

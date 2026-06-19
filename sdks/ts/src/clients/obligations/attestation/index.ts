@@ -10,14 +10,14 @@ export { type AttestationUtilClient, makeAttestationUtilClient } from "./util";
 
 export type AttestationAddresses = {
   eas: `0x${string}`;
-  barterUtils: `0x${string}`;
+  atomicUtils: `0x${string}`;
   escrowObligation: `0x${string}`;
   escrowObligation2: `0x${string}`;
 };
 
 export const pickAttestationAddresses = (addresses: ChainAddresses): AttestationAddresses => ({
   eas: addresses.eas,
-  barterUtils: addresses.attestationBarterUtils,
+  atomicUtils: addresses.atomicAttestationUtils,
   escrowObligation: addresses.attestationEscrowObligation,
   escrowObligation2: addresses.attestationReferenceEscrowObligation,
 });

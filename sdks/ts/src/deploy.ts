@@ -54,7 +54,7 @@ import StringObligation from "./contracts/obligations/StringObligation.json";
 import CommitRevealObligation from "./contracts/obligations/CommitRevealObligation.json";
 
 // Utils
-import AttestationBarterUtils from "./contracts/utils/AttestationBarterUtils.json";
+import AtomicAttestationUtils from "./contracts/utils/AtomicAttestationUtils.json";
 import AtomicPaymentUtils from "./contracts/utils/AtomicPaymentUtils.json";
 
 export type DeployFn = (
@@ -206,10 +206,7 @@ export async function deployAlkahest(
     result.erc1155BarterUtils = atomicPaymentUtils;
     result.nativeTokenBarterUtils = atomicPaymentUtils;
     result.tokenBundleBarterUtils = atomicPaymentUtils;
-    result.attestationBarterUtils = await deploy(deployFn, AttestationBarterUtils as Artifact, [
-      easAddress,
-      easSrAddress,
-    ]);
+    result.atomicAttestationUtils = await deploy(deployFn, AtomicAttestationUtils as Artifact, [easAddress]);
   }
 
   return result;

@@ -31,7 +31,7 @@ describe("Demand Parsing and Static Codecs", () => {
     tokenBundleEscrowObligation: "0x12345678901234567890123456789012345678A6",
     tokenBundlePaymentObligation: "0x12345678901234567890123456789012345678A7",
 
-    attestationBarterUtils: "0x12345678901234567890123456789012345678AB",
+    atomicAttestationUtils: "0x12345678901234567890123456789012345678AB",
     attestationEscrowObligation: "0x12345678901234567890123456789012345678A9",
     attestationReferenceEscrowObligation: "0x12345678901234567890123456789012345678AA",
 

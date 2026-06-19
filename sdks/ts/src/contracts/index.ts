@@ -51,4 +51,4 @@ export * as StringObligation from "./obligations/StringObligation";
 export * as CommitRevealObligation from "./obligations/CommitRevealObligation";
 // Utils
 export * as AtomicPaymentUtils from "./utils/AtomicPaymentUtils";
-export * as AttestationBarterUtils from "./utils/AttestationBarterUtils";
+export * as AtomicAttestationUtils from "./utils/AtomicAttestationUtils";

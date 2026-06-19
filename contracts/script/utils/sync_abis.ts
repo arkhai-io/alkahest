@@ -58,9 +58,9 @@ const SKIP_FILES = new Set([
 ]);
 
 // Path remapping: source path prefix -> SDK path prefix
-// e.g. utils/barter/Foo -> utils/Foo in SDKs
+// e.g. utils/atomic/Foo -> utils/Foo in SDKs
 const PATH_REMAPS: [string, string][] = [
-  ["utils/barter/", "utils/"],
+  ["utils/atomic/", "utils/"],
   ["utils/splitters/", "utils/splitters/"],
 ];
 

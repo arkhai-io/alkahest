@@ -5,7 +5,8 @@ import "forge-std/Script.sol";
 import {IEAS} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {EASDeployer} from "test/utils/EASDeployer.sol";
-import {AtomicPaymentUtils} from "@src/utils/barter/AtomicPaymentUtils.sol";
+import {AtomicPaymentUtils} from "@src/utils/atomic/AtomicPaymentUtils.sol";
+import {AtomicAttestationUtils} from "@src/utils/atomic/AtomicAttestationUtils.sol";
 
 // ERC20 Contracts
 import {ERC20EscrowObligation} from "@src/obligations/escrow/default/ERC20EscrowObligation.sol";
@@ -32,7 +33,6 @@ import {AttestationEscrowObligation} from "@src/obligations/escrow/default/Attes
 import {
     AttestationReferenceEscrowObligation
 } from "@src/obligations/escrow/default/AttestationReferenceEscrowObligation.sol";
-import {AttestationBarterUtils} from "@src/utils/barter/AttestationBarterUtils.sol";
 
 // Arbiter Contracts
 // import {SpecificAttestationArbiter} from "@src/arbiters/SpecificAttestationArbiter.sol";
@@ -203,21 +203,15 @@ contract Deploy is Script {
 
         // Deploy atomic payment utility contract
         AtomicPaymentUtils atomicPaymentUtils = new AtomicPaymentUtils(
-            IEAS(easAddress),
-            erc20Payment,
-            erc721Payment,
-            erc1155Payment,
-            nativePayment,
-            bundlePayment
+            IEAS(easAddress), erc20Payment, erc721Payment, erc1155Payment, nativePayment, bundlePayment
         );
 
-        // Deploy attestation barter contracts
+        // Deploy attestation contracts
         AttestationEscrowObligation attestationEscrow =
             new AttestationEscrowObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
         AttestationReferenceEscrowObligation attestationEscrow2 =
             new AttestationReferenceEscrowObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
-        AttestationBarterUtils attestationBarterUtils =
-            new AttestationBarterUtils(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
+        AtomicAttestationUtils atomicAttestationUtils = new AtomicAttestationUtils(IEAS(easAddress));
 
         vm.stopBroadcast();
 
@@ -288,10 +282,10 @@ contract Deploy is Script {
         console.log("\nPayment Utility Contracts:");
         console.log("AtomicPaymentUtils:", address(atomicPaymentUtils));
 
-        console.log("\nAttestation Barter Contracts:");
+        console.log("\nAttestation Contracts:");
         console.log("AttestationEscrowObligation:", address(attestationEscrow));
         console.log("AttestationReferenceEscrowObligation:", address(attestationEscrow2));
-        console.log("AttestationBarterUtils:", address(attestationBarterUtils));
+        console.log("AtomicAttestationUtils:", address(atomicAttestationUtils));
 
         // Create JSON with deployed addresses
         string memory deploymentJson = "deploymentJson";
@@ -389,7 +383,7 @@ contract Deploy is Script {
         vm.serializeAddress(deploymentJson, "attestationEscrowObligation", address(attestationEscrow));
         vm.serializeAddress(deploymentJson, "attestationReferenceEscrowObligation", address(attestationEscrow2));
         string memory finalJson =
-            vm.serializeAddress(deploymentJson, "attestationBarterUtils", address(attestationBarterUtils));
+            vm.serializeAddress(deploymentJson, "atomicAttestationUtils", address(atomicAttestationUtils));
 
         // Generate timestamp for filename
         uint256 timestamp = block.timestamp;

@@ -217,8 +217,8 @@ export const makeMinimalClient = (
       contractAddresses?.attestationEscrowObligation || baseAddresses?.attestationEscrowObligation || zeroAddress,
     attestationReferenceEscrowObligation:
       contractAddresses?.attestationReferenceEscrowObligation || baseAddresses?.attestationReferenceEscrowObligation || zeroAddress,
-    attestationBarterUtils:
-      contractAddresses?.attestationBarterUtils || baseAddresses?.attestationBarterUtils || zeroAddress,
+    atomicAttestationUtils:
+      contractAddresses?.atomicAttestationUtils || baseAddresses?.atomicAttestationUtils || zeroAddress,
 
     stringObligation: contractAddresses?.stringObligation || baseAddresses?.stringObligation || zeroAddress,
     commitRevealObligation:

@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { $ } from "bun";
 import { decodeAbiParameters, parseAbi, parseAbiParameters, parseEventLogs } from "viem";
+import { abi as easAbi } from "../../src/contracts/IEAS";
+import { abi as schemaRegistryAbi } from "../../src/contracts/eas/SchemaRegistry";
 import { setupTestEnvironment, type TestContext } from "../utils/setup";
 import { teardownTestEnvironment } from "../utils/teardownTestEnvironment";
 
@@ -44,12 +46,12 @@ describe("Attestation Tests", () => {
     // Generate a unique schema name to avoid AlreadyExists errors
     const uniqueSchemaName = `string testData${Date.now()}`;
 
-    // Register schema using the SDK function
-    const hash = await aliceClient.attestation.util.registerSchema(
-      uniqueSchemaName,
-      testContext.addresses.attestationBarterUtils,
-      true,
-    );
+    const hash = await aliceClient.viemClient.writeContract({
+      address: testContext.addresses.easSchemaRegistry,
+      abi: schemaRegistryAbi.abi,
+      functionName: "register",
+      args: [uniqueSchemaName, "0x0000000000000000000000000000000000000000", true],
+    });
 
     const receipt = await testClient.waitForTransactionReceipt({ hash });
 
@@ -57,6 +59,38 @@ describe("Attestation Tests", () => {
     const log = receipt.logs[0];
     if (!log) throw new Error("No log found in receipt");
     return log.topics[1] as `0x${string}`; // Force type to be 0x-prefixed string
+  }
+
+  async function createTestAttestation(
+    client: TestContext["alice"]["client"],
+    schema: `0x${string}`,
+    recipient: `0x${string}`,
+    expirationTime: bigint,
+    revocable: boolean,
+    refUID: `0x${string}`,
+    data: `0x${string}`,
+  ) {
+    const hash = await client.viemClient.writeContract({
+      address: testContext.addresses.eas,
+      abi: easAbi.abi,
+      functionName: "attest",
+      args: [
+        {
+          schema,
+          data: {
+            recipient,
+            expirationTime,
+            revocable,
+            refUID,
+            data,
+            value: 0n,
+          },
+        },
+      ],
+    });
+
+    const attested = await client.getAttestedEventFromTxHash(hash);
+    return { hash, attested };
   }
 
   describe("AttestationEscrowObligation", () => {
@@ -69,7 +103,8 @@ describe("Attestation Tests", () => {
 
     test("testDoObligation", async () => {
       // Create an attestation
-      const { attested: attestationData } = await aliceClient.attestation.util.createAttestation(
+      const { attested: attestationData } = await createTestAttestation(
+        aliceClient,
         testSchemaId,
         bob,
         BigInt(Math.floor(Date.now() / 1000) + 86400), // 1 day expiration
@@ -168,11 +203,12 @@ describe("Attestation Tests", () => {
 
       const uniqueSchemaName = `string testData${Date.now()}`;
 
-      const schemaRegisterHash = await aliceClient.attestation.util.registerSchema(
-        uniqueSchemaName,
-        "0x0000000000000000000000000000000000000000",
-        true,
-      );
+      const schemaRegisterHash = await aliceClient.viemClient.writeContract({
+        address: testContext.addresses.easSchemaRegistry,
+        abi: schemaRegistryAbi.abi,
+        functionName: "register",
+        args: [uniqueSchemaName, "0x0000000000000000000000000000000000000000", true],
+      });
 
       const schemaRegisterReceipt = await testClient.waitForTransactionReceipt({
         hash: schemaRegisterHash,
@@ -199,7 +235,8 @@ describe("Attestation Tests", () => {
 
       // Create a pre-existing attestation exactly like in Solidity test (lines 52-65)
 
-      const { hash: attestHash } = await bobClient.attestation.util.createAttestation(
+      const { hash: attestHash } = await createTestAttestation(
+        bobClient,
         testSchemaId,
         bob,
         0n, // no expiration
@@ -350,95 +387,38 @@ describe("Attestation Tests", () => {
     });
   });
 
-  describe("AttestationBarterUtils", () => {
-    test("testRegisterSchema", async () => {
-      // For this test, use the SDK to register a schema
-      const schema = `uint256 value${Date.now()}`;
-      const hash = await aliceClient.attestation.util.registerSchema(
-        schema,
-        testContext.addresses.attestationBarterUtils,
-        true,
-      );
-
-      expect(hash).not.toBe("0x0000000000000000000000000000000000000000000000000000000000000000");
-    });
-
-    test("testCreateAttestation", async () => {
-      // Register a schema using the SDK function
-      const uniqueSchemaName = `bool value${Date.now()}`;
-      const registerHash = await aliceClient.attestation.util.registerSchema(
-        uniqueSchemaName,
-        testContext.addresses.attestationBarterUtils,
-        true,
-      );
-
-      const registerReceipt = await testClient.waitForTransactionReceipt({
-        hash: registerHash,
-      });
-      const log = registerReceipt.logs[0];
-      if (!log) throw new Error("No log found in receipt");
-      const schemaId = log.topics[1] as `0x${string}`;
-
-      // Create an attestation using the SDK function
-      const { hash: attestationHash } = await aliceClient.attestation.util.createAttestation(
-        schemaId,
-        bob,
-        BigInt(Math.floor(Date.now() / 1000) + 86400), // 1 day expiration
-        true, // revocable
-        "0x0000000000000000000000000000000000000000000000000000000000000000", // no ref
-        ("0x" + Buffer.from("true").toString("hex")) as `0x${string}`, // data
-      );
-
-      const attestationEvent = await aliceClient.getAttestedEventFromTxHash(attestationHash);
-      const attestationUid = attestationEvent.uid as `0x${string}`;
-
-      expect(attestationUid).not.toBe("0x0000000000000000000000000000000000000000000000000000000000000000");
-    });
-
-    test("testAttestAndCreateEscrow", async () => {
-      // Register a schema using the SDK function
-      const uniqueSchemaName = `bool value${Date.now()}`;
-      const registerHash = await aliceClient.attestation.util.registerSchema(
-        uniqueSchemaName,
-        testContext.addresses.attestationBarterUtils,
-        true,
-      );
-
-      const registerReceipt = await testClient.waitForTransactionReceipt({
-        hash: registerHash,
-      });
-      const log2 = registerReceipt.logs[0];
-      if (!log2) throw new Error("No log found in receipt");
-      const schemaId = log2.topics[1] as `0x${string}`;
-
-      // First create an attestation using the SDK function
-      const { hash: attestationHash } = await aliceClient.attestation.util.createAttestation(
-        schemaId,
-        bob,
-        BigInt(Math.floor(Date.now() / 1000) + 86400), // 1 day expiration
-        true, // revocable
-        "0x0000000000000000000000000000000000000000000000000000000000000000", // no ref
-        ("0x" + Buffer.from("true").toString("hex")) as `0x${string}`, // data
-      );
-
-      const attestationEvent = await aliceClient.getAttestedEventFromTxHash(attestationHash);
-      const attestationUid = attestationEvent.uid as `0x${string}`;
-
-      // Now create an escrow for this attestation using the SDK function
+  describe("AtomicAttestationUtils", () => {
+    test("testAttestAndCreateReferenceEscrow", async () => {
+      const schemaId = await registerTestSchema();
       const demandData = ("0x" + Buffer.from("false").toString("hex")) as `0x${string}`;
-      const { hash: escrowHash } = await aliceClient.attestation.escrow.v2.create(
-        attestationUid,
+
+      const { attestation, escrow } = await aliceClient.attestation.util.attestAndCreateReferenceEscrow(
+        {
+          schema: schemaId,
+          data: {
+            recipient: bob,
+            expirationTime: BigInt(Math.floor(Date.now() / 1000) + 86400),
+            revocable: true,
+            refUID: "0x0000000000000000000000000000000000000000000000000000000000000000",
+            data: ("0x" + Buffer.from("true").toString("hex")) as `0x${string}`,
+            value: 0n,
+          },
+        },
         {
           arbiter: testContext.addresses.trivialArbiter,
           demand: demandData,
+          validationExpirationTime: 0n,
+          validationRevocable: false,
         },
-        BigInt(Math.floor(Date.now() / 1000) + 2 * 86400), // 2 days expiration
+        BigInt(Math.floor(Date.now() / 1000) + 2 * 86400),
       );
 
-      const escrowEvent = await aliceClient.getAttestedEventFromTxHash(escrowHash);
-      const escrowUid = escrowEvent.uid as `0x${string}`;
+      expect(attestation?.uid).not.toBe("0x0000000000000000000000000000000000000000000000000000000000000000");
+      expect(escrow?.uid).not.toBe("0x0000000000000000000000000000000000000000000000000000000000000000");
 
-      expect(escrowUid).not.toBe("0x0000000000000000000000000000000000000000000000000000000000000000");
+      const escrowAttestation = await aliceClient.getAttestation(escrow!.uid);
+      expect(escrowAttestation.recipient.toLowerCase()).toBe(alice.toLowerCase());
+      expect(escrowAttestation.data).toContain(attestation!.uid.slice(2));
     });
   });
 });

@@ -208,11 +208,7 @@ mod tests {
 
         // Register schema
         let receipt = schema_registry
-            .register(
-                schema,
-                test.addresses.clone().attestation_addresses.barter_utils,
-                true,
-            )
+            .register(schema, Address::ZERO, true)
             .send()
             .await?
             .get_receipt()
@@ -419,11 +415,7 @@ mod tests {
             .alice_client
             .attestation()
             .util()
-            .register_schema(
-                schema.clone(),
-                test.addresses.attestation_addresses.barter_utils,
-                true,
-            )
+            .register_schema(schema.clone(), Address::ZERO, true)
             .await?;
 
         // Extract schema ID
