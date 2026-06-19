@@ -50,7 +50,7 @@ async fn test_intrinsics_arbiter() -> eyre::Result<()> {
 
     // Valid attestation should pass
     let result_valid = intrinsics_arbiter
-        .checkObligation(
+        .check(
             valid_attestation.into(),
             Bytes::default(),
             FixedBytes::<32>::default(),
@@ -64,7 +64,7 @@ async fn test_intrinsics_arbiter() -> eyre::Result<()> {
 
     // Expired attestation should fail
     let result_expired = intrinsics_arbiter
-        .checkObligation(
+        .check(
             expired_attestation.into(),
             Bytes::default(),
             FixedBytes::<32>::default(),
@@ -79,7 +79,7 @@ async fn test_intrinsics_arbiter() -> eyre::Result<()> {
 
     // Revoked attestation should fail
     let result_revoked = intrinsics_arbiter
-        .checkObligation(
+        .check(
             revoked_attestation.into(),
             Bytes::default(),
             FixedBytes::<32>::default(),

@@ -55,7 +55,7 @@ async fn test_recipient_arbiter_with_incorrect_recipient() -> eyre::Result<()> {
 
     // Call check_obligation - should revert with RecipientMismatched
     let result = recipient_arbiter
-        .checkObligation(attestation, demand, counteroffer)
+        .check(attestation, demand, counteroffer)
         .call()
         .await;
 
@@ -94,7 +94,7 @@ async fn test_recipient_arbiter_with_correct_recipient() -> eyre::Result<()> {
 
     // Call check_obligation
     let result = recipient_arbiter
-        .checkObligation(attestation, demand, counteroffer)
+        .check(attestation, demand, counteroffer)
         .call()
         .await?;
 

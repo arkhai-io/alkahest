@@ -756,7 +756,7 @@ impl
 impl
     From<
         alkahest_rs::types::DecodedAttestation<
-            alkahest_rs::contracts::obligations::escrow::default_escrow::AttestationEscrowObligation2::ObligationData,
+            alkahest_rs::contracts::obligations::escrow::default_escrow::AttestationReferenceEscrowObligation::ObligationData,
         >,
     >
     for PyDecodedAttestation<
@@ -765,7 +765,7 @@ impl
 {
     fn from(
         decoded: alkahest_rs::types::DecodedAttestation<
-            alkahest_rs::contracts::obligations::escrow::default_escrow::AttestationEscrowObligation2::ObligationData,
+            alkahest_rs::contracts::obligations::escrow::default_escrow::AttestationReferenceEscrowObligation::ObligationData,
         >,
     ) -> Self {
         Self {
@@ -778,7 +778,7 @@ impl
 impl
     From<
         alkahest_rs::types::DecodedAttestation<
-            alkahest_rs::contracts::obligations::escrow::unconditional::UnconditionalAttestationEscrowObligation2::ObligationData,
+            alkahest_rs::contracts::obligations::escrow::unconditional::UnconditionalAttestationReferenceEscrowObligation::ObligationData,
         >,
     >
     for PyDecodedAttestation<
@@ -787,7 +787,7 @@ impl
 {
     fn from(
         decoded: alkahest_rs::types::DecodedAttestation<
-            alkahest_rs::contracts::obligations::escrow::unconditional::UnconditionalAttestationEscrowObligation2::ObligationData,
+            alkahest_rs::contracts::obligations::escrow::unconditional::UnconditionalAttestationReferenceEscrowObligation::ObligationData,
         >,
     ) -> Self {
         Self {

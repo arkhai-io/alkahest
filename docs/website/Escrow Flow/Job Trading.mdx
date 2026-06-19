@@ -474,7 +474,7 @@ Bob can listen for the `ArbitrationMade` event from TrustedOracleArbiter, then c
 // When a positive decision is found:
 
 // Bob claims the escrow using the fulfillment attestation
-erc20EscrowObligation.collectEscrow(escrowUid, fulfillmentUid);
+erc20EscrowObligation.collect(escrowUid, fulfillmentUid);
 ```
 
 </TabItem>
@@ -600,7 +600,7 @@ If no valid fulfillment is made, Alice can reclaim the escrow after it expires.
 
 ```solidity
 // Alice reclaims her expired escrow
-erc20EscrowObligation.reclaimExpired(escrowUid);
+erc20EscrowObligation.reclaim(escrowUid);
 ```
 
 </TabItem>
@@ -608,7 +608,7 @@ erc20EscrowObligation.reclaimExpired(escrowUid);
 
 ```typescript
 // Alice reclaims her expired escrow
-await aliceClient.erc20.escrow.default.reclaimExpired(escrow.uid);
+await aliceClient.erc20.escrow.default.reclaim(escrow.uid);
 ```
 
 </TabItem>

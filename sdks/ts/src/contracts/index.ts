@@ -34,7 +34,7 @@ export * as IERC1155 from "./IERC1155";
 export * as ISchemaRegistry from "./ISchemaRegistry";
 // Obligations - Escrow (default)
 export * as AttestationEscrowObligation from "./obligations/escrow/default/AttestationEscrowObligation";
-export * as AttestationEscrowObligation2 from "./obligations/escrow/default/AttestationEscrowObligation2";
+export * as AttestationReferenceEscrowObligation from "./obligations/escrow/default/AttestationReferenceEscrowObligation";
 export * as ERC20EscrowObligation from "./obligations/escrow/default/ERC20EscrowObligation";
 export * as ERC721EscrowObligation from "./obligations/escrow/default/ERC721EscrowObligation";
 export * as ERC1155EscrowObligation from "./obligations/escrow/default/ERC1155EscrowObligation";

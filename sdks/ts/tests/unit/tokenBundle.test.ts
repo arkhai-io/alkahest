@@ -294,7 +294,7 @@ describe("TokenBundle Tests", () => {
       expect(compareAddresses(escrowErc721Owner, testContext.addresses.tokenBundleEscrowObligation)).toBe(true);
 
       // Alice collects her expired escrow
-      await aliceClient.bundle.escrow.default.reclaimExpired(buyAttestation.uid);
+      await aliceClient.bundle.escrow.default.reclaim(buyAttestation.uid);
 
       // Verify Alice got her tokens back
       const finalErc20Balance = await testClient.getErc20Balance({ address: aliceErc20Token }, alice);

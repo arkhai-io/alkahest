@@ -32,7 +32,7 @@ async fn test_trusted_oracle_arbiter_constructor() -> eyre::Result<()> {
     );
 
     let result = trusted_oracle_arbiter
-        .checkObligation(attestation.into(), demand, counteroffer)
+        .check(attestation.into(), demand, counteroffer)
         .call()
         .await?;
 
@@ -73,7 +73,7 @@ async fn test_trusted_oracle_arbiter_arbitrate() -> eyre::Result<()> {
 
     // Initially the decision should be false (default value)
     let initial_result = trusted_oracle_arbiter
-        .checkObligation(attestation.clone().into(), demand.clone(), counteroffer)
+        .check(attestation.clone().into(), demand.clone(), counteroffer)
         .call()
         .await?;
 
@@ -97,7 +97,7 @@ async fn test_trusted_oracle_arbiter_arbitrate() -> eyre::Result<()> {
 
     // Now the decision should be true
     let final_result = trusted_oracle_arbiter
-        .checkObligation(attestation.into(), demand, counteroffer)
+        .check(attestation.into(), demand, counteroffer)
         .call()
         .await?;
 
@@ -168,7 +168,7 @@ async fn test_trusted_oracle_arbiter_with_different_oracles() -> eyre::Result<()
     let counteroffer = FixedBytes::<32>::default();
 
     let result1 = trusted_oracle_arbiter
-        .checkObligation(attestation.clone().into(), demand1, counteroffer)
+        .check(attestation.clone().into(), demand1, counteroffer)
         .call()
         .await?;
 
@@ -182,7 +182,7 @@ async fn test_trusted_oracle_arbiter_with_different_oracles() -> eyre::Result<()
     let demand2 = demand_data2.into();
 
     let result2 = trusted_oracle_arbiter
-        .checkObligation(attestation.into(), demand2, counteroffer)
+        .check(attestation.into(), demand2, counteroffer)
         .call()
         .await?;
 
@@ -220,7 +220,7 @@ async fn test_trusted_oracle_arbiter_with_no_decision() -> eyre::Result<()> {
     );
 
     let result = trusted_oracle_arbiter
-        .checkObligation(attestation.into(), demand, counteroffer)
+        .check(attestation.into(), demand, counteroffer)
         .call()
         .await?;
 
@@ -280,7 +280,7 @@ async fn test_wait_for_trusted_oracle_arbitration() -> eyre::Result<()> {
     // Verify the event data
     assert_eq!(log_result.oracle, oracle, "Oracle in event should match");
     assert_eq!(
-        log_result.obligation, obligation_uid,
+        log_result.fulfillmentUid, obligation_uid,
         "Obligation UID in event should match"
     );
     assert!(log_result.decision, "Decision in event should be true");

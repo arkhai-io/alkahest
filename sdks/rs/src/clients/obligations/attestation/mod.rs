@@ -57,9 +57,9 @@ impl_attestation_request!(AttestationBarterUtils);
 
 // --- ABI conversions for Attestation obligation types ---
 impl_abi_conversions!(contracts::obligations::escrow::default_escrow::AttestationEscrowObligation::ObligationData);
-impl_abi_conversions!(contracts::obligations::escrow::default_escrow::AttestationEscrowObligation2::ObligationData);
+impl_abi_conversions!(contracts::obligations::escrow::default_escrow::AttestationReferenceEscrowObligation::ObligationData);
 impl_abi_conversions!(contracts::obligations::escrow::unconditional::UnconditionalAttestationEscrowObligation::ObligationData);
-impl_abi_conversions!(contracts::obligations::escrow::unconditional::UnconditionalAttestationEscrowObligation2::ObligationData);
+impl_abi_conversions!(contracts::obligations::escrow::unconditional::UnconditionalAttestationReferenceEscrowObligation::ObligationData);
 
 /// Macro to implement From<IEAS::Attestation> for arbiter-specific Attestation types.
 /// These types have the same structure but are defined separately in each arbiter contract.
@@ -332,17 +332,19 @@ mod tests {
         let arbiter = test.addresses.attestation_addresses.barter_utils;
         let demand = Bytes::from(vec![4, 5, 6]);
 
-        let escrow_data = contracts::obligations::escrow::default_escrow::AttestationEscrowObligation2::ObligationData {
+        let escrow_data = contracts::obligations::escrow::default_escrow::AttestationReferenceEscrowObligation::ObligationData {
             attestationUid: attestation_uid,
             arbiter,
             demand: demand.clone(),
+            validationExpirationTime: 0,
+            validationRevocable: true,
         };
 
         // Encode the data
         let encoded = escrow_data.abi_encode();
 
         // Decode the data using TryFrom<Bytes>
-        let decoded: contracts::obligations::escrow::default_escrow::AttestationEscrowObligation2::ObligationData =
+        let decoded: contracts::obligations::escrow::default_escrow::AttestationReferenceEscrowObligation::ObligationData =
             alloy::primitives::Bytes::from(encoded).try_into()?;
 
         // Verify decoded data
@@ -352,6 +354,8 @@ mod tests {
         );
         assert_eq!(decoded.arbiter, arbiter, "Arbiter should match");
         assert_eq!(decoded.demand, demand, "Demand should match");
+        assert_eq!(decoded.validationExpirationTime, 0);
+        assert!(decoded.validationRevocable);
 
         Ok(())
     }
@@ -667,7 +671,7 @@ mod tests {
             .await?;
 
         // Get the expected schema ID from the contract
-        let escrow_contract = contracts::obligations::escrow::default_escrow::AttestationEscrowObligation2::new(
+        let escrow_contract = contracts::obligations::escrow::default_escrow::AttestationReferenceEscrowObligation::new(
             test.addresses.attestation_addresses.escrow_obligation_2_default,
             &test.god_provider,
         );
@@ -913,7 +917,7 @@ mod tests {
             .await?;
 
         // Get the expected validation schema ID from the contract
-        let escrow_contract = contracts::obligations::escrow::default_escrow::AttestationEscrowObligation2::new(
+        let escrow_contract = contracts::obligations::escrow::default_escrow::AttestationReferenceEscrowObligation::new(
             test.addresses.attestation_addresses.escrow_obligation_2_default,
             &test.god_provider,
         );

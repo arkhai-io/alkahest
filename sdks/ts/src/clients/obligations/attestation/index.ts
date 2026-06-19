@@ -19,7 +19,7 @@ export const pickAttestationAddresses = (addresses: ChainAddresses): Attestation
   eas: addresses.eas,
   barterUtils: addresses.attestationBarterUtils,
   escrowObligation: addresses.attestationEscrowObligation,
-  escrowObligation2: addresses.attestationEscrowObligation2,
+  escrowObligation2: addresses.attestationReferenceEscrowObligation,
 });
 
 export type AttestationClient = {

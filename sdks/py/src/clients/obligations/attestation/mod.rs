@@ -203,39 +203,56 @@ pub struct PyAttestationEscrowV2ObligationData {
     pub demand: Vec<u8>,
     #[pyo3(get)]
     pub attestation_uid: String,
+    #[pyo3(get)]
+    pub validation_expiration_time: u64,
+    #[pyo3(get)]
+    pub validation_revocable: bool,
 }
 
 #[pymethods]
 impl PyAttestationEscrowV2ObligationData {
     #[new]
-    pub fn new(arbiter: String, demand: Vec<u8>, attestation_uid: String) -> Self {
+    #[pyo3(signature = (arbiter, demand, attestation_uid, validation_expiration_time = 0, validation_revocable = true))]
+    pub fn new(
+        arbiter: String,
+        demand: Vec<u8>,
+        attestation_uid: String,
+        validation_expiration_time: u64,
+        validation_revocable: bool,
+    ) -> Self {
         Self {
             arbiter,
             demand,
             attestation_uid,
+            validation_expiration_time,
+            validation_revocable,
         }
     }
 
     fn __repr__(&self) -> String {
         format!(
-            "PyAttestationEscrowV2ObligationData(arbiter='{}', attestation_uid='{}', demand_len={})",
-            self.arbiter, self.attestation_uid, self.demand.len()
+            "PyAttestationEscrowV2ObligationData(arbiter='{}', attestation_uid='{}', demand_len={}, validation_expiration_time={}, validation_revocable={})",
+            self.arbiter,
+            self.attestation_uid,
+            self.demand.len(),
+            self.validation_expiration_time,
+            self.validation_revocable
         )
     }
 
     #[staticmethod]
     pub fn decode(obligation_data: Vec<u8>) -> PyResult<PyAttestationEscrowV2ObligationData> {
-        use alkahest_rs::contracts::obligations::escrow::default_escrow::AttestationEscrowObligation2;
+        use alkahest_rs::contracts::obligations::escrow::default_escrow::AttestationReferenceEscrowObligation;
         use alloy::sol_types::SolValue;
         let decoded =
-            AttestationEscrowObligation2::ObligationData::abi_decode(&obligation_data)
+            AttestationReferenceEscrowObligation::ObligationData::abi_decode(&obligation_data)
                 .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
         Ok(decoded.into())
     }
 
     #[staticmethod]
     pub fn encode(obligation: &PyAttestationEscrowV2ObligationData) -> PyResult<Vec<u8>> {
-        use alkahest_rs::contracts::obligations::escrow::default_escrow::AttestationEscrowObligation2;
+        use alkahest_rs::contracts::obligations::escrow::default_escrow::AttestationReferenceEscrowObligation;
         use alloy::{
             primitives::{Address, Bytes, FixedBytes},
             sol_types::SolValue,
@@ -248,10 +265,12 @@ impl PyAttestationEscrowV2ObligationData {
             .parse()
             .map_err(map_parse_to_pyerr)?;
 
-        let obligation_data = AttestationEscrowObligation2::ObligationData {
+        let obligation_data = AttestationReferenceEscrowObligation::ObligationData {
             arbiter,
             demand,
             attestationUid: attestation_uid,
+            validationExpirationTime: obligation.validation_expiration_time,
+            validationRevocable: obligation.validation_revocable,
         };
 
         Ok(obligation_data.abi_encode())
@@ -262,30 +281,34 @@ impl PyAttestationEscrowV2ObligationData {
     }
 }
 
-impl From<alkahest_rs::contracts::obligations::escrow::default_escrow::AttestationEscrowObligation2::ObligationData>
+impl From<alkahest_rs::contracts::obligations::escrow::default_escrow::AttestationReferenceEscrowObligation::ObligationData>
     for PyAttestationEscrowV2ObligationData
 {
     fn from(
-        data: alkahest_rs::contracts::obligations::escrow::default_escrow::AttestationEscrowObligation2::ObligationData,
+        data: alkahest_rs::contracts::obligations::escrow::default_escrow::AttestationReferenceEscrowObligation::ObligationData,
     ) -> Self {
         Self {
             arbiter: format!("{:?}", data.arbiter),
             demand: data.demand.to_vec(),
             attestation_uid: data.attestationUid.to_string(),
+            validation_expiration_time: data.validationExpirationTime,
+            validation_revocable: data.validationRevocable,
         }
     }
 }
 
-impl From<alkahest_rs::contracts::obligations::escrow::unconditional::UnconditionalAttestationEscrowObligation2::ObligationData>
+impl From<alkahest_rs::contracts::obligations::escrow::unconditional::UnconditionalAttestationReferenceEscrowObligation::ObligationData>
     for PyAttestationEscrowV2ObligationData
 {
     fn from(
-        data: alkahest_rs::contracts::obligations::escrow::unconditional::UnconditionalAttestationEscrowObligation2::ObligationData,
+        data: alkahest_rs::contracts::obligations::escrow::unconditional::UnconditionalAttestationReferenceEscrowObligation::ObligationData,
     ) -> Self {
         Self {
             arbiter: format!("{:?}", data.arbiter),
             demand: data.demand.to_vec(),
             attestation_uid: data.attestationUid.to_string(),
+            validation_expiration_time: data.validationExpirationTime,
+            validation_revocable: data.validationRevocable,
         }
     }
 }

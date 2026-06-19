@@ -170,7 +170,7 @@ export const makeAttestationEscrowV1Client = (viemClient: ViemClient, addresses:
       const hash = await writeContract(viemClient, {
         address: addresses.escrowObligation,
         abi: attestationEscrowAbi.abi,
-        functionName: "collectEscrow",
+        functionName: "collect",
         args: [escrowAttestation, fulfillmentAttestation],
       });
 
@@ -184,11 +184,11 @@ export const makeAttestationEscrowV1Client = (viemClient: ViemClient, addresses:
      * @param escrowAttestation - The UID of the escrow attestation
      * @returns The transaction hash
      */
-    reclaimExpired: async (escrowAttestation: `0x${string}`) => {
+    reclaim: async (escrowAttestation: `0x${string}`) => {
       const hash = await writeContract(viemClient, {
         address: addresses.escrowObligation,
         abi: attestationEscrowAbi.abi,
-        functionName: "reclaimExpired",
+        functionName: "reclaim",
         args: [escrowAttestation],
       });
       return hash;

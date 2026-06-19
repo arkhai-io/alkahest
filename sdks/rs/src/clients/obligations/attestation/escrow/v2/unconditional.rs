@@ -34,7 +34,7 @@ impl<'a> Unconditional<'a> {
         uid: FixedBytes<32>,
     ) -> eyre::Result<
         DecodedAttestation<
-            contracts::obligations::escrow::unconditional::UnconditionalAttestationEscrowObligation2::ObligationData,
+            contracts::obligations::escrow::unconditional::UnconditionalAttestationReferenceEscrowObligation::ObligationData,
         >,
     > {
         let eas_contract =
@@ -42,7 +42,7 @@ impl<'a> Unconditional<'a> {
 
         let attestation = eas_contract.getAttestation(uid).call().await?;
         let obligation_data =
-            contracts::obligations::escrow::unconditional::UnconditionalAttestationEscrowObligation2::ObligationData::abi_decode(
+            contracts::obligations::escrow::unconditional::UnconditionalAttestationReferenceEscrowObligation::ObligationData::abi_decode(
                 &attestation.data,
             )?;
 
@@ -60,17 +60,19 @@ impl<'a> Unconditional<'a> {
         expiration: u64,
     ) -> eyre::Result<TransactionReceipt> {
         let escrow_contract =
-            contracts::obligations::escrow::unconditional::UnconditionalAttestationEscrowObligation2::new(
+            contracts::obligations::escrow::unconditional::UnconditionalAttestationReferenceEscrowObligation::new(
                 self.module.addresses.escrow_obligation_2_unconditional,
                 &self.module.wallet_provider,
             );
 
         let receipt = escrow_contract
             .doObligation(
-                contracts::obligations::escrow::unconditional::UnconditionalAttestationEscrowObligation2::ObligationData {
+                contracts::obligations::escrow::unconditional::UnconditionalAttestationReferenceEscrowObligation::ObligationData {
                     attestationUid: attestation_uid,
                     arbiter: demand.arbiter,
                     demand: demand.demand.clone(),
+                    validationExpirationTime: 0,
+                    validationRevocable: true,
                 },
                 expiration,
             )
@@ -89,13 +91,13 @@ impl<'a> Unconditional<'a> {
         fulfillment: FixedBytes<32>,
     ) -> eyre::Result<TransactionReceipt> {
         let escrow_contract =
-            contracts::obligations::escrow::unconditional::UnconditionalAttestationEscrowObligation2::new(
+            contracts::obligations::escrow::unconditional::UnconditionalAttestationReferenceEscrowObligation::new(
                 self.module.addresses.escrow_obligation_2_unconditional,
                 &self.module.wallet_provider,
             );
 
         let receipt = escrow_contract
-            .collectEscrow(buy_attestation, fulfillment)
+            .collect(buy_attestation, fulfillment)
             .send()
             .await?
             .get_receipt()

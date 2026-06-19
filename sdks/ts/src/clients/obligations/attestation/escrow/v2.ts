@@ -1,5 +1,5 @@
 import { decodeAbiParameters, encodeAbiParameters, getAbiItem } from "viem";
-import { abi as attestationEscrow2Abi } from "../../../../contracts/obligations/escrow/default/AttestationEscrowObligation2";
+import { abi as attestationEscrow2Abi } from "../../../../contracts/obligations/escrow/default/AttestationReferenceEscrowObligation";
 import type { Demand } from "../../../../types";
 import { getAttestation, getAttestedEventFromTxHash, type ViemClient, writeContract } from "../../../../utils";
 import type { AttestationAddresses } from "../index";
@@ -12,16 +12,18 @@ const escrow2ObligationDecodeFunction = getAbiItem({
 const escrow2ObligationDataType = escrow2ObligationDecodeFunction.outputs[0];
 
 /**
- * AttestationEscrowObligation2 (V2) ObligationData type
+ * AttestationReferenceEscrowObligation (V2) ObligationData type
  */
 export type AttestationEscrowV2ObligationData = {
   attestationUid: `0x${string}`;
   arbiter: `0x${string}`;
   demand: `0x${string}`;
+  validationExpirationTime: bigint;
+  validationRevocable: boolean;
 };
 
 /**
- * Encodes AttestationEscrowObligation2.ObligationData to bytes.
+ * Encodes AttestationReferenceEscrowObligation.ObligationData to bytes.
  * @param data - ObligationData struct
  * @returns abi encoded bytes
  */
@@ -30,7 +32,7 @@ export const encodeObligation = (data: AttestationEscrowV2ObligationData): `0x${
 };
 
 /**
- * Decodes AttestationEscrowObligation2.ObligationData from bytes.
+ * Decodes AttestationReferenceEscrowObligation.ObligationData from bytes.
  * @param obligationData - ObligationData as abi encoded bytes
  * @returns the decoded ObligationData object
  */
@@ -54,16 +56,16 @@ export const makeAttestationEscrowV2Client = (viemClient: ViemClient, addresses:
     getSchema,
 
     /**
-     * Encodes AttestationEscrowObligation2.ObligationData to bytes.
+     * Encodes AttestationReferenceEscrowObligation.ObligationData to bytes.
      * @param data - ObligationData object to encode
      * @returns the abi encoded ObligationData as bytes
      */
-    encodeObligation: (data: { attestationUid: `0x${string}`; arbiter: `0x${string}`; demand: `0x${string}` }) => {
+    encodeObligation: (data: AttestationEscrowV2ObligationData) => {
       return encodeAbiParameters([escrow2ObligationDataType], [data]);
     },
 
     /**
-     * Decodes AttestationEscrowObligation2.ObligationData from bytes.
+     * Decodes AttestationReferenceEscrowObligation.ObligationData from bytes.
      * @param obligationData - ObligationData as abi encoded bytes
      * @returns the decoded ObligationData object
      */
@@ -92,7 +94,7 @@ export const makeAttestationEscrowV2Client = (viemClient: ViemClient, addresses:
 
     /**
      * Creates an escrow using an attestation UID as reference.
-     * This function uses AttestationEscrowObligation2 which references the attestation by UID
+     * This function uses AttestationReferenceEscrowObligation which references the attestation by UID
      * instead of storing the full attestation data, making it more gas efficient. When collecting
      * payment, this contract creates a validation attestation that references the original attestation,
      * allowing it to work with any schema implementation without requiring attestation rights.
@@ -102,7 +104,13 @@ export const makeAttestationEscrowV2Client = (viemClient: ViemClient, addresses:
      * @param expiration - Optional expiration time for the escrow (default: 0 = no expiration)
      * @returns The transaction hash and attested escrow data
      */
-    create: async (attestationUid: `0x${string}`, item: Demand, expiration: bigint = 0n) => {
+    create: async (
+      attestationUid: `0x${string}`,
+      item: Demand,
+      expiration: bigint = 0n,
+      validationExpirationTime: bigint = 0n,
+      validationRevocable = true,
+    ) => {
       const hash = await writeContract(viemClient, {
         address: addresses.escrowObligation2,
         abi: attestationEscrow2Abi.abi,
@@ -112,6 +120,8 @@ export const makeAttestationEscrowV2Client = (viemClient: ViemClient, addresses:
             attestationUid,
             arbiter: item.arbiter,
             demand: item.demand,
+            validationExpirationTime,
+            validationRevocable,
           },
           expiration,
         ],
@@ -123,7 +133,7 @@ export const makeAttestationEscrowV2Client = (viemClient: ViemClient, addresses:
 
     /**
      * Collects payment from an attestation escrow by providing a fulfillment attestation.
-     * This function is used with AttestationEscrowObligation2 and creates a validation
+     * This function is used with AttestationReferenceEscrowObligation and creates a validation
      * attestation referencing the original attestation.
      *
      * @param escrowAttestation - The UID of the escrow attestation
@@ -134,7 +144,7 @@ export const makeAttestationEscrowV2Client = (viemClient: ViemClient, addresses:
       const hash = await writeContract(viemClient, {
         address: addresses.escrowObligation2,
         abi: attestationEscrow2Abi.abi,
-        functionName: "collectEscrow",
+        functionName: "collect",
         args: [escrowAttestation, fulfillmentAttestation],
       });
 
@@ -148,11 +158,11 @@ export const makeAttestationEscrowV2Client = (viemClient: ViemClient, addresses:
      * @param escrowAttestation - The UID of the escrow attestation
      * @returns The transaction hash
      */
-    reclaimExpired: async (escrowAttestation: `0x${string}`) => {
+    reclaim: async (escrowAttestation: `0x${string}`) => {
       const hash = await writeContract(viemClient, {
         address: addresses.escrowObligation2,
         abi: attestationEscrow2Abi.abi,
-        functionName: "reclaimExpired",
+        functionName: "reclaim",
         args: [escrowAttestation],
       });
       return hash;

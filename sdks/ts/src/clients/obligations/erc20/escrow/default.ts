@@ -174,7 +174,7 @@ export const makeErc20DefaultEscrowClient = (viemClient: ViemClient, addresses: 
         const { request } = await viemClient.simulateContract({
           address: addresses.escrowObligation,
           abi: erc20EscrowAbi.abi,
-          functionName: "collectEscrow",
+          functionName: "collect",
           args: [buyAttestation, fulfillment],
         });
         hash = await viemClient.writeContract(request);
@@ -184,11 +184,11 @@ export const makeErc20DefaultEscrowClient = (viemClient: ViemClient, addresses: 
       return hash;
     },
 
-    reclaimExpired: async (buyAttestation: `0x${string}`) => {
+    reclaim: async (buyAttestation: `0x${string}`) => {
       const hash = await writeContract(viemClient, {
         address: addresses.escrowObligation,
         abi: erc20EscrowAbi.abi,
-        functionName: "reclaimExpired",
+        functionName: "reclaim",
         args: [buyAttestation],
       });
       return hash;

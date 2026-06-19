@@ -497,6 +497,8 @@ describe("Obligation Codec Static Functions", () => {
           attestationUid: mockSchema, // Using mockSchema as a 32-byte UID
           arbiter: mockArbiter,
           demand: mockDemand,
+          validationExpirationTime: 0n,
+          validationRevocable: true,
         };
 
         const encoded = encodeAttestationEscrowV2(data);
@@ -506,6 +508,8 @@ describe("Obligation Codec Static Functions", () => {
         expect(decoded.attestationUid).toBe(data.attestationUid);
         expect(decoded.arbiter.toLowerCase()).toBe(data.arbiter.toLowerCase());
         expect(decoded.demand).toBe(data.demand);
+        expect(decoded.validationExpirationTime).toBe(data.validationExpirationTime);
+        expect(decoded.validationRevocable).toBe(data.validationRevocable);
       });
     });
   });

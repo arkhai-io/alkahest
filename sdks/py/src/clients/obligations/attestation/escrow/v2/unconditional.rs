@@ -51,7 +51,7 @@ impl Unconditional {
     }
 
     /// Creates a unconditional escrow using an attestation UID as reference.
-    /// This function uses AttestationEscrowObligation2 which references the attestation by UID
+    /// This function uses AttestationReferenceEscrowObligation which references the attestation by UID
     /// instead of storing the full attestation data, making it more gas efficient.
     pub fn create<'py>(
         &self,

@@ -446,7 +446,7 @@ impl TrustedOracleModule {
             let eas = IEAS::new(self.addresses.eas, &*self.wallet_provider);
             let demand = log.inner.demand.clone();
             async move {
-                let attestation = eas.getAttestation(log.inner.obligation).call().await?;
+                let attestation = eas.getAttestation(log.inner.fulfillmentUid).call().await?;
                 Ok::<_, alloy::contract::Error>(AttestationWithDemand { attestation, demand })
             }
         });
@@ -798,7 +798,7 @@ impl TrustedOracleModule {
             };
 
             let Ok(attestation) = eas
-                .getAttestation(arbitration_log.inner.obligation)
+                .getAttestation(arbitration_log.inner.fulfillmentUid)
                 .call()
                 .await
             else {
@@ -909,7 +909,7 @@ impl TrustedOracleModule {
             };
 
             let Ok(attestation) = eas
-                .getAttestation(arbitration_log.inner.obligation)
+                .getAttestation(arbitration_log.inner.fulfillmentUid)
                 .call()
                 .await
             else {
@@ -1006,7 +1006,7 @@ impl TrustedOracleModule {
                 };
 
                 let Ok(attestation) = eas
-                    .getAttestation(arbitration_log.inner.obligation)
+                    .getAttestation(arbitration_log.inner.fulfillmentUid)
                     .call()
                     .await
                 else {
@@ -1107,7 +1107,7 @@ impl TrustedOracleModule {
                 };
 
                 let Ok(attestation) = eas
-                    .getAttestation(arbitration_log.inner.obligation)
+                    .getAttestation(arbitration_log.inner.fulfillmentUid)
                     .call()
                     .await
                 else {

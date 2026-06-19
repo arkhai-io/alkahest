@@ -158,7 +158,7 @@ impl OracleClient {
                 .map_err(map_eyre_to_pyerr)?;
             Ok(PyArbitrationMadeLog {
                 decision_key: event.inner.data.decisionKey.to_string(),
-                obligation: event.inner.data.obligation.to_string(),
+                obligation: event.inner.data.fulfillmentUid.to_string(),
                 oracle: format!("{:?}", event.inner.data.oracle),
                 decision: event.inner.data.decision,
             })
@@ -952,7 +952,7 @@ impl TrustedOracle {
                 .map_err(map_eyre_to_pyerr)?;
             Ok(PyArbitrationMadeLog {
                 decision_key: event.decisionKey.to_string(),
-                obligation: event.obligation.to_string(),
+                obligation: event.fulfillmentUid.to_string(),
                 oracle: format!("{:?}", event.oracle),
                 decision: event.decision,
             })

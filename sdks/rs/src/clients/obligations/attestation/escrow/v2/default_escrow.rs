@@ -33,7 +33,7 @@ impl<'a> Default<'a> {
         uid: FixedBytes<32>,
     ) -> eyre::Result<
         DecodedAttestation<
-            contracts::obligations::escrow::default_escrow::AttestationEscrowObligation2::ObligationData,
+            contracts::obligations::escrow::default_escrow::AttestationReferenceEscrowObligation::ObligationData,
         >,
     > {
         let eas_contract =
@@ -41,7 +41,7 @@ impl<'a> Default<'a> {
 
         let attestation = eas_contract.getAttestation(uid).call().await?;
         let obligation_data =
-            contracts::obligations::escrow::default_escrow::AttestationEscrowObligation2::ObligationData::abi_decode(
+            contracts::obligations::escrow::default_escrow::AttestationReferenceEscrowObligation::ObligationData::abi_decode(
                 &attestation.data,
             )?;
 
@@ -52,7 +52,7 @@ impl<'a> Default<'a> {
     }
 
     /// Creates an escrow using an attestation UID as reference.
-    /// This function uses AttestationEscrowObligation2 which references the attestation by UID
+    /// This function uses AttestationReferenceEscrowObligation which references the attestation by UID
     /// instead of storing the full attestation data, making it more gas efficient.
     pub async fn create(
         &self,
@@ -61,17 +61,19 @@ impl<'a> Default<'a> {
         expiration: u64,
     ) -> eyre::Result<TransactionReceipt> {
         let escrow_contract =
-            contracts::obligations::escrow::default_escrow::AttestationEscrowObligation2::new(
+            contracts::obligations::escrow::default_escrow::AttestationReferenceEscrowObligation::new(
                 self.module.addresses.escrow_obligation_2_default,
                 &self.module.wallet_provider,
             );
 
         let receipt = escrow_contract
             .doObligation(
-                contracts::obligations::escrow::default_escrow::AttestationEscrowObligation2::ObligationData {
+                contracts::obligations::escrow::default_escrow::AttestationReferenceEscrowObligation::ObligationData {
                     attestationUid: attestation_uid,
                     arbiter: demand.arbiter,
                     demand: demand.demand.clone(),
+                    validationExpirationTime: 0,
+                    validationRevocable: true,
                 },
                 expiration,
             )
@@ -91,13 +93,13 @@ impl<'a> Default<'a> {
         fulfillment: FixedBytes<32>,
     ) -> eyre::Result<TransactionReceipt> {
         let escrow_contract =
-            contracts::obligations::escrow::default_escrow::AttestationEscrowObligation2::new(
+            contracts::obligations::escrow::default_escrow::AttestationReferenceEscrowObligation::new(
                 self.module.addresses.escrow_obligation_2_default,
                 &self.module.wallet_provider,
             );
 
         let receipt = escrow_contract
-            .collectEscrow(buy_attestation, fulfillment)
+            .collect(buy_attestation, fulfillment)
             .send()
             .await?
             .get_receipt()

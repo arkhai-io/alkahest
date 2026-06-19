@@ -28,7 +28,7 @@ contract StringCapitalizer is IArbiter {
         string query;  // Input data
     }
 
-    function checkObligation(
+    function check(
         Attestation memory obligation,
         bytes memory demand,
         bytes32 counteroffer
@@ -112,7 +112,7 @@ contract GameWinner is IArbiter {
         uint256 validAfter;
     }
 
-    function checkObligation(
+    function check(
         Attestation memory obligation,
         bytes memory demand,
         bytes32 counteroffer
@@ -160,7 +160,7 @@ contract GameWinner is IArbiter {
 All single-transaction arbiters follow this structure:
 
 1. **Define data structures**: Create structs for demand parameters and expected obligation data
-2. **Implement `checkObligation`**: The main validation function that returns a boolean
+2. **Implement `check`**: The main validation function that returns a boolean
 3. **Validate attestation integrity**: Use `ArbiterUtils` to check expiration and revocation
 4. **Verify schema and source** (if needed): Ensure attestations match expected format and origin
 5. **Decode data**: Extract information from both obligation and demand
@@ -174,7 +174,7 @@ The key difference between examples:
 
 ## Asynchronous arbiters
 
-Asynchronous arbiters handle validation that cannot be completed in a single transaction. They maintain internal state across multiple transactions and only return true from `checkObligation` once a multi-step process has been completed.
+Asynchronous arbiters handle validation that cannot be completed in a single transaction. They maintain internal state across multiple transactions and only return true from `check` once a multi-step process has been completed.
 
 ### Example 3: MajorityVoteArbiter - Multi-transaction State Accumulation
 
@@ -261,7 +261,7 @@ contract MajorityVoteArbiter is IArbiter {
         }
     }
 
-    function checkObligation(
+    function check(
         Attestation memory obligation,
         bytes memory demand,
         bytes32 /* counteroffer */
@@ -283,7 +283,7 @@ contract MajorityVoteArbiter is IArbiter {
 1. **State Storage**: The contract maintains a mapping (`voteStatuses`) that persists state between transactions
 2. **Process Accumulation**: Multiple transactions (`castVote`) modify the stored state incrementally
 3. **Completion Detection**: The arbiter tracks when the process reaches a deterministic outcome
-4. **Deferred Validation**: `checkObligation` returns false until the process completes, then returns the final decision
+4. **Deferred Validation**: `check` returns false until the process completes, then returns the final decision
 
 **When to use this pattern**:
 

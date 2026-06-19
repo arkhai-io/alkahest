@@ -426,7 +426,7 @@ bytes32 paymentUid = erc721PaymentObligation.doObligation(
 );
 
 // Bob claims Alice's escrow using both attestation UIDs
-erc20EscrowObligation.collectEscrow(escrowUid, paymentUid);
+erc20EscrowObligation.collect(escrowUid, paymentUid);
 ```
 
 </TabItem>
@@ -463,7 +463,7 @@ const paymentUid = getAttestedEventFromReceipt(paymentReceipt).uid;
 await walletClient.writeContract({
   address: erc20EscrowObligation,
   abi: erc20EscrowAbi,
-  functionName: "collectEscrow",
+  functionName: "collect",
   args: [escrowUid, paymentUid],
 });
 ```
@@ -504,7 +504,7 @@ let escrow_contract = contracts::ERC20EscrowObligation::new(
     &wallet_provider
 );
 escrow_contract
-    .collectEscrow(escrow_uid, payment_uid)
+    .collect(escrow_uid, payment_uid)
     .send()
     .await?
     .get_receipt()
@@ -648,7 +648,7 @@ You can reclaim your escrow if nobody fulfills it before it expires.
 
 ```solidity
 // Alice reclaims her expired escrow
-erc20EscrowObligation.reclaimExpired(escrowUid);
+erc20EscrowObligation.reclaim(escrowUid);
 ```
 
 </TabItem>
@@ -659,7 +659,7 @@ erc20EscrowObligation.reclaimExpired(escrowUid);
 await walletClient.writeContract({
   address: erc20EscrowObligation,
   abi: erc20EscrowAbi,
-  functionName: "reclaimExpired",
+  functionName: "reclaim",
   args: [escrowUid],
 });
 ```
@@ -674,7 +674,7 @@ let escrow_contract = contracts::ERC20EscrowObligation::new(
     &wallet_provider
 );
 escrow_contract
-    .reclaimExpired(escrow_uid)
+    .reclaim(escrow_uid)
     .send()
     .await?
     .get_receipt()

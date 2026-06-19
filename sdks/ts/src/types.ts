@@ -21,7 +21,7 @@ export type ChainAddresses = {
   tokenBundleBarterUtils: `0x${string}`;
 
   attestationEscrowObligation: `0x${string}`;
-  attestationEscrowObligation2: `0x${string}`;
+  attestationReferenceEscrowObligation: `0x${string}`;
   attestationBarterUtils: `0x${string}`;
 
   stringObligation: `0x${string}`;

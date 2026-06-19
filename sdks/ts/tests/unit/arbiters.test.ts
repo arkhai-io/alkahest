@@ -88,11 +88,11 @@ describe("Arbiters Tests", () => {
       const demand = "0x1234" as `0x${string}`;
       const counteroffer = "0x0000000000000000000000000000000000000000000000000000000000000000" as `0x${string}`;
 
-      // Call checkObligation and verify it returns true - line 95
+      // Call check and verify it returns true - line 95
       const result = await testContext.testClient.readContract({
         address: testContext.addresses.trivialArbiter,
         abi: trivialArbiterAbi.abi,
-        functionName: "checkObligation",
+        functionName: "check",
         args: [attestation, demand, counteroffer],
       });
 
@@ -117,7 +117,7 @@ describe("Arbiters Tests", () => {
       const result = await testContext.testClient.readContract({
         address: testContext.addresses.trivialArbiter,
         abi: trivialArbiterAbi.abi,
-        functionName: "checkObligation",
+        functionName: "check",
         args: [
           mockAttestation,
           "0x1234" as `0x${string}`,
@@ -162,7 +162,7 @@ describe("Arbiters Tests", () => {
       const result = await testClient.readContract({
         address: testContext.addresses.trustedOracleArbiter,
         abi: trustedOracleArbiterAbi.abi,
-        functionName: "checkObligation",
+        functionName: "check",
         args: [attestation, demand, counteroffer],
       });
 
@@ -199,7 +199,7 @@ describe("Arbiters Tests", () => {
       const initialResult = await testClient.readContract({
         address: testContext.addresses.trustedOracleArbiter,
         abi: trustedOracleArbiterAbi.abi,
-        functionName: "checkObligation",
+        functionName: "check",
         args: [attestation, demand, counteroffer],
       });
 
@@ -207,7 +207,7 @@ describe("Arbiters Tests", () => {
 
       // Make a positive arbitration decision
       // Note: arbitrate() expects the inner data portion, not the full encoded demand
-      // checkObligation computes: keccak256(obligation.uid, demand_.data)
+      // check computes: keccak256(obligation.uid, demand_.data)
       const arbitrateHash = await oracleClient.arbiters.general.trustedOracle.arbitrate(
         statementUid,
         demandData.data,
@@ -223,7 +223,7 @@ describe("Arbiters Tests", () => {
       const finalResult = await testClient.readContract({
         address: testContext.addresses.trustedOracleArbiter,
         abi: trustedOracleArbiterAbi.abi,
-        functionName: "checkObligation",
+        functionName: "check",
         args: [attestation, demand, counteroffer],
       });
 
@@ -291,7 +291,7 @@ describe("Arbiters Tests", () => {
       const result1 = await testClient.readContract({
         address: testContext.addresses.trustedOracleArbiter,
         abi: trustedOracleArbiterAbi.abi,
-        functionName: "checkObligation",
+        functionName: "check",
         args: [attestation, demand1, counteroffer],
       });
 
@@ -302,7 +302,7 @@ describe("Arbiters Tests", () => {
       const result2 = await testClient.readContract({
         address: testContext.addresses.trustedOracleArbiter,
         abi: trustedOracleArbiterAbi.abi,
-        functionName: "checkObligation",
+        functionName: "check",
         args: [attestation, demand2, counteroffer],
       });
 
@@ -341,7 +341,7 @@ describe("Arbiters Tests", () => {
       const result = await testClient.readContract({
         address: testContext.addresses.trustedOracleArbiter,
         abi: trustedOracleArbiterAbi.abi,
-        functionName: "checkObligation",
+        functionName: "check",
         args: [attestation, demand, counteroffer],
       });
 
@@ -405,7 +405,7 @@ describe("Arbiters Tests", () => {
       const result = await testClient.readContract({
         address: testContext.addresses.anyArbiter,
         abi: anyArbiterAbi.abi,
-        functionName: "checkObligation",
+        functionName: "check",
         args: [attestation, demand, counteroffer],
       });
 
@@ -452,7 +452,7 @@ describe("Arbiters Tests", () => {
       const result = await testClient.readContract({
         address: testContext.addresses.anyArbiter,
         abi: anyArbiterAbi.abi,
-        functionName: "checkObligation",
+        functionName: "check",
         args: [attestation, demand, counteroffer],
       });
 
@@ -514,7 +514,7 @@ describe("Arbiters Tests", () => {
       const result = await testClient.readContract({
         address: testContext.addresses.allArbiter,
         abi: allArbiterAbi.abi,
-        functionName: "checkObligation",
+        functionName: "check",
         args: [attestation, demand, counteroffer],
       });
 
@@ -558,7 +558,7 @@ describe("Arbiters Tests", () => {
         await testClient.readContract({
           address: testContext.addresses.allArbiter,
           abi: allArbiterAbi.abi,
-          functionName: "checkObligation",
+          functionName: "check",
           args: [attestation, demand, counteroffer],
         });
         expect(false).toBe(true); // Should not reach here

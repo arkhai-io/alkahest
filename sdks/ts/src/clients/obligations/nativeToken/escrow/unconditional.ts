@@ -129,17 +129,17 @@ export const makeNativeTokenUnconditionalEscrowClient = (viemClient: ViemClient,
       const hash = await writeContract(viemClient, {
         address: addresses.escrowObligationUnconditional,
         abi: nativeTokenEscrowAbi.abi,
-        functionName: "collectEscrow",
+        functionName: "collect",
         args: [buyAttestation, fulfillment],
       });
       return hash;
     },
 
-    reclaimExpired: async (buyAttestation: `0x${string}`) => {
+    reclaim: async (buyAttestation: `0x${string}`) => {
       const hash = await writeContract(viemClient, {
         address: addresses.escrowObligationUnconditional,
         abi: nativeTokenEscrowAbi.abi,
-        functionName: "reclaimExpired",
+        functionName: "reclaim",
         args: [buyAttestation],
       });
       return hash;

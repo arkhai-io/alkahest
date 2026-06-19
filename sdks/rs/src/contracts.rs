@@ -382,8 +382,8 @@ pub mod obligations {
                 #[allow(missing_docs)]
                 #[sol(rpc)]
                 #[derive(Debug)]
-                AttestationEscrowObligation2,
-                "src/contracts/obligations/escrow/default/AttestationEscrowObligation2.json"
+                AttestationReferenceEscrowObligation,
+                "src/contracts/obligations/escrow/default/AttestationReferenceEscrowObligation.json"
             );
         }
 
@@ -442,8 +442,8 @@ pub mod obligations {
                 #[allow(missing_docs)]
                 #[sol(rpc)]
                 #[derive(Debug)]
-                UnconditionalAttestationEscrowObligation2,
-                "src/contracts/obligations/escrow/unconditional/UnconditionalAttestationEscrowObligation2.json"
+                UnconditionalAttestationReferenceEscrowObligation,
+                "src/contracts/obligations/escrow/unconditional/UnconditionalAttestationReferenceEscrowObligation.json"
             );
         }
     }

@@ -104,7 +104,7 @@ async fn run_synchronous_oracle_capitalization_example(test: &TestContext) -> ey
     println!("step3: bob fulfilled with uid {}", fulfillment_uid);
     // Step 3. Bob asks Charlie to arbitrate his fulfillment.
     // Pass the inner data field (not the full encoded DemandData) because
-    // TrustedOracleArbiter.checkObligation() uses only demand_.data for the decisionKey
+    // TrustedOracleArbiter.check() uses only demand_.data for the decisionKey
     test.bob_client
         .oracle()
         .request_arbitration(fulfillment_uid, charlie_client.address, inner_demand_data)

@@ -158,7 +158,7 @@ describe("Attestation Tests", () => {
     });
   });
 
-  describe("AttestationEscrowObligation2", () => {
+  describe("AttestationReferenceEscrowObligation", () => {
     let testSchemaId: `0x${string}`;
     let preExistingAttestationId: `0x${string}`;
 
@@ -219,7 +219,7 @@ describe("Attestation Tests", () => {
     });
 
     test("testDoObligation", async () => {
-      // This test directly mirrors the Solidity test in AttestationEscrowObligation2Test.sol, lines 95-128
+      // This test directly mirrors the Solidity test in AttestationReferenceEscrowObligationTest.sol, lines 95-128
 
       // Create the obligation data as in Solidity test (lines 99-103)
       const demandData = ("0x" + Buffer.from("test demand").toString("hex")) as `0x${string}`;
@@ -247,7 +247,7 @@ describe("Attestation Tests", () => {
 
       // Get the attestation schema ID - matches line 116
       const schemaId = (await testClient.readContract({
-        address: testContext.addresses.attestationEscrowObligation2,
+        address: testContext.addresses.attestationReferenceEscrowObligation,
         abi: parseAbi(["function ATTESTATION_SCHEMA() view returns (bytes32)"]),
         functionName: "ATTESTATION_SCHEMA",
         args: [],
@@ -270,7 +270,7 @@ describe("Attestation Tests", () => {
     });
 
     test("testCollectEscrow", async () => {
-      // This test directly mirrors the Solidity test in AttestationEscrowObligation2Test.sol - lines 164-214
+      // This test directly mirrors the Solidity test in AttestationReferenceEscrowObligationTest.sol - lines 164-214
 
       // Setup: create an escrow with the accepting TrivialArbiter - lines 166-177
 
@@ -319,7 +319,7 @@ describe("Attestation Tests", () => {
 
       // Get the validation schema ID from the obligation contract - line 196-199
       const validationSchemaId = (await testClient.readContract({
-        address: testContext.addresses.attestationEscrowObligation2,
+        address: testContext.addresses.attestationReferenceEscrowObligation,
         abi: parseAbi(["function VALIDATION_SCHEMA() view returns (bytes32)"]),
         functionName: "VALIDATION_SCHEMA",
         args: [],

@@ -98,7 +98,7 @@ impl<'a> Default<'a> {
             );
 
         let receipt = escrow_contract
-            .collectEscrow(buy_attestation, fulfillment)
+            .collect(buy_attestation, fulfillment)
             .send()
             .await?
             .get_receipt()

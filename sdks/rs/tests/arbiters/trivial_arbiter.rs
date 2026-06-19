@@ -28,7 +28,7 @@ async fn test_trivial_arbiter_always_returns_true() -> eyre::Result<()> {
     );
 
     let result = trivial_arbiter
-        .checkObligation(attestation.clone().into(), demand.clone(), counteroffer)
+        .check(attestation.clone().into(), demand.clone(), counteroffer)
         .call()
         .await?;
 
@@ -51,7 +51,7 @@ async fn test_trivial_arbiter_always_returns_true() -> eyre::Result<()> {
     let counteroffer2 = FixedBytes::<32>::from_slice(&[42u8; 32]);
 
     let result2 = trivial_arbiter
-        .checkObligation(attestation2.into(), demand2, counteroffer2)
+        .check(attestation2.into(), demand2, counteroffer2)
         .call()
         .await?;
 

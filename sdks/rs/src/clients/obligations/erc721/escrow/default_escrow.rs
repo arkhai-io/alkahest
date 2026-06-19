@@ -107,7 +107,7 @@ impl<'a> Default<'a> {
             );
 
         let receipt = escrow_contract
-            .collectEscrow(buy_attestation, fulfillment)
+            .collect(buy_attestation, fulfillment)
             .send()
             .await?
             .get_receipt()
@@ -128,7 +128,7 @@ impl<'a> Default<'a> {
             );
 
         let receipt = escrow_contract
-            .reclaimExpired(buy_attestation)
+            .reclaim(buy_attestation)
             .send()
             .await?
             .get_receipt()

@@ -33,7 +33,7 @@ describe("Demand Parsing and Static Codecs", () => {
 
     attestationBarterUtils: "0x12345678901234567890123456789012345678AB",
     attestationEscrowObligation: "0x12345678901234567890123456789012345678A9",
-    attestationEscrowObligation2: "0x12345678901234567890123456789012345678AA",
+    attestationReferenceEscrowObligation: "0x12345678901234567890123456789012345678AA",
 
     stringObligation: "0x12345678901234567890123456789012345678AC",
     commitRevealObligation: "0x12345678901234567890123456789012345678AD",

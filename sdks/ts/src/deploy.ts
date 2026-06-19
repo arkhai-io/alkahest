@@ -35,7 +35,7 @@ import NonexclusiveUnrevocableConfirmationArbiter from "./contracts/arbiters/con
 
 // Obligations - Escrow
 import AttestationEscrowObligation from "./contracts/obligations/escrow/default/AttestationEscrowObligation.json";
-import AttestationEscrowObligation2 from "./contracts/obligations/escrow/default/AttestationEscrowObligation2.json";
+import AttestationReferenceEscrowObligation from "./contracts/obligations/escrow/default/AttestationReferenceEscrowObligation.json";
 import ERC20EscrowObligation from "./contracts/obligations/escrow/default/ERC20EscrowObligation.json";
 import ERC721EscrowObligation from "./contracts/obligations/escrow/default/ERC721EscrowObligation.json";
 import ERC1155EscrowObligation from "./contracts/obligations/escrow/default/ERC1155EscrowObligation.json";
@@ -171,7 +171,7 @@ export async function deployAlkahest(
     result.nativeTokenEscrowObligation = await deploy(deployFn, NativeTokenEscrowObligation as Artifact, easArgs);
     result.nativeTokenPaymentObligation = await deploy(deployFn, NativeTokenPaymentObligation as Artifact, easArgs);
     result.attestationEscrowObligation = await deploy(deployFn, AttestationEscrowObligation as Artifact, easArgs);
-    result.attestationEscrowObligation2 = await deploy(deployFn, AttestationEscrowObligation2 as Artifact, easArgs);
+    result.attestationReferenceEscrowObligation = await deploy(deployFn, AttestationReferenceEscrowObligation as Artifact, easArgs);
     result.stringObligation = await deploy(deployFn, StringObligation as Artifact, easArgs);
     result.commitRevealObligation = await deploy(deployFn, CommitRevealObligation as Artifact, [
       easAddress,
@@ -226,7 +226,7 @@ export async function deployAlkahest(
     result.attestationBarterUtils = await deploy(deployFn, AttestationBarterUtils as Artifact, [
       easAddress,
       easSrAddress,
-      result.attestationEscrowObligation2,
+      result.attestationReferenceEscrowObligation,
     ]);
   }
 

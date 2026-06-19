@@ -316,7 +316,7 @@ describe("ERC721 Tests", () => {
       await testClient.increaseTime({ seconds: 120 }); // Advance 120 seconds
 
       // Alice collects her expired escrow
-      const reclaimTxHash = await aliceClient.erc721.escrow.default.reclaimExpired(buyAttestation.uid);
+      const reclaimTxHash = await aliceClient.erc721.escrow.default.reclaim(buyAttestation.uid);
 
       // increase block timestamp to index tx
       // await testClient.increaseTime({ seconds: 25 });

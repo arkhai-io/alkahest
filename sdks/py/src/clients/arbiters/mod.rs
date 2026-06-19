@@ -202,23 +202,36 @@ pub struct ERC8004ArbiterDemandData {
     /// Minimum response value (0-100)
     #[pyo3(get)]
     pub min_response: u8,
+    /// Additional validation context bytes.
+    #[pyo3(get)]
+    pub data: Vec<u8>,
 }
 
 #[pymethods]
 impl ERC8004ArbiterDemandData {
     #[new]
-    pub fn new(validation_registry: String, validator_address: String, min_response: u8) -> Self {
+    #[pyo3(signature = (validation_registry, validator_address, min_response, data = Vec::new()))]
+    pub fn new(
+        validation_registry: String,
+        validator_address: String,
+        min_response: u8,
+        data: Vec<u8>,
+    ) -> Self {
         Self {
             validation_registry,
             validator_address,
             min_response,
+            data,
         }
     }
 
     fn __repr__(&self) -> String {
         format!(
-            "ERC8004ArbiterDemandData(validation_registry='{}', validator_address='{}', min_response={})",
-            self.validation_registry, self.validator_address, self.min_response
+            "ERC8004ArbiterDemandData(validation_registry='{}', validator_address='{}', min_response={}, data_len={})",
+            self.validation_registry,
+            self.validator_address,
+            self.min_response,
+            self.data.len()
         )
     }
 
@@ -230,6 +243,7 @@ impl ERC8004ArbiterDemandData {
             validation_registry: format!("{:?}", decoded.validationRegistry),
             validator_address: format!("{:?}", decoded.validatorAddress),
             min_response: decoded.minResponse,
+            data: decoded.data.to_vec(),
         })
     }
 
@@ -248,6 +262,7 @@ impl ERC8004ArbiterDemandData {
             validationRegistry: validation_registry,
             validatorAddress: validator_address,
             minResponse: demand_data.min_response,
+            data: demand_data.data.clone().into(),
         };
         Ok(rust_data.abi_encode())
     }

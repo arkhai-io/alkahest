@@ -238,7 +238,7 @@ export const makeTrustedOracleArbiterClient = (viemClient: ViemClient, addresses
         }
 
         // Decode the full demand to get the inner data
-        // checkObligation computes: keccak256(obligation.uid, demand_.data)
+        // check computes: keccak256(obligation.uid, demand_.data)
         // so arbitrate must use the same inner data
         // Handle empty demand case (contextless arbitration)
         const innerData = awd.demand && awd.demand !== "0x" ? decodeDemand(awd.demand).data : "0x";
@@ -278,7 +278,7 @@ export const makeTrustedOracleArbiterClient = (viemClient: ViemClient, addresses
             if (decisionResult === null) return;
 
             // Decode the full demand to get the inner data
-            // checkObligation computes: keccak256(obligation.uid, demand_.data)
+            // check computes: keccak256(obligation.uid, demand_.data)
             // so arbitrate must use the same inner data
             // Handle empty demand case (contextless arbitration)
             const innerData = demand && demand !== "0x" ? decodeDemand(demand).data : "0x";
@@ -493,7 +493,7 @@ export const makeTrustedOracleArbiterClient = (viemClient: ViemClient, addresses
                 );
 
                 // Decode the full demand to get the inner data
-                // checkObligation computes: keccak256(obligation.uid, demand_.data)
+                // check computes: keccak256(obligation.uid, demand_.data)
                 // so arbitrate must use the same inner data
                 // Handle empty demand case (contextless arbitration)
                 const innerData = demand && demand !== "0x" ? decodeDemand(demand as `0x${string}`).data : "0x";

@@ -84,7 +84,7 @@ async def test_synchronous_offchain_oracle_capitalization_flow(env, alice_client
 
     # Step 3: Bob asks the oracle to arbitrate his fulfillment
     # Pass the inner data field (not the full encoded DemandData) because
-    # TrustedOracleArbiter.checkObligation() uses only demand_.data for the decisionKey
+    # TrustedOracleArbiter.check() uses only demand_.data for the decisionKey
     await bob_client.oracle.request_arbitration(fulfillment_uid, oracle_address, inner_demand_data)
 
     # Step 4: Oracle evaluates with async decision function

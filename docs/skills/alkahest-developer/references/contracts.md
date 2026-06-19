@@ -12,7 +12,7 @@ Each escrow locks assets in a contract until an arbiter validates fulfillment.
 | Native Token | `NativeTokenEscrowObligation` | `amount: uint256`, `arbiter: address`, `demand: bytes` |
 | Token Bundle | `TokenBundleEscrowObligation` | `nativeAmount: uint256`, `erc20Tokens: address[]`, `erc20Amounts: uint256[]`, `erc721Tokens: address[]`, `erc721TokenIds: uint256[]`, `erc1155Tokens: address[]`, `erc1155TokenIds: uint256[]`, `erc1155Amounts: uint256[]`, `arbiter: address`, `demand: bytes` |
 | Attestation (v1) | `AttestationEscrowObligation` | `attestation: AttestationRequest`, `arbiter: address`, `demand: bytes` |
-| Attestation (v2) | `AttestationEscrowObligation2` | `attestation: AttestationRequest`, `arbiter: address`, `demand: bytes` |
+| Attestation (v2) | `AttestationReferenceEscrowObligation` | `attestationUid: bytes32`, `arbiter: address`, `demand: bytes`, `validationExpirationTime: uint64`, `validationRevocable: bool` |
 
 ### Escrow lifecycle
 
@@ -90,7 +90,7 @@ Barter utils combine escrow + payment into atomic single-transaction swaps.
 | TokenBundleBarterUtils | `0x47C033F49D5A1559AC48f27571204a29b8E728b8` |
 | **Attestation** | |
 | AttestationEscrowObligation | `0x9D133Cbd51270a2A410465F82dAFFD6c1C87322D` |
-| AttestationEscrowObligation2 | `0xa076e9ca47f192E6AfB67817608E382074CF0Dcf` |
+| AttestationReferenceEscrowObligation | `0xa076e9ca47f192E6AfB67817608E382074CF0Dcf` |
 | AttestationBarterUtils | `0x84D390BCd90d5f65D14ff66f6860DCa45e776666` |
 | **Fulfillment** | |
 | StringObligation | `0x544873C22A3228798F91a71C4ef7a9bFe96E7CE0` |
@@ -141,7 +141,7 @@ Barter utils combine escrow + payment into atomic single-transaction swaps.
 | TokenBundlePaymentObligation | `0x36Fcf1Ddee838a94B1358285A11e8bbbb90eD9A1` |
 | TokenBundleBarterUtils | `0xA7EacA68Bffc9443eA08fd58633Eeed3f5EE8A92` |
 | AttestationEscrowObligation | `0x6eb7792D821f32914Be75901F1b4269B13Efad2e` |
-| AttestationEscrowObligation2 | `0x1A7c6F951e0a33F4910dbe56a200Eb413AEca17b` |
+| AttestationReferenceEscrowObligation | `0x1A7c6F951e0a33F4910dbe56a200Eb413AEca17b` |
 | AttestationBarterUtils | `0x5E6602F080E9B37267aa52306c699ae54Cd71056` |
 | StringObligation | `0xC51C938f5497be8157DAf8CCc3Eb11Afb8b752C0` |
 | CommitRevealObligation | `0x9fD6D7A3B4e4b5dD75c50F5f16Deba46162127C3` |
@@ -190,7 +190,7 @@ Barter utils combine escrow + payment into atomic single-transaction swaps.
 | TokenBundlePaymentObligation | `0xc1b02efec19a171ecbb7c8ad54b9617e80fdf40f` |
 | TokenBundleBarterUtils | `0xfca2c2df4023a0a418bf354b5bfff1ebfe0520a9` |
 | AttestationEscrowObligation | `0xd59c6c6cb025e76a0a1e706c62a9df38b04694e2` |
-| AttestationEscrowObligation2 | `0xa22b4d9fe7a746d44be1e724bb1a26593bca2c1b` |
+| AttestationReferenceEscrowObligation | `0xa22b4d9fe7a746d44be1e724bb1a26593bca2c1b` |
 | AttestationBarterUtils | `0xcda1e1ea425e31a789feffc8e3d90f839ff49c9f` |
 | StringObligation | `0x66c3f78258823b9b899ab14b11e1dcf978c060d7` |
 | CommitRevealObligation | `0x32889Ee549d61Ed5D14f2D499fCc809a4feC0dD8` |
@@ -239,7 +239,7 @@ Barter utils combine escrow + payment into atomic single-transaction swaps.
 | TokenBundlePaymentObligation | `0x36Fcf1Ddee838a94B1358285A11e8bbbb90eD9A1` |
 | TokenBundleBarterUtils | `0xA7EacA68Bffc9443eA08fd58633Eeed3f5EE8A92` |
 | AttestationEscrowObligation | `0x6eb7792D821f32914Be75901F1b4269B13Efad2e` |
-| AttestationEscrowObligation2 | `0x1A7c6F951e0a33F4910dbe56a200Eb413AEca17b` |
+| AttestationReferenceEscrowObligation | `0x1A7c6F951e0a33F4910dbe56a200Eb413AEca17b` |
 | AttestationBarterUtils | `0x5E6602F080E9B37267aa52306c699ae54Cd71056` |
 | StringObligation | `0xC51C938f5497be8157DAf8CCc3Eb11Afb8b752C0` |
 | CommitRevealObligation | `0x05d9Aa2A6AE38619b864Ff7f87A8f94301ecAB42` |

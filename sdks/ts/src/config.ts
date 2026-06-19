@@ -23,7 +23,7 @@ export const contractAddresses: Record<string, ChainAddresses> = {
 
     attestationBarterUtils: "0x84D390BCd90d5f65D14ff66f6860DCa45e776666",
     attestationEscrowObligation: "0x9D133Cbd51270a2A410465F82dAFFD6c1C87322D",
-    attestationEscrowObligation2: "0xa076e9ca47f192E6AfB67817608E382074CF0Dcf",
+    attestationReferenceEscrowObligation: "0xa076e9ca47f192E6AfB67817608E382074CF0Dcf",
 
     stringObligation: "0x544873C22A3228798F91a71C4ef7a9bFe96E7CE0",
     commitRevealObligation: "0x447b11ce03237f0C674eF7F16c913c3B2e8ef494",
@@ -80,7 +80,7 @@ export const contractAddresses: Record<string, ChainAddresses> = {
 
     attestationBarterUtils: "0x5E6602F080E9B37267aa52306c699ae54Cd71056",
     attestationEscrowObligation: "0x6eb7792D821f32914Be75901F1b4269B13Efad2e",
-    attestationEscrowObligation2: "0x1A7c6F951e0a33F4910dbe56a200Eb413AEca17b",
+    attestationReferenceEscrowObligation: "0x1A7c6F951e0a33F4910dbe56a200Eb413AEca17b",
 
     stringObligation: "0xC51C938f5497be8157DAf8CCc3Eb11Afb8b752C0",
     commitRevealObligation: "0x9fD6D7A3B4e4b5dD75c50F5f16Deba46162127C3",
@@ -137,7 +137,7 @@ export const contractAddresses: Record<string, ChainAddresses> = {
 
     attestationBarterUtils: "0xcda1e1ea425e31a789feffc8e3d90f839ff49c9f",
     attestationEscrowObligation: "0xd59c6c6cb025e76a0a1e706c62a9df38b04694e2",
-    attestationEscrowObligation2: "0xa22b4d9fe7a746d44be1e724bb1a26593bca2c1b",
+    attestationReferenceEscrowObligation: "0xa22b4d9fe7a746d44be1e724bb1a26593bca2c1b",
 
     stringObligation: "0x66c3f78258823b9b899ab14b11e1dcf978c060d7",
     commitRevealObligation: "0x32889Ee549d61Ed5D14f2D499fCc809a4feC0dD8",
@@ -194,7 +194,7 @@ export const contractAddresses: Record<string, ChainAddresses> = {
 
     attestationBarterUtils: "0x5bf1EE1fEC1bC25d20C4537f74bD0909B195DEBd",
     attestationEscrowObligation: "0x5E6602F080E9B37267aa52306c699ae54Cd71056",
-    attestationEscrowObligation2: "0x57D5165F9487F6E7bD6E6a24017FAdadc2b1D7D2",
+    attestationReferenceEscrowObligation: "0x57D5165F9487F6E7bD6E6a24017FAdadc2b1D7D2",
 
     stringObligation: "0xB2c808911E84E80156101983897Da7c80e13cB47",
     commitRevealObligation: "0xb822aA07F55a8B75Ee133ede1f21C4E49DE7952f",
@@ -251,7 +251,7 @@ export const contractAddresses: Record<string, ChainAddresses> = {
 
     attestationBarterUtils: "0x5E6602F080E9B37267aa52306c699ae54Cd71056",
     attestationEscrowObligation: "0x6eb7792D821f32914Be75901F1b4269B13Efad2e",
-    attestationEscrowObligation2: "0x1A7c6F951e0a33F4910dbe56a200Eb413AEca17b",
+    attestationReferenceEscrowObligation: "0x1A7c6F951e0a33F4910dbe56a200Eb413AEca17b",
 
     stringObligation: "0xC51C938f5497be8157DAf8CCc3Eb11Afb8b752C0",
     commitRevealObligation: "0x05d9Aa2A6AE38619b864Ff7f87A8f94301ecAB42",

@@ -776,5 +776,5 @@ export const abi = {
     },
     "version": 1
   },
-  "id": 29
+  "id": 28
 } as const;

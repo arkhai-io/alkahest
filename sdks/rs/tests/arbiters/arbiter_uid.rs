@@ -29,7 +29,7 @@ async fn test_uid_arbiter_with_incorrect_uid() -> eyre::Result<()> {
     );
 
     let result = uid_arbiter
-        .checkObligation(attestation.into(), encoded, FixedBytes::<32>::ZERO)
+        .check(attestation.into(), encoded, FixedBytes::<32>::ZERO)
         .call()
         .await;
 
@@ -65,7 +65,7 @@ async fn test_uid_arbiter_with_correct_uid() -> eyre::Result<()> {
         &test.alice_client.public_provider,
     );
     let result = uid_arbiter
-        .checkObligation(attestation.into(), encoded, FixedBytes::<32>::ZERO)
+        .check(attestation.into(), encoded, FixedBytes::<32>::ZERO)
         .call()
         .await?;
 

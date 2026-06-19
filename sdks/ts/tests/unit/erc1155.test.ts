@@ -471,7 +471,7 @@ describe("ERC1155 Tests", () => {
       await testClient.increaseTime({ seconds: 120 }); // Advance 120 seconds
 
       // Alice collects her expired escrow
-      await aliceClient.erc1155.escrow.default.reclaimExpired(buyAttestation.uid);
+      await aliceClient.erc1155.escrow.default.reclaim(buyAttestation.uid);
 
       // Verify Alice got her tokens back
       const aliceBalance = await testClient.getErc1155Balance(
