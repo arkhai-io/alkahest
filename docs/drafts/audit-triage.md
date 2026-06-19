@@ -170,6 +170,31 @@ Report items:
 ERC-8004 validation request hash is derived from the fulfillment UID and that
 data with `keccak256(abi.encode(uid, data))`.
 
+### analysis(1): Fulfillment Liveness Defaults and Confirmation Existence
+
+Status: fixed for default escrows; explicit escape hatch retained.
+
+Report items:
+
+- `arkhai-io-alkahest-2026-04-13-analysis(1).md`, issue 6.
+- `arkhai-io-alkahest-2026-04-13-analysis(1).md`, confirmation invalid-UID
+  variant.
+- `arkhai-io-alkahest-2026-04-13-analysis(1).md`, warning 11.
+
+Completed across:
+
+- `b78de3accd9ef8655ad978bc31266c30b4530785`
+- `28c5d078b08ff5396936e84951a5fac208ebc662`
+
+Default escrow contracts require the fulfillment attestation to exist, reference
+the escrow, and pass intrinsic liveness checks before calling the configured
+arbiter. The unconditional escrow contracts intentionally omit those default
+checks as the explicit escape hatch for custom arbiter policy.
+
+Confirmation arbiters now reject confirmations for missing fulfillment UIDs at
+confirmation time, preventing irreversible confirmation slots from being
+consumed by nonexistent attestations.
+
 ## Not Issues
 
 ### analysis(1): Example Contracts
