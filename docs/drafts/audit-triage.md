@@ -195,6 +195,23 @@ Confirmation arbiters now reject confirmations for missing fulfillment UIDs at
 confirmation time, preventing irreversible confirmation slots from being
 consumed by nonexistent attestations.
 
+### analysis(1): Token Bundle Unsafe Partial Settlement Authorization
+
+Status: fixed.
+
+Report items:
+
+- `arkhai-io-alkahest-2026-04-13-analysis(1).md`, issue 7.
+- `arkhai-io-alkahest-2026-04-13-analysis(1).md`, atomic push / unsafe
+  partial related variant.
+
+Completed by `0d5a750fdd2c41a682e9f7a3ced6f1b5bc9e3283`.
+
+Token bundle unsafe partial collection and unsafe partial reclaim remain
+available as explicit last-resort escape hatches, but can no longer be triggered
+permissionlessly by third parties. The escrow recipient must opt into the
+destructive partial path.
+
 ## Not Issues
 
 ### analysis(1): Example Contracts
