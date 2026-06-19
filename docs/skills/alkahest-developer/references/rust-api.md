@@ -73,9 +73,9 @@ client
 │   │   ├── get_statement(uid) -> DecodedAttestation<ObligationData>
 │   │   └── decode_statement(bytes) -> ObligationData
 │   ├── barter()
-│   │   ├── pay_erc20_for_erc20(escrow_uid) -> Receipt
-│   │   ├── permit_and_pay_erc20_for_erc20(escrow_uid) -> Receipt
-│   │   ├── pay_erc20_for_erc721(escrow_uid) -> Receipt
+│   │   ├── pay_erc20_and_collect(escrow_uid) -> Receipt
+│   │   ├── permit_and_pay_erc20_and_collect(escrow_uid) -> Receipt
+│   │   ├── pay_erc20_and_collect(escrow_uid) -> Receipt
 │   │   └── ... (more cross-token settlement combinations)
 │   └── util()
 │       └── permit-related helpers

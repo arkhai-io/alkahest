@@ -125,7 +125,7 @@ impl NativeTokenModule {
     /// # Example
     /// ```rust,ignore
     /// let escrow = client.native_token().escrow().default().create(&bid, &demand, expiration).await?;
-    /// client.native_token().barter().pay_native_for_erc20(buy_attestation).await?;
+    /// client.native_token().barter().pay_native_and_collect(buy_attestation).await?;
     /// ```
     pub fn barter(&self) -> barter_utils::BarterUtils<'_> {
         barter_utils::BarterUtils::new(self)

@@ -19,7 +19,7 @@ use crate::error_handling::map_parse_to_pyerr;
 /// Provides access to escrow, payment, and barter APIs via properties:
 /// - `client.native_token.escrow.default.create(...)`
 /// - `client.native_token.payment.pay(...)`
-/// - `client.native_token.barter.pay_native_for_erc20(...)`
+/// - `client.native_token.barter.pay_native_and_collect(...)`
 #[pyclass]
 #[derive(Clone)]
 pub struct NativeTokenClient {
@@ -65,6 +65,41 @@ pub struct PyNativeTokenEscrowObligationData {
     /// uint256 amount represented as a decimal string to avoid loss of precision.
     #[pyo3(get)]
     pub amount: String,
+}
+
+#[pyclass]
+#[derive(Clone)]
+pub struct PyNativeTokenPaymentObligationData {
+    #[pyo3(get)]
+    pub amount: String,
+    #[pyo3(get)]
+    pub payee: String,
+}
+
+#[pymethods]
+impl PyNativeTokenPaymentObligationData {
+    #[new]
+    pub fn new(amount: String, payee: String) -> Self {
+        Self { amount, payee }
+    }
+
+    #[staticmethod]
+    pub fn encode(obligation: &PyNativeTokenPaymentObligationData) -> PyResult<Vec<u8>> {
+        use alkahest_rs::contracts::obligations::NativeTokenPaymentObligation;
+        use alloy::{
+            primitives::{Address, U256},
+            sol_types::SolValue,
+        };
+
+        let amount: U256 = obligation.amount.parse().map_err(map_parse_to_pyerr)?;
+        let payee: Address = obligation.payee.parse().map_err(map_parse_to_pyerr)?;
+
+        Ok(NativeTokenPaymentObligation::ObligationData { amount, payee }.abi_encode())
+    }
+
+    pub fn encode_self(&self) -> PyResult<Vec<u8>> {
+        PyNativeTokenPaymentObligationData::encode(self)
+    }
 }
 
 #[pymethods]

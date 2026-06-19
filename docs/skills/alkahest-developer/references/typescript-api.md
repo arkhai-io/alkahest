@@ -136,10 +136,10 @@ client
 │   │   └── doObligation(encodedData, refUID?)
 │   └── barter
 │       ├── address
-│       ├── payErc20ForErc20(escrowUid)
-│       ├── permitAndPayErc20ForErc20(escrowUid)
-│       ├── payErc20ForErc721(escrowUid)
-│       ├── payErc721ForErc20(escrowUid)
+│       ├── payErc20AndCollect(escrowUid)
+│       ├── permitAndPayErc20AndCollect(escrowUid)
+│       ├── payErc20AndCollect(escrowUid)
+│       ├── payErc721AndCollect(escrowUid)
 │       └── ... (more cross-token settlement combinations)
 │
 ├── erc721                                 // Same structure as erc20

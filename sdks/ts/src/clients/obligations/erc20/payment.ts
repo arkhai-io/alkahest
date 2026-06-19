@@ -1,6 +1,6 @@
 import { decodeAbiParameters, encodeAbiParameters, getAbiItem } from "viem";
 import { abi as erc20PaymentAbi } from "../../../contracts/obligations/payment/ERC20PaymentObligation";
-import { abi as erc20BarterUtilsAbi } from "../../../contracts/utils/ERC20BarterUtils";
+import { abi as atomicPaymentUtilsAbi } from "../../../contracts/utils/AtomicPaymentUtils";
 import type { Erc20 } from "../../../types";
 import { getAttestation, getAttestedEventFromTxHash, type ViemClient, writeContract } from "../../../utils";
 import type { Erc20Addresses } from "./index";
@@ -149,7 +149,7 @@ export const makeErc20PaymentClient = (viemClient: ViemClient, addresses: Erc20A
 
       const hash = await writeContract(viemClient, {
         address: addresses.barterUtils,
-        abi: erc20BarterUtilsAbi.abi,
+        abi: atomicPaymentUtilsAbi.abi,
         functionName: "permitAndPayWithErc20",
         args: [price.address, price.value, payee, refUID, deadline, permit.v, permit.r, permit.s],
       });

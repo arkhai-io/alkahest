@@ -5,31 +5,27 @@ import "forge-std/Script.sol";
 import {IEAS} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {EASDeployer} from "test/utils/EASDeployer.sol";
+import {AtomicPaymentUtils} from "@src/utils/barter/AtomicPaymentUtils.sol";
 
 // ERC20 Contracts
 import {ERC20EscrowObligation} from "@src/obligations/escrow/default/ERC20EscrowObligation.sol";
 import {ERC20PaymentObligation} from "@src/obligations/payment/ERC20PaymentObligation.sol";
-import {ERC20BarterUtils} from "@src/utils/barter/ERC20BarterUtils.sol";
 
 // ERC721 Contracts
 import {ERC721EscrowObligation} from "@src/obligations/escrow/default/ERC721EscrowObligation.sol";
 import {ERC721PaymentObligation} from "@src/obligations/payment/ERC721PaymentObligation.sol";
-import {ERC721BarterUtils} from "@src/utils/barter/ERC721BarterUtils.sol";
 
 // ERC1155 Contracts
 import {ERC1155EscrowObligation} from "@src/obligations/escrow/default/ERC1155EscrowObligation.sol";
 import {ERC1155PaymentObligation} from "@src/obligations/payment/ERC1155PaymentObligation.sol";
-import {ERC1155BarterUtils} from "@src/utils/barter/ERC1155BarterUtils.sol";
 
 // TokenBundle Contracts
 import {TokenBundleEscrowObligation} from "@src/obligations/escrow/default/TokenBundleEscrowObligation.sol";
 import {TokenBundlePaymentObligation} from "@src/obligations/payment/TokenBundlePaymentObligation.sol";
-import {TokenBundleBarterUtils} from "@src/utils/barter/TokenBundleBarterUtils.sol";
 
 // Native Token Contracts
 import {NativeTokenEscrowObligation} from "@src/obligations/escrow/default/NativeTokenEscrowObligation.sol";
 import {NativeTokenPaymentObligation} from "@src/obligations/payment/NativeTokenPaymentObligation.sol";
-import {NativeTokenBarterUtils} from "@src/utils/barter/NativeTokenBarterUtils.sol";
 
 // Attestation Contracts
 import {AttestationEscrowObligation} from "@src/obligations/escrow/default/AttestationEscrowObligation.sol";
@@ -180,41 +176,24 @@ contract Deploy is Script {
             new ERC20EscrowObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
         ERC20PaymentObligation erc20Payment =
             new ERC20PaymentObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
-        // ERC20BarterUtils erc20BarterUtils = new ERC20BarterUtils(
-        //     IEAS(easAddress),
-        //     erc20Escrow,
-        //     erc20Payment
-        // );
 
         // Deploy ERC721 contracts
         ERC721EscrowObligation erc721Escrow =
             new ERC721EscrowObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
         ERC721PaymentObligation erc721Payment =
             new ERC721PaymentObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
-        // ERC721BarterUtils erc721BarterUtils = new ERC721BarterUtils(
-        //     IEAS(easAddress),
-        //     erc721Escrow,
-        //     erc721Payment
-        // );
 
         // Deploy ERC1155 contracts
         ERC1155EscrowObligation erc1155Escrow =
             new ERC1155EscrowObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
         ERC1155PaymentObligation erc1155Payment =
             new ERC1155PaymentObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
-        // ERC1155BarterUtils erc1155BarterUtils = new ERC1155BarterUtils(
-        //     IEAS(easAddress),
-        //     erc1155Escrow,
-        //     erc1155Payment
-        // );
 
         // Deploy TokenBundle contracts
         TokenBundleEscrowObligation bundleEscrow =
             new TokenBundleEscrowObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
         TokenBundlePaymentObligation bundlePayment =
             new TokenBundlePaymentObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
-        TokenBundleBarterUtils bundleBarterUtils =
-            new TokenBundleBarterUtils(IEAS(easAddress), bundleEscrow, bundlePayment);
 
         // Deploy Native Token contracts
         NativeTokenEscrowObligation nativeEscrow =
@@ -222,61 +201,14 @@ contract Deploy is Script {
         NativeTokenPaymentObligation nativePayment =
             new NativeTokenPaymentObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
 
-        // Deploy barter utils contracts
-        ERC20BarterUtils erc20BarterUtils = new ERC20BarterUtils(
+        // Deploy atomic payment utility contract
+        AtomicPaymentUtils atomicPaymentUtils = new AtomicPaymentUtils(
             IEAS(easAddress),
-            erc20Escrow,
             erc20Payment,
-            erc721Escrow,
             erc721Payment,
-            erc1155Escrow,
             erc1155Payment,
-            bundleEscrow,
-            bundlePayment,
-            nativeEscrow,
-            nativePayment
-        );
-
-        ERC721BarterUtils erc721BarterUtils = new ERC721BarterUtils(
-            IEAS(easAddress),
-            erc20Escrow,
-            erc20Payment,
-            erc721Escrow,
-            erc721Payment,
-            erc1155Escrow,
-            erc1155Payment,
-            bundleEscrow,
-            bundlePayment,
-            nativeEscrow,
-            nativePayment
-        );
-
-        ERC1155BarterUtils erc1155BarterUtils = new ERC1155BarterUtils(
-            IEAS(easAddress),
-            erc20Escrow,
-            erc20Payment,
-            erc721Escrow,
-            erc721Payment,
-            erc1155Escrow,
-            erc1155Payment,
-            bundleEscrow,
-            bundlePayment,
-            nativeEscrow,
-            nativePayment
-        );
-
-        NativeTokenBarterUtils nativeBarterUtils = new NativeTokenBarterUtils(
-            IEAS(easAddress),
-            erc20Escrow,
-            erc20Payment,
-            erc721Escrow,
-            erc721Payment,
-            erc1155Escrow,
-            erc1155Payment,
-            bundleEscrow,
-            bundlePayment,
-            nativeEscrow,
-            nativePayment
+            nativePayment,
+            bundlePayment
         );
 
         // Deploy attestation barter contracts
@@ -336,27 +268,25 @@ contract Deploy is Script {
         console.log("\nERC20 Contracts:");
         console.log("ERC20EscrowObligation:", address(erc20Escrow));
         console.log("ERC20PaymentObligation:", address(erc20Payment));
-        console.log("ERC20BarterUtils:", address(erc20BarterUtils));
 
         console.log("\nERC721 Contracts:");
         console.log("ERC721EscrowObligation:", address(erc721Escrow));
         console.log("ERC721PaymentObligation:", address(erc721Payment));
-        console.log("ERC721BarterUtils:", address(erc721BarterUtils));
 
         console.log("\nERC1155 Contracts:");
         console.log("ERC1155EscrowObligation:", address(erc1155Escrow));
         console.log("ERC1155PaymentObligation:", address(erc1155Payment));
-        console.log("ERC1155BarterUtils:", address(erc1155BarterUtils));
 
         console.log("\nTokenBundle Contracts:");
         console.log("TokenBundleEscrowObligation:", address(bundleEscrow));
         console.log("TokenBundlePaymentObligation:", address(bundlePayment));
-        console.log("TokenBundleBarterUtils:", address(bundleBarterUtils));
 
         console.log("\nNative Token Contracts:");
         console.log("NativeTokenEscrowObligation:", address(nativeEscrow));
         console.log("NativeTokenPaymentObligation:", address(nativePayment));
-        console.log("NativeTokenBarterUtils:", address(nativeBarterUtils));
+
+        console.log("\nPayment Utility Contracts:");
+        console.log("AtomicPaymentUtils:", address(atomicPaymentUtils));
 
         console.log("\nAttestation Barter Contracts:");
         console.log("AttestationEscrowObligation:", address(attestationEscrow));
@@ -443,13 +373,13 @@ contract Deploy is Script {
         // Add TokenBundle addresses
         vm.serializeAddress(deploymentJson, "tokenBundleEscrowObligation", address(bundleEscrow));
         vm.serializeAddress(deploymentJson, "tokenBundlePaymentObligation", address(bundlePayment));
-        vm.serializeAddress(deploymentJson, "tokenBundleBarterUtils", address(bundleBarterUtils));
 
-        // Add BarterUtils addresses (using CrossToken contracts)
-        vm.serializeAddress(deploymentJson, "erc20BarterUtils", address(erc20BarterUtils));
-        vm.serializeAddress(deploymentJson, "erc721BarterUtils", address(erc721BarterUtils));
-        vm.serializeAddress(deploymentJson, "erc1155BarterUtils", address(erc1155BarterUtils));
-        vm.serializeAddress(deploymentJson, "nativeTokenBarterUtils", address(nativeBarterUtils));
+        // Add atomic payment utility address under existing config keys.
+        vm.serializeAddress(deploymentJson, "erc20BarterUtils", address(atomicPaymentUtils));
+        vm.serializeAddress(deploymentJson, "erc721BarterUtils", address(atomicPaymentUtils));
+        vm.serializeAddress(deploymentJson, "erc1155BarterUtils", address(atomicPaymentUtils));
+        vm.serializeAddress(deploymentJson, "tokenBundleBarterUtils", address(atomicPaymentUtils));
+        vm.serializeAddress(deploymentJson, "nativeTokenBarterUtils", address(atomicPaymentUtils));
 
         // Add Native Token addresses
         vm.serializeAddress(deploymentJson, "nativeTokenEscrowObligation", address(nativeEscrow));

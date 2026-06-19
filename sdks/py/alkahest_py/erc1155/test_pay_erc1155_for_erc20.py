@@ -1,11 +1,12 @@
 import pytest
 from alkahest_py import EnvTestManager, MockERC1155, MockERC20
+from alkahest_py.barter_helpers import create_erc20_escrow, erc1155_payment_demand
 
 @pytest.mark.asyncio
-async def test_pay_erc1155_for_erc20(env, alice_client, bob_client):
+async def test_pay_erc1155_and_collect(env, alice_client, bob_client):
     """
     Test using ERC1155 to fulfill ERC20 escrow.
-    This corresponds to test_pay_erc1155_for_erc20() in main.rs
+    This corresponds to test_pay_erc1155_and_collect() in main.rs
     
     Flow: 
     1. Mint ERC1155 tokens to Alice and ERC20 tokens to Bob
@@ -42,7 +43,7 @@ async def test_pay_erc1155_for_erc20(env, alice_client, bob_client):
     # Bob approves tokens for escrow and creates buy attestation
     await bob_client.erc20.util.approve(bid_data, "barter")
 
-    buy_result = await bob_client.erc20.barter.buy_erc1155_for_erc20(bid_data, ask_data, 0)
+    buy_result = await create_erc20_escrow(bob_client, bid_data, erc1155_payment_demand(env, ask_data, env.bob), 0)
     buy_attestation_uid = buy_result['log']['uid']
     
     # Alice approves her ERC1155 tokens for payment
@@ -53,7 +54,7 @@ async def test_pay_erc1155_for_erc20(env, alice_client, bob_client):
     initial_bob_erc1155_balance = mock_erc1155_a.balance_of(env.bob, 1)
     
     # Alice fulfills Bob's buy attestation with her ERC1155
-    pay_result = await alice_client.erc1155.barter.pay_erc1155_for_erc20(buy_attestation_uid)
+    pay_result = await alice_client.erc1155.barter.pay_erc1155_and_collect(buy_attestation_uid)
     
     assert pay_result['log']['uid'] and pay_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid payment attestation UID"
     

@@ -57,10 +57,7 @@ use crate::{
                 UnconditionalTokenBundleEscrowObligation,
             },
         },
-        utils::{
-            AttestationBarterUtils, ERC20BarterUtils, ERC721BarterUtils, ERC1155BarterUtils,
-            NativeTokenBarterUtils, TokenBundleBarterUtils,
-        },
+        utils::{AtomicPaymentUtils, AttestationBarterUtils},
     },
     fixtures::{EAS, MockERC20Permit, MockERC721, MockERC1155, SchemaRegistry},
     types::{PublicProvider, WalletProvider},
@@ -492,71 +489,14 @@ async fn build_shared_env() -> eyre::Result<SharedTestEnv> {
         schema_registry.address().clone(),
     )
     .await?;
-    let bundle_barter_utils = TokenBundleBarterUtils::deploy(
+    let atomic_payment_utils = AtomicPaymentUtils::deploy(
         &god_provider,
         eas.address().clone(),
-        bundle_escrow_obligation.address().clone(),
-        bundle_payment_obligation.address().clone(),
-    )
-    .await?;
-    let erc20_barter_utils = ERC20BarterUtils::deploy(
-        &god_provider,
-        eas.address().clone(),
-        erc20_escrow_obligation.address().clone(),
         erc20_payment_obligation.address().clone(),
-        erc721_escrow_obligation.address().clone(),
         erc721_payment_obligation.address().clone(),
-        erc1155_escrow_obligation.address().clone(),
         erc1155_payment_obligation.address().clone(),
-        bundle_escrow_obligation.address().clone(),
-        bundle_payment_obligation.address().clone(),
-        native_token_escrow_obligation.address().clone(),
         native_token_payment_obligation.address().clone(),
-    )
-    .await?;
-    let erc721_barter_utils = ERC721BarterUtils::deploy(
-        &god_provider,
-        eas.address().clone(),
-        erc20_escrow_obligation.address().clone(),
-        erc20_payment_obligation.address().clone(),
-        erc721_escrow_obligation.address().clone(),
-        erc721_payment_obligation.address().clone(),
-        erc1155_escrow_obligation.address().clone(),
-        erc1155_payment_obligation.address().clone(),
-        bundle_escrow_obligation.address().clone(),
         bundle_payment_obligation.address().clone(),
-        native_token_escrow_obligation.address().clone(),
-        native_token_payment_obligation.address().clone(),
-    )
-    .await?;
-    let erc1155_barter_utils = ERC1155BarterUtils::deploy(
-        &god_provider,
-        eas.address().clone(),
-        erc20_escrow_obligation.address().clone(),
-        erc20_payment_obligation.address().clone(),
-        erc721_escrow_obligation.address().clone(),
-        erc721_payment_obligation.address().clone(),
-        erc1155_escrow_obligation.address().clone(),
-        erc1155_payment_obligation.address().clone(),
-        bundle_escrow_obligation.address().clone(),
-        bundle_payment_obligation.address().clone(),
-        native_token_escrow_obligation.address().clone(),
-        native_token_payment_obligation.address().clone(),
-    )
-    .await?;
-    let native_token_barter_utils = NativeTokenBarterUtils::deploy(
-        &god_provider,
-        eas.address().clone(),
-        erc20_escrow_obligation.address().clone(),
-        erc20_payment_obligation.address().clone(),
-        erc721_escrow_obligation.address().clone(),
-        erc721_payment_obligation.address().clone(),
-        erc1155_escrow_obligation.address().clone(),
-        erc1155_payment_obligation.address().clone(),
-        bundle_escrow_obligation.address().clone(),
-        bundle_payment_obligation.address().clone(),
-        native_token_escrow_obligation.address().clone(),
-        native_token_payment_obligation.address().clone(),
     )
     .await?;
 
@@ -610,7 +550,7 @@ async fn build_shared_env() -> eyre::Result<SharedTestEnv> {
         },
         erc20_addresses: Erc20Addresses {
             eas: eas.address().clone(),
-            barter_utils: erc20_barter_utils.address().clone(),
+            barter_utils: atomic_payment_utils.address().clone(),
             escrow_obligation_default: erc20_escrow_obligation.address().clone(),
             escrow_obligation_unconditional: unconditional_erc20_escrow_obligation
                 .address()
@@ -619,7 +559,7 @@ async fn build_shared_env() -> eyre::Result<SharedTestEnv> {
         },
         erc721_addresses: Erc721Addresses {
             eas: eas.address().clone(),
-            barter_utils: erc721_barter_utils.address().clone(),
+            barter_utils: atomic_payment_utils.address().clone(),
             escrow_obligation_default: erc721_escrow_obligation.address().clone(),
             escrow_obligation_unconditional: unconditional_erc721_escrow_obligation
                 .address()
@@ -628,7 +568,7 @@ async fn build_shared_env() -> eyre::Result<SharedTestEnv> {
         },
         erc1155_addresses: Erc1155Addresses {
             eas: eas.address().clone(),
-            barter_utils: erc1155_barter_utils.address().clone(),
+            barter_utils: atomic_payment_utils.address().clone(),
             escrow_obligation_default: erc1155_escrow_obligation.address().clone(),
             escrow_obligation_unconditional: unconditional_erc1155_escrow_obligation
                 .address()
@@ -637,7 +577,7 @@ async fn build_shared_env() -> eyre::Result<SharedTestEnv> {
         },
         native_token_addresses: NativeTokenAddresses {
             eas: eas.address().clone(),
-            barter_utils: native_token_barter_utils.address().clone(),
+            barter_utils: atomic_payment_utils.address().clone(),
             escrow_obligation_default: native_token_escrow_obligation.address().clone(),
             escrow_obligation_unconditional: unconditional_native_token_escrow_obligation
                 .address()
@@ -646,7 +586,7 @@ async fn build_shared_env() -> eyre::Result<SharedTestEnv> {
         },
         token_bundle_addresses: TokenBundleAddresses {
             eas: eas.address().clone(),
-            barter_utils: bundle_barter_utils.address().clone(),
+            barter_utils: atomic_payment_utils.address().clone(),
             escrow_obligation_default: bundle_escrow_obligation.address().clone(),
             escrow_obligation_unconditional: unconditional_bundle_escrow_obligation
                 .address()

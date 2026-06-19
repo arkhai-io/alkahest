@@ -243,7 +243,7 @@ impl TokenBundleModule {
     /// # Example
     /// ```rust,ignore
     /// let escrow = client.token_bundle().escrow().default().create(&bid, &demand, expiration).await?;
-    /// client.token_bundle().barter().pay_bundle_for_bundle(buy_attestation).await?;
+    /// client.token_bundle().barter().pay_bundle_and_collect(buy_attestation).await?;
     /// ```
     pub fn barter(&self) -> barter_utils::BarterUtils<'_> {
         barter_utils::BarterUtils::new(self)
@@ -313,7 +313,7 @@ mod tests {
 
         ArbiterData {
             arbiter,
-            demand: demand.abi_encode().into(),
+            demand: demand.into(),
         }
     }
 
@@ -533,7 +533,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_pay_bundle_for_bundle() -> eyre::Result<()> {
+    async fn test_pay_bundle_and_collect() -> eyre::Result<()> {
         // Test setup
         let test = setup_test_environment().await?;
 
@@ -616,7 +616,7 @@ mod tests {
                 &bob_bundle,
                 &ArbiterData {
                     arbiter: test.addresses.token_bundle_addresses.payment_obligation,
-                    demand: payment_obligation.abi_encode().into(),
+                    demand: payment_obligation.into(),
                 },
                 expiration,
             )
@@ -651,7 +651,7 @@ mod tests {
             .alice_client
             .token_bundle()
             .barter()
-            .pay_bundle_for_bundle(buy_attestation)
+            .pay_bundle_and_collect(buy_attestation)
             .await?;
 
         // Verify payment attestation was created

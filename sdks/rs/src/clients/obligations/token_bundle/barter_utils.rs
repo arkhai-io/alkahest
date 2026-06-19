@@ -1,7 +1,4 @@
-//! Token bundle barter utilities.
-//!
-//! These helpers settle existing escrows atomically by paying with token
-//! bundles. Create escrows through the token bundle escrow client.
+//! Token bundle atomic payment utilities.
 
 use alloy::primitives::FixedBytes;
 use alloy::rpc::types::TransactionReceipt;
@@ -10,7 +7,6 @@ use crate::contracts;
 
 use super::TokenBundleModule;
 
-/// Barter utilities API for token bundle payments.
 pub struct BarterUtils<'a> {
     module: &'a TokenBundleModule,
 }
@@ -20,22 +16,20 @@ impl<'a> BarterUtils<'a> {
         Self { module }
     }
 
-    pub async fn pay_bundle_for_bundle(
+    pub async fn pay_bundle_and_collect(
         &self,
-        buy_attestation: FixedBytes<32>,
+        escrow_uid: FixedBytes<32>,
     ) -> eyre::Result<TransactionReceipt> {
-        let barter_utils_contract = contracts::utils::TokenBundleBarterUtils::new(
+        let utility = contracts::utils::AtomicPaymentUtils::new(
             self.module.addresses.barter_utils,
             &self.module.wallet_provider,
         );
 
-        let receipt = barter_utils_contract
-            .payBundleForBundle(buy_attestation)
+        Ok(utility
+            .payBundleAndCollect(escrow_uid)
             .send()
             .await?
             .get_receipt()
-            .await?;
-
-        Ok(receipt)
+            .await?)
     }
 }

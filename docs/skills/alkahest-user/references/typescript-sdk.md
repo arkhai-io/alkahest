@@ -89,7 +89,7 @@ await client.arbiters.general.trustedOracle.arbitrate(
 ### Settling a token-for-token escrow
 
 ```typescript
-const { hash } = await client.erc20.barter.payErc20ForErc20(escrowUid);
+const { hash } = await client.erc20.barter.payErc20AndCollect(escrowUid);
 ```
 
 ## Oracle Workflow: Arbitrate

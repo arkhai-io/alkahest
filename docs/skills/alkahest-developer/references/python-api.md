@@ -61,9 +61,9 @@ client
 │   │   ├── approve_and_pay(token, amount, payee, ...) -> str (uid)
 │   │   └── get(uid) -> PyDecodedAttestation
 │   └── barter
-│       ├── pay_erc20_for_erc20(escrow_uid)
-│       ├── permit_and_pay_erc20_for_erc20(escrow_uid)
-│       ├── pay_erc20_for_erc721(escrow_uid)
+│       ├── pay_erc20_and_collect(escrow_uid)
+│       ├── permit_and_pay_erc20_and_collect(escrow_uid)
+│       ├── pay_erc20_and_collect(escrow_uid)
 │       └── ... (other cross-token settlement combinations)
 │
 ├── erc721                            # Same structure as erc20

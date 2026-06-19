@@ -23,7 +23,7 @@ impl BarterUtils {
 
 #[pymethods]
 impl BarterUtils {
-    pub fn pay_bundle_for_bundle<'py>(
+    pub fn pay_bundle_and_collect<'py>(
         &self,
         py: pyo3::Python<'py>,
         buy_attestation: String,
@@ -32,7 +32,7 @@ impl BarterUtils {
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let receipt = inner
                 .barter()
-                .pay_bundle_for_bundle(buy_attestation.parse().map_err(map_parse_to_pyerr)?)
+                .pay_bundle_and_collect(buy_attestation.parse().map_err(map_parse_to_pyerr)?)
                 .await
                 .map_err(map_eyre_to_pyerr)?;
             Ok(LogWithHash::<AttestedLog> {

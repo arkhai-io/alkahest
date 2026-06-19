@@ -2,10 +2,10 @@ import pytest
 from alkahest_py import EnvTestManager, MockERC20, MockERC721, MockERC1155, ERC20PaymentObligationData
 
 @pytest.mark.asyncio
-async def test_pay_erc20_for_bundle(env, alice_client, bob_client):
+async def test_pay_erc20_and_collect(env, alice_client, bob_client):
     """
     Test paying ERC20 tokens to fulfill a token bundle escrow.
-    This corresponds to test_pay_erc20_for_bundle() in main.rs
+    This corresponds to test_pay_erc20_and_collect() in main.rs
     
     Flow: Bob escrows a bundle (ERC20 + ERC721 + ERC1155), Alice pays ERC20 to get the bundle
     """
@@ -84,7 +84,7 @@ async def test_pay_erc20_for_bundle(env, alice_client, bob_client):
     await alice_client.erc20.util.approve(erc20_data, "barter")
     
     # Step 4: Alice fulfills Bob's bundle escrow
-    pay_result = await alice_client.erc20.barter.pay_erc20_for_bundle(buy_attestation_uid)
+    pay_result = await alice_client.erc20.barter.pay_erc20_and_collect(buy_attestation_uid)
     
     assert pay_result['log']['uid'] and pay_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid payment attestation UID"
     

@@ -1,6 +1,7 @@
 import pytest
 import time
 from alkahest_py import EnvTestManager, MockERC1155
+from alkahest_py.barter_helpers import create_erc1155_escrow, erc1155_payment_demand
 
 @pytest.mark.asyncio
 async def test_erc1155_reclaim_expired(env, alice_client):
@@ -37,14 +38,14 @@ async def test_erc1155_reclaim_expired(env, alice_client):
     }
     
     # Alice approves tokens for barter (since we use barter.buy_erc1155_for_erc1155)
-    await alice_client.erc1155.util.approve_all(env.mock_addresses.erc1155_a, "barter")
+    await alice_client.erc1155.util.approve_all(env.mock_addresses.erc1155_a, "escrow")
     
     # Check initial balance
     initial_alice_balance = mock_erc1155_a.balance_of(env.alice, 1)
 
     # Alice makes escrow with a short expiration (current time + 15 second)
     expiration = int(time.time()) + 15
-    buy_result = await alice_client.erc1155.barter.buy_erc1155_for_erc1155(bid_data, ask_data, expiration)
+    buy_result = await create_erc1155_escrow(alice_client, bid_data, erc1155_payment_demand(env, ask_data, env.alice), expiration)
     
     assert buy_result['log']['uid'] and buy_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid buy attestation UID"
     

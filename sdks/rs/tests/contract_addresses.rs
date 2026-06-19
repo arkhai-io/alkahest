@@ -143,7 +143,7 @@ async fn test_contract_instance_creation() -> Result<()> {
     // Similarly for other contract types
     let barter_addr = client.erc721_address(Erc721Contract::BarterUtils);
     let barter_contract =
-        contracts::utils::ERC721BarterUtils::new(barter_addr, client.wallet_provider.clone());
+        contracts::utils::AtomicPaymentUtils::new(barter_addr, client.wallet_provider.clone());
 
     assert_eq!(*barter_contract.address(), barter_addr);
 

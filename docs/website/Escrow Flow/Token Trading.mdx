@@ -719,7 +719,7 @@ bytes32 escrowUid = erc20Escrow.doObligation(
 
 // Bob: Fulfill escrow offering ERC-721 for ERC-20
 IERC721(erc721Token).approve(address(erc721BarterUtils), 42);
-bytes32 paymentUid = erc721BarterUtils.payErc721ForErc20(escrowUid);
+bytes32 paymentUid = erc721BarterUtils.payErc721AndCollect(escrowUid);
 
 // ERC-20 permit settlement remains available when the fulfiller pays with ERC-20.
 ```
@@ -737,7 +737,7 @@ const { hash, attested } = await aliceClient.erc20.escrow.default.approveAndCrea
 
 // Bob: Approve and fulfill escrow offering ERC-721 for ERC-20
 await bobClient.erc721.util.approve({ address: erc721Token, id: 42n }, "barter");
-const payment = await bobClient.erc721.barter.payErc721ForErc20(attested.uid);
+const payment = await bobClient.erc721.barter.payErc721AndCollect(attested.uid);
 
 // Can also use direct escrow/payment for custom demands (approveAndCreate combines both steps)
 const escrow = await aliceClient.erc20.escrow.default.approveAndCreate(
@@ -774,7 +774,7 @@ bob_client.erc721().approve(&ask, ApprovalPurpose::BarterUtils).await?;
 let payment_receipt = bob_client
     .erc721()
     .barter()
-    .pay_erc721_for_erc20(escrow_uid)
+    .pay_erc721_and_collect(escrow_uid)
     .await?;
 
 // Can also use direct escrow/payment for custom demands (approve_and_create combines both steps)
@@ -805,7 +805,7 @@ escrow = await alice_client.erc20.escrow.default.approve_and_create(bid, demand,
 
 # Bob: Approve and fulfill escrow offering ERC-721 for ERC-20
 await bob_client.erc721.util.approve(ask, "barter")
-payment = await bob_client.erc721.barter.pay_erc721_for_erc20(escrow["log"]["uid"])
+payment = await bob_client.erc721.barter.pay_erc721_and_collect(escrow["log"]["uid"])
 
 # Example of a complete ERC20-for-ERC20 trade using permit functions
 bid = {"address": usdc_token, "value": 1000}
@@ -815,7 +815,7 @@ ask = {"address": eurc_token, "value": 900}
 escrow = await alice_client.erc20.escrow.default.approve_and_create(bid, demand, 0)
 
 # Bob fulfills escrow (permit handles approval)
-payment = await bob_client.erc20.barter.permit_and_pay_erc20_for_erc20(escrow["log"]["uid"])
+payment = await bob_client.erc20.barter.permit_and_pay_erc20_and_collect(escrow["log"]["uid"])
 
 # Can also use direct escrow/payment for custom demands (approve_and_create combines both steps)
 escrow = await alice_client.erc20.escrow.default.approve_and_create(

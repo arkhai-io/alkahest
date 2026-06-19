@@ -55,11 +55,7 @@ import CommitRevealObligation from "./contracts/obligations/CommitRevealObligati
 
 // Utils
 import AttestationBarterUtils from "./contracts/utils/AttestationBarterUtils.json";
-import ERC20BarterUtils from "./contracts/utils/ERC20BarterUtils.json";
-import ERC721BarterUtils from "./contracts/utils/ERC721BarterUtils.json";
-import ERC1155BarterUtils from "./contracts/utils/ERC1155BarterUtils.json";
-import NativeTokenBarterUtils from "./contracts/utils/NativeTokenBarterUtils.json";
-import TokenBundleBarterUtils from "./contracts/utils/TokenBundleBarterUtils.json";
+import AtomicPaymentUtils from "./contracts/utils/AtomicPaymentUtils.json";
 
 export type DeployFn = (
   abi: any[],
@@ -183,18 +179,13 @@ export async function deployAlkahest(
 
   // 4. Utils
   if (scope === "all" || scope === "utils") {
-    const erc20Escrow = result.erc20EscrowObligation;
     const erc20Payment = result.erc20PaymentObligation;
-    const erc721Escrow = result.erc721EscrowObligation;
     const erc721Payment = result.erc721PaymentObligation;
-    const erc1155Escrow = result.erc1155EscrowObligation;
     const erc1155Payment = result.erc1155PaymentObligation;
-    const bundleEscrow = result.tokenBundleEscrowObligation;
     const bundlePayment = result.tokenBundlePaymentObligation;
-    const nativeEscrow = result.nativeTokenEscrowObligation;
     const nativePayment = result.nativeTokenPaymentObligation;
 
-    if (!erc20Escrow || !erc20Payment) {
+    if (!erc20Payment || !erc721Payment || !erc1155Payment || !nativePayment || !bundlePayment) {
       throw new Error(
         "Cannot deploy utils without obligation addresses. Deploy obligations first or use scope 'all'.",
       );
@@ -202,27 +193,19 @@ export async function deployAlkahest(
 
     const barterArgs = [
       easAddress,
-      erc20Escrow,
       erc20Payment,
-      erc721Escrow,
       erc721Payment,
-      erc1155Escrow,
       erc1155Payment,
-      bundleEscrow,
-      bundlePayment,
-      nativeEscrow,
       nativePayment,
+      bundlePayment,
     ];
 
-    result.erc20BarterUtils = await deploy(deployFn, ERC20BarterUtils as Artifact, barterArgs);
-    result.erc721BarterUtils = await deploy(deployFn, ERC721BarterUtils as Artifact, barterArgs);
-    result.erc1155BarterUtils = await deploy(deployFn, ERC1155BarterUtils as Artifact, barterArgs);
-    result.nativeTokenBarterUtils = await deploy(deployFn, NativeTokenBarterUtils as Artifact, barterArgs);
-    result.tokenBundleBarterUtils = await deploy(deployFn, TokenBundleBarterUtils as Artifact, [
-      easAddress,
-      bundleEscrow,
-      bundlePayment,
-    ]);
+    const atomicPaymentUtils = await deploy(deployFn, AtomicPaymentUtils as Artifact, barterArgs);
+    result.erc20BarterUtils = atomicPaymentUtils;
+    result.erc721BarterUtils = atomicPaymentUtils;
+    result.erc1155BarterUtils = atomicPaymentUtils;
+    result.nativeTokenBarterUtils = atomicPaymentUtils;
+    result.tokenBundleBarterUtils = atomicPaymentUtils;
     result.attestationBarterUtils = await deploy(deployFn, AttestationBarterUtils as Artifact, [
       easAddress,
       easSrAddress,

@@ -450,61 +450,15 @@ pub mod obligations {
 }
 
 // Utils module - mirrors contracts/src/utils/
-// Each barter utils is in its own submodule to avoid naming conflicts
-// from internal types like ObligationData that share names across contracts
 pub mod utils {
-    pub mod erc20 {
+    pub mod atomic_payment {
         use alloy::sol;
         sol!(
             #[allow(missing_docs)]
             #[sol(rpc)]
             #[derive(Debug)]
-            ERC20BarterUtils,
-            "src/contracts/utils/ERC20BarterUtils.json"
-        );
-    }
-
-    pub mod erc721 {
-        use alloy::sol;
-        sol!(
-            #[allow(missing_docs)]
-            #[sol(rpc)]
-            #[derive(Debug)]
-            ERC721BarterUtils,
-            "src/contracts/utils/ERC721BarterUtils.json"
-        );
-    }
-
-    pub mod erc1155 {
-        use alloy::sol;
-        sol!(
-            #[allow(missing_docs)]
-            #[sol(rpc)]
-            #[derive(Debug)]
-            ERC1155BarterUtils,
-            "src/contracts/utils/ERC1155BarterUtils.json"
-        );
-    }
-
-    pub mod token_bundle {
-        use alloy::sol;
-        sol!(
-            #[allow(missing_docs)]
-            #[sol(rpc)]
-            #[derive(Debug)]
-            TokenBundleBarterUtils,
-            "src/contracts/utils/TokenBundleBarterUtils.json"
-        );
-    }
-
-    pub mod native_token {
-        use alloy::sol;
-        sol!(
-            #[allow(missing_docs)]
-            #[sol(rpc)]
-            #[derive(Debug)]
-            NativeTokenBarterUtils,
-            "src/contracts/utils/NativeTokenBarterUtils.json"
+            AtomicPaymentUtils,
+            "src/contracts/utils/AtomicPaymentUtils.json"
         );
     }
 
@@ -520,10 +474,6 @@ pub mod utils {
     }
 
     // Re-export the main contract types for convenience
+    pub use atomic_payment::AtomicPaymentUtils;
     pub use attestation::AttestationBarterUtils;
-    pub use erc20::ERC20BarterUtils;
-    pub use erc721::ERC721BarterUtils;
-    pub use erc1155::ERC1155BarterUtils;
-    pub use native_token::NativeTokenBarterUtils;
-    pub use token_bundle::TokenBundleBarterUtils;
 }

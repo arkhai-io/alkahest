@@ -53,9 +53,9 @@ use crate::{
             erc1155::{PyERC1155EscrowObligationData, PyERC1155PaymentObligationData},
             erc20::{PyERC20EscrowObligationData, PyERC20PaymentObligationData},
             erc721::{PyERC721EscrowObligationData, PyERC721PaymentObligationData},
-            native_token::PyNativeTokenEscrowObligationData,
+            native_token::{PyNativeTokenEscrowObligationData, PyNativeTokenPaymentObligationData},
             string::PyStringObligationData,
-            token_bundle::PyTokenBundleEscrowObligationData,
+            token_bundle::{PyTokenBundleEscrowObligationData, PyTokenBundlePaymentObligationData},
         },
     },
     contract::{
@@ -612,7 +612,9 @@ fn alkahest_py(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyERC1155EscrowObligationData>()?;
     m.add_class::<PyERC1155PaymentObligationData>()?;
     m.add_class::<PyNativeTokenEscrowObligationData>()?;
+    m.add_class::<PyNativeTokenPaymentObligationData>()?;
     m.add_class::<PyTokenBundleEscrowObligationData>()?;
+    m.add_class::<PyTokenBundlePaymentObligationData>()?;
     m.add_class::<PyAttestationEscrowV1ObligationData>()?;
     m.add_class::<PyAttestationEscrowV2ObligationData>()?;
     m.add_class::<PyStringObligationData>()?;

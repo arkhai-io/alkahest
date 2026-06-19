@@ -1,4 +1,4 @@
-//! ERC20 barter utilities.
+//! ERC20 atomic payment utilities.
 
 use alkahest_rs::extensions::Erc20Module;
 use pyo3::{pyclass, pymethods, PyResult};
@@ -23,170 +23,32 @@ impl BarterUtils {
 
 #[pymethods]
 impl BarterUtils {
-    pub fn pay_erc20_for_erc20<'py>(
+    pub fn pay_erc20_and_collect<'py>(
         &self,
         py: pyo3::Python<'py>,
-        buy_attestation: String,
+        escrow_uid: String,
     ) -> PyResult<pyo3::Bound<'py, pyo3::PyAny>> {
         let inner = self.inner.clone();
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let receipt = inner
                 .barter()
-                .pay_erc20_for_erc20(buy_attestation.parse().map_err(map_parse_to_pyerr)?)
+                .pay_erc20_and_collect(escrow_uid.parse().map_err(map_parse_to_pyerr)?)
                 .await
                 .map_err(map_eyre_to_pyerr)?;
             attested_with_hash(receipt)
         })
     }
 
-    pub fn permit_and_pay_erc20_for_erc20<'py>(
+    pub fn permit_and_pay_erc20_and_collect<'py>(
         &self,
         py: pyo3::Python<'py>,
-        buy_attestation: String,
+        escrow_uid: String,
     ) -> PyResult<pyo3::Bound<'py, pyo3::PyAny>> {
         let inner = self.inner.clone();
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let receipt = inner
                 .barter()
-                .permit_and_pay_erc20_for_erc20(
-                    buy_attestation.parse().map_err(map_parse_to_pyerr)?,
-                )
-                .await
-                .map_err(map_eyre_to_pyerr)?;
-            attested_with_hash(receipt)
-        })
-    }
-
-    pub fn pay_erc20_for_erc721<'py>(
-        &self,
-        py: pyo3::Python<'py>,
-        buy_attestation: String,
-    ) -> PyResult<pyo3::Bound<'py, pyo3::PyAny>> {
-        let inner = self.inner.clone();
-        pyo3_async_runtimes::tokio::future_into_py(py, async move {
-            let receipt = inner
-                .barter()
-                .pay_erc20_for_erc721(buy_attestation.parse().map_err(map_parse_to_pyerr)?)
-                .await
-                .map_err(map_eyre_to_pyerr)?;
-            attested_with_hash(receipt)
-        })
-    }
-
-    pub fn permit_and_pay_erc20_for_erc721<'py>(
-        &self,
-        py: pyo3::Python<'py>,
-        buy_attestation: String,
-    ) -> PyResult<pyo3::Bound<'py, pyo3::PyAny>> {
-        let inner = self.inner.clone();
-        pyo3_async_runtimes::tokio::future_into_py(py, async move {
-            let receipt = inner
-                .barter()
-                .permit_and_pay_erc20_for_erc721(
-                    buy_attestation.parse().map_err(map_parse_to_pyerr)?,
-                )
-                .await
-                .map_err(map_eyre_to_pyerr)?;
-            attested_with_hash(receipt)
-        })
-    }
-
-    pub fn pay_erc20_for_erc1155<'py>(
-        &self,
-        py: pyo3::Python<'py>,
-        buy_attestation: String,
-    ) -> PyResult<pyo3::Bound<'py, pyo3::PyAny>> {
-        let inner = self.inner.clone();
-        pyo3_async_runtimes::tokio::future_into_py(py, async move {
-            let receipt = inner
-                .barter()
-                .pay_erc20_for_erc1155(buy_attestation.parse().map_err(map_parse_to_pyerr)?)
-                .await
-                .map_err(map_eyre_to_pyerr)?;
-            attested_with_hash(receipt)
-        })
-    }
-
-    pub fn permit_and_pay_erc20_for_erc1155<'py>(
-        &self,
-        py: pyo3::Python<'py>,
-        buy_attestation: String,
-    ) -> PyResult<pyo3::Bound<'py, pyo3::PyAny>> {
-        let inner = self.inner.clone();
-        pyo3_async_runtimes::tokio::future_into_py(py, async move {
-            let receipt = inner
-                .barter()
-                .permit_and_pay_erc20_for_erc1155(
-                    buy_attestation.parse().map_err(map_parse_to_pyerr)?,
-                )
-                .await
-                .map_err(map_eyre_to_pyerr)?;
-            attested_with_hash(receipt)
-        })
-    }
-
-    pub fn pay_erc20_for_bundle<'py>(
-        &self,
-        py: pyo3::Python<'py>,
-        buy_attestation: String,
-    ) -> PyResult<pyo3::Bound<'py, pyo3::PyAny>> {
-        let inner = self.inner.clone();
-        pyo3_async_runtimes::tokio::future_into_py(py, async move {
-            let receipt = inner
-                .barter()
-                .pay_erc20_for_bundle(buy_attestation.parse().map_err(map_parse_to_pyerr)?)
-                .await
-                .map_err(map_eyre_to_pyerr)?;
-            attested_with_hash(receipt)
-        })
-    }
-
-    pub fn permit_and_pay_erc20_for_bundle<'py>(
-        &self,
-        py: pyo3::Python<'py>,
-        buy_attestation: String,
-    ) -> PyResult<pyo3::Bound<'py, pyo3::PyAny>> {
-        let inner = self.inner.clone();
-        pyo3_async_runtimes::tokio::future_into_py(py, async move {
-            let receipt = inner
-                .barter()
-                .permit_and_pay_erc20_for_bundle(
-                    buy_attestation.parse().map_err(map_parse_to_pyerr)?,
-                )
-                .await
-                .map_err(map_eyre_to_pyerr)?;
-            attested_with_hash(receipt)
-        })
-    }
-
-    pub fn pay_erc20_for_native<'py>(
-        &self,
-        py: pyo3::Python<'py>,
-        buy_attestation: String,
-    ) -> PyResult<pyo3::Bound<'py, pyo3::PyAny>> {
-        let inner = self.inner.clone();
-        pyo3_async_runtimes::tokio::future_into_py(py, async move {
-            let receipt = inner
-                .barter()
-                .pay_erc20_for_native(buy_attestation.parse().map_err(map_parse_to_pyerr)?)
-                .await
-                .map_err(map_eyre_to_pyerr)?;
-            attested_with_hash(receipt)
-        })
-    }
-
-    pub fn permit_and_pay_erc20_for_native<'py>(
-        &self,
-        py: pyo3::Python<'py>,
-        buy_attestation: String,
-    ) -> PyResult<pyo3::Bound<'py, pyo3::PyAny>> {
-        let inner = self.inner.clone();
-        pyo3_async_runtimes::tokio::future_into_py(py, async move {
-            let receipt = inner
-                .barter()
-                .permit_and_pay_erc20_for_native(
-                    buy_attestation.parse().map_err(map_parse_to_pyerr)?,
-                )
+                .permit_and_pay_erc20_and_collect(escrow_uid.parse().map_err(map_parse_to_pyerr)?)
                 .await
                 .map_err(map_eyre_to_pyerr)?;
             attested_with_hash(receipt)

@@ -1,8 +1,9 @@
 import pytest
 from alkahest_py import EnvTestManager, MockERC20
+from alkahest_py.barter_helpers import create_erc20_escrow, erc20_payment_demand, erc721_payment_demand, erc1155_payment_demand
 
 @pytest.mark.asyncio
-async def test_pay_erc20_for_erc20(env, alice_client, bob_client):
+async def test_pay_erc20_and_collect(env, alice_client, bob_client):
     
     # Setup mock ERC20 tokens
     mock_erc20_a = MockERC20(env.mock_addresses.erc20_a, env.god_wallet_provider)
@@ -30,7 +31,7 @@ async def test_pay_erc20_for_erc20(env, alice_client, bob_client):
     await alice_client.erc20.util.approve(bid_data, "barter")
     
     # Alice creates the buy order
-    buy_result = await alice_client.erc20.barter.buy_erc20_for_erc20(bid_data, ask_data, 0)
+    buy_result = await create_erc20_escrow(alice_client, bid_data, erc20_payment_demand(env, ask_data, env.alice), 0)
 
     assert buy_result['log']['uid'] and buy_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid buy attestation UID"
     
@@ -44,11 +45,11 @@ async def test_pay_erc20_for_erc20(env, alice_client, bob_client):
     
     assert escrow_balance_a == 100, "Escrow should have 100 token A, got {escrow_balance_a}"
     
-    # Bob approves tokens for barter (pay_erc20_for_erc20 is a barter function)
+    # Bob approves tokens for barter (pay_erc20_and_collect is a barter function)
     await bob_client.erc20.util.approve(ask_data, "barter")
 
     # Bob fulfills the buy order
-    pay_result = await bob_client.erc20.barter.pay_erc20_for_erc20(buy_attestation_uid)
+    pay_result = await bob_client.erc20.barter.pay_erc20_and_collect(buy_attestation_uid)
 
     assert pay_result['log']['uid'] and pay_result['log']['uid'] != "0x0000000000000000000000000000000000000000000000000000000000000000", "Invalid payment attestation UID"
     

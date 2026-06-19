@@ -121,7 +121,7 @@ impl<'a> Payment<'a> {
             )
             .await?;
 
-        let barter_utils_contract = contracts::utils::ERC20BarterUtils::new(
+        let barter_utils_contract = contracts::utils::AtomicPaymentUtils::new(
             self.module.addresses.barter_utils,
             &self.module.wallet_provider,
         );

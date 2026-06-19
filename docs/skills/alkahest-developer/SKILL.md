@@ -297,12 +297,12 @@ Barter utils provide atomic single-transaction settlement for existing escrows:
 
 **TypeScript:**
 ```typescript
-await client.erc20.barter.payErc20ForErc20(escrowUid);
+await client.erc20.barter.payErc20AndCollect(escrowUid);
 ```
 
 **Rust:**
 ```rust
-client.erc20().barter().pay_erc20_for_erc20(escrow_uid).await?;
+client.erc20().barter().pay_erc20_and_collect(escrow_uid).await?;
 ```
 
 ## Key Type Differences

@@ -50,9 +50,5 @@ export * as TokenBundlePaymentObligation from "./obligations/payment/TokenBundle
 export * as StringObligation from "./obligations/StringObligation";
 export * as CommitRevealObligation from "./obligations/CommitRevealObligation";
 // Utils
+export * as AtomicPaymentUtils from "./utils/AtomicPaymentUtils";
 export * as AttestationBarterUtils from "./utils/AttestationBarterUtils";
-export * as ERC20BarterUtils from "./utils/ERC20BarterUtils";
-export * as ERC721BarterUtils from "./utils/ERC721BarterUtils";
-export * as ERC1155BarterUtils from "./utils/ERC1155BarterUtils";
-export * as NativeTokenBarterUtils from "./utils/NativeTokenBarterUtils";
-export * as TokenBundleBarterUtils from "./utils/TokenBundleBarterUtils";

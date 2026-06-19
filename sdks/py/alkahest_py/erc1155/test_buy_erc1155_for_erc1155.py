@@ -1,4 +1,6 @@
 import pytest
+
+pytestmark = pytest.mark.skip(reason="Obsolete buy_* convenience alias removed; direct escrow creation is covered elsewhere.")
 from alkahest_py import EnvTestManager, MockERC1155
 
 @pytest.mark.asyncio

@@ -81,6 +81,91 @@ pub struct PyTokenBundleEscrowObligationData {
     pub erc1155_amounts: Vec<String>,
 }
 
+#[pyclass]
+#[derive(Clone)]
+pub struct PyTokenBundlePaymentObligationData {
+    #[pyo3(get)]
+    pub native_amount: String,
+    #[pyo3(get)]
+    pub erc20_tokens: Vec<String>,
+    #[pyo3(get)]
+    pub erc20_amounts: Vec<String>,
+    #[pyo3(get)]
+    pub erc721_tokens: Vec<String>,
+    #[pyo3(get)]
+    pub erc721_token_ids: Vec<String>,
+    #[pyo3(get)]
+    pub erc1155_tokens: Vec<String>,
+    #[pyo3(get)]
+    pub erc1155_token_ids: Vec<String>,
+    #[pyo3(get)]
+    pub erc1155_amounts: Vec<String>,
+    #[pyo3(get)]
+    pub payee: String,
+}
+
+#[pymethods]
+impl PyTokenBundlePaymentObligationData {
+    #[new]
+    pub fn new(
+        native_amount: String,
+        erc20_tokens: Vec<String>,
+        erc20_amounts: Vec<String>,
+        erc721_tokens: Vec<String>,
+        erc721_token_ids: Vec<String>,
+        erc1155_tokens: Vec<String>,
+        erc1155_token_ids: Vec<String>,
+        erc1155_amounts: Vec<String>,
+        payee: String,
+    ) -> Self {
+        Self {
+            native_amount,
+            erc20_tokens,
+            erc20_amounts,
+            erc721_tokens,
+            erc721_token_ids,
+            erc1155_tokens,
+            erc1155_token_ids,
+            erc1155_amounts,
+            payee,
+        }
+    }
+
+    #[staticmethod]
+    pub fn encode(obligation: &PyTokenBundlePaymentObligationData) -> PyResult<Vec<u8>> {
+        use alkahest_rs::contracts::obligations::TokenBundlePaymentObligation;
+        use alloy::{
+            primitives::{Address, U256},
+            sol_types::SolValue,
+        };
+
+        fn parse_addresses(values: &[String]) -> PyResult<Vec<Address>> {
+            values.iter().map(|value| value.parse().map_err(map_parse_to_pyerr)).collect()
+        }
+
+        fn parse_u256s(values: &[String]) -> PyResult<Vec<U256>> {
+            values.iter().map(|value| value.parse().map_err(map_parse_to_pyerr)).collect()
+        }
+
+        Ok(TokenBundlePaymentObligation::ObligationData {
+            nativeAmount: obligation.native_amount.parse().map_err(map_parse_to_pyerr)?,
+            erc20Tokens: parse_addresses(&obligation.erc20_tokens)?,
+            erc20Amounts: parse_u256s(&obligation.erc20_amounts)?,
+            erc721Tokens: parse_addresses(&obligation.erc721_tokens)?,
+            erc721TokenIds: parse_u256s(&obligation.erc721_token_ids)?,
+            erc1155Tokens: parse_addresses(&obligation.erc1155_tokens)?,
+            erc1155TokenIds: parse_u256s(&obligation.erc1155_token_ids)?,
+            erc1155Amounts: parse_u256s(&obligation.erc1155_amounts)?,
+            payee: obligation.payee.parse().map_err(map_parse_to_pyerr)?,
+        }
+        .abi_encode())
+    }
+
+    pub fn encode_self(&self) -> PyResult<Vec<u8>> {
+        PyTokenBundlePaymentObligationData::encode(self)
+    }
+}
+
 #[pymethods]
 impl PyTokenBundleEscrowObligationData {
     #[new]

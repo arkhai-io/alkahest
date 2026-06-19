@@ -53,7 +53,7 @@ await clientBob.erc20.util.approve(
   { address: eurc, value: parseUnits("10", 6) },
   "barter",
 );
-const payment = await clientBob.erc20.barter.payErc20ForErc20(
+const payment = await clientBob.erc20.barter.payErc20AndCollect(
   escrow.attested.uid,
 );
 ```

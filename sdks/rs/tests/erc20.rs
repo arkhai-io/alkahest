@@ -68,7 +68,7 @@
 //     let receipt = test
 //         .bob_client
 //         .erc20()
-//         .pay_erc20_for_erc20(attested.uid)
+//         .pay_erc20_and_collect(attested.uid)
 //         .await?;
 //     println!("{:?}", receipt);
 

@@ -21,7 +21,7 @@ use crate::error_handling::{map_eyre_to_pyerr, map_parse_to_pyerr};
 /// Provides access to escrow, payment, barter, and utility APIs via properties:
 /// - `client.erc20.escrow.default.create(...)`
 /// - `client.erc20.payment.pay(...)`
-/// - `client.erc20.barter.pay_erc20_for_erc20(...)`
+/// - `client.erc20.barter.pay_erc20_and_collect(...)`
 /// - `client.erc20.util.approve(...)`
 #[pyclass]
 #[derive(Clone)]

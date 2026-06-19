@@ -127,7 +127,7 @@ impl Erc20Module {
     /// # Example
     /// ```rust,ignore
     /// let escrow = client.erc20().escrow().default().create(&bid, &demand, expiration).await?;
-    /// client.erc20().barter().pay_erc20_for_erc20(buy_attestation).await?;
+    /// client.erc20().barter().pay_erc20_and_collect(buy_attestation).await?;
     /// ```
     pub fn barter(&self) -> barter_utils::BarterUtils<'_> {
         barter_utils::BarterUtils::new(self)
@@ -207,9 +207,7 @@ mod tests {
                 token: payment.address,
                 amount: payment.value,
                 payee,
-            }
-            .abi_encode()
-            .into(),
+            }.into(),
         }
     }
 
@@ -224,9 +222,7 @@ mod tests {
                 token: payment.address,
                 tokenId: payment.id,
                 payee,
-            }
-            .abi_encode()
-            .into(),
+            }.into(),
         }
     }
 
@@ -242,9 +238,7 @@ mod tests {
                 tokenId: payment.id,
                 amount: payment.value,
                 payee,
-            }
-            .abi_encode()
-            .into(),
+            }.into(),
         }
     }
 
@@ -257,7 +251,7 @@ mod tests {
 
         ArbiterData {
             arbiter,
-            demand: demand.abi_encode().into(),
+            demand: demand.into(),
         }
     }
 
@@ -812,7 +806,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_pay_erc20_for_erc20() -> eyre::Result<()> {
+    async fn test_pay_erc20_and_collect_for_erc20() -> eyre::Result<()> {
         // test setup
         let test = setup_test_environment().await?;
 
@@ -879,7 +873,7 @@ mod tests {
             .bob_client
             .erc20()
             .barter()
-            .pay_erc20_for_erc20(buy_attestation)
+            .pay_erc20_and_collect(buy_attestation)
             .await?;
 
         // verify token transfers
@@ -903,7 +897,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_permit_and_pay_erc20_for_erc20() -> eyre::Result<()> {
+    async fn test_permit_and_pay_erc20_and_collect_for_erc20() -> eyre::Result<()> {
         // test setup
         let test = setup_test_environment().await?;
 
@@ -964,7 +958,7 @@ mod tests {
             .bob_client
             .erc20()
             .barter()
-            .permit_and_pay_erc20_for_erc20(buy_attestation)
+            .permit_and_pay_erc20_and_collect(buy_attestation)
             .await?;
 
         // verify token transfers
@@ -1474,7 +1468,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_pay_erc20_for_erc721() -> eyre::Result<()> {
+    async fn test_pay_erc20_and_collect_for_erc721() -> eyre::Result<()> {
         // test setup
         let test = setup_test_environment().await?;
 
@@ -1568,7 +1562,7 @@ mod tests {
             .alice_client
             .erc20()
             .barter()
-            .pay_erc20_for_erc721(buy_attestation)
+            .pay_erc20_and_collect(buy_attestation)
             .await?;
 
         // Verify the payment attestation was created
@@ -1603,7 +1597,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_permit_and_pay_erc20_for_erc721() -> eyre::Result<()> {
+    async fn test_permit_and_pay_erc20_and_collect_for_erc721() -> eyre::Result<()> {
         // test setup
         let test = setup_test_environment().await?;
 
@@ -1686,7 +1680,7 @@ mod tests {
             .alice_client
             .erc20()
             .barter()
-            .permit_and_pay_erc20_for_erc721(buy_attestation)
+            .permit_and_pay_erc20_and_collect(buy_attestation)
             .await?;
 
         // Verify the payment attestation was created
@@ -1721,7 +1715,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_pay_erc20_for_erc1155() -> eyre::Result<()> {
+    async fn test_pay_erc20_and_collect_for_erc1155() -> eyre::Result<()> {
         // test setup
         let test = setup_test_environment().await?;
 
@@ -1815,7 +1809,7 @@ mod tests {
             .alice_client
             .erc20()
             .barter()
-            .pay_erc20_for_erc1155(buy_attestation)
+            .pay_erc20_and_collect(buy_attestation)
             .await?;
 
         // Verify the payment attestation was created
@@ -1852,7 +1846,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_permit_and_pay_erc20_for_erc1155() -> eyre::Result<()> {
+    async fn test_permit_and_pay_erc20_and_collect_for_erc1155() -> eyre::Result<()> {
         // test setup
         let test = setup_test_environment().await?;
 
@@ -1934,7 +1928,7 @@ mod tests {
             .alice_client
             .erc20()
             .barter()
-            .permit_and_pay_erc20_for_erc1155(buy_attestation)
+            .permit_and_pay_erc20_and_collect(buy_attestation)
             .await?;
 
         // Verify the payment attestation was created
@@ -1971,7 +1965,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_pay_erc20_for_bundle() -> eyre::Result<()> {
+    async fn test_pay_erc20_and_collect_for_bundle() -> eyre::Result<()> {
         // test setup
         let test = setup_test_environment().await?;
 
@@ -2062,7 +2056,7 @@ mod tests {
                 &bundle,
                 &ArbiterData {
                     arbiter: test.addresses.erc20_addresses.payment_obligation,
-                    demand: payment_obligation_data.abi_encode().into(),
+                    demand: payment_obligation_data.into(),
                 },
                 expiration as u64,
             )
@@ -2097,7 +2091,7 @@ mod tests {
             .alice_client
             .erc20()
             .barter()
-            .pay_erc20_for_bundle(buy_attestation)
+            .pay_erc20_and_collect(buy_attestation)
             .await?;
 
         // Verify the payment attestation was created
@@ -2152,7 +2146,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_permit_and_pay_erc20_for_bundle() -> eyre::Result<()> {
+    async fn test_permit_and_pay_erc20_and_collect_for_bundle() -> eyre::Result<()> {
         // test setup
         let test = setup_test_environment().await?;
 
@@ -2243,7 +2237,7 @@ mod tests {
                 &bundle,
                 &ArbiterData {
                     arbiter: test.addresses.erc20_addresses.payment_obligation,
-                    demand: payment_obligation_data.abi_encode().into(),
+                    demand: payment_obligation_data.into(),
                 },
                 expiration as u64,
             )
@@ -2266,7 +2260,7 @@ mod tests {
             .alice_client
             .erc20()
             .barter()
-            .permit_and_pay_erc20_for_bundle(buy_attestation)
+            .permit_and_pay_erc20_and_collect(buy_attestation)
             .await?;
 
         // Verify the payment attestation was created
