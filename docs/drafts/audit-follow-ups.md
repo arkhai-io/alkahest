@@ -31,7 +31,8 @@ examples together.
 Solidity contracts, Solidity tests, scripts, and tracked docs were aligned in
 `59f8f628d9099c1dbbef67c3de21fdb17032fa1f`, with formatting-only cleanup in
 `9d32a984e7988e37909f7a478e14ebea8de741f8`. Generated ABI artifacts, SDK typed
-clients, SDK docs, and deploy/config surfaces remain to be updated.
+clients, SDK docs, and deploy/config surfaces were aligned in
+`660455edde29e5124920cab0222dffa724968581`.
 
 ### [ ] BarterUtils Surface Area
 
@@ -101,7 +102,7 @@ conceptual lock work and post-attest binding can be separated cleanly.
 Completed by `fd47376f37cf367e3ee1fd0fa82b31ac8f28dbf6`.
 
 `CommitRevealObligation` is now the per-demand/per-commit bond variant. The
-committer supplies the bond value with the commit, and `checkObligation`
+committer supplies the bond value with the commit, and `check`
 validates the revealed commitment against the bond demanded by the escrow. The
 previous global contract-level bond behavior was retained separately as
 `GlobalBondCommitRevealObligation`.
