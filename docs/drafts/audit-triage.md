@@ -255,6 +255,8 @@ Report items:
 - `arkhai-io-alkahest-2026-04-13-analysis(1).md`, issue 33.
 - `arkhai-io-alkahest-2026-04-13-analysis(1).md`, issue 34.
 - `arkhai-io-alkahest-2026-04-13-analysis(1).md`, issue 35.
+- `arkhai-io-alkahest-2026-04-13-analysis(1).md`, issue 17.
+- `arkhai-io-alkahest-2026-04-13-analysis(1).md`, issue 19.
 - `arkhai-io-alkahest-2026-04-13-analysis(1).md`, issue 17 in warnings.
 - `arkhai-io-alkahest-2026-04-13-analysis(1).md`, issue 19 in warnings.
 - `arkhai-io-alkahest-2026-04-13-analysis(1).md`, `StringResultObligation`
