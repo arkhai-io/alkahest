@@ -130,6 +130,24 @@ ERC1155 escrow release no longer relies on an invalid recipient post-transfer
 balance invariant that could fail when receivers forward tokens in their
 callback.
 
+### analysis(1): ERC721 Payment Transfer Proof
+
+Status: fixed.
+
+Report item: `arkhai-io-alkahest-2026-04-13-analysis(1).md`, issue 10.
+
+Completed by `1b5738b11f509374c9f9c4ef82e4210a84214b3c`.
+
+`ERC721PaymentObligation` now rejects non-contract token addresses and verifies
+`ownerOf(tokenId) == payee` after `transferFrom`, so a non-reverting call alone
+cannot mint a payment attestation. The same post-transfer ownership proof was
+added to `TokenBundlePaymentObligation` for ERC721 items in mixed payment
+bundles.
+
+The default and unconditional ERC721 escrow obligations were already covered:
+their lock and release paths check ERC721 ownership before and after transfer,
+and the ERC721 escrow hook follows the same pattern.
+
 ### analysis(1): Raw Native Receivers
 
 Status: fixed.
