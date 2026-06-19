@@ -14,6 +14,7 @@ import {ERC721PaymentObligation} from "../../obligations/payment/ERC721PaymentOb
 import {ERC1155PaymentObligation} from "../../obligations/payment/ERC1155PaymentObligation.sol";
 import {NativeTokenPaymentObligation} from "../../obligations/payment/NativeTokenPaymentObligation.sol";
 import {TokenBundlePaymentObligation} from "../../obligations/payment/TokenBundlePaymentObligation.sol";
+import {IEscrow} from "../../IEscrow.sol";
 
 interface IEscrowConditionDecoder {
     function decodeCondition(bytes memory data) external pure returns (address arbiter, bytes memory demand);
@@ -182,9 +183,10 @@ contract AtomicPaymentUtils is IERC1155Receiver {
     }
 
     function _collect(address escrowContract, bytes32 escrowUid, bytes32 fulfillmentUid) internal {
-        (bool success,) =
-            escrowContract.call(abi.encodeWithSignature("collect(bytes32,bytes32)", escrowUid, fulfillmentUid));
-        if (!success) revert CouldntCollectEscrow();
+        try IEscrow(escrowContract).collect(escrowUid, fulfillmentUid) {}
+        catch {
+            revert CouldntCollectEscrow();
+        }
     }
 
     function _permitErc20(address token, uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s) internal {

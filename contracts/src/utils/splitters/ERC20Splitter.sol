@@ -7,10 +7,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {SplitterVerification} from "./SplitterVerification.sol";
 import {BaseSplitter} from "./BaseSplitter.sol";
-
-interface IERC20EscrowObligation {
-    function collect(bytes32 escrow, bytes32 fulfillment) external returns (bytes memory);
-}
+import {IEscrow} from "../../IEscrow.sol";
 
 contract ERC20Splitter is BaseSplitter {
     using SplitterVerification for Attestation;
@@ -111,7 +108,7 @@ contract ERC20Splitter is BaseSplitter {
         splits = decisions[demandData.oracle][_decisionKey(fulfillment, escrow)];
         token = escrowData.token;
         uint256 balanceBefore = IERC20(token).balanceOf(address(this));
-        IERC20EscrowObligation(escrowContract).collect(escrow, fulfillment);
+        IEscrow(escrowContract).collect(escrow, fulfillment);
         SplitterVerification.verifyDelta(balanceBefore, IERC20(token).balanceOf(address(this)), escrowData.amount);
     }
 

@@ -10,10 +10,7 @@ import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import {SplitterVerification} from "./SplitterVerification.sol";
 import {BaseSplitter} from "./BaseSplitter.sol";
-
-interface ITokenBundleEscrowObligation {
-    function collect(bytes32 escrow, bytes32 fulfillment) external returns (bytes memory);
-}
+import {IEscrow} from "../../IEscrow.sol";
 
 abstract contract TokenBundleSplitterBase is BaseSplitter, ERC1155Holder {
     using SplitterVerification for Attestation;
@@ -149,7 +146,7 @@ abstract contract TokenBundleSplitterBase is BaseSplitter, ERC1155Holder {
         uint256 nativeBefore = address(this).balance;
         uint256[] memory erc20Before = _erc20Balances(escrowData);
         uint256[] memory erc1155Before = _erc1155Balances(escrowData);
-        ITokenBundleEscrowObligation(escrowContract).collect(escrow, fulfillment);
+        IEscrow(escrowContract).collect(escrow, fulfillment);
         _verifyCollectedDeltas(escrowData, nativeBefore, erc20Before, erc1155Before);
     }
 

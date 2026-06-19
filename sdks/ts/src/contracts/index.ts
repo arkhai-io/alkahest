@@ -28,6 +28,7 @@ export * as TrivialArbiter from "./arbiters/TrivialArbiter";
 export * as TrustedOracleArbiter from "./arbiters/TrustedOracleArbiter";
 export * as ERC20Permit from "./ERC20Permit";
 export * as IEAS from "./IEAS";
+export * as IEscrow from "./IEscrow";
 export * as IERC20 from "./IERC20";
 export * as IERC721 from "./IERC721";
 export * as IERC1155 from "./IERC1155";

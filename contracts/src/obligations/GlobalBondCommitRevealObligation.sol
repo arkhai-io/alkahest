@@ -7,6 +7,7 @@ import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {BaseObligation} from "../BaseObligation.sol";
 import {IArbiter} from "../IArbiter.sol";
+import {IEscrow} from "../IEscrow.sol";
 import {ArbiterUtils} from "../ArbiterUtils.sol";
 
 /// @title GlobalBondCommitRevealObligation
@@ -136,22 +137,20 @@ contract GlobalBondCommitRevealObligation is BaseObligation, IArbiter, Ownable {
     }
 
     /// @notice Reveals a fulfillment and immediately collects the target escrow.
-    /// @dev Uses a low-level call so it can support escrow contracts with
-    ///      different collect return types.
     function revealAndCollect(
         ObligationData calldata data,
         address recipient,
-        address escrowContract,
+        IEscrow escrowContract,
         bytes32 escrowUid
     ) external returns (bytes32 fulfillmentUid, bytes memory collectResult) {
         bytes memory encodedData = abi.encode(data);
         fulfillmentUid = _doObligationForRaw(encodedData, 0, recipient, escrowUid);
 
-        (bool success, bytes memory result) =
-            escrowContract.call(abi.encodeWithSignature("collect(bytes32,bytes32)", escrowUid, fulfillmentUid));
-        if (!success) revert EscrowCollectionFailed(escrowContract, escrowUid, fulfillmentUid, result);
-
-        collectResult = abi.decode(result, (bytes));
+        try escrowContract.collect(escrowUid, fulfillmentUid) returns (bytes memory result) {
+            collectResult = result;
+        } catch (bytes memory reason) {
+            revert EscrowCollectionFailed(address(escrowContract), escrowUid, fulfillmentUid, reason);
+        }
     }
 
     /// @dev After the attestation is created, validate the commitment, enforce

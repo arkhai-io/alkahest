@@ -4,6 +4,7 @@ pragma solidity ^0.8.26;
 import "forge-std/Test.sol";
 import {IEAS, Attestation, AttestationRequest, AttestationRequestData} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
+import {IEscrow} from "@src/IEscrow.sol";
 import {GlobalBondCommitRevealObligation} from "@src/obligations/GlobalBondCommitRevealObligation.sol";
 import {NativeTokenEscrowObligation} from "@src/obligations/escrow/default/NativeTokenEscrowObligation.sol";
 import {EASDeployer} from "@test/utils/EASDeployer.sol";
@@ -94,7 +95,7 @@ contract GlobalBondCommitRevealObligationTest is Test {
         uint256 claimerBalanceBefore = claimer.balance;
         vm.prank(claimer);
         (bytes32 fulfillmentUid, bytes memory collectResult) =
-            obligation.revealAndCollect(data, claimer, address(nativeEscrow), escrowUid);
+            obligation.revealAndCollect(data, claimer, IEscrow(address(nativeEscrow)), escrowUid);
 
         assertEq(collectResult.length, 0);
         assertEq(claimer.balance, claimerBalanceBefore + BOND + 1 ether);
@@ -121,7 +122,7 @@ contract GlobalBondCommitRevealObligationTest is Test {
         uint256 claimerBalanceBefore = claimer.balance;
         vm.prank(claimer);
         vm.expectRevert();
-        obligation.revealAndCollect(data, claimer, address(obligation), escrowUid);
+        obligation.revealAndCollect(data, claimer, IEscrow(address(obligation)), escrowUid);
 
         assertEq(claimer.balance, claimerBalanceBefore);
         assertFalse(obligation.commitmentClaimed(commitment));
