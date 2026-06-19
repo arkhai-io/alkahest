@@ -3,18 +3,15 @@ pragma solidity ^0.8.26;
 
 import {BaseObligation} from "./BaseObligation.sol";
 import {IArbiter} from "./IArbiter.sol";
+import {IEscrow} from "./IEscrow.sol";
 import {ArbiterUtils} from "./ArbiterUtils.sol";
 import {Attestation} from "@eas/Common.sol";
 import {IEAS, RevocationRequest, RevocationRequestData} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 
 // Note: Does NOT implement IArbiter - that's left to specific implementations
-abstract contract BaseEscrowObligationUnconditional is BaseObligation {
+abstract contract BaseEscrowObligationUnconditional is BaseObligation, IEscrow {
     using ArbiterUtils for Attestation;
-
-    // Common events for all escrow types
-    event EscrowMade(bytes32 indexed escrowUid, address indexed escrower);
-    event EscrowCollected(bytes32 indexed escrowUid, bytes32 indexed fulfillmentUid, address indexed fulfiller);
 
     // Common errors
     error InvalidEscrowAttestation();
@@ -45,10 +42,21 @@ abstract contract BaseEscrowObligationUnconditional is BaseObligation {
     function _afterEscrowAttest(Attestation memory attestation) internal virtual {}
 
     // Extract arbiter and demand from encoded data
-    function decodeCondition(bytes memory data) public pure virtual returns (address arbiter, bytes memory demand);
+    function decodeCondition(bytes memory data)
+        public
+        pure
+        virtual
+        override
+        returns (address arbiter, bytes memory demand);
 
     // Common escrow collection implementation (unconditional version - no fulfillment intrinsic or refUID check)
-    function collect(bytes32 _escrow, bytes32 _fulfillment) public virtual nonReentrant returns (bytes memory) {
+    function collect(bytes32 _escrow, bytes32 _fulfillment)
+        public
+        virtual
+        override
+        nonReentrant
+        returns (bytes memory)
+    {
         Attestation memory escrow = _getExistingAttestation(_escrow);
         Attestation memory fulfillment = _getExistingAttestation(_fulfillment);
 
@@ -85,7 +93,7 @@ abstract contract BaseEscrowObligationUnconditional is BaseObligation {
         return result;
     }
 
-    function reclaim(bytes32 uid) public virtual nonReentrant returns (bool) {
+    function reclaim(bytes32 uid) public virtual override nonReentrant returns (bool) {
         Attestation memory attestation = _getExistingAttestation(uid);
 
         // Validate attestation uses correct schema
@@ -111,6 +119,7 @@ abstract contract BaseEscrowObligationUnconditional is BaseObligation {
         // Return escrowed value to original recipient
         _returnEscrow(attestation, attestation.recipient);
 
+        emit EscrowReclaimed(uid, attestation.recipient);
         return true;
     }
 
