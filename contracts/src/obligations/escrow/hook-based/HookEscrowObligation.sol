@@ -41,7 +41,7 @@ contract HookEscrowObligation is BaseEscrowObligation, IArbiter {
     // BaseEscrowObligation overrides
     // ──────────────────────────────────────────────
 
-    function extractArbiterAndDemand(bytes memory data)
+    function decodeCondition(bytes memory data)
         public
         pure
         override
@@ -80,7 +80,7 @@ contract HookEscrowObligation is BaseEscrowObligation, IArbiter {
     // IArbiter – allows demanding a HookEscrow
     // ──────────────────────────────────────────────
 
-    function checkObligation(
+    function check(
         Attestation memory obligation,
         bytes memory demand,
         bytes32 /* fulfilling */
@@ -113,11 +113,6 @@ contract HookEscrowObligation is BaseEscrowObligation, IArbiter {
         returns (bytes32)
     {
         return _doObligationForRaw(abi.encode(data), expirationTime, recipient, bytes32(0));
-    }
-
-    function collectEscrow(bytes32 escrow, bytes32 fulfillment) external returns (bool) {
-        collectEscrowRaw(escrow, fulfillment);
-        return true;
     }
 
     function getObligationData(bytes32 uid) public view returns (ObligationData memory) {

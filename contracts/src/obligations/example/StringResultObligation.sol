@@ -31,16 +31,16 @@ contract StringResultObligation is BaseObligation, IArbiter {
         return _doObligationForRaw(encodedData, 0, msg.sender, refUID);
     }
 
-    function checkObligation(
-        Attestation memory obligation,
+    function check(
+        Attestation memory fulfillment,
         bytes memory demand,
         /* (string query) */
-        bytes32 fulfilling
+        bytes32 escrowUid
     ) public view override returns (bool) {
         // Check if the obligation is intended to fulfill the specific escrow
-        if (obligation.refUID != bytes32(0) && obligation.refUID != fulfilling) return false;
+        if (fulfillment.refUID != bytes32(0) && fulfillment.refUID != escrowUid) return false;
 
-        ObligationData memory result = abi.decode(obligation.data, (ObligationData));
+        ObligationData memory result = abi.decode(fulfillment.data, (ObligationData));
         DemandData memory demandData = abi.decode(demand, (DemandData));
 
         // Only compare the length of the query and result

@@ -15,9 +15,9 @@ contract TrustedOracleArbiter is IArbiter {
     }
 
     event ArbitrationMade(
-        bytes32 indexed decisionKey, bytes32 indexed obligation, address indexed oracle, bool decision
+        bytes32 indexed decisionKey, bytes32 indexed fulfillmentUid, address indexed oracle, bool decision
     );
-    event ArbitrationRequested(bytes32 indexed obligation, address indexed oracle, bytes demand);
+    event ArbitrationRequested(bytes32 indexed fulfillmentUid, address indexed oracle, bytes demand);
 
     error UnauthorizedArbitrationRequest();
 
@@ -43,8 +43,8 @@ contract TrustedOracleArbiter is IArbiter {
         emit ArbitrationRequested(_obligation, oracle, demand);
     }
 
-    function checkObligation(
-        Attestation memory obligation,
+    function check(
+        Attestation memory fulfillment,
         bytes memory demand,
         bytes32 /*fulfilling*/
     )
@@ -54,7 +54,7 @@ contract TrustedOracleArbiter is IArbiter {
         returns (bool)
     {
         DemandData memory demand_ = abi.decode(demand, (DemandData));
-        bytes32 decisionKey = keccak256(abi.encodePacked(obligation.uid, demand_.data));
+        bytes32 decisionKey = keccak256(abi.encodePacked(fulfillment.uid, demand_.data));
         return decisions[demand_.oracle][decisionKey];
     }
 

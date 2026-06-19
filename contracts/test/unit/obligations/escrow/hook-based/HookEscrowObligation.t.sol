@@ -392,8 +392,7 @@ contract HookEscrowObligationTest is Test {
         bytes32 fulfillmentUid = _createFulfillment(escrowUid);
 
         vm.prank(seller);
-        bool ok = escrow.collectEscrow(escrowUid, fulfillmentUid);
-        assertTrue(ok);
+        escrow.collect(escrowUid, fulfillmentUid);
 
         // Tokens released to seller
         assertEq(token.balanceOf(seller), AMOUNT);
@@ -407,7 +406,7 @@ contract HookEscrowObligationTest is Test {
 
         vm.prank(seller);
         vm.expectRevert(BaseEscrowObligation.InvalidFulfillment.selector);
-        escrow.collectEscrow(escrowUid, fulfillmentUid);
+        escrow.collect(escrowUid, fulfillmentUid);
 
         // Tokens still in hook
         assertEq(token.balanceOf(address(erc20Hook)), AMOUNT);
@@ -419,12 +418,12 @@ contract HookEscrowObligationTest is Test {
 
         // Can't reclaim before expiry
         vm.expectRevert(BaseEscrowObligation.UnauthorizedCall.selector);
-        escrow.reclaimExpired(escrowUid);
+        escrow.reclaim(escrowUid);
 
         // Warp past expiry
         vm.warp(block.timestamp + shortExpiry + 1);
 
-        bool ok = escrow.reclaimExpired(escrowUid);
+        bool ok = escrow.reclaim(escrowUid);
         assertTrue(ok);
 
         // Tokens returned to buyer (the attestation recipient)
@@ -443,7 +442,7 @@ contract HookEscrowObligationTest is Test {
         // Collect only the first
         bytes32 ful1 = _createFulfillment(uid1);
         vm.prank(seller);
-        escrow.collectEscrow(uid1, ful1);
+        escrow.collect(uid1, ful1);
 
         assertEq(token.balanceOf(seller), AMOUNT);
         assertEq(token.balanceOf(address(erc20Hook)), AMOUNT);
@@ -452,21 +451,21 @@ contract HookEscrowObligationTest is Test {
         // Collect the second
         bytes32 ful2 = _createFulfillment(uid2);
         vm.prank(seller);
-        escrow.collectEscrow(uid2, ful2);
+        escrow.collect(uid2, ful2);
 
         assertEq(token.balanceOf(seller), 2 * AMOUNT);
         assertEq(token.balanceOf(address(erc20Hook)), 0);
     }
 
     // ──────────────────────────────────────────────
-    // IArbiter (checkObligation)
+    // IArbiter (check)
     // ──────────────────────────────────────────────
 
     function testCheckObligationExactMatch() public {
         bytes32 uid = _createEscrow(AMOUNT, address(acceptArbiter), EXPIRATION);
         Attestation memory att = eas.getAttestation(uid);
 
-        bool ok = escrow.checkObligation(att, abi.encode(_obligationData(AMOUNT, address(acceptArbiter))), bytes32(0));
+        bool ok = escrow.check(att, abi.encode(_obligationData(AMOUNT, address(acceptArbiter))), bytes32(0));
         assertTrue(ok);
     }
 
@@ -482,7 +481,7 @@ contract HookEscrowObligationTest is Test {
             hookData: _hookData(AMOUNT + 1)
         });
 
-        bool ok = escrow.checkObligation(att, abi.encode(demand), bytes32(0));
+        bool ok = escrow.check(att, abi.encode(demand), bytes32(0));
         assertFalse(ok);
     }
 
@@ -498,7 +497,7 @@ contract HookEscrowObligationTest is Test {
             hookData: _hookData(AMOUNT)
         });
 
-        bool ok = escrow.checkObligation(att, abi.encode(demand), bytes32(0));
+        bool ok = escrow.check(att, abi.encode(demand), bytes32(0));
         assertFalse(ok);
     }
 
@@ -609,7 +608,7 @@ contract HooksEscrowObligationTest is Test {
         );
 
         vm.prank(seller);
-        escrow.collectEscrow(escrowUid, fulUid);
+        escrow.collect(escrowUid, fulUid);
 
         assertEq(tokenA.balanceOf(seller), AMOUNT_A);
         assertEq(tokenB.balanceOf(seller), AMOUNT_B);
@@ -666,7 +665,7 @@ contract HooksEscrowObligationTest is Test {
         vm.stopPrank();
 
         vm.warp(block.timestamp + 101);
-        escrow.reclaimExpired(escrowUid);
+        escrow.reclaim(escrowUid);
 
         assertEq(tokenA.balanceOf(buyer), 1000 * 10 ** 18);
         assertEq(tokenB.balanceOf(buyer), 1000 * 10 ** 18);
@@ -943,7 +942,7 @@ contract HookEscrowAttackTest is Test {
         );
 
         vm.prank(seller_);
-        escrow.collectEscrow(escrowUid, fulUid);
+        escrow.collect(escrowUid, fulUid);
 
         assertEq(token.balanceOf(seller_), AMOUNT);
         assertEq(token.balanceOf(address(erc20Hook)), 0);

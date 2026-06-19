@@ -36,7 +36,7 @@ contract TimeBeforeArbiterTest is Test {
         bytes memory demand = abi.encode(demandData);
 
         // Check obligation should return true
-        bool result = arbiter.checkObligation(attestation, demand, bytes32(0));
+        bool result = arbiter.check(attestation, demand, bytes32(0));
         assertTrue(result, "Should accept attestation with time before threshold");
     }
 
@@ -61,7 +61,7 @@ contract TimeBeforeArbiterTest is Test {
 
         // Check obligation should revert with TimeNotBefore
         vm.expectRevert(TimeBeforeArbiter.TimeNotBefore.selector);
-        arbiter.checkObligation(attestation, demand, bytes32(0));
+        arbiter.check(attestation, demand, bytes32(0));
     }
 
     function testCheckObligationWithZeroSentinelValue() public view {
@@ -84,7 +84,7 @@ contract TimeBeforeArbiterTest is Test {
         bytes memory demand = abi.encode(demandData);
 
         // Check obligation should return true (0 means "before nothing" - no constraint)
-        bool result = arbiter.checkObligation(attestation, demand, bytes32(0));
+        bool result = arbiter.check(attestation, demand, bytes32(0));
         assertTrue(result, "Should accept any attestation when demand time is 0 (sentinel)");
     }
 

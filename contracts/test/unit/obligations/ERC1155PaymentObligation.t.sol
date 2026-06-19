@@ -163,7 +163,7 @@ contract ERC1155PaymentObligationTest is Test {
             token: address(token), tokenId: tokenId, amount: erc1155TokenAmount, payee: payee
         });
 
-        bool exactMatch = paymentObligation.checkObligation(attestation, abi.encode(exactDemand), bytes32(0));
+        bool exactMatch = paymentObligation.check(attestation, abi.encode(exactDemand), bytes32(0));
         assertTrue(exactMatch, "Should match exact demand");
 
         // Test lower amount demand (should succeed)
@@ -171,7 +171,7 @@ contract ERC1155PaymentObligationTest is Test {
             token: address(token), tokenId: tokenId, amount: erc1155TokenAmount - 50, payee: payee
         });
 
-        bool lowerMatch = paymentObligation.checkObligation(attestation, abi.encode(lowerDemand), bytes32(0));
+        bool lowerMatch = paymentObligation.check(attestation, abi.encode(lowerDemand), bytes32(0));
         assertTrue(lowerMatch, "Should match lower amount demand");
 
         // Test higher amount demand (should fail)
@@ -179,7 +179,7 @@ contract ERC1155PaymentObligationTest is Test {
             token: address(token), tokenId: tokenId, amount: erc1155TokenAmount + 50, payee: payee
         });
 
-        bool higherMatch = paymentObligation.checkObligation(attestation, abi.encode(higherDemand), bytes32(0));
+        bool higherMatch = paymentObligation.check(attestation, abi.encode(higherDemand), bytes32(0));
         assertFalse(higherMatch, "Should not match higher amount demand");
 
         // Test different token ID demand (should fail)
@@ -188,7 +188,7 @@ contract ERC1155PaymentObligationTest is Test {
         });
 
         bool differentIdMatch =
-            paymentObligation.checkObligation(attestation, abi.encode(differentIdDemand), bytes32(0));
+            paymentObligation.check(attestation, abi.encode(differentIdDemand), bytes32(0));
         assertFalse(differentIdMatch, "Should not match different token ID demand");
 
         // Test different token contract demand (should fail)
@@ -198,7 +198,7 @@ contract ERC1155PaymentObligationTest is Test {
         });
 
         bool differentTokenMatch =
-            paymentObligation.checkObligation(attestation, abi.encode(differentTokenDemand), bytes32(0));
+            paymentObligation.check(attestation, abi.encode(differentTokenDemand), bytes32(0));
         assertFalse(differentTokenMatch, "Should not match different token demand");
 
         // Test different payee demand (should fail)
@@ -208,7 +208,7 @@ contract ERC1155PaymentObligationTest is Test {
         });
 
         bool differentPayeeMatch =
-            paymentObligation.checkObligation(attestation, abi.encode(differentPayeeDemand), bytes32(0));
+            paymentObligation.check(attestation, abi.encode(differentPayeeDemand), bytes32(0));
         assertFalse(differentPayeeMatch, "Should not match different payee demand");
     }
 
@@ -233,7 +233,7 @@ contract ERC1155PaymentObligationTest is Test {
             token: address(differentToken), tokenId: 999, amount: 999, payee: makeAddr("differentPayee")
         });
 
-        bool result = paymentObligation.checkObligation(attestation, abi.encode(differentDemand), bytes32(0));
+        bool result = paymentObligation.check(attestation, abi.encode(differentDemand), bytes32(0));
         assertFalse(result, "Should not match attestation with different token, tokenId, amount, and payee");
     }
 

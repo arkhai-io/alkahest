@@ -14,10 +14,10 @@ contract UidArbiter is IArbiter {
 
     error UidMismatched();
 
-    function checkObligation(
-        Attestation memory obligation,
+    function check(
+        Attestation memory fulfillment,
         bytes memory demand,
-        bytes32 /*fulfilling*/
+        bytes32 /*escrowUid*/
     )
         public
         pure
@@ -25,7 +25,7 @@ contract UidArbiter is IArbiter {
         returns (bool)
     {
         DemandData memory demand_ = abi.decode(demand, (DemandData));
-        if (obligation.uid != demand_.uid) revert UidMismatched();
+        if (fulfillment.uid != demand_.uid) revert UidMismatched();
 
         return true;
     }

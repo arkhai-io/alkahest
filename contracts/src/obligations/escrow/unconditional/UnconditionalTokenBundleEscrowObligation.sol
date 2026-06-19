@@ -78,7 +78,7 @@ contract UnconditionalTokenBundleEscrowObligation is BaseEscrowObligationUncondi
     }
 
     // Extract arbiter and demand from encoded data
-    function extractArbiterAndDemand(bytes memory data)
+    function decodeCondition(bytes memory data)
         public
         pure
         override
@@ -298,7 +298,7 @@ contract UnconditionalTokenBundleEscrowObligation is BaseEscrowObligationUncondi
     }
 
     // Implement IArbiter
-    function checkObligation(
+    function check(
         Attestation memory obligation,
         bytes memory demand,
         bytes32 /* fulfilling */
@@ -371,11 +371,6 @@ contract UnconditionalTokenBundleEscrowObligation is BaseEscrowObligationUncondi
         return _doObligationForRaw(abi.encode(data), expirationTime, recipient, bytes32(0));
     }
 
-    function collectEscrow(bytes32 escrow, bytes32 fulfillment) external returns (bool) {
-        collectEscrowRaw(escrow, fulfillment);
-        return true;
-    }
-
     /// @notice Unsafe partial escrow collection - continues on individual transfer failures
     /// @dev Use only as a last resort when some tokens in the bundle cannot be collected.
     /// Failed transfers emit events but do not revert. The escrow will be marked as collected
@@ -393,13 +388,13 @@ contract UnconditionalTokenBundleEscrowObligation is BaseEscrowObligationUncondi
         if (msg.sender != escrow.recipient) revert UnauthorizedCall();
 
         // Extract arbiter and demand from escrow data
-        (address arbiter, bytes memory demand) = extractArbiterAndDemand(escrow.data);
+        (address arbiter, bytes memory demand) = decodeCondition(escrow.data);
 
         // UNCONDITIONAL: No fulfillment intrinsic or refUID check
         // Use this when fulfillment policy is fully delegated to arbiters
 
         // Check fulfillment via the specified arbiter
-        if (!IArbiter(arbiter).checkObligation(fulfillment, demand, escrow.uid)) {
+        if (!IArbiter(arbiter).check(fulfillment, demand, escrow.uid)) {
             revert InvalidFulfillment();
         }
 

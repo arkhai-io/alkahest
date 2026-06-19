@@ -101,10 +101,7 @@ contract ERC721BarterUtils {
             msg.sender,
             buyAttestation // Reference the escrow this payment is for
         );
-
-        if (!erc721Escrow.collectEscrow(buyAttestation, sellAttestation)) {
-            revert CouldntCollectEscrow();
-        }
+        erc721Escrow.collect(buyAttestation, sellAttestation);
 
         return sellAttestation;
     }
@@ -181,10 +178,7 @@ contract ERC721BarterUtils {
             msg.sender,
             buyAttestation // Reference the escrow this payment is for
         );
-
-        if (!erc20Escrow.collectEscrow(buyAttestation, sellAttestation)) {
-            revert CouldntCollectEscrow();
-        }
+        erc20Escrow.collect(buyAttestation, sellAttestation);
 
         return sellAttestation;
     }
@@ -242,10 +236,7 @@ contract ERC721BarterUtils {
             msg.sender,
             buyAttestation // Reference the escrow this payment is for
         );
-
-        if (!erc1155Escrow.collectEscrow(buyAttestation, sellAttestation)) {
-            revert CouldntCollectEscrow();
-        }
+        erc1155Escrow.collect(buyAttestation, sellAttestation);
 
         return sellAttestation;
     }
@@ -294,9 +285,7 @@ contract ERC721BarterUtils {
 
         // Fix: Use bundleEscrow instead of erc721Escrow
         // The original escrow was made with TokenBundleEscrowObligation
-        if (!bundleEscrow.collectEscrow(buyAttestation, sellAttestation)) {
-            revert CouldntCollectEscrow();
-        }
+        bundleEscrow.collect(buyAttestation, sellAttestation);
 
         return sellAttestation;
     }
@@ -346,10 +335,7 @@ contract ERC721BarterUtils {
             msg.sender,
             buyAttestation // Reference the escrow this payment is for
         );
-
-        if (!nativeEscrow.collectEscrow(buyAttestation, sellAttestation)) {
-            revert CouldntCollectEscrow();
-        }
+        nativeEscrow.collect(buyAttestation, sellAttestation);
 
         return sellAttestation;
     }
@@ -369,10 +355,7 @@ contract ERC721BarterUtils {
             msg.sender,
             buyAttestation // Reference the escrow this payment is for
         );
-
-        if (!erc721Escrow.collectEscrow(buyAttestation, sellAttestation)) {
-            revert CouldntCollectEscrow();
-        }
+        erc721Escrow.collect(buyAttestation, sellAttestation);
 
         return sellAttestation;
     }

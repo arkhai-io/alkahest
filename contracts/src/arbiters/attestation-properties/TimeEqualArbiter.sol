@@ -14,10 +14,10 @@ contract TimeEqualArbiter is IArbiter {
 
     error TimeNotEqual();
 
-    function checkObligation(
-        Attestation memory obligation,
+    function check(
+        Attestation memory fulfillment,
         bytes memory demand,
-        bytes32 /*fulfilling*/
+        bytes32 /*escrowUid*/
     )
         public
         pure
@@ -25,7 +25,7 @@ contract TimeEqualArbiter is IArbiter {
         returns (bool)
     {
         DemandData memory demand_ = abi.decode(demand, (DemandData));
-        if (obligation.time != demand_.time) revert TimeNotEqual();
+        if (fulfillment.time != demand_.time) revert TimeNotEqual();
 
         return true;
     }

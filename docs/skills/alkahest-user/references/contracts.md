@@ -18,8 +18,8 @@ Each escrow locks assets in a contract until an arbiter validates fulfillment.
 
 1. `doObligation(data, expirationTime)` — lock assets, create EAS attestation
 2. Fulfiller creates fulfillment attestation with `refUID` pointing to escrow
-3. `collectEscrow(escrowUid, fulfillmentUid)` — arbiter validates, releases assets
-4. `reclaimExpired(uid)` — reclaim assets after expiration (buyer only)
+3. `collect(escrowUid, fulfillmentUid)` — arbiter validates, releases assets
+4. `reclaim(uid)` — reclaim assets after expiration (buyer only)
 
 ## Payment Obligation Types
 

@@ -146,7 +146,7 @@ contract ApiCallExample1Test is Test {
         uint256 bobBalanceBefore = paymentToken.balanceOf(bob);
 
         vm.prank(bob);
-        erc20EscrowObligation.collectEscrow(escrowUid, fulfillmentUid);
+        erc20EscrowObligation.collect(escrowUid, fulfillmentUid);
 
         assertEq(paymentToken.balanceOf(bob), bobBalanceBefore + PAYMENT_AMOUNT, "Bob should receive payment");
         assertEq(paymentToken.balanceOf(address(erc20EscrowObligation)), 0, "Escrow should be empty");
@@ -185,14 +185,14 @@ contract ApiCallExample1Test is Test {
         // Bob's arbitration won't work because the demand specifies Charlie
         vm.prank(bob);
         vm.expectRevert();
-        erc20EscrowObligation.collectEscrow(escrowUid, fulfillmentUid);
+        erc20EscrowObligation.collect(escrowUid, fulfillmentUid);
 
         // Charlie's arbitration will work
         vm.prank(charlie);
         trustedOracleArbiter.arbitrate(fulfillmentUid, innerDemand, true);
 
         vm.prank(bob);
-        erc20EscrowObligation.collectEscrow(escrowUid, fulfillmentUid);
+        erc20EscrowObligation.collect(escrowUid, fulfillmentUid);
 
         assertGt(paymentToken.balanceOf(bob), 0, "Bob should receive payment after correct oracle validation");
     }
@@ -232,7 +232,7 @@ contract ApiCallExample1Test is Test {
         // Bob cannot claim payment
         vm.prank(bob);
         vm.expectRevert();
-        erc20EscrowObligation.collectEscrow(escrowUid, fulfillmentUid);
+        erc20EscrowObligation.collect(escrowUid, fulfillmentUid);
 
         assertEq(
             paymentToken.balanceOf(address(erc20EscrowObligation)),
@@ -269,7 +269,7 @@ contract ApiCallExample1Test is Test {
         // Alice reclaims expired escrow
         uint256 aliceBalanceBefore = paymentToken.balanceOf(alice);
         vm.prank(alice);
-        erc20EscrowObligation.reclaimExpired(escrowUid);
+        erc20EscrowObligation.reclaim(escrowUid);
 
         assertEq(
             paymentToken.balanceOf(alice), aliceBalanceBefore + PAYMENT_AMOUNT, "Alice should reclaim full payment"

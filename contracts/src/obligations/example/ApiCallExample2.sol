@@ -208,7 +208,7 @@ contract ApiCallExample2 {
      * @notice Claim payment after successful validation
      */
     function claimPayment(bytes32 escrowUid, bytes32 fulfillmentUid) external {
-        erc20EscrowObligation.collectEscrow(escrowUid, fulfillmentUid);
+        erc20EscrowObligation.collect(escrowUid, fulfillmentUid);
     }
 
     /**

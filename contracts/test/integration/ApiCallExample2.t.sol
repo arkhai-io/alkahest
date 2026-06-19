@@ -156,7 +156,7 @@ contract ApiCallExample2Test is Test {
 
         // Step 4: Bob claims payment
         vm.prank(bob);
-        erc20EscrowObligation.collectEscrow(escrowUid, fulfillmentUid);
+        erc20EscrowObligation.collect(escrowUid, fulfillmentUid);
 
         assertGt(paymentToken.balanceOf(bob), 0, "Bob should receive payment");
     }
@@ -294,6 +294,6 @@ contract ApiCallExample2Test is Test {
         // Bob cannot claim payment
         vm.prank(bob);
         vm.expectRevert();
-        erc20EscrowObligation.collectEscrow(escrowUid, fulfillmentUid);
+        erc20EscrowObligation.collect(escrowUid, fulfillmentUid);
     }
 }

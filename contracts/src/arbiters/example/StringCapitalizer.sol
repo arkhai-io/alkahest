@@ -10,7 +10,7 @@ import {StringObligation} from "../../obligations/StringObligation.sol";
  * @title StringCapitalizer
  * @notice Single-transaction arbiter that validates if a string has been properly capitalized
  * @dev Works with StringObligation attestations where the demand is a query for a string to capitalize,
- *      and checkObligation verifies if the fulfillment is the capitalized version of the string
+ *      and check verifies if the fulfillment is the capitalized version of the string
  */
 contract StringCapitalizer is IArbiter {
     using ArbiterUtils for Attestation;
@@ -24,13 +24,13 @@ contract StringCapitalizer is IArbiter {
     }
 
     /**
-     * @notice Checks if an obligation fulfills the capitalization requirement
-     * @param obligation The attestation containing the capitalized string
+     * @notice Checks if an fulfillment fulfills the capitalization requirement
+     * @param fulfillment The attestation containing the capitalized string
      * @param demand The encoded demand data containing the original string
-     * @param fulfilling Optional reference UID for what this obligation is fulfilling
-     * @return bool True if the obligation contains the properly capitalized version of the demand string
+     * @param escrowUid Optional reference UID for what this fulfillment is escrowUid
+     * @return bool True if the fulfillment contains the properly capitalized version of the demand string
      */
-    function checkObligation(Attestation memory obligation, bytes memory demand, bytes32 fulfilling)
+    function check(Attestation memory fulfillment, bytes memory demand, bytes32 escrowUid)
         external
         view
         override
@@ -38,19 +38,19 @@ contract StringCapitalizer is IArbiter {
     {
         // Check basic attestation validity
 
-        // Check if the obligation references what it's fulfilling (if provided)
-        if (fulfilling != bytes32(0) && obligation.refUID != fulfilling) {
+        // Check if the fulfillment references what it's escrowUid (if provided)
+        if (escrowUid != bytes32(0) && fulfillment.refUID != escrowUid) {
             return false;
         }
 
-        // Decode the obligation data to get the potentially capitalized string
+        // Decode the fulfillment data to get the potentially capitalized string
         StringObligation.ObligationData memory obligationData =
-            abi.decode(obligation.data, (StringObligation.ObligationData));
+            abi.decode(fulfillment.data, (StringObligation.ObligationData));
 
         // Decode the demand data to get the original query string
         DemandData memory demandData = abi.decode(demand, (DemandData));
 
-        // Check if the obligation item is the capitalized version of the query
+        // Check if the fulfillment item is the capitalized version of the query
         return _isCapitalized(demandData.query, obligationData.item);
     }
 

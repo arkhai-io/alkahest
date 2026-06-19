@@ -125,7 +125,7 @@ contract ERC8004ArbiterTest is Test {
         bytes memory demand = abi.encode(demandData);
 
         // Should return true since response (75) >= minResponse (50) and refUID matches
-        assertTrue(arbiter.checkObligation(attestation, demand, escrowUid));
+        assertTrue(arbiter.check(attestation, demand, escrowUid));
     }
 
     function testCheckObligationWrongRefUID() public {
@@ -169,7 +169,7 @@ contract ERC8004ArbiterTest is Test {
 
         // Should revert since refUID doesn't match the escrow
         vm.expectRevert(ERC8004Arbiter.FulfillmentMustReferenceEscrow.selector);
-        arbiter.checkObligation(attestation, demand, expectedRefUID);
+        arbiter.check(attestation, demand, expectedRefUID);
     }
 
     function testCheckObligationInsufficientResponse() public {
@@ -211,7 +211,7 @@ contract ERC8004ArbiterTest is Test {
 
         // Should revert since response (30) < minResponse (50)
         vm.expectRevert(ERC8004Arbiter.ResponseBelowMinimum.selector);
-        arbiter.checkObligation(attestation, demand, escrowUid);
+        arbiter.check(attestation, demand, escrowUid);
     }
 
     function testCheckObligationMinResponseZeroReverts() public {
@@ -244,7 +244,7 @@ contract ERC8004ArbiterTest is Test {
         bytes memory demand = abi.encode(demandData);
 
         vm.expectRevert(ERC8004Arbiter.InvalidMinResponse.selector);
-        arbiter.checkObligation(attestation, demand, escrowUid);
+        arbiter.check(attestation, demand, escrowUid);
     }
 
     function testCheckObligationPendingRequestDoesNotPassWithZeroThreshold() public {
@@ -274,7 +274,7 @@ contract ERC8004ArbiterTest is Test {
         bytes memory demand = abi.encode(demandData);
 
         vm.expectRevert(ERC8004Arbiter.InvalidMinResponse.selector);
-        arbiter.checkObligation(attestation, demand, escrowUid);
+        arbiter.check(attestation, demand, escrowUid);
     }
 
     function testCheckObligationWrongValidator() public {
@@ -312,7 +312,7 @@ contract ERC8004ArbiterTest is Test {
 
         // Should revert since validator addresses don't match
         vm.expectRevert(ERC8004Arbiter.ValidatorMismatch.selector);
-        arbiter.checkObligation(attestation, demand, escrowUid);
+        arbiter.check(attestation, demand, escrowUid);
     }
 
     function testCheckObligationWrongValidationData() public {
@@ -345,7 +345,7 @@ contract ERC8004ArbiterTest is Test {
         bytes memory demand = abi.encode(demandData);
 
         vm.expectRevert();
-        arbiter.checkObligation(attestation, demand, escrowUid);
+        arbiter.check(attestation, demand, escrowUid);
     }
 
     function testCheckObligationWrongRegistry() public {
@@ -389,6 +389,6 @@ contract ERC8004ArbiterTest is Test {
         // Should revert since the wrong registry won't have the validation
         // The new upgradeable ValidationRegistry reverts internally when the request doesn't exist
         vm.expectRevert();
-        arbiter.checkObligation(attestation, demand, escrowUid);
+        arbiter.check(attestation, demand, escrowUid);
     }
 }

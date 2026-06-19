@@ -472,7 +472,7 @@ Once Charlie approves, Bob claims the escrow exactly as in pt 2:
 **Solidity**
 
 ```solidity
-erc20EscrowObligation.collectEscrow(escrowUid, fulfillmentUid);
+erc20EscrowObligation.collect(escrowUid, fulfillmentUid);
 ```
 
 **TypeScript**

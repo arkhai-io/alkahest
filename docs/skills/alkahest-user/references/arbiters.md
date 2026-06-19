@@ -3,7 +3,7 @@
 Arbiters are contracts that validate whether a fulfillment satisfies an escrow's demand. Every arbiter implements:
 
 ```solidity
-function checkObligation(
+function check(
     Attestation memory obligation,
     bytes memory demand,
     bytes32 fulfilling

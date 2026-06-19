@@ -7,7 +7,7 @@ import {SplitterVerification} from "./SplitterVerification.sol";
 import {BaseSplitter} from "./BaseSplitter.sol";
 
 interface INativeTokenEscrowObligation {
-    function collectEscrow(bytes32 escrow, bytes32 fulfillment) external returns (bool);
+    function collect(bytes32 escrow, bytes32 fulfillment) external returns (bytes memory);
 }
 
 contract NativeTokenSplitter is BaseSplitter {
@@ -30,10 +30,10 @@ contract NativeTokenSplitter is BaseSplitter {
     }
 
     event ArbitrationMade(
-        bytes32 indexed decisionKey, bytes32 indexed obligation, address indexed oracle, Split[] splits
+        bytes32 indexed decisionKey, bytes32 indexed fulfillmentUid, address indexed oracle, Split[] splits
     );
     event EscrowCollectedAndDistributed(
-        bytes32 indexed escrow, bytes32 indexed fulfillment, address indexed fulfiller, Split[] splits
+        bytes32 indexed escrowUid, bytes32 indexed fulfillmentUid, address indexed fulfiller, Split[] splits
     );
     event NativeTransferFailedOnDistribute(address indexed recipient, uint256 amount);
 
@@ -99,7 +99,7 @@ contract NativeTokenSplitter is BaseSplitter {
         DemandData memory demandData = abi.decode(escrowData.demand, (DemandData));
         splits = decisions[demandData.oracle][_decisionKey(fulfillment, escrow)];
         uint256 balanceBefore = address(this).balance;
-        INativeTokenEscrowObligation(escrowContract).collectEscrow(escrow, fulfillment);
+        INativeTokenEscrowObligation(escrowContract).collect(escrow, fulfillment);
         SplitterVerification.verifyDelta(balanceBefore, address(this).balance, escrowData.amount);
     }
 

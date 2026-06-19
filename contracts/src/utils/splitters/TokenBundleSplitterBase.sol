@@ -12,7 +12,7 @@ import {SplitterVerification} from "./SplitterVerification.sol";
 import {BaseSplitter} from "./BaseSplitter.sol";
 
 interface ITokenBundleEscrowObligation {
-    function collectEscrow(bytes32 escrow, bytes32 fulfillment) external returns (bool);
+    function collect(bytes32 escrow, bytes32 fulfillment) external returns (bytes memory);
 }
 
 abstract contract TokenBundleSplitterBase is BaseSplitter, ERC1155Holder {
@@ -45,8 +45,8 @@ abstract contract TokenBundleSplitterBase is BaseSplitter, ERC1155Holder {
         uint256[] erc1155Amounts;
     }
 
-    event ArbitrationMade(bytes32 indexed decisionKey, bytes32 indexed obligation, address indexed oracle);
-    event EscrowCollectedAndDistributed(bytes32 indexed escrow, bytes32 indexed fulfillment, address indexed fulfiller);
+    event ArbitrationMade(bytes32 indexed decisionKey, bytes32 indexed fulfillmentUid, address indexed oracle);
+    event EscrowCollectedAndDistributed(bytes32 indexed escrowUid, bytes32 indexed fulfillmentUid, address indexed fulfiller);
     event NativeTransferFailedOnDistribute(address indexed recipient, uint256 amount);
     event ERC20TransferFailedOnDistribute(address indexed recipient, address indexed token, uint256 amount);
     event ERC721TransferFailedOnDistribute(address indexed recipient, address indexed token, uint256 tokenId);
@@ -147,7 +147,7 @@ abstract contract TokenBundleSplitterBase is BaseSplitter, ERC1155Holder {
         uint256 nativeBefore = address(this).balance;
         uint256[] memory erc20Before = _erc20Balances(escrowData);
         uint256[] memory erc1155Before = _erc1155Balances(escrowData);
-        ITokenBundleEscrowObligation(escrowContract).collectEscrow(escrow, fulfillment);
+        ITokenBundleEscrowObligation(escrowContract).collect(escrow, fulfillment);
         _verifyCollectedDeltas(escrowData, nativeBefore, erc20Before, erc1155Before);
     }
 

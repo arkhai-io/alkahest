@@ -155,9 +155,7 @@ contract ERC721EscrowObligationTest is Test {
 
         // Collect payment
         vm.prank(seller);
-        bool success = escrowObligation.collectEscrow(paymentUid, fulfillmentUid);
-
-        assertTrue(success, "Payment collection should succeed");
+        escrowObligation.collect(paymentUid, fulfillmentUid);
 
         // Verify token transfer to seller
         assertEq(token.ownerOf(tokenId), seller, "Seller should have received the token");
@@ -188,7 +186,7 @@ contract ERC721EscrowObligationTest is Test {
         // Try to collect payment, should revert with InvalidFulfillment
         vm.prank(seller);
         vm.expectRevert(BaseEscrowObligation.InvalidFulfillment.selector);
-        escrowObligation.collectEscrow(paymentUid, fulfillmentUid);
+        escrowObligation.collect(paymentUid, fulfillmentUid);
     }
 
     function testReclaimExpired() public {
@@ -208,14 +206,14 @@ contract ERC721EscrowObligationTest is Test {
         // Attempt to collect before expiration (should fail)
         vm.prank(buyer);
         vm.expectRevert(BaseEscrowObligation.UnauthorizedCall.selector);
-        escrowObligation.reclaimExpired(paymentUid);
+        escrowObligation.reclaim(paymentUid);
 
         // Fast forward past expiration time
         vm.warp(block.timestamp + 200);
 
         // Collect expired funds
         vm.prank(buyer);
-        bool success = escrowObligation.reclaimExpired(paymentUid);
+        bool success = escrowObligation.reclaim(paymentUid);
 
         assertTrue(success, "Expired token collection should succeed");
 
@@ -248,7 +246,7 @@ contract ERC721EscrowObligationTest is Test {
             demand: abi.encode("specific demand")
         });
 
-        bool exactMatch = escrowObligation.checkObligation(attestation, abi.encode(exactDemand), bytes32(0));
+        bool exactMatch = escrowObligation.check(attestation, abi.encode(exactDemand), bytes32(0));
         assertTrue(exactMatch, "Should match exact demand");
 
         // Test different token ID (should fail)
@@ -261,7 +259,7 @@ contract ERC721EscrowObligationTest is Test {
         });
 
         bool differentTokenIdMatch =
-            escrowObligation.checkObligation(attestation, abi.encode(differentTokenIdDemand), bytes32(0));
+            escrowObligation.check(attestation, abi.encode(differentTokenIdDemand), bytes32(0));
         assertFalse(differentTokenIdMatch, "Should not match different token ID demand");
 
         // Test different token (should fail)
@@ -274,7 +272,7 @@ contract ERC721EscrowObligationTest is Test {
         });
 
         bool differentTokenMatch =
-            escrowObligation.checkObligation(attestation, abi.encode(differentTokenDemand), bytes32(0));
+            escrowObligation.check(attestation, abi.encode(differentTokenDemand), bytes32(0));
         assertFalse(differentTokenMatch, "Should not match different token demand");
 
         // Test different arbiter (should fail)
@@ -286,7 +284,7 @@ contract ERC721EscrowObligationTest is Test {
         });
 
         bool differentArbiterMatch =
-            escrowObligation.checkObligation(attestation, abi.encode(differentArbiterDemand), bytes32(0));
+            escrowObligation.check(attestation, abi.encode(differentArbiterDemand), bytes32(0));
         assertFalse(differentArbiterMatch, "Should not match different arbiter demand");
 
         // Test different demand (should fail)
@@ -298,7 +296,7 @@ contract ERC721EscrowObligationTest is Test {
         });
 
         bool differentDemandMatch =
-            escrowObligation.checkObligation(attestation, abi.encode(differentDemandData), bytes32(0));
+            escrowObligation.check(attestation, abi.encode(differentDemandData), bytes32(0));
         assertFalse(differentDemandMatch, "Should not match different demand");
     }
 

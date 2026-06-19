@@ -149,7 +149,7 @@ contract NativeTokenSplitterTest is Test {
         bytes memory demand = abi.encode(NativeTokenSplitter.DemandData({oracle: oracle, data: bytes("")}));
 
         Attestation memory attackerF = eas.getAttestation(attackerFulfillmentUid);
-        assertFalse(splitter.checkObligation(attackerF, demand, escrowUid));
+        assertFalse(splitter.check(attackerF, demand, escrowUid));
     }
 
     function testArbitrateRejectsZeroFulfillment() public {

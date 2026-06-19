@@ -52,7 +52,7 @@ bytes32 fulfillmentUid = stringObligation.doObligation(
 trustedOracleArbiter.arbitrate(fulfillmentUid, true);
 
 // Step 4: Claim escrow with validated fulfillment
-erc20EscrowObligation.collectEscrow(escrowUid, fulfillmentUid);
+erc20EscrowObligation.collect(escrowUid, fulfillmentUid);
 ```
 
 **When to use this pattern**:
@@ -242,7 +242,7 @@ contract CryptoSignatureObligation is BaseObligation, IArbiter {
     }
 
     // Implements IArbiter to self-validate
-    function checkObligation(
+    function check(
         Attestation memory obligation,
         bytes memory demand,
         bytes32 counteroffer
@@ -332,8 +332,8 @@ bytes32 fulfillmentUid = cryptoSigObligation.doObligation(
     escrowUid
 );
 
-// Step 4: Claim escrow (self-validates via checkObligation)
-erc20EscrowObligation.collectEscrow(escrowUid, fulfillmentUid);
+// Step 4: Claim escrow (self-validates via check)
+erc20EscrowObligation.collect(escrowUid, fulfillmentUid);
 ```
 
 **When to use this pattern**:
@@ -377,7 +377,7 @@ When deciding whether to implement IArbiter in a fulfillment contract:
 
 **Implementation Guidelines**:
 
-- Keep `doObligation()` and `checkObligation()` logic clearly separated
+- Keep `doObligation()` and `check()` logic clearly separated
 - Validation should be deterministic and state-independent
 - Consider gas costs of validation in every claim
 - Document why validation is bundled rather than separate
@@ -393,7 +393,7 @@ contract MultiProofObligation is BaseObligation, IArbiter {
         uint256 proofType;  // Bitmap of proof types included
     }
 
-    function checkObligation(
+    function check(
         Attestation memory obligation,
         bytes memory demand,
         bytes32 counteroffer

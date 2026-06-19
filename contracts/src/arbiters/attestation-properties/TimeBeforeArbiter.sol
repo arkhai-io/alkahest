@@ -14,10 +14,10 @@ contract TimeBeforeArbiter is IArbiter {
 
     error TimeNotBefore();
 
-    function checkObligation(
-        Attestation memory obligation,
+    function check(
+        Attestation memory fulfillment,
         bytes memory demand,
-        bytes32 /*fulfilling*/
+        bytes32 /*escrowUid*/
     )
         public
         pure
@@ -26,7 +26,7 @@ contract TimeBeforeArbiter is IArbiter {
     {
         DemandData memory demand_ = abi.decode(demand, (DemandData));
         // 0 is a sentinel value meaning "before nothing" (no constraint)
-        if (demand_.time != 0 && obligation.time > demand_.time) {
+        if (demand_.time != 0 && fulfillment.time > demand_.time) {
             revert TimeNotBefore();
         }
 

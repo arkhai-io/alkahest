@@ -191,8 +191,7 @@ contract ERC20BarterUtilsIntegrationTest is Test {
 
         // Make the payment collection
         vm.prank(bob);
-        bool success = escrowObligation.collectEscrow(buyAttestation, sellAttestation);
-        assertTrue(success, "Payment collection should succeed");
+        escrowObligation.collect(buyAttestation, sellAttestation);
 
         // Verify final balances
         assertEq(erc1155TokenA.balanceOf(alice), 900 * 10 ** 18, "Alice should have 900 Token A");

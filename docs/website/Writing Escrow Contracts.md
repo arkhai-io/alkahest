@@ -94,12 +94,12 @@ function decodeObligationData(
 }
 ```
 
-## Step 4: Implement extractArbiterAndDemand
+## Step 4: Implement decodeCondition
 
 This required method tells the base contract how to find the arbiter information:
 
 ```solidity
-function extractArbiterAndDemand(
+function decodeCondition(
     bytes memory data
 ) public pure override returns (address arbiter, bytes memory demand) {
     ObligationData memory obligation = decodeObligationData(data);
@@ -266,7 +266,7 @@ export const makeVoteEscrowClient = (
     const hash = await viemClient.writeContract({
       address: addresses.voteEscrowObligation,
       abi: voteEscrowAbi.abi,
-      functionName: "collectEscrowRaw",
+      functionName: "collect",
       args: [escrowAttestation, fulfillment],
     });
     return hash;
@@ -396,7 +396,7 @@ const fulfillment = await createFulfillmentAttestation();
 await client.voteEscrow.collectVoteEscrow(escrow.attested.uid, fulfillment.uid);
 
 // Alternative: Reclaim if expired
-await client.voteEscrow.reclaimExpired(escrow.attested.uid);
+await client.voteEscrow.reclaim(escrow.attested.uid);
 ```
 
 ## Key Considerations

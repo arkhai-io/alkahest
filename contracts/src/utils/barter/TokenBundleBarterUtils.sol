@@ -137,10 +137,7 @@ contract TokenBundleBarterUtils is IERC1155Receiver {
 
         bytes32 sellAttestation =
             bundlePayment.doObligationFor{value: demand.nativeAmount}(demand, msg.sender, buyAttestation);
-
-        if (!bundleEscrow.collectEscrow(buyAttestation, sellAttestation)) {
-            revert CouldntCollectEscrow();
-        }
+        bundleEscrow.collect(buyAttestation, sellAttestation);
 
         return sellAttestation;
     }

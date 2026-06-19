@@ -64,7 +64,7 @@ contract CommitRevealObligationTest is Test {
         assertEq(claimer.balance, claimerBalanceBefore + BOND, "claimer received committed bond");
 
         Attestation memory fulfillment = eas.getAttestation(fulfillmentUid);
-        assertTrue(obligation.checkObligation(fulfillment, demand, escrowUid));
+        assertTrue(obligation.check(fulfillment, demand, escrowUid));
     }
 
     function testCheckObligationReturnsFalseForMismatchedBondDemand() public {
@@ -85,8 +85,8 @@ contract CommitRevealObligationTest is Test {
         assertEq(claimer.balance, claimerBalanceBefore + BOND / 2, "claimer received actual committed bond");
 
         Attestation memory fulfillment = eas.getAttestation(fulfillmentUid);
-        assertFalse(obligation.checkObligation(fulfillment, demand, escrowUid));
-        assertTrue(obligation.checkObligation(fulfillment, _demand(BOND / 2), escrowUid));
+        assertFalse(obligation.check(fulfillment, demand, escrowUid));
+        assertTrue(obligation.check(fulfillment, _demand(BOND / 2), escrowUid));
     }
 
     function testCommitRejectsZeroBond() public {

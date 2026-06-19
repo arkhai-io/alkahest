@@ -57,8 +57,8 @@ contract NoOpERC20EscrowObligation is BaseObligation {
         BaseObligation(eas, schemaRegistry, "address arbiter, bytes demand, address token, uint256 amount", true)
     {}
 
-    function collectEscrow(bytes32, bytes32) external pure returns (bool) {
-        return true;
+    function collect(bytes32, bytes32) external pure returns (bytes memory) {
+        return "";
     }
 }
 
@@ -225,7 +225,7 @@ contract ERC20SplitterTest is Test {
     }
 
     // -----------------------------------------------------------------
-    // checkObligation
+    // check
     // -----------------------------------------------------------------
 
     function testCheckObligationReturnsTrueWhenDecisionExists() public {
@@ -239,7 +239,7 @@ contract ERC20SplitterTest is Test {
 
         bytes memory demand = abi.encode(ERC20Splitter.DemandData({oracle: oracle, data: bytes("")}));
         Attestation memory fulfillmentAttestation = eas.getAttestation(fulfillmentUid);
-        assertTrue(splitter.checkObligation(fulfillmentAttestation, demand, escrowUid));
+        assertTrue(splitter.check(fulfillmentAttestation, demand, escrowUid));
     }
 
     function testCheckObligationReturnsFalseWhenNoDecision() public {
@@ -248,7 +248,7 @@ contract ERC20SplitterTest is Test {
 
         bytes memory demand = abi.encode(ERC20Splitter.DemandData({oracle: oracle, data: bytes("")}));
         Attestation memory fulfillmentAttestation = eas.getAttestation(fulfillmentUid);
-        assertFalse(splitter.checkObligation(fulfillmentAttestation, demand, escrowUid));
+        assertFalse(splitter.check(fulfillmentAttestation, demand, escrowUid));
     }
 
     function testCheckObligationRejectsDifferentFulfillment() public {
@@ -264,7 +264,7 @@ contract ERC20SplitterTest is Test {
 
         bytes memory demand = abi.encode(ERC20Splitter.DemandData({oracle: oracle, data: bytes("")}));
         Attestation memory attackerFulfillment = eas.getAttestation(attackerFulfillmentUid);
-        assertFalse(splitter.checkObligation(attackerFulfillment, demand, escrowUid));
+        assertFalse(splitter.check(attackerFulfillment, demand, escrowUid));
     }
 
     function testCheckObligationReturnsFalseForZeroUidFulfillmentWithoutDecision() public {
@@ -284,7 +284,7 @@ contract ERC20SplitterTest is Test {
             data: bytes("")
         });
 
-        assertFalse(splitter.checkObligation(fulfillment, demand, escrowUid));
+        assertFalse(splitter.check(fulfillment, demand, escrowUid));
     }
 
     // -----------------------------------------------------------------
@@ -494,7 +494,7 @@ contract ERC20SplitterTest is Test {
         splitter.arbitrate(fulfillmentUid, escrowUid, splits);
 
         vm.expectRevert(SplitterVerification.InvalidFulfillmentRecipient.selector);
-        escrowObligation.collectEscrow(escrowUid, fulfillmentUid);
+        escrowObligation.collect(escrowUid, fulfillmentUid);
 
         assertEq(token.balanceOf(alice), 0);
         assertEq(token.balanceOf(address(escrowObligation)), AMOUNT);

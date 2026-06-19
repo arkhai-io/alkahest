@@ -14,7 +14,7 @@ import {ArbiterUtils} from "../ArbiterUtils.sol";
 ///         Each commitment locks the native-token bond supplied as msg.value.
 ///         Arbiter demand data specifies the exact bond amount required for a
 ///         particular escrow, so this contract composes cleanly under logical
-///         arbiters that pass nested demands to checkObligation.
+///         arbiters that pass nested demands to check.
 contract CommitRevealObligation is BaseObligation, IArbiter, Ownable {
     using ArbiterUtils for Attestation;
 
@@ -116,7 +116,7 @@ contract CommitRevealObligation is BaseObligation, IArbiter, Ownable {
 
     /// @notice Reveals a fulfillment and immediately collects the target escrow.
     /// @dev Uses a low-level call so it can support escrow contracts with
-    ///      different collectEscrow return types.
+    ///      different collect return types.
     function revealAndCollect(
         ObligationData calldata data,
         address recipient,
@@ -127,10 +127,10 @@ contract CommitRevealObligation is BaseObligation, IArbiter, Ownable {
         fulfillmentUid = _doObligationForRaw(encodedData, 0, recipient, escrowUid);
 
         (bool success, bytes memory result) =
-            escrowContract.call(abi.encodeWithSignature("collectEscrow(bytes32,bytes32)", escrowUid, fulfillmentUid));
+            escrowContract.call(abi.encodeWithSignature("collect(bytes32,bytes32)", escrowUid, fulfillmentUid));
         if (!success) revert EscrowCollectionFailed(escrowContract, escrowUid, fulfillmentUid, result);
 
-        collectResult = result;
+        collectResult = abi.decode(result, (bytes));
     }
 
     /// @dev After the attestation is created, validate the commitment, enforce
@@ -204,7 +204,7 @@ contract CommitRevealObligation is BaseObligation, IArbiter, Ownable {
     // ---------------------------------------------------------------------
 
     /// @inheritdoc IArbiter
-    function checkObligation(
+    function check(
         Attestation memory obligation,
         bytes memory demand,
         bytes32 /* fulfilling */

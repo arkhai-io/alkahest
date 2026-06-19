@@ -68,7 +68,7 @@ contract GlobalBondCommitRevealObligationTest is Test {
 
         // Arbiter check should pass
         Attestation memory fulfillment = eas.getAttestation(fulfillmentUid);
-        assertTrue(obligation.checkObligation(fulfillment, "", escrowUid));
+        assertTrue(obligation.check(fulfillment, "", escrowUid));
 
         // Bond is already claimed — slashing should fail
         vm.warp(block.timestamp + COMMIT_DEADLINE + 1);
@@ -96,7 +96,7 @@ contract GlobalBondCommitRevealObligationTest is Test {
         (bytes32 fulfillmentUid, bytes memory collectResult) =
             obligation.revealAndCollect(data, claimer, address(nativeEscrow), escrowUid);
 
-        assertEq(abi.decode(collectResult, (bool)), true);
+        assertEq(collectResult.length, 0);
         assertEq(claimer.balance, claimerBalanceBefore + BOND + 1 ether);
 
         Attestation memory fulfillment = eas.getAttestation(fulfillmentUid);
@@ -177,10 +177,10 @@ contract GlobalBondCommitRevealObligationTest is Test {
         bytes32 fulfillmentUid = obligation.doObligation(data, escrowUid);
 
         // But if we fake the block number back for checking (simulate same-block scenario)
-        // We can't really do this with checkObligation since attestation is already created.
-        // Instead verify that checkObligation passes when block.number > commitBlock
+        // We can't really do this with check since attestation is already created.
+        // Instead verify that check passes when block.number > commitBlock
         Attestation memory fulfillment = eas.getAttestation(fulfillmentUid);
-        assertTrue(obligation.checkObligation(fulfillment, "", escrowUid));
+        assertTrue(obligation.check(fulfillment, "", escrowUid));
     }
 
     function testMultipleRevealsFromSameCommitReverts() public {
@@ -355,13 +355,13 @@ contract GlobalBondCommitRevealObligationTest is Test {
         vm.prank(claimer);
         bytes32 fulfillmentUid = obligation.doObligation(data, escrowUid);
 
-        // checkObligation should pass when called within or after deadline
+        // check should pass when called within or after deadline
         // because the attestation's timestamp is what matters, not current time
         Attestation memory fulfillment = eas.getAttestation(fulfillmentUid);
 
         // Even if we warp far into the future, the attestation time is still within deadline
         vm.warp(block.timestamp + COMMIT_DEADLINE * 10);
-        assertTrue(obligation.checkObligation(fulfillment, "", escrowUid));
+        assertTrue(obligation.check(fulfillment, "", escrowUid));
     }
 
     // ----------------------------------------------------------------
@@ -529,8 +529,8 @@ contract GlobalBondCommitRevealObligationTest is Test {
         Attestation memory fulfillment = eas.getAttestation(fulfillmentUid);
         assertEq(fulfillment.recipient, splitter, "recipient should be splitter");
 
-        // checkObligation should pass
-        assertTrue(obligation.checkObligation(fulfillment, "", escrowUid));
+        // check should pass
+        assertTrue(obligation.check(fulfillment, "", escrowUid));
     }
 
     function testDoObligationForRevertsWithWrongRecipientCommitment() public {

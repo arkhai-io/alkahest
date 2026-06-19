@@ -65,7 +65,7 @@ contract MockArbiter {
         approvedFulfillments[fulfillmentUid] = true;
     }
 
-    function checkObligation(
+    function check(
         Attestation memory,
         /* obligation */
         bytes memory,
@@ -355,7 +355,7 @@ contract TokenBundleEscrowObligationTest is Test {
         });
 
         // Mock arbiter check
-        vm.mockCall(address(arbiter), abi.encodeWithSelector(MockArbiter.checkObligation.selector), abi.encode(true));
+        vm.mockCall(address(arbiter), abi.encodeWithSelector(MockArbiter.check.selector), abi.encode(true));
 
         // Mock EAS getAttestation for fulfillment
         vm.mockCall(
@@ -385,9 +385,7 @@ contract TokenBundleEscrowObligationTest is Test {
         // Bob collects escrow
         uint256 bobBalanceBefore = bob.balance;
         vm.prank(bob);
-        bool success = escrow.collectEscrow(escrowId, fulfillmentId);
-
-        assertTrue(success);
+        escrow.collect(escrowId, fulfillmentId);
         // Verify Bob received all assets
         assertEq(bob.balance, bobBalanceBefore + NATIVE_AMOUNT);
         assertEq(token1.balanceOf(bob), TOKEN1_AMOUNT * 10 + TOKEN1_AMOUNT);
@@ -439,7 +437,7 @@ contract TokenBundleEscrowObligationTest is Test {
         uint256 aliceToken2Before = token2.balanceOf(alice);
 
         vm.prank(alice);
-        escrow.reclaimExpired(escrowId);
+        escrow.reclaim(escrowId);
 
         // Verify Alice got everything back
         assertEq(alice.balance, aliceBalanceBefore + NATIVE_AMOUNT);
@@ -471,31 +469,31 @@ contract TokenBundleEscrowObligationTest is Test {
 
         // Test exact match
         bytes memory demandBytes = abi.encode(paymentData);
-        assertTrue(escrow.checkObligation(attestation, demandBytes, bytes32(0)));
+        assertTrue(escrow.check(attestation, demandBytes, bytes32(0)));
 
         // Test with subset demands
         bytes memory subsetERC20 = abi.encode(createSubsetERC20Demand());
-        assertTrue(escrow.checkObligation(attestation, subsetERC20, bytes32(0)));
+        assertTrue(escrow.check(attestation, subsetERC20, bytes32(0)));
 
         bytes memory subsetERC721 = abi.encode(createSubsetERC721Demand());
-        assertTrue(escrow.checkObligation(attestation, subsetERC721, bytes32(0)));
+        assertTrue(escrow.check(attestation, subsetERC721, bytes32(0)));
 
         bytes memory subsetERC1155 = abi.encode(createSubsetERC1155Demand());
-        assertTrue(escrow.checkObligation(attestation, subsetERC1155, bytes32(0)));
+        assertTrue(escrow.check(attestation, subsetERC1155, bytes32(0)));
 
         // Test with lower native amount demand
         bytes memory lowerNative = abi.encode(createLowerNativeAmountDemand());
-        assertTrue(escrow.checkObligation(attestation, lowerNative, bytes32(0)));
+        assertTrue(escrow.check(attestation, lowerNative, bytes32(0)));
 
         // Test failures
         bytes memory higherNative = abi.encode(createHigherNativeAmountDemand());
-        assertFalse(escrow.checkObligation(attestation, higherNative, bytes32(0)));
+        assertFalse(escrow.check(attestation, higherNative, bytes32(0)));
 
         bytes memory differentArbiter = abi.encode(createDifferentArbiterDemand());
-        assertFalse(escrow.checkObligation(attestation, differentArbiter, bytes32(0)));
+        assertFalse(escrow.check(attestation, differentArbiter, bytes32(0)));
 
         bytes memory differentDemandData = abi.encode(createDifferentDemandData());
-        assertFalse(escrow.checkObligation(attestation, differentDemandData, bytes32(0)));
+        assertFalse(escrow.check(attestation, differentDemandData, bytes32(0)));
     }
 
     function testDirectNativeTransferReverts() public {
@@ -684,7 +682,7 @@ contract TokenBundleEscrowObligationTest is Test {
         assertEq(multiToken.balanceOf(address(escrow), MULTI_TOKEN_ID_2), MULTI_TOKEN_AMOUNT_2);
     }
 
-    // Test that collectEscrow reverts when native token transfer fails
+    // Test that collect reverts when native token transfer fails
     function testCollectEscrowRevertsOnNativeTransferFailure() public {
         // Create a bundle with native tokens
         TokenBundleEscrowObligation.ObligationData memory data = createNativeOnlyBundleData();
@@ -715,7 +713,7 @@ contract TokenBundleEscrowObligationTest is Test {
         });
 
         // Mock arbiter check
-        vm.mockCall(address(arbiter), abi.encodeWithSelector(MockArbiter.checkObligation.selector), abi.encode(true));
+        vm.mockCall(address(arbiter), abi.encodeWithSelector(MockArbiter.check.selector), abi.encode(true));
 
         // Mock EAS getAttestation for fulfillment
         vm.mockCall(
@@ -742,13 +740,13 @@ contract TokenBundleEscrowObligationTest is Test {
             address(eas), abi.encodeWithSelector(IEAS.getAttestation.selector, escrowId), abi.encode(escrowAttestation)
         );
 
-        // collectEscrow should revert because native token transfer fails
+        // collect should revert because native token transfer fails
         vm.expectRevert(
             abi.encodeWithSelector(
                 TokenBundleEscrowObligation.NativeTokenTransferFailed.selector, address(badRecipient), NATIVE_AMOUNT
             )
         );
-        escrow.collectEscrow(escrowId, fulfillmentId);
+        escrow.collect(escrowId, fulfillmentId);
 
         // Verify native tokens are still in escrow (not stuck)
         assertEq(address(escrow).balance, NATIVE_AMOUNT);
@@ -785,7 +783,7 @@ contract TokenBundleEscrowObligationTest is Test {
         });
 
         // Mock arbiter check
-        vm.mockCall(address(arbiter), abi.encodeWithSelector(MockArbiter.checkObligation.selector), abi.encode(true));
+        vm.mockCall(address(arbiter), abi.encodeWithSelector(MockArbiter.check.selector), abi.encode(true));
 
         // Mock EAS getAttestation for fulfillment
         vm.mockCall(
@@ -847,7 +845,7 @@ contract TokenBundleEscrowObligationTest is Test {
             data: ""
         });
 
-        vm.mockCall(address(arbiter), abi.encodeWithSelector(MockArbiter.checkObligation.selector), abi.encode(true));
+        vm.mockCall(address(arbiter), abi.encodeWithSelector(MockArbiter.check.selector), abi.encode(true));
         vm.mockCall(
             address(eas),
             abi.encodeWithSelector(IEAS.getAttestation.selector, fulfillmentId),
@@ -876,7 +874,7 @@ contract TokenBundleEscrowObligationTest is Test {
         escrow.unsafePartiallyCollectEscrow(escrowId, fulfillmentId);
     }
 
-    // Test that reclaimExpired reverts when native token transfer fails
+    // Test that reclaim reverts when native token transfer fails
     function testReclaimExpiredRevertsOnNativeTransferFailure() public {
         // Use a rejecting recipient as the escrow recipient
         RejectingRecipient badRecipient = new RejectingRecipient();
@@ -922,13 +920,13 @@ contract TokenBundleEscrowObligationTest is Test {
         // Move time past expiration
         vm.warp(block.timestamp + EXPIRATION_TIME + 1);
 
-        // reclaimExpired should revert because native token transfer fails
+        // reclaim should revert because native token transfer fails
         vm.expectRevert(
             abi.encodeWithSelector(
                 TokenBundleEscrowObligation.NativeTokenTransferFailed.selector, address(badRecipient), NATIVE_AMOUNT
             )
         );
-        escrow.reclaimExpired(escrowId);
+        escrow.reclaim(escrowId);
 
         // Verify native tokens are still in escrow (not stuck)
         assertEq(address(escrow).balance, NATIVE_AMOUNT);

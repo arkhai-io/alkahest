@@ -6,12 +6,12 @@ import {IArbiter} from "../IArbiter.sol";
 import {ArbiterUtils} from "../ArbiterUtils.sol";
 
 contract TrivialArbiter is IArbiter {
-    function checkObligation(
+    function check(
         Attestation memory,
         /*obligation*/
         bytes memory,
         /*demand*/
-        bytes32 /*fulfilling*/
+        bytes32 /*escrowUid*/
     )
         public
         pure

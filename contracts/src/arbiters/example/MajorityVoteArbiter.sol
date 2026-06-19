@@ -123,7 +123,7 @@ contract MajorityVoteArbiter is IArbiter {
      * @param demand Encoded DemandData containing voters and quorum
      * @return bool True if the obligation has received enough yes votes
      */
-    function checkObligation(
+    function check(
         Attestation memory obligation,
         bytes memory demand,
         bytes32 /* fulfilling */

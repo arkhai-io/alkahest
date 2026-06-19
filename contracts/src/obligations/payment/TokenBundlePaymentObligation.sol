@@ -165,18 +165,18 @@ contract TokenBundlePaymentObligation is BaseObligation, IArbiter {
         }
     }
 
-    function checkObligation(Attestation memory obligation, bytes memory demand, bytes32 fulfilling)
+    function check(Attestation memory fulfillment, bytes memory demand, bytes32 escrowUid)
         public
         view
         override
         returns (bool)
     {
-        if (obligation.schema != ATTESTATION_SCHEMA) return false;
+        if (fulfillment.schema != ATTESTATION_SCHEMA) return false;
 
         // Check that the payment references the correct escrow
-        if (obligation.refUID != fulfilling) return false;
+        if (fulfillment.refUID != escrowUid) return false;
 
-        ObligationData memory payment = abi.decode(obligation.data, (ObligationData));
+        ObligationData memory payment = abi.decode(fulfillment.data, (ObligationData));
         ObligationData memory demandData = abi.decode(demand, (ObligationData));
 
         return payment.nativeAmount >= demandData.nativeAmount && _checkTokenArrays(payment, demandData)

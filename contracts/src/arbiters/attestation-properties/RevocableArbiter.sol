@@ -14,10 +14,10 @@ contract RevocableArbiter is IArbiter {
 
     error RevocabilityMismatched();
 
-    function checkObligation(
-        Attestation memory obligation,
+    function check(
+        Attestation memory fulfillment,
         bytes memory demand,
-        bytes32 /*fulfilling*/
+        bytes32 /*escrowUid*/
     )
         public
         pure
@@ -25,7 +25,7 @@ contract RevocableArbiter is IArbiter {
         returns (bool)
     {
         DemandData memory demand_ = abi.decode(demand, (DemandData));
-        if (obligation.revocable != demand_.revocable) {
+        if (fulfillment.revocable != demand_.revocable) {
             revert RevocabilityMismatched();
         }
 

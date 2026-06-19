@@ -33,7 +33,7 @@ contract AttesterArbiterTest is Test {
         bytes memory demand = abi.encode(demandData);
 
         // Check obligation should return true
-        bool result = arbiter.checkObligation(attestation, demand, bytes32(0));
+        bool result = arbiter.check(attestation, demand, bytes32(0));
         assertTrue(result, "Should accept attestation with matching attester");
     }
 
@@ -58,7 +58,7 @@ contract AttesterArbiterTest is Test {
 
         // Check obligation should revert with AttesterMismatched
         vm.expectRevert(AttesterArbiter.AttesterMismatched.selector);
-        arbiter.checkObligation(attestation, demand, bytes32(0));
+        arbiter.check(attestation, demand, bytes32(0));
     }
 
     function testDecodeDemandData() public {

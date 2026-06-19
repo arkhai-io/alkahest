@@ -110,7 +110,7 @@ contract CryptoSignatureObligationTest is Test {
 
         // Step 3: Bob claims the escrow with his valid signature
         vm.prank(bob);
-        erc20Escrow.collectEscrowRaw(escrowUid, fulfillmentUid);
+        erc20Escrow.collect(escrowUid, fulfillmentUid);
 
         // Verify Bob received the tokens
         assertEq(paymentToken.balanceOf(bob), escrowAmount);
@@ -152,7 +152,7 @@ contract CryptoSignatureObligationTest is Test {
 
         // This should revert because Charlie's signature doesn't match Bob's pubkey
         vm.expectRevert();
-        erc20Escrow.collectEscrowRaw(escrowUid, fulfillmentUid);
+        erc20Escrow.collect(escrowUid, fulfillmentUid);
         vm.stopPrank();
 
         // Verify no tokens were transferred (Alice's 100 ether is still in escrow)
@@ -283,7 +283,7 @@ contract CryptoSignatureObligationTest is Test {
 
         // Get attestation and verify it passes the check
         Attestation memory obligation = eas.getAttestation(fulfillmentUid);
-        bool isValid = cryptoSigObligation.checkObligation(obligation, demand, bytes32(0));
+        bool isValid = cryptoSigObligation.check(obligation, demand, bytes32(0));
 
         assertTrue(isValid, "Domain-separated signature should be valid");
         vm.stopPrank();

@@ -149,25 +149,25 @@ contract NativeTokenPaymentObligationTest is Test {
         Attestation memory attestation = eas.getAttestation(uid);
 
         // Should match with same data
-        bool result = paymentObligation.checkObligation(attestation, abi.encode(data), bytes32(0));
+        bool result = paymentObligation.check(attestation, abi.encode(data), bytes32(0));
         assertTrue(result);
 
         // Should match with lower demanded amount
         NativeTokenPaymentObligation.ObligationData memory lowerDemand =
             NativeTokenPaymentObligation.ObligationData({amount: 0.5 ether, payee: seller});
-        result = paymentObligation.checkObligation(attestation, abi.encode(lowerDemand), bytes32(0));
+        result = paymentObligation.check(attestation, abi.encode(lowerDemand), bytes32(0));
         assertTrue(result);
 
         // Should not match with higher demanded amount
         NativeTokenPaymentObligation.ObligationData memory higherDemand =
             NativeTokenPaymentObligation.ObligationData({amount: 2 ether, payee: seller});
-        result = paymentObligation.checkObligation(attestation, abi.encode(higherDemand), bytes32(0));
+        result = paymentObligation.check(attestation, abi.encode(higherDemand), bytes32(0));
         assertFalse(result);
 
         // Should not match with different payee
         NativeTokenPaymentObligation.ObligationData memory differentPayee =
             NativeTokenPaymentObligation.ObligationData({amount: AMOUNT, payee: randomUser});
-        result = paymentObligation.checkObligation(attestation, abi.encode(differentPayee), bytes32(0));
+        result = paymentObligation.check(attestation, abi.encode(differentPayee), bytes32(0));
         assertFalse(result);
     }
 

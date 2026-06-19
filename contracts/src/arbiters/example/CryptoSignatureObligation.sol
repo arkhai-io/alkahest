@@ -11,7 +11,7 @@ import {ArbiterUtils} from "../../ArbiterUtils.sol";
 /**
  * @title CryptoSignatureObligation
  * @notice Combined Obligation/Arbiter contract for cryptographic signature verification
- * @dev This contract demonstrates the pattern of combining obligation and arbiter functionality
+ * @dev This contract demonstrates the pattern of combining fulfillment and arbiter functionality
  *      when there's an obvious, canonical way to validate the fulfillment data. For cryptographic
  *      signatures, the validation method (ECDSA recovery) is inherent to the data format itself.
  *
@@ -64,7 +64,7 @@ contract CryptoSignatureObligation is BaseObligation, IArbiter {
 
     /**
      * @notice Create a fulfillment attestation with signature data
-     * @param data The obligation data containing the signature
+     * @param data The fulfillment data containing the signature
      * @param refUID Reference to the escrow being fulfilled
      * @return uid The UID of the created attestation
      */
@@ -103,12 +103,12 @@ contract CryptoSignatureObligation is BaseObligation, IArbiter {
 
     /**
      * @notice Check if a fulfillment contains a valid signature for the demand
-     * @param obligation The attestation containing the signature
+     * @param fulfillment The attestation containing the signature
      * @param demand The encoded demand specifying what should be signed
-     * @param fulfilling Optional reference UID for what this obligation is fulfilling
+     * @param escrowUid Optional reference UID for what this fulfillment is escrowUid
      * @return bool True if the signature is valid for the specified challenge
      */
-    function checkObligation(Attestation memory obligation, bytes memory demand, bytes32 fulfilling)
+    function check(Attestation memory fulfillment, bytes memory demand, bytes32 escrowUid)
         external
         view
         override
@@ -117,15 +117,15 @@ contract CryptoSignatureObligation is BaseObligation, IArbiter {
         // Check basic attestation validity
 
         // Check reference if specified
-        if (fulfilling != bytes32(0) && obligation.refUID != fulfilling) {
+        if (escrowUid != bytes32(0) && fulfillment.refUID != escrowUid) {
             return false;
         }
 
         // Decode the demand to get requirements
         DemandData memory demandData = abi.decode(demand, (DemandData));
 
-        // Decode the obligation to get the signature
-        ObligationData memory obligationData = decodeObligationData(obligation.data);
+        // Decode the fulfillment to get the signature
+        ObligationData memory obligationData = decodeObligationData(fulfillment.data);
 
         // Verify the signer matches the required public key
         if (obligationData.signerAddress != demandData.publicKey) {
@@ -200,8 +200,8 @@ contract CryptoSignatureObligation is BaseObligation, IArbiter {
     }
 
     /**
-     * @notice Encode obligation data
-     * @param data The obligation data to encode
+     * @notice Encode fulfillment data
+     * @param data The fulfillment data to encode
      * @return Encoded data
      */
     function encodeObligationData(ObligationData memory data) public pure returns (bytes memory) {
@@ -209,9 +209,9 @@ contract CryptoSignatureObligation is BaseObligation, IArbiter {
     }
 
     /**
-     * @notice Decode obligation data from bytes
+     * @notice Decode fulfillment data from bytes
      * @param data The encoded data
-     * @return Decoded obligation data
+     * @return Decoded fulfillment data
      */
     function decodeObligationData(bytes memory data) public pure returns (ObligationData memory) {
         (bytes memory signature, address signerAddress, uint256 timestamp, string memory metadata) =
@@ -224,9 +224,9 @@ contract CryptoSignatureObligation is BaseObligation, IArbiter {
     }
 
     /**
-     * @notice Get obligation data for a specific attestation UID
+     * @notice Get fulfillment data for a specific attestation UID
      * @param uid The attestation UID
-     * @return The decoded obligation data
+     * @return The decoded fulfillment data
      */
     function getObligationData(bytes32 uid) public view returns (ObligationData memory) {
         Attestation memory attestation = _getAttestation(uid);

@@ -8,18 +8,18 @@ import {IArbiter} from "../IArbiter.sol";
 contract ReferencesEscrowArbiter is IArbiter {
     error EscrowReferenceMismatch();
 
-    function checkObligation(
-        Attestation memory obligation,
+    function check(
+        Attestation memory fulfillment,
         bytes memory,
         /* demand */
-        bytes32 fulfilling
+        bytes32 escrowUid
     )
         public
         pure
         override
         returns (bool)
     {
-        if (obligation.refUID != fulfilling) revert EscrowReferenceMismatch();
+        if (fulfillment.refUID != escrowUid) revert EscrowReferenceMismatch();
         return true;
     }
 }

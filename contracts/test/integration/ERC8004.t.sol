@@ -195,9 +195,7 @@ contract ERC8004IntegrationTest is Test {
         uint256 bobBalanceBefore = token.balanceOf(bob);
 
         vm.prank(bob);
-        bool success = escrowObligation.collectEscrow(escrowUid, fulfillmentUid);
-
-        assertTrue(success, "Escrow collection should succeed");
+        escrowObligation.collect(escrowUid, fulfillmentUid);
 
         // Verify tokens were transferred to Bob
         assertEq(token.balanceOf(bob), bobBalanceBefore + ESCROW_AMOUNT, "Bob should have received tokens");
@@ -253,7 +251,7 @@ contract ERC8004IntegrationTest is Test {
         // === Step 5: Bob attempts to claim Alice's escrow (should fail) ===
         vm.prank(bob);
         vm.expectRevert(); // Should revert because validation score is too low
-        escrowObligation.collectEscrow(escrowUid, fulfillmentUid);
+        escrowObligation.collect(escrowUid, fulfillmentUid);
 
         // Verify tokens remain in escrow
         assertEq(token.balanceOf(address(escrowObligation)), ESCROW_AMOUNT, "Escrow should still hold tokens");
@@ -306,9 +304,7 @@ contract ERC8004IntegrationTest is Test {
         uint256 bobBalanceBefore = token.balanceOf(bob);
 
         vm.prank(bob);
-        bool success = escrowObligation.collectEscrow(escrowUid, fulfillmentUid);
-
-        assertTrue(success, "Escrow collection should succeed");
+        escrowObligation.collect(escrowUid, fulfillmentUid);
         assertEq(token.balanceOf(bob), bobBalanceBefore + ESCROW_AMOUNT, "Bob should have received tokens");
     }
 
@@ -357,7 +353,7 @@ contract ERC8004IntegrationTest is Test {
         // === Step 5: Bob attempts to claim escrow (should fail) ===
         vm.prank(bob);
         vm.expectRevert(); // Should revert because validation score is below minimum
-        escrowObligation.collectEscrow(escrowUid, fulfillmentUid);
+        escrowObligation.collect(escrowUid, fulfillmentUid);
 
         // Verify tokens remain in escrow
         assertEq(token.balanceOf(address(escrowObligation)), ESCROW_AMOUNT, "Escrow should still hold tokens");

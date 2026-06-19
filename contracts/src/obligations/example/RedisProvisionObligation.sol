@@ -87,7 +87,7 @@ contract RedisProvisionObligation is BaseObligation, IArbiter {
         return _attest(abi.encode(obligationData), msg.sender, obligation.expirationTime, obligationUID);
     }
 
-    function checkObligation(
+    function check(
         Attestation memory obligation,
         bytes memory demand,
         bytes32 /* fulfilling */

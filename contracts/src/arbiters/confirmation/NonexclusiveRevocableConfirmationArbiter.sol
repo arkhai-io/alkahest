@@ -71,17 +71,17 @@ contract NonexclusiveRevocableConfirmationArbiter is IArbiter {
         emit ConfirmationRequested(_fulfillment, escrow.recipient, _escrow);
     }
 
-    function checkObligation(
+    function check(
         Attestation memory fulfillment,
         bytes memory,
         /*demand*/
-        bytes32 fulfilling
+        bytes32 escrowUid
     )
         public
         view
         override
         returns (bool)
     {
-        return confirmations[fulfillment.uid][fulfilling];
+        return confirmations[fulfillment.uid][escrowUid];
     }
 }

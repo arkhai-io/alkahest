@@ -196,7 +196,7 @@ contract EscrowCommitRevealOracleGasTest is Test {
         vm.resumeGasMetering();
 
         vm.prank(bob);
-        erc20Escrow.collectEscrow(escrowUid, fulfillmentUid);
+        erc20Escrow.collect(escrowUid, fulfillmentUid);
     }
 
     function testGas_Fulfiller_RevealWithBondReclaim() public {

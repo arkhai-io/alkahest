@@ -14,10 +14,10 @@ contract AttesterArbiter is IArbiter {
 
     error AttesterMismatched();
 
-    function checkObligation(
-        Attestation memory obligation,
+    function check(
+        Attestation memory fulfillment,
         bytes memory demand,
-        bytes32 /*fulfilling*/
+        bytes32 /*escrowUid*/
     )
         public
         pure
@@ -25,7 +25,7 @@ contract AttesterArbiter is IArbiter {
         returns (bool)
     {
         DemandData memory demand_ = abi.decode(demand, (DemandData));
-        if (obligation.attester != demand_.attester) revert AttesterMismatched();
+        if (fulfillment.attester != demand_.attester) revert AttesterMismatched();
 
         return true;
     }

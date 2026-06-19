@@ -74,7 +74,7 @@ contract TrustedOracleArbiterTest is Test {
         bytes memory demand = abi.encode(demandData);
 
         // Should return false initially since no decision has been made
-        assertFalse(newArbiter.checkObligation(attestation, demand, bytes32(0)));
+        assertFalse(newArbiter.check(attestation, demand, bytes32(0)));
     }
 
     function testArbitrate() public {
@@ -85,7 +85,7 @@ contract TrustedOracleArbiterTest is Test {
 
         // Initially the decision should be false (default value)
         assertFalse(
-            arbiter.checkObligation(
+            arbiter.check(
                 Attestation({
                     uid: obligationUid,
                     schema: bytes32(0),
@@ -113,7 +113,7 @@ contract TrustedOracleArbiterTest is Test {
 
         // Now the decision should be true
         assertTrue(
-            arbiter.checkObligation(
+            arbiter.check(
                 Attestation({
                     uid: obligationUid,
                     schema: bytes32(0),
@@ -166,7 +166,7 @@ contract TrustedOracleArbiterTest is Test {
 
         // Check with oracle1 - should be true
         assertTrue(
-            arbiter.checkObligation(
+            arbiter.check(
                 attestation,
                 abi.encode(TrustedOracleArbiter.DemandData({oracle: oracle1, data: demandData})),
                 bytes32(0)
@@ -175,7 +175,7 @@ contract TrustedOracleArbiterTest is Test {
 
         // Check with oracle2 - should be false
         assertFalse(
-            arbiter.checkObligation(
+            arbiter.check(
                 attestation,
                 abi.encode(TrustedOracleArbiter.DemandData({oracle: oracle2, data: demandData})),
                 bytes32(0)
@@ -204,7 +204,7 @@ contract TrustedOracleArbiterTest is Test {
 
         // Check with the new oracle - should be false (default value)
         assertFalse(
-            arbiter.checkObligation(
+            arbiter.check(
                 attestation,
                 abi.encode(TrustedOracleArbiter.DemandData({oracle: newOracle, data: bytes("")})),
                 bytes32(0)
@@ -240,7 +240,7 @@ contract TrustedOracleArbiterTest is Test {
 
         // Check with demand1 - should be true
         assertTrue(
-            arbiter.checkObligation(
+            arbiter.check(
                 attestation,
                 abi.encode(TrustedOracleArbiter.DemandData({oracle: oracle, data: demandData1})),
                 bytes32(0)
@@ -249,7 +249,7 @@ contract TrustedOracleArbiterTest is Test {
 
         // Check with demand2 - should be false
         assertFalse(
-            arbiter.checkObligation(
+            arbiter.check(
                 attestation,
                 abi.encode(TrustedOracleArbiter.DemandData({oracle: oracle, data: demandData2})),
                 bytes32(0)

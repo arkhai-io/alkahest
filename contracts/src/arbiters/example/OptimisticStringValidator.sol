@@ -84,27 +84,27 @@ contract OptimisticStringValidator is BaseObligation, IArbiter {
         emit MediationRequested(validationUID, success_);
     }
 
-    function checkObligation(Attestation memory obligation, bytes memory demand, bytes32 fulfilling)
+    function check(Attestation memory fulfillment, bytes memory demand, bytes32 escrowUid)
         public
         view
         override
         returns (bool)
     {
         ValidationData memory demandData = abi.decode(demand, (ValidationData));
-        ValidationData memory obligationData = abi.decode(obligation.data, (ValidationData));
+        ValidationData memory obligationData = abi.decode(fulfillment.data, (ValidationData));
 
         if (keccak256(bytes(obligationData.query)) != keccak256(bytes(demandData.query))) return false;
         if (obligationData.mediationPeriod != demandData.mediationPeriod) {
             return false;
         }
-        if (block.timestamp <= obligation.time + obligationData.mediationPeriod) {
+        if (block.timestamp <= fulfillment.time + obligationData.mediationPeriod) {
             return false;
         }
 
-        return resultObligation.checkObligation(
-            eas.getAttestation(obligation.refUID),
+        return resultObligation.check(
+            eas.getAttestation(fulfillment.refUID),
             abi.encode(StringResultObligation.DemandData({query: obligationData.query})),
-            fulfilling
+            escrowUid
         );
     }
 

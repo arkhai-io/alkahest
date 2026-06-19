@@ -132,8 +132,7 @@ contract NativeTokenEscrowObligationTest is Test {
 
         // Collect escrow
         vm.prank(seller);
-        bool success = escrowObligation.collectEscrow(escrowUid, fulfillmentUid);
-        assertTrue(success);
+        escrowObligation.collect(escrowUid, fulfillmentUid);
 
         // Check seller received the funds
         assertEq(seller.balance, sellerBalanceBefore + AMOUNT);
@@ -163,7 +162,7 @@ contract NativeTokenEscrowObligationTest is Test {
         // Try to collect escrow
         vm.prank(seller);
         vm.expectRevert(BaseEscrowObligation.InvalidFulfillment.selector);
-        escrowObligation.collectEscrow(escrowUid, fulfillmentUid);
+        escrowObligation.collect(escrowUid, fulfillmentUid);
     }
 
     function testReclaimExpired() public {
@@ -178,7 +177,7 @@ contract NativeTokenEscrowObligationTest is Test {
         // Try to reclaim before expiration
         vm.prank(buyer);
         vm.expectRevert(BaseEscrowObligation.UnauthorizedCall.selector);
-        escrowObligation.reclaimExpired(uid);
+        escrowObligation.reclaim(uid);
 
         // Move time forward past expiration
         vm.warp(block.timestamp + 101);
@@ -187,7 +186,7 @@ contract NativeTokenEscrowObligationTest is Test {
 
         // Reclaim expired escrow
         vm.prank(buyer);
-        bool success = escrowObligation.reclaimExpired(uid);
+        bool success = escrowObligation.reclaim(uid);
         assertTrue(success);
 
         // Check buyer got their funds back
@@ -212,7 +211,7 @@ contract NativeTokenEscrowObligationTest is Test {
         // Try to reclaim non-expiring escrow - should revert
         vm.prank(buyer);
         vm.expectRevert(BaseEscrowObligation.UnauthorizedCall.selector);
-        escrowObligation.reclaimExpired(uid);
+        escrowObligation.reclaim(uid);
     }
 
     function testReclaimExpiredRevokesAttestation() public {
@@ -229,7 +228,7 @@ contract NativeTokenEscrowObligationTest is Test {
 
         // Reclaim expired escrow
         vm.prank(buyer);
-        escrowObligation.reclaimExpired(uid);
+        escrowObligation.reclaim(uid);
 
         // Check attestation was revoked
         Attestation memory revokedAttestation = eas.getAttestation(uid);
@@ -250,12 +249,12 @@ contract NativeTokenEscrowObligationTest is Test {
 
         // Reclaim expired escrow first time
         vm.prank(buyer);
-        escrowObligation.reclaimExpired(uid);
+        escrowObligation.reclaim(uid);
 
         // Try to reclaim again - should fail because attestation is already revoked
         vm.prank(buyer);
         vm.expectRevert(abi.encodeWithSelector(BaseEscrowObligation.RevocationFailed.selector, uid));
-        escrowObligation.reclaimExpired(uid);
+        escrowObligation.reclaim(uid);
     }
 
     function testCheckObligation() public {
@@ -269,31 +268,31 @@ contract NativeTokenEscrowObligationTest is Test {
         Attestation memory attestation = eas.getAttestation(uid);
 
         // Should match with same data
-        bool result = escrowObligation.checkObligation(attestation, abi.encode(data), bytes32(0));
+        bool result = escrowObligation.check(attestation, abi.encode(data), bytes32(0));
         assertTrue(result);
 
         // Should match with lower demanded amount
         NativeTokenEscrowObligation.ObligationData memory lowerDemand = data;
         lowerDemand.amount = 0.5 ether;
-        result = escrowObligation.checkObligation(attestation, abi.encode(lowerDemand), bytes32(0));
+        result = escrowObligation.check(attestation, abi.encode(lowerDemand), bytes32(0));
         assertTrue(result);
 
         // Should not match with higher demanded amount
         NativeTokenEscrowObligation.ObligationData memory higherDemand = data;
         higherDemand.amount = 2 ether;
-        result = escrowObligation.checkObligation(attestation, abi.encode(higherDemand), bytes32(0));
+        result = escrowObligation.check(attestation, abi.encode(higherDemand), bytes32(0));
         assertFalse(result);
 
         // Should not match with different arbiter
         NativeTokenEscrowObligation.ObligationData memory differentArbiter = data;
         differentArbiter.arbiter = address(rejectingArbiter);
-        result = escrowObligation.checkObligation(attestation, abi.encode(differentArbiter), bytes32(0));
+        result = escrowObligation.check(attestation, abi.encode(differentArbiter), bytes32(0));
         assertFalse(result);
 
         // Should not match with different demand
         NativeTokenEscrowObligation.ObligationData memory differentDemand = data;
         differentDemand.demand = abi.encode("different demand");
-        result = escrowObligation.checkObligation(attestation, abi.encode(differentDemand), bytes32(0));
+        result = escrowObligation.check(attestation, abi.encode(differentDemand), bytes32(0));
         assertFalse(result);
     }
 
@@ -303,7 +302,7 @@ contract NativeTokenEscrowObligationTest is Test {
         });
 
         (address extractedArbiter, bytes memory extractedDemand) =
-            escrowObligation.extractArbiterAndDemand(abi.encode(data));
+            escrowObligation.decodeCondition(abi.encode(data));
 
         assertEq(extractedArbiter, data.arbiter);
         assertEq(extractedDemand, data.demand);
@@ -349,7 +348,7 @@ contract NativeTokenEscrowObligationTest is Test {
         // Try to collect escrow with wrong schema - should revert
         vm.prank(seller);
         vm.expectRevert(BaseEscrowObligation.InvalidEscrowAttestation.selector);
-        escrowObligation.collectEscrow(wrongSchemaEscrowUid, fulfillmentUid);
+        escrowObligation.collect(wrongSchemaEscrowUid, fulfillmentUid);
     }
 
     function testCollectEscrowWithExpiredFulfillmentReverts() public {
@@ -372,7 +371,7 @@ contract NativeTokenEscrowObligationTest is Test {
 
         vm.prank(seller);
         vm.expectRevert(ArbiterUtils.DeadlineExpired.selector);
-        escrowObligation.collectEscrow(escrowUid, fulfillmentUid);
+        escrowObligation.collect(escrowUid, fulfillmentUid);
     }
 
     function testCollectEscrowWithMissingEscrowRevertsAttestationNotFound() public {
@@ -380,7 +379,7 @@ contract NativeTokenEscrowObligationTest is Test {
         bytes32 missingFulfillment = bytes32("missing fulfillment");
 
         vm.expectRevert(abi.encodeWithSelector(BaseEscrowObligation.AttestationNotFound.selector, missingEscrow));
-        escrowObligation.collectEscrow(missingEscrow, missingFulfillment);
+        escrowObligation.collect(missingEscrow, missingFulfillment);
     }
 
     function testCollectEscrowWithMissingFulfillmentRevertsAttestationNotFound() public {
@@ -394,7 +393,7 @@ contract NativeTokenEscrowObligationTest is Test {
         bytes32 missingFulfillment = bytes32("missing fulfillment");
 
         vm.expectRevert(abi.encodeWithSelector(BaseEscrowObligation.AttestationNotFound.selector, missingFulfillment));
-        escrowObligation.collectEscrow(escrowUid, missingFulfillment);
+        escrowObligation.collect(escrowUid, missingFulfillment);
     }
 
     function testReclaimExpiredWithWrongSchema() public {
@@ -412,14 +411,14 @@ contract NativeTokenEscrowObligationTest is Test {
         // Try to reclaim with wrong schema - should revert
         vm.prank(buyer);
         vm.expectRevert(BaseEscrowObligation.InvalidEscrowAttestation.selector);
-        escrowObligation.reclaimExpired(wrongSchemaUid);
+        escrowObligation.reclaim(wrongSchemaUid);
     }
 
     function testReclaimExpiredWithMissingEscrowRevertsAttestationNotFound() public {
         bytes32 missingEscrow = bytes32("missing escrow");
 
         vm.expectRevert(abi.encodeWithSelector(BaseEscrowObligation.AttestationNotFound.selector, missingEscrow));
-        escrowObligation.reclaimExpired(missingEscrow);
+        escrowObligation.reclaim(missingEscrow);
     }
 
     function testNativeTokenTransferFailed() public {
@@ -448,7 +447,7 @@ contract NativeTokenEscrowObligationTest is Test {
                 NativeTokenEscrowObligation.NativeTokenTransferFailed.selector, address(revertingReceiver), AMOUNT
             )
         );
-        escrowObligation.collectEscrow(escrowUid, fulfillmentUid);
+        escrowObligation.collect(escrowUid, fulfillmentUid);
     }
 }
 

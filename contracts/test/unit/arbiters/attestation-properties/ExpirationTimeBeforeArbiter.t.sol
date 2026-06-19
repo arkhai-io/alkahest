@@ -37,7 +37,7 @@ contract ExpirationTimeBeforeArbiterTest is Test {
         bytes memory demand = abi.encode(demandData);
 
         // Check obligation should return true
-        bool result = arbiter.checkObligation(attestation, demand, bytes32(0));
+        bool result = arbiter.check(attestation, demand, bytes32(0));
         assertTrue(result, "Should accept attestation with expiration time before threshold");
     }
 
@@ -63,7 +63,7 @@ contract ExpirationTimeBeforeArbiterTest is Test {
 
         // Check obligation should revert with ExpirationTimeNotBefore
         vm.expectRevert(ExpirationTimeBeforeArbiter.ExpirationTimeNotBefore.selector);
-        arbiter.checkObligation(attestation, demand, bytes32(0));
+        arbiter.check(attestation, demand, bytes32(0));
     }
 
     function testDecodeDemandData() public {

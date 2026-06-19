@@ -18,7 +18,7 @@ contract MockArbiter is IArbiter {
         shouldPass = _shouldPass;
     }
 
-    function checkObligation(Attestation memory, bytes memory, bytes32) external view returns (bool) {
+    function check(Attestation memory, bytes memory, bytes32) external view returns (bool) {
         return shouldPass;
     }
 }
@@ -103,7 +103,7 @@ contract AttestationEscrowObligationTest is Test {
         );
 
         vm.prank(bob);
-        bytes32 resultId = escrowObligation.collectEscrow(escrowId, fulfillmentId);
+        bytes32 resultId = abi.decode(escrowObligation.collect(escrowId, fulfillmentId), (bytes32));
 
         assertNotEq(resultId, bytes32(0), "Payment collection should succeed");
     }
@@ -135,13 +135,13 @@ contract AttestationEscrowObligationTest is Test {
 
         vm.prank(bob);
         vm.expectRevert(BaseEscrowObligation.InvalidFulfillment.selector);
-        escrowObligation.collectEscrow(escrowId, fulfillmentId);
+        escrowObligation.collect(escrowId, fulfillmentId);
     }
 
     function testInvalidEscrowAttestation() public {
         vm.prank(bob);
         vm.expectRevert();
-        escrowObligation.collectEscrow(bytes32(0), bytes32(0));
+        escrowObligation.collect(bytes32(0), bytes32(0));
     }
 
     function testCheckObligation() public {
@@ -166,7 +166,7 @@ contract AttestationEscrowObligationTest is Test {
 
         Attestation memory attestation = eas.getAttestation(attestationId);
 
-        bool isValid = escrowObligation.checkObligation(attestation, abi.encode(obligationData), bytes32(0));
+        bool isValid = escrowObligation.check(attestation, abi.encode(obligationData), bytes32(0));
 
         assertTrue(isValid, "Statement check should pass for valid data");
     }

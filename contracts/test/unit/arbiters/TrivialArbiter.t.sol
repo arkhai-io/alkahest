@@ -31,14 +31,14 @@ contract TrivialArbiterTest is Test {
         bytes memory demand = bytes("");
 
         // Check obligation should always return true
-        bool result = arbiter.checkObligation(attestation, demand, bytes32(0));
+        bool result = arbiter.check(attestation, demand, bytes32(0));
         assertTrue(result, "TrivialArbiter should always return true");
 
         // Try with different values, should still return true
         attestation.uid = bytes32(uint256(1));
         demand = abi.encode("some data");
 
-        result = arbiter.checkObligation(attestation, demand, bytes32(uint256(42)));
+        result = arbiter.check(attestation, demand, bytes32(uint256(42)));
         assertTrue(result, "TrivialArbiter should always return true regardless of inputs");
     }
 }

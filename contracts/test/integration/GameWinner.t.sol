@@ -111,7 +111,7 @@ contract GameWinnerTest is Test {
         });
 
         // Check if arbiter validates the winner
-        bool result = gameWinnerArbiter.checkObligation(winnerAttestation, abi.encode(demand), bytes32(0));
+        bool result = gameWinnerArbiter.check(winnerAttestation, abi.encode(demand), bytes32(0));
 
         assertTrue(result, "Valid winner should be able to claim");
     }
@@ -130,7 +130,7 @@ contract GameWinnerTest is Test {
             validAfter: 0
         });
 
-        bool result = gameWinnerArbiter.checkObligation(winnerAttestation, abi.encode(demand), bytes32(0));
+        bool result = gameWinnerArbiter.check(winnerAttestation, abi.encode(demand), bytes32(0));
 
         assertFalse(result, "Should reject claim for wrong game ID");
     }
@@ -149,7 +149,7 @@ contract GameWinnerTest is Test {
             validAfter: 0
         });
 
-        bool result = gameWinnerArbiter.checkObligation(winnerAttestation, abi.encode(demand), bytes32(0));
+        bool result = gameWinnerArbiter.check(winnerAttestation, abi.encode(demand), bytes32(0));
 
         assertFalse(result, "Should reject claim with insufficient score");
     }
@@ -174,7 +174,7 @@ contract GameWinnerTest is Test {
             validAfter: initialTime - 1 hours // Past timestamp - should pass
         });
 
-        bool result = gameWinnerArbiter.checkObligation(winnerAttestation, abi.encode(demand), bytes32(0));
+        bool result = gameWinnerArbiter.check(winnerAttestation, abi.encode(demand), bytes32(0));
 
         assertTrue(result, "Should accept claim when win timestamp is after validAfter");
 
@@ -185,7 +185,7 @@ contract GameWinnerTest is Test {
             validAfter: block.timestamp + 1 hours // Future timestamp - should fail
         });
 
-        bool futureResult = gameWinnerArbiter.checkObligation(winnerAttestation, abi.encode(futureDemand), bytes32(0));
+        bool futureResult = gameWinnerArbiter.check(winnerAttestation, abi.encode(futureDemand), bytes32(0));
 
         assertFalse(futureResult, "Should reject claim when win timestamp is before validAfter");
     }
@@ -214,7 +214,7 @@ contract GameWinnerTest is Test {
 
         GameWinner.ClaimDemand memory demand = GameWinner.ClaimDemand({gameId: GAME_ID_1, minScore: 0, validAfter: 0});
 
-        bool result = gameWinnerArbiter.checkObligation(fakeAttestation, abi.encode(demand), bytes32(0));
+        bool result = gameWinnerArbiter.check(fakeAttestation, abi.encode(demand), bytes32(0));
 
         assertFalse(result, "Should reject attestation from untrusted source");
     }
@@ -243,7 +243,7 @@ contract GameWinnerTest is Test {
 
         GameWinner.ClaimDemand memory demand = GameWinner.ClaimDemand({gameId: GAME_ID_1, minScore: 0, validAfter: 0});
 
-        bool result = gameWinnerArbiter.checkObligation(wrongAttestation, abi.encode(demand), bytes32(0));
+        bool result = gameWinnerArbiter.check(wrongAttestation, abi.encode(demand), bytes32(0));
 
         assertFalse(result, "Should reject attestation with wrong schema");
     }
@@ -272,7 +272,7 @@ contract GameWinnerTest is Test {
 
         GameWinner.ClaimDemand memory demand = GameWinner.ClaimDemand({gameId: GAME_ID_1, minScore: 0, validAfter: 0});
 
-        bool result = gameWinnerArbiter.checkObligation(tamperedAttestation, abi.encode(demand), bytes32(0));
+        bool result = gameWinnerArbiter.check(tamperedAttestation, abi.encode(demand), bytes32(0));
 
         assertFalse(result, "Should reject when recipient doesn't match winner");
     }
@@ -319,12 +319,12 @@ contract GameWinnerTest is Test {
         GameWinner.ClaimDemand memory demand = GameWinner.ClaimDemand({gameId: GAME_ID_1, minScore: 0, validAfter: 0});
 
         // Check with matching fulfilling
-        bool resultMatching = gameWinnerArbiter.checkObligation(winnerAttestation, abi.encode(demand), escrowUID);
+        bool resultMatching = gameWinnerArbiter.check(winnerAttestation, abi.encode(demand), escrowUID);
         assertTrue(resultMatching, "Should validate with matching fulfilling");
 
         // Check with different fulfilling
         bytes32 wrongFulfilling = bytes32(uint256(123));
-        bool resultWrong = gameWinnerArbiter.checkObligation(winnerAttestation, abi.encode(demand), wrongFulfilling);
+        bool resultWrong = gameWinnerArbiter.check(winnerAttestation, abi.encode(demand), wrongFulfilling);
         assertFalse(resultWrong, "Should reject with wrong fulfilling");
     }
 
@@ -364,11 +364,11 @@ contract GameWinnerTest is Test {
 
         // Both should be able to claim
         Attestation memory aliceAttestation = eas.getAttestation(aliceAttestationUID);
-        bool aliceResult = gameWinnerArbiter.checkObligation(aliceAttestation, abi.encode(demand), bytes32(0));
+        bool aliceResult = gameWinnerArbiter.check(aliceAttestation, abi.encode(demand), bytes32(0));
         assertTrue(aliceResult, "Alice should be able to claim");
 
         Attestation memory bobAttestation = eas.getAttestation(bobAttestationUID);
-        bool bobResult = gameWinnerArbiter.checkObligation(bobAttestation, abi.encode(demand), bytes32(0));
+        bool bobResult = gameWinnerArbiter.check(bobAttestation, abi.encode(demand), bytes32(0));
         assertTrue(bobResult, "Bob should be able to claim");
     }
 
@@ -396,7 +396,7 @@ contract GameWinnerTest is Test {
 
         GameWinner.ClaimDemand memory demand = GameWinner.ClaimDemand({gameId: GAME_ID_1, minScore: 0, validAfter: 0});
 
-        bool result = gameWinnerArbiter.checkObligation(expiredAttestation, abi.encode(demand), bytes32(0));
+        bool result = gameWinnerArbiter.check(expiredAttestation, abi.encode(demand), bytes32(0));
 
         assertTrue(result, "Semantic arbiter should ignore expiration");
     }
@@ -420,7 +420,7 @@ contract GameWinnerTest is Test {
 
         GameWinner.ClaimDemand memory demand = GameWinner.ClaimDemand({gameId: GAME_ID_1, minScore: 0, validAfter: 0});
 
-        bool result = gameWinnerArbiter.checkObligation(revokedAttestation, abi.encode(demand), bytes32(0));
+        bool result = gameWinnerArbiter.check(revokedAttestation, abi.encode(demand), bytes32(0));
 
         assertTrue(result, "Semantic arbiter should ignore revocation");
     }

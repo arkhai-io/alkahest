@@ -167,10 +167,10 @@ contract ERC1155SplitterTest is Test {
         bytes memory demand = abi.encode(ERC1155Splitter.DemandData({oracle: oracle, data: bytes("")}));
 
         Attestation memory attackerF = eas.getAttestation(attackerFulfillmentUid);
-        assertFalse(splitter.checkObligation(attackerF, demand, escrowUid));
+        assertFalse(splitter.check(attackerF, demand, escrowUid));
 
         Attestation memory f = eas.getAttestation(fulfillmentUid);
-        assertTrue(splitter.checkObligation(f, demand, escrowUid));
+        assertTrue(splitter.check(f, demand, escrowUid));
     }
 
     function testArbitrateRejectsZeroFulfillment() public {

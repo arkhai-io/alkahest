@@ -55,7 +55,7 @@ contract StringCapitalizerTest is Test {
         Attestation memory obligation = eas.getAttestation(obligationUID);
 
         // Check if the arbiter validates the capitalization
-        bool result = capitalizer.checkObligation(obligation, abi.encode(demand), bytes32(0));
+        bool result = capitalizer.check(obligation, abi.encode(demand), bytes32(0));
 
         assertTrue(result, "Should validate correct capitalization");
     }
@@ -76,7 +76,7 @@ contract StringCapitalizerTest is Test {
         Attestation memory obligation = eas.getAttestation(obligationUID);
 
         // Check if the arbiter rejects the incorrect capitalization
-        bool result = capitalizer.checkObligation(obligation, abi.encode(demand), bytes32(0));
+        bool result = capitalizer.check(obligation, abi.encode(demand), bytes32(0));
 
         assertFalse(result, "Should reject incorrect capitalization");
     }
@@ -97,7 +97,7 @@ contract StringCapitalizerTest is Test {
         Attestation memory obligation = eas.getAttestation(obligationUID);
 
         // Check if the arbiter validates the capitalization
-        bool result = capitalizer.checkObligation(obligation, abi.encode(demand), bytes32(0));
+        bool result = capitalizer.check(obligation, abi.encode(demand), bytes32(0));
 
         assertTrue(result, "Should validate correct capitalization of mixed case");
     }
@@ -118,7 +118,7 @@ contract StringCapitalizerTest is Test {
         Attestation memory obligation = eas.getAttestation(obligationUID);
 
         // Check if the arbiter validates the capitalization
-        bool result = capitalizer.checkObligation(obligation, abi.encode(demand), bytes32(0));
+        bool result = capitalizer.check(obligation, abi.encode(demand), bytes32(0));
 
         assertTrue(result, "Should handle numbers and special characters correctly");
     }
@@ -139,7 +139,7 @@ contract StringCapitalizerTest is Test {
         Attestation memory obligation = eas.getAttestation(obligationUID);
 
         // Check if the arbiter rejects different length strings
-        bool result = capitalizer.checkObligation(obligation, abi.encode(demand), bytes32(0));
+        bool result = capitalizer.check(obligation, abi.encode(demand), bytes32(0));
 
         assertFalse(result, "Should reject different length strings");
     }
@@ -166,13 +166,13 @@ contract StringCapitalizerTest is Test {
         Attestation memory obligation = eas.getAttestation(obligationUID);
 
         // Check with matching fulfilling
-        bool resultMatching = capitalizer.checkObligation(obligation, abi.encode(demand), escrowUID);
+        bool resultMatching = capitalizer.check(obligation, abi.encode(demand), escrowUID);
 
         assertTrue(resultMatching, "Should validate when fulfilling matches");
 
         // Check with non-matching fulfilling
         bytes32 wrongFulfilling = bytes32(uint256(999999));
-        bool resultNonMatching = capitalizer.checkObligation(obligation, abi.encode(demand), wrongFulfilling);
+        bool resultNonMatching = capitalizer.check(obligation, abi.encode(demand), wrongFulfilling);
 
         assertFalse(resultNonMatching, "Should reject when fulfilling doesn't match");
     }
@@ -195,7 +195,7 @@ contract StringCapitalizerTest is Test {
             data: abi.encode(StringObligation.ObligationData({item: "HELLO", schema: bytes32(0)}))
         });
 
-        bool result = capitalizer.checkObligation(revokedObligation, abi.encode(demand), bytes32(0));
+        bool result = capitalizer.check(revokedObligation, abi.encode(demand), bytes32(0));
 
         assertTrue(result, "Semantic arbiter should ignore revocation");
     }
@@ -221,7 +221,7 @@ contract StringCapitalizerTest is Test {
             data: abi.encode(StringObligation.ObligationData({item: "HELLO", schema: bytes32(0)}))
         });
 
-        bool result = capitalizer.checkObligation(expiredObligation, abi.encode(demand), bytes32(0));
+        bool result = capitalizer.check(expiredObligation, abi.encode(demand), bytes32(0));
 
         assertTrue(result, "Semantic arbiter should ignore expiration");
     }
@@ -244,7 +244,7 @@ contract StringCapitalizerTest is Test {
         Attestation memory obligation = eas.getAttestation(obligationUID);
 
         // Check the result
-        bool result = capitalizer.checkObligation(obligation, abi.encode(demand), bytes32(0));
+        bool result = capitalizer.check(obligation, abi.encode(demand), bytes32(0));
 
         // Manually check if output is correctly capitalized version of input
         bool expectedResult = isProperlyCapitalized(input, output);

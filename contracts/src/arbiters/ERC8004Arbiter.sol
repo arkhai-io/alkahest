@@ -44,12 +44,12 @@ contract ERC8004Arbiter is IArbiter {
 
     /**
      * @notice Check if the validation response meets the minimum requirement
-     * @param obligation The attestation representing the obligation
+     * @param fulfillment The attestation representing the obligation
      * @param demand ABI-encoded DemandData containing registry address and min response
-     * @param fulfilling The escrow UID that this obligation must reference
+     * @param escrowUid The escrow UID that this fulfillment must reference
      * @return bool True if the validation response >= minResponse
      */
-    function checkObligation(Attestation memory obligation, bytes memory demand, bytes32 fulfilling)
+    function check(Attestation memory fulfillment, bytes memory demand, bytes32 escrowUid)
         public
         view
         override
@@ -57,15 +57,15 @@ contract ERC8004Arbiter is IArbiter {
     {
         DemandData memory demand_ = abi.decode(demand, (DemandData));
 
-        // Ensure obligation references what it's fulfilling
-        if (obligation.refUID != fulfilling) {
+        // Ensure fulfillment references what it's escrowUid
+        if (fulfillment.refUID != escrowUid) {
             revert FulfillmentMustReferenceEscrow();
         }
 
         // ValidationRegistry does not expose hasResponse, so response 0 is indistinguishable from pending.
         if (demand_.minResponse == 0 || demand_.minResponse > 100) revert InvalidMinResponse();
 
-        bytes32 requestHash = requestHashFor(obligation.uid, demand_.data);
+        bytes32 requestHash = requestHashFor(fulfillment.uid, demand_.data);
 
         // Query the ValidationRegistry
         IValidationRegistry registry = IValidationRegistry(demand_.validationRegistry);

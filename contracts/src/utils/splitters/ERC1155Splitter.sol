@@ -9,7 +9,7 @@ import {SplitterVerification} from "./SplitterVerification.sol";
 import {BaseSplitter} from "./BaseSplitter.sol";
 
 interface IERC1155EscrowObligation {
-    function collectEscrow(bytes32 escrow, bytes32 fulfillment) external returns (bool);
+    function collect(bytes32 escrow, bytes32 fulfillment) external returns (bytes memory);
 }
 
 contract ERC1155Splitter is BaseSplitter, ERC1155Holder {
@@ -34,7 +34,7 @@ contract ERC1155Splitter is BaseSplitter, ERC1155Holder {
     }
 
     event ArbitrationMade(
-        bytes32 indexed decisionKey, bytes32 indexed obligation, address indexed oracle, Split[] splits
+        bytes32 indexed decisionKey, bytes32 indexed fulfillmentUid, address indexed oracle, Split[] splits
     );
     event EscrowCollectedAndDistributed(
         bytes32 indexed escrow,
@@ -114,7 +114,7 @@ contract ERC1155Splitter is BaseSplitter, ERC1155Holder {
         token = escrowData.token;
         tokenId = escrowData.tokenId;
         uint256 balanceBefore = IERC1155(token).balanceOf(address(this), tokenId);
-        IERC1155EscrowObligation(escrowContract).collectEscrow(escrow, fulfillment);
+        IERC1155EscrowObligation(escrowContract).collect(escrow, fulfillment);
         SplitterVerification.verifyDelta(
             balanceBefore, IERC1155(token).balanceOf(address(this), tokenId), escrowData.amount
         );

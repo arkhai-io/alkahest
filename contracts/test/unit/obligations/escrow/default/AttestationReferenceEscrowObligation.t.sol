@@ -187,7 +187,7 @@ contract AttestationReferenceEscrowObligationTest is Test {
 
         // Collect payment
         vm.prank(attester);
-        bytes32 validationUid = escrowObligation.collectEscrow(escrowUid, fulfillmentUid);
+        bytes32 validationUid = abi.decode(escrowObligation.collect(escrowUid, fulfillmentUid), (bytes32));
 
         assertNotEq(validationUid, bytes32(0), "Validation UID should not be empty");
 
@@ -234,7 +234,7 @@ contract AttestationReferenceEscrowObligationTest is Test {
         bytes32 fulfillmentUid = stringObligation.doObligation(stringData, escrowUid);
 
         vm.prank(attester);
-        bytes32 validationUid = escrowObligation.collectEscrow(escrowUid, fulfillmentUid);
+        bytes32 validationUid = abi.decode(escrowObligation.collect(escrowUid, fulfillmentUid), (bytes32));
 
         Attestation memory validationAttestation = eas.getAttestation(validationUid);
         assertEq(validationAttestation.expirationTime, validationExpiration);
@@ -269,7 +269,7 @@ contract AttestationReferenceEscrowObligationTest is Test {
         // Try to collect payment, should revert with InvalidFulfillment
         vm.prank(attester);
         vm.expectRevert(BaseEscrowObligation.InvalidFulfillment.selector);
-        escrowObligation.collectEscrow(escrowUid, fulfillmentUid);
+        escrowObligation.collect(escrowUid, fulfillmentUid);
     }
 
     function testCheckObligation() public {
@@ -299,7 +299,7 @@ contract AttestationReferenceEscrowObligationTest is Test {
                 validationRevocable: false
             });
 
-        bool exactMatch = escrowObligation.checkObligation(attestation, abi.encode(exactDemand), bytes32(0));
+        bool exactMatch = escrowObligation.check(attestation, abi.encode(exactDemand), bytes32(0));
         assertTrue(exactMatch, "Should match exact demand");
 
         // Test different attestation UID (should fail)
@@ -329,7 +329,7 @@ contract AttestationReferenceEscrowObligationTest is Test {
             });
 
         bool differentUidMatch =
-            escrowObligation.checkObligation(attestation, abi.encode(differentUidDemand), bytes32(0));
+            escrowObligation.check(attestation, abi.encode(differentUidDemand), bytes32(0));
         assertFalse(differentUidMatch, "Should not match different attestation UID");
 
         // Test different arbiter (should fail)
@@ -343,7 +343,7 @@ contract AttestationReferenceEscrowObligationTest is Test {
             });
 
         bool differentArbiterMatch =
-            escrowObligation.checkObligation(attestation, abi.encode(differentArbiterDemand), bytes32(0));
+            escrowObligation.check(attestation, abi.encode(differentArbiterDemand), bytes32(0));
         assertFalse(differentArbiterMatch, "Should not match different arbiter");
 
         // Test different demand (should fail)
@@ -357,7 +357,7 @@ contract AttestationReferenceEscrowObligationTest is Test {
             });
 
         bool differentDemandMatch =
-            escrowObligation.checkObligation(attestation, abi.encode(differentDemandData), bytes32(0));
+            escrowObligation.check(attestation, abi.encode(differentDemandData), bytes32(0));
         assertFalse(differentDemandMatch, "Should not match different demand");
 
         AttestationReferenceEscrowObligation.ObligationData memory differentValidationDemand =
@@ -370,7 +370,7 @@ contract AttestationReferenceEscrowObligationTest is Test {
             });
 
         bool differentValidationMatch =
-            escrowObligation.checkObligation(attestation, abi.encode(differentValidationDemand), bytes32(0));
+            escrowObligation.check(attestation, abi.encode(differentValidationDemand), bytes32(0));
         assertFalse(differentValidationMatch, "Should not match different validation properties");
     }
 
@@ -394,6 +394,6 @@ contract AttestationReferenceEscrowObligationTest is Test {
         // Just expect any revert instead of a specific error code, since the revert data
         // isn't being properly encoded for some reason
         vm.expectRevert();
-        escrowObligation.collectEscrow(nonExistentAttestationId, fulfillmentUid);
+        escrowObligation.collect(nonExistentAttestationId, fulfillmentUid);
     }
 }

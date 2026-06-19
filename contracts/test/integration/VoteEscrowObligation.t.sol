@@ -113,7 +113,7 @@ contract VoteEscrowObligationTest is Test {
         assertNotEq(fulfillmentUid, bytes32(0), "Fulfillment UID should not be zero");
 
         // Step 3: Bob collects the escrow using the fulfillment
-        bytes memory result = voteEscrow.collectEscrowRaw(escrowUid, fulfillmentUid);
+        bytes memory result = voteEscrow.collect(escrowUid, fulfillmentUid);
 
         // Decode the result to verify vote was cast
         (uint256 proposalId, uint8 support, address fulfiller, address voter) =
@@ -171,7 +171,7 @@ contract VoteEscrowObligationTest is Test {
 
         // Alice reclaims expired escrow
         vm.startPrank(alice);
-        bool success = voteEscrow.reclaimExpired(escrowUid);
+        bool success = voteEscrow.reclaim(escrowUid);
         assertTrue(success, "Reclaim should succeed");
 
         // After reclaim, alice must manually re-delegate (contract can't do it automatically)
@@ -256,7 +256,7 @@ contract VoteEscrowObligationTest is Test {
         vm.warp(block.timestamp + 2 hours);
 
         vm.startPrank(alice);
-        voteEscrow.reclaimExpired(escrowUid);
+        voteEscrow.reclaim(escrowUid);
 
         // After reclaim, alice still delegates to escrow (contract can't change it)
         assertEq(
@@ -304,7 +304,7 @@ contract VoteEscrowObligationTest is Test {
         vm.expectEmit(true, false, false, true);
         emit VoteCast(escrowDataHash, PROPOSAL_ID, VOTE_FOR);
 
-        voteEscrow.collectEscrowRaw(escrowUid, fulfillmentUid);
+        voteEscrow.collect(escrowUid, fulfillmentUid);
 
         vm.stopPrank();
     }
@@ -333,7 +333,7 @@ contract VoteEscrowObligationTest is Test {
             StringObligation.ObligationData({item: "Vote once", schema: bytes32(0)}),
             escrowUid // Reference the escrow for default pattern
         );
-        voteEscrow.collectEscrowRaw(escrowUid, fulfillmentUid);
+        voteEscrow.collect(escrowUid, fulfillmentUid);
         vm.stopPrank();
 
         // Create another escrow for the same proposal
@@ -350,7 +350,7 @@ contract VoteEscrowObligationTest is Test {
         );
 
         vm.expectRevert(abi.encodeWithSelector(VoteEscrowObligation.VoteAlreadyCast.selector, PROPOSAL_ID));
-        voteEscrow.collectEscrowRaw(secondEscrowUid, secondFulfillmentUid);
+        voteEscrow.collect(secondEscrowUid, secondFulfillmentUid);
 
         vm.stopPrank();
     }
@@ -384,7 +384,7 @@ contract VoteEscrowObligationTest is Test {
         });
 
         bytes memory encoded = voteEscrow.encodeObligationData(obligationData);
-        (address arbiter, bytes memory demand) = voteEscrow.extractArbiterAndDemand(encoded);
+        (address arbiter, bytes memory demand) = voteEscrow.decodeCondition(encoded);
 
         assertEq(arbiter, address(trivialArbiter), "Arbiter should match");
         assertEq(demand, abi.encode("Extract test"), "Demand should match");

@@ -74,12 +74,12 @@ contract GameWinner is IArbiter {
 
     /**
      * @notice Checks if a game winner attestation satisfies the reward claim requirements
-     * @param obligation The attestation proving game winner status
+     * @param fulfillment The attestation proving game winner status
      * @param demand The encoded demand specifying claim requirements
-     * @param fulfilling Optional reference to what this obligation is fulfilling
+     * @param escrowUid Optional reference to what this fulfillment is escrowUid
      * @return bool True if the attestation proves valid winner status for the claim
      */
-    function checkObligation(Attestation memory obligation, bytes memory demand, bytes32 fulfilling)
+    function check(Attestation memory fulfillment, bytes memory demand, bytes32 escrowUid)
         external
         view
         override
@@ -88,18 +88,18 @@ contract GameWinner is IArbiter {
         // Check basic attestation validity
 
         // Verify the attestation uses the correct schema
-        if (obligation.schema != GAME_WINNER_SCHEMA) return false;
+        if (fulfillment.schema != GAME_WINNER_SCHEMA) return false;
 
         // Verify the attestation was made by the trusted game contract
-        if (obligation.attester != trustedGameContract) return false;
+        if (fulfillment.attester != trustedGameContract) return false;
 
-        // Check if the obligation references what it's fulfilling (if provided)
-        if (fulfilling != bytes32(0) && obligation.refUID != fulfilling) {
+        // Check if the fulfillment references what it's escrowUid (if provided)
+        if (escrowUid != bytes32(0) && fulfillment.refUID != escrowUid) {
             return false;
         }
 
         // Decode the attestation data
-        GameWinnerData memory winnerData = abi.decode(obligation.data, (GameWinnerData));
+        GameWinnerData memory winnerData = abi.decode(fulfillment.data, (GameWinnerData));
 
         // Decode the demand requirements
         ClaimDemand memory claimDemand = abi.decode(demand, (ClaimDemand));
@@ -119,7 +119,7 @@ contract GameWinner is IArbiter {
 
         // Verify the attestation recipient matches the winner
         // This ensures only the actual winner can use this attestation
-        if (obligation.recipient != winnerData.winner) return false;
+        if (fulfillment.recipient != winnerData.winner) return false;
 
         // All checks passed - the winner can claim their reward
         return true;
@@ -137,6 +137,6 @@ contract GameWinner is IArbiter {
         returns (bool)
     {
         Attestation memory attestation = eas.getAttestation(attestationUID);
-        return this.checkObligation(attestation, abi.encode(claimDemand), bytes32(0));
+        return this.check(attestation, abi.encode(claimDemand), bytes32(0));
     }
 }

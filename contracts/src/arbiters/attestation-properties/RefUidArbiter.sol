@@ -14,10 +14,10 @@ contract RefUidArbiter is IArbiter {
 
     error RefUidMismatched();
 
-    function checkObligation(
-        Attestation memory obligation,
+    function check(
+        Attestation memory fulfillment,
         bytes memory demand,
-        bytes32 /*fulfilling*/
+        bytes32 /*escrowUid*/
     )
         public
         pure
@@ -25,7 +25,7 @@ contract RefUidArbiter is IArbiter {
         returns (bool)
     {
         DemandData memory demand_ = abi.decode(demand, (DemandData));
-        if (obligation.refUID != demand_.refUID) revert RefUidMismatched();
+        if (fulfillment.refUID != demand_.refUID) revert RefUidMismatched();
 
         return true;
     }

@@ -31,7 +31,7 @@ contract UnconditionalAttestationEscrowObligation is BaseEscrowObligationUncondi
     {}
 
     // Extract arbiter and demand from encoded data
-    function extractArbiterAndDemand(bytes memory data)
+    function decodeCondition(bytes memory data)
         public
         pure
         override
@@ -77,7 +77,7 @@ contract UnconditionalAttestationEscrowObligation is BaseEscrowObligationUncondi
     }
 
     // Implement IArbiter
-    function checkObligation(
+    function check(
         Attestation memory obligation,
         bytes memory demand,
         bytes32 /* fulfilling */
@@ -107,11 +107,6 @@ contract UnconditionalAttestationEscrowObligation is BaseEscrowObligationUncondi
         returns (bytes32)
     {
         return _doObligationForRaw(abi.encode(data), expirationTime, recipient, bytes32(0));
-    }
-
-    function collectEscrow(bytes32 escrow, bytes32 fulfillment) external returns (bytes32) {
-        bytes memory result = collectEscrowRaw(escrow, fulfillment);
-        return abi.decode(result, (bytes32));
     }
 
     function getObligationData(bytes32 uid) public view returns (ObligationData memory) {

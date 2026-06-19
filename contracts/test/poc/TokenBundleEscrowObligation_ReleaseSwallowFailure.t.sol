@@ -23,7 +23,7 @@ contract MockERC1155 is ERC1155 {
 }
 
 contract TrueArbiter is IArbiter {
-    function checkObligation(Attestation memory, bytes memory, bytes32) external pure returns (bool) {
+    function check(Attestation memory, bytes memory, bytes32) external pure returns (bool) {
         return true;
     }
 }
@@ -101,7 +101,7 @@ contract TokenBundleEscrowObligation_ReleaseSwallowFailure_POC is Test {
                 TokenBundleEscrowObligation.NativeTokenTransferFailed.selector, address(badRecipient), nativeAmount
             )
         );
-        escrow.collectEscrow(escrowUid, fulfillmentUid);
+        escrow.collect(escrowUid, fulfillmentUid);
         vm.stopPrank();
 
         // Verify escrow is NOT revoked (attestation still valid) because tx reverted

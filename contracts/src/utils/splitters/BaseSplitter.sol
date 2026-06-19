@@ -61,7 +61,7 @@ abstract contract BaseSplitter is IArbiter, ReentrancyGuard {
         emit ArbitrationRequested(_fulfillment, _escrow, oracle, demand);
     }
 
-    function checkObligation(Attestation memory fulfillment, bytes memory demand, bytes32 escrow)
+    function check(Attestation memory fulfillment, bytes memory demand, bytes32 escrow)
         public
         view
         virtual

@@ -576,7 +576,7 @@ contract ERC20BarterUtilsUnitTest is Test {
         );
 
         // Collect the escrow through the ERC20 escrow contract
-        assertTrue(escrowObligation.collectEscrow(escrowId, paymentId));
+        escrowObligation.collect(escrowId, paymentId);
 
         vm.stopPrank();
 

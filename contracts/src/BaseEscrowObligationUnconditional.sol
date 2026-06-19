@@ -13,8 +13,8 @@ abstract contract BaseEscrowObligationUnconditional is BaseObligation {
     using ArbiterUtils for Attestation;
 
     // Common events for all escrow types
-    event EscrowMade(bytes32 indexed escrow, address indexed buyer);
-    event EscrowCollected(bytes32 indexed escrow, bytes32 indexed fulfillment, address indexed fulfiller);
+    event EscrowMade(bytes32 indexed escrowUid, address indexed escrower);
+    event EscrowCollected(bytes32 indexed escrowUid, bytes32 indexed fulfillmentUid, address indexed fulfiller);
 
     // Common errors
     error InvalidEscrowAttestation();
@@ -45,14 +45,14 @@ abstract contract BaseEscrowObligationUnconditional is BaseObligation {
     function _afterEscrowAttest(Attestation memory attestation) internal virtual {}
 
     // Extract arbiter and demand from encoded data
-    function extractArbiterAndDemand(bytes memory data)
+    function decodeCondition(bytes memory data)
         public
         pure
         virtual
         returns (address arbiter, bytes memory demand);
 
     // Common escrow collection implementation (unconditional version - no fulfillment intrinsic or refUID check)
-    function collectEscrowRaw(bytes32 _escrow, bytes32 _fulfillment)
+    function collect(bytes32 _escrow, bytes32 _fulfillment)
         public
         virtual
         nonReentrant
@@ -69,13 +69,13 @@ abstract contract BaseEscrowObligationUnconditional is BaseObligation {
         if (!escrow._checkIntrinsic()) revert InvalidEscrowAttestation();
 
         // Extract arbiter and demand from escrow data
-        (address arbiter, bytes memory demand) = extractArbiterAndDemand(escrow.data);
+        (address arbiter, bytes memory demand) = decodeCondition(escrow.data);
 
         // UNCONDITIONAL: No fulfillment intrinsic or refUID check
         // Use this when fulfillment policy is fully delegated to arbiters
 
         // Check fulfillment via the specified arbiter
-        if (!IArbiter(arbiter).checkObligation(fulfillment, demand, escrow.uid)) {
+        if (!IArbiter(arbiter).check(fulfillment, demand, escrow.uid)) {
             revert InvalidFulfillment();
         }
 
@@ -94,7 +94,7 @@ abstract contract BaseEscrowObligationUnconditional is BaseObligation {
         return result;
     }
 
-    function reclaimExpired(bytes32 uid) public virtual nonReentrant returns (bool) {
+    function reclaim(bytes32 uid) public virtual nonReentrant returns (bool) {
         Attestation memory attestation = _getExistingAttestation(uid);
 
         // Validate attestation uses correct schema

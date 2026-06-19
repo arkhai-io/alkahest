@@ -17,7 +17,7 @@ contract AllArbiter is IArbiter {
 
     uint256 public constant MAX_ARBITERS = 50;
 
-    function checkObligation(Attestation memory obligation, bytes memory demand, bytes32 fulfilling)
+    function check(Attestation memory fulfillment, bytes memory demand, bytes32 escrowUid)
         public
         view
         override
@@ -35,7 +35,7 @@ contract AllArbiter is IArbiter {
             if (
                 // can throw, since some arbiters throw with failure case instead of returning false
                 // error must be checked against all base arbiters
-                !IArbiter(demand_.arbiters[i]).checkObligation(obligation, demand_.demands[i], fulfilling)
+                !IArbiter(demand_.arbiters[i]).check(fulfillment, demand_.demands[i], escrowUid)
             ) {
                 return false;
             }

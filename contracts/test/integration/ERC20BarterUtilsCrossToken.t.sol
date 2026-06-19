@@ -139,10 +139,8 @@ contract ERC20BarterUtilsCrossTokenTest is Test {
         );
 
         // Collect payment
-        bool success = escrowObligation.collectEscrow(buyAttestation, sellAttestation);
+        escrowObligation.collect(buyAttestation, sellAttestation);
         vm.stopPrank();
-
-        assertTrue(success, "Payment collection should succeed");
         assertEq(erc721Token.ownerOf(nftId), alice, "Alice should own the ERC721");
         assertEq(bidToken.balanceOf(bob), bidAmount, "Bob should receive bid amount");
     }
@@ -172,10 +170,8 @@ contract ERC20BarterUtilsCrossTokenTest is Test {
         );
 
         // Collect payment
-        bool success = escrowObligation.collectEscrow(buyAttestation, sellAttestation);
+        escrowObligation.collect(buyAttestation, sellAttestation);
         vm.stopPrank();
-
-        assertTrue(success, "Payment collection should succeed");
         assertEq(erc1155Token.balanceOf(alice, tokenId), amount, "Alice should receive tokens");
         assertEq(bidToken.balanceOf(bob), bidAmount, "Bob should receive bid amount");
     }
@@ -203,11 +199,8 @@ contract ERC20BarterUtilsCrossTokenTest is Test {
             ERC721PaymentObligation.ObligationData({token: address(erc721Token), tokenId: nftId, payee: alice}),
             buyAttestation
         );
-
-        bool success = escrowObligation.collectEscrow(buyAttestation, sellAttestation);
+        escrowObligation.collect(buyAttestation, sellAttestation);
         vm.stopPrank();
-
-        assertTrue(success, "Payment collection should succeed");
         assertEq(erc721Token.ownerOf(nftId), alice, "Alice should own the ERC721");
         assertEq(bidToken.balanceOf(bob), bidAmount, "Bob should receive bid amount");
     }

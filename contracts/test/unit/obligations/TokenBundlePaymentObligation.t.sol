@@ -383,31 +383,31 @@ contract TokenBundlePaymentObligationTest is Test {
 
         // Test exact match
         bytes memory demandBytes = abi.encode(paymentData);
-        assertTrue(obligation.checkObligation(attestation, demandBytes, bytes32(0)));
+        assertTrue(obligation.check(attestation, demandBytes, bytes32(0)));
 
         // Test with subset demands
         bytes memory subsetERC20 = abi.encode(createSubsetERC20Demand());
-        assertTrue(obligation.checkObligation(attestation, subsetERC20, bytes32(0)));
+        assertTrue(obligation.check(attestation, subsetERC20, bytes32(0)));
 
         bytes memory subsetERC721 = abi.encode(createSubsetERC721Demand());
-        assertTrue(obligation.checkObligation(attestation, subsetERC721, bytes32(0)));
+        assertTrue(obligation.check(attestation, subsetERC721, bytes32(0)));
 
         bytes memory subsetERC1155 = abi.encode(createSubsetERC1155Demand());
-        assertTrue(obligation.checkObligation(attestation, subsetERC1155, bytes32(0)));
+        assertTrue(obligation.check(attestation, subsetERC1155, bytes32(0)));
 
         // Test with lower native amount demand
         bytes memory lowerNative = abi.encode(createLowerNativeAmountDemand());
-        assertTrue(obligation.checkObligation(attestation, lowerNative, bytes32(0)));
+        assertTrue(obligation.check(attestation, lowerNative, bytes32(0)));
 
         // Test failures
         bytes memory higherNative = abi.encode(createHigherNativeAmountDemand());
-        assertFalse(obligation.checkObligation(attestation, higherNative, bytes32(0)));
+        assertFalse(obligation.check(attestation, higherNative, bytes32(0)));
 
         bytes memory moreERC20 = abi.encode(createMoreERC20Demand());
-        assertFalse(obligation.checkObligation(attestation, moreERC20, bytes32(0)));
+        assertFalse(obligation.check(attestation, moreERC20, bytes32(0)));
 
         bytes memory differentPayee = abi.encode(createDifferentPayeeDemand());
-        assertFalse(obligation.checkObligation(attestation, differentPayee, bytes32(0)));
+        assertFalse(obligation.check(attestation, differentPayee, bytes32(0)));
     }
 
     function testDirectNativeTransferReverts() public {

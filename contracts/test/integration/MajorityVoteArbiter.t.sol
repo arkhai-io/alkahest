@@ -106,7 +106,7 @@ contract MajorityVoteArbiterTest is Test {
 
         // Initially, obligation should not pass
         Attestation memory obligation = eas.getAttestation(testObligationUID);
-        assertFalse(arbiter.checkObligation(obligation, encodedDemand, bytes32(0)));
+        assertFalse(arbiter.check(obligation, encodedDemand, bytes32(0)));
 
         // First vote (yes)
         vm.prank(voter1);
@@ -120,7 +120,7 @@ contract MajorityVoteArbiterTest is Test {
         assertEq(noVotes, 0);
 
         // Still not enough votes to pass
-        assertFalse(arbiter.checkObligation(obligation, encodedDemand, bytes32(0)));
+        assertFalse(arbiter.check(obligation, encodedDemand, bytes32(0)));
 
         // Second vote (yes) - should reach quorum
         vm.prank(voter2);
@@ -131,7 +131,7 @@ contract MajorityVoteArbiterTest is Test {
         arbiter.castVote(testObligationUID, true, encodedDemand);
 
         // Now should pass
-        assertTrue(arbiter.checkObligation(obligation, encodedDemand, bytes32(0)));
+        assertTrue(arbiter.check(obligation, encodedDemand, bytes32(0)));
 
         // Check final vote count
         (yesVotes, noVotes) = arbiter.getVoteCount(testObligationUID);
@@ -168,7 +168,7 @@ contract MajorityVoteArbiterTest is Test {
 
         // Should not pass
         Attestation memory obligation = eas.getAttestation(testObligationUID);
-        assertFalse(arbiter.checkObligation(obligation, encodedDemand, bytes32(0)));
+        assertFalse(arbiter.check(obligation, encodedDemand, bytes32(0)));
 
         // Check voting is complete
         (bool complete, bool approved) = arbiter.isVotingComplete(testObligationUID, encodedDemand);
@@ -340,7 +340,7 @@ contract MajorityVoteArbiterTest is Test {
 
         // Should pass
         Attestation memory obligation = eas.getAttestation(testObligationUID);
-        assertTrue(arbiter.checkObligation(obligation, encodedDemand, bytes32(0)));
+        assertTrue(arbiter.check(obligation, encodedDemand, bytes32(0)));
 
         // Verify final counts
         (uint256 yesVotes, uint256 noVotes) = arbiter.getVoteCount(testObligationUID);
@@ -381,14 +381,14 @@ contract MajorityVoteArbiterTest is Test {
 
         // Should pass before expiration
         Attestation memory obligation = eas.getAttestation(expiringUID);
-        assertTrue(arbiter.checkObligation(obligation, encodedDemand, bytes32(0)));
+        assertTrue(arbiter.check(obligation, encodedDemand, bytes32(0)));
 
         // Fast forward past expiration
         vm.warp(block.timestamp + 2 hours);
 
         // Semantic arbiter ignores expiration; use IntrinsicsArbiter when liveness is required.
         obligation = eas.getAttestation(expiringUID);
-        assertTrue(arbiter.checkObligation(obligation, encodedDemand, bytes32(0)));
+        assertTrue(arbiter.check(obligation, encodedDemand, bytes32(0)));
     }
 
     function testCheckObligationIgnoresRevokedAttestation() public {
@@ -421,7 +421,7 @@ contract MajorityVoteArbiterTest is Test {
 
         // Should pass before revocation
         Attestation memory obligation = eas.getAttestation(revocableUID);
-        assertTrue(arbiter.checkObligation(obligation, encodedDemand, bytes32(0)));
+        assertTrue(arbiter.check(obligation, encodedDemand, bytes32(0)));
 
         // Revoke the attestation
         vm.prank(attester);
@@ -429,6 +429,6 @@ contract MajorityVoteArbiterTest is Test {
 
         // Semantic arbiter ignores revocation; use IntrinsicsArbiter when liveness is required.
         obligation = eas.getAttestation(revocableUID);
-        assertTrue(arbiter.checkObligation(obligation, encodedDemand, bytes32(0)));
+        assertTrue(arbiter.check(obligation, encodedDemand, bytes32(0)));
     }
 }

@@ -669,7 +669,7 @@ contract ERC1155BarterUtilsUnitTest is Test {
 
         // This should revert because the payment doesn't match the demand
         vm.expectRevert();
-        erc20Escrow.collectEscrow(aliceSellOrder, wrongPayment);
+        erc20Escrow.collect(aliceSellOrder, wrongPayment);
         vm.stopPrank();
     }
 

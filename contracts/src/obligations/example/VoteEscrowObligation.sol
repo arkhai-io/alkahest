@@ -87,7 +87,7 @@ contract VoteEscrowObligation is BaseEscrowObligation {
     /// @param data The encoded obligation data
     /// @return arbiter The arbiter address
     /// @return demand The demand bytes
-    function extractArbiterAndDemand(bytes memory data)
+    function decodeCondition(bytes memory data)
         public
         pure
         override

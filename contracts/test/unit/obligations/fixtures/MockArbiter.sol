@@ -21,7 +21,7 @@ contract MockArbiter is IArbiter {
         shouldAccept = _shouldAccept;
     }
 
-    function checkObligation(Attestation memory, bytes memory, bytes32) public view override returns (bool) {
+    function check(Attestation memory, bytes memory, bytes32) public view override returns (bool) {
         return shouldAccept;
     }
 }

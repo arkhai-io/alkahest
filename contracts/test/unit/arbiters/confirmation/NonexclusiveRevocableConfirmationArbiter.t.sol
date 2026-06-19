@@ -214,23 +214,23 @@ contract NonexclusiveRevocableConfirmationArbiterTest is Test {
         Attestation memory fulfillment = eas.getAttestation(fulfillmentUid);
 
         // Not confirmed yet
-        assertFalse(arbiter.checkObligation(fulfillment, bytes(""), escrowUid));
+        assertFalse(arbiter.check(fulfillment, bytes(""), escrowUid));
 
         // Confirm
         vm.prank(confirmer);
         arbiter.confirm(fulfillmentUid, escrowUid);
 
         // Now confirmed
-        assertTrue(arbiter.checkObligation(fulfillment, bytes(""), escrowUid));
+        assertTrue(arbiter.check(fulfillment, bytes(""), escrowUid));
 
         // Different escrow should still be false
-        assertFalse(arbiter.checkObligation(fulfillment, bytes(""), escrowUid2));
+        assertFalse(arbiter.check(fulfillment, bytes(""), escrowUid2));
 
         // Revoke
         vm.prank(confirmer);
         arbiter.revoke(fulfillmentUid, escrowUid);
 
         // After revoke, should be false again
-        assertFalse(arbiter.checkObligation(fulfillment, bytes(""), escrowUid));
+        assertFalse(arbiter.check(fulfillment, bytes(""), escrowUid));
     }
 }

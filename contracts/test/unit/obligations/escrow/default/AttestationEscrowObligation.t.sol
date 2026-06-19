@@ -159,7 +159,7 @@ contract AttestationEscrowObligationTest is Test {
     }
 
     function testCollectEscrow_Successful() public {
-        // For this test to pass, we need to make the mockArbiter's checkObligation function return true
+        // For this test to pass, we need to make the mockArbiter's check function return true
         // First setup the test
         bytes32 fulfillmentUid;
         bytes32 escrowUid;
@@ -170,7 +170,7 @@ contract AttestationEscrowObligationTest is Test {
 
         // Collect payment
         vm.prank(attester);
-        bytes32 attestationUid = escrowObligation.collectEscrow(escrowUid, fulfillmentUid);
+        bytes32 attestationUid = abi.decode(escrowObligation.collect(escrowUid, fulfillmentUid), (bytes32));
 
         // Verify the payment attestation was created
         assertNotEq(attestationUid, bytes32(0), "Payment attestation should be created");
@@ -210,7 +210,7 @@ contract AttestationEscrowObligationTest is Test {
         );
 
         vm.prank(attester);
-        bytes32 attestationUid = escrowObligation.collectEscrow(escrowUid, fulfillmentUid);
+        bytes32 attestationUid = abi.decode(escrowObligation.collect(escrowUid, fulfillmentUid), (bytes32));
 
         assertNotEq(attestationUid, bytes32(0));
         assertEq(payableResolver.attestValue(), 1 wei);
@@ -230,7 +230,7 @@ contract AttestationEscrowObligationTest is Test {
 
         uint256 balanceBefore = requester.balance;
         vm.warp(block.timestamp + 2);
-        escrowObligation.reclaimExpired(escrowUid);
+        escrowObligation.reclaim(escrowUid);
 
         assertEq(requester.balance, balanceBefore + 1 wei);
         assertEq(payableResolver.attestValue(), 0);
@@ -262,7 +262,7 @@ contract AttestationEscrowObligationTest is Test {
 
         // Try to collect payment, should revert with InvalidFulfillment
         vm.expectRevert(BaseEscrowObligation.InvalidFulfillment.selector);
-        escrowObligation.collectEscrow(escrowUid, fulfillmentUid);
+        escrowObligation.collect(escrowUid, fulfillmentUid);
         vm.stopPrank();
     }
 
@@ -298,7 +298,7 @@ contract AttestationEscrowObligationTest is Test {
             attestation: attestationRequest, arbiter: address(mockArbiter), demand: abi.encode("specific demand")
         });
 
-        bool exactMatch = escrowObligation.checkObligation(attestation, abi.encode(exactDemand), bytes32(0));
+        bool exactMatch = escrowObligation.check(attestation, abi.encode(exactDemand), bytes32(0));
         assertTrue(exactMatch, "Should match exact demand");
     }
 
@@ -318,7 +318,7 @@ contract AttestationEscrowObligationTest is Test {
         Attestation memory expiredAttestation = attestation;
         expiredAttestation.expirationTime = uint64(block.timestamp - 1); // Expired
 
-        assertTrue(escrowObligation.checkObligation(expiredAttestation, abi.encode(exactDemand), bytes32(0)));
+        assertTrue(escrowObligation.check(expiredAttestation, abi.encode(exactDemand), bytes32(0)));
     }
 
     function testCheckObligation_ReturnsFalseWhenSchemaInvalid() public {
@@ -336,7 +336,7 @@ contract AttestationEscrowObligationTest is Test {
         Attestation memory wrongSchemaAttestation = attestation;
         wrongSchemaAttestation.schema = bytes32(uint256(1)); // Different schema
 
-        assertFalse(escrowObligation.checkObligation(wrongSchemaAttestation, abi.encode(exactDemand), bytes32(0)));
+        assertFalse(escrowObligation.check(wrongSchemaAttestation, abi.encode(exactDemand), bytes32(0)));
     }
 
     function testCheckObligation_IgnoresRevocation() public {
@@ -354,7 +354,7 @@ contract AttestationEscrowObligationTest is Test {
         Attestation memory revokedAttestation = attestation;
         revokedAttestation.revocationTime = uint64(block.timestamp - 1); // Revoked
 
-        assertTrue(escrowObligation.checkObligation(revokedAttestation, abi.encode(exactDemand), bytes32(0)));
+        assertTrue(escrowObligation.check(revokedAttestation, abi.encode(exactDemand), bytes32(0)));
     }
 
     // Test case for different attestation request
@@ -376,7 +376,7 @@ contract AttestationEscrowObligationTest is Test {
             });
 
         bool differentAttestationMatch =
-            escrowObligation.checkObligation(attestation, abi.encode(differentAttestationDemand), bytes32(0));
+            escrowObligation.check(attestation, abi.encode(differentAttestationDemand), bytes32(0));
         assertFalse(differentAttestationMatch, "Should not match different attestation request");
     }
 
@@ -393,7 +393,7 @@ contract AttestationEscrowObligationTest is Test {
             });
 
         bool differentArbiterMatch =
-            escrowObligation.checkObligation(attestation, abi.encode(differentArbiterDemand), bytes32(0));
+            escrowObligation.check(attestation, abi.encode(differentArbiterDemand), bytes32(0));
         assertFalse(differentArbiterMatch, "Should not match different arbiter");
     }
 
@@ -408,7 +408,7 @@ contract AttestationEscrowObligationTest is Test {
             });
 
         bool differentDemandMatch =
-            escrowObligation.checkObligation(attestation, abi.encode(differentDemandData), bytes32(0));
+            escrowObligation.check(attestation, abi.encode(differentDemandData), bytes32(0));
         assertFalse(differentDemandMatch, "Should not match different demand");
     }
 
@@ -436,7 +436,7 @@ contract AttestationEscrowObligationTest is Test {
         // The test should expect a generic revert when the attestation ID is not found
         // This is because the EAS contract is likely returning a generic revert when the attestation doesn't exist
         vm.expectRevert();
-        escrowObligation.collectEscrow(invalidAttestationId, fulfillmentUid);
+        escrowObligation.collect(invalidAttestationId, fulfillmentUid);
         vm.stopPrank();
     }
 

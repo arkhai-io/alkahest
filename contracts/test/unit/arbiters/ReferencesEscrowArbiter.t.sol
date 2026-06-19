@@ -16,7 +16,7 @@ contract ReferencesEscrowArbiterTest is Test {
     function testCheckObligationWithMatchingEscrowReference() public view {
         Attestation memory attestation = _attestationWithRefUID(escrowUid);
 
-        bool result = arbiter.checkObligation(attestation, bytes(""), escrowUid);
+        bool result = arbiter.check(attestation, bytes(""), escrowUid);
 
         assertTrue(result, "Should accept fulfillment that references the escrow");
     }
@@ -25,14 +25,14 @@ contract ReferencesEscrowArbiterTest is Test {
         Attestation memory attestation = _attestationWithRefUID(bytes32(uint256(456)));
 
         vm.expectRevert(ReferencesEscrowArbiter.EscrowReferenceMismatch.selector);
-        arbiter.checkObligation(attestation, bytes(""), escrowUid);
+        arbiter.check(attestation, bytes(""), escrowUid);
     }
 
     function testCheckObligationWithZeroFulfillingRevertsForRealFulfillment() public {
         Attestation memory attestation = _attestationWithRefUID(escrowUid);
 
         vm.expectRevert(ReferencesEscrowArbiter.EscrowReferenceMismatch.selector);
-        arbiter.checkObligation(attestation, bytes(""), bytes32(0));
+        arbiter.check(attestation, bytes(""), bytes32(0));
     }
 
     function _attestationWithRefUID(bytes32 refUID) internal view returns (Attestation memory) {

@@ -320,10 +320,10 @@ contract TokenBundleSplitterTest is Test {
         bytes memory demand = abi.encode(TokenBundleSplitterBase.DemandData({oracle: oracle, data: bytes("")}));
 
         Attestation memory attackerF = eas.getAttestation(attackerFulfillmentUid);
-        assertFalse(splitter.checkObligation(attackerF, demand, escrowUid));
+        assertFalse(splitter.check(attackerF, demand, escrowUid));
 
         Attestation memory f = eas.getAttestation(fulfillmentUid);
-        assertTrue(splitter.checkObligation(f, demand, escrowUid));
+        assertTrue(splitter.check(f, demand, escrowUid));
     }
 
     function testRequestArbitrationAsRecipient() public {

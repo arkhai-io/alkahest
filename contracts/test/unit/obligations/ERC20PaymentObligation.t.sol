@@ -135,7 +135,7 @@ contract ERC20PaymentObligationTest is Test {
         ERC20PaymentObligation.ObligationData memory exactDemand =
             ERC20PaymentObligation.ObligationData({token: address(token), amount: amount, payee: payee});
 
-        bool exactMatch = paymentObligation.checkObligation(attestation, abi.encode(exactDemand), refUID);
+        bool exactMatch = paymentObligation.check(attestation, abi.encode(exactDemand), refUID);
         assertTrue(exactMatch, "Should match exact demand");
 
         // Test lower amount demand
@@ -143,7 +143,7 @@ contract ERC20PaymentObligationTest is Test {
             token: address(token), amount: amount - 50 * 10 ** 18, payee: payee
         });
 
-        bool lowerMatch = paymentObligation.checkObligation(attestation, abi.encode(lowerDemand), refUID);
+        bool lowerMatch = paymentObligation.check(attestation, abi.encode(lowerDemand), refUID);
         assertTrue(lowerMatch, "Should match lower amount demand");
 
         // Test higher amount demand (should fail)
@@ -151,7 +151,7 @@ contract ERC20PaymentObligationTest is Test {
             token: address(token), amount: amount + 50 * 10 ** 18, payee: payee
         });
 
-        bool higherMatch = paymentObligation.checkObligation(attestation, abi.encode(higherDemand), refUID);
+        bool higherMatch = paymentObligation.check(attestation, abi.encode(higherDemand), refUID);
         assertFalse(higherMatch, "Should not match higher amount demand");
 
         // Test different token demand (should fail)
@@ -160,7 +160,7 @@ contract ERC20PaymentObligationTest is Test {
             ERC20PaymentObligation.ObligationData({token: address(differentToken), amount: amount, payee: payee});
 
         bool differentTokenMatch =
-            paymentObligation.checkObligation(attestation, abi.encode(differentTokenDemand), refUID);
+            paymentObligation.check(attestation, abi.encode(differentTokenDemand), refUID);
         assertFalse(differentTokenMatch, "Should not match different token demand");
 
         // Test different payee demand (should fail)
@@ -169,12 +169,12 @@ contract ERC20PaymentObligationTest is Test {
         });
 
         bool differentPayeeMatch =
-            paymentObligation.checkObligation(attestation, abi.encode(differentPayeeDemand), refUID);
+            paymentObligation.check(attestation, abi.encode(differentPayeeDemand), refUID);
         assertFalse(differentPayeeMatch, "Should not match different payee demand");
 
         // Test wrong refUID (should fail)
         bytes32 wrongRefUID = bytes32(uint256(999));
-        bool wrongRefMatch = paymentObligation.checkObligation(attestation, abi.encode(exactDemand), wrongRefUID);
+        bool wrongRefMatch = paymentObligation.check(attestation, abi.encode(exactDemand), wrongRefUID);
         assertFalse(wrongRefMatch, "Should not match with wrong refUID");
     }
 

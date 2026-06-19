@@ -37,7 +37,7 @@ contract ExpirationTimeEqualArbiterTest is Test {
         bytes memory demand = abi.encode(demandData);
 
         // Check obligation should return true
-        bool result = arbiter.checkObligation(attestation, demand, bytes32(0));
+        bool result = arbiter.check(attestation, demand, bytes32(0));
         assertTrue(result, "Should accept attestation with equal expiration time");
     }
 
@@ -63,7 +63,7 @@ contract ExpirationTimeEqualArbiterTest is Test {
 
         // Check obligation should revert with ExpirationTimeNotEqual
         vm.expectRevert(ExpirationTimeEqualArbiter.ExpirationTimeNotEqual.selector);
-        arbiter.checkObligation(attestation, demand, bytes32(0));
+        arbiter.check(attestation, demand, bytes32(0));
     }
 
     function testDecodeDemandData() public {
