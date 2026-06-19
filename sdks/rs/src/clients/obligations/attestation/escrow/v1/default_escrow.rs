@@ -36,7 +36,7 @@ impl<'a> Default<'a> {
         DecodedAttestation<
             contracts::obligations::escrow::default_escrow::AttestationEscrowObligation::ObligationData,
         >,
-    > {
+    >{
         let eas_contract =
             contracts::IEAS::new(self.module.addresses.eas, &self.module.wallet_provider);
 

@@ -12,7 +12,7 @@ use alloy::{
     sol,
     sol_types::SolEvent,
 };
-use futures::{future::try_join_all, Stream, StreamExt as _};
+use futures::{Stream, StreamExt as _, future::try_join_all};
 use tokio::time::Duration;
 use tokio_util::sync::CancellationToken;
 use tracing;
@@ -20,8 +20,8 @@ use tracing;
 use crate::{
     addresses::BASE_SEPOLIA_ADDRESSES,
     contracts::{
-        arbiters::TrustedOracleArbiter,
         IEAS::{self, Attestation},
+        arbiters::TrustedOracleArbiter,
     },
     extensions::AlkahestExtension,
     types::{SharedPublicProvider, SharedWalletProvider},
@@ -122,7 +122,6 @@ pub struct AttestationWithDemand {
     pub demand: Bytes,
 }
 
-
 impl AlkahestExtension for TrustedOracleModule {
     type Config = TrustedOracleAddresses;
 
@@ -206,12 +205,9 @@ impl TrustedOracleModule {
             filter = filter.topic3(oracle);
         }
 
-        let log = crate::utils::wait_for_first_log(
-            &*self.public_provider,
-            &filter,
-            self.poll_interval,
-        )
-        .await?;
+        let log =
+            crate::utils::wait_for_first_log(&*self.public_provider, &filter, self.poll_interval)
+                .await?;
         let decoded_log = log.log_decode::<TrustedOracleArbiter::ArbitrationMade>()?;
         Ok(decoded_log)
     }
@@ -447,25 +443,29 @@ impl TrustedOracleModule {
             let demand = log.inner.demand.clone();
             async move {
                 let attestation = eas.getAttestation(log.inner.fulfillmentUid).call().await?;
-                Ok::<_, alloy::contract::Error>(AttestationWithDemand { attestation, demand })
+                Ok::<_, alloy::contract::Error>(AttestationWithDemand {
+                    attestation,
+                    demand,
+                })
             }
         });
 
         let now = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
 
-        let attestations_with_demand: Vec<AttestationWithDemand> = try_join_all(attestation_futures)
-            .await?
-            .into_iter()
-            .filter(|awd| {
-                let a = &awd.attestation;
-                if (a.expirationTime != 0 && a.expirationTime < now)
-                    || (a.revocationTime != 0 && a.revocationTime < now)
-                {
-                    return false;
-                }
-                true
-            })
-            .collect();
+        let attestations_with_demand: Vec<AttestationWithDemand> =
+            try_join_all(attestation_futures)
+                .await?
+                .into_iter()
+                .filter(|awd| {
+                    let a = &awd.attestation;
+                    if (a.expirationTime != 0 && a.expirationTime < now)
+                        || (a.revocationTime != 0 && a.revocationTime < now)
+                    {
+                        return false;
+                    }
+                    true
+                })
+                .collect();
 
         let attestations_with_demand = if skip_arbitrated {
             self.filter_unarbitrated_attestations_with_demand(attestations_with_demand)
@@ -559,7 +559,8 @@ impl TrustedOracleModule {
         // Process past attestations
         let past_decisions = if include_past {
             let attestations = self.get_past_attestations(skip_arbitrated).await?;
-            let decisions: Vec<Option<bool>> = attestations.iter().map(|awd| arbitrate(awd)).collect();
+            let decisions: Vec<Option<bool>> =
+                attestations.iter().map(|awd| arbitrate(awd)).collect();
             self.submit_arbitrations(decisions, attestations).await?
         } else {
             Vec::new()
@@ -603,8 +604,8 @@ impl TrustedOracleModule {
     where
         ArbitrateFut: 'static,
     {
-        use futures::future::join_all;
         use ArbitrationMode::*;
+        use futures::future::join_all;
 
         let skip_arbitrated = matches!(mode, PastUnarbitrated | AllUnarbitrated);
         let include_past = matches!(mode, Past | PastUnarbitrated | All | AllUnarbitrated);
@@ -670,7 +671,8 @@ impl TrustedOracleModule {
         // Process past attestations
         let past_decisions = if include_past {
             let attestations = self.get_past_attestations(skip_arbitrated).await?;
-            let decisions: Vec<Option<bool>> = attestations.iter().map(|awd| arbitrate(awd)).collect();
+            let decisions: Vec<Option<bool>> =
+                attestations.iter().map(|awd| arbitrate(awd)).collect();
             self.submit_arbitrations(decisions, attestations).await?
         } else {
             Vec::new()
@@ -681,8 +683,14 @@ impl TrustedOracleModule {
             let filter = self.make_arbitration_requested_filter();
             let (stream, handle) = self.open_log_stream(&filter, self.poll_interval).await?;
 
-            self.handle_stream_blocking_sync(stream, &arbitrate, &on_decision, skip_arbitrated, timeout)
-                .await;
+            self.handle_stream_blocking_sync(
+                stream,
+                &arbitrate,
+                &on_decision,
+                skip_arbitrated,
+                timeout,
+            )
+            .await;
 
             Some(handle)
         } else {
@@ -719,8 +727,8 @@ impl TrustedOracleModule {
         mode: ArbitrationMode,
         timeout: Option<Duration>,
     ) -> eyre::Result<ArbitrateManyResult> {
-        use futures::future::join_all;
         use ArbitrationMode::*;
+        use futures::future::join_all;
 
         let skip_arbitrated = matches!(mode, PastUnarbitrated | AllUnarbitrated);
         let include_past = matches!(mode, Past | PastUnarbitrated | All | AllUnarbitrated);
@@ -741,8 +749,14 @@ impl TrustedOracleModule {
             let filter = self.make_arbitration_requested_filter();
             let (stream, handle) = self.open_log_stream(&filter, self.poll_interval).await?;
 
-            self.handle_stream_blocking_async(stream, &arbitrate, &on_decision, skip_arbitrated, timeout)
-                .await;
+            self.handle_stream_blocking_async(
+                stream,
+                &arbitrate,
+                &on_decision,
+                skip_arbitrated,
+                timeout,
+            )
+            .await;
 
             Some(handle)
         } else {

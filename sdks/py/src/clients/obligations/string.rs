@@ -145,7 +145,10 @@ impl PyStringObligationData {
     }
 
     fn __repr__(&self) -> String {
-        format!("PyStringObligationData(item='{}', schema='{}')", self.item, self.schema)
+        format!(
+            "PyStringObligationData(item='{}', schema='{}')",
+            self.item, self.schema
+        )
     }
 
     #[staticmethod]
@@ -166,9 +169,8 @@ impl PyStringObligationData {
     pub fn decode(obligation_data: Vec<u8>) -> PyResult<PyStringObligationData> {
         use alloy::primitives::Bytes;
         let bytes = Bytes::from(obligation_data);
-        let decoded =
-            alkahest_rs::extensions::StringObligationModule::decode(&bytes)
-                .map_err(map_eyre_to_pyerr)?;
+        let decoded = alkahest_rs::extensions::StringObligationModule::decode(&bytes)
+            .map_err(map_eyre_to_pyerr)?;
         Ok(decoded.into())
     }
 
@@ -177,8 +179,7 @@ impl PyStringObligationData {
         use alloy::primitives::Bytes;
         let bytes = Bytes::from(obligation_data);
         let decoded: serde_json::Value =
-            StringObligationModule::decode_json(&bytes)
-                .map_err(map_eyre_to_pyerr)?;
+            StringObligationModule::decode_json(&bytes).map_err(map_eyre_to_pyerr)?;
         Ok(serde_json::to_string(&decoded).map_err(map_serde_to_pyerr)?)
     }
 
@@ -192,14 +193,17 @@ impl PyStringObligationData {
         } else {
             None
         };
-        let encoded = StringObligationModule::encode_json(json_value, schema)
-            .map_err(map_eyre_to_pyerr)?;
+        let encoded =
+            StringObligationModule::encode_json(json_value, schema).map_err(map_eyre_to_pyerr)?;
         Ok(encoded.to_vec())
     }
 
     #[staticmethod]
     #[pyo3(signature = (json_data, schema=None))]
-    pub fn encode_json_object(json_data: &Bound<'_, PyAny>, schema: Option<String>) -> PyResult<Vec<u8>> {
+    pub fn encode_json_object(
+        json_data: &Bound<'_, PyAny>,
+        schema: Option<String>,
+    ) -> PyResult<Vec<u8>> {
         let json_string = python_to_json_string(json_data).map_err(map_eyre_to_pyerr)?;
         let json_value: serde_json::Value =
             serde_json::from_str(&json_string).map_err(map_serde_to_pyerr)?;
@@ -208,8 +212,8 @@ impl PyStringObligationData {
         } else {
             None
         };
-        let encoded = StringObligationModule::encode_json(json_value, schema)
-            .map_err(map_eyre_to_pyerr)?;
+        let encoded =
+            StringObligationModule::encode_json(json_value, schema).map_err(map_eyre_to_pyerr)?;
         Ok(encoded.to_vec())
     }
 
@@ -218,7 +222,9 @@ impl PyStringObligationData {
     }
 }
 
-impl From<alkahest_rs::contracts::obligations::StringObligation::ObligationData> for PyStringObligationData {
+impl From<alkahest_rs::contracts::obligations::StringObligation::ObligationData>
+    for PyStringObligationData
+{
     fn from(data: alkahest_rs::contracts::obligations::StringObligation::ObligationData) -> Self {
         Self {
             item: data.item,

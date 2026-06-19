@@ -132,7 +132,10 @@ async fn test_contract_instance_creation() -> Result<()> {
 
     // Create a contract instance for direct interaction
     let escrow_contract =
-        contracts::obligations::escrow::default_escrow::ERC20EscrowObligation::new(escrow_addr, client.wallet_provider.clone());
+        contracts::obligations::escrow::default_escrow::ERC20EscrowObligation::new(
+            escrow_addr,
+            client.wallet_provider.clone(),
+        );
 
     // Verify the contract instance has the correct address
     assert_eq!(*escrow_contract.address(), escrow_addr);
@@ -180,7 +183,9 @@ async fn test_custom_network_configuration() -> Result<()> {
     // Verify each client uses its respective network addresses
     assert_eq!(
         base_escrow,
-        BASE_SEPOLIA_ADDRESSES.erc20_addresses.escrow_obligation_default
+        BASE_SEPOLIA_ADDRESSES
+            .erc20_addresses
+            .escrow_obligation_default
     );
     assert_eq!(
         filecoin_escrow,

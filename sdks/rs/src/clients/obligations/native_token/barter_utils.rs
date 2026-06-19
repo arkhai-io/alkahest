@@ -305,7 +305,11 @@ impl<'a> BarterUtils<'a> {
         );
 
         let receipt = barter_utils_contract
-            .buyBundleWithEth(bid.value, (ask, self.module.signer.address()).into(), expiration)
+            .buyBundleWithEth(
+                bid.value,
+                (ask, self.module.signer.address()).into(),
+                expiration,
+            )
             .value(bid.value)
             .send()
             .await?

@@ -4,8 +4,8 @@ use alloy::{
     providers::{
         RootProvider,
         fillers::{
-            BlobGasFiller, ChainIdFiller, FillProvider, GasFiller, JoinFill,
-            NonceFiller, SimpleNonceManager, WalletFiller,
+            BlobGasFiller, ChainIdFiller, FillProvider, GasFiller, JoinFill, NonceFiller,
+            SimpleNonceManager, WalletFiller,
         },
     },
     sol,

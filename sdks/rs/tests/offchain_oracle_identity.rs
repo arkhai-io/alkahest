@@ -38,10 +38,11 @@ fn verify_identity(
     let attestation = awd.attestation.clone();
     Box::pin(async move {
         // Extract obligation data
-        let obligation: StringObligation::ObligationData = match StringObligation::ObligationData::abi_decode(&attestation.data) {
-            Ok(o) => o,
-            Err(_) => return Some(false),
-        };
+        let obligation: StringObligation::ObligationData =
+            match StringObligation::ObligationData::abi_decode(&attestation.data) {
+                Ok(o) => o,
+                Err(_) => return Some(false),
+            };
 
         let payload = obligation.item.clone();
         let parsed: IdentityFulfillment = match serde_json::from_str(&payload) {
@@ -102,11 +103,7 @@ async fn run_contextless_identity_example(test: &TestContext) -> eyre::Result<()
     }
 
     let listen_result = charlie_oracle
-        .arbitrate_many_async(
-            verify_identity,
-            |_| async {},
-            ArbitrationMode::Future,
-        )
+        .arbitrate_many_async(verify_identity, |_| async {}, ArbitrationMode::Future)
         .await?;
 
     async fn create_payload(
@@ -175,7 +172,11 @@ async fn run_contextless_identity_example(test: &TestContext) -> eyre::Result<()
 
     let second_log = tokio::time::timeout(
         StdDuration::from_secs(10),
-        charlie_arbiters.trusted_oracle().wait_for_arbitration(charlie_client.address, bad_uid, None),
+        charlie_arbiters.trusted_oracle().wait_for_arbitration(
+            charlie_client.address,
+            bad_uid,
+            None,
+        ),
     )
     .await
     .wrap_err("timeout waiting for rejection arbitration")??;

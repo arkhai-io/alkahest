@@ -58,7 +58,10 @@ impl<'a> Util<'a> {
     }
 
     /// Creates a new attestation using the EAS contract.
-    pub async fn attest(&self, attestation: AttestationRequest) -> eyre::Result<TransactionReceipt> {
+    pub async fn attest(
+        &self,
+        attestation: AttestationRequest,
+    ) -> eyre::Result<TransactionReceipt> {
         let eas_contract =
             contracts::IEAS::new(self.module.addresses.eas, &self.module.wallet_provider);
 

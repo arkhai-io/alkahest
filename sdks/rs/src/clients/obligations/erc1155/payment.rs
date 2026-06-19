@@ -30,8 +30,9 @@ impl<'a> Payment<'a> {
     pub async fn get_obligation(
         &self,
         uid: FixedBytes<32>,
-    ) -> eyre::Result<DecodedAttestation<contracts::obligations::ERC1155PaymentObligation::ObligationData>>
-    {
+    ) -> eyre::Result<
+        DecodedAttestation<contracts::obligations::ERC1155PaymentObligation::ObligationData>,
+    > {
         let eas_contract =
             contracts::IEAS::new(self.module.addresses.eas, &self.module.wallet_provider);
 

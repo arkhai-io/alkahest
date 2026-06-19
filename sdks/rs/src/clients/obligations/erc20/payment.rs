@@ -30,8 +30,9 @@ impl<'a> Payment<'a> {
     pub async fn get_obligation(
         &self,
         uid: FixedBytes<32>,
-    ) -> eyre::Result<DecodedAttestation<contracts::obligations::ERC20PaymentObligation::ObligationData>>
-    {
+    ) -> eyre::Result<
+        DecodedAttestation<contracts::obligations::ERC20PaymentObligation::ObligationData>,
+    > {
         let eas_contract =
             contracts::IEAS::new(self.module.addresses.eas, &self.module.wallet_provider);
 
@@ -55,11 +56,7 @@ impl<'a> Payment<'a> {
     ///
     /// # Returns
     /// * `Result<TransactionReceipt>` - The transaction receipt
-    pub async fn pay(
-        &self,
-        price: &Erc20Data,
-        payee: Address,
-    ) -> eyre::Result<TransactionReceipt> {
+    pub async fn pay(&self, price: &Erc20Data, payee: Address) -> eyre::Result<TransactionReceipt> {
         let payment_obligation_contract = contracts::obligations::ERC20PaymentObligation::new(
             self.module.addresses.payment_obligation,
             &self.module.wallet_provider,

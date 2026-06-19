@@ -28,7 +28,9 @@ impl NonexclusiveUnrevocable {
     pub fn address(&self) -> String {
         format!(
             "{:?}",
-            self.inner.addresses.nonexclusive_unrevocable_confirmation_arbiter
+            self.inner
+                .addresses
+                .nonexclusive_unrevocable_confirmation_arbiter
         )
     }
 

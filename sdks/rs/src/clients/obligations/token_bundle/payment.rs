@@ -30,8 +30,9 @@ impl<'a> Payment<'a> {
     pub async fn get_obligation(
         &self,
         uid: FixedBytes<32>,
-    ) -> eyre::Result<DecodedAttestation<contracts::obligations::TokenBundlePaymentObligation::ObligationData>>
-    {
+    ) -> eyre::Result<
+        DecodedAttestation<contracts::obligations::TokenBundlePaymentObligation::ObligationData>,
+    > {
         let eas_contract =
             contracts::IEAS::new(self.module.addresses.eas, &self.module.wallet_provider);
 
@@ -60,11 +61,10 @@ impl<'a> Payment<'a> {
         price: &TokenBundleData,
         payee: Address,
     ) -> eyre::Result<TransactionReceipt> {
-        let payment_obligation_contract =
-            contracts::obligations::TokenBundlePaymentObligation::new(
-                self.module.addresses.payment_obligation,
-                &self.module.wallet_provider,
-            );
+        let payment_obligation_contract = contracts::obligations::TokenBundlePaymentObligation::new(
+            self.module.addresses.payment_obligation,
+            &self.module.wallet_provider,
+        );
 
         let receipt = payment_obligation_contract
             .doObligation(
@@ -92,11 +92,17 @@ impl<'a> Payment<'a> {
         &self,
         price: &TokenBundleData,
         payee: Address,
-    ) -> eyre::Result<(Vec<TransactionReceipt>, TransactionReceipt, Vec<TransactionReceipt>)> {
+    ) -> eyre::Result<(
+        Vec<TransactionReceipt>,
+        TransactionReceipt,
+        Vec<TransactionReceipt>,
+    )> {
         let util = self.module.util();
         let approval_receipts = util.approve(price, ApprovalPurpose::Payment).await?;
         let payment_receipt = self.pay(price, payee).await?;
-        let revoke_receipts = util.revoke_erc1155s(price, ApprovalPurpose::Payment).await?;
+        let revoke_receipts = util
+            .revoke_erc1155s(price, ApprovalPurpose::Payment)
+            .await?;
         Ok((approval_receipts, payment_receipt, revoke_receipts))
     }
 }

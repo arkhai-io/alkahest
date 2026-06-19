@@ -9,9 +9,10 @@ use alloy::primitives::Address;
 
 use crate::{
     clients::arbiters::{ArbitersModule, DecodedDemand},
-    contracts::arbiters::logical::{AllArbiter as AllArbiterContract, AnyArbiter as AnyArbiterContract},
-    impl_abi_conversions,
-    impl_from_attestation,
+    contracts::arbiters::logical::{
+        AllArbiter as AllArbiterContract, AnyArbiter as AnyArbiterContract,
+    },
+    impl_abi_conversions, impl_from_attestation,
 };
 
 // Implement ABI conversions for logical arbiters

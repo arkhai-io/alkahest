@@ -232,7 +232,9 @@ impl PyERC1155PaymentObligationData {
 impl From<alkahest_rs::contracts::obligations::ERC1155PaymentObligation::ObligationData>
     for PyERC1155PaymentObligationData
 {
-    fn from(data: alkahest_rs::contracts::obligations::ERC1155PaymentObligation::ObligationData) -> Self {
+    fn from(
+        data: alkahest_rs::contracts::obligations::ERC1155PaymentObligation::ObligationData,
+    ) -> Self {
         Self {
             token: format!("{:?}", data.token),
             token_id: data.tokenId.to_string(),

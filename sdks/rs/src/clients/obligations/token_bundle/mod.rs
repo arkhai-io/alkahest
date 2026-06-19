@@ -55,7 +55,9 @@ impl TokenBundleData {
 macro_rules! impl_token_bundle_payment_obligation {
     ($target:path) => {
         impl From<($crate::types::TokenBundleData, alloy::primitives::Address)> for $target {
-            fn from((bundle, payee): ($crate::types::TokenBundleData, alloy::primitives::Address)) -> Self {
+            fn from(
+                (bundle, payee): ($crate::types::TokenBundleData, alloy::primitives::Address),
+            ) -> Self {
                 let native_amount = bundle.native_amount;
                 let components = bundle.into_bundle_components();
                 Self {
@@ -72,7 +74,9 @@ macro_rules! impl_token_bundle_payment_obligation {
             }
         }
         impl From<(&$crate::types::TokenBundleData, alloy::primitives::Address)> for $target {
-            fn from((bundle, payee): (&$crate::types::TokenBundleData, alloy::primitives::Address)) -> Self {
+            fn from(
+                (bundle, payee): (&$crate::types::TokenBundleData, alloy::primitives::Address),
+            ) -> Self {
                 (bundle.clone(), payee).into()
             }
         }
@@ -85,7 +89,12 @@ macro_rules! impl_token_bundle_payment_obligation {
 macro_rules! impl_token_bundle_escrow_obligation {
     ($target:path) => {
         impl From<($crate::types::TokenBundleData, $crate::types::ArbiterData)> for $target {
-            fn from((bundle, arbiter_data): ($crate::types::TokenBundleData, $crate::types::ArbiterData)) -> Self {
+            fn from(
+                (bundle, arbiter_data): (
+                    $crate::types::TokenBundleData,
+                    $crate::types::ArbiterData,
+                ),
+            ) -> Self {
                 let native_amount = bundle.native_amount;
                 let components = bundle.into_bundle_components();
 
@@ -104,7 +113,12 @@ macro_rules! impl_token_bundle_escrow_obligation {
             }
         }
         impl From<(&$crate::types::TokenBundleData, &$crate::types::ArbiterData)> for $target {
-            fn from((bundle, arbiter_data): (&$crate::types::TokenBundleData, &$crate::types::ArbiterData)) -> Self {
+            fn from(
+                (bundle, arbiter_data): (
+                    &$crate::types::TokenBundleData,
+                    &$crate::types::ArbiterData,
+                ),
+            ) -> Self {
                 (bundle.clone(), arbiter_data.clone()).into()
             }
         }
@@ -112,15 +126,25 @@ macro_rules! impl_token_bundle_escrow_obligation {
 }
 
 // TokenBundle-specific conversions (for contracts::obligations and contracts::utils::token_bundle)
-impl_token_bundle_payment_obligation!(contracts::obligations::TokenBundlePaymentObligation::ObligationData);
-impl_token_bundle_payment_obligation!(contracts::utils::token_bundle::TokenBundlePaymentObligation::ObligationData);
-impl_token_bundle_escrow_obligation!(contracts::obligations::escrow::default_escrow::TokenBundleEscrowObligation::ObligationData);
+impl_token_bundle_payment_obligation!(
+    contracts::obligations::TokenBundlePaymentObligation::ObligationData
+);
+impl_token_bundle_payment_obligation!(
+    contracts::utils::token_bundle::TokenBundlePaymentObligation::ObligationData
+);
+impl_token_bundle_escrow_obligation!(
+    contracts::obligations::escrow::default_escrow::TokenBundleEscrowObligation::ObligationData
+);
 impl_token_bundle_escrow_obligation!(contracts::obligations::escrow::unconditional::UnconditionalTokenBundleEscrowObligation::ObligationData);
-impl_token_bundle_escrow_obligation!(contracts::utils::token_bundle::TokenBundleEscrowObligation::ObligationData);
+impl_token_bundle_escrow_obligation!(
+    contracts::utils::token_bundle::TokenBundleEscrowObligation::ObligationData
+);
 
 // --- ABI conversions for TokenBundle obligation types ---
 impl_abi_conversions!(contracts::obligations::TokenBundlePaymentObligation::ObligationData);
-impl_abi_conversions!(contracts::obligations::escrow::default_escrow::TokenBundleEscrowObligation::ObligationData);
+impl_abi_conversions!(
+    contracts::obligations::escrow::default_escrow::TokenBundleEscrowObligation::ObligationData
+);
 impl_abi_conversions!(contracts::obligations::escrow::unconditional::UnconditionalTokenBundleEscrowObligation::ObligationData);
 
 use crate::addresses::BASE_SEPOLIA_ADDRESSES;
@@ -276,8 +300,7 @@ mod tests {
     use crate::{
         DefaultAlkahestClient,
         contracts::obligations::{
-            TokenBundlePaymentObligation,
-            escrow::default_escrow::TokenBundleEscrowObligation,
+            TokenBundlePaymentObligation, escrow::default_escrow::TokenBundleEscrowObligation,
         },
         extensions::HasTokenBundle,
         fixtures::{MockERC20Permit, MockERC721, MockERC1155},
@@ -477,7 +500,10 @@ mod tests {
         );
 
         assert_eq!(
-            final_erc721_a_owner, test.addresses.token_bundle_addresses.escrow_obligation_default,
+            final_erc721_a_owner,
+            test.addresses
+                .token_bundle_addresses
+                .escrow_obligation_default,
             "ERC721 token should be in escrow"
         );
 
@@ -753,7 +779,10 @@ mod tests {
 
         // Verify tokens are in escrow
         assert_eq!(
-            escrow_erc721_owner, test.addresses.token_bundle_addresses.escrow_obligation_default,
+            escrow_erc721_owner,
+            test.addresses
+                .token_bundle_addresses
+                .escrow_obligation_default,
             "ERC721 token should be in escrow before collection"
         );
 
@@ -997,7 +1026,9 @@ mod tests {
         let erc1155_escrow_approved = mock_erc1155_a
             .isApprovedForAll(
                 test.alice.address(),
-                test.addresses.token_bundle_addresses.escrow_obligation_default,
+                test.addresses
+                    .token_bundle_addresses
+                    .escrow_obligation_default,
             )
             .call()
             .await?;
@@ -1097,7 +1128,10 @@ mod tests {
 
         // Verify tokens are in escrow
         assert_eq!(
-            erc721_owner, test.addresses.token_bundle_addresses.escrow_obligation_default,
+            erc721_owner,
+            test.addresses
+                .token_bundle_addresses
+                .escrow_obligation_default,
             "ERC721 token should be owned by escrow contract"
         );
 
@@ -1453,7 +1487,10 @@ mod tests {
 
         // Verify tokens are in escrow
         assert_eq!(
-            erc721_owner, test.addresses.token_bundle_addresses.escrow_obligation_default,
+            erc721_owner,
+            test.addresses
+                .token_bundle_addresses
+                .escrow_obligation_default,
             "ERC721 token should be owned by escrow contract"
         );
 
@@ -1471,7 +1508,9 @@ mod tests {
         let final_approval = mock_erc1155_a
             .isApprovedForAll(
                 test.alice.address(),
-                test.addresses.token_bundle_addresses.escrow_obligation_default,
+                test.addresses
+                    .token_bundle_addresses
+                    .escrow_obligation_default,
             )
             .call()
             .await?;
@@ -1560,10 +1599,7 @@ mod tests {
             .call()
             .await?;
 
-        assert!(
-            !approval_after_revoke,
-            "ERC1155 approval should be revoked"
-        );
+        assert!(!approval_after_revoke, "ERC1155 approval should be revoked");
 
         Ok(())
     }

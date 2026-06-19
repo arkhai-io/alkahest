@@ -24,11 +24,15 @@ use crate::types::{ApprovalPurpose, Erc20Data, ProviderContext, SharedWalletProv
 
 // --- ABI conversions for ERC20 obligation types ---
 impl_abi_conversions!(contracts::obligations::ERC20PaymentObligation::ObligationData);
-impl_abi_conversions!(contracts::obligations::escrow::default_escrow::ERC20EscrowObligation::ObligationData);
+impl_abi_conversions!(
+    contracts::obligations::escrow::default_escrow::ERC20EscrowObligation::ObligationData
+);
 impl_abi_conversions!(contracts::obligations::escrow::unconditional::UnconditionalERC20EscrowObligation::ObligationData);
 
 // --- TokenBundle conversions for ERC20 barter utils ---
-impl_token_bundle_payment_obligation!(contracts::utils::erc20::TokenBundlePaymentObligation::ObligationData);
+impl_token_bundle_payment_obligation!(
+    contracts::utils::erc20::TokenBundlePaymentObligation::ObligationData
+);
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Erc20Addresses {
@@ -190,7 +194,9 @@ mod tests {
     use super::Erc20Module;
     use crate::{
         DefaultAlkahestClient,
-        contracts::obligations::{ERC20PaymentObligation, escrow::default_escrow::ERC20EscrowObligation},
+        contracts::obligations::{
+            ERC20PaymentObligation, escrow::default_escrow::ERC20EscrowObligation,
+        },
         extensions::{AlkahestExtension, HasErc20, HasErc721, HasErc1155, HasTokenBundle},
         fixtures::{MockERC20Permit, MockERC721, MockERC1155},
         types::{

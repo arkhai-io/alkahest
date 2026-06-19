@@ -18,11 +18,15 @@ use crate::types::{ApprovalPurpose, Erc721Data, ProviderContext, SharedWalletPro
 
 // --- ABI conversions for ERC721 obligation types ---
 impl_abi_conversions!(contracts::obligations::ERC721PaymentObligation::ObligationData);
-impl_abi_conversions!(contracts::obligations::escrow::default_escrow::ERC721EscrowObligation::ObligationData);
+impl_abi_conversions!(
+    contracts::obligations::escrow::default_escrow::ERC721EscrowObligation::ObligationData
+);
 impl_abi_conversions!(contracts::obligations::escrow::unconditional::UnconditionalERC721EscrowObligation::ObligationData);
 
 // --- TokenBundle conversions for ERC721 barter utils ---
-impl_token_bundle_payment_obligation!(contracts::utils::erc721::TokenBundlePaymentObligation::ObligationData);
+impl_token_bundle_payment_obligation!(
+    contracts::utils::erc721::TokenBundlePaymentObligation::ObligationData
+);
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Erc721Addresses {
@@ -1107,11 +1111,12 @@ mod tests {
         };
 
         // Create the ERC721 payment obligation data as the demand
-        let payment_obligation_data = crate::contracts::obligations::ERC721PaymentObligation::ObligationData {
-            token: test.mock_addresses.erc721_a,
-            tokenId: U256::from(1),
-            payee: test.bob.address(),
-        };
+        let payment_obligation_data =
+            crate::contracts::obligations::ERC721PaymentObligation::ObligationData {
+                token: test.mock_addresses.erc721_a,
+                tokenId: U256::from(1),
+                payee: test.bob.address(),
+            };
 
         // bob approves all tokens for the bundle escrow
         test.bob_client

@@ -78,9 +78,8 @@ impl PyAttestationEscrowV1ObligationData {
     pub fn decode(obligation_data: Vec<u8>) -> PyResult<PyAttestationEscrowV1ObligationData> {
         use alkahest_rs::contracts::obligations::escrow::default_escrow::AttestationEscrowObligation;
         use alloy::sol_types::SolValue;
-        let decoded =
-            AttestationEscrowObligation::ObligationData::abi_decode(&obligation_data)
-                .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+        let decoded = AttestationEscrowObligation::ObligationData::abi_decode(&obligation_data)
+            .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
         Ok(decoded.into())
     }
 

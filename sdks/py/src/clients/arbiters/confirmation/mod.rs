@@ -73,16 +73,24 @@ impl Confirmation {
     pub fn address(&self, arbiter_type: PyConfirmationArbiterType) -> String {
         let addr = match arbiter_type {
             PyConfirmationArbiterType::ExclusiveRevocable => {
-                self.inner.addresses.exclusive_revocable_confirmation_arbiter
+                self.inner
+                    .addresses
+                    .exclusive_revocable_confirmation_arbiter
             }
             PyConfirmationArbiterType::ExclusiveUnrevocable => {
-                self.inner.addresses.exclusive_unrevocable_confirmation_arbiter
+                self.inner
+                    .addresses
+                    .exclusive_unrevocable_confirmation_arbiter
             }
             PyConfirmationArbiterType::NonexclusiveRevocable => {
-                self.inner.addresses.nonexclusive_revocable_confirmation_arbiter
+                self.inner
+                    .addresses
+                    .nonexclusive_revocable_confirmation_arbiter
             }
             PyConfirmationArbiterType::NonexclusiveUnrevocable => {
-                self.inner.addresses.nonexclusive_unrevocable_confirmation_arbiter
+                self.inner
+                    .addresses
+                    .nonexclusive_unrevocable_confirmation_arbiter
             }
         };
         format!("{:?}", addr)

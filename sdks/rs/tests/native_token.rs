@@ -1,11 +1,8 @@
-use alkahest_rs::{
-    contracts::obligations::{
-        NativeTokenPaymentObligation,
-        escrow::default_escrow::NativeTokenEscrowObligation,
-    },
+use alkahest_rs::contracts::obligations::{
+    NativeTokenPaymentObligation, escrow::default_escrow::NativeTokenEscrowObligation,
 };
 use alloy::{
-    primitives::{address, Bytes, U256},
+    primitives::{Bytes, U256, address},
     sol_types::SolValue,
 };
 use eyre::Result;

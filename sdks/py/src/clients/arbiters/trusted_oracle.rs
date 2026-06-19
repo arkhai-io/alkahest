@@ -1,8 +1,6 @@
 use alkahest_rs::{
-    extensions::OracleModule as InnerOracleClient,
-    extensions::ArbitersModule,
-    contracts::obligations::StringObligation,
-    contracts::arbiters::TrustedOracleArbiter,
+    contracts::arbiters::TrustedOracleArbiter, contracts::obligations::StringObligation,
+    extensions::ArbitersModule, extensions::OracleModule as InnerOracleClient,
 };
 use alloy::primitives::FixedBytes;
 use alloy::sol_types::SolValue;
@@ -12,9 +10,7 @@ use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
 
-use crate::{
-    error_handling::{map_eyre_to_pyerr, map_parse_to_pyerr},
-};
+use crate::error_handling::{map_eyre_to_pyerr, map_parse_to_pyerr};
 
 use super::PyArbitrationMadeLog;
 
@@ -58,7 +54,10 @@ impl OracleClient {
                 .await
                 .map_err(map_eyre_to_pyerr)?;
 
-            Ok(format!("0x{}", alloy::hex::encode(receipt.transaction_hash.as_slice())))
+            Ok(format!(
+                "0x{}",
+                alloy::hex::encode(receipt.transaction_hash.as_slice())
+            ))
         })
     }
 
@@ -66,16 +65,26 @@ impl OracleClient {
         use alloy::hex;
         use alloy::sol_types::SolType;
 
-        let data_bytes = hex::decode(attestation.data.strip_prefix("0x").unwrap_or(&attestation.data))
-            .map_err(|e| map_eyre_to_pyerr(eyre::eyre!("Failed to decode data hex: {}", e)))?;
+        let data_bytes = hex::decode(
+            attestation
+                .data
+                .strip_prefix("0x")
+                .unwrap_or(&attestation.data),
+        )
+        .map_err(|e| map_eyre_to_pyerr(eyre::eyre!("Failed to decode data hex: {}", e)))?;
 
-        let obligation_data = <StringObligation::ObligationData as SolType>::abi_decode(&data_bytes)
-            .map_err(|e| map_eyre_to_pyerr(eyre::eyre!("Failed to decode obligation data: {}", e)))?;
+        let obligation_data = <StringObligation::ObligationData as SolType>::abi_decode(
+            &data_bytes,
+        )
+        .map_err(|e| map_eyre_to_pyerr(eyre::eyre!("Failed to decode obligation data: {}", e)))?;
 
         Ok(obligation_data.item)
     }
 
-    pub fn extract_demand_data(&self, escrow_attestation: &PyOracleAttestation) -> PyResult<PyTrustedOracleArbiterDemandData> {
+    pub fn extract_demand_data(
+        &self,
+        escrow_attestation: &PyOracleAttestation,
+    ) -> PyResult<PyTrustedOracleArbiterDemandData> {
         use alloy::{hex, sol, sol_types::SolType};
 
         sol! {
@@ -85,14 +94,23 @@ impl OracleClient {
             }
         }
 
-        let data_bytes = hex::decode(escrow_attestation.data.strip_prefix("0x").unwrap_or(&escrow_attestation.data))
-            .map_err(|e| map_eyre_to_pyerr(eyre::eyre!("Failed to decode data hex: {}", e)))?;
+        let data_bytes = hex::decode(
+            escrow_attestation
+                .data
+                .strip_prefix("0x")
+                .unwrap_or(&escrow_attestation.data),
+        )
+        .map_err(|e| map_eyre_to_pyerr(eyre::eyre!("Failed to decode data hex: {}", e)))?;
 
-        let arbiter_demand = <ArbiterDemand as SolType>::abi_decode(&data_bytes)
-            .map_err(|e| map_eyre_to_pyerr(eyre::eyre!("Failed to decode arbiter demand: {}", e)))?;
+        let arbiter_demand = <ArbiterDemand as SolType>::abi_decode(&data_bytes).map_err(|e| {
+            map_eyre_to_pyerr(eyre::eyre!("Failed to decode arbiter demand: {}", e))
+        })?;
 
-        let demand_data = <TrustedOracleArbiter::DemandData as SolType>::abi_decode(&arbiter_demand.demand)
-            .map_err(|e| map_eyre_to_pyerr(eyre::eyre!("Failed to decode demand data: {}", e)))?;
+        let demand_data =
+            <TrustedOracleArbiter::DemandData as SolType>::abi_decode(&arbiter_demand.demand)
+                .map_err(|e| {
+                    map_eyre_to_pyerr(eyre::eyre!("Failed to decode demand data: {}", e))
+                })?;
 
         Ok(PyTrustedOracleArbiterDemandData::from(demand_data))
     }
@@ -151,7 +169,10 @@ impl OracleClient {
                 .wait_for_arbitration(
                     obligation.parse().map_err(map_parse_to_pyerr)?,
                     demand.map(|d| d.into()),
-                    oracle.map(|o| o.parse()).transpose().map_err(map_parse_to_pyerr)?,
+                    oracle
+                        .map(|o| o.parse())
+                        .transpose()
+                        .map_err(map_parse_to_pyerr)?,
                     from_block,
                 )
                 .await
@@ -182,9 +203,16 @@ impl OracleClient {
             use alloy::hex;
 
             // Convert PyOracleAttestation to Rust Attestation
-            let ref_uid_bytes = hex::decode(fulfillment.ref_uid.strip_prefix("0x").unwrap_or(&fulfillment.ref_uid))
-                .map_err(|e| map_eyre_to_pyerr(eyre::eyre!("Failed to decode ref_uid: {}", e)))?;
-            let ref_uid: FixedBytes<32> = ref_uid_bytes.as_slice().try_into()
+            let ref_uid_bytes = hex::decode(
+                fulfillment
+                    .ref_uid
+                    .strip_prefix("0x")
+                    .unwrap_or(&fulfillment.ref_uid),
+            )
+            .map_err(|e| map_eyre_to_pyerr(eyre::eyre!("Failed to decode ref_uid: {}", e)))?;
+            let ref_uid: FixedBytes<32> = ref_uid_bytes
+                .as_slice()
+                .try_into()
                 .map_err(|_| map_eyre_to_pyerr(eyre::eyre!("Invalid ref_uid length")))?;
 
             // Create a minimal attestation struct with just the refUID we need
@@ -227,9 +255,16 @@ impl OracleClient {
             use alloy::{hex, sol, sol_types::SolType};
 
             // Convert PyOracleAttestation to Rust Attestation
-            let ref_uid_bytes = hex::decode(fulfillment.ref_uid.strip_prefix("0x").unwrap_or(&fulfillment.ref_uid))
-                .map_err(|e| map_eyre_to_pyerr(eyre::eyre!("Failed to decode ref_uid: {}", e)))?;
-            let ref_uid: FixedBytes<32> = ref_uid_bytes.as_slice().try_into()
+            let ref_uid_bytes = hex::decode(
+                fulfillment
+                    .ref_uid
+                    .strip_prefix("0x")
+                    .unwrap_or(&fulfillment.ref_uid),
+            )
+            .map_err(|e| map_eyre_to_pyerr(eyre::eyre!("Failed to decode ref_uid: {}", e)))?;
+            let ref_uid: FixedBytes<32> = ref_uid_bytes
+                .as_slice()
+                .try_into()
                 .map_err(|_| map_eyre_to_pyerr(eyre::eyre!("Invalid ref_uid length")))?;
 
             // Create a minimal attestation struct with just the refUID we need
@@ -260,13 +295,21 @@ impl OracleClient {
                 }
             }
 
-            let arbiter_demand = <ArbiterDemand as SolType>::abi_decode(&escrow.data)
-                .map_err(|e| map_eyre_to_pyerr(eyre::eyre!("Failed to decode arbiter demand: {}", e)))?;
+            let arbiter_demand =
+                <ArbiterDemand as SolType>::abi_decode(&escrow.data).map_err(|e| {
+                    map_eyre_to_pyerr(eyre::eyre!("Failed to decode arbiter demand: {}", e))
+                })?;
 
-            let demand_data = <TrustedOracleArbiter::DemandData as SolType>::abi_decode(&arbiter_demand.demand)
-                .map_err(|e| map_eyre_to_pyerr(eyre::eyre!("Failed to decode demand data: {}", e)))?;
+            let demand_data =
+                <TrustedOracleArbiter::DemandData as SolType>::abi_decode(&arbiter_demand.demand)
+                    .map_err(|e| {
+                    map_eyre_to_pyerr(eyre::eyre!("Failed to decode demand data: {}", e))
+                })?;
 
-            Ok((PyOracleAttestation::from(&escrow), PyTrustedOracleArbiterDemandData::from(demand_data)))
+            Ok((
+                PyOracleAttestation::from(&escrow),
+                PyTrustedOracleArbiterDemandData::from(demand_data),
+            ))
         })
     }
 
@@ -314,13 +357,23 @@ impl OracleClient {
         let is_async = Python::with_gil(|py| {
             let inspect = py.import("inspect").ok()?;
             inspect
-                .getattr("iscoroutinefunction").ok()?
-                .call1((decision_func.clone_ref(py),)).ok()?
-                .extract::<bool>().ok()
-        }).unwrap_or(false);
+                .getattr("iscoroutinefunction")
+                .ok()?
+                .call1((decision_func.clone_ref(py),))
+                .ok()?
+                .extract::<bool>()
+                .ok()
+        })
+        .unwrap_or(false);
 
         if is_async {
-            return self.arbitrate_many_async_impl(py, decision_func, callback_func, mode, timeout_seconds);
+            return self.arbitrate_many_async_impl(
+                py,
+                decision_func,
+                callback_func,
+                mode,
+                timeout_seconds,
+            );
         }
 
         // Sync implementation
@@ -329,21 +382,22 @@ impl OracleClient {
             let rust_mode = mode.unwrap_or_default().into();
             let timeout = timeout_seconds.map(|secs| std::time::Duration::from_secs_f64(secs));
 
-            let arbitrate_func = |awd: &alkahest_rs::clients::oracle::AttestationWithDemand| -> Option<bool> {
-                Python::with_gil(|py| {
-                    let py_attestation = PyOracleAttestation::from(&awd.attestation);
-                    let py_demand: Vec<u8> = awd.demand.to_vec();
-                    let result = decision_func.call1(py, (py_attestation, py_demand)).ok()?;
-                    // If Python returned None, defer the decision (return Rust None)
-                    if result.is_none(py) {
-                        return None;
-                    }
-                    result
-                        .extract::<bool>(py)
-                        .or_else(|_| result.is_truthy(py))
-                        .ok()
-                })
-            };
+            let arbitrate_func =
+                |awd: &alkahest_rs::clients::oracle::AttestationWithDemand| -> Option<bool> {
+                    Python::with_gil(|py| {
+                        let py_attestation = PyOracleAttestation::from(&awd.attestation);
+                        let py_demand: Vec<u8> = awd.demand.to_vec();
+                        let result = decision_func.call1(py, (py_attestation, py_demand)).ok()?;
+                        // If Python returned None, defer the decision (return Rust None)
+                        if result.is_none(py) {
+                            return None;
+                        }
+                        result
+                            .extract::<bool>(py)
+                            .or_else(|_| result.is_truthy(py))
+                            .ok()
+                    })
+                };
 
             let callback = |decision: &alkahest_rs::clients::oracle::Decision| {
                 if let Some(ref py_callback) = callback_func {
@@ -352,7 +406,10 @@ impl OracleClient {
                         let py_decision = PyDecision::__new__(
                             py_attestation,
                             decision.decision,
-                            format!("0x{}", alloy::hex::encode(decision.receipt.transaction_hash.as_slice())),
+                            format!(
+                                "0x{}",
+                                alloy::hex::encode(decision.receipt.transaction_hash.as_slice())
+                            ),
                         );
 
                         if let Err(e) = py_callback.call1(py, (py_decision,)) {
@@ -365,12 +422,7 @@ impl OracleClient {
             };
 
             let result = inner
-                .arbitrate_many_blocking_sync(
-                    arbitrate_func,
-                    callback,
-                    rust_mode,
-                    timeout,
-                )
+                .arbitrate_many_blocking_sync(arbitrate_func, callback, rust_mode, timeout)
                 .await
                 .map_err(map_eyre_to_pyerr)?;
 
@@ -413,7 +465,9 @@ impl OracleClient {
             let callback_func = Arc::new(callback_func);
 
             // Create async arbitration function that converts Python coroutines to Rust futures
-            let arbitrate = move |awd: &alkahest_rs::clients::oracle::AttestationWithDemand| -> Pin<Box<dyn Future<Output = Option<bool>> + Send + 'static>> {
+            let arbitrate = move |awd: &alkahest_rs::clients::oracle::AttestationWithDemand| -> Pin<
+                Box<dyn Future<Output = Option<bool>> + Send + 'static>,
+            > {
                 let awd = awd.clone();
                 let decision_func = Arc::clone(&decision_func);
 
@@ -422,7 +476,9 @@ impl OracleClient {
                     let coro_result = Python::with_gil(|py| {
                         let py_attestation = PyOracleAttestation::from(&awd.attestation);
                         let py_demand: Vec<u8> = awd.demand.to_vec();
-                        decision_func.clone_ref(py).call1(py, (py_attestation, py_demand))
+                        decision_func
+                            .clone_ref(py)
+                            .call1(py, (py_attestation, py_demand))
                     });
 
                     let coro = match coro_result {
@@ -431,9 +487,7 @@ impl OracleClient {
                     };
 
                     // Convert Python coroutine to Rust future
-                    let future_result = Python::with_gil(|py| {
-                        into_future(coro.into_bound(py))
-                    });
+                    let future_result = Python::with_gil(|py| into_future(coro.into_bound(py)));
 
                     let future = match future_result {
                         Ok(f) => f,
@@ -451,7 +505,8 @@ impl OracleClient {
                         if result.is_none(py) {
                             return None;
                         }
-                        result.extract::<bool>(py)
+                        result
+                            .extract::<bool>(py)
                             .or_else(|_| result.is_truthy(py))
                             .ok()
                     })
@@ -483,12 +538,7 @@ impl OracleClient {
 
             // Call the blocking async version
             let result = inner
-                .arbitrate_many_blocking_async(
-                    arbitrate,
-                    callback,
-                    rust_mode,
-                    timeout,
-                )
+                .arbitrate_many_blocking_async(arbitrate, callback, rust_mode, timeout)
                 .await
                 .map_err(map_eyre_to_pyerr)?;
 
@@ -610,13 +660,16 @@ impl PyArbitrationMode {
     }
 
     pub fn __repr__(&self) -> String {
-        format!("ArbitrationMode.{}", match self {
-            Self::Past => "Past",
-            Self::PastUnarbitrated => "PastUnarbitrated",
-            Self::AllUnarbitrated => "AllUnarbitrated",
-            Self::All => "All",
-            Self::Future => "Future",
-        })
+        format!(
+            "ArbitrationMode.{}",
+            match self {
+                Self::Past => "Past",
+                Self::PastUnarbitrated => "PastUnarbitrated",
+                Self::AllUnarbitrated => "AllUnarbitrated",
+                Self::All => "All",
+                Self::Future => "Future",
+            }
+        )
     }
 }
 
@@ -624,8 +677,12 @@ impl From<PyArbitrationMode> for alkahest_rs::clients::oracle::ArbitrationMode {
     fn from(mode: PyArbitrationMode) -> Self {
         match mode {
             PyArbitrationMode::Past => alkahest_rs::clients::oracle::ArbitrationMode::Past,
-            PyArbitrationMode::PastUnarbitrated => alkahest_rs::clients::oracle::ArbitrationMode::PastUnarbitrated,
-            PyArbitrationMode::AllUnarbitrated => alkahest_rs::clients::oracle::ArbitrationMode::AllUnarbitrated,
+            PyArbitrationMode::PastUnarbitrated => {
+                alkahest_rs::clients::oracle::ArbitrationMode::PastUnarbitrated
+            }
+            PyArbitrationMode::AllUnarbitrated => {
+                alkahest_rs::clients::oracle::ArbitrationMode::AllUnarbitrated
+            }
             PyArbitrationMode::All => alkahest_rs::clients::oracle::ArbitrationMode::All,
             PyArbitrationMode::Future => alkahest_rs::clients::oracle::ArbitrationMode::Future,
         }
@@ -735,7 +792,10 @@ pub struct PyAttestationWithDemand {
 impl PyAttestationWithDemand {
     #[new]
     pub fn __new__(attestation: PyOracleAttestation, demand: Vec<u8>) -> Self {
-        Self { attestation, demand }
+        Self {
+            attestation,
+            demand,
+        }
     }
 
     pub fn __str__(&self) -> String {
@@ -798,7 +858,6 @@ impl PyDecision {
     }
 }
 
-
 #[pyclass]
 #[derive(Clone)]
 pub struct PyTrustedOracleArbiterDemandData {
@@ -850,9 +909,7 @@ impl PyTrustedOracleArbiterDemandData {
     }
 }
 
-impl From<TrustedOracleArbiter::DemandData>
-    for PyTrustedOracleArbiterDemandData
-{
+impl From<TrustedOracleArbiter::DemandData> for PyTrustedOracleArbiterDemandData {
     fn from(data: TrustedOracleArbiter::DemandData) -> Self {
         Self {
             oracle: format!("{:?}", data.oracle),
@@ -861,9 +918,7 @@ impl From<TrustedOracleArbiter::DemandData>
     }
 }
 
-impl TryFrom<PyTrustedOracleArbiterDemandData>
-    for TrustedOracleArbiter::DemandData
-{
+impl TryFrom<PyTrustedOracleArbiterDemandData> for TrustedOracleArbiter::DemandData {
     type Error = eyre::Error;
 
     fn try_from(py_data: PyTrustedOracleArbiterDemandData) -> eyre::Result<Self> {
@@ -962,8 +1017,12 @@ impl TrustedOracle {
     /// Decode TrustedOracleArbiter demand data from raw bytes
     pub fn decode(&self, demand_bytes: Vec<u8>) -> PyResult<PyTrustedOracleArbiterDemandData> {
         let demand: TrustedOracleArbiter::DemandData =
-            TrustedOracleArbiter::DemandData::abi_decode(&demand_bytes)
-                .map_err(|e| map_eyre_to_pyerr(eyre::eyre!("Failed to decode TrustedOracleArbiter demand: {}", e)))?;
+            TrustedOracleArbiter::DemandData::abi_decode(&demand_bytes).map_err(|e| {
+                map_eyre_to_pyerr(eyre::eyre!(
+                    "Failed to decode TrustedOracleArbiter demand: {}",
+                    e
+                ))
+            })?;
         Ok(PyTrustedOracleArbiterDemandData::from(demand))
     }
 

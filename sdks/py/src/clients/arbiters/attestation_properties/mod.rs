@@ -9,14 +9,11 @@ use alkahest_rs::{
         ExpirationTimeAfterArbiter as ExpirationTimeAfterArbiterContract,
         ExpirationTimeBeforeArbiter as ExpirationTimeBeforeArbiterContract,
         ExpirationTimeEqualArbiter as ExpirationTimeEqualArbiterContract,
-        RecipientArbiter as RecipientArbiterContract,
-        RefUidArbiter as RefUidArbiterContract,
-        RevocableArbiter as RevocableArbiterContract,
-        SchemaArbiter as SchemaArbiterContract,
+        RecipientArbiter as RecipientArbiterContract, RefUidArbiter as RefUidArbiterContract,
+        RevocableArbiter as RevocableArbiterContract, SchemaArbiter as SchemaArbiterContract,
         TimeAfterArbiter as TimeAfterArbiterContract,
         TimeBeforeArbiter as TimeBeforeArbiterContract,
-        TimeEqualArbiter as TimeEqualArbiterContract,
-        UidArbiter as UidArbiterContract,
+        TimeEqualArbiter as TimeEqualArbiterContract, UidArbiter as UidArbiterContract,
     },
     extensions::ArbitersModule,
 };
@@ -211,7 +208,9 @@ impl AttesterArbiterDemandData {
 
     #[staticmethod]
     pub fn encode(demand_data: &AttesterArbiterDemandData) -> PyResult<Vec<u8>> {
-        let attester: alloy::primitives::Address = demand_data.attester.parse()
+        let attester: alloy::primitives::Address = demand_data
+            .attester
+            .parse()
             .map_err(|e| map_eyre_to_pyerr(eyre::eyre!("Invalid address: {}", e)))?;
         let rust_data = AttesterArbiterContract::DemandData { attester };
         Ok(rust_data.abi_encode())
@@ -254,7 +253,9 @@ impl RecipientArbiterDemandData {
 
     #[staticmethod]
     pub fn encode(demand_data: &RecipientArbiterDemandData) -> PyResult<Vec<u8>> {
-        let recipient: alloy::primitives::Address = demand_data.recipient.parse()
+        let recipient: alloy::primitives::Address = demand_data
+            .recipient
+            .parse()
             .map_err(|e| map_eyre_to_pyerr(eyre::eyre!("Invalid address: {}", e)))?;
         let rust_data = RecipientArbiterContract::DemandData { recipient };
         Ok(rust_data.abi_encode())
@@ -297,7 +298,9 @@ impl SchemaArbiterDemandData {
 
     #[staticmethod]
     pub fn encode(demand_data: &SchemaArbiterDemandData) -> PyResult<Vec<u8>> {
-        let schema: alloy::primitives::FixedBytes<32> = demand_data.schema.parse()
+        let schema: alloy::primitives::FixedBytes<32> = demand_data
+            .schema
+            .parse()
             .map_err(|e| map_eyre_to_pyerr(eyre::eyre!("Invalid bytes32: {}", e)))?;
         let rust_data = SchemaArbiterContract::DemandData { schema };
         Ok(rust_data.abi_encode())
@@ -340,7 +343,9 @@ impl UidArbiterDemandData {
 
     #[staticmethod]
     pub fn encode(demand_data: &UidArbiterDemandData) -> PyResult<Vec<u8>> {
-        let uid: alloy::primitives::FixedBytes<32> = demand_data.uid.parse()
+        let uid: alloy::primitives::FixedBytes<32> = demand_data
+            .uid
+            .parse()
             .map_err(|e| map_eyre_to_pyerr(eyre::eyre!("Invalid bytes32: {}", e)))?;
         let rust_data = UidArbiterContract::DemandData { uid };
         Ok(rust_data.abi_encode())
@@ -383,7 +388,9 @@ impl RefUidArbiterDemandData {
 
     #[staticmethod]
     pub fn encode(demand_data: &RefUidArbiterDemandData) -> PyResult<Vec<u8>> {
-        let ref_uid: alloy::primitives::FixedBytes<32> = demand_data.ref_uid.parse()
+        let ref_uid: alloy::primitives::FixedBytes<32> = demand_data
+            .ref_uid
+            .parse()
             .map_err(|e| map_eyre_to_pyerr(eyre::eyre!("Invalid bytes32: {}", e)))?;
         let rust_data = RefUidArbiterContract::DemandData { refUID: ref_uid };
         Ok(rust_data.abi_encode())

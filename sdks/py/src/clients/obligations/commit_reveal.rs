@@ -261,8 +261,7 @@ impl PyCommitRevealObligationData {
     pub fn decode(obligation_data: Vec<u8>) -> PyResult<PyCommitRevealObligationData> {
         use alloy::primitives::Bytes;
         let bytes = Bytes::from(obligation_data);
-        let decoded =
-            CommitRevealObligationModule::decode(&bytes).map_err(map_eyre_to_pyerr)?;
+        let decoded = CommitRevealObligationModule::decode(&bytes).map_err(map_eyre_to_pyerr)?;
         Ok(decoded.into())
     }
 
@@ -300,18 +299,20 @@ impl PyCommitRevealDemandData {
     }
 
     fn __repr__(&self) -> String {
-        format!("PyCommitRevealDemandData(bond_amount='{}')", self.bond_amount)
+        format!(
+            "PyCommitRevealDemandData(bond_amount='{}')",
+            self.bond_amount
+        )
     }
 
     #[staticmethod]
     pub fn encode(demand: &PyCommitRevealDemandData) -> PyResult<Vec<u8>> {
         use alloy::sol_types::SolValue;
 
-        let demand_data =
-            alkahest_rs::contracts::obligations::CommitRevealObligation::DemandData {
-                bondAmount: U256::from_str_radix(&demand.bond_amount, 10)
-                    .map_err(map_parse_to_pyerr)?,
-            };
+        let demand_data = alkahest_rs::contracts::obligations::CommitRevealObligation::DemandData {
+            bondAmount: U256::from_str_radix(&demand.bond_amount, 10)
+                .map_err(map_parse_to_pyerr)?,
+        };
 
         Ok(demand_data.abi_encode())
     }
@@ -333,9 +334,7 @@ impl PyCommitRevealDemandData {
 impl From<alkahest_rs::contracts::obligations::CommitRevealObligation::DemandData>
     for PyCommitRevealDemandData
 {
-    fn from(
-        data: alkahest_rs::contracts::obligations::CommitRevealObligation::DemandData,
-    ) -> Self {
+    fn from(data: alkahest_rs::contracts::obligations::CommitRevealObligation::DemandData) -> Self {
         Self {
             bond_amount: data.bondAmount.to_string(),
         }

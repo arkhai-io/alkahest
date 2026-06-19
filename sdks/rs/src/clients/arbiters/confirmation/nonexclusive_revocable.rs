@@ -22,7 +22,9 @@ impl<'a> NonexclusiveRevocable<'a> {
 
     /// Get the contract address
     pub fn address(&self) -> Address {
-        self.module.addresses.nonexclusive_revocable_confirmation_arbiter
+        self.module
+            .addresses
+            .nonexclusive_revocable_confirmation_arbiter
     }
 
     /// Confirm a fulfillment for an escrow
@@ -35,7 +37,9 @@ impl<'a> NonexclusiveRevocable<'a> {
     ) -> eyre::Result<TransactionReceipt> {
         let arbiter =
             contracts::arbiters::confirmation::NonexclusiveRevocableConfirmationArbiter::new(
-                self.module.addresses.nonexclusive_revocable_confirmation_arbiter,
+                self.module
+                    .addresses
+                    .nonexclusive_revocable_confirmation_arbiter,
                 &*self.module.wallet_provider,
             );
 
@@ -59,7 +63,9 @@ impl<'a> NonexclusiveRevocable<'a> {
     ) -> eyre::Result<TransactionReceipt> {
         let arbiter =
             contracts::arbiters::confirmation::NonexclusiveRevocableConfirmationArbiter::new(
-                self.module.addresses.nonexclusive_revocable_confirmation_arbiter,
+                self.module
+                    .addresses
+                    .nonexclusive_revocable_confirmation_arbiter,
                 &*self.module.wallet_provider,
             );
 
@@ -83,7 +89,9 @@ impl<'a> NonexclusiveRevocable<'a> {
     ) -> eyre::Result<TransactionReceipt> {
         let arbiter =
             contracts::arbiters::confirmation::NonexclusiveRevocableConfirmationArbiter::new(
-                self.module.addresses.nonexclusive_revocable_confirmation_arbiter,
+                self.module
+                    .addresses
+                    .nonexclusive_revocable_confirmation_arbiter,
                 &*self.module.wallet_provider,
             );
 
@@ -105,7 +113,7 @@ impl<'a> NonexclusiveRevocable<'a> {
         from_block: Option<u64>,
     ) -> eyre::Result<
         Log<contracts::arbiters::confirmation::NonexclusiveRevocableConfirmationArbiter::ConfirmationMade>,
-    > {
+    >{
         let filter = Filter::new()
             .from_block(from_block.unwrap_or(0))
             .address(self.module.addresses.nonexclusive_revocable_confirmation_arbiter)
@@ -133,7 +141,7 @@ impl<'a> NonexclusiveRevocable<'a> {
         from_block: Option<u64>,
     ) -> eyre::Result<
         Log<contracts::arbiters::confirmation::NonexclusiveRevocableConfirmationArbiter::ConfirmationRequested>,
-    > {
+    >{
         let filter = Filter::new()
             .from_block(from_block.unwrap_or(0))
             .address(self.module.addresses.nonexclusive_revocable_confirmation_arbiter)
@@ -161,7 +169,9 @@ impl<'a> NonexclusiveRevocable<'a> {
     ) -> eyre::Result<bool> {
         let arbiter =
             contracts::arbiters::confirmation::NonexclusiveRevocableConfirmationArbiter::new(
-                self.module.addresses.nonexclusive_revocable_confirmation_arbiter,
+                self.module
+                    .addresses
+                    .nonexclusive_revocable_confirmation_arbiter,
                 &*self.module.public_provider,
             );
 

@@ -45,15 +45,16 @@ use crate::{
             StringObligation,
             TokenBundlePaymentObligation,
             escrow::default_escrow::{
-                AttestationEscrowObligation, AttestationReferenceEscrowObligation, ERC20EscrowObligation,
-                ERC721EscrowObligation, ERC1155EscrowObligation, NativeTokenEscrowObligation,
-                TokenBundleEscrowObligation,
+                AttestationEscrowObligation, AttestationReferenceEscrowObligation,
+                ERC20EscrowObligation, ERC721EscrowObligation, ERC1155EscrowObligation,
+                NativeTokenEscrowObligation, TokenBundleEscrowObligation,
             },
             escrow::unconditional::{
                 UnconditionalAttestationEscrowObligation,
-                UnconditionalAttestationReferenceEscrowObligation, UnconditionalERC20EscrowObligation,
-                UnconditionalERC721EscrowObligation, UnconditionalERC1155EscrowObligation,
-                UnconditionalNativeTokenEscrowObligation, UnconditionalTokenBundleEscrowObligation,
+                UnconditionalAttestationReferenceEscrowObligation,
+                UnconditionalERC20EscrowObligation, UnconditionalERC721EscrowObligation,
+                UnconditionalERC1155EscrowObligation, UnconditionalNativeTokenEscrowObligation,
+                UnconditionalTokenBundleEscrowObligation,
             },
         },
         utils::{
@@ -439,7 +440,8 @@ async fn build_shared_env() -> eyre::Result<SharedTestEnv> {
 
     // Deploy default obligations
     let attestation_escrow_obligation = deploy_obligation!(AttestationEscrowObligation);
-    let attestation_reference_escrow_obligation = deploy_obligation!(AttestationReferenceEscrowObligation);
+    let attestation_reference_escrow_obligation =
+        deploy_obligation!(AttestationReferenceEscrowObligation);
     let bundle_escrow_obligation = deploy_obligation!(TokenBundleEscrowObligation);
     let bundle_payment_obligation = deploy_obligation!(TokenBundlePaymentObligation);
     let erc20_escrow_obligation = deploy_obligation!(ERC20EscrowObligation);
@@ -662,9 +664,10 @@ async fn build_shared_env() -> eyre::Result<SharedTestEnv> {
                 .address()
                 .clone(),
             escrow_obligation_2_default: attestation_reference_escrow_obligation.address().clone(),
-            escrow_obligation_2_unconditional: unconditional_attestation_reference_escrow_obligation
-                .address()
-                .clone(),
+            escrow_obligation_2_unconditional:
+                unconditional_attestation_reference_escrow_obligation
+                    .address()
+                    .clone(),
         },
     };
 

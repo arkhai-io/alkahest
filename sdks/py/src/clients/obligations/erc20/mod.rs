@@ -226,7 +226,9 @@ impl PyERC20PaymentObligationData {
 impl From<alkahest_rs::contracts::obligations::ERC20PaymentObligation::ObligationData>
     for PyERC20PaymentObligationData
 {
-    fn from(data: alkahest_rs::contracts::obligations::ERC20PaymentObligation::ObligationData) -> Self {
+    fn from(
+        data: alkahest_rs::contracts::obligations::ERC20PaymentObligation::ObligationData,
+    ) -> Self {
         Self {
             token: format!("{:?}", data.token),
             amount: data.amount.try_into().unwrap_or(0),

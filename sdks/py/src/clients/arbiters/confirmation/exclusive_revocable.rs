@@ -26,7 +26,9 @@ impl ExclusiveRevocable {
     pub fn address(&self) -> String {
         format!(
             "{:?}",
-            self.inner.addresses.exclusive_revocable_confirmation_arbiter
+            self.inner
+                .addresses
+                .exclusive_revocable_confirmation_arbiter
         )
     }
 

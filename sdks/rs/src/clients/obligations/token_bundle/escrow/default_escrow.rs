@@ -34,7 +34,7 @@ impl<'a> Default<'a> {
         DecodedAttestation<
             contracts::obligations::escrow::default_escrow::TokenBundleEscrowObligation::ObligationData,
         >,
-    > {
+    >{
         let eas_contract =
             contracts::IEAS::new(self.module.addresses.eas, &self.module.wallet_provider);
 
@@ -80,7 +80,11 @@ impl<'a> Default<'a> {
         price: &TokenBundleData,
         item: &ArbiterData,
         expiration: u64,
-    ) -> eyre::Result<(Vec<TransactionReceipt>, TransactionReceipt, Vec<TransactionReceipt>)> {
+    ) -> eyre::Result<(
+        Vec<TransactionReceipt>,
+        TransactionReceipt,
+        Vec<TransactionReceipt>,
+    )> {
         let util = self.module.util();
         let approval_receipts = util.approve(price, ApprovalPurpose::Escrow).await?;
         let escrow_receipt = self.create(price, item, expiration).await?;

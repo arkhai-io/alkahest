@@ -14,9 +14,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::addresses::BASE_SEPOLIA_ADDRESSES;
 use crate::contracts::{
-    self, IEAS,
-    obligations::escrow::default_escrow::AttestationEscrowObligation,
-    obligations::escrow::unconditional::UnconditionalAttestationEscrowObligation as UnconditionalAttestationEscrowObligation,
+    self, IEAS, obligations::escrow::default_escrow::AttestationEscrowObligation,
+    obligations::escrow::unconditional::UnconditionalAttestationEscrowObligation,
     utils::AttestationBarterUtils,
 };
 use crate::extensions::{AlkahestExtension, ContractModule};
@@ -56,7 +55,9 @@ impl_attestation_request!(UnconditionalAttestationEscrowObligation);
 impl_attestation_request!(AttestationBarterUtils);
 
 // --- ABI conversions for Attestation obligation types ---
-impl_abi_conversions!(contracts::obligations::escrow::default_escrow::AttestationEscrowObligation::ObligationData);
+impl_abi_conversions!(
+    contracts::obligations::escrow::default_escrow::AttestationEscrowObligation::ObligationData
+);
 impl_abi_conversions!(contracts::obligations::escrow::default_escrow::AttestationReferenceEscrowObligation::ObligationData);
 impl_abi_conversions!(contracts::obligations::escrow::unconditional::UnconditionalAttestationEscrowObligation::ObligationData);
 impl_abi_conversions!(contracts::obligations::escrow::unconditional::UnconditionalAttestationReferenceEscrowObligation::ObligationData);

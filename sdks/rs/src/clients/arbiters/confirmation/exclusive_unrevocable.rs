@@ -22,7 +22,9 @@ impl<'a> ExclusiveUnrevocable<'a> {
 
     /// Get the contract address
     pub fn address(&self) -> Address {
-        self.module.addresses.exclusive_unrevocable_confirmation_arbiter
+        self.module
+            .addresses
+            .exclusive_unrevocable_confirmation_arbiter
     }
 
     /// Confirm a fulfillment for an escrow
@@ -35,7 +37,9 @@ impl<'a> ExclusiveUnrevocable<'a> {
     ) -> eyre::Result<TransactionReceipt> {
         let arbiter =
             contracts::arbiters::confirmation::ExclusiveUnrevocableConfirmationArbiter::new(
-                self.module.addresses.exclusive_unrevocable_confirmation_arbiter,
+                self.module
+                    .addresses
+                    .exclusive_unrevocable_confirmation_arbiter,
                 &*self.module.wallet_provider,
             );
 
@@ -59,7 +63,9 @@ impl<'a> ExclusiveUnrevocable<'a> {
     ) -> eyre::Result<TransactionReceipt> {
         let arbiter =
             contracts::arbiters::confirmation::ExclusiveUnrevocableConfirmationArbiter::new(
-                self.module.addresses.exclusive_unrevocable_confirmation_arbiter,
+                self.module
+                    .addresses
+                    .exclusive_unrevocable_confirmation_arbiter,
                 &*self.module.wallet_provider,
             );
 
@@ -81,7 +87,7 @@ impl<'a> ExclusiveUnrevocable<'a> {
         from_block: Option<u64>,
     ) -> eyre::Result<
         Log<contracts::arbiters::confirmation::ExclusiveUnrevocableConfirmationArbiter::ConfirmationMade>,
-    > {
+    >{
         let filter = Filter::new()
             .from_block(from_block.unwrap_or(0))
             .address(self.module.addresses.exclusive_unrevocable_confirmation_arbiter)
@@ -109,7 +115,7 @@ impl<'a> ExclusiveUnrevocable<'a> {
         from_block: Option<u64>,
     ) -> eyre::Result<
         Log<contracts::arbiters::confirmation::ExclusiveUnrevocableConfirmationArbiter::ConfirmationRequested>,
-    > {
+    >{
         let filter = Filter::new()
             .from_block(from_block.unwrap_or(0))
             .address(self.module.addresses.exclusive_unrevocable_confirmation_arbiter)
@@ -137,7 +143,9 @@ impl<'a> ExclusiveUnrevocable<'a> {
     ) -> eyre::Result<bool> {
         let arbiter =
             contracts::arbiters::confirmation::ExclusiveUnrevocableConfirmationArbiter::new(
-                self.module.addresses.exclusive_unrevocable_confirmation_arbiter,
+                self.module
+                    .addresses
+                    .exclusive_unrevocable_confirmation_arbiter,
                 &*self.module.public_provider,
             );
 

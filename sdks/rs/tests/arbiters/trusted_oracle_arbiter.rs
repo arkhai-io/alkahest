@@ -1,5 +1,8 @@
 use crate::arbiters::common::create_test_attestation;
-use alkahest_rs::{contracts::arbiters::TrustedOracleArbiter, extensions::HasArbiters, utils::setup_test_environment};
+use alkahest_rs::{
+    contracts::arbiters::TrustedOracleArbiter, extensions::HasArbiters,
+    utils::setup_test_environment,
+};
 use alloy::{
     primitives::{Address, Bytes, FixedBytes, bytes},
     providers::Provider as _,
@@ -302,12 +305,10 @@ async fn test_trusted_oracle_arbiter_trait_based_encoding() -> eyre::Result<()> 
     let encoded_bytes: alloy::primitives::Bytes = test_data.clone().into();
 
     // Test TryFrom trait: &Bytes -> DemandData
-    let decoded_from_ref: TrustedOracleArbiter::DemandData =
-        (&encoded_bytes).try_into()?;
+    let decoded_from_ref: TrustedOracleArbiter::DemandData = (&encoded_bytes).try_into()?;
 
     // Test TryFrom trait: Bytes -> DemandData
-    let decoded_from_owned: TrustedOracleArbiter::DemandData =
-        encoded_bytes.clone().try_into()?;
+    let decoded_from_owned: TrustedOracleArbiter::DemandData = encoded_bytes.clone().try_into()?;
 
     // Verify both decoded versions match original
     assert_eq!(

@@ -11,15 +11,15 @@ mod transport_parity {
     use std::time::Duration;
 
     use alkahest_rs::{
+        AlkahestClient, DefaultAlkahestClient,
         clients::oracle::ArbitrationMode,
         contracts,
         extensions::{HasErc20, HasOracle, HasStringObligation},
         fixtures::MockERC20Permit,
         types::{ArbiterData, Erc20Data},
-        utils::{setup_test_environment, TestContext},
-        AlkahestClient, DefaultAlkahestClient,
+        utils::{TestContext, setup_test_environment},
     };
-    use alloy::primitives::{bytes, Bytes, FixedBytes};
+    use alloy::primitives::{Bytes, FixedBytes, bytes};
 
     /// Build a fresh client against a specific RPC URL using the same on-chain
     /// addresses as the existing TestContext (which was set up via ws).
@@ -40,8 +40,7 @@ mod transport_parity {
     }
 
     async fn fund_alice_with_erc20(test: &TestContext, value: u64) -> eyre::Result<Erc20Data> {
-        let mock_erc20 =
-            MockERC20Permit::new(test.mock_addresses.erc20_a, &test.god_provider);
+        let mock_erc20 = MockERC20Permit::new(test.mock_addresses.erc20_a, &test.god_provider);
         mock_erc20
             .transfer(test.alice.address(), value.try_into()?)
             .send()
@@ -82,8 +81,7 @@ mod transport_parity {
         let test = setup_test_environment().await?;
         let rpc_url = transport.url(&test.anvil);
 
-        let alice_client =
-            rebuild_client(&test, test.alice.clone(), rpc_url.clone()).await?;
+        let alice_client = rebuild_client(&test, test.alice.clone(), rpc_url.clone()).await?;
         let bob_client = rebuild_client(&test, test.bob.clone(), rpc_url.clone()).await?;
 
         let price = fund_alice_with_erc20(&test, 100).await?;
@@ -135,8 +133,7 @@ mod transport_parity {
             .string_obligation()
             .do_obligation("ok".to_string(), None, Some(escrow_event.uid))
             .await?;
-        let fulfillment_event =
-            DefaultAlkahestClient::get_attested_event(fulfillment_receipt)?;
+        let fulfillment_event = DefaultAlkahestClient::get_attested_event(fulfillment_receipt)?;
 
         // Spawn the wait-for in parallel with the arbitrate so the helper
         // exercises its live-stream path (not just historical get_logs).
@@ -193,11 +190,7 @@ mod transport_parity {
         // and unsubscribe() returns Ok regardless of transport.
         let result = bob_client
             .oracle()
-            .arbitrate_many_sync(
-                |_awd| None,
-                |_decision| async {},
-                ArbitrationMode::Future,
-            )
+            .arbitrate_many_sync(|_awd| None, |_decision| async {}, ArbitrationMode::Future)
             .await?;
 
         assert_eq!(result.past_decisions.len(), 0);
@@ -224,9 +217,7 @@ mod transport_parity {
         // ftp:// is not supported.
         let rt = tokio::runtime::Runtime::new().unwrap();
         let err = rt
-            .block_on(async {
-                alkahest_rs::utils::get_public_provider("ftp://example.com").await
-            })
+            .block_on(async { alkahest_rs::utils::get_public_provider("ftp://example.com").await })
             .expect_err("expected unsupported scheme to fail");
         let s = format!("{err:#}");
         assert!(

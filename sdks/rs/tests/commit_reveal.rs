@@ -6,12 +6,12 @@ use alloy::{
 };
 
 use alkahest_rs::{
+    DefaultAlkahestClient,
     clients::commit_reveal_obligation::CommitRevealObligationModule,
     contracts::obligations::CommitRevealObligation,
     extensions::{HasCommitReveal, HasNativeToken},
     types::{ArbiterData, NativeTokenData},
     utils::setup_test_environment,
-    DefaultAlkahestClient,
 };
 
 /// Full lifecycle: Alice escrows native tokens → Bob commits → reveals → collects escrow → reclaims bond.
@@ -28,10 +28,7 @@ async fn test_commit_reveal_full_lifecycle() -> eyre::Result<()> {
         bondAmount: bond_amount,
     };
 
-    let arbiter = test
-        .addresses
-        .commit_reveal_obligation_addresses
-        .obligation;
+    let arbiter = test.addresses.commit_reveal_obligation_addresses.obligation;
     let item = ArbiterData {
         arbiter,
         demand: CommitRevealObligationModule::encode_demand(&demand),
@@ -133,10 +130,7 @@ async fn test_commit_reveal_bond_slash() -> eyre::Result<()> {
         bondAmount: bond_amount,
     };
 
-    let arbiter = test
-        .addresses
-        .commit_reveal_obligation_addresses
-        .obligation;
+    let arbiter = test.addresses.commit_reveal_obligation_addresses.obligation;
     let item = ArbiterData {
         arbiter,
         demand: CommitRevealObligationModule::encode_demand(&demand),

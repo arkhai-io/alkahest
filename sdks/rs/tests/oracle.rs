@@ -90,7 +90,9 @@ mod tests {
             .arbitrate_many_sync(
                 move |awd| {
                     let obligation = bob_client
-                        .extract_obligation_data::<StringObligation::ObligationData>(&awd.attestation)
+                        .extract_obligation_data::<StringObligation::ObligationData>(
+                            &awd.attestation,
+                        )
                         .ok()?;
                     Some(obligation.item == "good")
                 },
@@ -106,7 +108,9 @@ mod tests {
         let collection = test
             .bob_client
             .erc20()
-            .escrow().default().collect(escrow_uid, fulfillment_uid)
+            .escrow()
+            .default()
+            .collect(escrow_uid, fulfillment_uid)
             .await?;
 
         println!("✅ Arbitrate decision passed. Tx: {:?}", collection);
@@ -139,7 +143,9 @@ mod tests {
             .arbitrate_many_sync(
                 move |awd| {
                     let obligation = bob_client
-                        .extract_obligation_data::<StringObligation::ObligationData>(&awd.attestation)
+                        .extract_obligation_data::<StringObligation::ObligationData>(
+                            &awd.attestation,
+                        )
                         .ok()?;
                     Some(obligation.item == "good")
                 },
@@ -179,7 +185,9 @@ mod tests {
             .arbitrate_many_sync(
                 move |awd| {
                     let obligation = bob_client
-                        .extract_obligation_data::<StringObligation::ObligationData>(&awd.attestation)
+                        .extract_obligation_data::<StringObligation::ObligationData>(
+                            &awd.attestation,
+                        )
                         .ok()?;
                     Some(obligation.item == "good")
                 },
@@ -198,7 +206,9 @@ mod tests {
             .arbitrate_many_sync(
                 move |awd| {
                     let obligation = bob_client2
-                        .extract_obligation_data::<StringObligation::ObligationData>(&awd.attestation)
+                        .extract_obligation_data::<StringObligation::ObligationData>(
+                            &awd.attestation,
+                        )
                         .ok()?;
                     Some(obligation.item == "good")
                 },
@@ -207,7 +217,11 @@ mod tests {
             )
             .await?;
 
-        assert_eq!(result.past_decisions.len(), 0, "Should skip already arbitrated");
+        assert_eq!(
+            result.past_decisions.len(),
+            0,
+            "Should skip already arbitrated"
+        );
 
         Ok(())
     }
@@ -273,7 +287,9 @@ mod tests {
             .arbitrate_many_sync(
                 move |awd| {
                     let obligation = (*oracle_client)
-                        .extract_obligation_data::<StringObligation::ObligationData>(&awd.attestation)
+                        .extract_obligation_data::<StringObligation::ObligationData>(
+                            &awd.attestation,
+                        )
                         .ok()?;
                     Some(obligation.item == "good")
                 },
@@ -306,7 +322,9 @@ mod tests {
             .arbitrate_many_sync(
                 move |awd| {
                     let obligation = (*oracle_client)
-                        .extract_obligation_data::<StringObligation::ObligationData>(&awd.attestation)
+                        .extract_obligation_data::<StringObligation::ObligationData>(
+                            &awd.attestation,
+                        )
                         .ok()?;
                     Some(obligation.item == "good")
                 },
@@ -334,7 +352,9 @@ mod tests {
         let collection = test
             .bob_client
             .erc20()
-            .escrow().default().collect(escrow_uid, fulfillment_uid)
+            .escrow()
+            .default()
+            .collect(escrow_uid, fulfillment_uid)
             .await?;
 
         println!("✅ Arbitrate decision passed. Tx: {:?}", collection);
@@ -400,7 +420,9 @@ mod tests {
         let collection = test
             .bob_client
             .erc20()
-            .escrow().default().collect(escrow_uid, fulfillment_uid)
+            .escrow()
+            .default()
+            .collect(escrow_uid, fulfillment_uid)
             .await?;
 
         println!("✅ Arbitrate decision passed. Tx: {:?}", collection);
@@ -443,7 +465,9 @@ mod tests {
             .arbitrate_many_sync(
                 move |awd| {
                     let obligation = (*oracle_client)
-                        .extract_obligation_data::<StringObligation::ObligationData>(&awd.attestation)
+                        .extract_obligation_data::<StringObligation::ObligationData>(
+                            &awd.attestation,
+                        )
                         .ok()?;
                     Some(obligation.item == "good")
                 },
@@ -467,7 +491,9 @@ mod tests {
         let collection = test
             .bob_client
             .erc20()
-            .escrow().default().collect(escrow_uid, good_fulfillment)
+            .escrow()
+            .default()
+            .collect(escrow_uid, good_fulfillment)
             .await?;
 
         println!("✅ Arbitrate decision passed. Tx: {:?}", collection);
@@ -501,7 +527,9 @@ mod tests {
             .arbitrate_many_blocking_sync(
                 move |awd| {
                     let obligation = oracle_client
-                        .extract_obligation_data::<StringObligation::ObligationData>(&awd.attestation)
+                        .extract_obligation_data::<StringObligation::ObligationData>(
+                            &awd.attestation,
+                        )
                         .ok()?;
                     Some(obligation.item == "good")
                 },
@@ -522,7 +550,9 @@ mod tests {
         let collection = test
             .bob_client
             .erc20()
-            .escrow().default().collect(escrow_uid, fulfillment_uid)
+            .escrow()
+            .default()
+            .collect(escrow_uid, fulfillment_uid)
             .await?;
 
         println!("✅ Arbitrate decision passed. Tx: {:?}", collection);

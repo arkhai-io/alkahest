@@ -35,7 +35,7 @@ impl<'a> Unconditional<'a> {
         DecodedAttestation<
             contracts::obligations::escrow::unconditional::UnconditionalNativeTokenEscrowObligation::ObligationData,
         >,
-    > {
+    >{
         let eas_contract =
             contracts::IEAS::new(self.module.addresses.eas, &self.module.wallet_provider);
 

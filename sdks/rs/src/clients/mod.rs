@@ -13,9 +13,9 @@ pub mod oracle {
 pub use obligations::attestation;
 pub use obligations::commit_reveal;
 pub use obligations::commit_reveal as commit_reveal_obligation;
-pub use obligations::erc1155;
 pub use obligations::erc20;
 pub use obligations::erc721;
+pub use obligations::erc1155;
 pub use obligations::native_token;
 pub use obligations::string;
 pub use obligations::string as string_obligation;

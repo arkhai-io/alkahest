@@ -22,7 +22,9 @@ impl<'a> ExclusiveRevocable<'a> {
 
     /// Get the contract address
     pub fn address(&self) -> Address {
-        self.module.addresses.exclusive_revocable_confirmation_arbiter
+        self.module
+            .addresses
+            .exclusive_revocable_confirmation_arbiter
     }
 
     /// Confirm a fulfillment for an escrow
@@ -33,11 +35,12 @@ impl<'a> ExclusiveRevocable<'a> {
         fulfillment: FixedBytes<32>,
         escrow: FixedBytes<32>,
     ) -> eyre::Result<TransactionReceipt> {
-        let arbiter =
-            contracts::arbiters::confirmation::ExclusiveRevocableConfirmationArbiter::new(
-                self.module.addresses.exclusive_revocable_confirmation_arbiter,
-                &*self.module.wallet_provider,
-            );
+        let arbiter = contracts::arbiters::confirmation::ExclusiveRevocableConfirmationArbiter::new(
+            self.module
+                .addresses
+                .exclusive_revocable_confirmation_arbiter,
+            &*self.module.wallet_provider,
+        );
 
         let receipt = arbiter
             .confirm(fulfillment, escrow)
@@ -57,11 +60,12 @@ impl<'a> ExclusiveRevocable<'a> {
         fulfillment: FixedBytes<32>,
         escrow: FixedBytes<32>,
     ) -> eyre::Result<TransactionReceipt> {
-        let arbiter =
-            contracts::arbiters::confirmation::ExclusiveRevocableConfirmationArbiter::new(
-                self.module.addresses.exclusive_revocable_confirmation_arbiter,
-                &*self.module.wallet_provider,
-            );
+        let arbiter = contracts::arbiters::confirmation::ExclusiveRevocableConfirmationArbiter::new(
+            self.module
+                .addresses
+                .exclusive_revocable_confirmation_arbiter,
+            &*self.module.wallet_provider,
+        );
 
         let receipt = arbiter
             .revoke(fulfillment, escrow)
@@ -81,11 +85,12 @@ impl<'a> ExclusiveRevocable<'a> {
         fulfillment: FixedBytes<32>,
         escrow: FixedBytes<32>,
     ) -> eyre::Result<TransactionReceipt> {
-        let arbiter =
-            contracts::arbiters::confirmation::ExclusiveRevocableConfirmationArbiter::new(
-                self.module.addresses.exclusive_revocable_confirmation_arbiter,
-                &*self.module.wallet_provider,
-            );
+        let arbiter = contracts::arbiters::confirmation::ExclusiveRevocableConfirmationArbiter::new(
+            self.module
+                .addresses
+                .exclusive_revocable_confirmation_arbiter,
+            &*self.module.wallet_provider,
+        );
 
         let receipt = arbiter
             .requestConfirmation(fulfillment, escrow)
@@ -105,7 +110,7 @@ impl<'a> ExclusiveRevocable<'a> {
         from_block: Option<u64>,
     ) -> eyre::Result<
         Log<contracts::arbiters::confirmation::ExclusiveRevocableConfirmationArbiter::ConfirmationMade>,
-    > {
+    >{
         let filter = Filter::new()
             .from_block(from_block.unwrap_or(0))
             .address(self.module.addresses.exclusive_revocable_confirmation_arbiter)
@@ -133,7 +138,7 @@ impl<'a> ExclusiveRevocable<'a> {
         from_block: Option<u64>,
     ) -> eyre::Result<
         Log<contracts::arbiters::confirmation::ExclusiveRevocableConfirmationArbiter::ConfirmationRequested>,
-    > {
+    >{
         let filter = Filter::new()
             .from_block(from_block.unwrap_or(0))
             .address(self.module.addresses.exclusive_revocable_confirmation_arbiter)
@@ -159,11 +164,12 @@ impl<'a> ExclusiveRevocable<'a> {
         fulfillment: FixedBytes<32>,
         escrow: FixedBytes<32>,
     ) -> eyre::Result<bool> {
-        let arbiter =
-            contracts::arbiters::confirmation::ExclusiveRevocableConfirmationArbiter::new(
-                self.module.addresses.exclusive_revocable_confirmation_arbiter,
-                &*self.module.public_provider,
-            );
+        let arbiter = contracts::arbiters::confirmation::ExclusiveRevocableConfirmationArbiter::new(
+            self.module
+                .addresses
+                .exclusive_revocable_confirmation_arbiter,
+            &*self.module.public_provider,
+        );
 
         let confirmed = arbiter.confirmations(fulfillment, escrow).call().await?;
         Ok(confirmed)

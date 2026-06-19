@@ -1,5 +1,9 @@
 use std::{
-    convert::TryInto, process::Command, sync::Arc, thread::sleep, time::{Duration as StdDuration, SystemTime, UNIX_EPOCH}
+    convert::TryInto,
+    process::Command,
+    sync::Arc,
+    thread::sleep,
+    time::{Duration as StdDuration, SystemTime, UNIX_EPOCH},
 };
 
 use alkahest_rs::{
@@ -56,8 +60,7 @@ async fn run_synchronous_oracle_capitalization_example(test: &TestContext) -> ey
 
     // The inner data field (JSON payload) - this is what gets passed to arbitrate()
     let inner_demand_data: Bytes = Bytes::from(
-        serde_json::to_vec(&demand_payload)
-            .wrap_err("failed to encode oracle demand payload")?,
+        serde_json::to_vec(&demand_payload).wrap_err("failed to encode oracle demand payload")?,
     );
 
     // The full encoded DemandData - this is what gets stored in the escrow
@@ -97,7 +100,11 @@ async fn run_synchronous_oracle_capitalization_example(test: &TestContext) -> ey
     let fulfillment_receipt = test
         .bob_client
         .string_obligation()
-        .do_obligation("tr '[:lower:]' '[:upper:]'".to_owned(), None, Some(escrow_uid))
+        .do_obligation(
+            "tr '[:lower:]' '[:upper:]'".to_owned(),
+            None,
+            Some(escrow_uid),
+        )
         .await?;
     let fulfillment_uid = DefaultAlkahestClient::get_attested_event(fulfillment_receipt)?.uid;
 
@@ -129,8 +136,7 @@ async fn run_synchronous_oracle_capitalization_example(test: &TestContext) -> ey
 
                     // Parse the demand payload directly from awd.demand
                     // (the inner demand data passed to request_arbitration)
-                    let Ok(payload) =
-                        serde_json::from_slice::<ShellOracleDemand>(demand.as_ref())
+                    let Ok(payload) = serde_json::from_slice::<ShellOracleDemand>(demand.as_ref())
                     else {
                         return Some(false);
                     };
@@ -183,7 +189,9 @@ async fn run_synchronous_oracle_capitalization_example(test: &TestContext) -> ey
     // Step 5. The successful arbitration lets Bob claim the escrowed payment.
     test.bob_client
         .erc20()
-        .escrow().default().collect(escrow_uid, fulfillment_uid)
+        .escrow()
+        .default()
+        .collect(escrow_uid, fulfillment_uid)
         .await?;
 
     Ok(())

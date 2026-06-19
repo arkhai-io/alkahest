@@ -24,11 +24,15 @@ use crate::types::{ApprovalPurpose, ProviderContext, SharedWalletProvider};
 
 // --- ABI conversions for ERC1155 obligation types ---
 impl_abi_conversions!(contracts::obligations::ERC1155PaymentObligation::ObligationData);
-impl_abi_conversions!(contracts::obligations::escrow::default_escrow::ERC1155EscrowObligation::ObligationData);
+impl_abi_conversions!(
+    contracts::obligations::escrow::default_escrow::ERC1155EscrowObligation::ObligationData
+);
 impl_abi_conversions!(contracts::obligations::escrow::unconditional::UnconditionalERC1155EscrowObligation::ObligationData);
 
 // --- TokenBundle conversions for ERC1155 barter utils ---
-impl_token_bundle_payment_obligation!(contracts::utils::erc1155::TokenBundlePaymentObligation::ObligationData);
+impl_token_bundle_payment_obligation!(
+    contracts::utils::erc1155::TokenBundlePaymentObligation::ObligationData
+);
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Erc1155Addresses {
@@ -244,12 +248,13 @@ mod tests {
         let amount: U256 = U256::from(10);
         let payee = test.alice.address();
 
-        let payment_data = crate::contracts::obligations::ERC1155PaymentObligation::ObligationData {
-            token: token_address,
-            tokenId: id,
-            amount,
-            payee,
-        };
+        let payment_data =
+            crate::contracts::obligations::ERC1155PaymentObligation::ObligationData {
+                token: token_address,
+                tokenId: id,
+                amount,
+                payee,
+            };
 
         // Encode the data
         let encoded = payment_data.abi_encode();
@@ -1193,12 +1198,13 @@ mod tests {
         };
 
         // Create the ERC1155 payment obligation data as the demand
-        let payment_obligation_data = crate::contracts::obligations::ERC1155PaymentObligation::ObligationData {
-            token: test.mock_addresses.erc1155_a,
-            tokenId: U256::from(1),
-            amount: U256::from(5),
-            payee: test.bob.address(),
-        };
+        let payment_obligation_data =
+            crate::contracts::obligations::ERC1155PaymentObligation::ObligationData {
+                token: test.mock_addresses.erc1155_a,
+                tokenId: U256::from(1),
+                amount: U256::from(5),
+                payee: test.bob.address(),
+            };
 
         // bob approves all tokens for the bundle escrow
         test.bob_client
@@ -1357,10 +1363,7 @@ mod tests {
             .call()
             .await?;
 
-        assert!(
-            !final_approval,
-            "Approval should be revoked after payment"
-        );
+        assert!(!final_approval, "Approval should be revoked after payment");
 
         // payment obligation made
         let attested_event = DefaultAlkahestClient::get_attested_event(payment_receipt)?;
@@ -1398,7 +1401,10 @@ mod tests {
         let initial_approval = mock_erc1155_a
             .isApprovedForAll(
                 test.alice.address(),
-                test.addresses.erc1155_addresses.clone().escrow_obligation_default,
+                test.addresses
+                    .erc1155_addresses
+                    .clone()
+                    .escrow_obligation_default,
             )
             .call()
             .await?;

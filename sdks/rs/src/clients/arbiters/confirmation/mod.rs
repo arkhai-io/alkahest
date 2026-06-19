@@ -59,7 +59,9 @@ impl<'a> Confirmation<'a> {
     }
 
     /// Access NonexclusiveUnrevocableConfirmationArbiter
-    pub fn nonexclusive_unrevocable(&self) -> nonexclusive_unrevocable::NonexclusiveUnrevocable<'_> {
+    pub fn nonexclusive_unrevocable(
+        &self,
+    ) -> nonexclusive_unrevocable::NonexclusiveUnrevocable<'_> {
         nonexclusive_unrevocable::NonexclusiveUnrevocable::new(self.module)
     }
 }

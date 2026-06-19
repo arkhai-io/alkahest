@@ -9,7 +9,7 @@ use crate::{
 // --- ABI conversions for String obligation types ---
 impl_abi_conversions!(contracts::obligations::StringObligation::ObligationData);
 use alloy::{
-    primitives::{Address, Bytes, FixedBytes, B256},
+    primitives::{Address, B256, Bytes, FixedBytes},
     rpc::types::TransactionReceipt,
     signers::local::PrivateKeySigner,
     sol_types::SolValue as _,
@@ -82,12 +82,14 @@ impl StringObligationModule {
     pub async fn get_obligation(
         &self,
         uid: FixedBytes<32>,
-    ) -> eyre::Result<DecodedAttestation<contracts::obligations::StringObligation::ObligationData>> {
+    ) -> eyre::Result<DecodedAttestation<contracts::obligations::StringObligation::ObligationData>>
+    {
         let eas_contract = contracts::IEAS::new(self.addresses.eas, &*self.wallet_provider);
 
         let attestation = eas_contract.getAttestation(uid).call().await?;
-        let obligation_data =
-            contracts::obligations::StringObligation::ObligationData::abi_decode(&attestation.data)?;
+        let obligation_data = contracts::obligations::StringObligation::ObligationData::abi_decode(
+            &attestation.data,
+        )?;
 
         Ok(DecodedAttestation {
             attestation,
@@ -98,8 +100,9 @@ impl StringObligationModule {
     pub fn decode(
         obligation_data: &Bytes,
     ) -> eyre::Result<contracts::obligations::StringObligation::ObligationData> {
-        let obligationdata =
-            contracts::obligations::StringObligation::ObligationData::abi_decode(obligation_data.as_ref())?;
+        let obligationdata = contracts::obligations::StringObligation::ObligationData::abi_decode(
+            obligation_data.as_ref(),
+        )?;
         Ok(obligationdata)
     }
 
@@ -108,11 +111,19 @@ impl StringObligationModule {
         Ok(decoded)
     }
 
-    pub fn encode(obligation_data: &contracts::obligations::StringObligation::ObligationData) -> Bytes {
-        return contracts::obligations::StringObligation::ObligationData::abi_encode(&obligation_data).into();
+    pub fn encode(
+        obligation_data: &contracts::obligations::StringObligation::ObligationData,
+    ) -> Bytes {
+        return contracts::obligations::StringObligation::ObligationData::abi_encode(
+            &obligation_data,
+        )
+        .into();
     }
 
-    pub fn encode_json<T: serde::Serialize>(obligation_data: T, schema: Option<B256>) -> eyre::Result<Bytes> {
+    pub fn encode_json<T: serde::Serialize>(
+        obligation_data: T,
+        schema: Option<B256>,
+    ) -> eyre::Result<Bytes> {
         let encoded = Self::encode(&contracts::obligations::StringObligation::ObligationData {
             item: serde_json::to_string(&obligation_data)?,
             schema: schema.unwrap_or_default(),
@@ -126,8 +137,10 @@ impl StringObligationModule {
         schema: Option<B256>,
         ref_uid: Option<FixedBytes<32>>,
     ) -> eyre::Result<TransactionReceipt> {
-        let contract =
-            contracts::obligations::StringObligation::new(self.addresses.obligation, &*self.wallet_provider);
+        let contract = contracts::obligations::StringObligation::new(
+            self.addresses.obligation,
+            &*self.wallet_provider,
+        );
 
         let obligation_data = contracts::obligations::StringObligation::ObligationData {
             item,
@@ -153,8 +166,10 @@ impl StringObligationModule {
         schema: Option<B256>,
         ref_uid: Option<FixedBytes<32>>,
     ) -> eyre::Result<TransactionReceipt> {
-        let contract =
-            contracts::obligations::StringObligation::new(self.addresses.obligation, &*self.wallet_provider);
+        let contract = contracts::obligations::StringObligation::new(
+            self.addresses.obligation,
+            &*self.wallet_provider,
+        );
 
         let obligation_data = contracts::obligations::StringObligation::ObligationData {
             item: serde_json::to_string(&obligation_data)?,

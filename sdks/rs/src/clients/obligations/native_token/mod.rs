@@ -23,11 +23,15 @@ use crate::types::{ProviderContext, SharedWalletProvider};
 
 // --- ABI conversions for NativeToken obligation types ---
 impl_abi_conversions!(contracts::obligations::NativeTokenPaymentObligation::ObligationData);
-impl_abi_conversions!(contracts::obligations::escrow::default_escrow::NativeTokenEscrowObligation::ObligationData);
+impl_abi_conversions!(
+    contracts::obligations::escrow::default_escrow::NativeTokenEscrowObligation::ObligationData
+);
 impl_abi_conversions!(contracts::obligations::escrow::unconditional::UnconditionalNativeTokenEscrowObligation::ObligationData);
 
 // --- TokenBundle conversions for NativeToken barter utils ---
-impl_token_bundle_payment_obligation!(contracts::utils::native_token::TokenBundlePaymentObligation::ObligationData);
+impl_token_bundle_payment_obligation!(
+    contracts::utils::native_token::TokenBundlePaymentObligation::ObligationData
+);
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NativeTokenAddresses {

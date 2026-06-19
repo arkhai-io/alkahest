@@ -70,8 +70,9 @@ impl CommitRevealObligationModule {
     pub async fn get_obligation(
         &self,
         uid: FixedBytes<32>,
-    ) -> eyre::Result<DecodedAttestation<contracts::obligations::CommitRevealObligation::ObligationData>>
-    {
+    ) -> eyre::Result<
+        DecodedAttestation<contracts::obligations::CommitRevealObligation::ObligationData>,
+    > {
         let eas_contract = contracts::IEAS::new(self.addresses.eas, &*self.wallet_provider);
 
         let attestation = eas_contract.getAttestation(uid).call().await?;
@@ -89,10 +90,9 @@ impl CommitRevealObligationModule {
     pub fn decode(
         obligation_data: &Bytes,
     ) -> eyre::Result<contracts::obligations::CommitRevealObligation::ObligationData> {
-        let data =
-            contracts::obligations::CommitRevealObligation::ObligationData::abi_decode(
-                obligation_data.as_ref(),
-            )?;
+        let data = contracts::obligations::CommitRevealObligation::ObligationData::abi_decode(
+            obligation_data.as_ref(),
+        )?;
         Ok(data)
     }
 
@@ -106,18 +106,16 @@ impl CommitRevealObligationModule {
     pub fn decode_demand(
         demand_data: &Bytes,
     ) -> eyre::Result<contracts::obligations::CommitRevealObligation::DemandData> {
-        let data =
-            contracts::obligations::CommitRevealObligation::DemandData::abi_decode(
-                demand_data.as_ref(),
-            )?;
+        let data = contracts::obligations::CommitRevealObligation::DemandData::abi_decode(
+            demand_data.as_ref(),
+        )?;
         Ok(data)
     }
 
     pub fn encode_demand(
         demand_data: &contracts::obligations::CommitRevealObligation::DemandData,
     ) -> Bytes {
-        contracts::obligations::CommitRevealObligation::DemandData::abi_encode(demand_data)
-            .into()
+        contracts::obligations::CommitRevealObligation::DemandData::abi_encode(demand_data).into()
     }
 
     pub async fn do_obligation(
@@ -180,10 +178,7 @@ impl CommitRevealObligationModule {
         Ok(result)
     }
 
-    pub async fn slash_bond(
-        &self,
-        commitment: FixedBytes<32>,
-    ) -> eyre::Result<TransactionReceipt> {
+    pub async fn slash_bond(&self, commitment: FixedBytes<32>) -> eyre::Result<TransactionReceipt> {
         let contract = contracts::obligations::CommitRevealObligation::new(
             self.addresses.obligation,
             &*self.wallet_provider,
@@ -237,10 +232,7 @@ impl CommitRevealObligationModule {
         ))
     }
 
-    pub async fn is_commitment_claimed(
-        &self,
-        commitment: FixedBytes<32>,
-    ) -> eyre::Result<bool> {
+    pub async fn is_commitment_claimed(&self, commitment: FixedBytes<32>) -> eyre::Result<bool> {
         let contract = contracts::obligations::CommitRevealObligation::new(
             self.addresses.obligation,
             &*self.wallet_provider,

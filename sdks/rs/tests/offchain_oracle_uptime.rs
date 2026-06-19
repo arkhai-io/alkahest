@@ -86,7 +86,8 @@ fn schedule_pings(
         };
 
         // Parse demand directly from awd.demand (the inner demand data passed to request_arbitration)
-        let Ok(parsed_demand) = serde_json::from_slice::<UptimeDemand>(demand_bytes.as_ref()) else {
+        let Ok(parsed_demand) = serde_json::from_slice::<UptimeDemand>(demand_bytes.as_ref())
+        else {
             return None;
         };
 
@@ -292,7 +293,9 @@ async fn run_async_uptime_oracle_example(test: &TestContext) -> eyre::Result<()>
             match test
                 .bob_client
                 .erc20()
-                .escrow().default().collect(escrow_uid, fulfillment_uid)
+                .escrow()
+                .default()
+                .collect(escrow_uid, fulfillment_uid)
                 .await
             {
                 Ok(receipt) => break receipt,

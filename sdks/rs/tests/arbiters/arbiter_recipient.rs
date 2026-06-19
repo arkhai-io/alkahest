@@ -78,9 +78,7 @@ async fn test_recipient_arbiter_with_correct_recipient() -> eyre::Result<()> {
     let attestation = create_recipient_arbiter_attestation(None, Some(recipient));
 
     // Create demand data with the correct recipient
-    let demand_data = RecipientArbiter::DemandData {
-        recipient,
-    };
+    let demand_data = RecipientArbiter::DemandData { recipient };
 
     // Encode demand data
     let demand = demand_data.into();
@@ -114,16 +112,13 @@ async fn test_encode_and_decode_recipient_arbiter_demand() -> eyre::Result<()> {
     // Create a test demand data
     let recipient = test.alice.address();
 
-    let demand_data = RecipientArbiter::DemandData {
-        recipient,
-    };
+    let demand_data = RecipientArbiter::DemandData { recipient };
 
     // Encode the demand data
     let encoded: Bytes = demand_data.clone().into();
 
     // Decode the demand data
-    let decoded: RecipientArbiter::DemandData =
-        (&encoded).try_into()?;
+    let decoded: RecipientArbiter::DemandData = (&encoded).try_into()?;
 
     // Verify the data was encoded and decoded correctly
     assert_eq!(
@@ -163,9 +158,7 @@ async fn test_recipient_arbiter_trait_based_encoding() -> eyre::Result<()> {
         "Recipient should match (from owned)"
     );
 
-    println!(
-        "Original -> Bytes -> DemandData conversions successful for RecipientArbiter"
-    );
+    println!("Original -> Bytes -> DemandData conversions successful for RecipientArbiter");
     println!("Encoded bytes length: {}", encoded_bytes.len());
 
     Ok(())

@@ -9,7 +9,10 @@ use pyo3::{pyclass, pymethods, PyResult};
 use crate::{
     error_handling::{map_eyre_to_pyerr, map_parse_to_pyerr},
     get_attested_event,
-    types::{AttestedLog, Erc1155Data, Erc20Data, Erc721Data, LogWithHash, NativeTokenData, TokenBundleData},
+    types::{
+        AttestedLog, Erc1155Data, Erc20Data, Erc721Data, LogWithHash, NativeTokenData,
+        TokenBundleData,
+    },
 };
 
 /// Barter utilities API for native tokens

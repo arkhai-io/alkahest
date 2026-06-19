@@ -4,7 +4,7 @@ use alloy::primitives::Address;
 use alloy::rpc::types::TransactionReceipt;
 use std::collections::HashSet;
 
-use crate::contracts::{IERC1155, IERC20, IERC721};
+use crate::contracts::{IERC20, IERC721, IERC1155};
 use crate::types::{ApprovalPurpose, TokenBundleData};
 
 use super::TokenBundleModule;

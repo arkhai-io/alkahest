@@ -5,7 +5,10 @@ use alloy::primitives::U256;
 use pyo3::{pyclass, pymethods, PyResult};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use crate::{error_handling::{map_eyre_to_pyerr, map_parse_to_pyerr}, types::Erc20Data};
+use crate::{
+    error_handling::{map_eyre_to_pyerr, map_parse_to_pyerr},
+    types::Erc20Data,
+};
 
 /// Utility API for ERC20 tokens (approvals)
 #[pyclass]
