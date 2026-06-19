@@ -24,6 +24,10 @@ contract MockERC721 is ERC721 {
     }
 }
 
+contract NoopERC721Transfer {
+    function transferFrom(address, address, uint256) external {}
+}
+
 contract ERC721PaymentObligationTest is Test {
     ERC721PaymentObligation public paymentObligation;
     IEAS public eas;
@@ -198,5 +202,35 @@ contract ERC721PaymentObligationTest is Test {
         vm.prank(otherOwner);
         vm.expectRevert();
         paymentObligation.doObligationFor(data, otherOwner, bytes32(0));
+    }
+
+    function testNonERC721TokenRevertsAfterNoopTransfer() public {
+        NoopERC721Transfer fakeToken = new NoopERC721Transfer();
+
+        ERC721PaymentObligation.ObligationData memory data =
+            ERC721PaymentObligation.ObligationData({token: address(fakeToken), tokenId: tokenId, payee: payee});
+
+        vm.prank(payer);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ERC721PaymentObligation.ERC721TransferFailed.selector, address(fakeToken), payer, payee, tokenId
+            )
+        );
+        paymentObligation.doObligation(data, bytes32(0));
+    }
+
+    function testEoaTokenAddressRevertsAfterNoopTransfer() public {
+        address fakeToken = makeAddr("fakeToken");
+
+        ERC721PaymentObligation.ObligationData memory data =
+            ERC721PaymentObligation.ObligationData({token: fakeToken, tokenId: tokenId, payee: payee});
+
+        vm.prank(payer);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ERC721PaymentObligation.ERC721TransferFailed.selector, fakeToken, payer, payee, tokenId
+            )
+        );
+        paymentObligation.doObligation(data, bytes32(0));
     }
 }

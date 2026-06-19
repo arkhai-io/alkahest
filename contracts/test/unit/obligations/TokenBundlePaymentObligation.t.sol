@@ -49,6 +49,10 @@ contract MockERC1155 is ERC1155 {
     }
 }
 
+contract NoopERC721Transfer {
+    function transferFrom(address, address, uint256) external {}
+}
+
 contract TokenBundlePaymentObligationTest is Test {
     TokenBundlePaymentObligation public obligation;
 
@@ -264,6 +268,66 @@ contract TokenBundlePaymentObligationTest is Test {
         obligation.doObligation{value: NATIVE_AMOUNT}(data, bytes32(0));
 
         vm.stopPrank();
+    }
+
+    function testBundlePaymentNonERC721TokenRevertsAfterNoopTransfer() public {
+        NoopERC721Transfer fakeToken = new NoopERC721Transfer();
+
+        address[] memory erc721Tokens = new address[](1);
+        erc721Tokens[0] = address(fakeToken);
+
+        uint256[] memory erc721TokenIds = new uint256[](1);
+        erc721TokenIds[0] = NFT1_ID;
+
+        TokenBundlePaymentObligation.ObligationData memory data = TokenBundlePaymentObligation.ObligationData({
+            nativeAmount: 0,
+            erc20Tokens: new address[](0),
+            erc20Amounts: new uint256[](0),
+            erc721Tokens: erc721Tokens,
+            erc721TokenIds: erc721TokenIds,
+            erc1155Tokens: new address[](0),
+            erc1155TokenIds: new uint256[](0),
+            erc1155Amounts: new uint256[](0),
+            payee: payee
+        });
+
+        vm.prank(alice);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                TokenBundlePaymentObligation.ERC721TransferFailed.selector, address(fakeToken), alice, payee, NFT1_ID
+            )
+        );
+        obligation.doObligation(data, bytes32(0));
+    }
+
+    function testBundlePaymentEoaTokenAddressRevertsAfterNoopTransfer() public {
+        address fakeToken = makeAddr("fakeToken");
+
+        address[] memory erc721Tokens = new address[](1);
+        erc721Tokens[0] = fakeToken;
+
+        uint256[] memory erc721TokenIds = new uint256[](1);
+        erc721TokenIds[0] = NFT1_ID;
+
+        TokenBundlePaymentObligation.ObligationData memory data = TokenBundlePaymentObligation.ObligationData({
+            nativeAmount: 0,
+            erc20Tokens: new address[](0),
+            erc20Amounts: new uint256[](0),
+            erc721Tokens: erc721Tokens,
+            erc721TokenIds: erc721TokenIds,
+            erc1155Tokens: new address[](0),
+            erc1155TokenIds: new uint256[](0),
+            erc1155Amounts: new uint256[](0),
+            payee: payee
+        });
+
+        vm.prank(alice);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                TokenBundlePaymentObligation.ERC721TransferFailed.selector, fakeToken, alice, payee, NFT1_ID
+            )
+        );
+        obligation.doObligation(data, bytes32(0));
     }
 
     function testArrayLengthMismatchReverts() public {

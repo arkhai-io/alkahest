@@ -38,6 +38,7 @@ contract TokenBundlePaymentObligation is BaseObligation, IArbiter {
     error InsufficientPayment(uint256 expected, uint256 received);
     error NativeTokenTransferFailed(address to, uint256 amount);
     error ERC20TransferFailed(address token, address from, address to, uint256 amount);
+    error ERC721TransferFailed(address token, address from, address to, uint256 tokenId);
 
     constructor(IEAS _eas, ISchemaRegistry _schemaRegistry)
         BaseObligation(
@@ -139,7 +140,22 @@ contract TokenBundlePaymentObligation is BaseObligation, IArbiter {
 
         // Transfer ERC721s
         for (uint256 i = 0; i < data.erc721Tokens.length; i++) {
-            IERC721(data.erc721Tokens[i]).transferFrom(from, data.payee, data.erc721TokenIds[i]);
+            if (data.erc721Tokens[i].code.length == 0) {
+                revert ERC721TransferFailed(data.erc721Tokens[i], from, data.payee, data.erc721TokenIds[i]);
+            }
+
+            try IERC721(data.erc721Tokens[i]).transferFrom(from, data.payee, data.erc721TokenIds[i]) {}
+            catch {
+                revert ERC721TransferFailed(data.erc721Tokens[i], from, data.payee, data.erc721TokenIds[i]);
+            }
+
+            try IERC721(data.erc721Tokens[i]).ownerOf(data.erc721TokenIds[i]) returns (address owner) {
+                if (owner != data.payee) {
+                    revert ERC721TransferFailed(data.erc721Tokens[i], from, data.payee, data.erc721TokenIds[i]);
+                }
+            } catch {
+                revert ERC721TransferFailed(data.erc721Tokens[i], from, data.payee, data.erc721TokenIds[i]);
+            }
         }
 
         // Transfer ERC1155s

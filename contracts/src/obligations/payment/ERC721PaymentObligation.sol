@@ -55,11 +55,23 @@ contract ERC721PaymentObligation is BaseObligation, IArbiter {
     {
         ObligationData memory obligationData = abi.decode(data, (ObligationData));
 
+        if (obligationData.token.code.length == 0) {
+            revert ERC721TransferFailed(obligationData.token, payer, obligationData.payee, obligationData.tokenId);
+        }
+
         // Try token transfer with error handling
         try IERC721(obligationData.token).transferFrom(payer, obligationData.payee, obligationData.tokenId) {
         // Transfer succeeded
         }
         catch {
+            revert ERC721TransferFailed(obligationData.token, payer, obligationData.payee, obligationData.tokenId);
+        }
+
+        try IERC721(obligationData.token).ownerOf(obligationData.tokenId) returns (address owner) {
+            if (owner != obligationData.payee) {
+                revert ERC721TransferFailed(obligationData.token, payer, obligationData.payee, obligationData.tokenId);
+            }
+        } catch {
             revert ERC721TransferFailed(obligationData.token, payer, obligationData.payee, obligationData.tokenId);
         }
     }
