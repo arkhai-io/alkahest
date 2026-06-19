@@ -214,6 +214,69 @@ contract ERC8004ArbiterTest is Test {
         arbiter.checkObligation(attestation, demand, escrowUid);
     }
 
+    function testCheckObligationMinResponseZeroReverts() public {
+        vm.prank(agentOwner);
+        validationRegistry.validationRequest(validator, agentId, "ipfs://validation-request", requestHash);
+
+        vm.prank(validator);
+        validationRegistry.validationResponse(requestHash, 0, "", bytes32(0), "");
+
+        bytes32 escrowUid = bytes32(uint256(54321));
+        Attestation memory attestation = Attestation({
+            uid: fulfillmentUid,
+            schema: bytes32(0),
+            time: uint64(block.timestamp),
+            expirationTime: uint64(0),
+            revocationTime: uint64(0),
+            refUID: escrowUid,
+            recipient: address(0),
+            attester: address(0),
+            revocable: true,
+            data: bytes("")
+        });
+
+        ERC8004Arbiter.DemandData memory demandData = ERC8004Arbiter.DemandData({
+            validationRegistry: address(validationRegistry),
+            validatorAddress: validator,
+            minResponse: 0,
+            data: validationData
+        });
+        bytes memory demand = abi.encode(demandData);
+
+        vm.expectRevert(ERC8004Arbiter.InvalidMinResponse.selector);
+        arbiter.checkObligation(attestation, demand, escrowUid);
+    }
+
+    function testCheckObligationPendingRequestDoesNotPassWithZeroThreshold() public {
+        vm.prank(agentOwner);
+        validationRegistry.validationRequest(validator, agentId, "ipfs://validation-request", requestHash);
+
+        bytes32 escrowUid = bytes32(uint256(54321));
+        Attestation memory attestation = Attestation({
+            uid: fulfillmentUid,
+            schema: bytes32(0),
+            time: uint64(block.timestamp),
+            expirationTime: uint64(0),
+            revocationTime: uint64(0),
+            refUID: escrowUid,
+            recipient: address(0),
+            attester: address(0),
+            revocable: true,
+            data: bytes("")
+        });
+
+        ERC8004Arbiter.DemandData memory demandData = ERC8004Arbiter.DemandData({
+            validationRegistry: address(validationRegistry),
+            validatorAddress: validator,
+            minResponse: 0,
+            data: validationData
+        });
+        bytes memory demand = abi.encode(demandData);
+
+        vm.expectRevert(ERC8004Arbiter.InvalidMinResponse.selector);
+        arbiter.checkObligation(attestation, demand, escrowUid);
+    }
+
     function testCheckObligationWrongValidator() public {
         // Create validation request
         vm.prank(agentOwner);

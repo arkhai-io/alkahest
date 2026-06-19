@@ -22,7 +22,7 @@ interface IValidationRegistry {
 /**
  * @title ValidationRegistryArbiter
  * @notice Arbiter that wraps ERC-8004's ValidationRegistry
- * @dev The DemandData specifies a minimum response uint8 (0-100)
+ * @dev The DemandData specifies a minimum response uint8 (1-100)
  *      The validation requestHash is derived from the fulfillment attestation
  *      UID and caller-supplied binding data.
  */
@@ -62,8 +62,8 @@ contract ERC8004Arbiter is IArbiter {
             revert FulfillmentMustReferenceEscrow();
         }
 
-        // Validate minResponse is in valid range
-        if (demand_.minResponse > 100) revert InvalidMinResponse();
+        // ValidationRegistry does not expose hasResponse, so response 0 is indistinguishable from pending.
+        if (demand_.minResponse == 0 || demand_.minResponse > 100) revert InvalidMinResponse();
 
         bytes32 requestHash = requestHashFor(obligation.uid, demand_.data);
 
