@@ -295,6 +295,7 @@ Report items:
 - `arkhai-io-alkahest-2026-04-13-analysis(1).md`, issue 18.
 - `arkhai-io-alkahest-2026-04-13-analysis(1).md`, issue 13 recipient-binding
   variant.
+- `arkhai-io-alkahest-2026-04-13-analysis(1).md`, issue 14.
 - `arkhai-io-alkahest-2026-04-13-analysis(1).md`, warning 4 recipient
   capability variants.
 - `arkhai-io-alkahest-2026-04-13-analysis(1).md`, warning 6 self-recipient
@@ -303,8 +304,9 @@ Report items:
 Recipient selection is intentionally controlled by the escrow creator, fulfiller,
 or splitter oracle depending on the flow. The core contracts should not
 blacklist `address(0)`, `address(this)`, repository contracts, or contracts that
-may reject token callbacks. When a flow needs recipient binding, it should use
-explicit arbiters such as `RecipientArbiter` or oracle-side policy.
+may reject or gas-grief token callbacks. When a flow needs recipient binding or
+recipient capability guarantees, it should use explicit arbiters such as
+`RecipientArbiter`, SDK/application checks, or oracle-side policy.
 
 ### analysis(1): Attestation Escrow as Arbiter
 
