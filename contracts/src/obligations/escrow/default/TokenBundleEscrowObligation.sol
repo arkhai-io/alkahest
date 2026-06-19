@@ -390,6 +390,7 @@ contract TokenBundleEscrowObligation is BaseEscrowObligation, IArbiter, ERC1155H
         }
 
         if (!escrow._checkIntrinsic()) revert InvalidEscrowAttestation();
+        if (msg.sender != escrow.recipient) revert UnauthorizedCall();
 
         // Extract arbiter and demand from escrow data
         (address arbiter, bytes memory demand) = extractArbiterAndDemand(escrow.data);
@@ -437,6 +438,8 @@ contract TokenBundleEscrowObligation is BaseEscrowObligation, IArbiter, ERC1155H
         if (block.timestamp < attestation.expirationTime) {
             revert UnauthorizedCall();
         }
+
+        if (msg.sender != attestation.recipient) revert UnauthorizedCall();
 
         // Revoke attestation to prevent re-entry
         try eas.revoke(

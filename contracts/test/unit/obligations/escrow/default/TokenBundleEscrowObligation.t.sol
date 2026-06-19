@@ -3,6 +3,7 @@ pragma solidity ^0.8.26;
 
 import {Test} from "forge-std/Test.sol";
 import {console2} from "forge-std/console2.sol";
+import {BaseEscrowObligation} from "@src/BaseEscrowObligation.sol";
 import {TokenBundleEscrowObligation} from "@src/obligations/escrow/default/TokenBundleEscrowObligation.sol";
 import {IEAS} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
@@ -815,11 +816,64 @@ contract TokenBundleEscrowObligationTest is Test {
         vm.expectEmit(true, false, false, true);
         emit TokenBundleEscrowObligation.NativeTokenTransferFailedOnRelease(address(badRecipient), NATIVE_AMOUNT);
 
+        vm.prank(alice);
         bool success = escrow.unsafePartiallyCollectEscrow(escrowId, fulfillmentId);
         assertTrue(success);
 
         // Native tokens are now stuck in escrow (this is the expected "unsafe" behavior)
         assertEq(address(escrow).balance, NATIVE_AMOUNT);
+    }
+
+    function testUnsafePartiallyCollectEscrowUnauthorizedCallerReverts() public {
+        TokenBundleEscrowObligation.ObligationData memory data = createNativeOnlyBundleData();
+
+        vm.startPrank(alice);
+        bytes32 escrowId = escrow.doObligation{value: NATIVE_AMOUNT}(data, uint64(block.timestamp + EXPIRATION_TIME));
+        vm.stopPrank();
+
+        bytes32 fulfillmentId = bytes32(uint256(2));
+        arbiter.approveFulfillment(fulfillmentId);
+
+        Attestation memory fulfillmentAttestation = Attestation({
+            uid: fulfillmentId,
+            schema: bytes32(0),
+            time: uint64(block.timestamp),
+            expirationTime: 0,
+            revocationTime: 0,
+            refUID: escrowId,
+            recipient: bob,
+            attester: bob,
+            revocable: true,
+            data: ""
+        });
+
+        vm.mockCall(address(arbiter), abi.encodeWithSelector(MockArbiter.checkObligation.selector), abi.encode(true));
+        vm.mockCall(
+            address(eas),
+            abi.encodeWithSelector(IEAS.getAttestation.selector, fulfillmentId),
+            abi.encode(fulfillmentAttestation)
+        );
+
+        Attestation memory escrowAttestation = Attestation({
+            uid: escrowId,
+            schema: escrow.ATTESTATION_SCHEMA(),
+            time: uint64(block.timestamp),
+            expirationTime: uint64(block.timestamp + EXPIRATION_TIME),
+            revocationTime: 0,
+            refUID: bytes32(0),
+            recipient: alice,
+            attester: address(escrow),
+            revocable: true,
+            data: abi.encode(data)
+        });
+
+        vm.mockCall(
+            address(eas), abi.encodeWithSelector(IEAS.getAttestation.selector, escrowId), abi.encode(escrowAttestation)
+        );
+
+        vm.prank(bob);
+        vm.expectRevert(BaseEscrowObligation.UnauthorizedCall.selector);
+        escrow.unsafePartiallyCollectEscrow(escrowId, fulfillmentId);
     }
 
     // Test that reclaimExpired reverts when native token transfer fails
@@ -930,10 +984,43 @@ contract TokenBundleEscrowObligationTest is Test {
         vm.expectEmit(true, false, false, true);
         emit TokenBundleEscrowObligation.NativeTokenTransferFailedOnRelease(address(badRecipient), NATIVE_AMOUNT);
 
+        vm.prank(address(badRecipient));
         bool success = escrow.unsafePartiallyReclaimExpired(escrowId);
         assertTrue(success);
 
         // Native tokens are now stuck in escrow (this is the expected "unsafe" behavior)
         assertEq(address(escrow).balance, NATIVE_AMOUNT);
+    }
+
+    function testUnsafePartiallyReclaimExpiredUnauthorizedCallerReverts() public {
+        TokenBundleEscrowObligation.ObligationData memory data = createNativeOnlyBundleData();
+
+        vm.deal(alice, 10 ether);
+        vm.startPrank(alice);
+        bytes32 escrowId = escrow.doObligation{value: NATIVE_AMOUNT}(data, uint64(block.timestamp + EXPIRATION_TIME));
+        vm.stopPrank();
+
+        Attestation memory escrowAttestation = Attestation({
+            uid: escrowId,
+            schema: escrow.ATTESTATION_SCHEMA(),
+            time: uint64(block.timestamp),
+            expirationTime: uint64(block.timestamp + EXPIRATION_TIME),
+            revocationTime: 0,
+            refUID: bytes32(0),
+            recipient: alice,
+            attester: address(escrow),
+            revocable: true,
+            data: abi.encode(data)
+        });
+
+        vm.mockCall(
+            address(eas), abi.encodeWithSelector(IEAS.getAttestation.selector, escrowId), abi.encode(escrowAttestation)
+        );
+
+        vm.warp(block.timestamp + EXPIRATION_TIME + 1);
+
+        vm.prank(bob);
+        vm.expectRevert(BaseEscrowObligation.UnauthorizedCall.selector);
+        escrow.unsafePartiallyReclaimExpired(escrowId);
     }
 }

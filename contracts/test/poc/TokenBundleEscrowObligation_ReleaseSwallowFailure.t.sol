@@ -124,7 +124,6 @@ contract TokenBundleEscrowObligation_ReleaseSwallowFailure_POC is Test {
         MockERC1155 token = new MockERC1155();
 
         address alice = makeAddr("alice");
-        address bob = makeAddr("bob");
         RejectingRecipient badRecipient = new RejectingRecipient();
 
         uint256 tokenId = 100;
@@ -164,8 +163,8 @@ contract TokenBundleEscrowObligation_ReleaseSwallowFailure_POC is Test {
             StringObligation.ObligationData({item: "fulfillment", schema: bytes32(0)}), escrowUid
         );
 
-        // unsafePartiallyCollectEscrow allows partial collection (user's last resort choice)
-        vm.startPrank(bob);
+        // unsafePartiallyCollectEscrow allows partial collection only when the escrow recipient opts in.
+        vm.startPrank(alice);
 
         // Expect events for failed transfers
         vm.expectEmit(true, false, false, true);
