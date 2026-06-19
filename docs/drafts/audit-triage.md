@@ -306,6 +306,28 @@ blacklist `address(0)`, `address(this)`, repository contracts, or contracts that
 may reject token callbacks. When a flow needs recipient binding, it should use
 explicit arbiters such as `RecipientArbiter` or oracle-side policy.
 
+### analysis(1): Attestation Escrow as Arbiter
+
+Status: intended responsibility split.
+
+Report items:
+
+- `arkhai-io-alkahest-2026-04-13-analysis(1).md`, issue 13.
+- `arkhai-io-alkahest-2026-04-13-analysis(1).md`, promise-only arbiter
+  variant.
+
+The `IArbiter` implementation bundled with escrow obligations answers whether
+an attestation represents an escrow with the demanded parameters. It does not
+mean the escrow has already been collected or that the escrowed action has
+already been delivered. This is consistent across escrow contracts.
+
+For attestation escrows specifically, v1 remains the deferred EAS attestation
+path and supports paid EAS attestations by locking the required native value at
+escrow creation. Non-atomic integrations that transfer value before collecting
+the attestation escrow are responsible for feasibility checks or should use an
+atomic utility path. The arbiter method should not be changed to encode delivery
+semantics that differ from the rest of the escrow family.
+
 ### analysis(1): User-Selected Arbiter and Registry Policy
 
 Status: intended responsibility split.
