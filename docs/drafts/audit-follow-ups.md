@@ -6,6 +6,28 @@ finished.
 
 ## Remaining
 
+### [ ] ERC Conditional Escrow Alignment
+
+Use `erc-conditional-escrow.md` as the major-version API target. The
+`erc-conditional-escrow-core.md` split was experimental and should not drive the
+repository refactor.
+
+The cleanup should align contract names and public interfaces with the ERC
+draft terminology:
+
+- `IArbiter.checkObligation(...)` -> `IArbiter.check(...)`.
+- `collectEscrow(...)` / `collectEscrowRaw(...)` -> `collect(...)`.
+- `reclaimExpired(...)` -> `reclaim(...)`.
+- `extractArbiterAndDemand(...)` -> `decodeCondition(...)`.
+- Use `escrowUid`, `fulfillmentUid`, `escrower`, and `fulfiller`
+  consistently in events, arguments, docs, and SDKs.
+- Avoid describing fulfillment attestations as obligations except where naming
+  refers to the concrete contract family.
+
+This is a major-version compatibility break. Update Solidity contracts,
+generated ABI artifacts, SDK typed clients, docs, deploy/config surfaces, and
+examples together.
+
 ### [ ] BarterUtils Surface Area
 
 The current BarterUtils contracts are useful as EOA atomic settlement routers:
