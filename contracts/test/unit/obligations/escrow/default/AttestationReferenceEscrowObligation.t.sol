@@ -328,8 +328,7 @@ contract AttestationReferenceEscrowObligationTest is Test {
                 validationRevocable: false
             });
 
-        bool differentUidMatch =
-            escrowObligation.check(attestation, abi.encode(differentUidDemand), bytes32(0));
+        bool differentUidMatch = escrowObligation.check(attestation, abi.encode(differentUidDemand), bytes32(0));
         assertFalse(differentUidMatch, "Should not match different attestation UID");
 
         // Test different arbiter (should fail)
@@ -342,8 +341,7 @@ contract AttestationReferenceEscrowObligationTest is Test {
                 validationRevocable: false
             });
 
-        bool differentArbiterMatch =
-            escrowObligation.check(attestation, abi.encode(differentArbiterDemand), bytes32(0));
+        bool differentArbiterMatch = escrowObligation.check(attestation, abi.encode(differentArbiterDemand), bytes32(0));
         assertFalse(differentArbiterMatch, "Should not match different arbiter");
 
         // Test different demand (should fail)
@@ -356,8 +354,7 @@ contract AttestationReferenceEscrowObligationTest is Test {
                 validationRevocable: false
             });
 
-        bool differentDemandMatch =
-            escrowObligation.check(attestation, abi.encode(differentDemandData), bytes32(0));
+        bool differentDemandMatch = escrowObligation.check(attestation, abi.encode(differentDemandData), bytes32(0));
         assertFalse(differentDemandMatch, "Should not match different demand");
 
         AttestationReferenceEscrowObligation.ObligationData memory differentValidationDemand =

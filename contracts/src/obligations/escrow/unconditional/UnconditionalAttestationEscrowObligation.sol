@@ -31,12 +31,7 @@ contract UnconditionalAttestationEscrowObligation is BaseEscrowObligationUncondi
     {}
 
     // Extract arbiter and demand from encoded data
-    function decodeCondition(bytes memory data)
-        public
-        pure
-        override
-        returns (address arbiter, bytes memory demand)
-    {
+    function decodeCondition(bytes memory data) public pure override returns (address arbiter, bytes memory demand) {
         ObligationData memory decoded = abi.decode(data, (ObligationData));
         return (decoded.arbiter, decoded.demand);
     }

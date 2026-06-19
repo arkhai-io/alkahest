@@ -258,8 +258,7 @@ contract ERC721EscrowObligationTest is Test {
             demand: abi.encode("specific demand")
         });
 
-        bool differentTokenIdMatch =
-            escrowObligation.check(attestation, abi.encode(differentTokenIdDemand), bytes32(0));
+        bool differentTokenIdMatch = escrowObligation.check(attestation, abi.encode(differentTokenIdDemand), bytes32(0));
         assertFalse(differentTokenIdMatch, "Should not match different token ID demand");
 
         // Test different token (should fail)
@@ -271,8 +270,7 @@ contract ERC721EscrowObligationTest is Test {
             demand: abi.encode("specific demand")
         });
 
-        bool differentTokenMatch =
-            escrowObligation.check(attestation, abi.encode(differentTokenDemand), bytes32(0));
+        bool differentTokenMatch = escrowObligation.check(attestation, abi.encode(differentTokenDemand), bytes32(0));
         assertFalse(differentTokenMatch, "Should not match different token demand");
 
         // Test different arbiter (should fail)
@@ -283,8 +281,7 @@ contract ERC721EscrowObligationTest is Test {
             demand: abi.encode("specific demand")
         });
 
-        bool differentArbiterMatch =
-            escrowObligation.check(attestation, abi.encode(differentArbiterDemand), bytes32(0));
+        bool differentArbiterMatch = escrowObligation.check(attestation, abi.encode(differentArbiterDemand), bytes32(0));
         assertFalse(differentArbiterMatch, "Should not match different arbiter demand");
 
         // Test different demand (should fail)
@@ -295,8 +292,7 @@ contract ERC721EscrowObligationTest is Test {
             demand: abi.encode("different demand")
         });
 
-        bool differentDemandMatch =
-            escrowObligation.check(attestation, abi.encode(differentDemandData), bytes32(0));
+        bool differentDemandMatch = escrowObligation.check(attestation, abi.encode(differentDemandData), bytes32(0));
         assertFalse(differentDemandMatch, "Should not match different demand");
     }
 

@@ -36,7 +36,12 @@ contract StringResultObligation is BaseObligation, IArbiter {
         bytes memory demand,
         /* (string query) */
         bytes32 escrowUid
-    ) public view override returns (bool) {
+    )
+        public
+        view
+        override
+        returns (bool)
+    {
         // Check if the obligation is intended to fulfill the specific escrow
         if (fulfillment.refUID != bytes32(0) && fulfillment.refUID != escrowUid) return false;
 

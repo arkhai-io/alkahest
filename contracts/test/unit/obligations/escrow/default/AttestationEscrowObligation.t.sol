@@ -392,8 +392,7 @@ contract AttestationEscrowObligationTest is Test {
                 demand: abi.encode("specific demand")
             });
 
-        bool differentArbiterMatch =
-            escrowObligation.check(attestation, abi.encode(differentArbiterDemand), bytes32(0));
+        bool differentArbiterMatch = escrowObligation.check(attestation, abi.encode(differentArbiterDemand), bytes32(0));
         assertFalse(differentArbiterMatch, "Should not match different arbiter");
     }
 
@@ -407,8 +406,7 @@ contract AttestationEscrowObligationTest is Test {
                 attestation: attestationRequest, arbiter: address(mockArbiter), demand: abi.encode("different demand")
             });
 
-        bool differentDemandMatch =
-            escrowObligation.check(attestation, abi.encode(differentDemandData), bytes32(0));
+        bool differentDemandMatch = escrowObligation.check(attestation, abi.encode(differentDemandData), bytes32(0));
         assertFalse(differentDemandMatch, "Should not match different demand");
     }
 

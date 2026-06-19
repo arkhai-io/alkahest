@@ -159,8 +159,7 @@ contract ERC20PaymentObligationTest is Test {
         ERC20PaymentObligation.ObligationData memory differentTokenDemand =
             ERC20PaymentObligation.ObligationData({token: address(differentToken), amount: amount, payee: payee});
 
-        bool differentTokenMatch =
-            paymentObligation.check(attestation, abi.encode(differentTokenDemand), refUID);
+        bool differentTokenMatch = paymentObligation.check(attestation, abi.encode(differentTokenDemand), refUID);
         assertFalse(differentTokenMatch, "Should not match different token demand");
 
         // Test different payee demand (should fail)
@@ -168,8 +167,7 @@ contract ERC20PaymentObligationTest is Test {
             token: address(token), amount: amount, payee: makeAddr("differentPayee")
         });
 
-        bool differentPayeeMatch =
-            paymentObligation.check(attestation, abi.encode(differentPayeeDemand), refUID);
+        bool differentPayeeMatch = paymentObligation.check(attestation, abi.encode(differentPayeeDemand), refUID);
         assertFalse(differentPayeeMatch, "Should not match different payee demand");
 
         // Test wrong refUID (should fail)

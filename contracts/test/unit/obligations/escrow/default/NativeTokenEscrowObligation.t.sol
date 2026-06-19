@@ -301,8 +301,7 @@ contract NativeTokenEscrowObligationTest is Test {
             arbiter: address(mockArbiter), demand: abi.encode("test demand"), amount: AMOUNT
         });
 
-        (address extractedArbiter, bytes memory extractedDemand) =
-            escrowObligation.decodeCondition(abi.encode(data));
+        (address extractedArbiter, bytes memory extractedDemand) = escrowObligation.decodeCondition(abi.encode(data));
 
         assertEq(extractedArbiter, data.arbiter);
         assertEq(extractedDemand, data.demand);

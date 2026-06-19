@@ -46,7 +46,9 @@ abstract contract TokenBundleSplitterBase is BaseSplitter, ERC1155Holder {
     }
 
     event ArbitrationMade(bytes32 indexed decisionKey, bytes32 indexed fulfillmentUid, address indexed oracle);
-    event EscrowCollectedAndDistributed(bytes32 indexed escrowUid, bytes32 indexed fulfillmentUid, address indexed fulfiller);
+    event EscrowCollectedAndDistributed(
+        bytes32 indexed escrowUid, bytes32 indexed fulfillmentUid, address indexed fulfiller
+    );
     event NativeTransferFailedOnDistribute(address indexed recipient, uint256 amount);
     event ERC20TransferFailedOnDistribute(address indexed recipient, address indexed token, uint256 amount);
     event ERC721TransferFailedOnDistribute(address indexed recipient, address indexed token, uint256 tokenId);

@@ -37,7 +37,11 @@ contract ERC20Splitter is BaseSplitter {
         bytes32 indexed decisionKey, bytes32 indexed fulfillmentUid, address indexed oracle, Split[] splits
     );
     event EscrowCollectedAndDistributed(
-        bytes32 indexed escrowUid, bytes32 indexed fulfillmentUid, address indexed fulfiller, address token, Split[] splits
+        bytes32 indexed escrowUid,
+        bytes32 indexed fulfillmentUid,
+        address indexed fulfiller,
+        address token,
+        Split[] splits
     );
     event ERC20TransferFailedOnDistribute(address indexed recipient, address indexed token, uint256 amount);
 

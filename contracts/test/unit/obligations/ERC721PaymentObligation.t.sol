@@ -150,8 +150,7 @@ contract ERC721PaymentObligationTest is Test {
         ERC721PaymentObligation.ObligationData memory differentTokenDemand =
             ERC721PaymentObligation.ObligationData({token: address(differentToken), tokenId: tokenId, payee: payee});
 
-        bool differentTokenMatch =
-            paymentObligation.check(attestation, abi.encode(differentTokenDemand), bytes32(0));
+        bool differentTokenMatch = paymentObligation.check(attestation, abi.encode(differentTokenDemand), bytes32(0));
         assertFalse(differentTokenMatch, "Should not match different token demand");
 
         // Test different payee demand (should fail)
@@ -159,8 +158,7 @@ contract ERC721PaymentObligationTest is Test {
         ERC721PaymentObligation.ObligationData memory differentPayeeDemand =
             ERC721PaymentObligation.ObligationData({token: address(token), tokenId: tokenId, payee: differentPayee});
 
-        bool differentPayeeMatch =
-            paymentObligation.check(attestation, abi.encode(differentPayeeDemand), bytes32(0));
+        bool differentPayeeMatch = paymentObligation.check(attestation, abi.encode(differentPayeeDemand), bytes32(0));
         assertFalse(differentPayeeMatch, "Should not match different payee demand");
     }
 

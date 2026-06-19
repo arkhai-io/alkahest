@@ -45,19 +45,10 @@ abstract contract BaseEscrowObligation is BaseObligation {
     function _afterEscrowAttest(Attestation memory attestation) internal virtual {}
 
     // Extract arbiter and demand from encoded data
-    function decodeCondition(bytes memory data)
-        public
-        pure
-        virtual
-        returns (address arbiter, bytes memory demand);
+    function decodeCondition(bytes memory data) public pure virtual returns (address arbiter, bytes memory demand);
 
     // Common escrow collection implementation
-    function collect(bytes32 _escrow, bytes32 _fulfillment)
-        public
-        virtual
-        nonReentrant
-        returns (bytes memory)
-    {
+    function collect(bytes32 _escrow, bytes32 _fulfillment) public virtual nonReentrant returns (bytes memory) {
         Attestation memory escrow = _getExistingAttestation(_escrow);
         Attestation memory fulfillment = _getExistingAttestation(_fulfillment);
 
