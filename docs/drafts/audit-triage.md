@@ -330,6 +330,25 @@ the attestation escrow are responsible for feasibility checks or should use an
 atomic utility path. The arbiter method should not be changed to encode delivery
 semantics that differ from the rest of the escrow family.
 
+### analysis(1): BarterUtils Proxy/Clone Deployment
+
+Status: deployment-mode constraint.
+
+Report item: `arkhai-io-alkahest-2026-04-13-analysis(1).md`, issue 15.
+
+The BarterUtils contracts are ordinary constructor-initialized helper contracts,
+and the repository deployment paths instantiate them directly. Deploying these
+contracts behind a proxy or ERC-1167 clone without an initializer leaves proxy
+or clone storage uninitialized, which is expected deployer misuse rather than a
+protocol vulnerability.
+
+Adding initializer or setter variants would increase the API and introduce
+administrative mutation surface for helper contracts that do not otherwise need
+upgradeability. A separate follow-up tracks a narrower BarterUtils cleanup:
+preserve EOA atomic settlement helpers where useful, but consider removing the
+large matrix of typed listing helpers that can be handled by SDK calls to the
+core escrow contracts.
+
 ### analysis(1): User-Selected Arbiter and Registry Policy
 
 Status: intended responsibility split.
