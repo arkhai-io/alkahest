@@ -173,6 +173,27 @@ Completed by `ebe3abcf1b7ada0910ca61da8b641fd939d8757f`.
 Escrow contracts now reuse existing EAS schemas where possible rather than
 registering unnecessary duplicate schemas during construction.
 
+### analysis(1): Attestation Reference Certification Properties
+
+Status: fixed for hardcoded certification lifetime; referenced-attestation
+freshness remains integration policy.
+
+Report item: `arkhai-io-alkahest-2026-04-13-analysis(1).md`, issue 18.
+
+Completed by `53ef8ee11b4da1c63cb6a5873b205432356bc079`.
+
+`AttestationEscrowObligation2` was renamed to
+`AttestationReferenceEscrowObligation`, with the matching unconditional and hook
+variants renamed as well. The reference escrow data now configures the produced
+validation attestation's `expirationTime` and `revocable` flag, so the contract
+no longer forces all certification attestations to be permanent and
+irrevocable.
+
+The contract still does not check freshness, schema, or provenance of the
+referenced attestation. That remains an integration-level interpretation:
+downstream consumers that require current validity must check the referenced EAS
+attestation directly or compose explicit arbiters/policy.
+
 ### ERC-8004 Validation Binding
 
 Status: fixed.
