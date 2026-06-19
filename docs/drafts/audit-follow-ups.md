@@ -28,6 +28,11 @@ This is a major-version compatibility break. Update Solidity contracts,
 generated ABI artifacts, SDK typed clients, docs, deploy/config surfaces, and
 examples together.
 
+Solidity contracts, Solidity tests, scripts, and tracked docs were aligned in
+`59f8f628d9099c1dbbef67c3de21fdb17032fa1f`, with formatting-only cleanup in
+`9d32a984e7988e37909f7a478e14ebea8de741f8`. Generated ABI artifacts, SDK typed
+clients, SDK docs, and deploy/config surfaces remain to be updated.
+
 ### [ ] BarterUtils Surface Area
 
 The current BarterUtils contracts are useful as EOA atomic settlement routers:
