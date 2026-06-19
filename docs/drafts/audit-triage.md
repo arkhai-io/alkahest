@@ -172,6 +172,84 @@ data with `keccak256(abi.encode(uid, data))`.
 
 ## Not Issues
 
+### analysis(1): Example Contracts
+
+Status: out of production security scope.
+
+Report items:
+
+- `arkhai-io-alkahest-2026-04-13-analysis(1).md`, issue 26.
+- `arkhai-io-alkahest-2026-04-13-analysis(1).md`, issue 33.
+- `arkhai-io-alkahest-2026-04-13-analysis(1).md`, issue 34.
+- `arkhai-io-alkahest-2026-04-13-analysis(1).md`, issue 35.
+- `arkhai-io-alkahest-2026-04-13-analysis(1).md`, issue 17 in warnings.
+- `arkhai-io-alkahest-2026-04-13-analysis(1).md`, issue 19 in warnings.
+- `arkhai-io-alkahest-2026-04-13-analysis(1).md`, `StringResultObligation`
+  length-only variant.
+- `arkhai-io-alkahest-2026-04-13-analysis(1).md`, `ApiCallExample1/2`
+  nonzero-oracle variant.
+- `arkhai-io-alkahest-2026-04-13-analysis(1).md`, `VoteEscrowObligation`
+  support-range, external-call, and data-hash variants.
+- `arkhai-io-alkahest-2026-04-13-analysis(1).md`, `MajorityVoteArbiter`
+  unchecked-subtraction variant.
+
+Example contracts are not production protocol components and are not intended to
+be secure building blocks. We are not patching example-only issues as part of
+the production audit work.
+
+### analysis(1): Logical Arbiter Empty Semantics
+
+Status: intended behavior.
+
+Report items:
+
+- `arkhai-io-alkahest-2026-04-13-analysis(1).md`, issue 4.
+- `arkhai-io-alkahest-2026-04-13-analysis(1).md`, issue 17.
+- `arkhai-io-alkahest-2026-04-13-analysis(1).md`, order-sensitive
+  `AllArbiter` variant.
+
+`AllArbiter([])` returning true and `AnyArbiter([])` returning false are
+intentional logical semantics, matching common precedent such as Python's
+`all([])` and `any([])`. Reverts from child arbiters are part of the configured
+composition behavior rather than an arbiter-level vulnerability.
+
+### analysis(1): Recipient Policy
+
+Status: intended responsibility split.
+
+Report items:
+
+- `arkhai-io-alkahest-2026-04-13-analysis(1).md`, issue 18.
+- `arkhai-io-alkahest-2026-04-13-analysis(1).md`, issue 13 recipient-binding
+  variant.
+- `arkhai-io-alkahest-2026-04-13-analysis(1).md`, warning 4 recipient
+  capability variants.
+- `arkhai-io-alkahest-2026-04-13-analysis(1).md`, warning 6 self-recipient
+  variant.
+
+Recipient selection is intentionally controlled by the escrow creator, fulfiller,
+or splitter oracle depending on the flow. The core contracts should not
+blacklist `address(0)`, `address(this)`, repository contracts, or contracts that
+may reject token callbacks. When a flow needs recipient binding, it should use
+explicit arbiters such as `RecipientArbiter` or oracle-side policy.
+
+### analysis(1): User-Selected Arbiter and Registry Policy
+
+Status: intended responsibility split.
+
+Report items:
+
+- `arkhai-io-alkahest-2026-04-13-analysis(1).md`, issue 5.
+- `arkhai-io-alkahest-2026-04-13-analysis(1).md`, registry-call variant.
+- `arkhai-io-alkahest-2026-04-13-analysis(1).md`, issue 12.
+- `arkhai-io-alkahest-2026-04-13-analysis(1).md`, permissive-arbiter variant.
+
+Escrow creators choose their arbiter, arbiter demand, and external registry
+configuration. The protocol supports arbitrary arbiters and registries; a bad or
+malicious configured arbiter is a configuration failure, not a protocol bug.
+SDKs and applications may provide safer defaults or warnings, but the contracts
+should not centralize allowlists for user-selected policy components.
+
 ### Splitter Arbitration Request Payloads
 
 Status: no contract change.
