@@ -14,6 +14,7 @@ contract NonexclusiveUnrevocableConfirmationArbiter is IArbiter {
 
     error UnauthorizedConfirmationRequest();
     error UnauthorizedConfirmation();
+    error InvalidFulfillment();
 
     IEAS public immutable eas;
     // fulfillment => escrow => confirmed
@@ -25,9 +26,14 @@ contract NonexclusiveUnrevocableConfirmationArbiter is IArbiter {
 
     function confirm(bytes32 _fulfillment, bytes32 _escrow) public {
         Attestation memory escrow = eas.getAttestation(_escrow);
+        Attestation memory fulfillment = eas.getAttestation(_fulfillment);
 
         if (escrow.recipient != msg.sender) {
             revert UnauthorizedConfirmation();
+        }
+
+        if (fulfillment.uid == bytes32(0) || fulfillment.uid != _fulfillment) {
+            revert InvalidFulfillment();
         }
 
         confirmations[_fulfillment][_escrow] = true;

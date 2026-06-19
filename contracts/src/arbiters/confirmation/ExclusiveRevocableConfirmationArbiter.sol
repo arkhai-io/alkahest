@@ -18,6 +18,7 @@ contract ExclusiveRevocableConfirmationArbiter is IArbiter {
     error UnauthorizedRevocation();
     error NoConfirmationToRevoke();
     error AnotherFulfillmentAlreadyConfirmed();
+    error InvalidFulfillment();
 
     IEAS public immutable eas;
     // fulfillment => escrow => confirmed
@@ -31,9 +32,14 @@ contract ExclusiveRevocableConfirmationArbiter is IArbiter {
 
     function confirm(bytes32 _fulfillment, bytes32 _escrow) public {
         Attestation memory escrow = eas.getAttestation(_escrow);
+        Attestation memory fulfillment = eas.getAttestation(_fulfillment);
 
         if (escrow.recipient != msg.sender) {
             revert UnauthorizedConfirmation();
+        }
+
+        if (fulfillment.uid == bytes32(0) || fulfillment.uid != _fulfillment) {
+            revert InvalidFulfillment();
         }
 
         // If another fulfillment is already confirmed for this escrow, revert

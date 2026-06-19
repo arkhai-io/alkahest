@@ -76,6 +76,17 @@ contract NonexclusiveUnrevocableConfirmationArbiterTest is Test {
         arbiter.confirm(fulfillmentUid, escrowUid);
     }
 
+    function testConfirmMissingFulfillmentReverts() public {
+        bytes32 escrowUid = _createAttestation(address(this), confirmer, bytes32(0));
+        bytes32 missingFulfillment = keccak256("missing fulfillment");
+
+        vm.prank(confirmer);
+        vm.expectRevert(NonexclusiveUnrevocableConfirmationArbiter.InvalidFulfillment.selector);
+        arbiter.confirm(missingFulfillment, escrowUid);
+
+        assertFalse(arbiter.confirmations(missingFulfillment, escrowUid));
+    }
+
     function testConfirmMultipleFulfillmentsForSameEscrow() public {
         bytes32 escrowUid = _createAttestation(address(this), confirmer, bytes32(0));
         bytes32 fulfillmentUid1 = _createAttestation(fulfiller, address(0), bytes32(0));
