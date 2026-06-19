@@ -366,13 +366,25 @@ malicious configured arbiter is a configuration failure, not a protocol bug.
 SDKs and applications may provide safer defaults or warnings, but the contracts
 should not centralize allowlists for user-selected policy components.
 
-### Splitter Arbitration Request Payloads
+### Oracle Arbitration Request Payloads
 
 Status: no contract change.
+
+Report item: `arkhai-io-alkahest-2026-04-13-analysis(1).md`, issue 16.
 
 Splitter `requestArbitration` events are non-authoritative hints, matching the
 general oracle-request pattern used by `TrustedOracleArbiter`. A caller-chosen
 event payload does not authorize settlement.
+
+`TrustedOracleArbiter` intentionally separates the outer escrow demand
+`DemandData { oracle, data }` from the inner oracle demand bytes. The outer
+`oracle` selects the trusted decision maker, while `data` is the payload the
+oracle signs off on by calling `arbitrate(obligationUid, data, decision)`.
+Oracle integrations must decode the escrow demand and submit the inner demand
+bytes; echoing the outer demand bytes is an integration error. The
+`requestArbitration` event's indexed oracle parameter is likewise a routing hint,
+not an authorization source, and off-chain services should verify it against the
+decoded demand before acting on it.
 
 The splitter decision model intentionally differs from `TrustedOracleArbiter`.
 `TrustedOracleArbiter` keys decisions by `(obligation uid, demand data)` because
