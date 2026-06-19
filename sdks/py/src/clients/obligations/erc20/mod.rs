@@ -3,7 +3,7 @@
 //! This module provides functionality for ERC20 token operations including:
 //! - Escrow obligations (default)
 //! - Payment obligations
-//! - Barter utilities for cross-token trading
+//! - Barter utilities for atomic settlement
 //! - Utility functions for permits and approvals
 
 pub mod barter_utils;
@@ -21,7 +21,7 @@ use crate::error_handling::{map_eyre_to_pyerr, map_parse_to_pyerr};
 /// Provides access to escrow, payment, barter, and utility APIs via properties:
 /// - `client.erc20.escrow.default.create(...)`
 /// - `client.erc20.payment.pay(...)`
-/// - `client.erc20.barter.buy_erc20_for_erc20(...)`
+/// - `client.erc20.barter.pay_erc20_for_erc20(...)`
 /// - `client.erc20.util.approve(...)`
 #[pyclass]
 #[derive(Clone)]

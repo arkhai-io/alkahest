@@ -285,7 +285,7 @@ contract Deploy is Script {
         AttestationReferenceEscrowObligation attestationEscrow2 =
             new AttestationReferenceEscrowObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
         AttestationBarterUtils attestationBarterUtils =
-            new AttestationBarterUtils(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress), attestationEscrow2);
+            new AttestationBarterUtils(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
 
         vm.stopBroadcast();
 

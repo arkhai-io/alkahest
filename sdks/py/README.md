@@ -20,17 +20,17 @@ client = AlkahestClient(
 )
 
 async def main():
-    # Approve the barter utils contract to spend tokens
+    # Approve the escrow contract to lock tokens
     tx_hash = await client.erc20.util.approve(
         {"address": "0x036CbD53842c5426634e7929541eC2318f3dCF7e", "value": 100},
-        "barter",
+        "escrow",
     )
     print(tx_hash)
 
     # Create an escrow: deposit 100 token A, demanding 200 token B
-    escrow = await client.erc20.barter.buy_erc20_for_erc20(
+    escrow = await client.erc20.escrow.default.create(
         {"address": "0x...", "value": 100},  # bid
-        {"address": "0x...", "value": 200},  # ask
+        payment_demand,  # encoded demand for token B payment
         0,  # no expiration
     )
     print(escrow["log"]["uid"])

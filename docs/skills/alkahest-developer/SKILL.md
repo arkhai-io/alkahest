@@ -293,22 +293,16 @@ await client.commit_reveal.reclaim_bond(uid)
 
 ## Barter Utilities
 
-Barter utils provide atomic single-transaction token swaps:
+Barter utils provide atomic single-transaction settlement for existing escrows:
 
 **TypeScript:**
 ```typescript
-await client.erc20.barter.buyErc20ForErc20(
-  { address: BID_TOKEN, value: bidAmount },
-  { address: ASK_TOKEN, value: askAmount },
-  BigInt(Math.floor(Date.now() / 1000) + 3600),
-);
+await client.erc20.barter.payErc20ForErc20(escrowUid);
 ```
 
 **Rust:**
 ```rust
-client.erc20().barter().buy_erc20_for_erc20(
-    &bid_token, &ask_token, expiration,
-).await?;
+client.erc20().barter().pay_erc20_for_erc20(escrow_uid).await?;
 ```
 
 ## Key Type Differences

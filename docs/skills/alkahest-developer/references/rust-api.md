@@ -73,12 +73,10 @@ client
 │   │   ├── get_statement(uid) -> DecodedAttestation<ObligationData>
 │   │   └── decode_statement(bytes) -> ObligationData
 │   ├── barter()
-│   │   ├── buy_erc20_for_erc20(&bid, &ask, expiration) -> Receipt
-│   │   ├── buy_erc20_for_erc721(&bid, &ask, expiration) -> Receipt
-│   │   ├── buy_erc721_for_erc20(&bid, &ask, expiration) -> Receipt
-│   │   ├── buy_erc20_for_erc1155(&bid, &ask, expiration) -> Receipt
-│   │   ├── buy_erc20_for_native(&bid, native_amount, expiration) -> Receipt
-│   │   └── buy_native_for_erc20(native_amount, &ask, expiration) -> Receipt
+│   │   ├── pay_erc20_for_erc20(escrow_uid) -> Receipt
+│   │   ├── permit_and_pay_erc20_for_erc20(escrow_uid) -> Receipt
+│   │   ├── pay_erc20_for_erc721(escrow_uid) -> Receipt
+│   │   └── ... (more cross-token settlement combinations)
 │   └── util()
 │       └── permit-related helpers
 │

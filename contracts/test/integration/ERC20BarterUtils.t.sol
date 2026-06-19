@@ -93,10 +93,8 @@ contract ERC20BarterUtilsIntegrationTest is Test {
 
         // Alice creates buy order
         vm.startPrank(alice);
-        erc1155TokenA.approve(address(barterUtils), bidAmount);
-        bytes32 buyAttestation = barterUtils.buyErc20ForErc20(
-            address(erc1155TokenA), bidAmount, address(erc1155TokenB), askAmount, expiration
-        );
+        erc1155TokenA.approve(address(escrowObligation), bidAmount);
+        bytes32 buyAttestation = _createErc20ForErc20Escrow(bidAmount, askAmount, expiration);
         vm.stopPrank();
 
         // Bob fulfills the order
@@ -122,14 +120,11 @@ contract ERC20BarterUtilsIntegrationTest is Test {
         uint64 expiration = uint64(block.timestamp + 1 days);
         uint256 deadline = block.timestamp + 1;
 
-        // Alice creates buy order with permit
-        (uint8 v1, bytes32 r1, bytes32 s1) =
-            _getPermitSignature(erc1155TokenA, ALICE_PRIVATE_KEY, address(barterUtils), bidAmount, deadline);
-
-        vm.prank(alice);
-        bytes32 buyAttestation = barterUtils.permitAndBuyErc20ForErc20(
-            address(erc1155TokenA), bidAmount, address(erc1155TokenB), askAmount, expiration, deadline, v1, r1, s1
-        );
+        // Alice creates buy order through the escrow obligation.
+        vm.startPrank(alice);
+        erc1155TokenA.approve(address(escrowObligation), bidAmount);
+        bytes32 buyAttestation = _createErc20ForErc20Escrow(bidAmount, askAmount, expiration);
+        vm.stopPrank();
 
         // Bob fulfills with permit
         (uint8 v2, bytes32 r2, bytes32 s2) =
@@ -153,25 +148,22 @@ contract ERC20BarterUtilsIntegrationTest is Test {
         uint64 expiration = uint64(block.timestamp + 1 days);
         uint256 deadline = block.timestamp + 1;
 
-        // First create the buy order with proper permit signature
-        (uint8 v1, bytes32 r1, bytes32 s1) =
-            _getPermitSignature(erc1155TokenA, ALICE_PRIVATE_KEY, address(barterUtils), bidAmount, deadline);
-
         ERC20PaymentObligation.ObligationData memory demand =
             ERC20PaymentObligation.ObligationData({token: address(erc1155TokenB), amount: askAmount, payee: alice});
 
-        vm.prank(alice);
-        bytes32 buyAttestation = barterUtils.permitAndBuyWithErc20(
-            address(erc1155TokenA),
-            bidAmount,
-            address(paymentObligation),
-            abi.encode(demand),
+        vm.startPrank(alice);
+        erc1155TokenA.approve(address(escrowObligation), bidAmount);
+        bytes32 buyAttestation = escrowObligation.doObligationFor(
+            ERC20EscrowObligation.ObligationData({
+                token: address(erc1155TokenA),
+                amount: bidAmount,
+                arbiter: address(paymentObligation),
+                demand: abi.encode(demand)
+            }),
             expiration,
-            deadline,
-            v1,
-            r1,
-            s1
+            alice
         );
+        vm.stopPrank();
 
         // Bob fulfills with permit
         (uint8 v2, bytes32 r2, bytes32 s2) =
@@ -198,6 +190,26 @@ contract ERC20BarterUtilsIntegrationTest is Test {
         assertEq(erc1155TokenA.balanceOf(bob), 100 * 10 ** 18, "Bob should have 100 Token A");
         assertEq(erc1155TokenB.balanceOf(alice), 200 * 10 ** 18, "Alice should have 200 Token B");
         assertEq(erc1155TokenB.balanceOf(bob), 800 * 10 ** 18, "Bob should have 800 Token B");
+    }
+
+    function _createErc20ForErc20Escrow(uint256 bidAmount, uint256 askAmount, uint64 expiration)
+        internal
+        returns (bytes32)
+    {
+        return escrowObligation.doObligationFor(
+            ERC20EscrowObligation.ObligationData({
+                token: address(erc1155TokenA),
+                amount: bidAmount,
+                arbiter: address(paymentObligation),
+                demand: abi.encode(
+                    ERC20PaymentObligation.ObligationData({
+                        token: address(erc1155TokenB), amount: askAmount, payee: alice
+                    })
+                )
+            }),
+            expiration,
+            alice
+        );
     }
 
     function _getPermitSignature(

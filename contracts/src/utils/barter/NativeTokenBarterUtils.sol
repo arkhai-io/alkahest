@@ -59,18 +59,6 @@ contract NativeTokenBarterUtils {
 
     // ============ Native Token to Native Token Functions ============
 
-    function _buyEthForEth(uint256 bidAmount, uint256 askAmount, uint64 expiration) internal returns (bytes32) {
-        return nativeEscrow.doObligationFor{value: bidAmount}(
-            NativeTokenEscrowObligation.ObligationData({
-                amount: bidAmount,
-                arbiter: address(nativePayment),
-                demand: abi.encode(NativeTokenPaymentObligation.ObligationData({amount: askAmount, payee: msg.sender}))
-            }),
-            expiration,
-            msg.sender
-        );
-    }
-
     function _payEthForEth(bytes32 buyAttestation, NativeTokenPaymentObligation.ObligationData memory demand)
         internal
         returns (bytes32)
@@ -83,11 +71,6 @@ contract NativeTokenBarterUtils {
         nativeEscrow.collect(buyAttestation, sellAttestation);
 
         return sellAttestation;
-    }
-
-    function buyEthForEth(uint256 bidAmount, uint256 askAmount, uint64 expiration) external payable returns (bytes32) {
-        if (msg.value != bidAmount) revert MsgValueMismatch();
-        return _buyEthForEth(bidAmount, askAmount, expiration);
     }
 
     function payEthForEth(bytes32 buyAttestation) external payable returns (bytes32) {
@@ -103,25 +86,6 @@ contract NativeTokenBarterUtils {
     // ============ Cross-Token Functions ============
 
     // ============ Native Token to ERC20 Functions ============
-
-    function buyErc20WithEth(uint256 bidAmount, address askToken, uint256 askAmount, uint64 expiration)
-        external
-        payable
-        returns (bytes32)
-    {
-        if (msg.value != bidAmount) revert MsgValueMismatch();
-        return nativeEscrow.doObligationFor{value: bidAmount}(
-            NativeTokenEscrowObligation.ObligationData({
-                amount: bidAmount,
-                arbiter: address(erc20Payment),
-                demand: abi.encode(
-                    ERC20PaymentObligation.ObligationData({token: askToken, amount: askAmount, payee: msg.sender})
-                )
-            }),
-            expiration,
-            msg.sender
-        );
-    }
 
     function payEthForErc20(bytes32 buyAttestation) external payable returns (bytes32) {
         Attestation memory bid = eas.getAttestation(buyAttestation);
@@ -145,25 +109,6 @@ contract NativeTokenBarterUtils {
 
     // ============ Native Token to ERC721 Functions ============
 
-    function buyErc721WithEth(uint256 bidAmount, address askToken, uint256 askTokenId, uint64 expiration)
-        external
-        payable
-        returns (bytes32)
-    {
-        if (msg.value != bidAmount) revert MsgValueMismatch();
-        return nativeEscrow.doObligationFor{value: bidAmount}(
-            NativeTokenEscrowObligation.ObligationData({
-                amount: bidAmount,
-                arbiter: address(erc721Payment),
-                demand: abi.encode(
-                    ERC721PaymentObligation.ObligationData({token: askToken, tokenId: askTokenId, payee: msg.sender})
-                )
-            }),
-            expiration,
-            msg.sender
-        );
-    }
-
     function payEthForErc721(bytes32 buyAttestation) external payable returns (bytes32) {
         Attestation memory bid = eas.getAttestation(buyAttestation);
         if (bid.uid == bytes32(0)) {
@@ -186,29 +131,6 @@ contract NativeTokenBarterUtils {
 
     // ============ Native Token to ERC1155 Functions ============
 
-    function buyErc1155WithEth(
-        uint256 bidAmount,
-        address askToken,
-        uint256 askTokenId,
-        uint256 askAmount,
-        uint64 expiration
-    ) external payable returns (bytes32) {
-        if (msg.value != bidAmount) revert MsgValueMismatch();
-        return nativeEscrow.doObligationFor{value: bidAmount}(
-            NativeTokenEscrowObligation.ObligationData({
-                amount: bidAmount,
-                arbiter: address(erc1155Payment),
-                demand: abi.encode(
-                    ERC1155PaymentObligation.ObligationData({
-                        token: askToken, tokenId: askTokenId, amount: askAmount, payee: msg.sender
-                    })
-                )
-            }),
-            expiration,
-            msg.sender
-        );
-    }
-
     function payEthForErc1155(bytes32 buyAttestation) external payable returns (bytes32) {
         Attestation memory bid = eas.getAttestation(buyAttestation);
         if (bid.uid == bytes32(0)) {
@@ -230,21 +152,6 @@ contract NativeTokenBarterUtils {
     }
 
     // ============ Native Token to Token Bundle Functions ============
-
-    function buyBundleWithEth(
-        uint256 bidAmount,
-        TokenBundlePaymentObligation.ObligationData calldata askData,
-        uint64 expiration
-    ) external payable returns (bytes32) {
-        if (msg.value != bidAmount) revert MsgValueMismatch();
-        return nativeEscrow.doObligationFor{value: bidAmount}(
-            NativeTokenEscrowObligation.ObligationData({
-                amount: bidAmount, arbiter: address(bundlePayment), demand: abi.encode(askData)
-            }),
-            expiration,
-            msg.sender
-        );
-    }
 
     function payEthForBundle(bytes32 buyAttestation) external payable returns (bytes32) {
         Attestation memory bid = eas.getAttestation(buyAttestation);

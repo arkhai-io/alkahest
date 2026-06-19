@@ -226,7 +226,6 @@ export async function deployAlkahest(
     result.attestationBarterUtils = await deploy(deployFn, AttestationBarterUtils as Artifact, [
       easAddress,
       easSrAddress,
-      result.attestationReferenceEscrowObligation,
     ]);
   }
 

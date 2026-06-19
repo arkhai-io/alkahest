@@ -18,7 +18,6 @@ use crate::addresses::BASE_SEPOLIA_ADDRESSES;
 use crate::contracts;
 use crate::extensions::{AlkahestExtension, ContractModule};
 use crate::impl_abi_conversions;
-use crate::impl_token_bundle_payment_obligation;
 use crate::types::{ProviderContext, SharedWalletProvider};
 
 // --- ABI conversions for NativeToken obligation types ---
@@ -27,11 +26,6 @@ impl_abi_conversions!(
     contracts::obligations::escrow::default_escrow::NativeTokenEscrowObligation::ObligationData
 );
 impl_abi_conversions!(contracts::obligations::escrow::unconditional::UnconditionalNativeTokenEscrowObligation::ObligationData);
-
-// --- TokenBundle conversions for NativeToken barter utils ---
-impl_token_bundle_payment_obligation!(
-    contracts::utils::native_token::TokenBundlePaymentObligation::ObligationData
-);
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NativeTokenAddresses {
@@ -130,7 +124,7 @@ impl NativeTokenModule {
     ///
     /// # Example
     /// ```rust,ignore
-    /// client.native_token().barter().buy_erc20_for_native(&bid, &ask, expiration).await?;
+    /// let escrow = client.native_token().escrow().default().create(&bid, &demand, expiration).await?;
     /// client.native_token().barter().pay_native_for_erc20(buy_attestation).await?;
     /// ```
     pub fn barter(&self) -> barter_utils::BarterUtils<'_> {

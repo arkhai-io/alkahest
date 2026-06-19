@@ -1,6 +1,5 @@
 import { decodeAbiParameters, encodeAbiParameters, getAbiItem } from "viem";
 import { abi as erc20EscrowAbi } from "../../../../contracts/obligations/escrow/default/ERC20EscrowObligation";
-import { abi as erc20BarterUtilsAbi } from "../../../../contracts/utils/ERC20BarterUtils";
 import type { Demand, Erc20 } from "../../../../types";
 import { getAttestation, getAttestedEventFromTxHash, type ViemClient, writeContract } from "../../../../utils";
 import type { Erc20Addresses } from "../index";
@@ -144,23 +143,19 @@ export const makeErc20DefaultEscrowClient = (viemClient: ViemClient, addresses: 
     },
 
     permitAndCreate: async (price: Erc20, item: Demand, expiration: bigint) => {
-      const deadline = util.getPermitDeadline();
-      const permit = await util.getPermitSignature(addresses.barterUtils, price, deadline);
-
+      await util.approve(price, "escrow");
       const hash = await writeContract(viemClient, {
-        address: addresses.barterUtils,
-        abi: erc20BarterUtilsAbi.abi,
-        functionName: "permitAndBuyWithErc20",
+        address: addresses.escrowObligation,
+        abi: erc20EscrowAbi.abi,
+        functionName: "doObligation",
         args: [
-          price.address,
-          price.value,
-          item.arbiter,
-          item.demand,
+          {
+            token: price.address,
+            amount: price.value,
+            arbiter: item.arbiter,
+            demand: item.demand,
+          },
           expiration,
-          deadline,
-          permit.v,
-          permit.r,
-          permit.s,
         ],
       });
 

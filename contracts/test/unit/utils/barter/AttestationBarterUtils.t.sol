@@ -3,10 +3,7 @@ pragma solidity ^0.8.26;
 
 import "forge-std/Test.sol";
 import {AttestationBarterUtils} from "@src/utils/barter/AttestationBarterUtils.sol";
-import {
-    AttestationReferenceEscrowObligation
-} from "@src/obligations/escrow/default/AttestationReferenceEscrowObligation.sol";
-import {IEAS, AttestationRequest, AttestationRequestData} from "@eas/IEAS.sol";
+import {IEAS} from "@eas/IEAS.sol";
 import {ISchemaRegistry, SchemaRecord} from "@eas/ISchemaRegistry.sol";
 import {SchemaResolver} from "@eas/resolver/SchemaResolver.sol";
 import {Attestation} from "@eas/Common.sol";
@@ -14,7 +11,6 @@ import {EASDeployer} from "@test/utils/EASDeployer.sol";
 
 contract AttestationBarterUtilsTest is Test {
     AttestationBarterUtils public barterUtils;
-    AttestationReferenceEscrowObligation public escrowContract;
     IEAS public eas;
     ISchemaRegistry public schemaRegistry;
 
@@ -35,8 +31,7 @@ contract AttestationBarterUtilsTest is Test {
         bob = vm.addr(BOB_PRIVATE_KEY);
 
         // Deploy contracts
-        escrowContract = new AttestationReferenceEscrowObligation(eas, schemaRegistry);
-        barterUtils = new AttestationBarterUtils(eas, schemaRegistry, escrowContract);
+        barterUtils = new AttestationBarterUtils(eas, schemaRegistry);
 
         // Register test schema
         testSchema = barterUtils.registerSchema(TEST_SCHEMA, barterUtils, true);
@@ -64,43 +59,6 @@ contract AttestationBarterUtilsTest is Test {
         assertNotEq(attestationId, bytes32(0), "Attestation should be created");
     }
 
-    function testAttestAndCreateEscrow() public {
-        bytes memory attestationData = abi.encode(true);
-        bytes memory demandData = abi.encode(false);
-
-        vm.prank(alice);
-        (bytes32 attestationUid, bytes32 escrowUid) = barterUtils.attestAndCreateEscrow(
-            AttestationRequest({
-                schema: testSchema,
-                data: AttestationRequestData({
-                    recipient: bob,
-                    expirationTime: uint64(block.timestamp + 1 days),
-                    revocable: false,
-                    refUID: 0,
-                    data: attestationData,
-                    value: 0
-                })
-            }),
-            address(this), // arbiter
-            demandData,
-            uint64(block.timestamp + 2 days) // escrow expiration
-        );
-
-        // Verify both UIDs are valid
-        assertNotEq(attestationUid, bytes32(0), "Attestation should be created");
-        assertNotEq(escrowUid, bytes32(0), "Escrow should be created");
-
-        // Verify attestation details
-        AttestationReferenceEscrowObligation.ObligationData memory escrowData =
-            abi.decode(eas.getAttestation(escrowUid).data, (AttestationReferenceEscrowObligation.ObligationData));
-
-        assertEq(escrowData.attestationUid, attestationUid, "Attestation UID should match");
-        assertEq(escrowData.arbiter, address(this), "Arbiter should match");
-        assertEq(keccak256(escrowData.demand), keccak256(demandData), "Demand data should match");
-        assertEq(escrowData.validationExpirationTime, 0, "Validation should not expire by default");
-        assertFalse(escrowData.validationRevocable, "Validation should not be revocable by default");
-    }
-
     function testGetSchema() public view {
         SchemaRecord memory schema = barterUtils.getSchema(testSchema);
         assertEq(schema.uid, testSchema, "Schema UID should match");
@@ -117,7 +75,7 @@ contract AttestationBarterUtilsTest is Test {
         // to access the exposed function in a test contract
 
         // Deploy a test contract that exposes onAttest
-        AttestationBarterUtilsHarness harness = new AttestationBarterUtilsHarness(eas, schemaRegistry, escrowContract);
+        AttestationBarterUtilsHarness harness = new AttestationBarterUtilsHarness(eas, schemaRegistry);
 
         bool result = harness.exposedOnAttest(mockAttestation, 0);
         assertTrue(result, "onAttest should return true");
@@ -129,7 +87,7 @@ contract AttestationBarterUtilsTest is Test {
         // The actual contents don't matter since onRevoke returns true unconditionally
 
         // Deploy a test contract that exposes onRevoke
-        AttestationBarterUtilsHarness harness = new AttestationBarterUtilsHarness(eas, schemaRegistry, escrowContract);
+        AttestationBarterUtilsHarness harness = new AttestationBarterUtilsHarness(eas, schemaRegistry);
 
         bool result = harness.exposedOnRevoke(mockAttestation, 0);
         assertTrue(result, "onRevoke should return true");
@@ -138,9 +96,7 @@ contract AttestationBarterUtilsTest is Test {
 
 // Helper contract to test internal functions
 contract AttestationBarterUtilsHarness is AttestationBarterUtils {
-    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, AttestationReferenceEscrowObligation _escrowContract)
-        AttestationBarterUtils(_eas, _schemaRegistry, _escrowContract)
-    {}
+    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry) AttestationBarterUtils(_eas, _schemaRegistry) {}
 
     function exposedOnAttest(Attestation calldata attestation, uint256 value) external pure returns (bool) {
         return onAttest(attestation, value);

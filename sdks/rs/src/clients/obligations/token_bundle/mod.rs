@@ -129,16 +129,10 @@ macro_rules! impl_token_bundle_escrow_obligation {
 impl_token_bundle_payment_obligation!(
     contracts::obligations::TokenBundlePaymentObligation::ObligationData
 );
-impl_token_bundle_payment_obligation!(
-    contracts::utils::token_bundle::TokenBundlePaymentObligation::ObligationData
-);
 impl_token_bundle_escrow_obligation!(
     contracts::obligations::escrow::default_escrow::TokenBundleEscrowObligation::ObligationData
 );
 impl_token_bundle_escrow_obligation!(contracts::obligations::escrow::unconditional::UnconditionalTokenBundleEscrowObligation::ObligationData);
-impl_token_bundle_escrow_obligation!(
-    contracts::utils::token_bundle::TokenBundleEscrowObligation::ObligationData
-);
 
 // --- ABI conversions for TokenBundle obligation types ---
 impl_abi_conversions!(contracts::obligations::TokenBundlePaymentObligation::ObligationData);
@@ -248,7 +242,7 @@ impl TokenBundleModule {
     ///
     /// # Example
     /// ```rust,ignore
-    /// client.token_bundle().barter().buy_bundle_for_bundle(&bid, &ask, expiration).await?;
+    /// let escrow = client.token_bundle().escrow().default().create(&bid, &demand, expiration).await?;
     /// client.token_bundle().barter().pay_bundle_for_bundle(buy_attestation).await?;
     /// ```
     pub fn barter(&self) -> barter_utils::BarterUtils<'_> {
@@ -292,7 +286,7 @@ mod tests {
     use std::time::{SystemTime, UNIX_EPOCH};
 
     use alloy::{
-        primitives::{FixedBytes, U256},
+        primitives::{Address, FixedBytes, U256},
         providers::ext::AnvilApi as _,
         sol_types::SolValue as _,
     };
@@ -309,6 +303,19 @@ mod tests {
         },
         utils::setup_test_environment,
     };
+
+    fn bundle_payment_demand(
+        payment: &TokenBundleData,
+        payee: Address,
+        arbiter: Address,
+    ) -> ArbiterData {
+        let demand: TokenBundlePaymentObligation::ObligationData = (payment, payee).into();
+
+        ArbiterData {
+            arbiter,
+            demand: demand.abi_encode().into(),
+        }
+    }
 
     // Helper function to create a token bundle for Alice
     fn create_alice_bundle(test: &crate::utils::TestContext) -> eyre::Result<TokenBundleData> {
@@ -443,10 +450,10 @@ mod tests {
             .call()
             .await?;
 
-        // Alice approves her tokens for barter
+        // Alice approves her tokens for escrow
         test.alice_client
             .token_bundle()
-            .approve(&alice_bundle, ApprovalPurpose::BarterUtils)
+            .approve(&alice_bundle, ApprovalPurpose::Escrow)
             .await?;
 
         // Set expiration time to 1 day from now
@@ -456,8 +463,17 @@ mod tests {
         let receipt = test
             .alice_client
             .token_bundle()
-            .barter()
-            .buy_bundle_for_bundle(&alice_bundle, &bob_bundle, expiration)
+            .escrow()
+            .default()
+            .create(
+                &alice_bundle,
+                &bundle_payment_demand(
+                    &bob_bundle,
+                    test.alice.address(),
+                    test.addresses.token_bundle_addresses.payment_obligation,
+                ),
+                expiration,
+            )
             .await?;
 
         // Verify attestation was created
@@ -748,18 +764,27 @@ mod tests {
         // Set a short expiration (60 seconds from now)
         let short_expiration = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() + 60;
 
-        // Alice approves her tokens for barter
+        // Alice approves her tokens for escrow
         test.alice_client
             .token_bundle()
-            .approve(&alice_bundle, ApprovalPurpose::BarterUtils)
+            .approve(&alice_bundle, ApprovalPurpose::Escrow)
             .await?;
 
         // Alice creates a buy order with a short expiration
         let buy_receipt = test
             .alice_client
             .token_bundle()
-            .barter()
-            .buy_bundle_for_bundle(&alice_bundle, &bob_bundle, short_expiration)
+            .escrow()
+            .default()
+            .create(
+                &alice_bundle,
+                &bundle_payment_demand(
+                    &bob_bundle,
+                    test.alice.address(),
+                    test.addresses.token_bundle_addresses.payment_obligation,
+                ),
+                short_expiration,
+            )
             .await?;
 
         let buy_attestation = DefaultAlkahestClient::get_attested_event(buy_receipt)?.uid;

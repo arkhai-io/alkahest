@@ -7,7 +7,6 @@ use alloy::rpc::types::TransactionReceipt;
 
 use crate::contracts;
 use crate::contracts::IEAS::{Attestation, AttestationRequest};
-use crate::types::ArbiterData;
 
 use super::AttestationModule;
 
@@ -67,34 +66,6 @@ impl<'a> Util<'a> {
 
         let receipt = eas_contract
             .attest(attestation)
-            .send()
-            .await?
-            .get_receipt()
-            .await?;
-
-        Ok(receipt)
-    }
-
-    /// Creates an attestation and immediately escrows it in a single transaction.
-    /// This is a convenience function that combines attest and create_escrow.
-    pub async fn attest_and_create_escrow(
-        &self,
-        attestation: AttestationRequest,
-        demand: &ArbiterData,
-        expiration: u64,
-    ) -> eyre::Result<TransactionReceipt> {
-        let barter_utils_contract = contracts::utils::AttestationBarterUtils::new(
-            self.module.addresses.barter_utils,
-            &self.module.wallet_provider,
-        );
-
-        let receipt = barter_utils_contract
-            .attestAndCreateEscrow(
-                attestation.into(),
-                demand.arbiter,
-                demand.demand.clone(),
-                expiration,
-            )
             .send()
             .await?
             .get_receipt()

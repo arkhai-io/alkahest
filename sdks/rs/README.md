@@ -48,20 +48,21 @@ async fn main() -> eyre::Result<()> {
     let usdc = address!("036CbD53842c5426634e7929541eC2318f3dCF7e");
     let eurc = address!("808456652fdb597867f38412077A9182bf77359F");
 
-    // Alice: approve barter utils and deposit 10 USDC, demanding 10 EURC
+    // Alice: approve the escrow contract and deposit 10 USDC, demanding 10 EURC
     alice_client.erc20().util().approve(
         &Erc20Data { address: usdc, value: U256::from(10) },
-        alkahest_rs::types::ApprovalPurpose::BarterUtils,
+        alkahest_rs::types::ApprovalPurpose::Escrow,
     ).await?;
 
-    let receipt = alice_client.erc20().barter().buy_erc20_for_erc20(
+    let eurc_payment_demand = /* encode ERC20 payment demand for 10 EURC */;
+    let receipt = alice_client.erc20().escrow().default().create(
         &Erc20Data { address: usdc, value: U256::from(10) },
-        &Erc20Data { address: eurc, value: U256::from(10) },
+        &eurc_payment_demand,
         0, // no expiration
     ).await?;
     let escrow = DefaultAlkahestClient::get_attested_event(receipt)?;
 
-    // Bob: approve barter utils and fulfill the escrow by paying 10 EURC
+    // Bob: approve barter utils and atomically pay 10 EURC + collect the escrow
     bob_client.erc20().util().approve(
         &Erc20Data { address: eurc, value: U256::from(10) },
         alkahest_rs::types::ApprovalPurpose::BarterUtils,

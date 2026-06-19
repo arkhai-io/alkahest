@@ -5,14 +5,10 @@ import {Attestation} from "@eas/Common.sol";
 import {IEAS, AttestationRequest, AttestationRequestData} from "@eas/IEAS.sol";
 import {ISchemaRegistry, SchemaRecord} from "@eas/ISchemaRegistry.sol";
 import {SchemaResolver} from "@eas/resolver/SchemaResolver.sol";
-import {
-    AttestationReferenceEscrowObligation
-} from "../../obligations/escrow/default/AttestationReferenceEscrowObligation.sol";
 
 contract AttestationBarterUtils is SchemaResolver {
     IEAS public immutable eas;
     ISchemaRegistry public immutable schemaRegistry;
-    AttestationReferenceEscrowObligation public immutable escrowContract;
 
     mapping(bytes32 => address) public schemaResolvers;
 
@@ -21,12 +17,9 @@ contract AttestationBarterUtils is SchemaResolver {
     error InvalidResolver();
     error InvalidSchema();
 
-    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, AttestationReferenceEscrowObligation _escrowContract)
-        SchemaResolver(_eas)
-    {
+    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry) SchemaResolver(_eas) {
         eas = _eas;
         schemaRegistry = _schemaRegistry;
-        escrowContract = _escrowContract;
     }
 
     function registerSchema(string calldata schema, SchemaResolver resolver, bool revocable)
@@ -60,28 +53,6 @@ contract AttestationBarterUtils is SchemaResolver {
                 })
             })
         );
-    }
-
-    function attestAndCreateEscrow(
-        AttestationRequest calldata attestationRequest,
-        address arbiter,
-        bytes calldata demand,
-        uint64 expiration
-    ) external returns (bytes32 attestationUid, bytes32 escrowUid) {
-        // First create the attestation
-        attestationUid = eas.attest(attestationRequest);
-
-        // Then create the escrow obligation
-        AttestationReferenceEscrowObligation.ObligationData memory escrowData =
-            AttestationReferenceEscrowObligation.ObligationData({
-                attestationUid: attestationUid,
-                arbiter: arbiter,
-                demand: demand,
-                validationExpirationTime: 0,
-                validationRevocable: false
-            });
-
-        escrowUid = escrowContract.doObligation(escrowData, expiration);
     }
 
     function onAttest(

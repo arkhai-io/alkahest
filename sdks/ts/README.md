@@ -33,7 +33,7 @@ const client = makeClient(
 
 ### Trade ERC20 for ERC20
 
-Uses barter utils to combine escrow creation and payment fulfillment into simple calls.
+Uses escrow clients to create escrows, and barter utils to settle compatible escrows atomically.
 
 ```ts
 import { parseUnits } from "viem";
@@ -41,14 +41,10 @@ import { parseUnits } from "viem";
 const usdc = "0x036CbD53842c5426634e7929541eC2318f3dCF7e" as const;
 const eurc = "0x808456652fdb597867f38412077A9182bf77359F" as const;
 
-// Alice: approve barter utils and deposit 10 USDC into escrow, demanding 10 EURC
-await clientAlice.erc20.util.approve(
+// Alice: approve escrow and deposit 10 USDC, demanding 10 EURC
+const escrow = await clientAlice.erc20.escrow.default.approveAndCreate(
   { address: usdc, value: parseUnits("10", 6) },
-  "barter",
-);
-const escrow = await clientAlice.erc20.barter.buyErc20ForErc20(
-  { address: usdc, value: parseUnits("10", 6) },
-  { address: eurc, value: parseUnits("10", 6) },
+  { arbiter: erc20PaymentAddress, demand: encodedErc20PaymentDemand },
   0n, // no expiration
 );
 

@@ -486,12 +486,10 @@ async fn build_shared_env() -> eyre::Result<SharedTestEnv> {
     .await?;
 
     // Deploy barter utils
-    // Note: AttestationBarterUtils uses AttestationReferenceEscrowObligation (V2)
     let attestation_barter_utils = AttestationBarterUtils::deploy(
         &god_provider,
         eas.address().clone(),
         schema_registry.address().clone(),
-        attestation_reference_escrow_obligation.address().clone(),
     )
     .await?;
     let bundle_barter_utils = TokenBundleBarterUtils::deploy(

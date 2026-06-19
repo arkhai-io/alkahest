@@ -16,7 +16,6 @@ use crate::addresses::BASE_SEPOLIA_ADDRESSES;
 use crate::contracts::{
     self, IEAS, obligations::escrow::default_escrow::AttestationEscrowObligation,
     obligations::escrow::unconditional::UnconditionalAttestationEscrowObligation,
-    utils::AttestationBarterUtils,
 };
 use crate::extensions::{AlkahestExtension, ContractModule};
 use crate::impl_abi_conversions;
@@ -52,7 +51,6 @@ macro_rules! impl_attestation_request {
 
 impl_attestation_request!(AttestationEscrowObligation);
 impl_attestation_request!(UnconditionalAttestationEscrowObligation);
-impl_attestation_request!(AttestationBarterUtils);
 
 // --- ABI conversions for Attestation obligation types ---
 impl_abi_conversions!(
@@ -951,80 +949,6 @@ mod tests {
             escrow_attestation.revocationTime > 0u64.into(),
             "Escrow attestation should be revoked"
         );
-
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn test_attest_and_create_escrow() -> eyre::Result<()> {
-        // Setup test environment
-        let test = setup_test_environment().await?;
-
-        sol! {
-            struct TestStruct {
-                string value;
-            }
-        }
-
-        // Register a schema
-        let schema_id = register_test_schema(
-            &test,
-            format!(
-                "string testData{}",
-                SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs()
-            ),
-        )
-        .await?;
-
-        // Create attestation request
-        let expiration = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() + 86400; // 1 day
-        let attestation_request = IEAS::AttestationRequest {
-            schema: schema_id,
-            data: IEAS::AttestationRequestData {
-                recipient: test.bob.address(),
-                expirationTime: expiration.into(),
-                revocable: true,
-                refUID: FixedBytes::<32>::default(),
-                data: TestStruct {
-                    value: "test attestation data".to_string(),
-                }
-                .abi_encode()
-                .into(),
-                value: U256::ZERO,
-            },
-        };
-
-        // Create demand data
-        let arbiter = test.addresses.arbiters_addresses.trivial_arbiter;
-        let demand = TestStruct {
-            value: "test demand".to_string(),
-        }
-        .abi_encode()
-        .into();
-        let demand_data = ArbiterData { arbiter, demand };
-
-        // Create escrow expiration
-        let escrow_expiration = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() + 2 * 86400; // 2 days
-
-        // Attest and create escrow in one step using new API
-        let receipt = test
-            .alice_client
-            .attestation()
-            .util()
-            .attest_and_create_escrow(attestation_request, &demand_data, escrow_expiration)
-            .await?;
-
-        // This function creates two attestations - one for the attestation and one for the escrow
-
-        let attested_events = receipt
-            .inner
-            .logs()
-            .iter()
-            .filter(|log| log.topic0() == Some(&contracts::IEAS::Attested::SIGNATURE_HASH))
-            .map(|log| log.log_decode::<contracts::IEAS::Attested>())
-            .collect::<Vec<_>>();
-
-        assert_eq!(attested_events.len(), 2, "2 attestations should be created");
 
         Ok(())
     }

@@ -695,9 +695,9 @@ alkahest --private-key 0xALICE_KEY escrow reclaim \
 
 ## Utility contracts and SDK functions
 
-There are utility contracts that provide a convenient interface for doing token trades atomically, and SDKs in TypeScript, Rust, and Python that wrap these. The SDKs additionally have functions that generate ERC-20 permits to enable easy approval and escrow/payment in one transaction.
+There are utility contracts that provide a convenient interface for settling token trades atomically, and SDKs in TypeScript, Rust, and Python that wrap these. Create escrows through the token escrow clients or contracts, then use BarterUtils to fulfill compatible escrows in one transaction.
 
-The functions to escrow one type of token, demanding any other type (buyYforX), and to fulfill any type of escrow demanding that token type (payXforY), are available in \[TokenType]BarterUtils.sol, or the corresponding barter module of each SDK (e.g. `client.erc20.barter`, `client.tokenBundle.barter`...). Available token types are native tokens (ETH), ERC-20, ERC-721, ERC-1155, and bundles of all of these together.
+The functions to fulfill any type of escrow demanding a token type (`payXforY`) are available in \[TokenType]BarterUtils.sol, or the corresponding barter module of each SDK (e.g. `client.erc20.barter`, `client.tokenBundle.barter`...). Available token types are native tokens (ETH), ERC-20, ERC-721, ERC-1155, and bundles of all of these together.
 
 For ERC-20 tokens, `permit_and_*` functions combine approval and action in a single gasless step. For escrow and payment modules, `approve_and_create` and `approve_and_pay` functions combine approval and action in two transactions but a single SDK call.
 
@@ -705,13 +705,15 @@ For ERC-20 tokens, `permit_and_*` functions combine approval and action in a sin
 <TabItem value="solidity" label="Solidity">
 
 ```solidity
-// Alice: Create escrow offering ERC-20 for ERC-721 using barter utils
-IERC20(usdcToken).approve(address(erc20BarterUtils), 1000e6);
-bytes32 escrowUid = erc20BarterUtils.buyErc721WithErc20(
-    usdcToken,      // bid token
-    1000e6,         // bid amount
-    erc721Token,    // ask token
-    42,             // ask token ID
+// Alice: Create escrow offering ERC-20 for ERC-721 through the escrow contract
+IERC20(usdcToken).approve(address(erc20Escrow), 1000e6);
+bytes32 escrowUid = erc20Escrow.doObligation(
+    ERC20EscrowObligation.ObligationData({
+        token: usdcToken,
+        amount: 1000e6,
+        arbiter: address(erc721Payment),
+        demand: abi.encode(erc721Token, uint256(42), alice)
+    }),
     expiration
 );
 
@@ -719,22 +721,18 @@ bytes32 escrowUid = erc20BarterUtils.buyErc721WithErc20(
 IERC721(erc721Token).approve(address(erc721BarterUtils), 42);
 bytes32 paymentUid = erc721BarterUtils.payErc721ForErc20(escrowUid);
 
-// Or use permit for gasless approval (ERC-20 only)
-bytes32 escrowUid = erc20BarterUtils.permitAndBuyErc721WithErc20(
-    usdcToken, 1000e6, erc721Token, 42, expiration,
-    deadline, v, r, s  // permit signature
-);
+// ERC-20 permit settlement remains available when the fulfiller pays with ERC-20.
 ```
 
 </TabItem>
 <TabItem value="typescript" label="TypeScript">
 
 ```typescript
-// Alice: Create escrow offering ERC-20 for ERC-721 (using permit for gasless approval)
-const { hash, attested } = await aliceClient.erc20.barter.permitAndBuyErc721WithErc20(
-  { address: usdcToken, value: 1000000000n }, // bid
-  { address: erc721Token, id: 42n }, // ask
-  0n, // no expiration
+// Alice: Create escrow offering ERC-20 for ERC-721
+const { hash, attested } = await aliceClient.erc20.escrow.default.approveAndCreate(
+  { address: usdcToken, value: 1000000000n },
+  { arbiter: erc721PaymentAddress, demand: encodedErc721PaymentDemand },
+  0n,
 );
 
 // Bob: Approve and fulfill escrow offering ERC-721 for ERC-20
@@ -753,7 +751,7 @@ const escrow = await aliceClient.erc20.escrow.default.approveAndCreate(
 <TabItem value="rust" label="Rust">
 
 ```rust
-// Alice: Create escrow offering ERC-20 for ERC-721 (using permit for gasless approval)
+// Alice: Create escrow offering ERC-20 for ERC-721
 let bid = Erc20Data {
     address: usdc_token,
     value: U256::from(1000000000),
@@ -765,8 +763,9 @@ let ask = Erc721Data {
 
 let escrow_receipt = alice_client
     .erc20()
-    .barter()
-    .permit_and_buy_erc721_for_erc20(&bid, &ask, 0)
+    .escrow()
+    .default()
+    .approve_and_create(&bid, &demand, 0)
     .await?;
 let escrow_uid = DefaultAlkahestClient::get_attested_event(escrow_receipt)?.uid;
 
@@ -798,11 +797,11 @@ let escrow_receipt = alice_client
 <TabItem value="python" label="Python">
 
 ```python
-# Alice: Create escrow offering ERC-20 for ERC-721 (using permit for gasless approval)
+# Alice: Create escrow offering ERC-20 for ERC-721
 bid = {"address": usdc_token, "value": 1000000000}
 ask = {"address": erc721_token, "id": 42}
 
-escrow = await alice_client.erc20.barter.permit_and_buy_erc721_for_erc20(bid, ask, 0)
+escrow = await alice_client.erc20.escrow.default.approve_and_create(bid, demand, 0)
 
 # Bob: Approve and fulfill escrow offering ERC-721 for ERC-20
 await bob_client.erc721.util.approve(ask, "barter")
@@ -812,8 +811,8 @@ payment = await bob_client.erc721.barter.pay_erc721_for_erc20(escrow["log"]["uid
 bid = {"address": usdc_token, "value": 1000}
 ask = {"address": eurc_token, "value": 900}
 
-# Alice creates escrow (permit handles approval)
-escrow = await alice_client.erc20.barter.permit_and_buy_erc20_for_erc20(bid, ask, 0)
+# Alice creates escrow
+escrow = await alice_client.erc20.escrow.default.approve_and_create(bid, demand, 0)
 
 # Bob fulfills escrow (permit handles approval)
 payment = await bob_client.erc20.barter.permit_and_pay_erc20_for_erc20(escrow["log"]["uid"])

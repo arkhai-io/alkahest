@@ -13,7 +13,6 @@ use crate::addresses::BASE_SEPOLIA_ADDRESSES;
 use crate::contracts;
 use crate::extensions::{AlkahestExtension, ContractModule};
 use crate::impl_abi_conversions;
-use crate::impl_token_bundle_payment_obligation;
 use crate::types::{ApprovalPurpose, Erc721Data, ProviderContext, SharedWalletProvider};
 
 // --- ABI conversions for ERC721 obligation types ---
@@ -22,11 +21,6 @@ impl_abi_conversions!(
     contracts::obligations::escrow::default_escrow::ERC721EscrowObligation::ObligationData
 );
 impl_abi_conversions!(contracts::obligations::escrow::unconditional::UnconditionalERC721EscrowObligation::ObligationData);
-
-// --- TokenBundle conversions for ERC721 barter utils ---
-impl_token_bundle_payment_obligation!(
-    contracts::utils::erc721::TokenBundlePaymentObligation::ObligationData
-);
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Erc721Addresses {
@@ -156,13 +150,17 @@ mod tests {
     use std::time::{SystemTime, UNIX_EPOCH};
 
     use alloy::{
-        primitives::{Bytes, FixedBytes, U256},
+        primitives::{Address, Bytes, FixedBytes, U256},
         providers::ext::AnvilApi as _,
         sol_types::SolValue as _,
     };
 
     use crate::{
         DefaultAlkahestClient,
+        contracts::obligations::{
+            ERC20PaymentObligation, ERC721PaymentObligation, ERC1155PaymentObligation,
+            TokenBundlePaymentObligation,
+        },
         extensions::{HasErc20, HasErc721, HasErc1155, HasTokenBundle},
         fixtures::{MockERC20Permit, MockERC721, MockERC1155},
         types::{
@@ -170,6 +168,67 @@ mod tests {
         },
         utils::setup_test_environment,
     };
+
+    fn erc20_payment_demand(payment: &Erc20Data, payee: Address, arbiter: Address) -> ArbiterData {
+        ArbiterData {
+            arbiter,
+            demand: ERC20PaymentObligation::ObligationData {
+                token: payment.address,
+                amount: payment.value,
+                payee,
+            }
+            .abi_encode()
+            .into(),
+        }
+    }
+
+    fn erc721_payment_demand(
+        payment: &Erc721Data,
+        payee: Address,
+        arbiter: Address,
+    ) -> ArbiterData {
+        ArbiterData {
+            arbiter,
+            demand: ERC721PaymentObligation::ObligationData {
+                token: payment.address,
+                tokenId: payment.id,
+                payee,
+            }
+            .abi_encode()
+            .into(),
+        }
+    }
+
+    fn erc1155_payment_demand(
+        payment: &Erc1155Data,
+        payee: Address,
+        arbiter: Address,
+    ) -> ArbiterData {
+        ArbiterData {
+            arbiter,
+            demand: ERC1155PaymentObligation::ObligationData {
+                token: payment.address,
+                tokenId: payment.id,
+                amount: payment.value,
+                payee,
+            }
+            .abi_encode()
+            .into(),
+        }
+    }
+
+    fn bundle_payment_demand(
+        payment: &TokenBundleData,
+        payee: Address,
+        arbiter: Address,
+    ) -> ArbiterData {
+        let demand: TokenBundlePaymentObligation::ObligationData = (payment, payee).into();
+
+        ArbiterData {
+            arbiter,
+            demand: demand.abi_encode().into(),
+        }
+    }
 
     #[tokio::test]
     async fn test_decode_escrow_obligation() -> eyre::Result<()> {
@@ -524,15 +583,24 @@ mod tests {
         // alice approves token for barter
         test.alice_client
             .erc721()
-            .approve(&bid, ApprovalPurpose::BarterUtils)
+            .approve(&bid, ApprovalPurpose::Escrow)
             .await?;
 
         // alice makes escrow
         let receipt = test
             .alice_client
             .erc721()
-            .barter()
-            .buy_erc721_for_erc721(&bid, &ask, 0)
+            .escrow()
+            .default()
+            .create(
+                &bid,
+                &erc721_payment_demand(
+                    &ask,
+                    test.alice.address(),
+                    test.addresses.erc721_addresses.payment_obligation,
+                ),
+                0,
+            )
             .await?;
 
         // verify escrow
@@ -585,14 +653,23 @@ mod tests {
         // alice approves token for barter and creates buy attestation
         test.alice_client
             .erc721()
-            .approve(&bid, ApprovalPurpose::BarterUtils)
+            .approve(&bid, ApprovalPurpose::Escrow)
             .await?;
 
         let buy_receipt = test
             .alice_client
             .erc721()
-            .barter()
-            .buy_erc721_for_erc721(&bid, &ask, 0)
+            .escrow()
+            .default()
+            .create(
+                &bid,
+                &erc721_payment_demand(
+                    &ask,
+                    test.alice.address(),
+                    test.addresses.erc721_addresses.payment_obligation,
+                ),
+                0,
+            )
             .await?;
 
         let buy_attestation = DefaultAlkahestClient::get_attested_event(buy_receipt)?.uid;
@@ -657,7 +734,7 @@ mod tests {
         // alice approves token for barter
         test.alice_client
             .erc721()
-            .approve(&bid, ApprovalPurpose::BarterUtils)
+            .approve(&bid, ApprovalPurpose::Escrow)
             .await?;
 
         // alice makes escrow with a short expiration
@@ -665,8 +742,17 @@ mod tests {
         let receipt = test
             .alice_client
             .erc721()
-            .barter()
-            .buy_erc721_for_erc721(&bid, &ask, expiration as u64 + 1)
+            .escrow()
+            .default()
+            .create(
+                &bid,
+                &erc721_payment_demand(
+                    &ask,
+                    test.alice.address(),
+                    test.addresses.erc721_addresses.payment_obligation,
+                ),
+                expiration as u64 + 1,
+            )
             .await?;
 
         let buy_attestation = DefaultAlkahestClient::get_attested_event(receipt)?.uid;
@@ -722,15 +808,24 @@ mod tests {
         // alice approves token for barter
         test.alice_client
             .erc721()
-            .approve(&bid, ApprovalPurpose::BarterUtils)
+            .approve(&bid, ApprovalPurpose::Escrow)
             .await?;
 
         // alice creates purchase offer
         let receipt = test
             .alice_client
             .erc721()
-            .barter()
-            .buy_erc20_with_erc721(&bid, &ask, 0)
+            .escrow()
+            .default()
+            .create(
+                &bid,
+                &erc20_payment_demand(
+                    &ask,
+                    test.alice.address(),
+                    test.addresses.erc20_addresses.payment_obligation,
+                ),
+                0,
+            )
             .await?;
 
         // Verify escrow happened
@@ -776,15 +871,24 @@ mod tests {
         // alice approves token for barter
         test.alice_client
             .erc721()
-            .approve(&bid, ApprovalPurpose::BarterUtils)
+            .approve(&bid, ApprovalPurpose::Escrow)
             .await?;
 
         // alice creates purchase offer
         let receipt = test
             .alice_client
             .erc721()
-            .barter()
-            .buy_erc1155_with_erc721(&bid, &ask, 0)
+            .escrow()
+            .default()
+            .create(
+                &bid,
+                &erc1155_payment_demand(
+                    &ask,
+                    test.alice.address(),
+                    test.addresses.erc1155_addresses.payment_obligation,
+                ),
+                0,
+            )
             .await?;
 
         // Verify escrow happened
@@ -843,15 +947,24 @@ mod tests {
         // alice approves token for barter
         test.alice_client
             .erc721()
-            .approve(&bid, ApprovalPurpose::BarterUtils)
+            .approve(&bid, ApprovalPurpose::Escrow)
             .await?;
 
         // alice creates purchase offer
         let receipt = test
             .alice_client
             .erc721()
-            .barter()
-            .buy_bundle_with_erc721(&bid, &bundle, 0)
+            .escrow()
+            .default()
+            .create(
+                &bid,
+                &bundle_payment_demand(
+                    &bundle,
+                    test.alice.address(),
+                    test.addresses.token_bundle_addresses.payment_obligation,
+                ),
+                0,
+            )
             .await?;
 
         // Verify escrow happened
@@ -907,14 +1020,23 @@ mod tests {
         // bob approves tokens for barter and creates buy attestation
         test.bob_client
             .erc20()
-            .approve(&bid, ApprovalPurpose::BarterUtils)
+            .approve(&bid, ApprovalPurpose::Escrow)
             .await?;
 
         let buy_receipt = test
             .bob_client
             .erc20()
-            .barter()
-            .buy_erc721_for_erc20(&bid, &ask, 0)
+            .escrow()
+            .default()
+            .create(
+                &bid,
+                &erc721_payment_demand(
+                    &ask,
+                    test.bob.address(),
+                    test.addresses.erc721_addresses.payment_obligation,
+                ),
+                0,
+            )
             .await?;
 
         let buy_attestation = DefaultAlkahestClient::get_attested_event(buy_receipt)?.uid;
@@ -992,14 +1114,23 @@ mod tests {
         // bob approves tokens for barter and creates buy attestation
         test.bob_client
             .erc1155()
-            .approve_all(test.mock_addresses.erc1155_a, ApprovalPurpose::BarterUtils)
+            .approve_all(test.mock_addresses.erc1155_a, ApprovalPurpose::Escrow)
             .await?;
 
         let buy_receipt = test
             .bob_client
             .erc1155()
-            .barter()
-            .buy_erc721_with_erc1155(&bid, &ask, 0)
+            .escrow()
+            .default()
+            .create(
+                &bid,
+                &erc721_payment_demand(
+                    &ask,
+                    test.bob.address(),
+                    test.addresses.erc721_addresses.payment_obligation,
+                ),
+                0,
+            )
             .await?;
 
         let buy_attestation = DefaultAlkahestClient::get_attested_event(buy_receipt)?.uid;

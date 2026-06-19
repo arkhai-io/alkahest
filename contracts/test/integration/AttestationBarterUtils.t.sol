@@ -3,17 +3,12 @@ pragma solidity ^0.8.26;
 
 import "forge-std/Test.sol";
 import {AttestationBarterUtils} from "@src/utils/barter/AttestationBarterUtils.sol";
-import {
-    AttestationReferenceEscrowObligation
-} from "@src/obligations/escrow/default/AttestationReferenceEscrowObligation.sol";
-import {IEAS, AttestationRequest, AttestationRequestData} from "@eas/IEAS.sol";
-import {ISchemaRegistry, SchemaRecord} from "@eas/ISchemaRegistry.sol";
-import {SchemaResolver} from "@eas/resolver/SchemaResolver.sol";
+import {IEAS} from "@eas/IEAS.sol";
+import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {EASDeployer} from "@test/utils/EASDeployer.sol";
 
 contract AttestationBarterUtilsIntegrationTest is Test {
     AttestationBarterUtils public barterUtils;
-    AttestationReferenceEscrowObligation public escrowContract;
     IEAS public eas;
     ISchemaRegistry public schemaRegistry;
 
@@ -34,47 +29,18 @@ contract AttestationBarterUtilsIntegrationTest is Test {
         bob = vm.addr(BOB_PRIVATE_KEY);
 
         // Deploy contracts
-        escrowContract = new AttestationReferenceEscrowObligation(eas, schemaRegistry);
-        barterUtils = new AttestationBarterUtils(eas, schemaRegistry, escrowContract);
+        barterUtils = new AttestationBarterUtils(eas, schemaRegistry);
 
         // Register test schema
         testSchema = barterUtils.registerSchema(TEST_SCHEMA, barterUtils, true);
     }
 
-    function testAttestAndCreateEscrow() public {
-        bytes memory attestationData = abi.encode(true);
-        bytes memory demandData = abi.encode(false);
-
+    function testAttest() public {
         vm.prank(alice);
-        (bytes32 attestationUid, bytes32 escrowUid) = barterUtils.attestAndCreateEscrow(
-            AttestationRequest({
-                schema: testSchema,
-                data: AttestationRequestData({
-                    recipient: bob,
-                    expirationTime: uint64(block.timestamp + 1 days),
-                    revocable: false,
-                    refUID: 0,
-                    data: attestationData,
-                    value: 0
-                })
-            }),
-            address(this), // arbiter
-            demandData,
-            uint64(block.timestamp + 2 days) // escrow expiration
-        );
+        bytes32 attestationUid =
+            barterUtils.attest(testSchema, bob, uint64(block.timestamp + 1 days), true, bytes32(0), abi.encode(true));
 
-        // Verify both UIDs are valid
         assertNotEq(attestationUid, bytes32(0), "Attestation should be created");
-        assertNotEq(escrowUid, bytes32(0), "Escrow should be created");
-
-        // Verify attestation details
-        AttestationReferenceEscrowObligation.ObligationData memory escrowData =
-            abi.decode(eas.getAttestation(escrowUid).data, (AttestationReferenceEscrowObligation.ObligationData));
-
-        assertEq(escrowData.attestationUid, attestationUid, "Attestation UID should match");
-        assertEq(escrowData.arbiter, address(this), "Arbiter should match");
-        assertEq(keccak256(escrowData.demand), keccak256(demandData), "Demand data should match");
-        assertEq(escrowData.validationExpirationTime, 0, "Validation should not expire by default");
-        assertFalse(escrowData.validationRevocable, "Validation should not be revocable by default");
+        assertEq(eas.getAttestation(attestationUid).recipient, bob, "Recipient should match");
     }
 }

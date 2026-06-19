@@ -212,11 +212,11 @@ contract TokenBundleBarterUtilsTest is Test, IERC1155Receiver {
 
         // Alice creates buy order with manual approvals
         vm.startPrank(alice);
-        erc20TokenA.approve(address(barterUtils), bidBundle.erc20Amounts[0]);
-        askErc721TokenA.approve(address(barterUtils), bidBundle.erc721TokenIds[0]);
-        askErc1155TokenA.setApprovalForAll(address(barterUtils), true);
+        erc20TokenA.approve(address(escrowObligation), bidBundle.erc20Amounts[0]);
+        askErc721TokenA.approve(address(escrowObligation), bidBundle.erc721TokenIds[0]);
+        askErc1155TokenA.setApprovalForAll(address(escrowObligation), true);
 
-        bytes32 buyAttestation = barterUtils.buyBundleForBundle(bidBundle, askBundle, uint64(block.timestamp + 1 days));
+        bytes32 buyAttestation = escrowObligation.doObligationFor(bidBundle, uint64(block.timestamp + 1 days), alice);
         vm.stopPrank();
 
         // Verify escrow state after Alice's deposit
@@ -301,53 +301,6 @@ contract TokenBundleBarterUtilsTest is Test, IERC1155Receiver {
         );
     }
 
-    function test_RevertWhen_BundleTradeHasNoApprovals() public {
-        TokenBundleEscrowObligation.ObligationData memory bidBundle = _createBidBundle();
-        bidBundle.erc20Tokens[0] = address(erc20TokenA);
-        bidBundle.erc721Tokens[0] = address(askErc721TokenA);
-        bidBundle.erc1155Tokens[0] = address(askErc1155TokenA);
-
-        TokenBundlePaymentObligation.ObligationData memory askBundle = _createAskBundle();
-        askBundle.erc20Tokens[0] = address(erc20TokenB);
-        askBundle.erc721Tokens[0] = address(askErc721TokenB);
-        askBundle.erc1155Tokens[0] = address(askErc1155TokenB);
-        askBundle.payee = alice;
-
-        bidBundle.arbiter = address(paymentObligation);
-        bidBundle.demand = abi.encode(askBundle);
-
-        // Attempt to create buy order without approvals
-        vm.prank(alice);
-        vm.expectRevert();
-        barterUtils.buyBundleForBundle(bidBundle, askBundle, uint64(block.timestamp + 1 days));
-    }
-
-    function test_RevertWhen_BundleTradeHasInsufficientBalance() public {
-        TokenBundleEscrowObligation.ObligationData memory bidBundle = _createBidBundle();
-        bidBundle.erc20Tokens[0] = address(erc20TokenA);
-        bidBundle.erc721Tokens[0] = address(askErc721TokenA);
-        bidBundle.erc1155Tokens[0] = address(askErc1155TokenA);
-        bidBundle.erc20Amounts[0] = 1000000 * 10 ** 18; // Amount larger than balance
-
-        TokenBundlePaymentObligation.ObligationData memory askBundle = _createAskBundle();
-        askBundle.erc20Tokens[0] = address(erc20TokenB);
-        askBundle.erc721Tokens[0] = address(askErc721TokenB);
-        askBundle.erc1155Tokens[0] = address(askErc1155TokenB);
-        askBundle.payee = alice;
-
-        bidBundle.arbiter = address(paymentObligation);
-        bidBundle.demand = abi.encode(askBundle);
-
-        vm.startPrank(alice);
-        erc20TokenA.approve(address(barterUtils), bidBundle.erc20Amounts[0]);
-        askErc721TokenA.approve(address(barterUtils), bidBundle.erc721TokenIds[0]);
-        askErc1155TokenA.setApprovalForAll(address(barterUtils), true);
-
-        vm.expectRevert();
-        barterUtils.buyBundleForBundle(bidBundle, askBundle, uint64(block.timestamp + 1 days));
-        vm.stopPrank();
-    }
-
     function testBundleTradeWithPermits() public {
         // Setup bundles
         TokenBundleEscrowObligation.ObligationData memory bidBundle = _createBidBundle();
@@ -364,22 +317,13 @@ contract TokenBundleBarterUtilsTest is Test, IERC1155Receiver {
         bidBundle.arbiter = address(paymentObligation);
         bidBundle.demand = abi.encode(askBundle);
 
-        // Setup permits
-        TokenBundleBarterUtils.ERC20PermitSignature[] memory alicePermits =
-            new TokenBundleBarterUtils.ERC20PermitSignature[](1);
-        alicePermits[0] = _getERC20PermitSignature(
-            erc20TokenA, ALICE_PRIVATE_KEY, address(barterUtils), bidBundle.erc20Amounts[0], block.timestamp + 1
-        );
-
         // Alice creates buy order
         vm.startPrank(alice);
-        erc20TokenA.approve(address(barterUtils), bidBundle.erc20Amounts[0]);
-        askErc721TokenA.approve(address(barterUtils), bidBundle.erc721TokenIds[0]);
-        askErc1155TokenA.setApprovalForAll(address(barterUtils), true);
+        erc20TokenA.approve(address(escrowObligation), bidBundle.erc20Amounts[0]);
+        askErc721TokenA.approve(address(escrowObligation), bidBundle.erc721TokenIds[0]);
+        askErc1155TokenA.setApprovalForAll(address(escrowObligation), true);
 
-        bytes32 buyAttestation = barterUtils.permitAndEscrowBundleForBundle(
-            bidBundle, askBundle, uint64(block.timestamp + 1 days), alicePermits
-        );
+        bytes32 buyAttestation = escrowObligation.doObligationFor(bidBundle, uint64(block.timestamp + 1 days), alice);
         vm.stopPrank();
 
         // Setup Bob's permits

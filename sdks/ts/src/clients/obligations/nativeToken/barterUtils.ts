@@ -2,8 +2,7 @@ import { decodeAbiParameters, getAbiItem } from "viem";
 import { abi as easAbi } from "../../../contracts/IEAS";
 import { abi as nativeTokenEscrowAbi } from "../../../contracts/obligations/escrow/default/NativeTokenEscrowObligation";
 import { abi as nativeTokenBarterUtilsAbi } from "../../../contracts/utils/NativeTokenBarterUtils";
-import type { Erc20, Erc721, Erc1155, TokenBundle } from "../../../types";
-import { flattenTokenBundle, getAttestedEventFromTxHash, type ViemClient, writeContract } from "../../../utils";
+import { getAttestedEventFromTxHash, type ViemClient, writeContract } from "../../../utils";
 import type { NativeTokenAddresses } from "./index";
 
 const nativeEscrowDecodeFunction = getAbiItem({
@@ -22,20 +21,6 @@ export const makeNativeTokenBarterUtilsClient = (viemClient: ViemClient, address
     // =========================================================================
     // Native Token for Native Token
     // =========================================================================
-
-    buyNativeForNative: async (bidAmount: bigint, askAmount: bigint, expiration: bigint) => {
-      const hash = await viemClient.writeContract({
-        address: addresses.barterUtils,
-        abi: nativeTokenBarterUtilsAbi.abi,
-        functionName: "buyEthForEth",
-        args: [bidAmount, askAmount, expiration],
-        value: bidAmount,
-        chain: viemClient.chain,
-      });
-
-      const attested = await getAttestedEventFromTxHash(viemClient, hash);
-      return { hash, attested };
-    },
 
     payNativeForNative: async (buyAttestation: `0x${string}`) => {
       const buyAttestationData = await viemClient.readContract({
@@ -78,20 +63,6 @@ export const makeNativeTokenBarterUtilsClient = (viemClient: ViemClient, address
     // Native Token for ERC20
     // =========================================================================
 
-    buyErc20WithNative: async (bidAmount: bigint, ask: Erc20, expiration: bigint) => {
-      const hash = await viemClient.writeContract({
-        address: addresses.barterUtils,
-        abi: nativeTokenBarterUtilsAbi.abi,
-        functionName: "buyErc20WithEth",
-        args: [bidAmount, ask.address, ask.value, expiration],
-        value: bidAmount,
-        chain: viemClient.chain,
-      });
-
-      const attested = await getAttestedEventFromTxHash(viemClient, hash);
-      return { hash, attested };
-    },
-
     payNativeForErc20: async (buyAttestation: `0x${string}`) => {
       const buyAttestationData = await viemClient.readContract({
         address: addresses.eas,
@@ -132,20 +103,6 @@ export const makeNativeTokenBarterUtilsClient = (viemClient: ViemClient, address
     // =========================================================================
     // Native Token for ERC721
     // =========================================================================
-
-    buyErc721WithNative: async (bidAmount: bigint, ask: Erc721, expiration: bigint) => {
-      const hash = await viemClient.writeContract({
-        address: addresses.barterUtils,
-        abi: nativeTokenBarterUtilsAbi.abi,
-        functionName: "buyErc721WithEth",
-        args: [bidAmount, ask.address, ask.id, expiration],
-        value: bidAmount,
-        chain: viemClient.chain,
-      });
-
-      const attested = await getAttestedEventFromTxHash(viemClient, hash);
-      return { hash, attested };
-    },
 
     payNativeForErc721: async (buyAttestation: `0x${string}`) => {
       const buyAttestationData = await viemClient.readContract({
@@ -188,20 +145,6 @@ export const makeNativeTokenBarterUtilsClient = (viemClient: ViemClient, address
     // Native Token for ERC1155
     // =========================================================================
 
-    buyErc1155WithNative: async (bidAmount: bigint, ask: Erc1155, expiration: bigint) => {
-      const hash = await viemClient.writeContract({
-        address: addresses.barterUtils,
-        abi: nativeTokenBarterUtilsAbi.abi,
-        functionName: "buyErc1155WithEth",
-        args: [bidAmount, ask.address, ask.id, ask.value, expiration],
-        value: bidAmount,
-        chain: viemClient.chain,
-      });
-
-      const attested = await getAttestedEventFromTxHash(viemClient, hash);
-      return { hash, attested };
-    },
-
     payNativeForErc1155: async (buyAttestation: `0x${string}`) => {
       const buyAttestationData = await viemClient.readContract({
         address: addresses.eas,
@@ -242,20 +185,6 @@ export const makeNativeTokenBarterUtilsClient = (viemClient: ViemClient, address
     // =========================================================================
     // Native Token for Token Bundle
     // =========================================================================
-
-    buyBundleWithNative: async (bidAmount: bigint, ask: TokenBundle, payee: `0x${string}`, expiration: bigint) => {
-      const hash = await viemClient.writeContract({
-        address: addresses.barterUtils,
-        abi: nativeTokenBarterUtilsAbi.abi,
-        functionName: "buyBundleWithEth",
-        args: [bidAmount, { ...flattenTokenBundle(ask), payee }, expiration],
-        value: bidAmount,
-        chain: viemClient.chain,
-      });
-
-      const attested = await getAttestedEventFromTxHash(viemClient, hash);
-      return { hash, attested };
-    },
 
     payNativeForBundle: async (buyAttestation: `0x${string}`) => {
       const buyAttestationData = await viemClient.readContract({

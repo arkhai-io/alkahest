@@ -57,41 +57,5 @@ export const makeAttestationUtilClient = (viemClient: ViemClient, addresses: Att
       return { hash, attested };
     },
 
-    /**
-     * Creates an attestation and immediately escrows it in a single transaction.
-     * This is a convenience function that combines createAttestation and createEscrow.
-     *
-     * @param attestation - The attestation data to create and escrow
-     * @param escrow - The escrow parameters including arbiter, demand, and expiration
-     * @returns The transaction hash and attested data
-     */
-    attestAndCreateEscrow: async (
-      attestation: {
-        schema: `0x${string}`;
-        data: {
-          recipient: `0x${string}`;
-          expirationTime: bigint;
-          revocable: boolean;
-          refUID: `0x${string}`;
-          data: `0x${string}`;
-          value: bigint;
-        };
-      },
-      escrow: {
-        arbiter: `0x${string}`;
-        demand: `0x${string}`;
-        expirationTime: bigint;
-      },
-    ) => {
-      const hash = await writeContract(viemClient, {
-        address: addresses.barterUtils,
-        abi: attestationBarterUtilsAbi.abi,
-        functionName: "attestAndCreateEscrow",
-        args: [attestation, escrow.arbiter, escrow.demand, escrow.expirationTime],
-      });
-
-      const attested = await getAttestedEventFromTxHash(viemClient, hash);
-      return { hash, attested };
-    },
   };
 };

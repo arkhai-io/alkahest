@@ -136,14 +136,11 @@ client
 │   │   └── doObligation(encodedData, refUID?)
 │   └── barter
 │       ├── address
-│       ├── buyErc20ForErc20(bid: Erc20, ask: Erc20, expiration)
-│       ├── buyErc20ForNative(bid: Erc20, ethAmount, expiration)
-│       ├── buyNativeForErc20(ethAmount, ask: Erc20, expiration)
-│       ├── buyErc20ForErc721(bid: Erc20, ask: Erc721, expiration)
-│       ├── buyErc721ForErc20(bid: Erc721, ask: Erc20, expiration)
-│       ├── buyErc20ForErc1155(bid: Erc20, ask: Erc1155, expiration)
-│       ├── buyErc1155ForErc20(bid: Erc1155, ask: Erc20, expiration)
-│       └── ... (more cross-token combinations)
+│       ├── payErc20ForErc20(escrowUid)
+│       ├── permitAndPayErc20ForErc20(escrowUid)
+│       ├── payErc20ForErc721(escrowUid)
+│       ├── payErc721ForErc20(escrowUid)
+│       └── ... (more cross-token settlement combinations)
 │
 ├── erc721                                 // Same structure as erc20
 │   ├── util (.approve)

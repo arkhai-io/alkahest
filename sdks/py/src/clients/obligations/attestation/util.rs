@@ -9,7 +9,7 @@ use pyo3::{pyclass, pymethods, PyResult};
 use crate::{
     error_handling::{map_eyre_to_pyerr, map_parse_to_pyerr},
     get_attested_event,
-    types::{ArbiterData, AttestationRequest, AttestedLog, LogWithHash},
+    types::{AttestationRequest, AttestedLog, LogWithHash},
 };
 
 #[pyclass]
@@ -56,34 +56,6 @@ impl Util {
             let receipt = inner
                 .util()
                 .attest(attestation.try_into().map_err(map_eyre_to_pyerr)?)
-                .await
-                .map_err(map_eyre_to_pyerr)?;
-            Ok(LogWithHash::<AttestedLog> {
-                log: get_attested_event(receipt.clone())
-                    .map_err(map_eyre_to_pyerr)?
-                    .data
-                    .into(),
-                transaction_hash: receipt.transaction_hash.to_string(),
-            })
-        })
-    }
-
-    pub fn attest_and_create_escrow<'py>(
-        &self,
-        py: pyo3::Python<'py>,
-        attestation: AttestationRequest,
-        demand: ArbiterData,
-        expiration: u64,
-    ) -> PyResult<pyo3::Bound<'py, pyo3::PyAny>> {
-        let inner = self.inner.clone();
-        pyo3_async_runtimes::tokio::future_into_py(py, async move {
-            let receipt = inner
-                .util()
-                .attest_and_create_escrow(
-                    attestation.try_into().map_err(map_eyre_to_pyerr)?,
-                    &demand.try_into().map_err(map_eyre_to_pyerr)?,
-                    expiration,
-                )
                 .await
                 .map_err(map_eyre_to_pyerr)?;
             Ok(LogWithHash::<AttestedLog> {

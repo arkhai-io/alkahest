@@ -61,33 +61,6 @@ contract ERC20BarterUtils {
 
     // ============ ERC20 to ERC20 Functions ============
 
-    function permitAndBuyWithErc20(
-        address token,
-        uint256 amount,
-        address arbiter,
-        bytes memory demand,
-        uint64 expiration,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external returns (bytes32) {
-        IERC20Permit tokenC = IERC20Permit(token);
-        tokenC.permit(msg.sender, address(this), amount, deadline, v, r, s);
-
-        // Pull tokens from user to BarterUtils
-        IERC20(token).transferFrom(msg.sender, address(this), amount);
-
-        // Approve obligation contract to spend BarterUtils' tokens
-        IERC20(token).approve(address(erc20Escrow), amount);
-
-        return erc20Escrow.doObligationFor(
-            ERC20EscrowObligation.ObligationData({token: token, amount: amount, arbiter: arbiter, demand: demand}),
-            expiration,
-            msg.sender
-        );
-    }
-
     function permitAndPayWithErc20(
         address token,
         uint256 amount,
@@ -112,33 +85,6 @@ contract ERC20BarterUtils {
         );
     }
 
-    function _buyErc20ForErc20(
-        address bidToken,
-        uint256 bidAmount,
-        address askToken,
-        uint256 askAmount,
-        uint64 expiration
-    ) internal returns (bytes32) {
-        // Pull tokens from user to BarterUtils
-        IERC20(bidToken).transferFrom(msg.sender, address(this), bidAmount);
-
-        // Approve obligation contract to spend BarterUtils' tokens
-        IERC20(bidToken).approve(address(erc20Escrow), bidAmount);
-
-        return erc20Escrow.doObligationFor(
-            ERC20EscrowObligation.ObligationData({
-                token: bidToken,
-                amount: bidAmount,
-                arbiter: address(erc20Payment),
-                demand: abi.encode(
-                    ERC20PaymentObligation.ObligationData({token: askToken, amount: askAmount, payee: msg.sender})
-                )
-            }),
-            expiration,
-            msg.sender
-        );
-    }
-
     function _payErc20ForErc20(bytes32 buyAttestation, ERC20PaymentObligation.ObligationData memory demand)
         internal
         returns (bytes32)
@@ -159,22 +105,6 @@ contract ERC20BarterUtils {
         return sellAttestation;
     }
 
-    function permitAndBuyErc20ForErc20(
-        address bidToken,
-        uint256 bidAmount,
-        address askToken,
-        uint256 askAmount,
-        uint64 expiration,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external returns (bytes32) {
-        IERC20Permit bidTokenC = IERC20Permit(bidToken);
-        bidTokenC.permit(msg.sender, address(this), bidAmount, deadline, v, r, s);
-        return _buyErc20ForErc20(bidToken, bidAmount, askToken, askAmount, expiration);
-    }
-
     function permitAndPayErc20ForErc20(bytes32 buyAttestation, uint256 deadline, uint8 v, bytes32 r, bytes32 s)
         external
         returns (bytes32)
@@ -189,16 +119,6 @@ contract ERC20BarterUtils {
         askTokenC.permit(msg.sender, address(this), demand.amount, deadline, v, r, s);
 
         return _payErc20ForErc20(buyAttestation, demand);
-    }
-
-    function buyErc20ForErc20(
-        address bidToken,
-        uint256 bidAmount,
-        address askToken,
-        uint256 askAmount,
-        uint64 expiration
-    ) external returns (bytes32) {
-        return _buyErc20ForErc20(bidToken, bidAmount, askToken, askAmount, expiration);
     }
 
     function payErc20ForErc20(bytes32 buyAttestation) external returns (bytes32) {
@@ -233,33 +153,6 @@ contract ERC20BarterUtils {
 
     // ============ ERC20 to ERC721 Functions ============
 
-    function _buyErc721WithErc20(
-        address bidToken,
-        uint256 bidAmount,
-        address askToken,
-        uint256 askId,
-        uint64 expiration
-    ) internal returns (bytes32) {
-        // Pull tokens from user to BarterUtils
-        IERC20(bidToken).transferFrom(msg.sender, address(this), bidAmount);
-
-        // Approve obligation contract to spend BarterUtils' tokens
-        IERC20(bidToken).approve(address(erc20Escrow), bidAmount);
-
-        return erc20Escrow.doObligationFor(
-            ERC20EscrowObligation.ObligationData({
-                token: bidToken,
-                amount: bidAmount,
-                arbiter: address(erc721Payment),
-                demand: abi.encode(
-                    ERC721PaymentObligation.ObligationData({token: askToken, tokenId: askId, payee: msg.sender})
-                )
-            }),
-            expiration,
-            msg.sender
-        );
-    }
-
     function _payErc20ForErc721(bytes32 buyAttestation, ERC20PaymentObligation.ObligationData memory demand)
         internal
         returns (bytes32)
@@ -278,35 +171,6 @@ contract ERC20BarterUtils {
         erc721Escrow.collect(buyAttestation, sellAttestation);
 
         return sellAttestation;
-    }
-
-    function buyErc721WithErc20(address bidToken, uint256 bidAmount, address askToken, uint256 askId, uint64 expiration)
-        external
-        returns (bytes32)
-    {
-        return _buyErc721WithErc20(bidToken, bidAmount, askToken, askId, expiration);
-    }
-
-    function permitAndBuyErc721WithErc20(
-        address bidToken,
-        uint256 bidAmount,
-        address askToken,
-        uint256 askId,
-        uint64 expiration,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external returns (bytes32) {
-        IERC20Permit bidTokenC = IERC20Permit(bidToken);
-        try bidTokenC.permit(msg.sender, address(this), bidAmount, deadline, v, r, s) {}
-        catch Error(string memory reason) {
-            revert PermitFailed(bidToken, reason);
-        } catch {
-            revert PermitFailed(bidToken, "Unknown error");
-        }
-
-        return _buyErc721WithErc20(bidToken, bidAmount, askToken, askId, expiration);
     }
 
     function payErc20ForErc721(bytes32 buyAttestation) external returns (bytes32) {
@@ -339,36 +203,6 @@ contract ERC20BarterUtils {
 
     // ============ ERC20 to ERC1155 Functions ============
 
-    function _buyErc1155WithErc20(
-        address bidToken,
-        uint256 bidAmount,
-        address askToken,
-        uint256 askId,
-        uint256 askAmount,
-        uint64 expiration
-    ) internal returns (bytes32) {
-        // Pull tokens from user to BarterUtils
-        IERC20(bidToken).transferFrom(msg.sender, address(this), bidAmount);
-
-        // Approve obligation contract to spend BarterUtils' tokens
-        IERC20(bidToken).approve(address(erc20Escrow), bidAmount);
-
-        return erc20Escrow.doObligationFor(
-            ERC20EscrowObligation.ObligationData({
-                token: bidToken,
-                amount: bidAmount,
-                arbiter: address(erc1155Payment),
-                demand: abi.encode(
-                    ERC1155PaymentObligation.ObligationData({
-                        token: askToken, tokenId: askId, amount: askAmount, payee: msg.sender
-                    })
-                )
-            }),
-            expiration,
-            msg.sender
-        );
-    }
-
     function _payErc20ForErc1155(bytes32 buyAttestation, ERC20PaymentObligation.ObligationData memory demand)
         internal
         returns (bytes32)
@@ -387,40 +221,6 @@ contract ERC20BarterUtils {
         erc1155Escrow.collect(buyAttestation, sellAttestation);
 
         return sellAttestation;
-    }
-
-    function buyErc1155WithErc20(
-        address bidToken,
-        uint256 bidAmount,
-        address askToken,
-        uint256 askId,
-        uint256 askAmount,
-        uint64 expiration
-    ) external returns (bytes32) {
-        return _buyErc1155WithErc20(bidToken, bidAmount, askToken, askId, askAmount, expiration);
-    }
-
-    function permitAndBuyErc1155WithErc20(
-        address bidToken,
-        uint256 bidAmount,
-        address askToken,
-        uint256 askId,
-        uint256 askAmount,
-        uint64 expiration,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external returns (bytes32) {
-        IERC20Permit bidTokenC = IERC20Permit(bidToken);
-        try bidTokenC.permit(msg.sender, address(this), bidAmount, deadline, v, r, s) {}
-        catch Error(string memory reason) {
-            revert PermitFailed(bidToken, reason);
-        } catch {
-            revert PermitFailed(bidToken, "Unknown error");
-        }
-
-        return _buyErc1155WithErc20(bidToken, bidAmount, askToken, askId, askAmount, expiration);
     }
 
     function payErc20ForErc1155(bytes32 buyAttestation) external returns (bytes32) {
@@ -455,27 +255,6 @@ contract ERC20BarterUtils {
 
     // ============ ERC20 to Token Bundle Functions ============
 
-    function _buyBundleWithErc20(
-        address bidToken,
-        uint256 bidAmount,
-        TokenBundlePaymentObligation.ObligationData memory askData,
-        uint64 expiration
-    ) internal returns (bytes32) {
-        // Pull tokens from user to BarterUtils
-        IERC20(bidToken).transferFrom(msg.sender, address(this), bidAmount);
-
-        // Approve obligation contract to spend BarterUtils' tokens
-        IERC20(bidToken).approve(address(erc20Escrow), bidAmount);
-
-        return erc20Escrow.doObligationFor(
-            ERC20EscrowObligation.ObligationData({
-                token: bidToken, amount: bidAmount, arbiter: address(bundlePayment), demand: abi.encode(askData)
-            }),
-            expiration,
-            msg.sender
-        );
-    }
-
     function _payErc20ForBundle(bytes32 buyAttestation, ERC20PaymentObligation.ObligationData memory demand)
         internal
         returns (bytes32)
@@ -494,36 +273,6 @@ contract ERC20BarterUtils {
         bundleEscrow.collect(buyAttestation, sellAttestation);
 
         return sellAttestation;
-    }
-
-    function buyBundleWithErc20(
-        address bidToken,
-        uint256 bidAmount,
-        TokenBundlePaymentObligation.ObligationData calldata askData,
-        uint64 expiration
-    ) external returns (bytes32) {
-        return _buyBundleWithErc20(bidToken, bidAmount, askData, expiration);
-    }
-
-    function permitAndBuyBundleWithErc20(
-        address bidToken,
-        uint256 bidAmount,
-        TokenBundlePaymentObligation.ObligationData calldata askData,
-        uint64 expiration,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external returns (bytes32) {
-        IERC20Permit bidTokenC = IERC20Permit(bidToken);
-        try bidTokenC.permit(msg.sender, address(this), bidAmount, deadline, v, r, s) {}
-        catch Error(string memory reason) {
-            revert PermitFailed(bidToken, reason);
-        } catch {
-            revert PermitFailed(bidToken, "Unknown error");
-        }
-
-        return _buyBundleWithErc20(bidToken, bidAmount, askData, expiration);
     }
 
     function payErc20ForBundle(bytes32 buyAttestation) external returns (bytes32) {
@@ -558,28 +307,6 @@ contract ERC20BarterUtils {
 
     // ============ ERC20 to Native Token Functions ============
 
-    function _buyEthWithErc20(address bidToken, uint256 bidAmount, uint256 askAmount, uint64 expiration)
-        internal
-        returns (bytes32)
-    {
-        // Pull tokens from user to BarterUtils
-        IERC20(bidToken).transferFrom(msg.sender, address(this), bidAmount);
-
-        // Approve obligation contract to spend BarterUtils' tokens
-        IERC20(bidToken).approve(address(erc20Escrow), bidAmount);
-
-        return erc20Escrow.doObligationFor(
-            ERC20EscrowObligation.ObligationData({
-                token: bidToken,
-                amount: bidAmount,
-                arbiter: address(nativePayment),
-                demand: abi.encode(NativeTokenPaymentObligation.ObligationData({amount: askAmount, payee: msg.sender}))
-            }),
-            expiration,
-            msg.sender
-        );
-    }
-
     function _payErc20ForEth(bytes32 buyAttestation, ERC20PaymentObligation.ObligationData memory demand)
         internal
         returns (bytes32)
@@ -598,28 +325,6 @@ contract ERC20BarterUtils {
         nativeEscrow.collect(buyAttestation, sellAttestation);
 
         return sellAttestation;
-    }
-
-    function buyEthWithErc20(address bidToken, uint256 bidAmount, uint256 askAmount, uint64 expiration)
-        external
-        returns (bytes32)
-    {
-        return _buyEthWithErc20(bidToken, bidAmount, askAmount, expiration);
-    }
-
-    function permitAndBuyEthWithErc20(
-        address bidToken,
-        uint256 bidAmount,
-        uint256 askAmount,
-        uint64 expiration,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external returns (bytes32) {
-        IERC20Permit bidTokenC = IERC20Permit(bidToken);
-        bidTokenC.permit(msg.sender, address(this), bidAmount, deadline, v, r, s);
-        return _buyEthWithErc20(bidToken, bidAmount, askAmount, expiration);
     }
 
     function payErc20ForEth(bytes32 buyAttestation) external returns (bytes32) {

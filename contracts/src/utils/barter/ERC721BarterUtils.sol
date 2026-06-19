@@ -59,33 +59,6 @@ contract ERC721BarterUtils {
 
     // ============ ERC721 to ERC721 Functions ============
 
-    function _buyErc721ForErc721(
-        address bidToken,
-        uint256 bidTokenId,
-        address askToken,
-        uint256 askTokenId,
-        uint64 expiration
-    ) internal returns (bytes32) {
-        // Pull NFT from user to BarterUtils
-        IERC721(bidToken).transferFrom(msg.sender, address(this), bidTokenId);
-
-        // Approve obligation contract to spend BarterUtils' NFT
-        IERC721(bidToken).approve(address(erc721Escrow), bidTokenId);
-
-        return erc721Escrow.doObligationFor(
-            ERC721EscrowObligation.ObligationData({
-                token: bidToken,
-                tokenId: bidTokenId,
-                arbiter: address(erc721Payment),
-                demand: abi.encode(
-                    ERC721PaymentObligation.ObligationData({token: askToken, tokenId: askTokenId, payee: msg.sender})
-                )
-            }),
-            expiration,
-            msg.sender
-        );
-    }
-
     function _payErc721ForErc721(bytes32 buyAttestation, ERC721PaymentObligation.ObligationData memory demand)
         internal
         returns (bytes32)
@@ -106,16 +79,6 @@ contract ERC721BarterUtils {
         return sellAttestation;
     }
 
-    function buyErc721ForErc721(
-        address bidToken,
-        uint256 bidTokenId,
-        address askToken,
-        uint256 askTokenId,
-        uint64 expiration
-    ) external returns (bytes32) {
-        return _buyErc721ForErc721(bidToken, bidTokenId, askToken, askTokenId, expiration);
-    }
-
     function payErc721ForErc721(bytes32 buyAttestation) external returns (bytes32) {
         Attestation memory bid = eas.getAttestation(buyAttestation);
         ERC721EscrowObligation.ObligationData memory escrowData =
@@ -129,33 +92,6 @@ contract ERC721BarterUtils {
     // ============ Cross-Token Functions ============
 
     // ============ ERC721 to ERC20 Functions ============
-
-    function buyErc20WithErc721(
-        address bidToken,
-        uint256 bidTokenId,
-        address askToken,
-        uint256 askAmount,
-        uint64 expiration
-    ) external returns (bytes32) {
-        // Pull NFT from user to BarterUtils
-        IERC721(bidToken).transferFrom(msg.sender, address(this), bidTokenId);
-
-        // Approve obligation contract to spend BarterUtils' NFT
-        IERC721(bidToken).approve(address(erc721Escrow), bidTokenId);
-
-        return erc721Escrow.doObligationFor(
-            ERC721EscrowObligation.ObligationData({
-                token: bidToken,
-                tokenId: bidTokenId,
-                arbiter: address(erc20Payment),
-                demand: abi.encode(
-                    ERC20PaymentObligation.ObligationData({token: askToken, amount: askAmount, payee: msg.sender})
-                )
-            }),
-            expiration,
-            msg.sender
-        );
-    }
 
     function payErc721ForErc20(bytes32 buyAttestation) external returns (bytes32) {
         Attestation memory bid = eas.getAttestation(buyAttestation);
@@ -185,36 +121,6 @@ contract ERC721BarterUtils {
 
     // ============ ERC721 to ERC1155 Functions ============
 
-    function buyErc1155WithErc721(
-        address bidToken,
-        uint256 bidTokenId,
-        address askToken,
-        uint256 askTokenId,
-        uint256 askAmount,
-        uint64 expiration
-    ) external returns (bytes32) {
-        // Pull NFT from user to BarterUtils
-        IERC721(bidToken).transferFrom(msg.sender, address(this), bidTokenId);
-
-        // Approve obligation contract to spend BarterUtils' NFT
-        IERC721(bidToken).approve(address(erc721Escrow), bidTokenId);
-
-        return erc721Escrow.doObligationFor(
-            ERC721EscrowObligation.ObligationData({
-                token: bidToken,
-                tokenId: bidTokenId,
-                arbiter: address(erc1155Payment),
-                demand: abi.encode(
-                    ERC1155PaymentObligation.ObligationData({
-                        token: askToken, tokenId: askTokenId, amount: askAmount, payee: msg.sender
-                    })
-                )
-            }),
-            expiration,
-            msg.sender
-        );
-    }
-
     function payErc721ForErc1155(bytes32 buyAttestation) external returns (bytes32) {
         Attestation memory bid = eas.getAttestation(buyAttestation);
         if (bid.uid == bytes32(0)) {
@@ -243,27 +149,6 @@ contract ERC721BarterUtils {
 
     // ============ ERC721 to Token Bundle Functions ============
 
-    function buyBundleWithErc721(
-        address bidToken,
-        uint256 bidTokenId,
-        TokenBundlePaymentObligation.ObligationData calldata askData,
-        uint64 expiration
-    ) external returns (bytes32) {
-        // Pull NFT from user to BarterUtils
-        IERC721(bidToken).transferFrom(msg.sender, address(this), bidTokenId);
-
-        // Approve obligation contract to spend BarterUtils' NFT
-        IERC721(bidToken).approve(address(erc721Escrow), bidTokenId);
-
-        return erc721Escrow.doObligationFor(
-            ERC721EscrowObligation.ObligationData({
-                token: bidToken, tokenId: bidTokenId, arbiter: address(bundlePayment), demand: abi.encode(askData)
-            }),
-            expiration,
-            msg.sender
-        );
-    }
-
     function payErc721ForBundle(bytes32 buyAttestation) external returns (bytes32) {
         Attestation memory bid = eas.getAttestation(buyAttestation);
         TokenBundleEscrowObligation.ObligationData memory escrowData =
@@ -291,28 +176,6 @@ contract ERC721BarterUtils {
     }
 
     // ============ ERC721 to Native Token (ETH) Functions ============
-
-    function buyEthWithErc721(address bidToken, uint256 bidTokenId, uint256 askAmount, uint64 expiration)
-        external
-        returns (bytes32)
-    {
-        // Pull NFT from user to BarterUtils
-        IERC721(bidToken).transferFrom(msg.sender, address(this), bidTokenId);
-
-        // Approve obligation contract to spend BarterUtils' NFT
-        IERC721(bidToken).approve(address(erc721Escrow), bidTokenId);
-
-        return erc721Escrow.doObligationFor(
-            ERC721EscrowObligation.ObligationData({
-                token: bidToken,
-                tokenId: bidTokenId,
-                arbiter: address(nativePayment),
-                demand: abi.encode(NativeTokenPaymentObligation.ObligationData({amount: askAmount, payee: msg.sender}))
-            }),
-            expiration,
-            msg.sender
-        );
-    }
 
     function payErc721ForEth(bytes32 buyAttestation) external returns (bytes32) {
         Attestation memory bid = eas.getAttestation(buyAttestation);

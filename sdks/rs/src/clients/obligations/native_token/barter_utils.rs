@@ -1,18 +1,17 @@
-//! Native Token barter utilities
+//! Native token barter utilities.
 //!
-//! Provides functionality for trading native tokens for other token types
-//! including ERC20, ERC721, ERC1155, and token bundles.
+//! These helpers settle existing escrows atomically by paying with native
+//! tokens. Create escrows through the native token escrow client.
 
-use alloy::primitives::FixedBytes;
+use alloy::primitives::{Bytes, FixedBytes, U256};
 use alloy::rpc::types::TransactionReceipt;
 use alloy::sol_types::SolValue;
 
 use crate::contracts;
-use crate::types::{Erc20Data, Erc721Data, Erc1155Data, NativeTokenData, TokenBundleData};
 
 use super::NativeTokenModule;
 
-/// Barter utilities API for native tokens
+/// Barter utilities API for native token payments.
 pub struct BarterUtils<'a> {
     module: &'a NativeTokenModule,
 }
@@ -22,326 +21,224 @@ impl<'a> BarterUtils<'a> {
         Self { module }
     }
 
-    // =========================================================================
-    // Native for Native
-    // =========================================================================
-
-    /// Creates an escrow to trade native tokens for other native tokens.
-    ///
-    /// # Arguments
-    /// * `bid` - The native token data being offered
-    /// * `ask` - The native token data being requested
-    /// * `expiration` - The expiration timestamp
-    ///
-    /// # Returns
-    /// * `Result<TransactionReceipt>` - The transaction receipt
-    pub async fn buy_native_for_native(
-        &self,
-        bid: &NativeTokenData,
-        ask: &NativeTokenData,
-        expiration: u64,
-    ) -> eyre::Result<TransactionReceipt> {
-        let barter_utils_contract = contracts::utils::NativeTokenBarterUtils::new(
-            self.module.addresses.barter_utils,
-            &self.module.wallet_provider,
-        );
-
-        let receipt = barter_utils_contract
-            .buyEthForEth(bid.value, ask.value, expiration)
-            .value(bid.value)
-            .send()
-            .await?
-            .get_receipt()
-            .await?;
-
-        Ok(receipt)
-    }
-
-    /// Fulfills an existing native-for-native trade escrow.
-    ///
-    /// # Arguments
-    /// * `buy_attestation` - The attestation UID of the buy order
-    ///
-    /// # Returns
-    /// * `Result<TransactionReceipt>` - The transaction receipt
     pub async fn pay_native_for_native(
         &self,
         buy_attestation: FixedBytes<32>,
     ) -> eyre::Result<TransactionReceipt> {
-        let eas_contract =
-            contracts::IEAS::new(self.module.addresses.eas, &self.module.wallet_provider);
-        let barter_utils_contract = contracts::utils::NativeTokenBarterUtils::new(
-            self.module.addresses.barter_utils,
-            &self.module.wallet_provider,
-        );
-
-        // Fetch the escrow attestation to get the ask amount
-        let buy_attestation_data = eas_contract.getAttestation(buy_attestation).call().await?;
-        let buy_attestation_data =
-            contracts::obligations::escrow::default_escrow::NativeTokenEscrowObligation::ObligationData::abi_decode(
-                buy_attestation_data.data.as_ref(),
-            )?;
-        let demand_data =
-            contracts::obligations::NativeTokenPaymentObligation::ObligationData::abi_decode(
-                buy_attestation_data.demand.as_ref(),
-            )?;
-
-        let receipt = barter_utils_contract
-            .payEthForEth(buy_attestation)
-            .value(demand_data.amount)
-            .send()
-            .await?
-            .get_receipt()
+        let amount = self
+            .native_payment_amount_for_native_escrow(buy_attestation)
+            .await?;
+        let receipt = self
+            .pay_with_native(buy_attestation, amount, NativePayTarget::Native)
             .await?;
 
         Ok(receipt)
     }
 
-    // =========================================================================
-    // Native for ERC20
-    // =========================================================================
-
-    /// Creates an escrow to trade native tokens for ERC20 tokens.
-    ///
-    /// # Arguments
-    /// * `bid` - The native token data being offered
-    /// * `ask` - The ERC20 token data being requested
-    /// * `expiration` - The expiration timestamp
-    ///
-    /// # Returns
-    /// * `Result<TransactionReceipt>` - The transaction receipt
-    pub async fn buy_erc20_for_native(
-        &self,
-        bid: &NativeTokenData,
-        ask: &Erc20Data,
-        expiration: u64,
-    ) -> eyre::Result<TransactionReceipt> {
-        let barter_utils_contract = contracts::utils::NativeTokenBarterUtils::new(
-            self.module.addresses.barter_utils,
-            &self.module.wallet_provider,
-        );
-
-        let receipt = barter_utils_contract
-            .buyErc20WithEth(bid.value, ask.address, ask.value, expiration)
-            .value(bid.value)
-            .send()
-            .await?
-            .get_receipt()
-            .await?;
-
-        Ok(receipt)
-    }
-
-    /// Fulfills an existing ERC20-for-native trade escrow.
-    ///
-    /// # Arguments
-    /// * `buy_attestation` - The attestation UID of the buy order
-    ///
-    /// # Returns
-    /// * `Result<TransactionReceipt>` - The transaction receipt
     pub async fn pay_native_for_erc20(
         &self,
         buy_attestation: FixedBytes<32>,
     ) -> eyre::Result<TransactionReceipt> {
-        let barter_utils_contract = contracts::utils::NativeTokenBarterUtils::new(
-            self.module.addresses.barter_utils,
-            &self.module.wallet_provider,
-        );
-
-        let receipt = barter_utils_contract
-            .payEthForErc20(buy_attestation)
-            .send()
-            .await?
-            .get_receipt()
+        let amount = self
+            .native_payment_amount_for_erc20_escrow(buy_attestation)
+            .await?;
+        let receipt = self
+            .pay_with_native(buy_attestation, amount, NativePayTarget::Erc20)
             .await?;
 
         Ok(receipt)
     }
 
-    // =========================================================================
-    // Native for ERC721
-    // =========================================================================
-
-    /// Creates an escrow to trade native tokens for an ERC721 token.
-    ///
-    /// # Arguments
-    /// * `bid` - The native token data being offered
-    /// * `ask` - The ERC721 token data being requested
-    /// * `expiration` - The expiration timestamp
-    ///
-    /// # Returns
-    /// * `Result<TransactionReceipt>` - The transaction receipt
-    pub async fn buy_erc721_for_native(
-        &self,
-        bid: &NativeTokenData,
-        ask: &Erc721Data,
-        expiration: u64,
-    ) -> eyre::Result<TransactionReceipt> {
-        let barter_utils_contract = contracts::utils::NativeTokenBarterUtils::new(
-            self.module.addresses.barter_utils,
-            &self.module.wallet_provider,
-        );
-
-        let receipt = barter_utils_contract
-            .buyErc721WithEth(bid.value, ask.address, ask.id, expiration)
-            .value(bid.value)
-            .send()
-            .await?
-            .get_receipt()
-            .await?;
-
-        Ok(receipt)
-    }
-
-    /// Fulfills an existing ERC721-for-native trade escrow.
-    ///
-    /// # Arguments
-    /// * `buy_attestation` - The attestation UID of the buy order
-    ///
-    /// # Returns
-    /// * `Result<TransactionReceipt>` - The transaction receipt
     pub async fn pay_native_for_erc721(
         &self,
         buy_attestation: FixedBytes<32>,
     ) -> eyre::Result<TransactionReceipt> {
-        let barter_utils_contract = contracts::utils::NativeTokenBarterUtils::new(
-            self.module.addresses.barter_utils,
-            &self.module.wallet_provider,
-        );
-
-        let receipt = barter_utils_contract
-            .payEthForErc721(buy_attestation)
-            .send()
-            .await?
-            .get_receipt()
+        let amount = self
+            .native_payment_amount_for_erc721_escrow(buy_attestation)
+            .await?;
+        let receipt = self
+            .pay_with_native(buy_attestation, amount, NativePayTarget::Erc721)
             .await?;
 
         Ok(receipt)
     }
 
-    // =========================================================================
-    // Native for ERC1155
-    // =========================================================================
-
-    /// Creates an escrow to trade native tokens for an ERC1155 token.
-    ///
-    /// # Arguments
-    /// * `bid` - The native token data being offered
-    /// * `ask` - The ERC1155 token data being requested
-    /// * `expiration` - The expiration timestamp
-    ///
-    /// # Returns
-    /// * `Result<TransactionReceipt>` - The transaction receipt
-    pub async fn buy_erc1155_for_native(
-        &self,
-        bid: &NativeTokenData,
-        ask: &Erc1155Data,
-        expiration: u64,
-    ) -> eyre::Result<TransactionReceipt> {
-        let barter_utils_contract = contracts::utils::NativeTokenBarterUtils::new(
-            self.module.addresses.barter_utils,
-            &self.module.wallet_provider,
-        );
-
-        let receipt = barter_utils_contract
-            .buyErc1155WithEth(bid.value, ask.address, ask.id, ask.value, expiration)
-            .value(bid.value)
-            .send()
-            .await?
-            .get_receipt()
-            .await?;
-
-        Ok(receipt)
-    }
-
-    /// Fulfills an existing ERC1155-for-native trade escrow.
-    ///
-    /// # Arguments
-    /// * `buy_attestation` - The attestation UID of the buy order
-    ///
-    /// # Returns
-    /// * `Result<TransactionReceipt>` - The transaction receipt
     pub async fn pay_native_for_erc1155(
         &self,
         buy_attestation: FixedBytes<32>,
     ) -> eyre::Result<TransactionReceipt> {
-        let barter_utils_contract = contracts::utils::NativeTokenBarterUtils::new(
-            self.module.addresses.barter_utils,
-            &self.module.wallet_provider,
-        );
-
-        let receipt = barter_utils_contract
-            .payEthForErc1155(buy_attestation)
-            .send()
-            .await?
-            .get_receipt()
+        let amount = self
+            .native_payment_amount_for_erc1155_escrow(buy_attestation)
+            .await?;
+        let receipt = self
+            .pay_with_native(buy_attestation, amount, NativePayTarget::Erc1155)
             .await?;
 
         Ok(receipt)
     }
 
-    // =========================================================================
-    // Native for Token Bundle
-    // =========================================================================
-
-    /// Creates an escrow to trade native tokens for a bundle of tokens.
-    ///
-    /// # Arguments
-    /// * `bid` - The native token data being offered
-    /// * `ask` - The token bundle data being requested
-    /// * `expiration` - The expiration timestamp
-    ///
-    /// # Returns
-    /// * `Result<TransactionReceipt>` - The transaction receipt
-    pub async fn buy_bundle_for_native(
-        &self,
-        bid: &NativeTokenData,
-        ask: &TokenBundleData,
-        expiration: u64,
-    ) -> eyre::Result<TransactionReceipt> {
-        let barter_utils_contract = contracts::utils::NativeTokenBarterUtils::new(
-            self.module.addresses.barter_utils,
-            &self.module.wallet_provider,
-        );
-
-        let receipt = barter_utils_contract
-            .buyBundleWithEth(
-                bid.value,
-                (ask, self.module.signer.address()).into(),
-                expiration,
-            )
-            .value(bid.value)
-            .send()
-            .await?
-            .get_receipt()
-            .await?;
-
-        Ok(receipt)
-    }
-
-    /// Fulfills an existing bundle-for-native trade escrow.
-    ///
-    /// # Arguments
-    /// * `buy_attestation` - The attestation UID of the buy order
-    ///
-    /// # Returns
-    /// * `Result<TransactionReceipt>` - The transaction receipt
     pub async fn pay_native_for_bundle(
         &self,
         buy_attestation: FixedBytes<32>,
     ) -> eyre::Result<TransactionReceipt> {
+        let amount = self
+            .native_payment_amount_for_token_bundle_escrow(buy_attestation)
+            .await?;
+        let receipt = self
+            .pay_with_native(buy_attestation, amount, NativePayTarget::Bundle)
+            .await?;
+
+        Ok(receipt)
+    }
+
+    async fn escrow_attestation_data(
+        &self,
+        buy_attestation: FixedBytes<32>,
+    ) -> eyre::Result<Bytes> {
+        let eas_contract =
+            contracts::IEAS::new(self.module.addresses.eas, &self.module.wallet_provider);
+
+        let buy_attestation_data = eas_contract.getAttestation(buy_attestation).call().await?;
+
+        Ok(buy_attestation_data.data)
+    }
+
+    fn native_payment_amount_from_demand_bytes(&self, demand: &[u8]) -> eyre::Result<U256> {
+        let demand_data =
+            contracts::obligations::NativeTokenPaymentObligation::ObligationData::abi_decode(
+                demand,
+            )?;
+
+        Ok(demand_data.amount)
+    }
+
+    async fn native_payment_amount_for_native_escrow(
+        &self,
+        buy_attestation: FixedBytes<32>,
+    ) -> eyre::Result<U256> {
+        let escrow_data =
+            contracts::obligations::escrow::default_escrow::NativeTokenEscrowObligation::ObligationData::abi_decode(
+                self.escrow_attestation_data(buy_attestation).await?.as_ref(),
+            )?;
+
+        self.native_payment_amount_from_demand_bytes(escrow_data.demand.as_ref())
+    }
+
+    async fn native_payment_amount_for_erc20_escrow(
+        &self,
+        buy_attestation: FixedBytes<32>,
+    ) -> eyre::Result<U256> {
+        let escrow_data =
+            contracts::obligations::escrow::default_escrow::ERC20EscrowObligation::ObligationData::abi_decode(
+                self.escrow_attestation_data(buy_attestation).await?.as_ref(),
+            )?;
+
+        self.native_payment_amount_from_demand_bytes(escrow_data.demand.as_ref())
+    }
+
+    async fn native_payment_amount_for_erc721_escrow(
+        &self,
+        buy_attestation: FixedBytes<32>,
+    ) -> eyre::Result<U256> {
+        let escrow_data =
+            contracts::obligations::escrow::default_escrow::ERC721EscrowObligation::ObligationData::abi_decode(
+                self.escrow_attestation_data(buy_attestation).await?.as_ref(),
+            )?;
+
+        self.native_payment_amount_from_demand_bytes(escrow_data.demand.as_ref())
+    }
+
+    async fn native_payment_amount_for_erc1155_escrow(
+        &self,
+        buy_attestation: FixedBytes<32>,
+    ) -> eyre::Result<U256> {
+        let escrow_data =
+            contracts::obligations::escrow::default_escrow::ERC1155EscrowObligation::ObligationData::abi_decode(
+                self.escrow_attestation_data(buy_attestation).await?.as_ref(),
+            )?;
+
+        self.native_payment_amount_from_demand_bytes(escrow_data.demand.as_ref())
+    }
+
+    async fn native_payment_amount_for_token_bundle_escrow(
+        &self,
+        buy_attestation: FixedBytes<32>,
+    ) -> eyre::Result<U256> {
+        let escrow_data =
+            contracts::obligations::escrow::default_escrow::TokenBundleEscrowObligation::ObligationData::abi_decode(
+                self.escrow_attestation_data(buy_attestation).await?.as_ref(),
+            )?;
+
+        self.native_payment_amount_from_demand_bytes(escrow_data.demand.as_ref())
+    }
+
+    async fn pay_with_native(
+        &self,
+        buy_attestation: FixedBytes<32>,
+        amount: U256,
+        target: NativePayTarget,
+    ) -> eyre::Result<TransactionReceipt> {
         let barter_utils_contract = contracts::utils::NativeTokenBarterUtils::new(
             self.module.addresses.barter_utils,
             &self.module.wallet_provider,
         );
 
-        let receipt = barter_utils_contract
-            .payEthForBundle(buy_attestation)
-            .send()
-            .await?
-            .get_receipt()
-            .await?;
+        let receipt = match target {
+            NativePayTarget::Native => {
+                barter_utils_contract
+                    .payEthForEth(buy_attestation)
+                    .value(amount)
+                    .send()
+                    .await?
+                    .get_receipt()
+                    .await?
+            }
+            NativePayTarget::Erc20 => {
+                barter_utils_contract
+                    .payEthForErc20(buy_attestation)
+                    .value(amount)
+                    .send()
+                    .await?
+                    .get_receipt()
+                    .await?
+            }
+            NativePayTarget::Erc721 => {
+                barter_utils_contract
+                    .payEthForErc721(buy_attestation)
+                    .value(amount)
+                    .send()
+                    .await?
+                    .get_receipt()
+                    .await?
+            }
+            NativePayTarget::Erc1155 => {
+                barter_utils_contract
+                    .payEthForErc1155(buy_attestation)
+                    .value(amount)
+                    .send()
+                    .await?
+                    .get_receipt()
+                    .await?
+            }
+            NativePayTarget::Bundle => {
+                barter_utils_contract
+                    .payEthForBundle(buy_attestation)
+                    .value(amount)
+                    .send()
+                    .await?
+                    .get_receipt()
+                    .await?
+            }
+        };
 
         Ok(receipt)
     }
+}
+
+enum NativePayTarget {
+    Native,
+    Erc20,
+    Erc721,
+    Erc1155,
+    Bundle,
 }

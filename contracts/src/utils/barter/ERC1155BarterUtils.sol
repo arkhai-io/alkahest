@@ -60,38 +60,6 @@ contract ERC1155BarterUtils is IERC1155Receiver {
 
     // ============ ERC1155 to ERC1155 Functions ============
 
-    function _buyErc1155ForErc1155(
-        address bidToken,
-        uint256 bidTokenId,
-        uint256 bidAmount,
-        address askToken,
-        uint256 askId,
-        uint256 askAmount,
-        uint64 expiration
-    ) internal returns (bytes32) {
-        // Pull ERC1155 tokens from user to BarterUtils
-        IERC1155(bidToken).safeTransferFrom(msg.sender, address(this), bidTokenId, bidAmount, "");
-
-        // Approve obligation contract to spend BarterUtils' ERC1155 tokens
-        IERC1155(bidToken).setApprovalForAll(address(erc1155Escrow), true);
-
-        return erc1155Escrow.doObligationFor(
-            ERC1155EscrowObligation.ObligationData({
-                token: bidToken,
-                tokenId: bidTokenId,
-                amount: bidAmount,
-                arbiter: address(erc1155Payment),
-                demand: abi.encode(
-                    ERC1155PaymentObligation.ObligationData({
-                        token: askToken, tokenId: askId, amount: askAmount, payee: msg.sender
-                    })
-                )
-            }),
-            expiration,
-            msg.sender
-        );
-    }
-
     function _payErc1155ForErc1155(bytes32 buyAttestation, ERC1155PaymentObligation.ObligationData memory demand)
         internal
         returns (bytes32)
@@ -112,18 +80,6 @@ contract ERC1155BarterUtils is IERC1155Receiver {
         return sellAttestation;
     }
 
-    function buyErc1155ForErc1155(
-        address bidToken,
-        uint256 bidTokenId,
-        uint256 bidAmount,
-        address askToken,
-        uint256 askId,
-        uint256 askAmount,
-        uint64 expiration
-    ) external returns (bytes32) {
-        return _buyErc1155ForErc1155(bidToken, bidTokenId, bidAmount, askToken, askId, askAmount, expiration);
-    }
-
     function payErc1155ForErc1155(bytes32 buyAttestation) external returns (bytes32) {
         Attestation memory bid = eas.getAttestation(buyAttestation);
         ERC1155EscrowObligation.ObligationData memory escrowData =
@@ -137,35 +93,6 @@ contract ERC1155BarterUtils is IERC1155Receiver {
     // ============ Cross-Token Functions ============
 
     // ============ ERC1155 to ERC20 Functions ============
-
-    function buyErc20WithErc1155(
-        address bidToken,
-        uint256 bidTokenId,
-        uint256 bidAmount,
-        address askToken,
-        uint256 askAmount,
-        uint64 expiration
-    ) external returns (bytes32) {
-        // Pull ERC1155 tokens from user to BarterUtils
-        IERC1155(bidToken).safeTransferFrom(msg.sender, address(this), bidTokenId, bidAmount, "");
-
-        // Approve obligation contract to spend BarterUtils' ERC1155 tokens
-        IERC1155(bidToken).setApprovalForAll(address(erc1155Escrow), true);
-
-        return erc1155Escrow.doObligationFor(
-            ERC1155EscrowObligation.ObligationData({
-                token: bidToken,
-                tokenId: bidTokenId,
-                amount: bidAmount,
-                arbiter: address(erc20Payment),
-                demand: abi.encode(
-                    ERC20PaymentObligation.ObligationData({token: askToken, amount: askAmount, payee: msg.sender})
-                )
-            }),
-            expiration,
-            msg.sender
-        );
-    }
 
     function payErc1155ForErc20(bytes32 buyAttestation) external returns (bytes32) {
         Attestation memory bid = eas.getAttestation(buyAttestation);
@@ -195,35 +122,6 @@ contract ERC1155BarterUtils is IERC1155Receiver {
 
     // ============ ERC1155 to ERC721 Functions ============
 
-    function buyErc721WithErc1155(
-        address bidToken,
-        uint256 bidTokenId,
-        uint256 bidAmount,
-        address askToken,
-        uint256 askTokenId,
-        uint64 expiration
-    ) external returns (bytes32) {
-        // Pull ERC1155 tokens from user to BarterUtils
-        IERC1155(bidToken).safeTransferFrom(msg.sender, address(this), bidTokenId, bidAmount, "");
-
-        // Approve obligation contract to spend BarterUtils' ERC1155 tokens
-        IERC1155(bidToken).setApprovalForAll(address(erc1155Escrow), true);
-
-        return erc1155Escrow.doObligationFor(
-            ERC1155EscrowObligation.ObligationData({
-                token: bidToken,
-                tokenId: bidTokenId,
-                amount: bidAmount,
-                arbiter: address(erc721Payment),
-                demand: abi.encode(
-                    ERC721PaymentObligation.ObligationData({token: askToken, tokenId: askTokenId, payee: msg.sender})
-                )
-            }),
-            expiration,
-            msg.sender
-        );
-    }
-
     function payErc1155ForErc721(bytes32 buyAttestation) external returns (bytes32) {
         Attestation memory bid = eas.getAttestation(buyAttestation);
         if (bid.uid == bytes32(0)) {
@@ -252,32 +150,6 @@ contract ERC1155BarterUtils is IERC1155Receiver {
 
     // ============ ERC1155 to Token Bundle Functions ============
 
-    function buyBundleWithErc1155(
-        address bidToken,
-        uint256 bidTokenId,
-        uint256 bidAmount,
-        TokenBundlePaymentObligation.ObligationData calldata askData,
-        uint64 expiration
-    ) external returns (bytes32) {
-        // Pull ERC1155 tokens from user to BarterUtils
-        IERC1155(bidToken).safeTransferFrom(msg.sender, address(this), bidTokenId, bidAmount, "");
-
-        // Approve obligation contract to spend BarterUtils' ERC1155 tokens
-        IERC1155(bidToken).setApprovalForAll(address(erc1155Escrow), true);
-
-        return erc1155Escrow.doObligationFor(
-            ERC1155EscrowObligation.ObligationData({
-                token: bidToken,
-                tokenId: bidTokenId,
-                amount: bidAmount,
-                arbiter: address(bundlePayment),
-                demand: abi.encode(askData)
-            }),
-            expiration,
-            msg.sender
-        );
-    }
-
     function payErc1155ForBundle(bytes32 buyAttestation) external returns (bytes32) {
         Attestation memory bid = eas.getAttestation(buyAttestation);
         TokenBundleEscrowObligation.ObligationData memory escrowData =
@@ -302,32 +174,6 @@ contract ERC1155BarterUtils is IERC1155Receiver {
     }
 
     // ============ ERC1155 to Native Token (ETH) Functions ============
-
-    function buyEthWithErc1155(
-        address bidToken,
-        uint256 bidTokenId,
-        uint256 bidAmount,
-        uint256 askAmount,
-        uint64 expiration
-    ) external returns (bytes32) {
-        // Pull ERC1155 tokens from user to BarterUtils
-        IERC1155(bidToken).safeTransferFrom(msg.sender, address(this), bidTokenId, bidAmount, "");
-
-        // Approve obligation contract to spend BarterUtils' ERC1155 tokens
-        IERC1155(bidToken).setApprovalForAll(address(erc1155Escrow), true);
-
-        return erc1155Escrow.doObligationFor(
-            ERC1155EscrowObligation.ObligationData({
-                token: bidToken,
-                tokenId: bidTokenId,
-                amount: bidAmount,
-                arbiter: address(nativePayment),
-                demand: abi.encode(NativeTokenPaymentObligation.ObligationData({amount: askAmount, payee: msg.sender}))
-            }),
-            expiration,
-            msg.sender
-        );
-    }
 
     function payErc1155ForEth(bytes32 buyAttestation) external returns (bytes32) {
         Attestation memory bid = eas.getAttestation(buyAttestation);

@@ -86,14 +86,10 @@ await client.arbiters.general.trustedOracle.arbitrate(
 );
 ```
 
-### Using direct payment (token-for-token barter)
+### Settling a token-for-token escrow
 
 ```typescript
-const { hash } = await client.erc20.barter.buyErc20ForErc20(
-  { address: BID_TOKEN, value: bidAmount },
-  { address: ASK_TOKEN, value: askAmount },
-  BigInt(Math.floor(Date.now() / 1000) + 3600),
-);
+const { hash } = await client.erc20.barter.payErc20ForErc20(escrowUid);
 ```
 
 ## Oracle Workflow: Arbitrate

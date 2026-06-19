@@ -2,7 +2,7 @@
 //!
 //! Unconditional escrows support multiple fulfillments per escrow (1:many relationship).
 
-use alloy::primitives::{Address, FixedBytes, U256};
+use alloy::primitives::{Address, FixedBytes};
 use alloy::rpc::types::TransactionReceipt;
 use alloy::sol_types::SolValue;
 
@@ -103,38 +103,8 @@ impl<'a> Unconditional<'a> {
         expiration: u64,
     ) -> eyre::Result<TransactionReceipt> {
         let util = self.module.util();
-        let deadline = super::super::util::Util::get_permit_deadline()?;
-
-        let permit = util
-            .get_permit_signature(
-                self.module.addresses.escrow_obligation_unconditional,
-                price,
-                U256::from(deadline),
-            )
-            .await?;
-
-        let barter_utils_contract = contracts::utils::ERC20BarterUtils::new(
-            self.module.addresses.barter_utils,
-            &self.module.wallet_provider,
-        );
-        let receipt = barter_utils_contract
-            .permitAndBuyWithErc20(
-                price.address,
-                price.value,
-                item.arbiter,
-                item.demand.clone(),
-                expiration,
-                U256::from(deadline),
-                27 + permit.v() as u8,
-                permit.r().into(),
-                permit.s().into(),
-            )
-            .send()
-            .await?
-            .get_receipt()
-            .await?;
-
-        Ok(receipt)
+        util.approve(price, ApprovalPurpose::Escrow).await?;
+        self.create(price, item, expiration).await
     }
 
     /// Collects payment from a fulfilled trade.
