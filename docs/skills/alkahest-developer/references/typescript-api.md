@@ -192,7 +192,7 @@ client
     ├── doObligation(data, refUID?)
     ├── commit(commitment)                 // sends bond as ETH
     ├── computeCommitment(refUID, claimer, data)
-    ├── reclaimBond(obligationUid)
+    ├── reclaimBond(fulfillmentUid)
     ├── slashBond(commitment)
     ├── getBondAmount()
     ├── getCommitDeadline()

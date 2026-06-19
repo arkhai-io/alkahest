@@ -28,19 +28,19 @@ contract TrustedOracleArbiter is IArbiter {
         eas = _eas;
     }
 
-    function arbitrate(bytes32 obligation, bytes memory demand, bool decision) public {
-        bytes32 decisionKey = keccak256(abi.encodePacked(obligation, demand));
+    function arbitrate(bytes32 fulfillmentUid, bytes memory demand, bool decision) public {
+        bytes32 decisionKey = keccak256(abi.encodePacked(fulfillmentUid, demand));
         decisions[msg.sender][decisionKey] = decision;
-        emit ArbitrationMade(decisionKey, obligation, msg.sender, decision);
+        emit ArbitrationMade(decisionKey, fulfillmentUid, msg.sender, decision);
     }
 
-    function requestArbitration(bytes32 _obligation, address oracle, bytes memory demand) public {
-        Attestation memory obligation = eas.getAttestation(_obligation);
-        if (obligation.attester != msg.sender && obligation.recipient != msg.sender) {
+    function requestArbitration(bytes32 fulfillmentUid, address oracle, bytes memory demand) public {
+        Attestation memory fulfillment = eas.getAttestation(fulfillmentUid);
+        if (fulfillment.attester != msg.sender && fulfillment.recipient != msg.sender) {
             revert UnauthorizedArbitrationRequest();
         }
 
-        emit ArbitrationRequested(_obligation, oracle, demand);
+        emit ArbitrationRequested(fulfillmentUid, oracle, demand);
     }
 
     function check(

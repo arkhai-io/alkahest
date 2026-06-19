@@ -399,7 +399,7 @@ test("waitForArbitration with existing decision", async () => {
     testContext.bob.address,
   );
 
-  expect(result.obligation).toBe(fulfillment.uid);
+  expect(result.fulfillmentUid).toBe(fulfillment.uid);
   expect(result.oracle).toBe(testContext.bob.address);
   expect(result.decision).toBe(true);
 });
@@ -450,7 +450,7 @@ test("waitForArbitration with new decision", async () => {
   // Wait for the arbitration result
   const result = await waitPromise;
 
-  expect(result.obligation).toBe(fulfillment.uid);
+  expect(result.fulfillmentUid).toBe(fulfillment.uid);
   expect(result.oracle).toBe(testContext.bob.address);
   expect(result.decision).toBe(true);
 });
@@ -501,7 +501,7 @@ test("waitForArbitration with false decision", async () => {
   // Wait for the arbitration result
   const result = await waitPromise;
 
-  expect(result.obligation).toBe(fulfillment.uid);
+  expect(result.fulfillmentUid).toBe(fulfillment.uid);
   expect(result.oracle).toBe(testContext.bob.address);
   expect(result.decision).toBe(false);
 });

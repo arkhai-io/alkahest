@@ -45,7 +45,7 @@ Payments transfer assets immediately upon attestation creation (no escrow hold).
 - `commit(commitment)` — submit hash commitment with ETH bond
 - `doObligation(data, refUID)` — reveal fulfillment data
 - `computeCommitment(refUID, claimer, data)` — compute expected commitment hash
-- `reclaimBond(obligationUid)` — reclaim bond after valid reveal
+- `reclaimBond(fulfillmentUid)` — reclaim bond after valid reveal
 - `slashBond(commitment)` — slash bond if reveal deadline passes
 - Commitment hash: `keccak256(abi.encode(refUID, claimer, keccak256(abi.encode(obligationData))))`
 - Built-in `IArbiter` implementation verifies commitment exists in an earlier block

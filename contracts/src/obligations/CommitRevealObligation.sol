@@ -44,7 +44,7 @@ contract CommitRevealObligation is BaseObligation, IArbiter, Ownable {
     mapping(bytes32 => bool) public commitmentClaimed;
 
     event Committed(bytes32 indexed commitment, address indexed claimer, uint256 amount);
-    event BondReclaimed(bytes32 indexed obligationUid, address indexed claimer, uint256 amount);
+    event BondReclaimed(bytes32 indexed fulfillmentUid, address indexed claimer, uint256 amount);
     event BondSlashed(bytes32 indexed commitment, address indexed recipient, uint256 amount);
 
     error CommitmentMissing(bytes32 commitment, address claimer);

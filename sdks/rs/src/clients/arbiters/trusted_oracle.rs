@@ -177,24 +177,24 @@ impl TrustedOracleModule {
 
     pub async fn wait_for_arbitration(
         &self,
-        obligation: FixedBytes<32>,
+        fulfillment_uid: FixedBytes<32>,
         demand: Option<Bytes>,
         oracle: Option<Address>,
         from_block: Option<u64>,
     ) -> eyre::Result<Log<TrustedOracleArbiter::ArbitrationMade>> {
-        // ArbitrationMade event: (bytes32 indexed decisionKey, bytes32 indexed obligation, address indexed oracle, bool decision)
-        // topic1 = decisionKey, topic2 = obligation, topic3 = oracle
+        // ArbitrationMade event: (bytes32 indexed decisionKey, bytes32 indexed fulfillmentUid, address indexed oracle, bool decision)
+        // topic1 = decisionKey, topic2 = fulfillmentUid, topic3 = oracle
         let mut filter = Filter::new()
             .from_block(from_block.unwrap_or(0))
             .address(self.addresses.trusted_oracle_arbiter)
             .event_signature(TrustedOracleArbiter::ArbitrationMade::SIGNATURE_HASH)
-            .topic2(obligation);
+            .topic2(fulfillment_uid);
 
         // If demand is provided, compute decisionKey and filter by it
         if let Some(demand) = demand {
-            // decisionKey = keccak256(abi.encodePacked(obligation, demand))
+            // decisionKey = keccak256(abi.encodePacked(fulfillmentUid, demand))
             let mut packed = Vec::with_capacity(32 + demand.len());
-            packed.extend_from_slice(obligation.as_slice());
+            packed.extend_from_slice(fulfillment_uid.as_slice());
             packed.extend_from_slice(&demand);
             let decision_key = alloy::primitives::keccak256(&packed);
             filter = filter.topic1(decision_key);
@@ -387,9 +387,9 @@ impl TrustedOracleModule {
             .to_block(BlockNumberOrTag::Latest)
     }
 
-    fn make_arbitration_made_filter(&self, obligation: Option<FixedBytes<32>>) -> Filter {
-        // ArbitrationMade event: (bytes32 indexed decisionKey, bytes32 indexed obligation, address indexed oracle, bool decision)
-        // topic1 = decisionKey, topic2 = obligation, topic3 = oracle
+    fn make_arbitration_made_filter(&self, fulfillment_uid: Option<FixedBytes<32>>) -> Filter {
+        // ArbitrationMade event: (bytes32 indexed decisionKey, bytes32 indexed fulfillmentUid, address indexed oracle, bool decision)
+        // topic1 = decisionKey, topic2 = fulfillmentUid, topic3 = oracle
         let mut filter = Filter::new()
             .address(self.addresses.trusted_oracle_arbiter)
             .event_signature(TrustedOracleArbiter::ArbitrationMade::SIGNATURE_HASH)
@@ -397,8 +397,8 @@ impl TrustedOracleModule {
             .from_block(BlockNumberOrTag::Earliest)
             .to_block(BlockNumberOrTag::Latest);
 
-        if let Some(obligation) = obligation {
-            filter = filter.topic2(obligation);
+        if let Some(fulfillment_uid) = fulfillment_uid {
+            filter = filter.topic2(fulfillment_uid);
         }
 
         filter
@@ -1218,7 +1218,7 @@ impl<'a> TrustedOracle<'a> {
     /// Arbitrate as a trusted oracle
     ///
     /// # Arguments
-    /// * `obligation` - The obligation attestation UID
+    /// * `fulfillment_uid` - The fulfillment attestation UID
     /// * `demand` - The demand data bytes
     /// * `decision` - The oracle's decision (true/false)
     pub async fn arbitrate(
@@ -1251,16 +1251,16 @@ impl<'a> TrustedOracle<'a> {
     pub async fn wait_for_arbitration(
         &self,
         oracle: Address,
-        obligation: FixedBytes<32>,
+        fulfillment_uid: FixedBytes<32>,
         from_block: Option<u64>,
     ) -> eyre::Result<TrustedOracleArbiter::ArbitrationMade> {
-        // ArbitrationMade event: (bytes32 indexed decisionKey, bytes32 indexed obligation, address indexed oracle, bool decision)
-        // topic1 = decisionKey, topic2 = obligation, topic3 = oracle
+        // ArbitrationMade event: (bytes32 indexed decisionKey, bytes32 indexed fulfillmentUid, address indexed oracle, bool decision)
+        // topic1 = decisionKey, topic2 = fulfillmentUid, topic3 = oracle
         let filter = Filter::new()
             .from_block(from_block.unwrap_or(0))
             .address(self.module.addresses.trusted_oracle_arbiter)
             .event_signature(TrustedOracleArbiter::ArbitrationMade::SIGNATURE_HASH)
-            .topic2(obligation)
+            .topic2(fulfillment_uid)
             .topic3(oracle.into_word());
 
         let log = crate::utils::wait_for_first_log(

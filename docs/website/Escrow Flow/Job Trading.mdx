@@ -485,10 +485,10 @@ erc20EscrowObligation.collect(escrowUid, fulfillmentUid);
 const filter = await publicClient.createEventFilter({
   address: trustedOracleArbiter,
   event: parseAbiEvent(
-    "event ArbitrationMade(bytes32 indexed obligation, address indexed oracle, bool decision)",
+    "event ArbitrationMade(bytes32 indexed decisionKey, bytes32 indexed fulfillmentUid, address indexed oracle, bool decision)",
   ),
   args: {
-    obligation: fulfillment.uid,
+    fulfillmentUid: fulfillment.uid,
   },
 });
 
@@ -954,9 +954,9 @@ const waitForArbitrationAndClaim = async () => {
     const unwatch = publicClient.watchEvent({
       address: trustedOracleArbiter,
       event: parseAbiEvent(
-        "event ArbitrationMade(bytes32 indexed obligation, address indexed oracle, bool decision)",
+        "event ArbitrationMade(bytes32 indexed decisionKey, bytes32 indexed fulfillmentUid, address indexed oracle, bool decision)",
       ),
-      args: { obligation: fulfillment.uid },
+      args: { fulfillmentUid: fulfillment.uid },
       onLogs: async (logs) => {
         if (logs[0].args.decision) {
           // Positive decision - claim the escrow
