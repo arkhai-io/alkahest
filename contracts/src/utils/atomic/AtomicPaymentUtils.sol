@@ -16,10 +16,15 @@ import {NativeTokenPaymentObligation} from "../../obligations/payment/NativeToke
 import {TokenBundlePaymentObligation} from "../../obligations/payment/TokenBundlePaymentObligation.sol";
 import {IEscrow} from "../../IEscrow.sol";
 
+/// @notice Minimal interface for escrow contracts whose attestation data contains an arbiter and demand.
 interface IEscrowConditionDecoder {
+    /// @notice Decodes an escrow attestation's condition into arbiter and demand data.
     function decodeCondition(bytes memory data) external pure returns (address arbiter, bytes memory demand);
 }
 
+/// @title AtomicPaymentUtils
+/// @notice Helper contract that pays a payment obligation and collects the matching escrow in one transaction.
+/// @dev Payment demand data is read from the escrow attestation, so callers do not need to provide duplicate terms.
 contract AtomicPaymentUtils is IERC1155Receiver {
     using SafeERC20 for IERC20;
 
@@ -36,6 +41,7 @@ contract AtomicPaymentUtils is IERC1155Receiver {
     error InvalidSignatureLength();
     error PermitFailed(address token, string reason);
 
+    /// @notice EIP-2612 permit signature fields for ERC20 payments inside bundle payments.
     struct ERC20PermitSignature {
         uint8 v;
         bytes32 r;
@@ -59,6 +65,12 @@ contract AtomicPaymentUtils is IERC1155Receiver {
         bundlePayment = _bundlePayment;
     }
 
+    /// @notice Creates an ERC20 payment attestation using a permit instead of a pre-existing allowance.
+    /// @param token ERC20 token to pay.
+    /// @param amount Amount of `token` to transfer.
+    /// @param payee Recipient of the payment.
+    /// @param refUID Reference UID stored on the payment attestation.
+    /// @param deadline EIP-2612 permit deadline.
     function permitAndPayWithErc20(
         address token,
         uint256 amount,
@@ -77,6 +89,9 @@ contract AtomicPaymentUtils is IERC1155Receiver {
         return _payErc20(data, refUID);
     }
 
+    /// @notice Pays the ERC20 demand from an escrow and immediately collects that escrow.
+    /// @param escrowUid UID of the escrow attestation to satisfy and collect.
+    /// @return UID of the payment fulfillment attestation.
     function payErc20AndCollect(bytes32 escrowUid) external returns (bytes32) {
         (Attestation memory escrow, bytes memory demand) = _getEscrowAndDemand(escrowUid);
         bytes32 fulfillmentUid = _payErc20(abi.decode(demand, (ERC20PaymentObligation.ObligationData)), escrowUid);
@@ -84,6 +99,10 @@ contract AtomicPaymentUtils is IERC1155Receiver {
         return fulfillmentUid;
     }
 
+    /// @notice Permits, pays the ERC20 demand from an escrow, and immediately collects that escrow.
+    /// @param escrowUid UID of the escrow attestation to satisfy and collect.
+    /// @param deadline EIP-2612 permit deadline.
+    /// @return UID of the payment fulfillment attestation.
     function permitAndPayErc20AndCollect(bytes32 escrowUid, uint256 deadline, uint8 v, bytes32 r, bytes32 s)
         external
         returns (bytes32)
@@ -96,6 +115,9 @@ contract AtomicPaymentUtils is IERC1155Receiver {
         return fulfillmentUid;
     }
 
+    /// @notice Pays the ERC721 demand from an escrow and immediately collects that escrow.
+    /// @param escrowUid UID of the escrow attestation to satisfy and collect.
+    /// @return UID of the payment fulfillment attestation.
     function payErc721AndCollect(bytes32 escrowUid) external returns (bytes32) {
         (Attestation memory escrow, bytes memory demand) = _getEscrowAndDemand(escrowUid);
         ERC721PaymentObligation.ObligationData memory data =
@@ -109,6 +131,9 @@ contract AtomicPaymentUtils is IERC1155Receiver {
         return fulfillmentUid;
     }
 
+    /// @notice Pays the ERC1155 demand from an escrow and immediately collects that escrow.
+    /// @param escrowUid UID of the escrow attestation to satisfy and collect.
+    /// @return UID of the payment fulfillment attestation.
     function payErc1155AndCollect(bytes32 escrowUid) external returns (bytes32) {
         (Attestation memory escrow, bytes memory demand) = _getEscrowAndDemand(escrowUid);
         ERC1155PaymentObligation.ObligationData memory data =
@@ -122,6 +147,9 @@ contract AtomicPaymentUtils is IERC1155Receiver {
         return fulfillmentUid;
     }
 
+    /// @notice Pays the native-token demand from an escrow and immediately collects that escrow.
+    /// @param escrowUid UID of the escrow attestation to satisfy and collect.
+    /// @return UID of the payment fulfillment attestation.
     function payNativeAndCollect(bytes32 escrowUid) external payable returns (bytes32) {
         (Attestation memory escrow, bytes memory demand) = _getEscrowAndDemand(escrowUid);
         NativeTokenPaymentObligation.ObligationData memory data =
@@ -133,6 +161,9 @@ contract AtomicPaymentUtils is IERC1155Receiver {
         return fulfillmentUid;
     }
 
+    /// @notice Pays a token-bundle demand from an escrow and immediately collects that escrow.
+    /// @param escrowUid UID of the escrow attestation to satisfy and collect.
+    /// @return UID of the payment fulfillment attestation.
     function payBundleAndCollect(bytes32 escrowUid) external payable returns (bytes32) {
         (Attestation memory escrow, bytes memory demand) = _getEscrowAndDemand(escrowUid);
         bytes32 fulfillmentUid =
@@ -141,6 +172,10 @@ contract AtomicPaymentUtils is IERC1155Receiver {
         return fulfillmentUid;
     }
 
+    /// @notice Permits all ERC20 bundle items, pays the bundle demand, and immediately collects the escrow.
+    /// @param escrowUid UID of the escrow attestation to satisfy and collect.
+    /// @param permits One ERC20 permit signature for each ERC20 token in the bundle demand.
+    /// @return UID of the payment fulfillment attestation.
     function permitAndPayBundleAndCollect(bytes32 escrowUid, ERC20PermitSignature[] calldata permits)
         external
         payable
@@ -156,12 +191,14 @@ contract AtomicPaymentUtils is IERC1155Receiver {
         return fulfillmentUid;
     }
 
+    /// @notice Pulls ERC20 from the caller, creates a payment attestation, and returns its UID.
     function _payErc20(ERC20PaymentObligation.ObligationData memory data, bytes32 refUID) internal returns (bytes32) {
         IERC20(data.token).safeTransferFrom(msg.sender, address(this), data.amount);
         IERC20(data.token).forceApprove(address(erc20Payment), data.amount);
         return erc20Payment.doObligationFor(data, msg.sender, refUID);
     }
 
+    /// @notice Pulls bundle assets from the caller, creates a bundle payment attestation, and returns its UID.
     function _payBundle(TokenBundlePaymentObligation.ObligationData memory data, bytes32 refUID)
         internal
         returns (bytes32)
@@ -172,6 +209,7 @@ contract AtomicPaymentUtils is IERC1155Receiver {
         return bundlePayment.doObligationFor{value: data.nativeAmount}(data, msg.sender, refUID);
     }
 
+    /// @notice Loads an escrow attestation and decodes its demand bytes.
     function _getEscrowAndDemand(bytes32 escrowUid)
         internal
         view
@@ -182,6 +220,7 @@ contract AtomicPaymentUtils is IERC1155Receiver {
         (, demand) = IEscrowConditionDecoder(escrow.attester).decodeCondition(escrow.data);
     }
 
+    /// @notice Calls the escrow contract to collect with the freshly-created fulfillment UID.
     function _collect(address escrowContract, bytes32 escrowUid, bytes32 fulfillmentUid) internal {
         try IEscrow(escrowContract).collect(escrowUid, fulfillmentUid) {}
         catch {
@@ -189,6 +228,7 @@ contract AtomicPaymentUtils is IERC1155Receiver {
         }
     }
 
+    /// @notice Executes an EIP-2612 permit for this contract to spend the caller's ERC20.
     function _permitErc20(address token, uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s) internal {
         try IERC20Permit(token).permit(msg.sender, address(this), amount, deadline, v, r, s) {}
         catch Error(string memory reason) {
@@ -198,6 +238,7 @@ contract AtomicPaymentUtils is IERC1155Receiver {
         }
     }
 
+    /// @notice Executes ERC20 permits for each ERC20 item in a bundle demand.
     function _permitBundle(
         TokenBundlePaymentObligation.ObligationData memory data,
         ERC20PermitSignature[] calldata permits
@@ -213,6 +254,7 @@ contract AtomicPaymentUtils is IERC1155Receiver {
         }
     }
 
+    /// @notice Pulls all non-native bundle payment assets from the caller into this contract.
     function _pullPaymentBundleTokens(TokenBundlePaymentObligation.ObligationData memory data) internal {
         for (uint256 i = 0; i < data.erc20Tokens.length; i++) {
             IERC20(data.erc20Tokens[i]).safeTransferFrom(msg.sender, address(this), data.erc20Amounts[i]);
@@ -228,6 +270,7 @@ contract AtomicPaymentUtils is IERC1155Receiver {
         }
     }
 
+    /// @notice Approves a payment obligation contract to transfer bundle assets held by this helper.
     function _approvePaymentBundleTokens(TokenBundlePaymentObligation.ObligationData memory data, address spender)
         internal
     {

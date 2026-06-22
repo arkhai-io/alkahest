@@ -19,28 +19,46 @@ const commitRevealDemandDecodeFunction = getAbiItem({
 
 const commitRevealDemandType = commitRevealDemandDecodeFunction.outputs[0];
 
+/** Data revealed in a commit-reveal fulfillment attestation. */
 export type CommitRevealObligationData = {
+  /** Arbitrary self-contained payload being revealed. */
   payload: `0x${string}`;
+  /** Fulfiller-chosen salt included in the commitment. */
   salt: `0x${string}`;
+  /** Application-level schema or tag describing the payload format. */
   schema: `0x${string}`;
 };
 
+/** Arbiter demand data for commit-reveal fulfillment checks. */
 export type CommitRevealDemandData = {
+  /** Exact native-token bond amount the prior commit must have locked. */
   bondAmount: bigint;
 };
 
+/** Contract addresses needed by the commit-reveal client. */
 export type CommitRevealAddresses = {
+  /** EAS contract address. */
   eas: `0x${string}`;
+  /** CommitRevealObligation contract address. */
   commitRevealObligation: `0x${string}`;
 };
 
+/** Picks commit-reveal addresses out of a complete chain address table. */
 export const pickCommitRevealAddresses = (addresses: ChainAddresses): CommitRevealAddresses => ({
   eas: addresses.eas,
   commitRevealObligation: addresses.commitRevealObligation,
 });
 
+/** Client returned by {@link makeCommitRevealObligationClient}. */
 export type CommitRevealObligationClient = ReturnType<typeof makeCommitRevealObligationClient>;
 
+/**
+ * Builds a client for `CommitRevealObligation`.
+ *
+ * The client covers both phases: submitting a commitment with a native-token
+ * bond, then revealing matching payload data to create a fulfillment
+ * attestation and reclaim the bond.
+ */
 export const makeCommitRevealObligationClient = (viemClient: ViemClient, addresses: CommitRevealAddresses) => {
   const contractAddress = addresses.commitRevealObligation;
   const abi = commitRevealObligationAbi.abi;
@@ -61,18 +79,24 @@ export const makeCommitRevealObligationClient = (viemClient: ViemClient, address
     });
 
   return {
+    /** CommitRevealObligation contract address. */
     address: contractAddress,
 
+    /** Encodes reveal data for use as obligation attestation bytes. */
     encode: (data: CommitRevealObligationData) => {
       return encodeAbiParameters([commitRevealDataType], [data]);
     },
+    /** Decodes obligation attestation bytes into reveal data. */
     decode,
 
+    /** Encodes arbiter demand data requiring an exact committed bond amount. */
     encodeDemand: (data: CommitRevealDemandData) => {
       return encodeAbiParameters([commitRevealDemandType], [data]);
     },
+    /** Decodes arbiter demand bytes. */
     decodeDemand,
 
+    /** Reveals committed data and creates a fulfillment attestation for `refUID`. */
     doObligation: async (
       data: CommitRevealObligationData,
       refUID: `0x${string}` = "0x0000000000000000000000000000000000000000000000000000000000000000",
@@ -89,6 +113,7 @@ export const makeCommitRevealObligationClient = (viemClient: ViemClient, address
       return { hash, attested };
     },
 
+    /** Reveals committed data and creates the fulfillment attestation for an explicit recipient. */
     doObligationFor: async (
       data: CommitRevealObligationData,
       recipient: `0x${string}`,
@@ -106,6 +131,7 @@ export const makeCommitRevealObligationClient = (viemClient: ViemClient, address
       return { hash, attested };
     },
 
+    /** Creates a raw obligation attestation using pre-encoded data. */
     doObligationRaw: async (
       data: `0x${string}`,
       expirationTime: bigint = 0n,
@@ -125,6 +151,7 @@ export const makeCommitRevealObligationClient = (viemClient: ViemClient, address
       return { hash, attested };
     },
 
+    /** Reveals committed data and collects the referenced escrow in the same transaction. */
     revealAndCollect: async (
       data: CommitRevealObligationData,
       recipient: `0x${string}`,
@@ -142,6 +169,7 @@ export const makeCommitRevealObligationClient = (viemClient: ViemClient, address
       return { hash, result };
     },
 
+    /** Submits a commitment hash and locks `bondAmount` as the commitment bond. */
     commit: async (commitment: `0x${string}`, bondAmount: bigint) => {
       const { request } = await viemClient.simulateContract({
         address: contractAddress,
@@ -155,6 +183,7 @@ export const makeCommitRevealObligationClient = (viemClient: ViemClient, address
       return { hash };
     },
 
+    /** Computes the commitment hash expected by the Solidity contract. */
     computeCommitment: async (
       refUID: `0x${string}`,
       claimer: `0x${string}`,
@@ -168,6 +197,7 @@ export const makeCommitRevealObligationClient = (viemClient: ViemClient, address
       });
     },
 
+    /** Slashes an unrevealed commitment after its reveal deadline has passed. */
     slashBond: async (commitment: `0x${string}`) => {
       const { request } = await viemClient.simulateContract({
         address: contractAddress,
@@ -180,6 +210,7 @@ export const makeCommitRevealObligationClient = (viemClient: ViemClient, address
       return { hash };
     },
 
+    /** Reads the reveal deadline, in seconds after a commit timestamp. */
     getCommitDeadline: async () =>
       await viemClient.readContract({
         address: contractAddress,
@@ -187,6 +218,7 @@ export const makeCommitRevealObligationClient = (viemClient: ViemClient, address
         functionName: "commitDeadline",
       }),
 
+    /** Reads the configured recipient of slashed commitment bonds. */
     getSlashedBondRecipient: async () =>
       await viemClient.readContract({
         address: contractAddress,
@@ -194,6 +226,7 @@ export const makeCommitRevealObligationClient = (viemClient: ViemClient, address
         functionName: "slashedBondRecipient",
       }),
 
+    /** Reads raw commitment metadata for a commitment hash. */
     getCommitment: async (commitment: `0x${string}`) =>
       await viemClient.readContract({
         address: contractAddress,
@@ -202,6 +235,7 @@ export const makeCommitRevealObligationClient = (viemClient: ViemClient, address
         args: [commitment],
       }),
 
+    /** Returns whether a commitment bond has already been returned or slashed. */
     isCommitmentClaimed: async (commitment: `0x${string}`) =>
       await viemClient.readContract({
         address: contractAddress,
@@ -210,8 +244,10 @@ export const makeCommitRevealObligationClient = (viemClient: ViemClient, address
         args: [commitment],
       }),
 
+    /** Reads this obligation contract's EAS schema UID. */
     getSchema,
 
+    /** Loads a fulfillment attestation and decodes its commit-reveal data. */
     getObligation: async (uid: `0x${string}`) => {
       const [attestation, schema] = await Promise.all([getAttestation(viemClient, uid, addresses), getSchema()]);
 

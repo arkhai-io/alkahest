@@ -9,39 +9,55 @@ import {Attestation} from "@eas/Common.sol";
 import {IEAS, RevocationRequest, RevocationRequestData} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 
-// Note: Does NOT implement IArbiter - that's left to specific implementations
+/// @title BaseEscrowObligationUnconditional
+/// @notice Base escrow implementation that delegates fulfillment policy entirely to the configured arbiter.
+/// @dev Does not require fulfillment `refUID == escrow.uid` and does not check fulfillment intrinsics by default.
+///      Concrete escrow contracts still decide how their own attestations arbitrate by implementing `IArbiter`.
 abstract contract BaseEscrowObligationUnconditional is BaseObligation, IEscrow {
     using ArbiterUtils for Attestation;
 
-    // Common errors
+    /// @notice Raised when the escrow attestation is missing, invalid, expired, revoked, or has the wrong schema.
     error InvalidEscrowAttestation();
+    /// @notice Raised when the fulfillment does not satisfy the escrow's configured arbiter.
     error InvalidFulfillment();
+    /// @notice Raised when a caller attempts an action that is not currently permitted.
     error UnauthorizedCall();
+    /// @notice Raised when EAS has no attestation for the requested UID.
     error AttestationNotFound(bytes32 attestationId);
+    /// @notice Raised when revoking the escrow attestation fails during collect or reclaim.
     error RevocationFailed(bytes32 attestationId);
 
+    /// @param _eas EAS contract used to create, read, and revoke escrow attestations.
+    /// @param _schemaRegistry EAS schema registry used to register or reuse `schema`.
+    /// @param schema Human-readable EAS schema string for the concrete escrow.
+    /// @param revocable Whether escrow attestations are revocable.
     constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, string memory schema, bool revocable)
         BaseObligation(_eas, _schemaRegistry, schema, revocable)
     {}
 
-    // Abstract methods that escrow types must implement
-
-    // Called when escrow is created (in _beforeObligation)
+    /// @notice Locks escrowed assets before the escrow attestation is created.
+    /// @param data ABI-encoded escrow obligation data.
+    /// @param from Address supplying escrowed assets.
     function _lockEscrow(bytes memory data, address from) internal virtual;
 
-    // Called when escrow is collected (after successful fulfillment check)
+    /// @notice Releases escrowed assets after arbiter validation succeeds.
+    /// @param escrow The escrow attestation being collected.
+    /// @param to Recipient of released escrow assets.
+    /// @param fulfillmentUid UID of the fulfillment attestation used to collect.
     function _releaseEscrow(Attestation memory escrow, address to, bytes32 fulfillmentUid)
         internal
         virtual
         returns (bytes memory result);
 
-    // Called when escrow expires and is reclaimed
+    /// @notice Returns escrowed assets to the escrower during reclaim.
+    /// @param escrow The expired escrow attestation being reclaimed.
+    /// @param to Recipient of returned escrow assets.
     function _returnEscrow(Attestation memory escrow, address to) internal virtual;
 
-    // Called after EAS creates the escrow attestation and before EscrowMade is emitted
+    /// @notice Hook called after EAS creates the escrow attestation and before `EscrowMade` is emitted.
     function _afterEscrowAttest(Attestation memory attestation) internal virtual {}
 
-    // Extract arbiter and demand from encoded data
+    /// @inheritdoc IEscrow
     function decodeCondition(bytes memory data)
         public
         pure
@@ -49,7 +65,7 @@ abstract contract BaseEscrowObligationUnconditional is BaseObligation, IEscrow {
         override
         returns (address arbiter, bytes memory demand);
 
-    // Common escrow collection implementation (unconditional version - no fulfillment intrinsic or refUID check)
+    /// @inheritdoc IEscrow
     function collect(bytes32 _escrow, bytes32 _fulfillment)
         public
         virtual
@@ -93,6 +109,7 @@ abstract contract BaseEscrowObligationUnconditional is BaseObligation, IEscrow {
         return result;
     }
 
+    /// @inheritdoc IEscrow
     function reclaim(bytes32 uid) public virtual override nonReentrant returns (bool) {
         Attestation memory attestation = _getExistingAttestation(uid);
 
@@ -123,12 +140,14 @@ abstract contract BaseEscrowObligationUnconditional is BaseObligation, IEscrow {
         return true;
     }
 
+    /// @notice Loads an attestation from EAS and verifies that the returned UID matches the requested UID.
+    /// @param uid UID to load from EAS.
     function _getExistingAttestation(bytes32 uid) internal view returns (Attestation memory attestation) {
         attestation = eas.getAttestation(uid);
         if (attestation.uid == bytes32(0) || attestation.uid != uid) revert AttestationNotFound(uid);
     }
 
-    // Hook implementations
+    /// @inheritdoc BaseObligation
     function _beforeAttest(
         bytes memory data,
         address payer,
@@ -141,8 +160,7 @@ abstract contract BaseEscrowObligationUnconditional is BaseObligation, IEscrow {
         _lockEscrow(data, payer);
     }
 
-    // Hook implementations
-
+    /// @inheritdoc BaseObligation
     function _afterAttest(Attestation memory attestation) internal override {
         _afterEscrowAttest(attestation);
         emit EscrowMade(attestation.uid, attestation.recipient);

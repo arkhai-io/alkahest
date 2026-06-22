@@ -1,5 +1,6 @@
 import type { BlockNumber, BlockTag, Hex } from "viem";
 
+/** Addresses for all deployed Alkahest contracts on a chain. */
 export type ChainAddresses = {
   eas: `0x${string}`;
   easSchemaRegistry: `0x${string}`;
@@ -81,6 +82,7 @@ export type ChainAddresses = {
   expirationTimeEqualArbiter: `0x${string}`;
 };
 
+/** EIP-2612 permit signature used by ERC20 helper flows. */
 export type PermitSignature = {
   deadline: bigint;
   v: number;
@@ -88,6 +90,7 @@ export type PermitSignature = {
   s: `0x${string}`;
 };
 
+/** Parameters needed to sign an ERC20 permit. */
 export type SignPermitProps = {
   /** Address of the token to approve */
   contractAddress: Hex;
@@ -108,38 +111,54 @@ export type SignPermitProps = {
   nonce: bigint;
 };
 
+/** ERC20 permit parameters including the approved value. */
 export type Eip2612Props = SignPermitProps & {
   /** Amount to approve */
   value: bigint;
 };
 
+/** ERC20 token amount used by payment and escrow helpers. */
 export type Erc20 = {
+  /** ERC20 token contract address. */
   address: `0x${string}`;
+  /** Token amount in the ERC20's smallest unit. */
   value: bigint;
 };
 
+/** ERC721 token used by payment and escrow helpers. */
 export type Erc721 = {
+  /** ERC721 token contract address. */
   address: `0x${string}`;
+  /** ERC721 token ID. */
   id: bigint;
 };
 
+/** ERC1155 token amount used by payment and escrow helpers. */
 export type Erc1155 = {
+  /** ERC1155 token contract address. */
   address: `0x${string}`;
+  /** ERC1155 token ID. */
   id: bigint;
+  /** Token amount. */
   value: bigint;
 };
 
+/** Arbiter address plus arbiter-specific demand bytes. */
 export type Demand = {
+  /** Arbiter contract address. */
   arbiter: `0x${string}`;
+  /** Arbiter-specific ABI-encoded demand data. */
   demand: `0x${string}`;
 };
 
+/** Mixed token bundle without native-token amount. */
 export type TokenBundle = {
   erc20s: Erc20[];
   erc721s: Erc721[];
   erc1155s: Erc1155[];
 };
 
+/** Flattened token bundle shape matching Solidity bundle obligation structs. */
 export type TokenBundleFlat = {
   nativeAmount: bigint;
   erc20Tokens: `0x${string}`[];
@@ -153,22 +172,34 @@ export type TokenBundleFlat = {
   erc1155Amounts: bigint[];
 };
 
+/** Approval target category understood by SDK token utility clients. */
 export type ApprovalPurpose = "escrow" | "payment" | "atomicPayment";
 
+/** EAS attestation shape returned by SDK helpers. */
 export type Attestation = {
+  /** Attestation UID. */
   uid: `0x${string}`;
+  /** Schema UID. */
   schema: `0x${string}`;
+  /** Creation timestamp in seconds. */
   time: bigint;
+  /** Expiration timestamp in seconds, or zero for no expiration. */
   expirationTime: bigint;
+  /** Revocation timestamp in seconds, or zero if not revoked. */
   revocationTime: bigint;
+  /** Referenced attestation UID. */
   refUID: `0x${string}`;
+  /** EAS recipient address. */
   recipient: `0x${string}`;
+  /** EAS attester address. */
   attester: `0x${string}`;
+  /** Whether the attestation can be revoked. */
   revocable: boolean;
+  /** ABI-encoded attestation data. */
   data: `0x${string}`;
 };
 
-// Enhanced filter types for arbitratePast function
+/** Time-related filters for trusted-oracle batch arbitration. */
 export interface TimeFilters {
   /** Only process attestations after this timestamp (Unix timestamp in seconds) */
   minTime?: bigint;
@@ -182,6 +213,7 @@ export interface TimeFilters {
   maxAge?: bigint;
 }
 
+/** Attestation-property filters for trusted-oracle batch arbitration. */
 export interface AttestationFilters {
   /** Only process attestations from specific attester */
   specificAttester?: string;
@@ -197,6 +229,7 @@ export interface AttestationFilters {
   specificSchema?: string;
 }
 
+/** Block-range filters for trusted-oracle batch arbitration. */
 export interface BlockFilters {
   /** Start from specific block number or block tag */
   fromBlock?: BlockNumber | BlockTag;
@@ -206,6 +239,7 @@ export interface BlockFilters {
   maxBlockRange?: bigint;
 }
 
+/** Batch sizing and ordering options for trusted-oracle batch arbitration. */
 export interface BatchFilters {
   /** Limit number of obligations to process */
   maxObligations?: number;
@@ -215,6 +249,7 @@ export interface BatchFilters {
   batchSize?: number;
 }
 
+/** Execution and validation options for trusted-oracle batch arbitration. */
 export interface PerformanceFilters {
   /** Skip if estimated gas exceeds limit */
   maxGasPerTx?: bigint;
@@ -224,6 +259,7 @@ export interface PerformanceFilters {
   skipValidation?: boolean;
 }
 
+/** Combined filters accepted by enhanced trusted-oracle arbitration helpers. */
 export interface EnhancedArbitrateFilters
   extends TimeFilters,
     AttestationFilters,

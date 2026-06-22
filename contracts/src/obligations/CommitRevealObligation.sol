@@ -77,10 +77,14 @@ contract CommitRevealObligation is BaseObligation, IArbiter, Ownable {
     // Owner-only setters
     // ---------------------------------------------------------------------
 
+    /// @notice Updates the maximum reveal delay before a commitment can be slashed.
+    /// @param _commitDeadline New deadline in seconds after the commit timestamp.
     function setCommitDeadline(uint256 _commitDeadline) external onlyOwner {
         commitDeadline = _commitDeadline;
     }
 
+    /// @notice Updates the recipient for slashed commitment bonds.
+    /// @param _slashedBondRecipient New recipient for slashed bonds; address(0) burns the native token.
     function setSlashedBondRecipient(address _slashedBondRecipient) external onlyOwner {
         slashedBondRecipient = _slashedBondRecipient;
     }
@@ -116,6 +120,12 @@ contract CommitRevealObligation is BaseObligation, IArbiter, Ownable {
     }
 
     /// @notice Reveals a fulfillment and immediately collects the target escrow.
+    /// @param data Revealed data and salt.
+    /// @param recipient Recipient to set on the fulfillment attestation.
+    /// @param escrowContract Escrow contract to collect after reveal.
+    /// @param escrowUid UID of the escrow attestation being fulfilled.
+    /// @return fulfillmentUid UID of the created fulfillment attestation.
+    /// @return collectResult Return data from the escrow contract's `collect` call.
     function revealAndCollect(
         ObligationData calldata data,
         address recipient,
@@ -190,6 +200,10 @@ contract CommitRevealObligation is BaseObligation, IArbiter, Ownable {
     }
 
     /// @notice Pure helper to compute the commitment expected by this contract.
+    /// @param refUID Reference UID that will be stored on the fulfillment attestation.
+    /// @param claimer Recipient that will be stored on the fulfillment attestation.
+    /// @param data Obligation data that will be revealed.
+    /// @return Commitment hash to submit in `commit`.
     function computeCommitment(bytes32 refUID, address claimer, ObligationData calldata data)
         external
         pure
@@ -261,15 +275,19 @@ contract CommitRevealObligation is BaseObligation, IArbiter, Ownable {
     // Convenience getters
     // ---------------------------------------------------------------------
 
+    /// @notice Loads and decodes this contract's obligation data from an attestation UID.
+    /// @param uid UID of the fulfillment attestation.
     function getObligationData(bytes32 uid) external view returns (ObligationData memory) {
         Attestation memory attestation = _getAttestation(uid);
         return abi.decode(attestation.data, (ObligationData));
     }
 
+    /// @notice Decodes ABI-encoded obligation data.
     function decodeObligationData(bytes calldata data) external pure returns (ObligationData memory) {
         return abi.decode(data, (ObligationData));
     }
 
+    /// @notice Decodes ABI-encoded arbiter demand data.
     function decodeDemandData(bytes calldata data) external pure returns (DemandData memory) {
         return abi.decode(data, (DemandData));
     }

@@ -17,12 +17,16 @@ use alloy::{
 };
 use serde::{Deserialize, Serialize};
 
+/// Contract addresses needed by the commit-reveal module.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CommitRevealObligationAddresses {
+    /// EAS contract address.
     pub eas: Address,
+    /// CommitRevealObligation contract address.
     pub obligation: Address,
 }
 
+/// Rust client module for `CommitRevealObligation`.
 #[derive(Clone)]
 pub struct CommitRevealObligationModule {
     _signer: PrivateKeySigner,
@@ -32,14 +36,18 @@ pub struct CommitRevealObligationModule {
 }
 
 impl Default for CommitRevealObligationAddresses {
+    /// Returns Base Sepolia commit-reveal addresses.
     fn default() -> Self {
         BASE_SEPOLIA_ADDRESSES.commit_reveal_obligation_addresses
     }
 }
 
+/// Contracts addressable through the commit-reveal module.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CommitRevealObligationContract {
+    /// EAS contract.
     Eas,
+    /// CommitRevealObligation contract.
     Obligation,
 }
 
@@ -55,6 +63,7 @@ impl ContractModule for CommitRevealObligationModule {
 }
 
 impl CommitRevealObligationModule {
+    /// Creates a commit-reveal module with optional custom addresses.
     pub fn new(
         signer: PrivateKeySigner,
         wallet_provider: SharedWalletProvider,
@@ -67,6 +76,7 @@ impl CommitRevealObligationModule {
         })
     }
 
+    /// Loads a fulfillment attestation and decodes its commit-reveal obligation data.
     pub async fn get_obligation(
         &self,
         uid: FixedBytes<32>,
@@ -87,6 +97,7 @@ impl CommitRevealObligationModule {
         })
     }
 
+    /// Decodes ABI-encoded commit-reveal obligation data.
     pub fn decode(
         obligation_data: &Bytes,
     ) -> eyre::Result<contracts::obligations::CommitRevealObligation::ObligationData> {
@@ -96,6 +107,7 @@ impl CommitRevealObligationModule {
         Ok(data)
     }
 
+    /// Encodes commit-reveal obligation data.
     pub fn encode(
         obligation_data: &contracts::obligations::CommitRevealObligation::ObligationData,
     ) -> Bytes {
@@ -103,6 +115,7 @@ impl CommitRevealObligationModule {
             .into()
     }
 
+    /// Decodes ABI-encoded commit-reveal demand data.
     pub fn decode_demand(
         demand_data: &Bytes,
     ) -> eyre::Result<contracts::obligations::CommitRevealObligation::DemandData> {
@@ -112,12 +125,14 @@ impl CommitRevealObligationModule {
         Ok(data)
     }
 
+    /// Encodes commit-reveal demand data.
     pub fn encode_demand(
         demand_data: &contracts::obligations::CommitRevealObligation::DemandData,
     ) -> Bytes {
         contracts::obligations::CommitRevealObligation::DemandData::abi_encode(demand_data).into()
     }
 
+    /// Reveals committed data and creates a fulfillment attestation.
     pub async fn do_obligation(
         &self,
         data: contracts::obligations::CommitRevealObligation::ObligationData,
@@ -138,6 +153,7 @@ impl CommitRevealObligationModule {
         Ok(receipt)
     }
 
+    /// Reveals committed data and creates a fulfillment attestation for an explicit recipient.
     pub async fn do_obligation_for(
         &self,
         data: contracts::obligations::CommitRevealObligation::ObligationData,
@@ -163,6 +179,7 @@ impl CommitRevealObligationModule {
         Ok(receipt)
     }
 
+    /// Creates an obligation attestation using pre-encoded bytes.
     pub async fn do_obligation_raw(
         &self,
         data: Bytes,
@@ -190,6 +207,7 @@ impl CommitRevealObligationModule {
         Ok(receipt)
     }
 
+    /// Reveals committed data and collects the referenced escrow in one transaction.
     pub async fn reveal_and_collect(
         &self,
         data: contracts::obligations::CommitRevealObligation::ObligationData,
@@ -212,6 +230,7 @@ impl CommitRevealObligationModule {
         Ok(receipt)
     }
 
+    /// Submits a commitment and locks `bond_amount` as native-token bond.
     pub async fn commit(
         &self,
         commitment: FixedBytes<32>,
@@ -233,6 +252,7 @@ impl CommitRevealObligationModule {
         Ok(receipt)
     }
 
+    /// Computes the commitment hash expected by the Solidity contract.
     pub async fn compute_commitment(
         &self,
         ref_uid: FixedBytes<32>,
@@ -252,6 +272,7 @@ impl CommitRevealObligationModule {
         Ok(result)
     }
 
+    /// Slashes an unrevealed commitment after its reveal deadline has passed.
     pub async fn slash_bond(&self, commitment: FixedBytes<32>) -> eyre::Result<TransactionReceipt> {
         let contract = contracts::obligations::CommitRevealObligation::new(
             self.addresses.obligation,
@@ -268,6 +289,7 @@ impl CommitRevealObligationModule {
         Ok(receipt)
     }
 
+    /// Reads the reveal deadline, in seconds after the commit timestamp.
     pub async fn commit_deadline(&self) -> eyre::Result<U256> {
         let contract = contracts::obligations::CommitRevealObligation::new(
             self.addresses.obligation,
@@ -278,6 +300,7 @@ impl CommitRevealObligationModule {
         Ok(result)
     }
 
+    /// Reads the configured recipient of slashed commitment bonds.
     pub async fn slashed_bond_recipient(&self) -> eyre::Result<Address> {
         let contract = contracts::obligations::CommitRevealObligation::new(
             self.addresses.obligation,
@@ -288,6 +311,7 @@ impl CommitRevealObligationModule {
         Ok(result)
     }
 
+    /// Reads raw commitment metadata for a commitment hash.
     pub async fn get_commitment(
         &self,
         commitment: FixedBytes<32>,
@@ -306,6 +330,7 @@ impl CommitRevealObligationModule {
         ))
     }
 
+    /// Returns whether a commitment bond has already been returned or slashed.
     pub async fn is_commitment_claimed(&self, commitment: FixedBytes<32>) -> eyre::Result<bool> {
         let contract = contracts::obligations::CommitRevealObligation::new(
             self.addresses.obligation,

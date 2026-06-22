@@ -6,6 +6,7 @@ use crate::error_handling::{map_eyre_to_pyerr, map_parse_to_pyerr};
 
 use crate::contract::PyDecodedAttestation;
 
+/// Python client wrapper for `CommitRevealObligation`.
 #[pyclass]
 #[derive(Clone)]
 pub struct CommitRevealObligationClient {
@@ -20,6 +21,7 @@ impl CommitRevealObligationClient {
 
 #[pymethods]
 impl CommitRevealObligationClient {
+    /// Load a fulfillment attestation and decode its commit-reveal data.
     pub fn get_obligation<'py>(
         &self,
         py: pyo3::Python<'py>,
@@ -35,6 +37,7 @@ impl CommitRevealObligationClient {
         })
     }
 
+    /// Reveal committed data and create a fulfillment attestation.
     #[pyo3(signature = (payload, salt, schema, ref_uid=None))]
     pub fn do_obligation<'py>(
         &self,
@@ -76,6 +79,7 @@ impl CommitRevealObligationClient {
         })
     }
 
+    /// Submit a commitment hash and lock `bond_amount` as native-token bond.
     pub fn commit<'py>(
         &self,
         py: pyo3::Python<'py>,
@@ -96,6 +100,7 @@ impl CommitRevealObligationClient {
         })
     }
 
+    /// Compute the commitment hash expected by the Solidity contract.
     pub fn compute_commitment<'py>(
         &self,
         py: pyo3::Python<'py>,
@@ -127,6 +132,7 @@ impl CommitRevealObligationClient {
         })
     }
 
+    /// Slash an unrevealed commitment after its reveal deadline has passed.
     pub fn slash_bond<'py>(
         &self,
         py: pyo3::Python<'py>,
@@ -146,6 +152,7 @@ impl CommitRevealObligationClient {
         })
     }
 
+    /// Read the reveal deadline, in seconds after the commit timestamp.
     pub fn commit_deadline<'py>(
         &self,
         py: pyo3::Python<'py>,
@@ -157,6 +164,7 @@ impl CommitRevealObligationClient {
         })
     }
 
+    /// Read the configured recipient of slashed commitment bonds.
     pub fn slashed_bond_recipient<'py>(
         &self,
         py: pyo3::Python<'py>,
@@ -171,6 +179,7 @@ impl CommitRevealObligationClient {
         })
     }
 
+    /// Read raw commitment metadata for a commitment hash.
     pub fn get_commitment<'py>(
         &self,
         py: pyo3::Python<'py>,
@@ -192,6 +201,7 @@ impl CommitRevealObligationClient {
         })
     }
 
+    /// Return whether a commitment bond has already been returned or slashed.
     pub fn is_commitment_claimed<'py>(
         &self,
         py: pyo3::Python<'py>,
@@ -209,13 +219,17 @@ impl CommitRevealObligationClient {
     }
 }
 
+/// Python representation of commit-reveal obligation data.
 #[pyclass]
 #[derive(Clone, Debug)]
 pub struct PyCommitRevealObligationData {
+    /// Arbitrary self-contained payload being revealed.
     #[pyo3(get)]
     pub payload: Vec<u8>,
+    /// Fulfiller-chosen salt included in the commitment.
     #[pyo3(get)]
     pub salt: String,
+    /// Application-level schema or tag describing the payload format.
     #[pyo3(get)]
     pub schema: String,
 }
@@ -223,6 +237,7 @@ pub struct PyCommitRevealObligationData {
 #[pymethods]
 impl PyCommitRevealObligationData {
     #[new]
+    /// Create commit-reveal obligation data.
     pub fn new(payload: Vec<u8>, salt: String, schema: String) -> Self {
         Self {
             payload,
@@ -241,6 +256,7 @@ impl PyCommitRevealObligationData {
     }
 
     #[staticmethod]
+    /// ABI-encode commit-reveal obligation data.
     pub fn encode(obligation: &PyCommitRevealObligationData) -> PyResult<Vec<u8>> {
         use alloy::sol_types::SolValue;
 
@@ -258,6 +274,7 @@ impl PyCommitRevealObligationData {
     }
 
     #[staticmethod]
+    /// Decode ABI-encoded commit-reveal obligation data.
     pub fn decode(obligation_data: Vec<u8>) -> PyResult<PyCommitRevealObligationData> {
         use alloy::primitives::Bytes;
         let bytes = Bytes::from(obligation_data);
@@ -265,6 +282,7 @@ impl PyCommitRevealObligationData {
         Ok(decoded.into())
     }
 
+    /// ABI-encode this commit-reveal obligation data.
     pub fn encode_self(&self) -> PyResult<Vec<u8>> {
         PyCommitRevealObligationData::encode(self)
     }
@@ -284,9 +302,11 @@ impl From<alkahest_rs::contracts::obligations::CommitRevealObligation::Obligatio
     }
 }
 
+/// Python representation of commit-reveal arbiter demand data.
 #[pyclass]
 #[derive(Clone, Debug)]
 pub struct PyCommitRevealDemandData {
+    /// Exact native-token bond amount required, encoded as a base-10 string.
     #[pyo3(get)]
     pub bond_amount: String,
 }
@@ -294,6 +314,7 @@ pub struct PyCommitRevealDemandData {
 #[pymethods]
 impl PyCommitRevealDemandData {
     #[new]
+    /// Create commit-reveal demand data.
     pub fn new(bond_amount: String) -> Self {
         Self { bond_amount }
     }
@@ -306,6 +327,7 @@ impl PyCommitRevealDemandData {
     }
 
     #[staticmethod]
+    /// ABI-encode commit-reveal demand data.
     pub fn encode(demand: &PyCommitRevealDemandData) -> PyResult<Vec<u8>> {
         use alloy::sol_types::SolValue;
 
@@ -318,6 +340,7 @@ impl PyCommitRevealDemandData {
     }
 
     #[staticmethod]
+    /// Decode ABI-encoded commit-reveal demand data.
     pub fn decode(demand_data: Vec<u8>) -> PyResult<PyCommitRevealDemandData> {
         use alloy::primitives::Bytes;
         let bytes = Bytes::from(demand_data);
@@ -326,6 +349,7 @@ impl PyCommitRevealDemandData {
         Ok(decoded.into())
     }
 
+    /// ABI-encode this commit-reveal demand data.
     pub fn encode_self(&self) -> PyResult<Vec<u8>> {
         PyCommitRevealDemandData::encode(self)
     }
