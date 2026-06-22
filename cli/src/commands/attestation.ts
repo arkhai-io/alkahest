@@ -49,19 +49,19 @@ export function makeAttestationCommand() {
       let decoded: any;
       switch (opts.type) {
         case "erc20-escrow":
-          decoded = client.erc20.escrow.nonTierable.decodeObligation(att.data);
+          decoded = client.erc20.escrow.default.decodeObligation(att.data);
           break;
         case "erc721-escrow":
-          decoded = client.erc721.escrow.nonTierable.decodeObligation(att.data);
+          decoded = client.erc721.escrow.default.decodeObligation(att.data);
           break;
         case "erc1155-escrow":
-          decoded = client.erc1155.escrow.nonTierable.decodeObligation(att.data);
+          decoded = client.erc1155.escrow.default.decodeObligation(att.data);
           break;
         case "native-escrow":
-          decoded = client.nativeToken.escrow.nonTierable.decodeObligation(att.data);
+          decoded = client.nativeToken.escrow.default.decodeObligation(att.data);
           break;
         case "bundle-escrow":
-          decoded = client.bundle.escrow.nonTierable.decodeObligation(att.data);
+          decoded = client.bundle.escrow.default.decodeObligation(att.data);
           break;
         default:
           throw new Error(

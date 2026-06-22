@@ -11,7 +11,8 @@ export function makeCommitRevealCommand() {
 
   const commit = new Command("commit")
     .description("Submit a commitment hash (requires bond)")
-    .requiredOption("--commitment <hex>", "Commitment hash (bytes32)");
+    .requiredOption("--commitment <hex>", "Commitment hash (bytes32)")
+    .requiredOption("--bond-amount <wei>", "Bond amount in wei");
 
   commit.action(async (opts, cmd) => {
     const globalOpts = cmd.parent.parent.opts();
@@ -21,7 +22,7 @@ export function makeCommitRevealCommand() {
       const chain = resolveChain(globalOpts.chain || "base-sepolia");
       const client = createAlkahestClient(account, chain, globalOpts.rpcUrl, loadAddresses(globalOpts.addressesFile));
 
-      const result = await client.commitReveal.commit(opts.commitment as `0x${string}`);
+      const result = await client.commitReveal.commit(opts.commitment as `0x${string}`, BigInt(opts.bondAmount));
       outputSuccess({ hash: result.hash }, human);
     } catch (e: any) {
       outputError("COMMIT_FAILED", e.message, human);
@@ -101,26 +102,6 @@ export function makeCommitRevealCommand() {
     }
   });
 
-  const reclaimBond = new Command("reclaim-bond")
-    .description("Reclaim bond from a revealed obligation")
-    .requiredOption("--uid <uid>", "Obligation attestation UID");
-
-  reclaimBond.action(async (opts, cmd) => {
-    const globalOpts = cmd.parent.parent.opts();
-    const human = !!globalOpts.human;
-    try {
-      const account = await resolveAccount(globalOpts);
-      const chain = resolveChain(globalOpts.chain || "base-sepolia");
-      const client = createAlkahestClient(account, chain, globalOpts.rpcUrl, loadAddresses(globalOpts.addressesFile));
-
-      const result = await client.commitReveal.reclaimBond(opts.uid as `0x${string}`);
-      outputSuccess({ hash: result.hash }, human);
-    } catch (e: any) {
-      outputError("RECLAIM_BOND_FAILED", e.message, human);
-      process.exit(1);
-    }
-  });
-
   const slashBond = new Command("slash-bond")
     .description("Slash an unrevealed commitment's bond")
     .requiredOption("--commitment <hex>", "Commitment hash");
@@ -142,7 +123,7 @@ export function makeCommitRevealCommand() {
   });
 
   const info = new Command("info")
-    .description("Show commit-reveal contract info (bond amount, deadline, recipient)");
+    .description("Show commit-reveal contract info (deadline and slashed bond recipient)");
 
   info.action(async (_opts, cmd) => {
     const globalOpts = cmd.parent.parent.opts();
@@ -152,13 +133,12 @@ export function makeCommitRevealCommand() {
       const chain = resolveChain(globalOpts.chain || "base-sepolia");
       const client = createAlkahestClient(account, chain, globalOpts.rpcUrl, loadAddresses(globalOpts.addressesFile));
 
-      const [bondAmount, commitDeadline, slashedBondRecipient] = await Promise.all([
-        client.commitReveal.getBondAmount(),
+      const [commitDeadline, slashedBondRecipient] = await Promise.all([
         client.commitReveal.getCommitDeadline(),
         client.commitReveal.getSlashedBondRecipient(),
       ]);
 
-      outputSuccess({ bondAmount, commitDeadline, slashedBondRecipient }, human);
+      outputSuccess({ commitDeadline, slashedBondRecipient }, human);
     } catch (e: any) {
       outputError("COMMIT_REVEAL_INFO_FAILED", e.message, human);
       process.exit(1);
@@ -168,7 +148,6 @@ export function makeCommitRevealCommand() {
   cr.addCommand(commit);
   cr.addCommand(reveal);
   cr.addCommand(computeCommitment);
-  cr.addCommand(reclaimBond);
   cr.addCommand(slashBond);
   cr.addCommand(info);
 

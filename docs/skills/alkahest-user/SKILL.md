@@ -172,15 +172,17 @@ alkahest --private-key 0xKEY barter create \
   --bid-type erc20 --ask-type erc20 \
   --bid-token 0xBID_TOKEN --bid-amount 1000000000000000000 \
   --ask-token 0xASK_TOKEN --ask-amount 2000000000000000000 \
-  --expiration 1735689600
+  --expiration 1735689600 \
+  --approve
 
 # Counterparty fulfills the barter
 alkahest --private-key 0xCOUNTERPARTY_KEY barter fulfill \
   --uid 0xBARTER_UID \
-  --bid-type erc20 --ask-type erc20
+  --bid-type erc20 --ask-type erc20 \
+  --approve
 ```
 
-Supported barter pairs: `erc20/erc20`, `erc20/erc721`, `erc20/erc1155`. Use `--permit` for gasless approval.
+Supported barter pairs: `erc20/erc20`, `erc20/erc721`, `erc20/erc1155`. `--permit` is only supported when fulfilling an ERC20 ask.
 
 ## Oracle Workflow: Arbitrate
 
@@ -216,7 +218,8 @@ alkahest --private-key 0xKEY commit-reveal compute-commitment \
 
 # 2. Commit (sends bond as ETH)
 alkahest --private-key 0xKEY commit-reveal commit \
-  --commitment 0xCOMMITMENT_HASH
+  --commitment 0xCOMMITMENT_HASH \
+  --bond-amount 10000000000000000
 
 # 3. Wait at least 1 block, then reveal
 alkahest --private-key 0xKEY commit-reveal reveal \
@@ -226,11 +229,7 @@ alkahest --private-key 0xKEY commit-reveal reveal \
   --ref-uid 0xESCROW_UID
 # Returns: { uid: "0xOBLIGATION_UID", ... }
 
-# 4. Reclaim bond after successful reveal
-alkahest --private-key 0xKEY commit-reveal reclaim-bond \
-  --uid 0xOBLIGATION_UID
-
-# Check bond amount and deadline
+# Check deadline and slashed bond recipient
 alkahest --private-key 0xKEY commit-reveal info
 
 # Slash an unrevealed commitment's bond

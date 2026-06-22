@@ -118,10 +118,10 @@ export function makeArbiterCommand() {
 
   const encodeDemand = new Command("encode-demand")
     .description("Encode demand data for an arbiter")
-    .requiredOption("--type <arbiter-type>", "Arbiter type (trusted-oracle, intrinsics2, all, any, recipient, attester, schema, uid, ref-uid, revocable, time-after, time-before, time-equal, expiration-time-after, expiration-time-before, expiration-time-equal)")
+    .requiredOption("--type <arbiter-type>", "Arbiter type (trusted-oracle, intrinsics, all, any, recipient, attester, schema, uid, ref-uid, revocable, time-after, time-before, time-equal, expiration-time-after, expiration-time-before, expiration-time-equal)")
     .option("--oracle <address>", "Oracle address (for trusted-oracle)")
     .option("--data <hex>", "Inner demand data hex (for trusted-oracle)")
-    .option("--schema <uid>", "Schema UID (for intrinsics2, schema)")
+    .option("--schema <uid>", "Schema UID (for schema)")
     .option("--demands <json>", "JSON array of {arbiter, demand} objects (for all, any)")
     .option("--recipient <address>", "Recipient address (for recipient)")
     .option("--attester <address>", "Attester address (for attester)")
@@ -148,10 +148,8 @@ export function makeArbiterCommand() {
             data: opts.data as `0x${string}`,
           });
           break;
-        case "intrinsics2":
-          encoded = client.arbiters.general.intrinsics2.encodeDemand({
-            schema: opts.schema as `0x${string}`,
-          });
+        case "intrinsics":
+          encoded = "0x";
           break;
         case "all": {
           const allParsed = JSON.parse(opts.demands) as { arbiter: string; demand: string }[];

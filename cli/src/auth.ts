@@ -81,8 +81,8 @@ async function createLedgerAccount(derivationPath?: string): Promise<LocalAccoun
     },
 
     async signTransaction(transaction) {
-      const { serialize, type } = await import("viem");
-      const serialized = serialize({ ...transaction, type: type || "eip1559" } as any);
+      const { serializeTransaction } = await import("viem");
+      const serialized = serializeTransaction({ ...transaction, type: (transaction as any).type || "eip1559" } as any);
       const rawTx = serialized.slice(2);
 
       const result = await eth.signTransaction(path, rawTx);

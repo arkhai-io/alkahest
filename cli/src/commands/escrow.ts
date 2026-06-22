@@ -10,15 +10,15 @@ import type { Demand, Erc20, Erc721, Erc1155 } from "../../../sdks/ts/src/types.
 function getEscrowClient(client: AlkahestClient, tokenType: TokenType) {
   switch (tokenType) {
     case "erc20":
-      return client.erc20.escrow.nonTierable;
+      return client.erc20.escrow.default;
     case "erc721":
-      return client.erc721.escrow.nonTierable;
+      return client.erc721.escrow.default;
     case "erc1155":
-      return client.erc1155.escrow.nonTierable;
+      return client.erc1155.escrow.default;
     case "native":
-      return client.nativeToken.escrow.nonTierable;
+      return client.nativeToken.escrow.default;
     case "bundle":
-      return client.bundle.escrow.nonTierable;
+      return client.bundle.escrow.default;
   }
 }
 
@@ -50,7 +50,7 @@ export function makeEscrowCommand() {
     .requiredOption("--demand <hex>", "Encoded demand data (hex)")
     .requiredOption("--expiration <unix>", "Expiration timestamp (unix seconds)")
     .option("--approve", "Approve tokens before creating")
-    .option("--permit", "Use permit for token approval");
+    .option("--permit", "Unsupported for escrow creation; use --approve");
 
   addTokenTypeFlags(create);
 
@@ -62,6 +62,10 @@ export function makeEscrowCommand() {
       const chain = resolveChain(globalOpts.chain || "base-sepolia");
       const client = createAlkahestClient(account, chain, globalOpts.rpcUrl, loadAddresses(globalOpts.addressesFile));
       const tokenType = resolveTokenType(opts);
+
+      if (opts.permit) {
+        throw new Error("--permit is not supported for escrow create. Use --approve or pre-approve the escrow.");
+      }
 
       if (tokenType !== "native" && !opts.token) {
         throw new Error("--token is required for ERC20/ERC721/ERC1155 escrows");
@@ -83,10 +87,8 @@ export function makeEscrowCommand() {
           address: opts.token as `0x${string}`,
           value: BigInt(opts.amount),
         };
-        const escrowClient = client.erc20.escrow.nonTierable;
-        if (opts.permit) {
-          result = await escrowClient.permitAndCreate(price, demand, expiration);
-        } else if (opts.approve) {
+        const escrowClient = client.erc20.escrow.default;
+        if (opts.approve) {
           result = await escrowClient.approveAndCreate(price, demand, expiration);
         } else {
           result = await escrowClient.create(price, demand, expiration);
@@ -96,7 +98,7 @@ export function makeEscrowCommand() {
           address: opts.token as `0x${string}`,
           id: BigInt(opts.tokenId || "0"),
         };
-        const escrowClient = client.erc721.escrow.nonTierable;
+        const escrowClient = client.erc721.escrow.default;
         if (opts.approve) {
           result = await escrowClient.approveAndCreate(token, demand, expiration);
         } else {
@@ -108,14 +110,14 @@ export function makeEscrowCommand() {
           id: BigInt(opts.tokenId || "0"),
           value: BigInt(opts.amount),
         };
-        const escrowClient = client.erc1155.escrow.nonTierable;
+        const escrowClient = client.erc1155.escrow.default;
         if (opts.approve) {
           result = await escrowClient.approveAndCreate(token, demand, expiration);
         } else {
           result = await escrowClient.create(token, demand, expiration);
         }
       } else if (tokenType === "native") {
-        const escrowClient = client.nativeToken.escrow.nonTierable;
+        const escrowClient = client.nativeToken.escrow.default;
         result = await escrowClient.create(BigInt(opts.amount), demand, expiration);
       } else {
         throw new Error("Bundle escrow create not yet supported via CLI. Use the SDK directly.");
@@ -183,7 +185,7 @@ export function makeEscrowCommand() {
       const tokenType = resolveTokenType(opts);
 
       const escrowClient = getEscrowClient(client, tokenType);
-      const hash = await escrowClient.reclaimExpired(opts.uid as `0x${string}`);
+      const hash = await escrowClient.reclaim(opts.uid as `0x${string}`);
 
       outputSuccess({ hash }, human);
     } catch (e: any) {

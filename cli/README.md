@@ -64,7 +64,7 @@ Use `--human` for labeled, indented output.
 
 | Subcommand | Description | Key Options |
 |------------|-------------|-------------|
-| `create` | Create an escrow | `--erc20\|--erc721\|--erc1155\|--native` `--token` `--amount` `--arbiter` `--demand` `--expiration` `[--approve\|--permit]` `[--token-id]` |
+| `create` | Create an escrow | `--erc20\|--erc721\|--erc1155\|--native` `--token` `--amount` `--arbiter` `--demand` `--expiration` `[--approve]` `[--token-id]` |
 | `collect` | Collect after fulfillment | `--erc20\|...` `--escrow-uid` `--fulfillment-uid` |
 | `reclaim` | Reclaim expired escrow | `--erc20\|...` `--uid` |
 | `get` | Get escrow details | `--erc20\|...` `--uid` |
@@ -81,10 +81,10 @@ Use `--human` for labeled, indented output.
 
 | Subcommand | Description | Key Options |
 |------------|-------------|-------------|
-| `create` | Create barter offer | `--bid-type` `--ask-type` `--bid-token` `--bid-amount` `--ask-token` `--ask-amount` `--expiration` `[--approve\|--permit]` |
+| `create` | Create barter offer | `--bid-type` `--ask-type` `--bid-token` `--bid-amount` `--ask-token` `--ask-amount` `--expiration` `[--approve]` |
 | `fulfill` | Fulfill barter offer | `--uid` `--bid-type` `--ask-type` `[--approve\|--permit]` |
 
-Supported pairs: erc20/erc20, erc20/erc721, erc20/erc1155.
+Supported pairs: erc20/erc20, erc20/erc721, erc20/erc1155. `--permit` is only supported when fulfilling an ERC20 ask.
 
 ### string
 
@@ -97,12 +97,11 @@ Supported pairs: erc20/erc20, erc20/erc721, erc20/erc1155.
 
 | Subcommand | Description | Key Options |
 |------------|-------------|-------------|
-| `commit` | Submit commitment hash | `--commitment` |
+| `commit` | Submit commitment hash | `--commitment` `--bond-amount` |
 | `reveal` | Reveal committed value | `--payload` `--salt` `--schema` `[--ref-uid]` |
 | `compute-commitment` | Compute commitment hash | `--ref-uid` `--claimer` `--payload` `--salt` `--schema` |
-| `reclaim-bond` | Reclaim bond after reveal | `--uid` |
 | `slash-bond` | Slash unrevealed bond | `--commitment` |
-| `info` | Show bond amount, deadline | (no options) |
+| `info` | Show deadline and slashed bond recipient | (no options) |
 
 ### arbiter
 
@@ -114,7 +113,7 @@ Supported pairs: erc20/erc20, erc20/erc721, erc20/erc1155.
 | `encode-demand` | Encode demand data | `--type` + type-specific flags |
 | `decode-demand` | Decode demand data | `--arbiter` `--demand` |
 
-Encode demand types: `trusted-oracle`, `intrinsics2`, `all`, `any`, `recipient`, `attester`, `schema`, `uid`, `ref-uid`, `revocable`, `time-after`, `time-before`, `time-equal`, `expiration-time-after`, `expiration-time-before`, `expiration-time-equal`.
+Encode demand types: `trusted-oracle`, `intrinsics`, `all`, `any`, `recipient`, `attester`, `schema`, `uid`, `ref-uid`, `revocable`, `time-after`, `time-before`, `time-equal`, `expiration-time-after`, `expiration-time-before`, `expiration-time-equal`.
 
 ### attestation
 

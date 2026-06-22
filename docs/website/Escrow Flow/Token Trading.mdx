@@ -282,14 +282,16 @@ alkahest --private-key 0xALICE_KEY barter create \
   --bid-type erc20 --ask-type erc20 \
   --bid-token 0xUSDC --bid-amount 1000000000 \
   --ask-token 0xEURC --ask-amount 900000000 \
-  --expiration 1735689600
+  --expiration 1735689600 \
+  --approve
 
 # Alice: Offer ERC20 for ERC721
 alkahest --private-key 0xALICE_KEY barter create \
   --bid-type erc20 --ask-type erc721 \
   --bid-token 0xUSDC --bid-amount 1000000000 \
   --ask-token 0xNFT --ask-amount 0 --ask-token-id 42 \
-  --expiration 1735689600
+  --expiration 1735689600 \
+  --approve
 ```
 
 </TabItem>
@@ -518,7 +520,8 @@ escrow_contract
 # Bob: Fulfill a barter escrow (counterparty pays)
 alkahest --private-key 0xBOB_KEY barter fulfill \
   --uid 0xESCROW_UID \
-  --bid-type erc20 --ask-type erc20
+  --bid-type erc20 --ask-type erc20 \
+  --approve
 
 # Or for manual escrow collection (after separately creating a payment):
 alkahest --private-key 0xBOB_KEY escrow collect \
@@ -828,16 +831,16 @@ escrow = await alice_client.erc20.escrow.default.approve_and_create(
 </TabItem>
 <TabItem value="cli" label="CLI">
 
-The CLI exposes token-trade convenience commands. Use `--permit` for gasless ERC-20 approval:
+The CLI exposes token-trade convenience commands. Use `--approve` to approve the escrow or atomic payment utility, or use `--permit` when fulfilling an ERC20 ask:
 
 ```bash
-# Alice: Create barter (ERC20 for ERC20) with permit
+# Alice: Create barter (ERC20 for ERC20) with approval
 alkahest --private-key 0xALICE_KEY barter create \
   --bid-type erc20 --ask-type erc20 \
   --bid-token 0xUSDC --bid-amount 1000000000 \
   --ask-token 0xEURC --ask-amount 900000000 \
   --expiration 1735689600 \
-  --permit
+  --approve
 
 # Bob: Fulfill the barter
 alkahest --private-key 0xBOB_KEY barter fulfill \

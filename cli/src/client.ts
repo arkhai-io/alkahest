@@ -15,7 +15,7 @@ export function createAlkahestClient(
     transport: http(rpcUrl),
   });
 
-  return makeClient(walletClient, contractAddresses);
+  return makeClient(walletClient as any, contractAddresses);
 }
 
 export function loadAddresses(path?: string): Partial<ChainAddresses> | undefined {

@@ -80,7 +80,7 @@ const demand = clientAlice.arbiters.general.trustedOracle.encodeDemand({
 });
 
 // Alice: deposit USDC into escrow with the custom demand
-const escrow = await clientAlice.erc20.escrow.nonTierable.approveAndCreate(
+const escrow = await clientAlice.erc20.escrow.default.approveAndCreate(
   { address: usdc, value: parseUnits("100", 6) },
   {
     arbiter: clientAlice.contractAddresses.trustedOracleArbiter,
@@ -104,7 +104,7 @@ await clientCharlie.arbiters.general.trustedOracle.arbitrate(
 );
 
 // Bob: collect the escrow
-await clientBob.erc20.escrow.nonTierable.collect(
+await clientBob.erc20.escrow.default.collect(
   escrow.attested.uid,
   fulfillment.attested.uid,
 );
