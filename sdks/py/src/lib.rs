@@ -4,15 +4,16 @@ use alkahest_rs::{
     clients::{
         attestation::AttestationAddresses, erc1155::Erc1155Addresses, erc20::Erc20Addresses,
         erc721::Erc721Addresses, native_token::NativeTokenAddresses, oracle::OracleAddresses,
-        string_obligation::StringObligationAddresses, token_bundle::TokenBundleAddresses,
+        splitters::SplittersAddresses, string_obligation::StringObligationAddresses,
+        token_bundle::TokenBundleAddresses,
     },
     contracts::IEAS::Attested,
     extensions::{
         AlkahestExtension, ArbitersModule, AttestationModule, CommitRevealObligationModule,
         Erc1155Module, Erc20Module, Erc721Module, HasArbiters, HasAttestation, HasCommitReveal,
-        HasErc1155, HasErc20, HasErc721, HasNativeToken, HasOracle, HasStringObligation,
-        HasTokenBundle, NativeTokenModule, NoExtension, OracleModule, StringObligationModule,
-        TokenBundleModule,
+        HasErc1155, HasErc20, HasErc721, HasHookBased, HasNativeToken, HasOracle, HasSplitters,
+        HasStringObligation, HasTokenBundle, HookBasedModule, NativeTokenModule, NoExtension,
+        OracleModule, SplittersModule, StringObligationModule, TokenBundleModule,
     },
     AlkahestClient,
 };
@@ -27,9 +28,10 @@ use clients::{
     obligations::{
         attestation::AttestationClient, commit_reveal::CommitRevealObligationClient,
         erc1155::Erc1155Client, erc20::Erc20Client, erc721::Erc721Client,
-        native_token::NativeTokenClient, string::StringObligationClient,
-        token_bundle::TokenBundleClient,
+        hook_based::HookBasedClient, native_token::NativeTokenClient,
+        string::StringObligationClient, token_bundle::TokenBundleClient,
     },
+    splitters::SplittersClient,
 };
 use pyo3::{
     pyclass, pymethods, pymodule,
@@ -40,6 +42,7 @@ use tokio::runtime::Runtime;
 use types::{DefaultExtensionConfig, EscowClaimedLog};
 
 use crate::{
+    clients::splitters::{PyAmountSplit, PyBundleSplit, PySplitterDemandData},
     clients::{
         arbiters::trusted_oracle::{
             PyArbitrationMode, PyAttestationWithDemand, PyDecision, PyOracleAddresses,
@@ -53,6 +56,7 @@ use crate::{
             erc1155::{PyERC1155EscrowObligationData, PyERC1155PaymentObligationData},
             erc20::{PyERC20EscrowObligationData, PyERC20PaymentObligationData},
             erc721::{PyERC721EscrowObligationData, PyERC721PaymentObligationData},
+            hook_based::{PyHookEscrowObligationData, PyHooksEscrowObligationData},
             native_token::{PyNativeTokenEscrowObligationData, PyNativeTokenPaymentObligationData},
             string::PyStringObligationData,
             token_bundle::{PyTokenBundleEscrowObligationData, PyTokenBundlePaymentObligationData},
@@ -89,6 +93,8 @@ pub struct PyAlkahestClient {
     erc1155: Option<Erc1155Client>,
     native_token: Option<NativeTokenClient>,
     token_bundle: Option<TokenBundleClient>,
+    hook_based: Option<HookBasedClient>,
+    splitters: Option<SplittersClient>,
     attestation: Option<AttestationClient>,
     string_obligation: Option<StringObligationClient>,
     commit_reveal: Option<CommitRevealObligationClient>,
@@ -112,6 +118,8 @@ impl PyAlkahestClient {
             token_bundle: Some(TokenBundleClient::new(
                 client.extensions.token_bundle().clone(),
             )),
+            hook_based: Some(HookBasedClient::new(client.extensions.hook_based().clone())),
+            splitters: Some(SplittersClient::new(client.extensions.splitters().clone())),
             attestation: Some(AttestationClient::new(
                 client.extensions.attestation().clone(),
             )),
@@ -151,6 +159,8 @@ impl PyAlkahestClient {
             erc1155: None,     // TODO: Extract if extension_type == "erc1155"
             native_token: None, // TODO: Extract if extension_type == "native_token"
             token_bundle: None, // TODO: Extract if extension_type == "token_bundle"
+            hook_based: None,  // TODO: Extract if extension_type == "hook_based"
+            splitters: None,   // TODO: Extract if extension_type == "splitters"
             attestation: None, // TODO: Extract if extension_type == "attestation"
             string_obligation: None, // TODO: Extract if extension_type == "string_obligation"
             commit_reveal: None, // TODO: Extract if extension_type == "commit_reveal"
@@ -207,6 +217,8 @@ impl PyAlkahestClient {
             token_bundle: Some(TokenBundleClient::new(
                 client.extensions.token_bundle().clone(),
             )),
+            hook_based: Some(HookBasedClient::new(client.extensions.hook_based().clone())),
+            splitters: Some(SplittersClient::new(client.extensions.splitters().clone())),
             attestation: Some(AttestationClient::new(
                 client.extensions.attestation().clone(),
             )),
@@ -231,6 +243,8 @@ impl PyAlkahestClient {
             "erc1155".to_string(),
             "native_token".to_string(),
             "token_bundle".to_string(),
+            "hook_based".to_string(),
+            "splitters".to_string(),
             "attestation".to_string(),
             "string_obligation".to_string(),
             "commit_reveal".to_string(),
@@ -247,6 +261,8 @@ impl PyAlkahestClient {
             "erc1155" => self.erc1155.is_some(),
             "native_token" => self.native_token.is_some(),
             "token_bundle" => self.token_bundle.is_some(),
+            "hook_based" => self.hook_based.is_some(),
+            "splitters" => self.splitters.is_some(),
             "attestation" => self.attestation.is_some(),
             "string_obligation" => self.string_obligation.is_some(),
             "commit_reveal" => self.commit_reveal.is_some(),
@@ -297,6 +313,24 @@ impl PyAlkahestClient {
         self.token_bundle.clone().ok_or_else(|| {
             pyo3::PyErr::new::<pyo3::exceptions::PyAttributeError, _>(
                 "TokenBundle extension is not available in this client",
+            )
+        })
+    }
+
+    #[getter]
+    pub fn hook_based(&self) -> PyResult<HookBasedClient> {
+        self.hook_based.clone().ok_or_else(|| {
+            pyo3::PyErr::new::<pyo3::exceptions::PyAttributeError, _>(
+                "HookBased extension is not available in this client",
+            )
+        })
+    }
+
+    #[getter]
+    pub fn splitters(&self) -> PyResult<SplittersClient> {
+        self.splitters.clone().ok_or_else(|| {
+            pyo3::PyErr::new::<pyo3::exceptions::PyAttributeError, _>(
+                "Splitters extension is not available in this client",
             )
         })
     }
@@ -615,6 +649,13 @@ fn alkahest_py(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyNativeTokenPaymentObligationData>()?;
     m.add_class::<PyTokenBundleEscrowObligationData>()?;
     m.add_class::<PyTokenBundlePaymentObligationData>()?;
+    m.add_class::<HookBasedClient>()?;
+    m.add_class::<PyHookEscrowObligationData>()?;
+    m.add_class::<PyHooksEscrowObligationData>()?;
+    m.add_class::<SplittersClient>()?;
+    m.add_class::<PySplitterDemandData>()?;
+    m.add_class::<PyAmountSplit>()?;
+    m.add_class::<PyBundleSplit>()?;
     m.add_class::<PyAttestationEscrowObligationData>()?;
     m.add_class::<PyAttestationReferenceEscrowObligationData>()?;
     m.add_class::<PyStringObligationData>()?;

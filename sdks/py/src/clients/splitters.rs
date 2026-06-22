@@ -1,0 +1,247 @@
+//! Splitter helper client.
+//!
+//! Mirrors the Rust SDK splitter helpers: address access, demand/split codecs,
+//! and decision-key computation.
+
+use alkahest_rs::{contracts, extensions::SplittersModule};
+use alloy::{
+    primitives::{keccak256, Address, Bytes, FixedBytes, U256},
+    sol_types::SolValue,
+};
+use pyo3::{pyclass, pymethods, PyResult};
+
+use crate::error_handling::{map_parse_to_pyerr, map_sol_decode_to_pyerr};
+
+type BundleSplit = contracts::utils::splitters::token_bundle::TokenBundleSplitterBase::BundleSplit;
+
+#[pyclass]
+#[derive(Clone)]
+pub struct SplittersClient {
+    inner: SplittersModule,
+}
+
+impl SplittersClient {
+    pub fn new(inner: SplittersModule) -> Self {
+        Self { inner }
+    }
+}
+
+#[pymethods]
+impl SplittersClient {
+    /// Return a splitter contract address by name.
+    pub fn address(&self, contract: String) -> PyResult<String> {
+        let address = match contract.as_str() {
+            "erc20_splitter" => self.inner.addresses.erc20_splitter,
+            "erc1155_splitter" => self.inner.addresses.erc1155_splitter,
+            "native_token_splitter" => self.inner.addresses.native_token_splitter,
+            "token_bundle_splitter" => self.inner.addresses.token_bundle_splitter,
+            "token_bundle_splitter_unvalidated" => {
+                self.inner.addresses.token_bundle_splitter_unvalidated
+            }
+            _ => {
+                return Err(pyo3::exceptions::PyValueError::new_err(
+                    "unknown splitter contract",
+                ))
+            }
+        };
+        Ok(address.to_string())
+    }
+
+    /// Encode splitter arbiter demand data.
+    pub fn encode_demand(&self, data: &PySplitterDemandData) -> PyResult<Vec<u8>> {
+        PySplitterDemandData::encode(data)
+    }
+
+    /// Decode splitter arbiter demand data.
+    pub fn decode_demand(&self, data: Vec<u8>) -> PyResult<PySplitterDemandData> {
+        PySplitterDemandData::decode(data)
+    }
+
+    /// Compute the splitter decision key for `(fulfillment, escrow)`.
+    pub fn decision_key(&self, fulfillment: String, escrow: String) -> PyResult<String> {
+        let fulfillment: FixedBytes<32> = fulfillment.parse().map_err(map_parse_to_pyerr)?;
+        let escrow: FixedBytes<32> = escrow.parse().map_err(map_parse_to_pyerr)?;
+
+        let mut packed = Vec::with_capacity(64);
+        packed.extend_from_slice(fulfillment.as_slice());
+        packed.extend_from_slice(escrow.as_slice());
+        Ok(keccak256(packed).to_string())
+    }
+}
+
+#[pyclass]
+#[derive(Clone)]
+pub struct PySplitterDemandData {
+    #[pyo3(get)]
+    pub oracle: String,
+    #[pyo3(get)]
+    pub data: Vec<u8>,
+}
+
+#[pymethods]
+impl PySplitterDemandData {
+    #[new]
+    pub fn new(oracle: String, data: Vec<u8>) -> Self {
+        Self { oracle, data }
+    }
+
+    #[staticmethod]
+    pub fn encode(demand: &PySplitterDemandData) -> PyResult<Vec<u8>> {
+        let oracle: Address = demand.oracle.parse().map_err(map_parse_to_pyerr)?;
+        Ok(contracts::utils::splitters::ERC20Splitter::DemandData {
+            oracle,
+            data: Bytes::from(demand.data.clone()),
+        }
+        .abi_encode())
+    }
+
+    #[staticmethod]
+    pub fn decode(data: Vec<u8>) -> PyResult<PySplitterDemandData> {
+        let decoded = contracts::utils::splitters::ERC20Splitter::DemandData::abi_decode(&data)
+            .map_err(map_sol_decode_to_pyerr)?;
+        Ok(decoded.into())
+    }
+
+    pub fn encode_self(&self) -> PyResult<Vec<u8>> {
+        PySplitterDemandData::encode(self)
+    }
+}
+
+impl From<contracts::utils::splitters::ERC20Splitter::DemandData> for PySplitterDemandData {
+    fn from(data: contracts::utils::splitters::ERC20Splitter::DemandData) -> Self {
+        Self {
+            oracle: data.oracle.to_string(),
+            data: data.data.to_vec(),
+        }
+    }
+}
+
+#[pyclass]
+#[derive(Clone)]
+pub struct PyAmountSplit {
+    #[pyo3(get)]
+    pub recipient: String,
+    #[pyo3(get)]
+    pub amount: String,
+}
+
+#[pymethods]
+impl PyAmountSplit {
+    #[new]
+    pub fn new(recipient: String, amount: String) -> Self {
+        Self { recipient, amount }
+    }
+
+    #[staticmethod]
+    pub fn encode(split: &PyAmountSplit) -> PyResult<Vec<u8>> {
+        let recipient: Address = split.recipient.parse().map_err(map_parse_to_pyerr)?;
+        let amount: U256 = split.amount.parse().map_err(map_parse_to_pyerr)?;
+        Ok(contracts::utils::splitters::ERC20Splitter::Split { recipient, amount }.abi_encode())
+    }
+
+    #[staticmethod]
+    pub fn decode(data: Vec<u8>) -> PyResult<PyAmountSplit> {
+        let decoded = contracts::utils::splitters::ERC20Splitter::Split::abi_decode(&data)
+            .map_err(map_sol_decode_to_pyerr)?;
+        Ok(decoded.into())
+    }
+
+    pub fn encode_self(&self) -> PyResult<Vec<u8>> {
+        PyAmountSplit::encode(self)
+    }
+}
+
+impl From<contracts::utils::splitters::ERC20Splitter::Split> for PyAmountSplit {
+    fn from(data: contracts::utils::splitters::ERC20Splitter::Split) -> Self {
+        Self {
+            recipient: data.recipient.to_string(),
+            amount: data.amount.to_string(),
+        }
+    }
+}
+
+#[pyclass]
+#[derive(Clone)]
+pub struct PyBundleSplit {
+    #[pyo3(get)]
+    pub recipient: String,
+    #[pyo3(get)]
+    pub native_amount: String,
+    #[pyo3(get)]
+    pub erc20_amounts: Vec<String>,
+    #[pyo3(get)]
+    pub erc721_indices: Vec<String>,
+    #[pyo3(get)]
+    pub erc1155_amounts: Vec<String>,
+}
+
+#[pymethods]
+impl PyBundleSplit {
+    #[new]
+    pub fn new(
+        recipient: String,
+        native_amount: String,
+        erc20_amounts: Vec<String>,
+        erc721_indices: Vec<String>,
+        erc1155_amounts: Vec<String>,
+    ) -> Self {
+        Self {
+            recipient,
+            native_amount,
+            erc20_amounts,
+            erc721_indices,
+            erc1155_amounts,
+        }
+    }
+
+    #[staticmethod]
+    pub fn encode(split: &PyBundleSplit) -> PyResult<Vec<u8>> {
+        let recipient: Address = split.recipient.parse().map_err(map_parse_to_pyerr)?;
+        let native_amount: U256 = split.native_amount.parse().map_err(map_parse_to_pyerr)?;
+        let erc20_amounts = parse_u256_vec(&split.erc20_amounts)?;
+        let erc721_indices = parse_u256_vec(&split.erc721_indices)?;
+        let erc1155_amounts = parse_u256_vec(&split.erc1155_amounts)?;
+
+        Ok(BundleSplit {
+            recipient,
+            nativeAmount: native_amount,
+            erc20Amounts: erc20_amounts,
+            erc721Indices: erc721_indices,
+            erc1155Amounts: erc1155_amounts,
+        }
+        .abi_encode())
+    }
+
+    #[staticmethod]
+    pub fn decode(data: Vec<u8>) -> PyResult<PyBundleSplit> {
+        let decoded = BundleSplit::abi_decode(&data).map_err(map_sol_decode_to_pyerr)?;
+        Ok(decoded.into())
+    }
+
+    pub fn encode_self(&self) -> PyResult<Vec<u8>> {
+        PyBundleSplit::encode(self)
+    }
+}
+
+impl From<BundleSplit> for PyBundleSplit {
+    fn from(data: BundleSplit) -> Self {
+        Self {
+            recipient: data.recipient.to_string(),
+            native_amount: data.nativeAmount.to_string(),
+            erc20_amounts: stringify_u256_vec(data.erc20Amounts),
+            erc721_indices: stringify_u256_vec(data.erc721Indices),
+            erc1155_amounts: stringify_u256_vec(data.erc1155Amounts),
+        }
+    }
+}
+
+fn parse_u256_vec(values: &[String]) -> PyResult<Vec<U256>> {
+    values
+        .iter()
+        .map(|value| value.parse().map_err(map_parse_to_pyerr))
+        .collect()
+}
+
+fn stringify_u256_vec(values: Vec<U256>) -> Vec<String> {
+    values.into_iter().map(|value| value.to_string()).collect()
+}
