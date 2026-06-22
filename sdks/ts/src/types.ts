@@ -24,6 +24,21 @@ export type ChainAddresses = {
   attestationReferenceEscrowObligation: `0x${string}`;
   atomicAttestationUtils: `0x${string}`;
 
+  hookEscrowObligation: `0x${string}`;
+  hooksEscrowObligation: `0x${string}`;
+  erc20EscrowHook: `0x${string}`;
+  erc721EscrowHook: `0x${string}`;
+  erc1155EscrowHook: `0x${string}`;
+  nativeTokenEscrowHook: `0x${string}`;
+  attestationEscrowHook: `0x${string}`;
+  attestationReferenceEscrowHook: `0x${string}`;
+
+  erc20Splitter: `0x${string}`;
+  erc1155Splitter: `0x${string}`;
+  nativeTokenSplitter: `0x${string}`;
+  tokenBundleSplitter: `0x${string}`;
+  tokenBundleSplitterUnvalidated: `0x${string}`;
+
   stringObligation: `0x${string}`;
   commitRevealObligation: `0x${string}`;
 

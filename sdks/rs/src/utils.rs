@@ -17,7 +17,8 @@ use crate::{
     clients::{
         arbiters::ArbitersAddresses, attestation::AttestationAddresses,
         commit_reveal_obligation::CommitRevealObligationAddresses, erc20::Erc20Addresses,
-        erc721::Erc721Addresses, erc1155::Erc1155Addresses, native_token::NativeTokenAddresses,
+        erc721::Erc721Addresses, erc1155::Erc1155Addresses, hook_based::HookBasedAddresses,
+        native_token::NativeTokenAddresses, splitters::SplittersAddresses,
         string_obligation::StringObligationAddresses, token_bundle::TokenBundleAddresses,
     },
     contracts::{
@@ -49,6 +50,13 @@ use crate::{
                 ERC20EscrowObligation, ERC721EscrowObligation, ERC1155EscrowObligation,
                 NativeTokenEscrowObligation, TokenBundleEscrowObligation,
             },
+            escrow::hook_based::{
+                HookEscrowObligation, HooksEscrowObligation,
+                hooks::{
+                    AttestationEscrowHook, AttestationReferenceEscrowHook, ERC20EscrowHook,
+                    ERC721EscrowHook, ERC1155EscrowHook, NativeTokenEscrowHook,
+                },
+            },
             escrow::unconditional::{
                 UnconditionalAttestationEscrowObligation,
                 UnconditionalAttestationReferenceEscrowObligation,
@@ -57,7 +65,14 @@ use crate::{
                 UnconditionalTokenBundleEscrowObligation,
             },
         },
-        utils::{AtomicAttestationUtils, AtomicPaymentUtils},
+        utils::{
+            AtomicAttestationUtils, AtomicPaymentUtils,
+            splitters::{
+                ERC20Splitter, ERC1155Splitter, NativeTokenSplitter,
+                token_bundle::TokenBundleSplitter,
+                token_bundle_unvalidated::TokenBundleSplitterUnvalidated,
+            },
+        },
     },
     fixtures::{EAS, MockERC20Permit, MockERC721, MockERC1155, SchemaRegistry},
     types::{PublicProvider, WalletProvider},
@@ -495,6 +510,38 @@ async fn build_shared_env() -> eyre::Result<SharedTestEnv> {
         bundle_payment_obligation.address().clone(),
     )
     .await?;
+    let hook_escrow_obligation = HookEscrowObligation::deploy(
+        &god_provider,
+        eas.address().clone(),
+        schema_registry.address().clone(),
+    )
+    .await?;
+    let hooks_escrow_obligation = HooksEscrowObligation::deploy(
+        &god_provider,
+        eas.address().clone(),
+        schema_registry.address().clone(),
+    )
+    .await?;
+    let erc20_escrow_hook = ERC20EscrowHook::deploy(&god_provider).await?;
+    let erc721_escrow_hook = ERC721EscrowHook::deploy(&god_provider).await?;
+    let erc1155_escrow_hook = ERC1155EscrowHook::deploy(&god_provider).await?;
+    let native_token_escrow_hook = NativeTokenEscrowHook::deploy(&god_provider).await?;
+    let attestation_escrow_hook =
+        AttestationEscrowHook::deploy(&god_provider, eas.address().clone()).await?;
+    let attestation_reference_escrow_hook = AttestationReferenceEscrowHook::deploy(
+        &god_provider,
+        eas.address().clone(),
+        schema_registry.address().clone(),
+    )
+    .await?;
+    let erc20_splitter = ERC20Splitter::deploy(&god_provider, eas.address().clone()).await?;
+    let erc1155_splitter = ERC1155Splitter::deploy(&god_provider, eas.address().clone()).await?;
+    let native_token_splitter =
+        NativeTokenSplitter::deploy(&god_provider, eas.address().clone()).await?;
+    let token_bundle_splitter =
+        TokenBundleSplitter::deploy(&god_provider, eas.address().clone()).await?;
+    let token_bundle_splitter_unvalidated =
+        TokenBundleSplitterUnvalidated::deploy(&god_provider, eas.address().clone()).await?;
 
     // Per-test wallets are created in setup_test_environment(); the
     // shared singleton only needs the deployer-derived state.
@@ -588,6 +635,24 @@ async fn build_shared_env() -> eyre::Result<SharedTestEnv> {
                 .address()
                 .clone(),
             payment_obligation: bundle_payment_obligation.address().clone(),
+        },
+        hook_based_addresses: HookBasedAddresses {
+            eas: eas.address().clone(),
+            hook_escrow_obligation: hook_escrow_obligation.address().clone(),
+            hooks_escrow_obligation: hooks_escrow_obligation.address().clone(),
+            erc20_escrow_hook: erc20_escrow_hook.address().clone(),
+            erc721_escrow_hook: erc721_escrow_hook.address().clone(),
+            erc1155_escrow_hook: erc1155_escrow_hook.address().clone(),
+            native_token_escrow_hook: native_token_escrow_hook.address().clone(),
+            attestation_escrow_hook: attestation_escrow_hook.address().clone(),
+            attestation_reference_escrow_hook: attestation_reference_escrow_hook.address().clone(),
+        },
+        splitters_addresses: SplittersAddresses {
+            erc20_splitter: erc20_splitter.address().clone(),
+            erc1155_splitter: erc1155_splitter.address().clone(),
+            native_token_splitter: native_token_splitter.address().clone(),
+            token_bundle_splitter: token_bundle_splitter.address().clone(),
+            token_bundle_splitter_unvalidated: token_bundle_splitter_unvalidated.address().clone(),
         },
         attestation_addresses: AttestationAddresses {
             eas: eas.address().clone(),

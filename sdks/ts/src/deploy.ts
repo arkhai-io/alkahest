@@ -41,6 +41,14 @@ import ERC721EscrowObligation from "./contracts/obligations/escrow/default/ERC72
 import ERC1155EscrowObligation from "./contracts/obligations/escrow/default/ERC1155EscrowObligation.json";
 import NativeTokenEscrowObligation from "./contracts/obligations/escrow/default/NativeTokenEscrowObligation.json";
 import TokenBundleEscrowObligation from "./contracts/obligations/escrow/default/TokenBundleEscrowObligation.json";
+import HookEscrowObligation from "./contracts/obligations/escrow/hook-based/HookEscrowObligation.json";
+import HooksEscrowObligation from "./contracts/obligations/escrow/hook-based/HooksEscrowObligation.json";
+import AttestationEscrowHook from "./contracts/obligations/escrow/hook-based/hooks/AttestationEscrowHook.json";
+import AttestationReferenceEscrowHook from "./contracts/obligations/escrow/hook-based/hooks/AttestationReferenceEscrowHook.json";
+import ERC20EscrowHook from "./contracts/obligations/escrow/hook-based/hooks/ERC20EscrowHook.json";
+import ERC721EscrowHook from "./contracts/obligations/escrow/hook-based/hooks/ERC721EscrowHook.json";
+import ERC1155EscrowHook from "./contracts/obligations/escrow/hook-based/hooks/ERC1155EscrowHook.json";
+import NativeTokenEscrowHook from "./contracts/obligations/escrow/hook-based/hooks/NativeTokenEscrowHook.json";
 
 // Obligations - Payment
 import ERC20PaymentObligation from "./contracts/obligations/payment/ERC20PaymentObligation.json";
@@ -56,6 +64,11 @@ import CommitRevealObligation from "./contracts/obligations/CommitRevealObligati
 // Utils
 import AtomicAttestationUtils from "./contracts/utils/AtomicAttestationUtils.json";
 import AtomicPaymentUtils from "./contracts/utils/AtomicPaymentUtils.json";
+import ERC20Splitter from "./contracts/utils/splitters/ERC20Splitter.json";
+import ERC1155Splitter from "./contracts/utils/splitters/ERC1155Splitter.json";
+import NativeTokenSplitter from "./contracts/utils/splitters/NativeTokenSplitter.json";
+import TokenBundleSplitter from "./contracts/utils/splitters/TokenBundleSplitter.json";
+import TokenBundleSplitterUnvalidated from "./contracts/utils/splitters/TokenBundleSplitterUnvalidated.json";
 
 export type DeployFn = (
   abi: any[],
@@ -168,6 +181,17 @@ export async function deployAlkahest(
     result.nativeTokenPaymentObligation = await deploy(deployFn, NativeTokenPaymentObligation as Artifact, easArgs);
     result.attestationEscrowObligation = await deploy(deployFn, AttestationEscrowObligation as Artifact, easArgs);
     result.attestationReferenceEscrowObligation = await deploy(deployFn, AttestationReferenceEscrowObligation as Artifact, easArgs);
+    result.hookEscrowObligation = await deploy(deployFn, HookEscrowObligation as Artifact, easArgs);
+    result.hooksEscrowObligation = await deploy(deployFn, HooksEscrowObligation as Artifact, easArgs);
+    result.erc20EscrowHook = await deploy(deployFn, ERC20EscrowHook as Artifact);
+    result.erc721EscrowHook = await deploy(deployFn, ERC721EscrowHook as Artifact);
+    result.erc1155EscrowHook = await deploy(deployFn, ERC1155EscrowHook as Artifact);
+    result.nativeTokenEscrowHook = await deploy(deployFn, NativeTokenEscrowHook as Artifact);
+    result.attestationEscrowHook = await deploy(deployFn, AttestationEscrowHook as Artifact, [easAddress]);
+    result.attestationReferenceEscrowHook = await deploy(deployFn, AttestationReferenceEscrowHook as Artifact, [
+      easAddress,
+      easSrAddress,
+    ]);
     result.stringObligation = await deploy(deployFn, StringObligation as Artifact, easArgs);
     result.commitRevealObligation = await deploy(deployFn, CommitRevealObligation as Artifact, [
       easAddress,
@@ -207,6 +231,14 @@ export async function deployAlkahest(
     result.nativeTokenAtomicPaymentUtils = atomicPaymentUtils;
     result.tokenBundleAtomicPaymentUtils = atomicPaymentUtils;
     result.atomicAttestationUtils = await deploy(deployFn, AtomicAttestationUtils as Artifact, [easAddress]);
+
+    result.erc20Splitter = await deploy(deployFn, ERC20Splitter as Artifact, [easAddress]);
+    result.erc1155Splitter = await deploy(deployFn, ERC1155Splitter as Artifact, [easAddress]);
+    result.nativeTokenSplitter = await deploy(deployFn, NativeTokenSplitter as Artifact, [easAddress]);
+    result.tokenBundleSplitter = await deploy(deployFn, TokenBundleSplitter as Artifact, [easAddress]);
+    result.tokenBundleSplitterUnvalidated = await deploy(deployFn, TokenBundleSplitterUnvalidated as Artifact, [
+      easAddress,
+    ]);
   }
 
   return result;

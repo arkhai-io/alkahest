@@ -454,6 +454,78 @@ pub mod obligations {
                 "src/contracts/obligations/escrow/unconditional/UnconditionalAttestationReferenceEscrowObligation.json"
             );
         }
+
+        pub mod hook_based {
+            use alloy::sol;
+
+            sol!(
+                #[allow(missing_docs)]
+                #[sol(rpc)]
+                #[derive(Debug)]
+                HookEscrowObligation,
+                "src/contracts/obligations/escrow/hook-based/HookEscrowObligation.json"
+            );
+
+            sol!(
+                #[allow(missing_docs)]
+                #[sol(rpc)]
+                #[derive(Debug)]
+                HooksEscrowObligation,
+                "src/contracts/obligations/escrow/hook-based/HooksEscrowObligation.json"
+            );
+
+            pub mod hooks {
+                use alloy::sol;
+
+                sol!(
+                    #[allow(missing_docs)]
+                    #[sol(rpc)]
+                    #[derive(Debug)]
+                    ERC20EscrowHook,
+                    "src/contracts/obligations/escrow/hook-based/hooks/ERC20EscrowHook.json"
+                );
+
+                sol!(
+                    #[allow(missing_docs)]
+                    #[sol(rpc)]
+                    #[derive(Debug)]
+                    ERC721EscrowHook,
+                    "src/contracts/obligations/escrow/hook-based/hooks/ERC721EscrowHook.json"
+                );
+
+                sol!(
+                    #[allow(missing_docs)]
+                    #[sol(rpc)]
+                    #[derive(Debug)]
+                    ERC1155EscrowHook,
+                    "src/contracts/obligations/escrow/hook-based/hooks/ERC1155EscrowHook.json"
+                );
+
+                sol!(
+                    #[allow(missing_docs)]
+                    #[sol(rpc)]
+                    #[derive(Debug)]
+                    NativeTokenEscrowHook,
+                    "src/contracts/obligations/escrow/hook-based/hooks/NativeTokenEscrowHook.json"
+                );
+
+                sol!(
+                    #[allow(missing_docs)]
+                    #[sol(rpc)]
+                    #[derive(Debug)]
+                    AttestationEscrowHook,
+                    "src/contracts/obligations/escrow/hook-based/hooks/AttestationEscrowHook.json"
+                );
+
+                sol!(
+                    #[allow(missing_docs)]
+                    #[sol(rpc)]
+                    #[derive(Debug)]
+                    AttestationReferenceEscrowHook,
+                    "src/contracts/obligations/escrow/hook-based/hooks/AttestationReferenceEscrowHook.json"
+                );
+            }
+        }
     }
 }
 
@@ -479,6 +551,58 @@ pub mod utils {
             AtomicAttestationUtils,
             "src/contracts/utils/AtomicAttestationUtils.json"
         );
+    }
+
+    pub mod splitters {
+        use alloy::sol;
+
+        sol!(
+            #[allow(missing_docs)]
+            #[sol(rpc)]
+            #[derive(Debug)]
+            ERC20Splitter,
+            "src/contracts/utils/splitters/ERC20Splitter.json"
+        );
+
+        sol!(
+            #[allow(missing_docs)]
+            #[sol(rpc)]
+            #[derive(Debug)]
+            ERC1155Splitter,
+            "src/contracts/utils/splitters/ERC1155Splitter.json"
+        );
+
+        sol!(
+            #[allow(missing_docs)]
+            #[sol(rpc)]
+            #[derive(Debug)]
+            NativeTokenSplitter,
+            "src/contracts/utils/splitters/NativeTokenSplitter.json"
+        );
+
+        pub mod token_bundle {
+            use alloy::sol;
+
+            sol!(
+                #[allow(missing_docs)]
+                #[sol(rpc)]
+                #[derive(Debug)]
+                TokenBundleSplitter,
+                "src/contracts/utils/splitters/TokenBundleSplitter.json"
+            );
+        }
+
+        pub mod token_bundle_unvalidated {
+            use alloy::sol;
+
+            sol!(
+                #[allow(missing_docs)]
+                #[sol(rpc)]
+                #[derive(Debug)]
+                TokenBundleSplitterUnvalidated,
+                "src/contracts/utils/splitters/TokenBundleSplitterUnvalidated.json"
+            );
+        }
     }
 
     // Re-export the main contract types for convenience

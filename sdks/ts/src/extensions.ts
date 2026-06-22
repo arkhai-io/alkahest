@@ -5,6 +5,7 @@ import {
   makeErc20Client,
   makeErc721Client,
   makeErc1155Client,
+  makeHookBasedClient,
   makeNativeTokenClient,
   makeStringObligationClient,
   makeTokenBundleClient,
@@ -13,10 +14,12 @@ import {
   pickErc20Addresses,
   pickErc721Addresses,
   pickErc1155Addresses,
+  pickHookBasedAddresses,
   pickNativeTokenAddresses,
   pickStringAddresses,
   pickTokenBundleAddresses,
 } from "./clients/obligations";
+import { makeSplittersClient, pickSplitterAddresses } from "./clients/splitters";
 
 /**
  * Creates the default extension for the Alkahest client with all standard functionality
@@ -41,6 +44,12 @@ export const makeDefaultExtension = (client: any) => ({
 
   /** Methods for interacting with token bundles */
   bundle: makeTokenBundleClient(client.viemClient, pickTokenBundleAddresses(client.contractAddresses)),
+
+  /** Generic hook-based escrow obligations and bundled hooks */
+  hookBased: makeHookBasedClient(client.viemClient, pickHookBasedAddresses(client.contractAddresses)),
+
+  /** Splitter utilities for distributing escrowed assets */
+  splitters: makeSplittersClient(client.viemClient, pickSplitterAddresses(client.contractAddresses)),
 
   /** Methods for interacting with attestations */
   attestation: makeAttestationClient(client.viemClient, pickAttestationAddresses(client.contractAddresses)),

@@ -6,19 +6,26 @@ finished.
 
 ## Remaining
 
-### [ ] SDK Contract Coverage
+No remaining items.
+
+## Done
+
+### [x] SDK Contract Coverage
 
 Generated raw bindings cover the deployable non-example contract surface, but
 the ergonomic SDK clients and address maps still need explicit coverage for
 newer hook-based escrow and splitter contracts.
+
+Added TypeScript and Rust SDK coverage for hook-based escrow obligations,
+bundled escrow hooks, and splitter contracts. Address maps and local deploy
+helpers now include these contracts, with published network maps using explicit
+zero-address placeholders until deployed.
 
 `SchemaRegistryUtils` is not part of that missing external surface. It is an
 internal Solidity library used by escrow contracts to register or reuse schemas.
 The SDKs do not need a deployed-address entry or contract client for it. If
 useful, its pure UID derivation can be mirrored later as an SDK helper rather
 than as a contract binding.
-
-## Done
 
 ### [x] SDK Atomic Payment Namespaces
 

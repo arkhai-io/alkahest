@@ -112,6 +112,8 @@ async fn test_custom_configuration() -> Result<()> {
         erc721_addresses: BASE_SEPOLIA_ADDRESSES.erc721_addresses,
         erc1155_addresses: BASE_SEPOLIA_ADDRESSES.erc1155_addresses,
         token_bundle_addresses: BASE_SEPOLIA_ADDRESSES.token_bundle_addresses,
+        hook_based_addresses: BASE_SEPOLIA_ADDRESSES.hook_based_addresses,
+        splitters_addresses: BASE_SEPOLIA_ADDRESSES.splitters_addresses,
         native_token_addresses: BASE_SEPOLIA_ADDRESSES.native_token_addresses,
         attestation_addresses: BASE_SEPOLIA_ADDRESSES.attestation_addresses,
         string_obligation_addresses: BASE_SEPOLIA_ADDRESSES.string_obligation_addresses,

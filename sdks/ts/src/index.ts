@@ -220,6 +220,31 @@ export const makeMinimalClient = (
     atomicAttestationUtils:
       contractAddresses?.atomicAttestationUtils || baseAddresses?.atomicAttestationUtils || zeroAddress,
 
+    hookEscrowObligation:
+      contractAddresses?.hookEscrowObligation || baseAddresses?.hookEscrowObligation || zeroAddress,
+    hooksEscrowObligation:
+      contractAddresses?.hooksEscrowObligation || baseAddresses?.hooksEscrowObligation || zeroAddress,
+    erc20EscrowHook: contractAddresses?.erc20EscrowHook || baseAddresses?.erc20EscrowHook || zeroAddress,
+    erc721EscrowHook: contractAddresses?.erc721EscrowHook || baseAddresses?.erc721EscrowHook || zeroAddress,
+    erc1155EscrowHook: contractAddresses?.erc1155EscrowHook || baseAddresses?.erc1155EscrowHook || zeroAddress,
+    nativeTokenEscrowHook:
+      contractAddresses?.nativeTokenEscrowHook || baseAddresses?.nativeTokenEscrowHook || zeroAddress,
+    attestationEscrowHook:
+      contractAddresses?.attestationEscrowHook || baseAddresses?.attestationEscrowHook || zeroAddress,
+    attestationReferenceEscrowHook:
+      contractAddresses?.attestationReferenceEscrowHook ||
+      baseAddresses?.attestationReferenceEscrowHook ||
+      zeroAddress,
+
+    erc20Splitter: contractAddresses?.erc20Splitter || baseAddresses?.erc20Splitter || zeroAddress,
+    erc1155Splitter: contractAddresses?.erc1155Splitter || baseAddresses?.erc1155Splitter || zeroAddress,
+    nativeTokenSplitter: contractAddresses?.nativeTokenSplitter || baseAddresses?.nativeTokenSplitter || zeroAddress,
+    tokenBundleSplitter: contractAddresses?.tokenBundleSplitter || baseAddresses?.tokenBundleSplitter || zeroAddress,
+    tokenBundleSplitterUnvalidated:
+      contractAddresses?.tokenBundleSplitterUnvalidated ||
+      baseAddresses?.tokenBundleSplitterUnvalidated ||
+      zeroAddress,
+
     stringObligation: contractAddresses?.stringObligation || baseAddresses?.stringObligation || zeroAddress,
     commitRevealObligation:
       contractAddresses?.commitRevealObligation || baseAddresses?.commitRevealObligation || zeroAddress,
@@ -500,6 +525,8 @@ export * as fixtures from "../tests/fixtures";
 export { setupTestEnvironment, type TestContext } from "../tests/utils/setup";
 // Main arbiters client - provides both hierarchical and flat APIs
 export * from "./clients/arbiters";
+export * from "./clients/obligations";
+export * from "./clients/splitters";
 export * from "./config";
 // Export contract ABIs
 export * as contracts from "./contracts";

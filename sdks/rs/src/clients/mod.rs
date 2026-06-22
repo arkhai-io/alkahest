@@ -1,5 +1,6 @@
 pub mod arbiters;
 pub mod obligations;
+pub mod splitters;
 
 // Re-export oracle module from arbiters for backwards compatibility
 pub mod oracle {
@@ -16,6 +17,7 @@ pub use obligations::commit_reveal as commit_reveal_obligation;
 pub use obligations::erc20;
 pub use obligations::erc721;
 pub use obligations::erc1155;
+pub use obligations::hook_based;
 pub use obligations::native_token;
 pub use obligations::string;
 pub use obligations::string as string_obligation;

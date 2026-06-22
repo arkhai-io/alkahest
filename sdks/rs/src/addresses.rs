@@ -5,9 +5,30 @@ use crate::{
     clients::{
         arbiters::ArbitersAddresses, attestation::AttestationAddresses,
         commit_reveal_obligation::CommitRevealObligationAddresses, erc20::Erc20Addresses,
-        erc721::Erc721Addresses, erc1155::Erc1155Addresses, native_token::NativeTokenAddresses,
+        erc721::Erc721Addresses, erc1155::Erc1155Addresses, hook_based::HookBasedAddresses,
+        native_token::NativeTokenAddresses, splitters::SplittersAddresses,
         string_obligation::StringObligationAddresses, token_bundle::TokenBundleAddresses,
     },
+};
+
+const UNRELEASED_HOOK_BASED_ADDRESSES: HookBasedAddresses = HookBasedAddresses {
+    eas: Address::ZERO,
+    hook_escrow_obligation: Address::ZERO,
+    hooks_escrow_obligation: Address::ZERO,
+    erc20_escrow_hook: Address::ZERO,
+    erc721_escrow_hook: Address::ZERO,
+    erc1155_escrow_hook: Address::ZERO,
+    native_token_escrow_hook: Address::ZERO,
+    attestation_escrow_hook: Address::ZERO,
+    attestation_reference_escrow_hook: Address::ZERO,
+};
+
+const UNRELEASED_SPLITTERS_ADDRESSES: SplittersAddresses = SplittersAddresses {
+    erc20_splitter: Address::ZERO,
+    erc1155_splitter: Address::ZERO,
+    native_token_splitter: Address::ZERO,
+    token_bundle_splitter: Address::ZERO,
+    token_bundle_splitter_unvalidated: Address::ZERO,
 };
 
 pub const BASE_SEPOLIA_ADDRESSES: DefaultExtensionConfig = DefaultExtensionConfig {
@@ -90,6 +111,8 @@ pub const BASE_SEPOLIA_ADDRESSES: DefaultExtensionConfig = DefaultExtensionConfi
         escrow_obligation_unconditional: Address::ZERO, // TODO: Add actual address when deployed
         payment_obligation: address!("0xFa5446475De31fa3c6457E2b62EA5a8F8172Cd29"),
     },
+    hook_based_addresses: UNRELEASED_HOOK_BASED_ADDRESSES,
+    splitters_addresses: UNRELEASED_SPLITTERS_ADDRESSES,
     attestation_addresses: AttestationAddresses {
         eas: address!("0x4200000000000000000000000000000000000021"),
         eas_schema_registry: address!("0x4200000000000000000000000000000000000020"),
@@ -181,6 +204,8 @@ pub const ETHEREUM_SEPOLIA_ADDRESSES: DefaultExtensionConfig = DefaultExtensionC
         escrow_obligation_unconditional: Address::ZERO, // TODO: Add actual address when deployed
         payment_obligation: address!("0x36Fcf1Ddee838a94B1358285A11e8bbbb90eD9A1"),
     },
+    hook_based_addresses: UNRELEASED_HOOK_BASED_ADDRESSES,
+    splitters_addresses: UNRELEASED_SPLITTERS_ADDRESSES,
     attestation_addresses: AttestationAddresses {
         eas: address!("0xC2679fBD37d54388Ce493F1DB75320D236e1815e"),
         eas_schema_registry: address!("0x0a7E2Ff54e76B8E6659aedc9103FB21c038050D0"),
@@ -272,6 +297,8 @@ pub const FILECOIN_CALIBRATION_ADDRESSES: DefaultExtensionConfig = DefaultExtens
         escrow_obligation_unconditional: Address::ZERO, // TODO: Add actual address when deployed
         payment_obligation: address!("0xc1b02efec19a171ecbb7c8ad54b9617e80fdf40f"),
     },
+    hook_based_addresses: UNRELEASED_HOOK_BASED_ADDRESSES,
+    splitters_addresses: UNRELEASED_SPLITTERS_ADDRESSES,
     attestation_addresses: AttestationAddresses {
         eas: address!("0x3c79a0225380fB6F3CB990FfC4E3D5aF4546b524"),
         eas_schema_registry: address!("0x2BB94a4E6eC0D81dE7f81007b572Ac09A5BE37b4"),
@@ -363,6 +390,8 @@ pub const GENLAYER_BRADBURY_ADDRESSES: DefaultExtensionConfig = DefaultExtension
         escrow_obligation_unconditional: Address::ZERO, // TODO: Add actual address when deployed
         payment_obligation: address!("0x9bA50DB048d1E5db034377abf97F92496D027C71"),
     },
+    hook_based_addresses: UNRELEASED_HOOK_BASED_ADDRESSES,
+    splitters_addresses: UNRELEASED_SPLITTERS_ADDRESSES,
     attestation_addresses: AttestationAddresses {
         eas: address!("0xaC18Fa0DE3123215404a0C5f6d02ed9B2D0D0d98"),
         eas_schema_registry: address!("0xA1F9076932f6eEA0D90BBfA1D6E81D001012645D"),
@@ -454,6 +483,8 @@ pub const ETHEREUM_ADDRESSES: DefaultExtensionConfig = DefaultExtensionConfig {
         escrow_obligation_unconditional: Address::ZERO, // TODO: Add actual address when deployed
         payment_obligation: address!("0x36Fcf1Ddee838a94B1358285A11e8bbbb90eD9A1"),
     },
+    hook_based_addresses: UNRELEASED_HOOK_BASED_ADDRESSES,
+    splitters_addresses: UNRELEASED_SPLITTERS_ADDRESSES,
     attestation_addresses: AttestationAddresses {
         eas: address!("0xA1207F3BBa224E2c9c3c6D5aF63D0eb1582Ce587"),
         eas_schema_registry: address!("0xA7b39296258348C78294F95B872b282326A97BDF"),

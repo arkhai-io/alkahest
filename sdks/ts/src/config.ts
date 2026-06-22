@@ -1,7 +1,41 @@
 import type { ChainAddresses } from "./types";
 
+const zeroAddress = "0x0000000000000000000000000000000000000000" as const;
+
+const unreleasedAddresses = {
+  hookEscrowObligation: zeroAddress,
+  hooksEscrowObligation: zeroAddress,
+  erc20EscrowHook: zeroAddress,
+  erc721EscrowHook: zeroAddress,
+  erc1155EscrowHook: zeroAddress,
+  nativeTokenEscrowHook: zeroAddress,
+  attestationEscrowHook: zeroAddress,
+  attestationReferenceEscrowHook: zeroAddress,
+  erc20Splitter: zeroAddress,
+  erc1155Splitter: zeroAddress,
+  nativeTokenSplitter: zeroAddress,
+  tokenBundleSplitter: zeroAddress,
+  tokenBundleSplitterUnvalidated: zeroAddress,
+} satisfies Pick<
+  ChainAddresses,
+  | "hookEscrowObligation"
+  | "hooksEscrowObligation"
+  | "erc20EscrowHook"
+  | "erc721EscrowHook"
+  | "erc1155EscrowHook"
+  | "nativeTokenEscrowHook"
+  | "attestationEscrowHook"
+  | "attestationReferenceEscrowHook"
+  | "erc20Splitter"
+  | "erc1155Splitter"
+  | "nativeTokenSplitter"
+  | "tokenBundleSplitter"
+  | "tokenBundleSplitterUnvalidated"
+>;
+
 export const contractAddresses: Record<string, ChainAddresses> = {
   "Base Sepolia": {
+    ...unreleasedAddresses,
     eas: "0x4200000000000000000000000000000000000021",
     easSchemaRegistry: "0x4200000000000000000000000000000000000020",
 
@@ -59,6 +93,7 @@ export const contractAddresses: Record<string, ChainAddresses> = {
     expirationTimeEqualArbiter: "0x4d05EA86C2C0af7CA94dc71Da45aba9368e664e4",
   },
   "Sepolia": {
+    ...unreleasedAddresses,
     eas: "0xC2679fBD37d54388Ce493F1DB75320D236e1815e",
     easSchemaRegistry: "0x0a7E2Ff54e76B8E6659aedc9103FB21c038050D0",
 
@@ -116,6 +151,7 @@ export const contractAddresses: Record<string, ChainAddresses> = {
     expirationTimeEqualArbiter: "0x7c782ac7741BB78DB7491Ee222af0a04f7f2bc0b",
   },
   "Filecoin Calibration": {
+    ...unreleasedAddresses,
     eas: "0x3c79a0225380fB6F3CB990FfC4E3D5aF4546b524",
     easSchemaRegistry: "0x2BB94a4E6eC0D81dE7f81007b572Ac09A5BE37b4",
 
@@ -173,6 +209,7 @@ export const contractAddresses: Record<string, ChainAddresses> = {
     expirationTimeEqualArbiter: "0x98d5bc7593143e55e9949da97603126cae0bfd7f",
   },
   "GenLayer Bradbury": {
+    ...unreleasedAddresses,
     eas: "0xaC18Fa0DE3123215404a0C5f6d02ed9B2D0D0d98",
     easSchemaRegistry: "0xA1F9076932f6eEA0D90BBfA1D6E81D001012645D",
 
@@ -230,6 +267,7 @@ export const contractAddresses: Record<string, ChainAddresses> = {
     expirationTimeEqualArbiter: "0xE9ee2c57B18283b66d342D33d63C55f1427f9e9B",
   },
   "Ethereum": {
+    ...unreleasedAddresses,
     eas: "0xA1207F3BBa224E2c9c3c6D5aF63D0eb1582Ce587",
     easSchemaRegistry: "0xA7b39296258348C78294F95B872b282326A97BDF",
 

@@ -17,7 +17,8 @@ use types::{SharedPublicProvider, SharedWalletProvider};
 use crate::clients::{
     arbiters::ArbitersAddresses, attestation::AttestationAddresses,
     commit_reveal_obligation::CommitRevealObligationAddresses, erc20::Erc20Addresses,
-    erc721::Erc721Addresses, erc1155::Erc1155Addresses, native_token::NativeTokenAddresses,
+    erc721::Erc721Addresses, erc1155::Erc1155Addresses, hook_based::HookBasedAddresses,
+    native_token::NativeTokenAddresses, splitters::SplittersAddresses,
     string_obligation::StringObligationAddresses, token_bundle::TokenBundleAddresses,
 };
 
@@ -40,7 +41,9 @@ pub use clients::commit_reveal_obligation::CommitRevealObligationContract;
 pub use clients::erc20::Erc20Contract;
 pub use clients::erc721::Erc721Contract;
 pub use clients::erc1155::Erc1155Contract;
+pub use clients::hook_based::HookBasedContract;
 pub use clients::native_token::NativeTokenContract;
+pub use clients::splitters::SplitterContract;
 pub use clients::string_obligation::StringObligationContract;
 pub use clients::token_bundle::TokenBundleContract;
 pub use extensions::ContractModule;
@@ -88,6 +91,10 @@ pub struct DefaultExtensionConfig {
     pub native_token_addresses: NativeTokenAddresses,
     /// Addresses for token bundle contracts that handle multiple token types
     pub token_bundle_addresses: TokenBundleAddresses,
+    /// Addresses for generic hook-based escrow contracts and bundled hooks
+    pub hook_based_addresses: HookBasedAddresses,
+    /// Addresses for splitter utility contracts
+    pub splitters_addresses: SplittersAddresses,
     /// Addresses for attestation-related contracts
     pub attestation_addresses: AttestationAddresses,
     /// Addresses for string obligation contracts

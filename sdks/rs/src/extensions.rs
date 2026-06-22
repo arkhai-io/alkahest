@@ -6,18 +6,18 @@ use std::any::Any;
 pub use crate::clients::{
     arbiters::ArbitersModule, attestation::AttestationModule,
     commit_reveal_obligation::CommitRevealObligationModule, erc20::Erc20Module,
-    erc721::Erc721Module, erc1155::Erc1155Module, native_token::NativeTokenModule,
-    oracle::OracleModule, string_obligation::StringObligationModule,
-    token_bundle::TokenBundleModule,
+    erc721::Erc721Module, erc1155::Erc1155Module, hook_based::HookBasedModule,
+    native_token::NativeTokenModule, oracle::OracleModule, splitters::SplittersModule,
+    string_obligation::StringObligationModule, token_bundle::TokenBundleModule,
 };
 
 // Re-export address types for convenience
 pub use crate::clients::{
     arbiters::ArbitersAddresses, attestation::AttestationAddresses,
     commit_reveal_obligation::CommitRevealObligationAddresses, erc20::Erc20Addresses,
-    erc721::Erc721Addresses, erc1155::Erc1155Addresses, native_token::NativeTokenAddresses,
-    oracle::OracleAddresses, string_obligation::StringObligationAddresses,
-    token_bundle::TokenBundleAddresses,
+    erc721::Erc721Addresses, erc1155::Erc1155Addresses, hook_based::HookBasedAddresses,
+    native_token::NativeTokenAddresses, oracle::OracleAddresses, splitters::SplittersAddresses,
+    string_obligation::StringObligationAddresses, token_bundle::TokenBundleAddresses,
 };
 
 use crate::{AlkahestClient, DefaultExtensionConfig};
@@ -138,6 +138,8 @@ pub struct BaseExtensions {
     pub erc1155: Erc1155Module,
     pub native_token: NativeTokenModule,
     pub token_bundle: TokenBundleModule,
+    pub hook_based: HookBasedModule,
+    pub splitters: SplittersModule,
     pub attestation: AttestationModule,
     pub string_obligation: StringObligationModule,
     pub commit_reveal: CommitRevealObligationModule,
@@ -159,6 +161,8 @@ impl AlkahestExtension for BaseExtensions {
         let erc1155_config = config.as_ref().map(|c| c.erc1155_addresses.clone());
         let native_token_config = config.as_ref().map(|c| c.native_token_addresses.clone());
         let token_bundle_config = config.as_ref().map(|c| c.token_bundle_addresses.clone());
+        let hook_based_config = config.as_ref().map(|c| c.hook_based_addresses.clone());
+        let splitters_config = config.as_ref().map(|c| c.splitters_addresses.clone());
         let attestation_config = config.as_ref().map(|c| c.attestation_addresses.clone());
         let string_obligation_config = config
             .as_ref()
@@ -184,6 +188,11 @@ impl AlkahestExtension for BaseExtensions {
         let token_bundle =
             TokenBundleModule::init(private_key.clone(), providers.clone(), token_bundle_config)
                 .await?;
+        let hook_based =
+            HookBasedModule::init(private_key.clone(), providers.clone(), hook_based_config)
+                .await?;
+        let splitters =
+            SplittersModule::init(private_key.clone(), providers.clone(), splitters_config).await?;
         let attestation =
             AttestationModule::init(private_key.clone(), providers.clone(), attestation_config)
                 .await?;
@@ -210,6 +219,8 @@ impl AlkahestExtension for BaseExtensions {
             erc1155,
             native_token,
             token_bundle,
+            hook_based,
+            splitters,
             attestation,
             string_obligation,
             commit_reveal,
@@ -229,7 +240,16 @@ impl AlkahestExtension for BaseExtensions {
         if let Some(client) = self.erc1155.find_client::<T>() {
             return Some(client);
         }
+        if let Some(client) = self.native_token.find_client::<T>() {
+            return Some(client);
+        }
         if let Some(client) = self.token_bundle.find_client::<T>() {
+            return Some(client);
+        }
+        if let Some(client) = self.hook_based.find_client::<T>() {
+            return Some(client);
+        }
+        if let Some(client) = self.splitters.find_client::<T>() {
             return Some(client);
         }
         if let Some(client) = self.attestation.find_client::<T>() {
@@ -268,6 +288,14 @@ pub trait HasNativeToken {
 
 pub trait HasTokenBundle {
     fn token_bundle(&self) -> &TokenBundleModule;
+}
+
+pub trait HasHookBased {
+    fn hook_based(&self) -> &HookBasedModule;
+}
+
+pub trait HasSplitters {
+    fn splitters(&self) -> &SplittersModule;
 }
 
 pub trait HasAttestation {
@@ -318,6 +346,18 @@ impl HasNativeToken for BaseExtensions {
 impl HasTokenBundle for BaseExtensions {
     fn token_bundle(&self) -> &TokenBundleModule {
         &self.token_bundle
+    }
+}
+
+impl HasHookBased for BaseExtensions {
+    fn hook_based(&self) -> &HookBasedModule {
+        &self.hook_based
+    }
+}
+
+impl HasSplitters for BaseExtensions {
+    fn splitters(&self) -> &SplittersModule {
+        &self.splitters
     }
 }
 
@@ -372,6 +412,18 @@ impl HasErc1155 for Erc1155Module {
 
 impl HasTokenBundle for TokenBundleModule {
     fn token_bundle(&self) -> &TokenBundleModule {
+        self
+    }
+}
+
+impl HasHookBased for HookBasedModule {
+    fn hook_based(&self) -> &HookBasedModule {
+        self
+    }
+}
+
+impl HasSplitters for SplittersModule {
+    fn splitters(&self) -> &SplittersModule {
         self
     }
 }
@@ -437,6 +489,16 @@ where
     }
 }
 
+impl<A: AlkahestExtension, B: AlkahestExtension> HasNativeToken for JoinExtension<A, B>
+where
+    Self: AlkahestExtension,
+{
+    fn native_token(&self) -> &NativeTokenModule {
+        self.find_client::<NativeTokenModule>()
+            .expect("NativeToken module not found in JoinExtension")
+    }
+}
+
 impl<A: AlkahestExtension, B: AlkahestExtension> HasTokenBundle for JoinExtension<A, B>
 where
     Self: AlkahestExtension,
@@ -444,6 +506,26 @@ where
     fn token_bundle(&self) -> &TokenBundleModule {
         self.find_client::<TokenBundleModule>()
             .expect("TokenBundle module not found in JoinExtension")
+    }
+}
+
+impl<A: AlkahestExtension, B: AlkahestExtension> HasHookBased for JoinExtension<A, B>
+where
+    Self: AlkahestExtension,
+{
+    fn hook_based(&self) -> &HookBasedModule {
+        self.find_client::<HookBasedModule>()
+            .expect("HookBased module not found in JoinExtension")
+    }
+}
+
+impl<A: AlkahestExtension, B: AlkahestExtension> HasSplitters for JoinExtension<A, B>
+where
+    Self: AlkahestExtension,
+{
+    fn splitters(&self) -> &SplittersModule {
+        self.find_client::<SplittersModule>()
+            .expect("Splitters module not found in JoinExtension")
     }
 }
 
@@ -525,6 +607,18 @@ impl<Ext: AlkahestExtension + HasNativeToken> HasNativeToken for AlkahestClient<
 impl<Ext: AlkahestExtension + HasTokenBundle> HasTokenBundle for AlkahestClient<Ext> {
     fn token_bundle(&self) -> &TokenBundleModule {
         self.extensions.token_bundle()
+    }
+}
+
+impl<Ext: AlkahestExtension + HasHookBased> HasHookBased for AlkahestClient<Ext> {
+    fn hook_based(&self) -> &HookBasedModule {
+        self.extensions.hook_based()
+    }
+}
+
+impl<Ext: AlkahestExtension + HasSplitters> HasSplitters for AlkahestClient<Ext> {
+    fn splitters(&self) -> &SplittersModule {
+        self.extensions.splitters()
     }
 }
 
