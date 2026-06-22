@@ -291,18 +291,18 @@ uid = await client.commit_reveal.do_obligation(payload, salt, schema, ref_uid=es
 await client.commit_reveal.reclaim_bond(uid)
 ```
 
-## Barter Utilities
+## Atomic Payment Utilities
 
-Barter utils provide atomic single-transaction settlement for existing escrows:
+Atomic payment utilities provide single-transaction payment and collection for existing escrows:
 
 **TypeScript:**
 ```typescript
-await client.erc20.barter.payErc20AndCollect(escrowUid);
+await client.erc20.payment.payErc20AndCollect(escrowUid);
 ```
 
 **Rust:**
 ```rust
-client.erc20().barter().pay_erc20_and_collect(escrow_uid).await?;
+client.erc20().payment().pay_erc20_and_collect(escrow_uid).await?;
 ```
 
 ## Key Type Differences

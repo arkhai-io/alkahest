@@ -1,6 +1,6 @@
 # TypeScript SDK Reference
 
-For complex workflows that go beyond the CLI (e.g., auto-arbitration listeners, custom barter combinations, bundle escrows), use the TypeScript SDK directly.
+For complex workflows that go beyond the CLI (e.g., auto-arbitration listeners, custom token-trade combinations, bundle escrows), use the TypeScript SDK directly.
 
 ## Setup
 
@@ -89,7 +89,7 @@ await client.arbiters.general.trustedOracle.arbitrate(
 ### Settling a token-for-token escrow
 
 ```typescript
-const { hash } = await client.erc20.barter.payErc20AndCollect(escrowUid);
+const { hash } = await client.erc20.payment.payErc20AndCollect(escrowUid);
 ```
 
 ## Oracle Workflow: Arbitrate

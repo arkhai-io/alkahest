@@ -62,7 +62,7 @@ client
 │   ├── approve(&token, purpose) -> Receipt
 │   ├── approve_if_less(&token, purpose) -> Option<Receipt>
 │   ├── escrow()
-│   │   ├── non_unconditional()
+│   │   ├── default()
 │   │   │   ├── make_statement(token, amount, arbiter, demand, expiration) -> Receipt
 │   │   │   ├── collect_payment(escrow_uid, fulfillment_uid) -> Receipt
 │   │   │   ├── get_statement(uid) -> DecodedAttestation<ObligationData>
@@ -71,40 +71,33 @@ client
 │   ├── payment()
 │   │   ├── make_statement(token, amount, payee, expiration, ref_uid) -> Receipt
 │   │   ├── get_statement(uid) -> DecodedAttestation<ObligationData>
-│   │   └── decode_statement(bytes) -> ObligationData
-│   ├── barter()
+│   │   ├── decode_statement(bytes) -> ObligationData
 │   │   ├── pay_erc20_and_collect(escrow_uid) -> Receipt
-│   │   ├── permit_and_pay_erc20_and_collect(escrow_uid) -> Receipt
-│   │   ├── pay_erc20_and_collect(escrow_uid) -> Receipt
-│   │   └── ... (more cross-token settlement combinations)
+│   │   └── permit_and_pay_erc20_and_collect(escrow_uid) -> Receipt
 │   └── util()
 │       └── permit-related helpers
 │
 ├── erc721()                         // Same structure as erc20
 │   ├── approve(&token, purpose)
-│   ├── escrow().non_unconditional() / .unconditional()
-│   ├── payment()
-│   └── barter()
+│   ├── escrow().default() / .unconditional()
+│   └── payment()
 │
 ├── erc1155()
 │   ├── approve_all(token_address, purpose)
-│   ├── escrow().non_unconditional() / .unconditional()
-│   ├── payment()
-│   └── barter()
+│   ├── escrow().default() / .unconditional()
+│   └── payment()
 │
 ├── native_token()                   // No approval needed
-│   ├── escrow().non_unconditional() / .unconditional()
-│   ├── payment()
-│   └── barter()
+│   ├── escrow().default() / .unconditional()
+│   └── payment()
 │
 ├── token_bundle()
 │   ├── approve(&bundle, purpose)
-│   ├── escrow().non_unconditional() / .unconditional()
-│   ├── payment()
-│   └── barter()
+│   ├── escrow().default() / .unconditional()
+│   └── payment()
 │
 ├── attestation()
-│   ├── escrow().v1() / .v2()
+│   ├── escrow().default() / .reference()
 │   └── util()
 │
 ├── string_obligation()
@@ -157,7 +150,7 @@ client
 ```rust
 client.erc20_address(Erc20Contract::EscrowObligation)     // -> Address
 client.erc20_address(Erc20Contract::PaymentObligation)
-client.erc20_address(Erc20Contract::BarterUtils)
+client.erc20_address(Erc20Contract::AtomicPaymentUtils)
 client.erc721_address(Erc721Contract::EscrowObligation)
 // ... same pattern for all modules
 client.arbiters_address(ArbitersContract::TrustedOracleArbiter)
@@ -182,7 +175,7 @@ struct ArbiterData { arbiter: Address, demand: Bytes }
 struct DecodedAttestation<T> { attestation: IEAS::Attestation, data: T }
 
 // Approval
-enum ApprovalPurpose { Escrow, Payment, BarterUtils }
+enum ApprovalPurpose { Escrow, Payment, AtomicPayment }
 ```
 
 ## Important Patterns
@@ -204,7 +197,7 @@ Only multi-return functions return structs with named fields.
 ### Getting attestation UID from receipt
 
 ```rust
-let receipt = client.erc20().escrow().non_unconditional().make_statement(...).await?;
+let receipt = client.erc20().escrow().default().make_statement(...).await?;
 let attested_event = client.get_attested_event(receipt)?;
 let uid = attested_event.inner.uid;
 ```

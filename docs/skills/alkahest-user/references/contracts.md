@@ -11,8 +11,8 @@ Each escrow locks assets in a contract until an arbiter validates fulfillment.
 | ERC1155 | `ERC1155EscrowObligation` | `token: address`, `tokenId: uint256`, `amount: uint256`, `arbiter: address`, `demand: bytes` |
 | Native Token | `NativeTokenEscrowObligation` | `amount: uint256`, `arbiter: address`, `demand: bytes` |
 | Token Bundle | `TokenBundleEscrowObligation` | `nativeAmount: uint256`, `erc20Tokens: address[]`, `erc20Amounts: uint256[]`, `erc721Tokens: address[]`, `erc721TokenIds: uint256[]`, `erc1155Tokens: address[]`, `erc1155TokenIds: uint256[]`, `erc1155Amounts: uint256[]`, `arbiter: address`, `demand: bytes` |
-| Attestation (v1) | `AttestationEscrowObligation` | `attestation: AttestationRequest`, `arbiter: address`, `demand: bytes` |
-| Attestation (v2) | `AttestationReferenceEscrowObligation` | `attestationUid: bytes32`, `arbiter: address`, `demand: bytes`, `validationExpirationTime: uint64`, `validationRevocable: bool` |
+| Attestation | `AttestationEscrowObligation` | `attestation: AttestationRequest`, `arbiter: address`, `demand: bytes` |
+| Attestation Reference | `AttestationReferenceEscrowObligation` | `attestationUid: bytes32`, `arbiter: address`, `demand: bytes`, `validationExpirationTime: uint64`, `validationRevocable: bool` |
 
 ### Escrow lifecycle
 
@@ -50,9 +50,9 @@ Payments transfer assets immediately upon attestation creation (no escrow hold).
 - Commitment hash: `keccak256(abi.encode(refUID, claimer, keccak256(abi.encode(obligationData))))`
 - Built-in `IArbiter` implementation verifies commitment exists in an earlier block
 
-## Barter Utilities
+## Atomic Utilities
 
-Barter utils combine escrow + payment into atomic single-transaction swaps.
+Atomic utilities combine payment + escrow collection into single-transaction settlements.
 
 | Contract | Supported swaps |
 |----------|----------------|

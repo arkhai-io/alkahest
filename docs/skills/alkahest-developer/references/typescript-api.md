@@ -133,41 +133,32 @@ client
 │   │   ├── encodeObligationRaw({ token, amount, payee })
 │   │   ├── decodeObligation(bytes)        // => { token, amount, payee }
 │   │   ├── getObligation(uid)
-│   │   └── doObligation(encodedData, refUID?)
-│   └── barter
-│       ├── address
-│       ├── payErc20AndCollect(escrowUid)
-│       ├── permitAndPayErc20AndCollect(escrowUid)
-│       ├── payErc20AndCollect(escrowUid)
-│       ├── payErc721AndCollect(escrowUid)
-│       └── ... (more cross-token settlement combinations)
+│   │   ├── doObligation(encodedData, refUID?)
+│   │   ├── payErc20AndCollect(escrowUid)
+│   │   └── permitAndPayErc20AndCollect(escrowUid)
 │
 ├── erc721                                 // Same structure as erc20
 │   ├── util (.approve)
 │   ├── escrow.default / .unconditional
-│   ├── payment
-│   └── barter
+│   └── payment                            // includes payErc721AndCollect
 │
 ├── erc1155                                // Same structure
 │   ├── util (.approveAll)
 │   ├── escrow.default / .unconditional
-│   ├── payment
-│   └── barter
+│   └── payment                            // includes payErc1155AndCollect
 │
 ├── nativeToken                            // No util (no approvals needed)
 │   ├── escrow.default / .unconditional
-│   ├── payment
-│   └── barter
+│   └── payment                            // includes payNativeAndCollect
 │
 ├── bundle
 │   ├── util (.approve)
 │   ├── escrow.default / .unconditional
-│   ├── payment
-│   └── barter
+│   └── payment                            // includes payBundleAndCollect
 │
 ├── attestation
 │   ├── util
-│   └── escrow.v1 / .v2
+│   └── escrow.default / .reference
 │
 ├── stringObligation
 │   ├── address
@@ -226,10 +217,10 @@ await client.erc20.util.approve({ address: TOKEN, value: amount }, "escrow");
 const permit = await client.erc20.util.getPermitSignature(
   spenderAddress, TOKEN, deadline,
 );
-// Pass permit to barter utils that accept it
+// Pass permit to atomic payment helpers that accept it
 ```
 
-Barter utils have `permitAnd*` variants that accept permit signatures.
+Atomic payment helpers have `permitAnd*` variants that accept permit signatures.
 
 ## Return Types
 

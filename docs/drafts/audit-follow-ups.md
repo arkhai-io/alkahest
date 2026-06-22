@@ -6,7 +6,14 @@ finished.
 
 ## Remaining
 
-No remaining items.
+### [ ] Python SDK API and Docs Alignment
+
+The Python SDK reference still describes the legacy `barter_utils` /
+`barter` surface and attestation `v1` / `v2` naming. Keep the page marked as
+legacy until the Python SDK is aligned with the current TypeScript/Rust
+surface: `default` / `unconditional` escrows, `default` / `reference`
+attestation escrows, and `AtomicPaymentUtils` helpers exposed from payment
+clients.
 
 ## Done
 

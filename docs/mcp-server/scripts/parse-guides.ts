@@ -82,7 +82,7 @@ function extractContractReferences(content: string): string[] {
   // Pattern for contract names (PascalCase ending in common suffixes)
   const patterns = [
     /\b([A-Z][a-zA-Z0-9]*(?:Obligation|Arbiter|Utils))\b/g,
-    /\b(ERC20|ERC721|ERC1155|NativeToken|TokenBundle|Attestation)(?:Escrow|Payment|Barter)/g,
+    /\b(ERC20|ERC721|ERC1155|NativeToken|TokenBundle|Attestation)(?:Escrow|Payment|AtomicPayment)/g,
   ];
 
   for (const pattern of patterns) {

@@ -16,6 +16,32 @@ function camelToPascal(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
+const LEGACY_KEY_MAP: Record<string, string> = {
+  eas: "EAS",
+  easSchemaRegistry: "EASSchemaRegistry",
+  attestationEscrowObligation2: "AttestationReferenceEscrowObligation",
+  attestationBarterUtils: "AtomicAttestationUtils",
+  erc20BarterUtils: "ERC20AtomicPaymentUtils",
+  erc721BarterUtils: "ERC721AtomicPaymentUtils",
+  erc1155BarterUtils: "ERC1155AtomicPaymentUtils",
+  nativeTokenBarterUtils: "NativeTokenAtomicPaymentUtils",
+  tokenBundleBarterUtils: "TokenBundleAtomicPaymentUtils",
+};
+
+function deploymentKeyToContractName(key: string): string {
+  if (LEGACY_KEY_MAP[key]) {
+    return LEGACY_KEY_MAP[key];
+  }
+
+  return camelToPascal(key)
+    .replace(/^Erc20/, "ERC20")
+    .replace(/^Erc721/, "ERC721")
+    .replace(/^Erc1155/, "ERC1155")
+    .replace(/^Erc8004/, "ERC8004")
+    .replace(/^Eas$/, "EAS")
+    .replace(/^EasSchemaRegistry$/, "EASSchemaRegistry");
+}
+
 // Parse a deployment JSON file
 function parseDeploymentFile(filePath: string): ChainDeployment | null {
   const fileName = basename(filePath, ".json");
@@ -37,8 +63,7 @@ function parseDeploymentFile(filePath: string): ChainDeployment | null {
 
     const contracts: ChainDeployment["contracts"] = {};
     for (const [key, address] of Object.entries(data)) {
-      // Convert camelCase key to PascalCase contract name
-      const contractName = camelToPascal(key);
+      const contractName = deploymentKeyToContractName(key);
       contracts[contractName] = {
         address: address.toLowerCase(),
       };

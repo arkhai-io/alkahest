@@ -1,5 +1,7 @@
 # Alkahest Python SDK API Reference
 
+> Status: this reference still describes the legacy Python SDK surface. The TypeScript and Rust SDKs have been updated to the current `default`/`unconditional` escrow split and `AtomicPaymentUtils` payment-client settlement helpers; the Python SDK/docs need the same follow-up before this page should be treated as current.
+
 The Python SDK is a PyO3 wrapper around the Rust SDK. It exposes the same functionality with Python-idiomatic naming and types.
 
 ## Client Construction

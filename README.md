@@ -109,7 +109,7 @@ The `docs/skills/` directory contains agent skills for AI coding assistants ([Cl
 | Skill | Description |
 |-------|-------------|
 | `alkahest-developer` | Write code using the TypeScript, Rust, or Python SDK |
-| `alkahest-user` | Create escrows, fulfill obligations, arbitrate, and barter via the CLI |
+| `alkahest-user` | Create escrows, fulfill obligations, arbitrate, and settle token trades via the CLI |
 
 ### Installation
 
