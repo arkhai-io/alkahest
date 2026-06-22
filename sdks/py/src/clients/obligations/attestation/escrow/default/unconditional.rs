@@ -1,35 +1,35 @@
-//! Attestation V1 default escrow obligation client
+//! Attestation unconditional escrow obligation client
 //!
-//! Default escrows have a 1:1 relationship between escrow and fulfillment.
-//! V1 stores the full attestation data in the escrow obligation.
+//! Unconditional escrows support multiple fulfillments per escrow (1:many relationship).
+//! The default attestation escrow stores the full attestation data in the escrow obligation.
 
 use alkahest_rs::extensions::AttestationModule;
 use alloy::primitives::FixedBytes;
 use pyo3::{pyclass, pymethods, PyResult};
 
 use crate::{
-    clients::obligations::attestation::PyAttestationEscrowV1ObligationData,
+    clients::obligations::attestation::PyAttestationEscrowObligationData,
     contract::PyDecodedAttestation,
     error_handling::{map_eyre_to_pyerr, map_parse_to_pyerr},
     get_attested_event,
     types::{ArbiterData, AttestationRequest, AttestedLog, LogWithHash},
 };
 
-/// Default escrow API for attestations (V1)
+/// Unconditional escrow API for attestations
 #[pyclass]
 #[derive(Clone)]
-pub struct Default {
+pub struct Unconditional {
     inner: AttestationModule,
 }
 
-impl Default {
+impl Unconditional {
     pub fn new(inner: AttestationModule) -> Self {
         Self { inner }
     }
 }
 
 #[pymethods]
-impl Default {
+impl Unconditional {
     /// Gets an escrow obligation by its attestation UID.
     pub fn get_obligation<'py>(
         &self,
@@ -41,16 +41,16 @@ impl Default {
             let uid: FixedBytes<32> = uid.parse().map_err(map_parse_to_pyerr)?;
             let obligation = inner
                 .escrow()
-                .v1()
                 .default()
+                .unconditional()
                 .get_obligation(uid)
                 .await
                 .map_err(map_eyre_to_pyerr)?;
-            Ok(PyDecodedAttestation::<PyAttestationEscrowV1ObligationData>::from(obligation))
+            Ok(PyDecodedAttestation::<PyAttestationEscrowObligationData>::from(obligation))
         })
     }
 
-    /// Creates an escrow using an attestation as the escrowed item.
+    /// Creates a unconditional escrow using an attestation as the escrowed item.
     /// This function uses the original AttestationEscrowObligation contract where the full attestation
     /// data is stored in the escrow obligation.
     pub fn create<'py>(
@@ -64,8 +64,8 @@ impl Default {
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let receipt = inner
                 .escrow()
-                .v1()
                 .default()
+                .unconditional()
                 .create(
                     attestation.try_into().map_err(map_eyre_to_pyerr)?,
                     &demand.try_into().map_err(map_eyre_to_pyerr)?,
@@ -83,7 +83,7 @@ impl Default {
         })
     }
 
-    /// Collects payment from an attestation escrow by providing a fulfillment attestation.
+    /// Collects payment from a unconditional attestation escrow by providing a fulfillment attestation.
     pub fn collect<'py>(
         &self,
         py: pyo3::Python<'py>,
@@ -94,8 +94,8 @@ impl Default {
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let receipt = inner
                 .escrow()
-                .v1()
                 .default()
+                .unconditional()
                 .collect(
                     buy_attestation.parse().map_err(map_parse_to_pyerr)?,
                     fulfillment.parse().map_err(map_parse_to_pyerr)?,

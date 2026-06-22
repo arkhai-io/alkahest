@@ -1,15 +1,15 @@
 import { describe, expect, test } from "bun:test";
 // Attestation codecs
 import {
-  type AttestationEscrowV1ObligationData,
-  decodeObligation as decodeAttestationEscrowV1,
-  encodeObligation as encodeAttestationEscrowV1,
-} from "../../src/clients/obligations/attestation/escrow/v1";
+  type AttestationEscrowObligationData,
+  decodeObligation as decodeAttestationEscrowDefault,
+  encodeObligation as encodeAttestationEscrowDefault,
+} from "../../src/clients/obligations/attestation/escrow/default";
 import {
-  type AttestationEscrowV2ObligationData,
-  decodeObligation as decodeAttestationEscrowV2,
-  encodeObligation as encodeAttestationEscrowV2,
-} from "../../src/clients/obligations/attestation/escrow/v2";
+  type AttestationReferenceEscrowObligationData,
+  decodeObligation as decodeAttestationReferenceEscrow,
+  encodeObligation as encodeAttestationReferenceEscrow,
+} from "../../src/clients/obligations/attestation/escrow/reference";
 // ERC20 codecs
 import {
   decodeObligation as decodeErc20DefaultEscrow,
@@ -461,9 +461,9 @@ describe("Obligation Codec Static Functions", () => {
   });
 
   describe("Attestation Codecs", () => {
-    describe("Escrow V1", () => {
-      test("should encode and decode Attestation escrow V1 obligation", () => {
-        const data: AttestationEscrowV1ObligationData = {
+    describe("Default escrow", () => {
+      test("should encode and decode Attestation escrow obligation", () => {
+        const data: AttestationEscrowObligationData = {
           attestation: {
             schema: mockSchema,
             data: {
@@ -479,10 +479,10 @@ describe("Obligation Codec Static Functions", () => {
           demand: mockDemand,
         };
 
-        const encoded = encodeAttestationEscrowV1(data);
+        const encoded = encodeAttestationEscrowDefault(data);
         expect(encoded).toMatch(/^0x[0-9a-fA-F]+$/);
 
-        const decoded = decodeAttestationEscrowV1(encoded);
+        const decoded = decodeAttestationEscrowDefault(encoded);
         expect(decoded.attestation.schema).toBe(data.attestation.schema);
         expect(decoded.attestation.data.recipient.toLowerCase()).toBe(data.attestation.data.recipient.toLowerCase());
         expect(decoded.attestation.data.revocable).toBe(data.attestation.data.revocable);
@@ -491,9 +491,9 @@ describe("Obligation Codec Static Functions", () => {
       });
     });
 
-    describe("Escrow V2", () => {
-      test("should encode and decode Attestation escrow V2 obligation", () => {
-        const data: AttestationEscrowV2ObligationData = {
+    describe("Reference escrow", () => {
+      test("should encode and decode Attestation reference escrow obligation", () => {
+        const data: AttestationReferenceEscrowObligationData = {
           attestationUid: mockSchema, // Using mockSchema as a 32-byte UID
           arbiter: mockArbiter,
           demand: mockDemand,
@@ -501,10 +501,10 @@ describe("Obligation Codec Static Functions", () => {
           validationRevocable: true,
         };
 
-        const encoded = encodeAttestationEscrowV2(data);
+        const encoded = encodeAttestationReferenceEscrow(data);
         expect(encoded).toMatch(/^0x[0-9a-fA-F]+$/);
 
-        const decoded = decodeAttestationEscrowV2(encoded);
+        const decoded = decodeAttestationReferenceEscrow(encoded);
         expect(decoded.attestationUid).toBe(data.attestationUid);
         expect(decoded.arbiter.toLowerCase()).toBe(data.arbiter.toLowerCase());
         expect(decoded.demand).toBe(data.demand);

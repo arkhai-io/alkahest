@@ -1,6 +1,6 @@
-//! Attestation V1 escrow obligation clients
+//! Attestation default escrow obligation clients
 //!
-//! V1 stores the full attestation data in the escrow obligation.
+//! Default attestation escrows store the full attestation data in the escrow obligation.
 
 pub mod default_escrow;
 pub mod unconditional;
@@ -10,12 +10,12 @@ pub use unconditional::Unconditional;
 
 use super::super::AttestationModule;
 
-/// V1 escrow API accessor
-pub struct V1<'a> {
+/// Default attestation escrow API accessor.
+pub struct DefaultEscrow<'a> {
     module: &'a AttestationModule,
 }
 
-impl<'a> V1<'a> {
+impl<'a> DefaultEscrow<'a> {
     pub fn new(module: &'a AttestationModule) -> Self {
         Self { module }
     }

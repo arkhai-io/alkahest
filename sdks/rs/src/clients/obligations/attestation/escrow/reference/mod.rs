@@ -1,6 +1,6 @@
-//! Attestation V2 escrow obligation clients
+//! Attestation reference escrow obligation clients
 //!
-//! V2 references the attestation by UID instead of storing the full data.
+//! Reference escrows reference the attestation by UID instead of storing the full data.
 
 pub mod default_escrow;
 pub mod unconditional;
@@ -10,12 +10,12 @@ pub use unconditional::Unconditional;
 
 use super::super::AttestationModule;
 
-/// V2 escrow API accessor
-pub struct V2<'a> {
+/// Attestation-reference escrow API accessor.
+pub struct ReferenceEscrow<'a> {
     module: &'a AttestationModule,
 }
 
-impl<'a> V2<'a> {
+impl<'a> ReferenceEscrow<'a> {
     pub fn new(module: &'a AttestationModule) -> Self {
         Self { module }
     }

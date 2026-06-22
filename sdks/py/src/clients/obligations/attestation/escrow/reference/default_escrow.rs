@@ -1,21 +1,21 @@
-//! Attestation V2 default escrow obligation client
+//! Attestation reference default escrow obligation client
 //!
 //! Default escrows have a 1:1 relationship between escrow and fulfillment.
-//! V2 references the attestation by UID instead of storing the full data.
+//! The reference attestation escrow references the attestation by UID instead of storing the full data.
 
 use alkahest_rs::extensions::AttestationModule;
 use alloy::primitives::FixedBytes;
 use pyo3::{pyclass, pymethods, PyResult};
 
 use crate::{
-    clients::obligations::attestation::PyAttestationEscrowV2ObligationData,
+    clients::obligations::attestation::PyAttestationReferenceEscrowObligationData,
     contract::PyDecodedAttestation,
     error_handling::{map_eyre_to_pyerr, map_parse_to_pyerr},
     get_attested_event,
     types::{ArbiterData, AttestedLog, LogWithHash},
 };
 
-/// Default escrow API for attestations (V2)
+/// Default reference escrow API for attestations
 #[pyclass]
 #[derive(Clone)]
 pub struct Default {
@@ -41,12 +41,14 @@ impl Default {
             let uid: FixedBytes<32> = uid.parse().map_err(map_parse_to_pyerr)?;
             let obligation = inner
                 .escrow()
-                .v2()
+                .reference()
                 .default()
                 .get_obligation(uid)
                 .await
                 .map_err(map_eyre_to_pyerr)?;
-            Ok(PyDecodedAttestation::<PyAttestationEscrowV2ObligationData>::from(obligation))
+            Ok(PyDecodedAttestation::<
+                PyAttestationReferenceEscrowObligationData,
+            >::from(obligation))
         })
     }
 
@@ -64,7 +66,7 @@ impl Default {
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let receipt = inner
                 .escrow()
-                .v2()
+                .reference()
                 .default()
                 .create(
                     attestation.parse().map_err(map_parse_to_pyerr)?,
@@ -95,7 +97,7 @@ impl Default {
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let receipt = inner
                 .escrow()
-                .v2()
+                .reference()
                 .default()
                 .collect(
                     buy_attestation.parse().map_err(map_parse_to_pyerr)?,

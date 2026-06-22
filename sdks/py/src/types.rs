@@ -34,8 +34,8 @@ pub struct AttestationAddresses {
     pub atomic_attestation_utils: String,
     pub escrow_obligation_default: String,
     pub escrow_obligation_unconditional: String,
-    pub escrow_obligation_2_default: String,
-    pub escrow_obligation_2_unconditional: String,
+    pub attestation_reference_escrow_obligation_default: String,
+    pub attestation_reference_escrow_obligation_unconditional: String,
 }
 
 #[derive(FromPyObject)]
@@ -220,8 +220,12 @@ impl TryFrom<AttestationAddresses> for alkahest_rs::clients::attestation::Attest
             atomic_attestation_utils: parse_address!(atomic_attestation_utils),
             escrow_obligation_default: parse_address!(escrow_obligation_default),
             escrow_obligation_unconditional: parse_address!(escrow_obligation_unconditional),
-            escrow_obligation_2_default: parse_address!(escrow_obligation_2_default),
-            escrow_obligation_2_unconditional: parse_address!(escrow_obligation_2_unconditional),
+            attestation_reference_escrow_obligation_default: parse_address!(
+                attestation_reference_escrow_obligation_default
+            ),
+            attestation_reference_escrow_obligation_unconditional: parse_address!(
+                attestation_reference_escrow_obligation_unconditional
+            ),
         })
     }
 }
@@ -971,9 +975,9 @@ pub struct PyAttestationAddresses {
     #[pyo3(get)]
     pub escrow_obligation_unconditional: String,
     #[pyo3(get)]
-    pub escrow_obligation_2_default: String,
+    pub attestation_reference_escrow_obligation_default: String,
     #[pyo3(get)]
-    pub escrow_obligation_2_unconditional: String,
+    pub attestation_reference_escrow_obligation_unconditional: String,
 }
 
 #[pymethods]
@@ -985,8 +989,8 @@ impl PyAttestationAddresses {
         atomic_attestation_utils: String,
         escrow_obligation_default: String,
         escrow_obligation_unconditional: String,
-        escrow_obligation_2_default: String,
-        escrow_obligation_2_unconditional: String,
+        attestation_reference_escrow_obligation_default: String,
+        attestation_reference_escrow_obligation_unconditional: String,
     ) -> Self {
         Self {
             eas,
@@ -994,8 +998,8 @@ impl PyAttestationAddresses {
             atomic_attestation_utils,
             escrow_obligation_default,
             escrow_obligation_unconditional,
-            escrow_obligation_2_default,
-            escrow_obligation_2_unconditional,
+            attestation_reference_escrow_obligation_default,
+            attestation_reference_escrow_obligation_unconditional,
         }
     }
 }
@@ -1008,10 +1012,13 @@ impl From<&alkahest_rs::clients::attestation::AttestationAddresses> for PyAttest
             atomic_attestation_utils: format!("{:?}", data.atomic_attestation_utils),
             escrow_obligation_default: format!("{:?}", data.escrow_obligation_default),
             escrow_obligation_unconditional: format!("{:?}", data.escrow_obligation_unconditional),
-            escrow_obligation_2_default: format!("{:?}", data.escrow_obligation_2_default),
-            escrow_obligation_2_unconditional: format!(
+            attestation_reference_escrow_obligation_default: format!(
                 "{:?}",
-                data.escrow_obligation_2_unconditional
+                data.attestation_reference_escrow_obligation_default
+            ),
+            attestation_reference_escrow_obligation_unconditional: format!(
+                "{:?}",
+                data.attestation_reference_escrow_obligation_unconditional
             ),
         }
     }

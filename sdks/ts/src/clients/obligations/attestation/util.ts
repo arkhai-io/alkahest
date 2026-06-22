@@ -40,7 +40,7 @@ export const makeAttestationUtilClient = (viemClient: ViemClient, addresses: Att
         address: addresses.atomicUtils,
         abi: atomicAttestationUtilsAbi.abi,
         functionName: "attestAndCreateReferenceEscrow",
-        args: [addresses.escrowObligation2, request, escrowData, escrowExpirationTime],
+        args: [addresses.attestationReferenceEscrowObligation, request, escrowData, escrowExpirationTime],
         value: request.data.value,
         chain: viemClient.chain,
       });

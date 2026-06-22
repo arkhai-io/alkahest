@@ -1,7 +1,7 @@
 //! Attestation escrow obligation clients
 
-pub mod v1;
-pub mod v2;
+pub mod default;
+pub mod reference;
 
 use alkahest_rs::extensions::AttestationModule;
 use pyo3::{pyclass, pymethods};
@@ -21,15 +21,15 @@ impl Escrow {
 
 #[pymethods]
 impl Escrow {
-    /// Access V1 escrow operations (stores full attestation data)
+    /// Access default escrow operations (stores full attestation data)
     #[getter]
-    pub fn v1(&self) -> v1::V1 {
-        v1::V1::new(self.inner.clone())
+    pub fn default(&self) -> default::DefaultEscrow {
+        default::DefaultEscrow::new(self.inner.clone())
     }
 
-    /// Access V2 escrow operations (references attestation by UID)
+    /// Access attestation-reference escrow operations
     #[getter]
-    pub fn v2(&self) -> v2::V2 {
-        v2::V2::new(self.inner.clone())
+    pub fn reference(&self) -> reference::ReferenceEscrow {
+        reference::ReferenceEscrow::new(self.inner.clone())
     }
 }

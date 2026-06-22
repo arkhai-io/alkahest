@@ -35,7 +35,7 @@ async fn main() -> eyre::Result<()> {
 
 ### Trade ERC20 for ERC20
 
-Uses barter utils to combine escrow creation and payment fulfillment into simple calls.
+Uses escrow clients to create escrows, and atomic payment utilities to settle compatible escrows atomically.
 
 ```rust
 use alkahest_rs::{DefaultAlkahestClient, types::Erc20Data, extensions::HasErc20};
@@ -62,13 +62,13 @@ async fn main() -> eyre::Result<()> {
     ).await?;
     let escrow = DefaultAlkahestClient::get_attested_event(receipt)?;
 
-    // Bob: approve barter utils and atomically pay 10 EURC + collect the escrow
+    // Bob: approve atomic payment utilities and atomically pay 10 EURC + collect the escrow
     bob_client.erc20().util().approve(
         &Erc20Data { address: eurc, value: U256::from(10) },
-        alkahest_rs::types::ApprovalPurpose::BarterUtils,
+        alkahest_rs::types::ApprovalPurpose::AtomicPayment,
     ).await?;
 
-    bob_client.erc20().barter().pay_erc20_for_erc20(escrow.uid).await?;
+    bob_client.erc20().payment().pay_erc20_and_collect(escrow.uid).await?;
 
     Ok(())
 }
@@ -108,7 +108,7 @@ async fn main() -> eyre::Result<()> {
     }.abi_encode();
 
     // Alice: deposit USDC into escrow with the custom demand
-    let (_, escrow_receipt) = alice_client.erc20().escrow().non_tierable()
+    let (_, escrow_receipt) = alice_client.erc20().escrow().default()
         .approve_and_create(
             &Erc20Data { address: usdc, value: U256::from(100) },
             &ArbiterData {
@@ -134,12 +134,12 @@ async fn main() -> eyre::Result<()> {
     // ... Charlie validates and submits decision via TrustedOracleArbiter
 
     // Bob: collect the escrow
-    bob_client.erc20().escrow().non_tierable()
+    bob_client.erc20().escrow().default()
         .collect(escrow.uid, fulfillment.uid).await?;
 
     // Alice: wait for fulfillment (useful if running concurrently)
     let result = alice_client.wait_for_fulfillment(
-        alice_client.erc20().addresses.escrow_obligation_nontierable,
+        alice_client.erc20().addresses.escrow_obligation_default,
         escrow.uid,
         None,
     ).await?;

@@ -1,6 +1,6 @@
-//! Attestation V2 escrow obligation clients
+//! Attestation default escrow obligation clients
 //!
-//! V2 references the attestation by UID instead of storing the full data.
+//! Default attestation escrows store the full attestation data in the escrow obligation.
 //!
 //! - `default`: 1:1 escrow to fulfillment relationship
 //! - `unconditional`: no default fulfillment checks
@@ -11,21 +11,21 @@ pub mod unconditional;
 use alkahest_rs::extensions::AttestationModule;
 use pyo3::{pyclass, pymethods};
 
-/// V2 escrow API accessor
+/// Default attestation escrow API accessor
 #[pyclass]
 #[derive(Clone)]
-pub struct V2 {
+pub struct DefaultEscrow {
     inner: AttestationModule,
 }
 
-impl V2 {
+impl DefaultEscrow {
     pub fn new(inner: AttestationModule) -> Self {
         Self { inner }
     }
 }
 
 #[pymethods]
-impl V2 {
+impl DefaultEscrow {
     /// Access default escrow operations (1:1 escrow:fulfillment)
     #[getter]
     pub fn default(&self) -> default_escrow::Default {

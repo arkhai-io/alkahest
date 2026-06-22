@@ -705,7 +705,7 @@ impl
     }
 }
 
-// --- AttestationEscrow V1 ---
+// --- AttestationEscrowObligation ---
 
 impl
     From<
@@ -714,7 +714,7 @@ impl
         >,
     >
     for PyDecodedAttestation<
-        crate::clients::obligations::attestation::PyAttestationEscrowV1ObligationData,
+        crate::clients::obligations::attestation::PyAttestationEscrowObligationData,
     >
 {
     fn from(
@@ -736,7 +736,7 @@ impl
         >,
     >
     for PyDecodedAttestation<
-        crate::clients::obligations::attestation::PyAttestationEscrowV1ObligationData,
+        crate::clients::obligations::attestation::PyAttestationEscrowObligationData,
     >
 {
     fn from(
@@ -751,7 +751,7 @@ impl
     }
 }
 
-// --- AttestationEscrow V2 ---
+// --- AttestationReferenceEscrowObligation ---
 
 impl
     From<
@@ -760,7 +760,7 @@ impl
         >,
     >
     for PyDecodedAttestation<
-        crate::clients::obligations::attestation::PyAttestationEscrowV2ObligationData,
+        crate::clients::obligations::attestation::PyAttestationReferenceEscrowObligationData,
     >
 {
     fn from(
@@ -782,7 +782,7 @@ impl
         >,
     >
     for PyDecodedAttestation<
-        crate::clients::obligations::attestation::PyAttestationEscrowV2ObligationData,
+        crate::clients::obligations::attestation::PyAttestationReferenceEscrowObligationData,
     >
 {
     fn from(

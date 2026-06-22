@@ -666,8 +666,9 @@ async fn build_shared_env() -> eyre::Result<SharedTestEnv> {
             escrow_obligation_unconditional: unconditional_attestation_escrow_obligation
                 .address()
                 .clone(),
-            escrow_obligation_2_default: attestation_reference_escrow_obligation.address().clone(),
-            escrow_obligation_2_unconditional:
+            attestation_reference_escrow_obligation_default:
+                attestation_reference_escrow_obligation.address().clone(),
+            attestation_reference_escrow_obligation_unconditional:
                 unconditional_attestation_reference_escrow_obligation
                     .address()
                     .clone(),

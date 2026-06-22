@@ -33,7 +33,7 @@ const client = makeClient(
 
 ### Trade ERC20 for ERC20
 
-Uses escrow clients to create escrows, and barter utils to settle compatible escrows atomically.
+Uses escrow clients to create escrows, and atomic payment utilities to settle compatible escrows atomically.
 
 ```ts
 import { parseUnits } from "viem";
@@ -48,12 +48,12 @@ const escrow = await clientAlice.erc20.escrow.default.approveAndCreate(
   0n, // no expiration
 );
 
-// Bob: approve barter utils and fulfill the escrow by paying 10 EURC
+// Bob: approve atomic payment utilities and fulfill the escrow by paying 10 EURC
 await clientBob.erc20.util.approve(
   { address: eurc, value: parseUnits("10", 6) },
-  "barter",
+  "atomicPayment",
 );
-const payment = await clientBob.erc20.barter.payErc20AndCollect(
+const payment = await clientBob.erc20.payment.payErc20AndCollect(
   escrow.attested.uid,
 );
 ```

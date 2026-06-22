@@ -1,7 +1,7 @@
-//! Attestation V2 default escrow obligation client
+//! Attestation reference default escrow obligation client
 //!
 //! Non-unconditional escrows have a 1:1 relationship between escrow and fulfillment.
-//! V2 references the attestation by UID instead of storing the full data.
+//! The reference attestation escrow references the attestation by UID instead of storing the full data.
 
 use alloy::primitives::{Address, FixedBytes};
 use alloy::rpc::types::TransactionReceipt;
@@ -12,7 +12,7 @@ use crate::types::{ArbiterData, DecodedAttestation};
 
 use super::super::super::AttestationModule;
 
-/// Non-unconditional escrow API for attestations (V2)
+/// Default reference escrow API for attestations
 pub struct Default<'a> {
     module: &'a AttestationModule,
 }
@@ -24,7 +24,9 @@ impl<'a> Default<'a> {
 
     /// Get the contract address
     pub fn address(&self) -> Address {
-        self.module.addresses.escrow_obligation_2_default
+        self.module
+            .addresses
+            .attestation_reference_escrow_obligation_default
     }
 
     /// Gets an escrow obligation by its attestation UID.
@@ -62,7 +64,7 @@ impl<'a> Default<'a> {
     ) -> eyre::Result<TransactionReceipt> {
         let escrow_contract =
             contracts::obligations::escrow::default_escrow::AttestationReferenceEscrowObligation::new(
-                self.module.addresses.escrow_obligation_2_default,
+                self.module.addresses.attestation_reference_escrow_obligation_default,
                 &self.module.wallet_provider,
             );
 
@@ -94,7 +96,7 @@ impl<'a> Default<'a> {
     ) -> eyre::Result<TransactionReceipt> {
         let escrow_contract =
             contracts::obligations::escrow::default_escrow::AttestationReferenceEscrowObligation::new(
-                self.module.addresses.escrow_obligation_2_default,
+                self.module.addresses.attestation_reference_escrow_obligation_default,
                 &self.module.wallet_provider,
             );
 

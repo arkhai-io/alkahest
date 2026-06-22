@@ -47,7 +47,7 @@ use crate::{
         },
         obligations::{
             attestation::{
-                PyAttestationEscrowV1ObligationData, PyAttestationEscrowV2ObligationData,
+                PyAttestationEscrowObligationData, PyAttestationReferenceEscrowObligationData,
             },
             commit_reveal::{PyCommitRevealDemandData, PyCommitRevealObligationData},
             erc1155::{PyERC1155EscrowObligationData, PyERC1155PaymentObligationData},
@@ -615,8 +615,8 @@ fn alkahest_py(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyNativeTokenPaymentObligationData>()?;
     m.add_class::<PyTokenBundleEscrowObligationData>()?;
     m.add_class::<PyTokenBundlePaymentObligationData>()?;
-    m.add_class::<PyAttestationEscrowV1ObligationData>()?;
-    m.add_class::<PyAttestationEscrowV2ObligationData>()?;
+    m.add_class::<PyAttestationEscrowObligationData>()?;
+    m.add_class::<PyAttestationReferenceEscrowObligationData>()?;
     m.add_class::<PyStringObligationData>()?;
     m.add_class::<CommitRevealObligationClient>()?;
     m.add_class::<PyCommitRevealObligationData>()?;

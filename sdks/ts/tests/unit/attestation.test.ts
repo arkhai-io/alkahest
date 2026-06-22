@@ -117,7 +117,7 @@ describe("Attestation Tests", () => {
       const demand = ("0x" + Buffer.from("test demand").toString("hex")) as `0x${string}`;
       const expiration = BigInt(Math.floor(Date.now() / 1000) + 86400); // 1 day from now
 
-      const { attested: escrowData } = await aliceClient.attestation.escrow.v1.create(
+      const { attested: escrowData } = await aliceClient.attestation.escrow.default.create(
         {
           schema: testSchemaId,
           data: {
@@ -151,7 +151,7 @@ describe("Attestation Tests", () => {
       const demandData = ("0x" + Buffer.from("test demand").toString("hex")) as `0x${string}`;
       const expiration = BigInt(Math.floor(Date.now() / 1000) + 86400); // 1 day from now
 
-      const { attested: escrowData } = await aliceClient.attestation.escrow.v1.create(
+      const { attested: escrowData } = await aliceClient.attestation.escrow.default.create(
         {
           schema: testSchemaId,
           data: {
@@ -180,7 +180,7 @@ describe("Attestation Tests", () => {
       const fulfillmentUid = fulfillmentEvent.uid as `0x${string}`;
 
       // Bob collects the payment by providing his fulfillment
-      const { attested: paymentData } = await bobClient.attestation.escrow.v1.collect(escrowData.uid, fulfillmentUid);
+      const { attested: paymentData } = await bobClient.attestation.escrow.default.collect(escrowData.uid, fulfillmentUid);
 
       // Verify payment attestation was created
       expect(paymentData.uid).not.toBe("0x0000000000000000000000000000000000000000000000000000000000000000");
@@ -263,7 +263,7 @@ describe("Attestation Tests", () => {
       const expiration = BigInt(Math.floor(Date.now() / 1000) + 86400); // 1 day from now - EXPIRATION_TIME (line 105)
 
       // Create the obligation - lines 106-107
-      const { hash: escrowHash } = await aliceClient.attestation.escrow.v2.create(
+      const { hash: escrowHash } = await aliceClient.attestation.escrow.reference.create(
         preExistingAttestationId,
         {
           arbiter: testContext.addresses.trivialArbiter,
@@ -316,7 +316,7 @@ describe("Attestation Tests", () => {
       const expiration = BigInt(Math.floor(Date.now() / 1000) + 86400); // 1 day expiration - line 175
 
       // Create the escrow exactly as in Solidity test - lines 176-177
-      const { hash: escrowHash } = await aliceClient.attestation.escrow.v2.create(
+      const { hash: escrowHash } = await aliceClient.attestation.escrow.reference.create(
         preExistingAttestationId,
         {
           arbiter: testContext.addresses.trivialArbiter,
@@ -342,7 +342,7 @@ describe("Attestation Tests", () => {
 
       // Collect payment - lines 188-189
 
-      const { hash: collectHash } = await bobClient.attestation.escrow.v2.collect(escrowUid, fulfillmentUid);
+      const { hash: collectHash } = await bobClient.attestation.escrow.reference.collect(escrowUid, fulfillmentUid);
 
       // Get the validation attestation UID using the SDK function
       const validationEvent = await bobClient.getAttestedEventFromTxHash(collectHash);

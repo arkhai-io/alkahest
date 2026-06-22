@@ -1,10 +1,10 @@
 //! Attestation escrow obligation clients
 
-pub mod v1;
-pub mod v2;
+pub mod default;
+pub mod reference;
 
-pub use v1::V1;
-pub use v2::V2;
+pub use default::DefaultEscrow;
+pub use reference::ReferenceEscrow;
 
 use super::AttestationModule;
 
@@ -19,22 +19,12 @@ impl<'a> Escrow<'a> {
     }
 
     /// Access default escrow operations (stores full attestation data).
-    pub fn default(&self) -> V1<'a> {
-        V1::new(self.module)
+    pub fn default(&self) -> DefaultEscrow<'a> {
+        DefaultEscrow::new(self.module)
     }
 
     /// Access attestation-reference escrow operations.
-    pub fn reference(&self) -> V2<'a> {
-        V2::new(self.module)
-    }
-
-    /// Access V1 escrow operations (stores full attestation data).
-    pub fn v1(&self) -> V1<'a> {
-        self.default()
-    }
-
-    /// Access V2 escrow operations (references attestation by UID).
-    pub fn v2(&self) -> V2<'a> {
-        self.reference()
+    pub fn reference(&self) -> ReferenceEscrow<'a> {
+        ReferenceEscrow::new(self.module)
     }
 }

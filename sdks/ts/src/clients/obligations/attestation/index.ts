@@ -4,8 +4,8 @@ import { type AttestationEscrowClient, makeAttestationEscrowClient } from "./esc
 import { type AttestationUtilClient, makeAttestationUtilClient } from "./util";
 
 export { type AttestationEscrowClient, makeAttestationEscrowClient } from "./escrow";
-export { type AttestationEscrowV1Client, makeAttestationEscrowV1Client } from "./escrow/v1";
-export { type AttestationEscrowV2Client, makeAttestationEscrowV2Client } from "./escrow/v2";
+export { type AttestationEscrowDefaultClient, makeAttestationEscrowDefaultClient } from "./escrow/default";
+export { type AttestationReferenceEscrowClient, makeAttestationReferenceEscrowClient } from "./escrow/reference";
 export { type AttestationUtilClient, makeAttestationUtilClient } from "./util";
 
 /** Addresses required by the attestation escrow clients. */
@@ -14,8 +14,8 @@ export type AttestationAddresses = {
   atomicUtils: `0x${string}`;
   escrowObligation: `0x${string}`;
   escrowObligationUnconditional: `0x${string}`;
-  escrowObligation2: `0x${string}`;
-  escrowObligation2Unconditional: `0x${string}`;
+  attestationReferenceEscrowObligation: `0x${string}`;
+  attestationReferenceEscrowObligationUnconditional: `0x${string}`;
 };
 
 /** Pick attestation escrow addresses from a full chain address map. */
@@ -24,8 +24,8 @@ export const pickAttestationAddresses = (addresses: ChainAddresses): Attestation
   atomicUtils: addresses.atomicAttestationUtils,
   escrowObligation: addresses.attestationEscrowObligation,
   escrowObligationUnconditional: addresses.attestationUnconditionalEscrowObligation,
-  escrowObligation2: addresses.attestationReferenceEscrowObligation,
-  escrowObligation2Unconditional: addresses.attestationReferenceUnconditionalEscrowObligation,
+  attestationReferenceEscrowObligation: addresses.attestationReferenceEscrowObligation,
+  attestationReferenceEscrowObligationUnconditional: addresses.attestationReferenceUnconditionalEscrowObligation,
 });
 
 /** Attestation escrow namespace client. */

@@ -93,8 +93,8 @@ pub struct AttestationAddresses {
     pub atomic_attestation_utils: Address,
     pub escrow_obligation_default: Address,
     pub escrow_obligation_unconditional: Address,
-    pub escrow_obligation_2_default: Address,
-    pub escrow_obligation_2_unconditional: Address,
+    pub attestation_reference_escrow_obligation_default: Address,
+    pub attestation_reference_escrow_obligation_unconditional: Address,
 }
 
 #[derive(Clone)]
@@ -123,10 +123,6 @@ pub enum AttestationContract {
     DefaultEscrowObligation,
     /// Attestation-reference escrow obligation contract
     ReferenceEscrowObligation,
-    /// Escrow obligation contract for attestations (V1)
-    EscrowObligation,
-    /// Escrow obligation contract for attestations (V2)
-    EscrowObligation2,
 }
 
 impl ContractModule for AttestationModule {
@@ -141,10 +137,9 @@ impl ContractModule for AttestationModule {
                 self.addresses.escrow_obligation_default
             }
             AttestationContract::ReferenceEscrowObligation => {
-                self.addresses.escrow_obligation_2_default
+                self.addresses
+                    .attestation_reference_escrow_obligation_default
             }
-            AttestationContract::EscrowObligation => self.addresses.escrow_obligation_default,
-            AttestationContract::EscrowObligation2 => self.addresses.escrow_obligation_2_default,
         }
     }
 }
@@ -163,7 +158,7 @@ impl AttestationModule {
         })
     }
 
-    /// Access escrow operations (V1 and V2)
+    /// Access escrow operations.
     pub fn escrow(&self) -> Escrow<'_> {
         Escrow::new(self)
     }
@@ -279,7 +274,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_decode_escrow_obligation_v1() -> eyre::Result<()> {
+    async fn test_decode_default_escrow_obligation() -> eyre::Result<()> {
         // Test setup
         let test = setup_test_environment().await?;
 
@@ -331,7 +326,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_decode_escrow_obligation_v2() -> eyre::Result<()> {
+    async fn test_decode_reference_escrow_obligation() -> eyre::Result<()> {
         // Test setup
         let test = setup_test_environment().await?;
 
@@ -571,7 +566,7 @@ mod tests {
             .alice_client
             .attestation()
             .escrow()
-            .v1()
+            .default()
             .default()
             .create(attestation_request, &demand_data, escrow_expiration)
             .await?;
@@ -652,12 +647,12 @@ mod tests {
         // Create escrow expiration
         let escrow_expiration = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() + 86400; // 1 day
 
-        // Create escrow using the new API (V2 - references attestation by UID)
+        // Create escrow using the reference escrow API
         let receipt = test
             .alice_client
             .attestation()
             .escrow()
-            .v2()
+            .reference()
             .default()
             .create(attestation_uid, &demand_data, escrow_expiration)
             .await?;
@@ -682,7 +677,7 @@ mod tests {
 
         // Get the expected schema ID from the contract
         let escrow_contract = contracts::obligations::escrow::default_escrow::AttestationReferenceEscrowObligation::new(
-            test.addresses.attestation_addresses.escrow_obligation_2_default,
+            test.addresses.attestation_addresses.attestation_reference_escrow_obligation_default,
             &test.god_provider,
         );
 
@@ -756,7 +751,7 @@ mod tests {
             .alice_client
             .attestation()
             .escrow()
-            .v1()
+            .default()
             .default()
             .create(
                 attestation_request,
@@ -784,7 +779,7 @@ mod tests {
             .bob_client
             .attestation()
             .escrow()
-            .v1()
+            .default()
             .default()
             .collect(escrow_uid, fulfillment_uid)
             .await?;
@@ -861,12 +856,12 @@ mod tests {
         // Create escrow expiration
         let escrow_expiration = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() + 86400; // 1 day
 
-        // Create escrow using the new API (V2)
+        // Create escrow using the reference escrow API
         let escrow_receipt = test
             .alice_client
             .attestation()
             .escrow()
-            .v2()
+            .reference()
             .default()
             .create(attestation_uid, &demand_data, escrow_expiration)
             .await?;
@@ -902,7 +897,7 @@ mod tests {
             .bob_client
             .attestation()
             .escrow()
-            .v2()
+            .reference()
             .default()
             .collect(escrow_uid, fulfillment_uid)
             .await?;
@@ -928,7 +923,7 @@ mod tests {
 
         // Get the expected validation schema ID from the contract
         let escrow_contract = contracts::obligations::escrow::default_escrow::AttestationReferenceEscrowObligation::new(
-            test.addresses.attestation_addresses.escrow_obligation_2_default,
+            test.addresses.attestation_addresses.attestation_reference_escrow_obligation_default,
             &test.god_provider,
         );
 

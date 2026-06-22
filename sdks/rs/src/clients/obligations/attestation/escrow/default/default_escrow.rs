@@ -1,30 +1,31 @@
-//! Attestation V2 unconditional escrow obligation client
+//! Attestation default escrow obligation client
 //!
-//! Unconditional escrows support multiple fulfillments per escrow (1:many relationship).
-//! V2 references the attestation by UID instead of storing the full data.
+//! Non-unconditional escrows have a 1:1 relationship between escrow and fulfillment.
+//! The default attestation escrow stores the full attestation data in the escrow obligation.
 
 use alloy::primitives::{Address, FixedBytes};
 use alloy::rpc::types::TransactionReceipt;
 use alloy::sol_types::SolValue;
 
 use crate::contracts;
+use crate::contracts::IEAS;
 use crate::types::{ArbiterData, DecodedAttestation};
 
 use super::super::super::AttestationModule;
 
-/// Unconditional escrow API for attestations (V2)
-pub struct Unconditional<'a> {
+/// Default escrow API for attestations
+pub struct Default<'a> {
     module: &'a AttestationModule,
 }
 
-impl<'a> Unconditional<'a> {
+impl<'a> Default<'a> {
     pub fn new(module: &'a AttestationModule) -> Self {
         Self { module }
     }
 
     /// Get the contract address
     pub fn address(&self) -> Address {
-        self.module.addresses.escrow_obligation_2_unconditional
+        self.module.addresses.escrow_obligation_default
     }
 
     /// Gets an escrow obligation by its attestation UID.
@@ -33,7 +34,7 @@ impl<'a> Unconditional<'a> {
         uid: FixedBytes<32>,
     ) -> eyre::Result<
         DecodedAttestation<
-            contracts::obligations::escrow::unconditional::UnconditionalAttestationReferenceEscrowObligation::ObligationData,
+            contracts::obligations::escrow::default_escrow::AttestationEscrowObligation::ObligationData,
         >,
     >{
         let eas_contract =
@@ -41,7 +42,7 @@ impl<'a> Unconditional<'a> {
 
         let attestation = eas_contract.getAttestation(uid).call().await?;
         let obligation_data =
-            contracts::obligations::escrow::unconditional::UnconditionalAttestationReferenceEscrowObligation::ObligationData::abi_decode(
+            contracts::obligations::escrow::default_escrow::AttestationEscrowObligation::ObligationData::abi_decode(
                 &attestation.data,
             )?;
 
@@ -51,27 +52,28 @@ impl<'a> Unconditional<'a> {
         })
     }
 
-    /// Creates a unconditional escrow using an attestation UID as reference.
+    /// Creates an escrow using an attestation as the escrowed item.
+    /// This function uses the original AttestationEscrowObligation contract where the full attestation
+    /// data is stored in the escrow obligation. When collecting payment, this contract creates a new
+    /// attestation as the collection event, requiring the contract to have attestation rights.
     pub async fn create(
         &self,
-        attestation_uid: FixedBytes<32>,
+        attestation: IEAS::AttestationRequest,
         demand: &ArbiterData,
         expiration: u64,
     ) -> eyre::Result<TransactionReceipt> {
         let escrow_contract =
-            contracts::obligations::escrow::unconditional::UnconditionalAttestationReferenceEscrowObligation::new(
-                self.module.addresses.escrow_obligation_2_unconditional,
+            contracts::obligations::escrow::default_escrow::AttestationEscrowObligation::new(
+                self.module.addresses.escrow_obligation_default,
                 &self.module.wallet_provider,
             );
 
         let receipt = escrow_contract
             .doObligation(
-                contracts::obligations::escrow::unconditional::UnconditionalAttestationReferenceEscrowObligation::ObligationData {
-                    attestationUid: attestation_uid,
+                contracts::obligations::escrow::default_escrow::AttestationEscrowObligation::ObligationData {
+                    attestation: attestation.into(),
                     arbiter: demand.arbiter,
                     demand: demand.demand.clone(),
-                    validationExpirationTime: 0,
-                    validationRevocable: true,
                 },
                 expiration,
             )
@@ -83,15 +85,15 @@ impl<'a> Unconditional<'a> {
         Ok(receipt)
     }
 
-    /// Collects payment from a unconditional attestation escrow.
+    /// Collects payment from an attestation escrow by providing a fulfillment attestation.
     pub async fn collect(
         &self,
         buy_attestation: FixedBytes<32>,
         fulfillment: FixedBytes<32>,
     ) -> eyre::Result<TransactionReceipt> {
         let escrow_contract =
-            contracts::obligations::escrow::unconditional::UnconditionalAttestationReferenceEscrowObligation::new(
-                self.module.addresses.escrow_obligation_2_unconditional,
+            contracts::obligations::escrow::default_escrow::AttestationEscrowObligation::new(
+                self.module.addresses.escrow_obligation_default,
                 &self.module.wallet_provider,
             );
 

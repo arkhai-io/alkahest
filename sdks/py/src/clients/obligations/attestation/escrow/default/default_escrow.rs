@@ -1,35 +1,35 @@
-//! Attestation V2 unconditional escrow obligation client
+//! Attestation default escrow obligation client
 //!
-//! Unconditional escrows support multiple fulfillments per escrow (1:many relationship).
-//! V2 references the attestation by UID instead of storing the full data.
+//! Default escrows have a 1:1 relationship between escrow and fulfillment.
+//! The default attestation escrow stores the full attestation data in the escrow obligation.
 
 use alkahest_rs::extensions::AttestationModule;
 use alloy::primitives::FixedBytes;
 use pyo3::{pyclass, pymethods, PyResult};
 
 use crate::{
-    clients::obligations::attestation::PyAttestationEscrowV2ObligationData,
+    clients::obligations::attestation::PyAttestationEscrowObligationData,
     contract::PyDecodedAttestation,
     error_handling::{map_eyre_to_pyerr, map_parse_to_pyerr},
     get_attested_event,
-    types::{ArbiterData, AttestedLog, LogWithHash},
+    types::{ArbiterData, AttestationRequest, AttestedLog, LogWithHash},
 };
 
-/// Unconditional escrow API for attestations (V2)
+/// Default escrow API for attestations
 #[pyclass]
 #[derive(Clone)]
-pub struct Unconditional {
+pub struct Default {
     inner: AttestationModule,
 }
 
-impl Unconditional {
+impl Default {
     pub fn new(inner: AttestationModule) -> Self {
         Self { inner }
     }
 }
 
 #[pymethods]
-impl Unconditional {
+impl Default {
     /// Gets an escrow obligation by its attestation UID.
     pub fn get_obligation<'py>(
         &self,
@@ -41,22 +41,22 @@ impl Unconditional {
             let uid: FixedBytes<32> = uid.parse().map_err(map_parse_to_pyerr)?;
             let obligation = inner
                 .escrow()
-                .v2()
-                .unconditional()
+                .default()
+                .default()
                 .get_obligation(uid)
                 .await
                 .map_err(map_eyre_to_pyerr)?;
-            Ok(PyDecodedAttestation::<PyAttestationEscrowV2ObligationData>::from(obligation))
+            Ok(PyDecodedAttestation::<PyAttestationEscrowObligationData>::from(obligation))
         })
     }
 
-    /// Creates a unconditional escrow using an attestation UID as reference.
-    /// This function uses AttestationReferenceEscrowObligation which references the attestation by UID
-    /// instead of storing the full attestation data, making it more gas efficient.
+    /// Creates an escrow using an attestation as the escrowed item.
+    /// This function uses the original AttestationEscrowObligation contract where the full attestation
+    /// data is stored in the escrow obligation.
     pub fn create<'py>(
         &self,
         py: pyo3::Python<'py>,
-        attestation: String,
+        attestation: AttestationRequest,
         demand: ArbiterData,
         expiration: u64,
     ) -> PyResult<pyo3::Bound<'py, pyo3::PyAny>> {
@@ -64,10 +64,10 @@ impl Unconditional {
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let receipt = inner
                 .escrow()
-                .v2()
-                .unconditional()
+                .default()
+                .default()
                 .create(
-                    attestation.parse().map_err(map_parse_to_pyerr)?,
+                    attestation.try_into().map_err(map_eyre_to_pyerr)?,
                     &demand.try_into().map_err(map_eyre_to_pyerr)?,
                     expiration,
                 )
@@ -83,8 +83,7 @@ impl Unconditional {
         })
     }
 
-    /// Collects payment from a unconditional attestation escrow by providing a fulfillment attestation.
-    /// This creates a validation attestation that references the original attestation.
+    /// Collects payment from an attestation escrow by providing a fulfillment attestation.
     pub fn collect<'py>(
         &self,
         py: pyo3::Python<'py>,
@@ -95,8 +94,8 @@ impl Unconditional {
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let receipt = inner
                 .escrow()
-                .v2()
-                .unconditional()
+                .default()
+                .default()
                 .collect(
                     buy_attestation.parse().map_err(map_parse_to_pyerr)?,
                     fulfillment.parse().map_err(map_parse_to_pyerr)?,
