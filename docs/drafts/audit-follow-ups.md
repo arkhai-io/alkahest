@@ -124,8 +124,11 @@ Completed by `fd47376f37cf367e3ee1fd0fa82b31ac8f28dbf6`.
 `CommitRevealObligation` is now the per-demand/per-commit bond variant. The
 committer supplies the bond value with the commit, and `check`
 validates the revealed commitment against the bond demanded by the escrow. The
-previous global contract-level bond behavior was retained separately as
-`GlobalBondCommitRevealObligation`.
+previous global contract-level bond behavior was retained as the example
+contract `contracts/src/obligations/example/GlobalBondCommitRevealObligation.sol`,
+not as part of the canonical deploy/SDK surface. Maintaining a sensible global
+bond per chain is operationally expensive and not worth making a default
+contract variant.
 
 ### [x] Base Splitter Refactor
 

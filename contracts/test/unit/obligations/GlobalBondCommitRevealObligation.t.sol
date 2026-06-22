@@ -5,7 +5,7 @@ import "forge-std/Test.sol";
 import {IEAS, Attestation, AttestationRequest, AttestationRequestData} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {IEscrow} from "@src/IEscrow.sol";
-import {GlobalBondCommitRevealObligation} from "@src/obligations/GlobalBondCommitRevealObligation.sol";
+import {GlobalBondCommitRevealObligation} from "@src/obligations/example/GlobalBondCommitRevealObligation.sol";
 import {NativeTokenEscrowObligation} from "@src/obligations/escrow/default/NativeTokenEscrowObligation.sol";
 import {EASDeployer} from "@test/utils/EASDeployer.sol";
 

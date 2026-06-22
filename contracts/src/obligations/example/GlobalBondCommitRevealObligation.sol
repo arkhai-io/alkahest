@@ -5,12 +5,13 @@ import {Attestation} from "@eas/Common.sol";
 import {IEAS} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {BaseObligation} from "../BaseObligation.sol";
-import {IArbiter} from "../IArbiter.sol";
-import {IEscrow} from "../IEscrow.sol";
-import {ArbiterUtils} from "../ArbiterUtils.sol";
+import {ArbiterUtils} from "@src/ArbiterUtils.sol";
+import {BaseObligation} from "@src/BaseObligation.sol";
+import {IArbiter} from "@src/IArbiter.sol";
+import {IEscrow} from "@src/IEscrow.sol";
 
 /// @title GlobalBondCommitRevealObligation
+/// @notice Example commit-reveal obligation variant with a globally configured bond.
 /// @notice Obligation with built-in commit–reveal anti-front‑running checks.
 /// The attestation data is self contained (payload + salt), and the arbiter
 /// verifies that a matching commit exists and was made in an earlier block.

@@ -79,7 +79,6 @@ import {StringObligation} from "@src/obligations/StringObligation.sol";
 
 // Commit Reveal Obligation
 import {CommitRevealObligation} from "@src/obligations/CommitRevealObligation.sol";
-import {GlobalBondCommitRevealObligation} from "@src/obligations/GlobalBondCommitRevealObligation.sol";
 
 contract Deploy is Script {
     function run() external {
@@ -156,17 +155,10 @@ contract Deploy is Script {
         StringObligation stringObligation =
             new StringObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
 
-        // Deploy CommitRevealObligation variants
+        // Deploy CommitRevealObligation
         CommitRevealObligation commitRevealObligation = new CommitRevealObligation(
             IEAS(easAddress),
             ISchemaRegistry(schemaRegistryAddress),
-            24 hours, // commitDeadline
-            0x07dD7186410Aa0fe85670531FC6EFc9cd980c558 // slashedBondRecipient (treasury)
-        );
-        GlobalBondCommitRevealObligation globalBondCommitRevealObligation = new GlobalBondCommitRevealObligation(
-            IEAS(easAddress),
-            ISchemaRegistry(schemaRegistryAddress),
-            0.005 ether, // bondAmount
             24 hours, // commitDeadline
             0x07dD7186410Aa0fe85670531FC6EFc9cd980c558 // slashedBondRecipient (treasury)
         );
@@ -257,7 +249,6 @@ contract Deploy is Script {
 
         console.log("\nCommit Reveal Obligation:");
         console.log("CommitRevealObligation:", address(commitRevealObligation));
-        console.log("GlobalBondCommitRevealObligation:", address(globalBondCommitRevealObligation));
 
         console.log("\nERC20 Contracts:");
         console.log("ERC20EscrowObligation:", address(erc20Escrow));
