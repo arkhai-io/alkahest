@@ -20,6 +20,21 @@ than as a contract binding.
 
 ## Done
 
+### [x] SDK Atomic Payment Namespaces
+
+Completed by `e134a166fb2c1ce6cc6b1ad2d18628ded7f214fe`.
+
+The ergonomic SDK APIs no longer expose a separate `barter`/`barterUtils`
+namespace for atomic payment settlement. Atomic payment helpers now live under
+each token payment client, e.g. `erc20.payment.payErc20AndCollect(...)`, while
+raw generated contract bindings continue to mirror the Solidity contract
+organization.
+
+Address/config fields were renamed from `*BarterUtils` / `barter_utils` to
+`*AtomicPaymentUtils` / `atomic_payment_utils`. Attestation atomic helpers use
+`atomic_attestation_utils` on the Rust side to avoid conflating them with
+payment routing.
+
 ### [x] BarterUtils Surface Area
 
 Completed by `0f13fd47bc9761b188d61adb187211aa7564b4fa`.
