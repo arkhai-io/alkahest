@@ -24,7 +24,7 @@ export const pickTokenBundleAddresses = (addresses: ChainAddresses): TokenBundle
   atomicPaymentUtils: addresses.tokenBundleAtomicPaymentUtils,
   nativeTokenAtomicPaymentUtils: addresses.nativeTokenAtomicPaymentUtils,
   escrowObligation: addresses.tokenBundleEscrowObligation,
-  escrowObligationUnconditional: addresses.tokenBundleEscrowObligation, // TODO: Add unconditional address when available
+  escrowObligationUnconditional: addresses.tokenBundleUnconditionalEscrowObligation,
   paymentObligation: addresses.tokenBundlePaymentObligation,
 });
 

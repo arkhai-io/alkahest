@@ -138,6 +138,80 @@ impl CommitRevealObligationModule {
         Ok(receipt)
     }
 
+    pub async fn do_obligation_for(
+        &self,
+        data: contracts::obligations::CommitRevealObligation::ObligationData,
+        recipient: Address,
+        ref_uid: Option<FixedBytes<32>>,
+    ) -> eyre::Result<TransactionReceipt> {
+        let contract = contracts::obligations::CommitRevealObligation::new(
+            self.addresses.obligation,
+            &*self.wallet_provider,
+        );
+
+        let receipt = contract
+            .doObligationFor(
+                data,
+                recipient,
+                ref_uid.unwrap_or(FixedBytes::<32>::default()),
+            )
+            .send()
+            .await?
+            .get_receipt()
+            .await?;
+
+        Ok(receipt)
+    }
+
+    pub async fn do_obligation_raw(
+        &self,
+        data: Bytes,
+        expiration_time: u64,
+        ref_uid: Option<FixedBytes<32>>,
+        value: U256,
+    ) -> eyre::Result<TransactionReceipt> {
+        let contract = contracts::obligations::CommitRevealObligation::new(
+            self.addresses.obligation,
+            &*self.wallet_provider,
+        );
+
+        let receipt = contract
+            .doObligationRaw(
+                data,
+                expiration_time,
+                ref_uid.unwrap_or(FixedBytes::<32>::default()),
+            )
+            .value(value)
+            .send()
+            .await?
+            .get_receipt()
+            .await?;
+
+        Ok(receipt)
+    }
+
+    pub async fn reveal_and_collect(
+        &self,
+        data: contracts::obligations::CommitRevealObligation::ObligationData,
+        recipient: Address,
+        escrow_contract: Address,
+        escrow_uid: FixedBytes<32>,
+    ) -> eyre::Result<TransactionReceipt> {
+        let contract = contracts::obligations::CommitRevealObligation::new(
+            self.addresses.obligation,
+            &*self.wallet_provider,
+        );
+
+        let receipt = contract
+            .revealAndCollect(data, recipient, escrow_contract, escrow_uid)
+            .send()
+            .await?
+            .get_receipt()
+            .await?;
+
+        Ok(receipt)
+    }
+
     pub async fn commit(
         &self,
         commitment: FixedBytes<32>,

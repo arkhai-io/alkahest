@@ -330,6 +330,12 @@ impl<Extensions: AlkahestExtension> AlkahestClient<Extensions> {
             AttestationContract::AtomicAttestationUtils => {
                 self.attestation().addresses.atomic_attestation_utils
             }
+            AttestationContract::DefaultEscrowObligation => {
+                self.attestation().addresses.escrow_obligation_default
+            }
+            AttestationContract::ReferenceEscrowObligation => {
+                self.attestation().addresses.escrow_obligation_2_default
+            }
             AttestationContract::EscrowObligation => {
                 self.attestation().addresses.escrow_obligation_default
             }

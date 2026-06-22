@@ -13,6 +13,8 @@ import { decodeDemand as decodeTimeBeforeDemand } from "../clients/arbiters/atte
 import { decodeDemand as decodeTimeEqualDemand } from "../clients/arbiters/attestationProperties/timeEqualArbiter";
 import { decodeDemand as decodeUidDemand } from "../clients/arbiters/attestationProperties/uidArbiter";
 // Import static decode functions from general arbiters
+import { decodeDemand as decodeERC8004Demand } from "../clients/arbiters/general/erc8004Arbiter";
+import { decodeDemand as decodeReferencesEscrowDemand } from "../clients/arbiters/general/referencesEscrowArbiter";
 import { decodeDemand as decodeTrustedOracleDemand } from "../clients/arbiters/general/trustedOracle";
 import type { DecodersRecord, DemandDecoder, RecursivelyDecodedDemand } from "../clients/arbiters/logical";
 import { AllArbiter, AnyArbiter } from "../clients/arbiters/logical";
@@ -90,6 +92,13 @@ export const createDecodersFromAddresses = (addresses: ChainAddresses): Decoders
   // General arbiters
   if (addresses.trustedOracleArbiter) {
     decoders[addresses.trustedOracleArbiter.toLowerCase() as Address] = decodeTrustedOracleDemand as DemandDecoder;
+  }
+  if (addresses.erc8004Arbiter) {
+    decoders[addresses.erc8004Arbiter.toLowerCase() as Address] = decodeERC8004Demand as DemandDecoder;
+  }
+  if (addresses.referencesEscrowArbiter) {
+    decoders[addresses.referencesEscrowArbiter.toLowerCase() as Address] =
+      decodeReferencesEscrowDemand as DemandDecoder;
   }
 
   // Note: Confirmation arbiters don't have DemandData - they are action-based (confirm/revoke)

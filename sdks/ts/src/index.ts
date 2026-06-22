@@ -190,24 +190,40 @@ export const makeMinimalClient = (
 
     erc20EscrowObligation:
       contractAddresses?.erc20EscrowObligation || baseAddresses?.erc20EscrowObligation || zeroAddress,
+    erc20UnconditionalEscrowObligation:
+      contractAddresses?.erc20UnconditionalEscrowObligation ||
+      baseAddresses?.erc20UnconditionalEscrowObligation ||
+      zeroAddress,
     erc20PaymentObligation:
       contractAddresses?.erc20PaymentObligation || baseAddresses?.erc20PaymentObligation || zeroAddress,
     erc20AtomicPaymentUtils: contractAddresses?.erc20AtomicPaymentUtils || baseAddresses?.erc20AtomicPaymentUtils || zeroAddress,
 
     erc721EscrowObligation:
       contractAddresses?.erc721EscrowObligation || baseAddresses?.erc721EscrowObligation || zeroAddress,
+    erc721UnconditionalEscrowObligation:
+      contractAddresses?.erc721UnconditionalEscrowObligation ||
+      baseAddresses?.erc721UnconditionalEscrowObligation ||
+      zeroAddress,
     erc721PaymentObligation:
       contractAddresses?.erc721PaymentObligation || baseAddresses?.erc721PaymentObligation || zeroAddress,
     erc721AtomicPaymentUtils: contractAddresses?.erc721AtomicPaymentUtils || baseAddresses?.erc721AtomicPaymentUtils || zeroAddress,
 
     erc1155EscrowObligation:
       contractAddresses?.erc1155EscrowObligation || baseAddresses?.erc1155EscrowObligation || zeroAddress,
+    erc1155UnconditionalEscrowObligation:
+      contractAddresses?.erc1155UnconditionalEscrowObligation ||
+      baseAddresses?.erc1155UnconditionalEscrowObligation ||
+      zeroAddress,
     erc1155PaymentObligation:
       contractAddresses?.erc1155PaymentObligation || baseAddresses?.erc1155PaymentObligation || zeroAddress,
     erc1155AtomicPaymentUtils: contractAddresses?.erc1155AtomicPaymentUtils || baseAddresses?.erc1155AtomicPaymentUtils || zeroAddress,
 
     tokenBundleEscrowObligation:
       contractAddresses?.tokenBundleEscrowObligation || baseAddresses?.tokenBundleEscrowObligation || zeroAddress,
+    tokenBundleUnconditionalEscrowObligation:
+      contractAddresses?.tokenBundleUnconditionalEscrowObligation ||
+      baseAddresses?.tokenBundleUnconditionalEscrowObligation ||
+      zeroAddress,
     tokenBundlePaymentObligation:
       contractAddresses?.tokenBundlePaymentObligation || baseAddresses?.tokenBundlePaymentObligation || zeroAddress,
     tokenBundleAtomicPaymentUtils:
@@ -215,8 +231,16 @@ export const makeMinimalClient = (
 
     attestationEscrowObligation:
       contractAddresses?.attestationEscrowObligation || baseAddresses?.attestationEscrowObligation || zeroAddress,
+    attestationUnconditionalEscrowObligation:
+      contractAddresses?.attestationUnconditionalEscrowObligation ||
+      baseAddresses?.attestationUnconditionalEscrowObligation ||
+      zeroAddress,
     attestationReferenceEscrowObligation:
       contractAddresses?.attestationReferenceEscrowObligation || baseAddresses?.attestationReferenceEscrowObligation || zeroAddress,
+    attestationReferenceUnconditionalEscrowObligation:
+      contractAddresses?.attestationReferenceUnconditionalEscrowObligation ||
+      baseAddresses?.attestationReferenceUnconditionalEscrowObligation ||
+      zeroAddress,
     atomicAttestationUtils:
       contractAddresses?.atomicAttestationUtils || baseAddresses?.atomicAttestationUtils || zeroAddress,
 
@@ -253,6 +277,10 @@ export const makeMinimalClient = (
       contractAddresses?.nativeTokenPaymentObligation || baseAddresses?.nativeTokenPaymentObligation || zeroAddress,
     nativeTokenEscrowObligation:
       contractAddresses?.nativeTokenEscrowObligation || baseAddresses?.nativeTokenEscrowObligation || zeroAddress,
+    nativeTokenUnconditionalEscrowObligation:
+      contractAddresses?.nativeTokenUnconditionalEscrowObligation ||
+      baseAddresses?.nativeTokenUnconditionalEscrowObligation ||
+      zeroAddress,
 
     trivialArbiter: contractAddresses?.trivialArbiter || baseAddresses?.trivialArbiter || zeroAddress,
     trustedOracleArbiter: contractAddresses?.trustedOracleArbiter || baseAddresses?.trustedOracleArbiter || zeroAddress,

@@ -43,6 +43,13 @@ import ERC721EscrowObligation from "./contracts/obligations/escrow/default/ERC72
 import ERC1155EscrowObligation from "./contracts/obligations/escrow/default/ERC1155EscrowObligation.json";
 import NativeTokenEscrowObligation from "./contracts/obligations/escrow/default/NativeTokenEscrowObligation.json";
 import TokenBundleEscrowObligation from "./contracts/obligations/escrow/default/TokenBundleEscrowObligation.json";
+import UnconditionalAttestationEscrowObligation from "./contracts/obligations/escrow/unconditional/UnconditionalAttestationEscrowObligation.json";
+import UnconditionalAttestationReferenceEscrowObligation from "./contracts/obligations/escrow/unconditional/UnconditionalAttestationReferenceEscrowObligation.json";
+import UnconditionalERC1155EscrowObligation from "./contracts/obligations/escrow/unconditional/UnconditionalERC1155EscrowObligation.json";
+import UnconditionalERC20EscrowObligation from "./contracts/obligations/escrow/unconditional/UnconditionalERC20EscrowObligation.json";
+import UnconditionalERC721EscrowObligation from "./contracts/obligations/escrow/unconditional/UnconditionalERC721EscrowObligation.json";
+import UnconditionalNativeTokenEscrowObligation from "./contracts/obligations/escrow/unconditional/UnconditionalNativeTokenEscrowObligation.json";
+import UnconditionalTokenBundleEscrowObligation from "./contracts/obligations/escrow/unconditional/UnconditionalTokenBundleEscrowObligation.json";
 import HookEscrowObligation from "./contracts/obligations/escrow/hook-based/HookEscrowObligation.json";
 import HooksEscrowObligation from "./contracts/obligations/escrow/hook-based/HooksEscrowObligation.json";
 import AttestationEscrowHook from "./contracts/obligations/escrow/hook-based/hooks/AttestationEscrowHook.json";
@@ -174,17 +181,52 @@ export async function deployAlkahest(
     const easArgs = [easAddress, easSrAddress];
 
     result.erc20EscrowObligation = await deploy(deployFn, ERC20EscrowObligation as Artifact, easArgs);
+    result.erc20UnconditionalEscrowObligation = await deploy(
+      deployFn,
+      UnconditionalERC20EscrowObligation as Artifact,
+      easArgs,
+    );
     result.erc20PaymentObligation = await deploy(deployFn, ERC20PaymentObligation as Artifact, easArgs);
     result.erc721EscrowObligation = await deploy(deployFn, ERC721EscrowObligation as Artifact, easArgs);
+    result.erc721UnconditionalEscrowObligation = await deploy(
+      deployFn,
+      UnconditionalERC721EscrowObligation as Artifact,
+      easArgs,
+    );
     result.erc721PaymentObligation = await deploy(deployFn, ERC721PaymentObligation as Artifact, easArgs);
     result.erc1155EscrowObligation = await deploy(deployFn, ERC1155EscrowObligation as Artifact, easArgs);
+    result.erc1155UnconditionalEscrowObligation = await deploy(
+      deployFn,
+      UnconditionalERC1155EscrowObligation as Artifact,
+      easArgs,
+    );
     result.erc1155PaymentObligation = await deploy(deployFn, ERC1155PaymentObligation as Artifact, easArgs);
     result.tokenBundleEscrowObligation = await deploy(deployFn, TokenBundleEscrowObligation as Artifact, easArgs);
+    result.tokenBundleUnconditionalEscrowObligation = await deploy(
+      deployFn,
+      UnconditionalTokenBundleEscrowObligation as Artifact,
+      easArgs,
+    );
     result.tokenBundlePaymentObligation = await deploy(deployFn, TokenBundlePaymentObligation as Artifact, easArgs);
     result.nativeTokenEscrowObligation = await deploy(deployFn, NativeTokenEscrowObligation as Artifact, easArgs);
+    result.nativeTokenUnconditionalEscrowObligation = await deploy(
+      deployFn,
+      UnconditionalNativeTokenEscrowObligation as Artifact,
+      easArgs,
+    );
     result.nativeTokenPaymentObligation = await deploy(deployFn, NativeTokenPaymentObligation as Artifact, easArgs);
     result.attestationEscrowObligation = await deploy(deployFn, AttestationEscrowObligation as Artifact, easArgs);
+    result.attestationUnconditionalEscrowObligation = await deploy(
+      deployFn,
+      UnconditionalAttestationEscrowObligation as Artifact,
+      easArgs,
+    );
     result.attestationReferenceEscrowObligation = await deploy(deployFn, AttestationReferenceEscrowObligation as Artifact, easArgs);
+    result.attestationReferenceUnconditionalEscrowObligation = await deploy(
+      deployFn,
+      UnconditionalAttestationReferenceEscrowObligation as Artifact,
+      easArgs,
+    );
     result.hookEscrowObligation = await deploy(deployFn, HookEscrowObligation as Artifact, easArgs);
     result.hooksEscrowObligation = await deploy(deployFn, HooksEscrowObligation as Artifact, easArgs);
     result.erc20EscrowHook = await deploy(deployFn, ERC20EscrowHook as Artifact);

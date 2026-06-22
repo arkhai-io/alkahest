@@ -24,7 +24,7 @@ export const pickErc721Addresses = (addresses: ChainAddresses): Erc721Addresses 
   atomicPaymentUtils: addresses.erc721AtomicPaymentUtils,
   nativeTokenAtomicPaymentUtils: addresses.nativeTokenAtomicPaymentUtils,
   escrowObligation: addresses.erc721EscrowObligation,
-  escrowObligationUnconditional: addresses.erc721EscrowObligation, // TODO: Add unconditional address when available
+  escrowObligationUnconditional: addresses.erc721UnconditionalEscrowObligation,
   paymentObligation: addresses.erc721PaymentObligation,
 });
 

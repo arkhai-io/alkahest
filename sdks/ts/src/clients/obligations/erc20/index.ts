@@ -22,7 +22,7 @@ export const pickErc20Addresses = (addresses: ChainAddresses): Erc20Addresses =>
   eas: addresses.eas,
   atomicPaymentUtils: addresses.erc20AtomicPaymentUtils,
   escrowObligation: addresses.erc20EscrowObligation,
-  escrowObligationUnconditional: addresses.erc20EscrowObligation, // TODO: Add unconditional address when available
+  escrowObligationUnconditional: addresses.erc20UnconditionalEscrowObligation,
   paymentObligation: addresses.erc20PaymentObligation,
 });
 

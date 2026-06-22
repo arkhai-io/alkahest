@@ -12,14 +12,18 @@ export type AttestationAddresses = {
   eas: `0x${string}`;
   atomicUtils: `0x${string}`;
   escrowObligation: `0x${string}`;
+  escrowObligationUnconditional: `0x${string}`;
   escrowObligation2: `0x${string}`;
+  escrowObligation2Unconditional: `0x${string}`;
 };
 
 export const pickAttestationAddresses = (addresses: ChainAddresses): AttestationAddresses => ({
   eas: addresses.eas,
   atomicUtils: addresses.atomicAttestationUtils,
   escrowObligation: addresses.attestationEscrowObligation,
+  escrowObligationUnconditional: addresses.attestationUnconditionalEscrowObligation,
   escrowObligation2: addresses.attestationReferenceEscrowObligation,
+  escrowObligation2Unconditional: addresses.attestationReferenceUnconditionalEscrowObligation,
 });
 
 export type AttestationClient = {

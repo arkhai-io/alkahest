@@ -18,13 +18,23 @@ impl<'a> Escrow<'a> {
         Self { module }
     }
 
-    /// Access V1 escrow operations (stores full attestation data)
-    pub fn v1(&self) -> V1<'a> {
+    /// Access default escrow operations (stores full attestation data).
+    pub fn default(&self) -> V1<'a> {
         V1::new(self.module)
     }
 
-    /// Access V2 escrow operations (references attestation by UID)
-    pub fn v2(&self) -> V2<'a> {
+    /// Access attestation-reference escrow operations.
+    pub fn reference(&self) -> V2<'a> {
         V2::new(self.module)
+    }
+
+    /// Access V1 escrow operations (stores full attestation data).
+    pub fn v1(&self) -> V1<'a> {
+        self.default()
+    }
+
+    /// Access V2 escrow operations (references attestation by UID).
+    pub fn v2(&self) -> V2<'a> {
+        self.reference()
     }
 }

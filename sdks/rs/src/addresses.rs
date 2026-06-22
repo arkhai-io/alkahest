@@ -117,7 +117,7 @@ pub const BASE_SEPOLIA_ADDRESSES: DefaultExtensionConfig = DefaultExtensionConfi
     attestation_addresses: AttestationAddresses {
         eas: address!("0x4200000000000000000000000000000000000021"),
         eas_schema_registry: address!("0x4200000000000000000000000000000000000020"),
-        atomic_attestation_utils: address!("0x84D390BCd90d5f65D14ff66f6860DCa45e776666"),
+        atomic_attestation_utils: Address::ZERO,
         escrow_obligation_default: address!("0x9D133Cbd51270a2A410465F82dAFFD6c1C87322D"),
         escrow_obligation_unconditional: Address::ZERO, // TODO: Add actual address when deployed
         escrow_obligation_2_default: address!("0xa076e9ca47f192E6AfB67817608E382074CF0Dcf"),
@@ -211,7 +211,7 @@ pub const ETHEREUM_SEPOLIA_ADDRESSES: DefaultExtensionConfig = DefaultExtensionC
     attestation_addresses: AttestationAddresses {
         eas: address!("0xC2679fBD37d54388Ce493F1DB75320D236e1815e"),
         eas_schema_registry: address!("0x0a7E2Ff54e76B8E6659aedc9103FB21c038050D0"),
-        atomic_attestation_utils: address!("0x5E6602F080E9B37267aa52306c699ae54Cd71056"),
+        atomic_attestation_utils: Address::ZERO,
         escrow_obligation_default: address!("0x6eb7792D821f32914Be75901F1b4269B13Efad2e"),
         escrow_obligation_unconditional: Address::ZERO, // TODO: Add actual address when deployed
         escrow_obligation_2_default: address!("0x1A7c6F951e0a33F4910dbe56a200Eb413AEca17b"),
@@ -305,7 +305,7 @@ pub const FILECOIN_CALIBRATION_ADDRESSES: DefaultExtensionConfig = DefaultExtens
     attestation_addresses: AttestationAddresses {
         eas: address!("0x3c79a0225380fB6F3CB990FfC4E3D5aF4546b524"),
         eas_schema_registry: address!("0x2BB94a4E6eC0D81dE7f81007b572Ac09A5BE37b4"),
-        atomic_attestation_utils: address!("0xcda1e1ea425e31a789feffc8e3d90f839ff49c9f"),
+        atomic_attestation_utils: Address::ZERO,
         escrow_obligation_default: address!("0xd59c6c6cb025e76a0a1e706c62a9df38b04694e2"),
         escrow_obligation_unconditional: Address::ZERO, // TODO: Add actual address when deployed
         escrow_obligation_2_default: address!("0xa22b4d9fe7a746d44be1e724bb1a26593bca2c1b"),
@@ -399,7 +399,7 @@ pub const GENLAYER_BRADBURY_ADDRESSES: DefaultExtensionConfig = DefaultExtension
     attestation_addresses: AttestationAddresses {
         eas: address!("0xaC18Fa0DE3123215404a0C5f6d02ed9B2D0D0d98"),
         eas_schema_registry: address!("0xA1F9076932f6eEA0D90BBfA1D6E81D001012645D"),
-        atomic_attestation_utils: address!("0x5bf1EE1fEC1bC25d20C4537f74bD0909B195DEBd"),
+        atomic_attestation_utils: Address::ZERO,
         escrow_obligation_default: address!("0x5E6602F080E9B37267aa52306c699ae54Cd71056"),
         escrow_obligation_unconditional: Address::ZERO, // TODO: Add actual address when deployed
         escrow_obligation_2_default: address!("0x57D5165F9487F6E7bD6E6a24017FAdadc2b1D7D2"),
@@ -493,7 +493,7 @@ pub const ETHEREUM_ADDRESSES: DefaultExtensionConfig = DefaultExtensionConfig {
     attestation_addresses: AttestationAddresses {
         eas: address!("0xA1207F3BBa224E2c9c3c6D5aF63D0eb1582Ce587"),
         eas_schema_registry: address!("0xA7b39296258348C78294F95B872b282326A97BDF"),
-        atomic_attestation_utils: address!("0x5E6602F080E9B37267aa52306c699ae54Cd71056"),
+        atomic_attestation_utils: Address::ZERO,
         escrow_obligation_default: address!("0x6eb7792D821f32914Be75901F1b4269B13Efad2e"),
         escrow_obligation_unconditional: Address::ZERO, // TODO: Add actual address when deployed
         escrow_obligation_2_default: address!("0x1A7c6F951e0a33F4910dbe56a200Eb413AEca17b"),

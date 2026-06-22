@@ -5,23 +5,29 @@ export type ChainAddresses = {
   easSchemaRegistry: `0x${string}`;
 
   erc20EscrowObligation: `0x${string}`;
+  erc20UnconditionalEscrowObligation: `0x${string}`;
   erc20PaymentObligation: `0x${string}`;
   erc20AtomicPaymentUtils: `0x${string}`;
 
   erc721EscrowObligation: `0x${string}`;
+  erc721UnconditionalEscrowObligation: `0x${string}`;
   erc721PaymentObligation: `0x${string}`;
   erc721AtomicPaymentUtils: `0x${string}`;
 
   erc1155EscrowObligation: `0x${string}`;
+  erc1155UnconditionalEscrowObligation: `0x${string}`;
   erc1155AtomicPaymentUtils: `0x${string}`;
   erc1155PaymentObligation: `0x${string}`;
 
   tokenBundleEscrowObligation: `0x${string}`;
+  tokenBundleUnconditionalEscrowObligation: `0x${string}`;
   tokenBundlePaymentObligation: `0x${string}`;
   tokenBundleAtomicPaymentUtils: `0x${string}`;
 
   attestationEscrowObligation: `0x${string}`;
+  attestationUnconditionalEscrowObligation: `0x${string}`;
   attestationReferenceEscrowObligation: `0x${string}`;
+  attestationReferenceUnconditionalEscrowObligation: `0x${string}`;
   atomicAttestationUtils: `0x${string}`;
 
   hookEscrowObligation: `0x${string}`;
@@ -56,6 +62,7 @@ export type ChainAddresses = {
   nonexclusiveRevocableConfirmationArbiter: `0x${string}`;
   nonexclusiveUnrevocableConfirmationArbiter: `0x${string}`;
   nativeTokenEscrowObligation: `0x${string}`;
+  nativeTokenUnconditionalEscrowObligation: `0x${string}`;
   nativeTokenPaymentObligation: `0x${string}`;
   nativeTokenAtomicPaymentUtils: `0x${string}`;
 

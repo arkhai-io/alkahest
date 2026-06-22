@@ -89,6 +89,59 @@ export const makeCommitRevealObligationClient = (viemClient: ViemClient, address
       return { hash, attested };
     },
 
+    doObligationFor: async (
+      data: CommitRevealObligationData,
+      recipient: `0x${string}`,
+      refUID: `0x${string}` = "0x0000000000000000000000000000000000000000000000000000000000000000",
+    ) => {
+      const { request } = await viemClient.simulateContract({
+        address: contractAddress,
+        abi,
+        functionName: "doObligationFor",
+        args: [data, recipient, refUID],
+      });
+
+      const hash = await viemClient.writeContract(request);
+      const attested = await getAttestedEventFromTxHash(viemClient, hash);
+      return { hash, attested };
+    },
+
+    doObligationRaw: async (
+      data: `0x${string}`,
+      expirationTime: bigint = 0n,
+      refUID: `0x${string}` = "0x0000000000000000000000000000000000000000000000000000000000000000",
+      value: bigint = 0n,
+    ) => {
+      const { request } = await viemClient.simulateContract({
+        address: contractAddress,
+        abi,
+        functionName: "doObligationRaw",
+        args: [data, expirationTime, refUID],
+        value,
+      });
+
+      const hash = await viemClient.writeContract(request);
+      const attested = await getAttestedEventFromTxHash(viemClient, hash);
+      return { hash, attested };
+    },
+
+    revealAndCollect: async (
+      data: CommitRevealObligationData,
+      recipient: `0x${string}`,
+      escrowContract: `0x${string}`,
+      escrowUid: `0x${string}`,
+    ) => {
+      const { request, result } = await viemClient.simulateContract({
+        address: contractAddress,
+        abi,
+        functionName: "revealAndCollect",
+        args: [data, recipient, escrowContract, escrowUid],
+      });
+
+      const hash = await viemClient.writeContract(request);
+      return { hash, result };
+    },
+
     commit: async (commitment: `0x${string}`, bondAmount: bigint) => {
       const { request } = await viemClient.simulateContract({
         address: contractAddress,

@@ -3,6 +3,13 @@ import type { ChainAddresses } from "./types";
 const zeroAddress = "0x0000000000000000000000000000000000000000" as const;
 
 const unreleasedAddresses = {
+  erc20UnconditionalEscrowObligation: zeroAddress,
+  erc721UnconditionalEscrowObligation: zeroAddress,
+  erc1155UnconditionalEscrowObligation: zeroAddress,
+  nativeTokenUnconditionalEscrowObligation: zeroAddress,
+  tokenBundleUnconditionalEscrowObligation: zeroAddress,
+  attestationUnconditionalEscrowObligation: zeroAddress,
+  attestationReferenceUnconditionalEscrowObligation: zeroAddress,
   hookEscrowObligation: zeroAddress,
   hooksEscrowObligation: zeroAddress,
   erc20EscrowHook: zeroAddress,
@@ -18,6 +25,13 @@ const unreleasedAddresses = {
   tokenBundleSplitterUnvalidated: zeroAddress,
 } satisfies Pick<
   ChainAddresses,
+  | "erc20UnconditionalEscrowObligation"
+  | "erc721UnconditionalEscrowObligation"
+  | "erc1155UnconditionalEscrowObligation"
+  | "nativeTokenUnconditionalEscrowObligation"
+  | "tokenBundleUnconditionalEscrowObligation"
+  | "attestationUnconditionalEscrowObligation"
+  | "attestationReferenceUnconditionalEscrowObligation"
   | "hookEscrowObligation"
   | "hooksEscrowObligation"
   | "erc20EscrowHook"

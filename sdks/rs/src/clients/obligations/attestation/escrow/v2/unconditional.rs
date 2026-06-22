@@ -24,7 +24,6 @@ impl<'a> Unconditional<'a> {
 
     /// Get the contract address
     pub fn address(&self) -> Address {
-        // TODO: Add unconditional V2 escrow address when deployed
         self.module.addresses.escrow_obligation_2_unconditional
     }
 

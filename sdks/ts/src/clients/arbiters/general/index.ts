@@ -13,6 +13,11 @@ export {
   requestHashFor as erc8004RequestHashFor,
 } from "./erc8004Arbiter";
 
+export {
+  decodeDemand as decodeReferencesEscrowDemand,
+  encodeDemand as encodeReferencesEscrowDemand,
+} from "./referencesEscrowArbiter";
+
 // Re-export static encode/decode functions and types from trustedOracle
 export {
   type ArbitrationMode,

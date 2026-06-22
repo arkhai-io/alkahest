@@ -7,6 +7,8 @@ export { type AttestationEscrowV1Client, makeAttestationEscrowV1Client } from ".
 export { type AttestationEscrowV2Client, makeAttestationEscrowV2Client } from "./v2";
 
 export type AttestationEscrowClient = {
+  default: AttestationEscrowV1Client;
+  reference: AttestationEscrowV2Client;
   v1: AttestationEscrowV1Client;
   v2: AttestationEscrowV2Client;
 };
@@ -15,8 +17,13 @@ export const makeAttestationEscrowClient = (
   viemClient: ViemClient,
   addresses: AttestationAddresses,
 ): AttestationEscrowClient => {
+  const defaultEscrow = makeAttestationEscrowV1Client(viemClient, addresses);
+  const referenceEscrow = makeAttestationEscrowV2Client(viemClient, addresses);
+
   return {
-    v1: makeAttestationEscrowV1Client(viemClient, addresses),
-    v2: makeAttestationEscrowV2Client(viemClient, addresses),
+    default: defaultEscrow,
+    reference: referenceEscrow,
+    v1: defaultEscrow,
+    v2: referenceEscrow,
   };
 };

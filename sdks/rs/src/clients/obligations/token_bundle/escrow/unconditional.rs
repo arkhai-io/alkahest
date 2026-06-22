@@ -23,7 +23,6 @@ impl<'a> Unconditional<'a> {
 
     /// Get the contract address
     pub fn address(&self) -> Address {
-        // TODO: Add unconditional escrow address to TokenBundleAddresses when deployed
         self.module.addresses.escrow_obligation_unconditional
     }
 

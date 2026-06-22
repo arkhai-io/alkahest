@@ -42,7 +42,7 @@ export const pickNativeTokenAddresses = (addresses: ChainAddresses): NativeToken
   eas: addresses.eas,
   atomicPaymentUtils: addresses.nativeTokenAtomicPaymentUtils,
   escrowObligation: addresses.nativeTokenEscrowObligation,
-  escrowObligationUnconditional: addresses.nativeTokenEscrowObligation, // TODO: Add unconditional address when available
+  escrowObligationUnconditional: addresses.nativeTokenUnconditionalEscrowObligation,
   paymentObligation: addresses.nativeTokenPaymentObligation,
 });
 

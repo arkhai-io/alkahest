@@ -7,8 +7,12 @@ import type { ViemClient } from "../../../utils";
  * Checks that a fulfillment attestation's refUID is the escrow UID.
  * This arbiter has no DemandData; pass "0x" as demand bytes.
  */
+export const encodeDemand = (): "0x" => "0x";
+
+export const decodeDemand = (_demand: `0x${string}`): Record<string, never> => ({});
+
 export const makeReferencesEscrowArbiterClient = (_viemClient: ViemClient, addresses: ChainAddresses) => ({
   address: addresses.referencesEscrowArbiter,
-  encodeDemand: (): "0x" => "0x",
-  decodeDemand: (_demand: `0x${string}`): Record<string, never> => ({}),
+  encodeDemand,
+  decodeDemand,
 });

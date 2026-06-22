@@ -119,6 +119,10 @@ pub enum AttestationContract {
     EasSchemaRegistry,
     /// Atomic attestation utilities contract for attestations
     AtomicAttestationUtils,
+    /// Default escrow obligation contract for attestations
+    DefaultEscrowObligation,
+    /// Attestation-reference escrow obligation contract
+    ReferenceEscrowObligation,
     /// Escrow obligation contract for attestations (V1)
     EscrowObligation,
     /// Escrow obligation contract for attestations (V2)
@@ -133,6 +137,12 @@ impl ContractModule for AttestationModule {
             AttestationContract::Eas => self.addresses.eas,
             AttestationContract::EasSchemaRegistry => self.addresses.eas_schema_registry,
             AttestationContract::AtomicAttestationUtils => self.addresses.atomic_attestation_utils,
+            AttestationContract::DefaultEscrowObligation => {
+                self.addresses.escrow_obligation_default
+            }
+            AttestationContract::ReferenceEscrowObligation => {
+                self.addresses.escrow_obligation_2_default
+            }
             AttestationContract::EscrowObligation => self.addresses.escrow_obligation_default,
             AttestationContract::EscrowObligation2 => self.addresses.escrow_obligation_2_default,
         }
