@@ -55,7 +55,7 @@ async fn test_building_client_by_chaining_extensions() -> Result<()> {
         alloy::primitives::Address::ZERO
     );
     assert_ne!(
-        client_with_both.erc721().addresses.barter_utils,
+        client_with_both.erc721().addresses.atomic_payment_utils,
         alloy::primitives::Address::ZERO
     );
 

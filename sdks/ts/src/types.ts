@@ -6,19 +6,19 @@ export type ChainAddresses = {
 
   erc20EscrowObligation: `0x${string}`;
   erc20PaymentObligation: `0x${string}`;
-  erc20BarterUtils: `0x${string}`;
+  erc20AtomicPaymentUtils: `0x${string}`;
 
   erc721EscrowObligation: `0x${string}`;
   erc721PaymentObligation: `0x${string}`;
-  erc721BarterUtils: `0x${string}`;
+  erc721AtomicPaymentUtils: `0x${string}`;
 
   erc1155EscrowObligation: `0x${string}`;
-  erc1155BarterUtils: `0x${string}`;
+  erc1155AtomicPaymentUtils: `0x${string}`;
   erc1155PaymentObligation: `0x${string}`;
 
   tokenBundleEscrowObligation: `0x${string}`;
   tokenBundlePaymentObligation: `0x${string}`;
-  tokenBundleBarterUtils: `0x${string}`;
+  tokenBundleAtomicPaymentUtils: `0x${string}`;
 
   attestationEscrowObligation: `0x${string}`;
   attestationReferenceEscrowObligation: `0x${string}`;
@@ -41,7 +41,7 @@ export type ChainAddresses = {
   nonexclusiveUnrevocableConfirmationArbiter: `0x${string}`;
   nativeTokenEscrowObligation: `0x${string}`;
   nativeTokenPaymentObligation: `0x${string}`;
-  nativeTokenBarterUtils: `0x${string}`;
+  nativeTokenAtomicPaymentUtils: `0x${string}`;
 
   // Attestation Properties Arbiters
   recipientArbiter: `0x${string}`;
@@ -130,7 +130,7 @@ export type TokenBundleFlat = {
   erc1155Amounts: bigint[];
 };
 
-export type ApprovalPurpose = "escrow" | "payment" | "barter";
+export type ApprovalPurpose = "escrow" | "payment" | "atomicPayment";
 
 export type Attestation = {
   uid: `0x${string}`;

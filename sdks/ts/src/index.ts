@@ -192,26 +192,26 @@ export const makeMinimalClient = (
       contractAddresses?.erc20EscrowObligation || baseAddresses?.erc20EscrowObligation || zeroAddress,
     erc20PaymentObligation:
       contractAddresses?.erc20PaymentObligation || baseAddresses?.erc20PaymentObligation || zeroAddress,
-    erc20BarterUtils: contractAddresses?.erc20BarterUtils || baseAddresses?.erc20BarterUtils || zeroAddress,
+    erc20AtomicPaymentUtils: contractAddresses?.erc20AtomicPaymentUtils || baseAddresses?.erc20AtomicPaymentUtils || zeroAddress,
 
     erc721EscrowObligation:
       contractAddresses?.erc721EscrowObligation || baseAddresses?.erc721EscrowObligation || zeroAddress,
     erc721PaymentObligation:
       contractAddresses?.erc721PaymentObligation || baseAddresses?.erc721PaymentObligation || zeroAddress,
-    erc721BarterUtils: contractAddresses?.erc721BarterUtils || baseAddresses?.erc721BarterUtils || zeroAddress,
+    erc721AtomicPaymentUtils: contractAddresses?.erc721AtomicPaymentUtils || baseAddresses?.erc721AtomicPaymentUtils || zeroAddress,
 
     erc1155EscrowObligation:
       contractAddresses?.erc1155EscrowObligation || baseAddresses?.erc1155EscrowObligation || zeroAddress,
     erc1155PaymentObligation:
       contractAddresses?.erc1155PaymentObligation || baseAddresses?.erc1155PaymentObligation || zeroAddress,
-    erc1155BarterUtils: contractAddresses?.erc1155BarterUtils || baseAddresses?.erc1155BarterUtils || zeroAddress,
+    erc1155AtomicPaymentUtils: contractAddresses?.erc1155AtomicPaymentUtils || baseAddresses?.erc1155AtomicPaymentUtils || zeroAddress,
 
     tokenBundleEscrowObligation:
       contractAddresses?.tokenBundleEscrowObligation || baseAddresses?.tokenBundleEscrowObligation || zeroAddress,
     tokenBundlePaymentObligation:
       contractAddresses?.tokenBundlePaymentObligation || baseAddresses?.tokenBundlePaymentObligation || zeroAddress,
-    tokenBundleBarterUtils:
-      contractAddresses?.tokenBundleBarterUtils || baseAddresses?.tokenBundleBarterUtils || zeroAddress,
+    tokenBundleAtomicPaymentUtils:
+      contractAddresses?.tokenBundleAtomicPaymentUtils || baseAddresses?.tokenBundleAtomicPaymentUtils || zeroAddress,
 
     attestationEscrowObligation:
       contractAddresses?.attestationEscrowObligation || baseAddresses?.attestationEscrowObligation || zeroAddress,
@@ -235,8 +235,8 @@ export const makeMinimalClient = (
     anyArbiter: contractAddresses?.anyArbiter || baseAddresses?.anyArbiter || zeroAddress,
     allArbiter: contractAddresses?.allArbiter || baseAddresses?.allArbiter || zeroAddress,
     erc8004Arbiter: contractAddresses?.erc8004Arbiter || baseAddresses?.erc8004Arbiter || zeroAddress,
-    nativeTokenBarterUtils:
-      contractAddresses?.nativeTokenBarterUtils || baseAddresses?.nativeTokenBarterUtils || zeroAddress,
+    nativeTokenAtomicPaymentUtils:
+      contractAddresses?.nativeTokenAtomicPaymentUtils || baseAddresses?.nativeTokenAtomicPaymentUtils || zeroAddress,
 
     // Confirmation arbiters (new naming convention)
     exclusiveRevocableConfirmationArbiter:

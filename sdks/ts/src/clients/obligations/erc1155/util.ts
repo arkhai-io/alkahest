@@ -13,7 +13,7 @@ export const makeErc1155UtilClient = (viemClient: ViemClient, addresses: Erc1155
           ? addresses.escrowObligation
           : purpose === "payment"
             ? addresses.paymentObligation
-            : addresses.barterUtils;
+            : addresses.atomicPaymentUtils;
       const hash = await writeContract(viemClient, {
         address: tokenContract,
         abi: erc1155Abi.abi,
@@ -29,7 +29,7 @@ export const makeErc1155UtilClient = (viemClient: ViemClient, addresses: Erc1155
           ? addresses.escrowObligation
           : purpose === "payment"
             ? addresses.paymentObligation
-            : addresses.barterUtils;
+            : addresses.atomicPaymentUtils;
       const hash = await writeContract(viemClient, {
         address: tokenContract,
         abi: erc1155Abi.abi,

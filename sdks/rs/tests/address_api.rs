@@ -31,12 +31,12 @@ async fn test_address_api_with_base_extensions() -> Result<()> {
     // Access ERC20 contract addresses
     let erc20_escrow = client.erc20().address(Erc20Contract::EscrowObligation);
     let erc20_payment = client.erc20().address(Erc20Contract::PaymentObligation);
-    let erc20_barter = client.erc20().address(Erc20Contract::BarterUtils);
+    let erc20_atomic_payment = client.erc20().address(Erc20Contract::AtomicPaymentUtils);
 
     // Verify addresses are not zero
     assert_ne!(erc20_escrow, alloy::primitives::Address::ZERO);
     assert_ne!(erc20_payment, alloy::primitives::Address::ZERO);
-    assert_ne!(erc20_barter, alloy::primitives::Address::ZERO);
+    assert_ne!(erc20_atomic_payment, alloy::primitives::Address::ZERO);
 
     // Access ERC721 contract addresses
     let erc721_escrow = client.erc721().address(Erc721Contract::EscrowObligation);

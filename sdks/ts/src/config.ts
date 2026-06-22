@@ -5,19 +5,19 @@ export const contractAddresses: Record<string, ChainAddresses> = {
     eas: "0x4200000000000000000000000000000000000021",
     easSchemaRegistry: "0x4200000000000000000000000000000000000020",
 
-    erc20BarterUtils: "0x946Ef4E912897B4A24b9250513dfeE3fc4303Dde",
+    erc20AtomicPaymentUtils: "0x946Ef4E912897B4A24b9250513dfeE3fc4303Dde",
     erc20EscrowObligation: "0x1Fe964348Ec42D9Bb1A072503ce8b4744266FF43",
     erc20PaymentObligation: "0x8d13d7542E64D9Da29AB66B6E9b4a6583C64b3F6",
 
-    erc721BarterUtils: "0x707f280Fa738b4cc175A369d450f2f603094cbAf",
+    erc721AtomicPaymentUtils: "0x707f280Fa738b4cc175A369d450f2f603094cbAf",
     erc721EscrowObligation: "0x7675a56b2880EF059cFC725E715E1139D689c07B",
     erc721PaymentObligation: "0x9Daf829f183cA46ad2146F489E7d14335C9B59a9",
 
-    erc1155BarterUtils: "0x4E4F0F883B1fEC20F219E0c8D2ec0061FE3c1328",
+    erc1155AtomicPaymentUtils: "0x4E4F0F883B1fEC20F219E0c8D2ec0061FE3c1328",
     erc1155EscrowObligation: "0xB8A3107DA5428a34f818ea4229233fBAe59C16F2",
     erc1155PaymentObligation: "0x6f71429bD940Bf3345780a8E5F5cf3BcdffE80C1",
 
-    tokenBundleBarterUtils: "0x47C033F49D5A1559AC48f27571204a29b8E728b8",
+    tokenBundleAtomicPaymentUtils: "0x47C033F49D5A1559AC48f27571204a29b8E728b8",
     tokenBundleEscrowObligation: "0x38e8E5684aFB24A88cD9B276032bCBD19C4b9d6e",
     tokenBundlePaymentObligation: "0xFa5446475De31fa3c6457E2b62EA5a8F8172Cd29",
 
@@ -36,7 +36,7 @@ export const contractAddresses: Record<string, ChainAddresses> = {
     erc8004Arbiter: "0x67B23406dd9e9EA884B3d14746ef73106b1C35d6",
     nativeTokenEscrowObligation: "0x8a1172D32B8cEf14094cF1E7d6F3d1A36D949FDe",
     nativeTokenPaymentObligation: "0xAB1E9714fbD4f9B5546e891B7Ba392b08c44c37A",
-    nativeTokenBarterUtils: "0xaaB70Cfc37C5E73e185E2976609A82Ba22A4310d",
+    nativeTokenAtomicPaymentUtils: "0xaaB70Cfc37C5E73e185E2976609A82Ba22A4310d",
 
     // Confirmation arbiters (new naming convention)
     exclusiveRevocableConfirmationArbiter: "0xBA0e678f4F1a62f5d737F9289B7e1F2F8580DD8D",
@@ -62,19 +62,19 @@ export const contractAddresses: Record<string, ChainAddresses> = {
     eas: "0xC2679fBD37d54388Ce493F1DB75320D236e1815e",
     easSchemaRegistry: "0x0a7E2Ff54e76B8E6659aedc9103FB21c038050D0",
 
-    erc20BarterUtils: "0x5bf7c8b0d60d05af0a3De531EB876De271E80dbc",
+    erc20AtomicPaymentUtils: "0x5bf7c8b0d60d05af0a3De531EB876De271E80dbc",
     erc20EscrowObligation: "0xB2c808911E84E80156101983897Da7c80e13cB47",
     erc20PaymentObligation: "0xb822aA07F55a8B75Ee133ede1f21C4E49DE7952f",
 
-    erc721BarterUtils: "0xEB0C0c41F708B8b3556a6F44a1a015a6832C2d2C",
+    erc721AtomicPaymentUtils: "0xEB0C0c41F708B8b3556a6F44a1a015a6832C2d2C",
     erc721EscrowObligation: "0x2A7df117e45D93d34a7893CC3aE8B105Ae0B561C",
     erc721PaymentObligation: "0x59A9c929778Ad2cC4D5DB6151bDEf0F9Fa7A068C",
 
-    erc1155BarterUtils: "0x52De4B30721b3E3660A79da7491a9B2F8a9cB1D5",
+    erc1155AtomicPaymentUtils: "0x52De4B30721b3E3660A79da7491a9B2F8a9cB1D5",
     erc1155EscrowObligation: "0xf04d9CA943f57353A3A735494E503280C1cD5e77",
     erc1155PaymentObligation: "0x52748DD0E39eD6eA9f626179b5eb512302adA7D9",
 
-    tokenBundleBarterUtils: "0xA7EacA68Bffc9443eA08fd58633Eeed3f5EE8A92",
+    tokenBundleAtomicPaymentUtils: "0xA7EacA68Bffc9443eA08fd58633Eeed3f5EE8A92",
     tokenBundleEscrowObligation: "0x677Aa9e1CD9D05f57FbCa2327155EA7479ec7Ac3",
     tokenBundlePaymentObligation: "0x36Fcf1Ddee838a94B1358285A11e8bbbb90eD9A1",
 
@@ -93,7 +93,7 @@ export const contractAddresses: Record<string, ChainAddresses> = {
     erc8004Arbiter: "0x367fEd55E65bd0FCCF8F966A04989AB61E1b5A49",
     nativeTokenEscrowObligation: "0x9bA50DB048d1E5db034377abf97F92496D027C71",
     nativeTokenPaymentObligation: "0xf60db64506E366a0A6c1f4cF9D849Adc7bB886D6",
-    nativeTokenBarterUtils: "0xA42032D8BFeE2302cC6F80ff51D283Ffc5a4081f",
+    nativeTokenAtomicPaymentUtils: "0xA42032D8BFeE2302cC6F80ff51D283Ffc5a4081f",
 
     // Confirmation arbiters (new naming convention)
     exclusiveRevocableConfirmationArbiter: "0x941044D43F9d75dfA8Ad24880B9B9cAD6e116a66",
@@ -119,19 +119,19 @@ export const contractAddresses: Record<string, ChainAddresses> = {
     eas: "0x3c79a0225380fB6F3CB990FfC4E3D5aF4546b524",
     easSchemaRegistry: "0x2BB94a4E6eC0D81dE7f81007b572Ac09A5BE37b4",
 
-    erc20BarterUtils: "0xb5800e34602154ce92c5eb0e7cb455306d7d590e",
+    erc20AtomicPaymentUtils: "0xb5800e34602154ce92c5eb0e7cb455306d7d590e",
     erc20EscrowObligation: "0x6bcec91a89a63d50368bce54cb9ed0399992c18b",
     erc20PaymentObligation: "0x33f6f558c1fcac597f2b635bc50554055ff98165",
 
-    erc721BarterUtils: "0x797a737defb8cae0a30324ecfa52eaab9c0a5fd6",
+    erc721AtomicPaymentUtils: "0x797a737defb8cae0a30324ecfa52eaab9c0a5fd6",
     erc721EscrowObligation: "0x99f5335b95e1c0be4c218a59aae26efc50d5673f",
     erc721PaymentObligation: "0x5b6bff4dc108c58b97721330666f56c8028c097c",
 
-    erc1155BarterUtils: "0x850d8df3ff0149bd5a9191a958b287b25564716b",
+    erc1155AtomicPaymentUtils: "0x850d8df3ff0149bd5a9191a958b287b25564716b",
     erc1155EscrowObligation: "0xf9dbc74553faecac775201113198085c4d572805",
     erc1155PaymentObligation: "0x4cb076af47f0f3909ebafd88cbc0c4cc8dee17dd",
 
-    tokenBundleBarterUtils: "0xfca2c2df4023a0a418bf354b5bfff1ebfe0520a9",
+    tokenBundleAtomicPaymentUtils: "0xfca2c2df4023a0a418bf354b5bfff1ebfe0520a9",
     tokenBundleEscrowObligation: "0x902ac1997bd29a037263e0d80952c80d69d9afd4",
     tokenBundlePaymentObligation: "0xc1b02efec19a171ecbb7c8ad54b9617e80fdf40f",
 
@@ -150,7 +150,7 @@ export const contractAddresses: Record<string, ChainAddresses> = {
     erc8004Arbiter: "0x3c1E21911C609714dBc0Ab90800c7aD8817B8e83",
     nativeTokenEscrowObligation: "0x7490102a8b821c70679508426823f26c9bab4714",
     nativeTokenPaymentObligation: "0xd511278d5b9e5f8f9b99d01ea326b8232c133be5",
-    nativeTokenBarterUtils: "0x3c07027874650794eae300c603f066af182ea86a",
+    nativeTokenAtomicPaymentUtils: "0x3c07027874650794eae300c603f066af182ea86a",
 
     // Confirmation arbiters (new naming convention)
     exclusiveRevocableConfirmationArbiter: "0xa740634e718c8727853d1e69963303d5cb8ea44c",
@@ -176,19 +176,19 @@ export const contractAddresses: Record<string, ChainAddresses> = {
     eas: "0xaC18Fa0DE3123215404a0C5f6d02ed9B2D0D0d98",
     easSchemaRegistry: "0xA1F9076932f6eEA0D90BBfA1D6E81D001012645D",
 
-    erc20BarterUtils: "0x52De4B30721b3E3660A79da7491a9B2F8a9cB1D5",
+    erc20AtomicPaymentUtils: "0x52De4B30721b3E3660A79da7491a9B2F8a9cB1D5",
     erc20EscrowObligation: "0x2A7df117e45D93d34a7893CC3aE8B105Ae0B561C",
     erc20PaymentObligation: "0x59A9c929778Ad2cC4D5DB6151bDEf0F9Fa7A068C",
 
-    erc721BarterUtils: "0xA42032D8BFeE2302cC6F80ff51D283Ffc5a4081f",
+    erc721AtomicPaymentUtils: "0xA42032D8BFeE2302cC6F80ff51D283Ffc5a4081f",
     erc721EscrowObligation: "0xf04d9CA943f57353A3A735494E503280C1cD5e77",
     erc721PaymentObligation: "0x52748DD0E39eD6eA9f626179b5eb512302adA7D9",
 
-    erc1155BarterUtils: "0x6eb7792D821f32914Be75901F1b4269B13Efad2e",
+    erc1155AtomicPaymentUtils: "0x6eb7792D821f32914Be75901F1b4269B13Efad2e",
     erc1155EscrowObligation: "0x677Aa9e1CD9D05f57FbCa2327155EA7479ec7Ac3",
     erc1155PaymentObligation: "0x36Fcf1Ddee838a94B1358285A11e8bbbb90eD9A1",
 
-    tokenBundleBarterUtils: "0xf60db64506E366a0A6c1f4cF9D849Adc7bB886D6",
+    tokenBundleAtomicPaymentUtils: "0xf60db64506E366a0A6c1f4cF9D849Adc7bB886D6",
     tokenBundleEscrowObligation: "0xA7EacA68Bffc9443eA08fd58633Eeed3f5EE8A92",
     tokenBundlePaymentObligation: "0x9bA50DB048d1E5db034377abf97F92496D027C71",
 
@@ -207,7 +207,7 @@ export const contractAddresses: Record<string, ChainAddresses> = {
     erc8004Arbiter: "0xe483EDA58b5f9Eba06A1ad0151dA5e4a5fFC8300",
     nativeTokenEscrowObligation: "0x5bf7c8b0d60d05af0a3De531EB876De271E80dbc",
     nativeTokenPaymentObligation: "0xEB0C0c41F708B8b3556a6F44a1a015a6832C2d2C",
-    nativeTokenBarterUtils: "0x1A7c6F951e0a33F4910dbe56a200Eb413AEca17b",
+    nativeTokenAtomicPaymentUtils: "0x1A7c6F951e0a33F4910dbe56a200Eb413AEca17b",
 
     // Confirmation arbiters (new naming convention)
     exclusiveRevocableConfirmationArbiter: "0x309509db364526C7aE202eA9ED94a398a0819d38",
@@ -233,19 +233,19 @@ export const contractAddresses: Record<string, ChainAddresses> = {
     eas: "0xA1207F3BBa224E2c9c3c6D5aF63D0eb1582Ce587",
     easSchemaRegistry: "0xA7b39296258348C78294F95B872b282326A97BDF",
 
-    erc20BarterUtils: "0x5bf7c8b0d60d05af0a3De531EB876De271E80dbc",
+    erc20AtomicPaymentUtils: "0x5bf7c8b0d60d05af0a3De531EB876De271E80dbc",
     erc20EscrowObligation: "0xB2c808911E84E80156101983897Da7c80e13cB47",
     erc20PaymentObligation: "0xb822aA07F55a8B75Ee133ede1f21C4E49DE7952f",
 
-    erc721BarterUtils: "0xEB0C0c41F708B8b3556a6F44a1a015a6832C2d2C",
+    erc721AtomicPaymentUtils: "0xEB0C0c41F708B8b3556a6F44a1a015a6832C2d2C",
     erc721EscrowObligation: "0x2A7df117e45D93d34a7893CC3aE8B105Ae0B561C",
     erc721PaymentObligation: "0x59A9c929778Ad2cC4D5DB6151bDEf0F9Fa7A068C",
 
-    erc1155BarterUtils: "0x52De4B30721b3E3660A79da7491a9B2F8a9cB1D5",
+    erc1155AtomicPaymentUtils: "0x52De4B30721b3E3660A79da7491a9B2F8a9cB1D5",
     erc1155EscrowObligation: "0xf04d9CA943f57353A3A735494E503280C1cD5e77",
     erc1155PaymentObligation: "0x52748DD0E39eD6eA9f626179b5eb512302adA7D9",
 
-    tokenBundleBarterUtils: "0xA7EacA68Bffc9443eA08fd58633Eeed3f5EE8A92",
+    tokenBundleAtomicPaymentUtils: "0xA7EacA68Bffc9443eA08fd58633Eeed3f5EE8A92",
     tokenBundleEscrowObligation: "0x677Aa9e1CD9D05f57FbCa2327155EA7479ec7Ac3",
     tokenBundlePaymentObligation: "0x36Fcf1Ddee838a94B1358285A11e8bbbb90eD9A1",
 
@@ -264,7 +264,7 @@ export const contractAddresses: Record<string, ChainAddresses> = {
     erc8004Arbiter: "0xBE7fE4d7CEb2140eeBdf01e12D198AEBAdC1F54D",
     nativeTokenEscrowObligation: "0x9bA50DB048d1E5db034377abf97F92496D027C71",
     nativeTokenPaymentObligation: "0xf60db64506E366a0A6c1f4cF9D849Adc7bB886D6",
-    nativeTokenBarterUtils: "0xA42032D8BFeE2302cC6F80ff51D283Ffc5a4081f",
+    nativeTokenAtomicPaymentUtils: "0xA42032D8BFeE2302cC6F80ff51D283Ffc5a4081f",
 
     // Confirmation arbiters (new naming convention)
     exclusiveRevocableConfirmationArbiter: "0x941044D43F9d75dfA8Ad24880B9B9cAD6e116a66",

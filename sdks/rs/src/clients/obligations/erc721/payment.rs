@@ -85,4 +85,21 @@ impl<'a> Payment<'a> {
         let payment_receipt = self.pay(price, payee).await?;
         Ok((approval_receipt, payment_receipt))
     }
+
+    pub async fn pay_erc721_and_collect(
+        &self,
+        escrow_uid: FixedBytes<32>,
+    ) -> eyre::Result<TransactionReceipt> {
+        let utility = contracts::utils::AtomicPaymentUtils::new(
+            self.module.addresses.atomic_payment_utils,
+            &self.module.wallet_provider,
+        );
+
+        Ok(utility
+            .payErc721AndCollect(escrow_uid)
+            .send()
+            .await?
+            .get_receipt()
+            .await?)
+    }
 }

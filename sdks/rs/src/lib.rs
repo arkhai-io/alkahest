@@ -259,7 +259,7 @@ impl<Extensions: AlkahestExtension> AlkahestClient<Extensions> {
     {
         match contract {
             Erc20Contract::Eas => self.erc20().addresses.eas,
-            Erc20Contract::BarterUtils => self.erc20().addresses.barter_utils,
+            Erc20Contract::AtomicPaymentUtils => self.erc20().addresses.atomic_payment_utils,
             Erc20Contract::EscrowObligation => self.erc20().addresses.escrow_obligation_default,
             Erc20Contract::PaymentObligation => self.erc20().addresses.payment_obligation,
         }
@@ -272,7 +272,7 @@ impl<Extensions: AlkahestExtension> AlkahestClient<Extensions> {
     {
         match contract {
             Erc721Contract::Eas => self.erc721().addresses.eas,
-            Erc721Contract::BarterUtils => self.erc721().addresses.barter_utils,
+            Erc721Contract::AtomicPaymentUtils => self.erc721().addresses.atomic_payment_utils,
             Erc721Contract::EscrowObligation => self.erc721().addresses.escrow_obligation_default,
             Erc721Contract::PaymentObligation => self.erc721().addresses.payment_obligation,
         }
@@ -285,7 +285,7 @@ impl<Extensions: AlkahestExtension> AlkahestClient<Extensions> {
     {
         match contract {
             Erc1155Contract::Eas => self.erc1155().addresses.eas,
-            Erc1155Contract::BarterUtils => self.erc1155().addresses.barter_utils,
+            Erc1155Contract::AtomicPaymentUtils => self.erc1155().addresses.atomic_payment_utils,
             Erc1155Contract::EscrowObligation => self.erc1155().addresses.escrow_obligation_default,
             Erc1155Contract::PaymentObligation => self.erc1155().addresses.payment_obligation,
         }
@@ -298,7 +298,9 @@ impl<Extensions: AlkahestExtension> AlkahestClient<Extensions> {
     {
         match contract {
             TokenBundleContract::Eas => self.token_bundle().addresses.eas,
-            TokenBundleContract::BarterUtils => self.token_bundle().addresses.barter_utils,
+            TokenBundleContract::AtomicPaymentUtils => {
+                self.token_bundle().addresses.atomic_payment_utils
+            }
             TokenBundleContract::EscrowObligation => {
                 self.token_bundle().addresses.escrow_obligation_default
             }
@@ -318,7 +320,9 @@ impl<Extensions: AlkahestExtension> AlkahestClient<Extensions> {
             AttestationContract::EasSchemaRegistry => {
                 self.attestation().addresses.eas_schema_registry
             }
-            AttestationContract::BarterUtils => self.attestation().addresses.barter_utils,
+            AttestationContract::AtomicAttestationUtils => {
+                self.attestation().addresses.atomic_attestation_utils
+            }
             AttestationContract::EscrowObligation => {
                 self.attestation().addresses.escrow_obligation_default
             }
@@ -519,8 +523,8 @@ mod tests {
             BASE_SEPOLIA_ADDRESSES.arbiters_addresses.eas
         );
         assert_eq!(
-            default_config.erc20_addresses.barter_utils,
-            BASE_SEPOLIA_ADDRESSES.erc20_addresses.barter_utils
+            default_config.erc20_addresses.atomic_payment_utils,
+            BASE_SEPOLIA_ADDRESSES.erc20_addresses.atomic_payment_utils
         );
         assert_eq!(
             default_config.attestation_addresses.eas,
@@ -535,8 +539,8 @@ mod tests {
 
         assert_eq!(config.arbiters_addresses.eas, cloned.arbiters_addresses.eas);
         assert_eq!(
-            config.erc20_addresses.barter_utils,
-            cloned.erc20_addresses.barter_utils
+            config.erc20_addresses.atomic_payment_utils,
+            cloned.erc20_addresses.atomic_payment_utils
         );
     }
 
@@ -573,7 +577,7 @@ mod tests {
         assert_ne!(config.attestation_addresses.eas, Address::ZERO);
 
         // Test specific contract addresses
-        assert_ne!(config.erc20_addresses.barter_utils, Address::ZERO);
+        assert_ne!(config.erc20_addresses.atomic_payment_utils, Address::ZERO);
         assert_ne!(
             config.erc20_addresses.escrow_obligation_default,
             Address::ZERO
@@ -606,8 +610,8 @@ mod tests {
             deserialized_config.erc20_addresses.eas
         );
         assert_eq!(
-            original_config.erc20_addresses.barter_utils,
-            deserialized_config.erc20_addresses.barter_utils
+            original_config.erc20_addresses.atomic_payment_utils,
+            deserialized_config.erc20_addresses.atomic_payment_utils
         );
         assert_eq!(
             original_config.erc721_addresses.eas,
@@ -696,8 +700,8 @@ mod tests {
             roundtrip_config.erc20_addresses.eas
         );
         assert_eq!(
-            config.erc20_addresses.barter_utils,
-            roundtrip_config.erc20_addresses.barter_utils
+            config.erc20_addresses.atomic_payment_utils,
+            roundtrip_config.erc20_addresses.atomic_payment_utils
         );
         assert_eq!(
             config.erc20_addresses.escrow_obligation_default,
@@ -714,8 +718,8 @@ mod tests {
             roundtrip_config.erc721_addresses.eas
         );
         assert_eq!(
-            config.erc721_addresses.barter_utils,
-            roundtrip_config.erc721_addresses.barter_utils
+            config.erc721_addresses.atomic_payment_utils,
+            roundtrip_config.erc721_addresses.atomic_payment_utils
         );
 
         // ERC1155 addresses
@@ -724,8 +728,8 @@ mod tests {
             roundtrip_config.erc1155_addresses.eas
         );
         assert_eq!(
-            config.erc1155_addresses.barter_utils,
-            roundtrip_config.erc1155_addresses.barter_utils
+            config.erc1155_addresses.atomic_payment_utils,
+            roundtrip_config.erc1155_addresses.atomic_payment_utils
         );
 
         // Token bundle addresses
@@ -734,8 +738,8 @@ mod tests {
             roundtrip_config.token_bundle_addresses.eas
         );
         assert_eq!(
-            config.token_bundle_addresses.barter_utils,
-            roundtrip_config.token_bundle_addresses.barter_utils
+            config.token_bundle_addresses.atomic_payment_utils,
+            roundtrip_config.token_bundle_addresses.atomic_payment_utils
         );
 
         // Attestation addresses

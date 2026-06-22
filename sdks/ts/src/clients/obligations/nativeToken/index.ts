@@ -1,6 +1,5 @@
 import type { ChainAddresses } from "../../../types";
 import type { ViemClient } from "../../../utils";
-import { makeNativeTokenBarterUtilsClient, type NativeTokenBarterUtilsClient } from "./barterUtils";
 import { makeNativeTokenEscrowClient, type NativeTokenEscrowClient } from "./escrow";
 import {
   makeNativeTokenPaymentClient,
@@ -8,7 +7,6 @@ import {
   type NativeTokenPaymentObligationData,
 } from "./payment";
 
-export { makeNativeTokenBarterUtilsClient, type NativeTokenBarterUtilsClient } from "./barterUtils";
 export { makeNativeTokenEscrowClient, type NativeTokenEscrowClient } from "./escrow";
 export {
   decodeObligation as decodeDefaultEscrowObligation,
@@ -34,7 +32,7 @@ export {
 
 export type NativeTokenAddresses = {
   eas: `0x${string}`;
-  barterUtils: `0x${string}`;
+  atomicPaymentUtils: `0x${string}`;
   escrowObligation: `0x${string}`;
   escrowObligationUnconditional: `0x${string}`;
   paymentObligation: `0x${string}`;
@@ -42,7 +40,7 @@ export type NativeTokenAddresses = {
 
 export const pickNativeTokenAddresses = (addresses: ChainAddresses): NativeTokenAddresses => ({
   eas: addresses.eas,
-  barterUtils: addresses.nativeTokenBarterUtils,
+  atomicPaymentUtils: addresses.nativeTokenAtomicPaymentUtils,
   escrowObligation: addresses.nativeTokenEscrowObligation,
   escrowObligationUnconditional: addresses.nativeTokenEscrowObligation, // TODO: Add unconditional address when available
   paymentObligation: addresses.nativeTokenPaymentObligation,
@@ -51,13 +49,11 @@ export const pickNativeTokenAddresses = (addresses: ChainAddresses): NativeToken
 export type NativeTokenClient = {
   escrow: NativeTokenEscrowClient;
   payment: NativeTokenPaymentClient;
-  barter: NativeTokenBarterUtilsClient;
 };
 
 export const makeNativeTokenClient = (viemClient: ViemClient, addresses: NativeTokenAddresses): NativeTokenClient => {
   return {
     escrow: makeNativeTokenEscrowClient(viemClient, addresses),
     payment: makeNativeTokenPaymentClient(viemClient, addresses),
-    barter: makeNativeTokenBarterUtilsClient(viemClient, addresses),
   };
 };

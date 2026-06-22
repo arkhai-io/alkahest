@@ -3,10 +3,8 @@
 //! This module provides functionality for ERC1155 token operations including:
 //! - Escrow obligations (unconditional and default)
 //! - Payment obligations
-//! - Barter utilities for cross-token trading
 //! - Utility functions for approvals
 
-pub mod barter_utils;
 pub mod escrow;
 pub mod payment;
 pub mod util;
@@ -31,7 +29,7 @@ impl_abi_conversions!(contracts::obligations::escrow::unconditional::Uncondition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Erc1155Addresses {
     pub eas: Address,
-    pub barter_utils: Address,
+    pub atomic_payment_utils: Address,
     pub escrow_obligation_default: Address,
     pub escrow_obligation_unconditional: Address,
     pub payment_obligation: Address,
@@ -48,8 +46,8 @@ impl Default for Erc1155Addresses {
 pub enum Erc1155Contract {
     /// EAS (Ethereum Attestation Service) contract
     Eas,
-    /// Barter utilities contract for ERC1155 tokens
-    BarterUtils,
+    /// Atomic payment utilities contract for ERC1155 tokens
+    AtomicPaymentUtils,
     /// Escrow obligation contract for ERC1155 tokens
     EscrowObligation,
     /// Payment obligation contract for ERC1155 tokens
@@ -76,7 +74,7 @@ impl ContractModule for Erc1155Module {
     fn address(&self, contract: Self::Contract) -> Address {
         match contract {
             Erc1155Contract::Eas => self.addresses.eas,
-            Erc1155Contract::BarterUtils => self.addresses.barter_utils,
+            Erc1155Contract::AtomicPaymentUtils => self.addresses.atomic_payment_utils,
             Erc1155Contract::EscrowObligation => self.addresses.escrow_obligation_default,
             Erc1155Contract::PaymentObligation => self.addresses.payment_obligation,
         }
@@ -119,17 +117,6 @@ impl Erc1155Module {
     /// ```
     pub fn payment(&self) -> payment::Payment<'_> {
         payment::Payment::new(self)
-    }
-
-    /// Access barter utilities API
-    ///
-    /// # Example
-    /// ```rust,ignore
-    /// let escrow = client.erc1155().escrow().default().create(&bid, &demand, expiration).await?;
-    /// client.erc1155().barter().pay_erc1155_and_collect(buy_attestation).await?;
-    /// ```
-    pub fn barter(&self) -> barter_utils::BarterUtils<'_> {
-        barter_utils::BarterUtils::new(self)
     }
 
     /// Access utility API (approvals)
@@ -205,7 +192,8 @@ mod tests {
                 token: payment.address,
                 amount: payment.value,
                 payee,
-            }.into(),
+            }
+            .into(),
         }
     }
 
@@ -220,7 +208,8 @@ mod tests {
                 token: payment.address,
                 tokenId: payment.id,
                 payee,
-            }.into(),
+            }
+            .into(),
         }
     }
 
@@ -236,7 +225,8 @@ mod tests {
                 tokenId: payment.id,
                 amount: payment.value,
                 payee,
-            }.into(),
+            }
+            .into(),
         }
     }
 
@@ -684,10 +674,13 @@ mod tests {
 
         let buy_attestation = DefaultAlkahestClient::get_attested_event(buy_receipt)?.uid;
 
-        // bob approves token for barter utils
+        // bob approves token for atomic payment
         test.bob_client
             .erc1155()
-            .approve_all(test.mock_addresses.erc1155_b, ApprovalPurpose::BarterUtils)
+            .approve_all(
+                test.mock_addresses.erc1155_b,
+                ApprovalPurpose::AtomicPayment,
+            )
             .await?;
 
         // Check initial balances
@@ -704,7 +697,7 @@ mod tests {
         let _sell_receipt = test
             .bob_client
             .erc1155()
-            .barter()
+            .payment()
             .pay_erc1155_and_collect(buy_attestation)
             .await?;
 
@@ -996,7 +989,7 @@ mod tests {
             native_amount: U256::ZERO,
         };
 
-        // alice approves token for barter
+        // alice approves token for atomic payment
         test.alice_client
             .erc1155()
             .approve_all(test.mock_addresses.erc1155_a, ApprovalPurpose::Escrow)
@@ -1077,7 +1070,7 @@ mod tests {
             value: U256::from(5),
         };
 
-        // bob approves tokens for barter and creates buy attestation
+        // bob approves tokens for atomic payment and creates buy attestation
         test.bob_client
             .erc20()
             .approve(&bid, ApprovalPurpose::Escrow)
@@ -1101,10 +1094,13 @@ mod tests {
 
         let buy_attestation = DefaultAlkahestClient::get_attested_event(buy_receipt)?.uid;
 
-        // alice approves her ERC1155 tokens for barter
+        // alice approves her ERC1155 tokens for atomic payment
         test.alice_client
             .erc1155()
-            .approve_all(test.mock_addresses.erc1155_a, ApprovalPurpose::BarterUtils)
+            .approve_all(
+                test.mock_addresses.erc1155_a,
+                ApprovalPurpose::AtomicPayment,
+            )
             .await?;
 
         // Check initial balances
@@ -1120,7 +1116,7 @@ mod tests {
         let _sell_receipt = test
             .alice_client
             .erc1155()
-            .barter()
+            .payment()
             .pay_erc1155_and_collect(buy_attestation)
             .await?;
 
@@ -1183,7 +1179,7 @@ mod tests {
             value: U256::from(5),
         };
 
-        // bob approves tokens for barter and creates buy attestation
+        // bob approves tokens for atomic payment and creates buy attestation
         test.bob_client
             .erc721()
             .approve(&bid, ApprovalPurpose::Escrow)
@@ -1207,10 +1203,13 @@ mod tests {
 
         let buy_attestation = DefaultAlkahestClient::get_attested_event(buy_receipt)?.uid;
 
-        // alice approves her ERC1155 tokens for barter
+        // alice approves her ERC1155 tokens for atomic payment
         test.alice_client
             .erc1155()
-            .approve_all(test.mock_addresses.erc1155_a, ApprovalPurpose::BarterUtils)
+            .approve_all(
+                test.mock_addresses.erc1155_a,
+                ApprovalPurpose::AtomicPayment,
+            )
             .await?;
 
         // Check initial ERC1155 balance for bob
@@ -1223,7 +1222,7 @@ mod tests {
         let _sell_receipt = test
             .alice_client
             .erc1155()
-            .barter()
+            .payment()
             .pay_erc1155_and_collect(buy_attestation)
             .await?;
 
@@ -1355,17 +1354,20 @@ mod tests {
 
         let buy_attestation = DefaultAlkahestClient::get_attested_event(buy_receipt)?.uid;
 
-        // alice approves her ERC1155 for barter
+        // alice approves her ERC1155 for atomic payment
         test.alice_client
             .erc1155()
-            .approve_all(test.mock_addresses.erc1155_a, ApprovalPurpose::BarterUtils)
+            .approve_all(
+                test.mock_addresses.erc1155_a,
+                ApprovalPurpose::AtomicPayment,
+            )
             .await?;
 
         // alice fulfills bob's buy attestation with her ERC1155
         let pay_receipt = test
             .alice_client
             .erc1155()
-            .barter()
+            .payment()
             .pay_erc1155_and_collect(buy_attestation)
             .await?;
 

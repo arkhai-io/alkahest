@@ -1,5 +1,7 @@
 import { type Address, decodeAbiParameters, encodeAbiParameters, getAbiItem } from "viem";
+import { abi as easAbi } from "../../../contracts/IEAS";
 import { abi as nativeTokenPaymentAbi } from "../../../contracts/obligations/payment/NativeTokenPaymentObligation";
+import { abi as atomicPaymentUtilsAbi } from "../../../contracts/utils/AtomicPaymentUtils";
 import type { Demand } from "../../../types";
 import { getAttestation, getAttestedEventFromTxHash, type ViemClient } from "../../../utils";
 import type { NativeTokenAddresses } from "./index";
@@ -64,8 +66,40 @@ export const makeNativeTokenPaymentClient = (viemClient: ViemClient, addresses: 
       authorizationList: undefined,
     });
 
+  const getPaymentDemand = async (escrowUid: `0x${string}`) => {
+    const escrow = await viemClient.readContract({
+      address: addresses.eas,
+      abi: easAbi.abi,
+      functionName: "getAttestation",
+      args: [escrowUid],
+      authorizationList: undefined,
+    });
+
+    const [, demand] = await viemClient.readContract({
+      address: escrow.attester,
+      abi: [
+        {
+          type: "function",
+          name: "decodeCondition",
+          inputs: [{ name: "data", type: "bytes" }],
+          outputs: [
+            { name: "arbiter", type: "address" },
+            { name: "demand", type: "bytes" },
+          ],
+          stateMutability: "pure",
+        },
+      ],
+      functionName: "decodeCondition",
+      args: [escrow.data],
+      authorizationList: undefined,
+    });
+
+    return decodeAbiParameters([nativePaymentObligationDataType], demand)[0];
+  };
+
   return {
     address: addresses.paymentObligation,
+    atomicPaymentUtilsAddress: addresses.atomicPaymentUtils,
     getSchema,
 
     encodeObligationRaw: (data: { amount: bigint; payee: `0x${string}` }) => {
@@ -170,6 +204,21 @@ export const makeNativeTokenPaymentClient = (viemClient: ViemClient, addresses: 
       });
 
       const hash = await viemClient.writeContract(request);
+      const attested = await getAttestedEventFromTxHash(viemClient, hash);
+      return { hash, attested };
+    },
+
+    payNativeAndCollect: async (escrowUid: `0x${string}`) => {
+      const demand = await getPaymentDemand(escrowUid);
+      const hash = await viemClient.writeContract({
+        address: addresses.atomicPaymentUtils,
+        abi: atomicPaymentUtilsAbi.abi,
+        functionName: "payNativeAndCollect",
+        args: [escrowUid],
+        value: demand.amount,
+        chain: viemClient.chain,
+      });
+
       const attested = await getAttestedEventFromTxHash(viemClient, hash);
       return { hash, attested };
     },

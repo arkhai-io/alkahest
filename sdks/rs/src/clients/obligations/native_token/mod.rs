@@ -3,9 +3,7 @@
 //! This module provides functionality for native token (ETH) operations including:
 //! - Escrow obligations (unconditional and default)
 //! - Payment obligations
-//! - Barter utilities for cross-token trading
 
-pub mod barter_utils;
 pub mod escrow;
 pub mod payment;
 pub mod util;
@@ -30,7 +28,7 @@ impl_abi_conversions!(contracts::obligations::escrow::unconditional::Uncondition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NativeTokenAddresses {
     pub eas: Address,
-    pub barter_utils: Address,
+    pub atomic_payment_utils: Address,
     pub escrow_obligation_default: Address,
     pub escrow_obligation_unconditional: Address,
     pub payment_obligation: Address,
@@ -47,8 +45,8 @@ impl Default for NativeTokenAddresses {
 pub enum NativeTokenContract {
     /// EAS (Ethereum Attestation Service) contract
     Eas,
-    /// Barter utilities contract for native tokens
-    BarterUtils,
+    /// Atomic payment utilities contract for native tokens
+    AtomicPaymentUtils,
     /// Escrow obligation contract for native tokens
     EscrowObligation,
     /// Payment obligation contract for native tokens
@@ -75,7 +73,7 @@ impl ContractModule for NativeTokenModule {
     fn address(&self, contract: Self::Contract) -> Address {
         match contract {
             NativeTokenContract::Eas => self.addresses.eas,
-            NativeTokenContract::BarterUtils => self.addresses.barter_utils,
+            NativeTokenContract::AtomicPaymentUtils => self.addresses.atomic_payment_utils,
             NativeTokenContract::EscrowObligation => self.addresses.escrow_obligation_default,
             NativeTokenContract::PaymentObligation => self.addresses.payment_obligation,
         }
@@ -118,17 +116,6 @@ impl NativeTokenModule {
     /// ```
     pub fn payment(&self) -> payment::Payment<'_> {
         payment::Payment::new(self)
-    }
-
-    /// Access barter utilities API
-    ///
-    /// # Example
-    /// ```rust,ignore
-    /// let escrow = client.native_token().escrow().default().create(&bid, &demand, expiration).await?;
-    /// client.native_token().barter().pay_native_and_collect(buy_attestation).await?;
-    /// ```
-    pub fn barter(&self) -> barter_utils::BarterUtils<'_> {
-        barter_utils::BarterUtils::new(self)
     }
 }
 

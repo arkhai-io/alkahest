@@ -3,10 +3,8 @@
 //! This module provides functionality for ERC20 token operations including:
 //! - Escrow obligations (unconditional and default)
 //! - Payment obligations
-//! - Barter utilities for cross-token trading
 //! - Utility functions for permits and approvals
 
-pub mod barter_utils;
 pub mod escrow;
 pub mod payment;
 pub mod util;
@@ -31,7 +29,7 @@ impl_abi_conversions!(contracts::obligations::escrow::unconditional::Uncondition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Erc20Addresses {
     pub eas: Address,
-    pub barter_utils: Address,
+    pub atomic_payment_utils: Address,
     pub escrow_obligation_default: Address,
     pub escrow_obligation_unconditional: Address,
     pub payment_obligation: Address,
@@ -48,8 +46,8 @@ impl Default for Erc20Addresses {
 pub enum Erc20Contract {
     /// EAS (Ethereum Attestation Service) contract
     Eas,
-    /// Barter utilities contract for ERC20 tokens
-    BarterUtils,
+    /// Atomic payment utilities contract for ERC20 tokens
+    AtomicPaymentUtils,
     /// Escrow obligation contract for ERC20 tokens
     EscrowObligation,
     /// Payment obligation contract for ERC20 tokens
@@ -76,7 +74,7 @@ impl ContractModule for Erc20Module {
     fn address(&self, contract: Self::Contract) -> Address {
         match contract {
             Erc20Contract::Eas => self.addresses.eas,
-            Erc20Contract::BarterUtils => self.addresses.barter_utils,
+            Erc20Contract::AtomicPaymentUtils => self.addresses.atomic_payment_utils,
             Erc20Contract::EscrowObligation => self.addresses.escrow_obligation_default,
             Erc20Contract::PaymentObligation => self.addresses.payment_obligation,
         }
@@ -120,17 +118,6 @@ impl Erc20Module {
     /// ```
     pub fn payment(&self) -> payment::Payment<'_> {
         payment::Payment::new(self)
-    }
-
-    /// Access barter utilities API
-    ///
-    /// # Example
-    /// ```rust,ignore
-    /// let escrow = client.erc20().escrow().default().create(&bid, &demand, expiration).await?;
-    /// client.erc20().barter().pay_erc20_and_collect(buy_attestation).await?;
-    /// ```
-    pub fn barter(&self) -> barter_utils::BarterUtils<'_> {
-        barter_utils::BarterUtils::new(self)
     }
 
     /// Access utility API (permits and approvals)
@@ -207,7 +194,8 @@ mod tests {
                 token: payment.address,
                 amount: payment.value,
                 payee,
-            }.into(),
+            }
+            .into(),
         }
     }
 
@@ -222,7 +210,8 @@ mod tests {
                 token: payment.address,
                 tokenId: payment.id,
                 payee,
-            }.into(),
+            }
+            .into(),
         }
     }
 
@@ -238,7 +227,8 @@ mod tests {
                 tokenId: payment.id,
                 amount: payment.value,
                 payee,
-            }.into(),
+            }
+            .into(),
         }
     }
 
@@ -682,7 +672,7 @@ mod tests {
         Ok(())
     }
 
-    // Erc20BarterUtils
+    // Erc20AtomicPaymentUtils
     #[tokio::test]
     async fn test_buy_erc20_for_erc20() -> eyre::Result<()> {
         // test setup
@@ -707,7 +697,7 @@ mod tests {
             value: U256::from(200),
         };
 
-        // alice approves tokens for barter
+        // alice approves tokens for atomic payment
         test.alice_client
             .erc20()
             .approve(&bid, ApprovalPurpose::Escrow)
@@ -838,7 +828,7 @@ mod tests {
             value: U256::from(200),
         };
 
-        // alice approves tokens for barter and creates buy attestation
+        // alice approves tokens for atomic payment and creates buy attestation
         test.alice_client
             .erc20()
             .approve(&bid, ApprovalPurpose::Escrow)
@@ -862,17 +852,17 @@ mod tests {
 
         let buy_attestation = DefaultAlkahestClient::get_attested_event(buy_receipt)?.uid;
 
-        // bob approves tokens for barter
+        // bob approves tokens for atomic payment
         test.bob_client
             .erc20()
-            .approve(&ask, ApprovalPurpose::BarterUtils)
+            .approve(&ask, ApprovalPurpose::AtomicPayment)
             .await?;
 
         // bob fulfills the buy attestation
         let _sell_receipt = test
             .bob_client
             .erc20()
-            .barter()
+            .payment()
             .pay_erc20_and_collect(buy_attestation)
             .await?;
 
@@ -929,7 +919,7 @@ mod tests {
             value: U256::from(200),
         };
 
-        // alice approves tokens for barter and creates buy attestation
+        // alice approves tokens for atomic payment and creates buy attestation
         test.alice_client
             .erc20()
             .approve(&bid, ApprovalPurpose::Escrow)
@@ -957,7 +947,7 @@ mod tests {
         let _sell_receipt = test
             .bob_client
             .erc20()
-            .barter()
+            .payment()
             .permit_and_pay_erc20_and_collect(buy_attestation)
             .await?;
 
@@ -1005,7 +995,7 @@ mod tests {
             value: U256::from(200),
         };
 
-        // alice approves tokens for barter
+        // alice approves tokens for atomic payment
         test.alice_client
             .erc20()
             .approve(&bid, ApprovalPurpose::Escrow)
@@ -1081,7 +1071,7 @@ mod tests {
             id: U256::from(1),
         };
 
-        // alice approves tokens for barter
+        // alice approves tokens for atomic payment
         test.alice_client
             .erc20()
             .approve(&bid, ApprovalPurpose::Escrow)
@@ -1149,7 +1139,7 @@ mod tests {
             value: U256::from(10),
         };
 
-        // alice approves tokens for barter
+        // alice approves tokens for atomic payment
         test.alice_client
             .erc20()
             .approve(&bid, ApprovalPurpose::Escrow)
@@ -1228,7 +1218,7 @@ mod tests {
             }],
             native_amount: U256::ZERO,
         };
-        // alice approves tokens for barter
+        // alice approves tokens for atomic payment
         test.alice_client
             .erc20()
             .approve(&bid, ApprovalPurpose::Escrow)
@@ -1498,7 +1488,7 @@ mod tests {
         let expiration = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() + 3600; // 1 hour
 
         // First create a buy attestation with Bob escrowing ERC721
-        // Bob approves his ERC721 for barter
+        // Bob approves his ERC721 for atomic payment
         test.bob_client
             .erc721()
             .approve(
@@ -1553,7 +1543,7 @@ mod tests {
                     address: test.mock_addresses.erc20_a,
                     value: erc20_amount,
                 },
-                ApprovalPurpose::BarterUtils,
+                ApprovalPurpose::AtomicPayment,
             )
             .await?;
 
@@ -1561,7 +1551,7 @@ mod tests {
         let pay_receipt = test
             .alice_client
             .erc20()
-            .barter()
+            .payment()
             .pay_erc20_and_collect(buy_attestation)
             .await?;
 
@@ -1679,7 +1669,7 @@ mod tests {
         let pay_receipt = test
             .alice_client
             .erc20()
-            .barter()
+            .payment()
             .permit_and_pay_erc20_and_collect(buy_attestation)
             .await?;
 
@@ -1746,7 +1736,7 @@ mod tests {
         let expiration = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() + 3600; // 1 hour
 
         // First create a buy attestation with Bob escrowing ERC1155
-        // Bob approves his ERC1155 for barter
+        // Bob approves his ERC1155 for atomic payment
         test.bob_client
             .erc1155()
             .approve_all(test.mock_addresses.erc1155_a, ApprovalPurpose::Escrow)
@@ -1792,7 +1782,7 @@ mod tests {
         let initial_alice_erc20_balance =
             mock_erc20_a.balanceOf(test.alice.address()).call().await?;
 
-        // Alice approves her ERC20 tokens for barter
+        // Alice approves her ERC20 tokens for atomic payment
         test.alice_client
             .erc20()
             .approve(
@@ -1800,7 +1790,7 @@ mod tests {
                     address: test.mock_addresses.erc20_a,
                     value: erc20_amount,
                 },
-                ApprovalPurpose::BarterUtils,
+                ApprovalPurpose::AtomicPayment,
             )
             .await?;
 
@@ -1808,7 +1798,7 @@ mod tests {
         let pay_receipt = test
             .alice_client
             .erc20()
-            .barter()
+            .payment()
             .pay_erc20_and_collect(buy_attestation)
             .await?;
 
@@ -1877,7 +1867,7 @@ mod tests {
         let expiration = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() + 3600; // 1 hour
 
         // First create a buy attestation with Bob escrowing ERC1155
-        // Bob approves his ERC1155 for barter
+        // Bob approves his ERC1155 for atomic payment
         test.bob_client
             .erc1155()
             .approve_all(test.mock_addresses.erc1155_a, ApprovalPurpose::Escrow)
@@ -1927,7 +1917,7 @@ mod tests {
         let pay_receipt = test
             .alice_client
             .erc20()
-            .barter()
+            .payment()
             .permit_and_pay_erc20_and_collect(buy_attestation)
             .await?;
 
@@ -2074,7 +2064,7 @@ mod tests {
             .call()
             .await?;
 
-        // Alice approves her ERC20 tokens for barter
+        // Alice approves her ERC20 tokens for atomic payment
         test.alice_client
             .erc20()
             .approve(
@@ -2082,7 +2072,7 @@ mod tests {
                     address: test.mock_addresses.erc20_a,
                     value: erc20_amount,
                 },
-                ApprovalPurpose::BarterUtils,
+                ApprovalPurpose::AtomicPayment,
             )
             .await?;
 
@@ -2090,7 +2080,7 @@ mod tests {
         let pay_receipt = test
             .alice_client
             .erc20()
-            .barter()
+            .payment()
             .pay_erc20_and_collect(buy_attestation)
             .await?;
 
@@ -2259,7 +2249,7 @@ mod tests {
         let pay_receipt = test
             .alice_client
             .erc20()
-            .barter()
+            .payment()
             .permit_and_pay_erc20_and_collect(buy_attestation)
             .await?;
 

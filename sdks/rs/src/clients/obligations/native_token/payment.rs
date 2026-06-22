@@ -2,14 +2,22 @@
 //!
 //! Provides functionality for making direct native token payments.
 
-use alloy::primitives::{Address, FixedBytes};
+use alloy::primitives::{Address, Bytes, FixedBytes, U256};
 use alloy::rpc::types::TransactionReceipt;
+use alloy::sol;
 use alloy::sol_types::SolValue;
 
 use crate::contracts;
 use crate::types::{DecodedAttestation, NativeTokenData};
 
 use super::NativeTokenModule;
+
+sol! {
+    #[sol(rpc)]
+    contract EscrowConditionDecoder {
+        function decodeCondition(bytes data) external view returns (address arbiter, bytes demand);
+    }
+}
 
 /// Payment API for native tokens
 pub struct Payment<'a> {
@@ -81,5 +89,40 @@ impl<'a> Payment<'a> {
             .await?;
 
         Ok(receipt)
+    }
+
+    pub async fn pay_native_and_collect(
+        &self,
+        escrow_uid: FixedBytes<32>,
+    ) -> eyre::Result<TransactionReceipt> {
+        let amount = self.native_payment_amount(escrow_uid).await?;
+        let utility = contracts::utils::AtomicPaymentUtils::new(
+            self.module.addresses.atomic_payment_utils,
+            &self.module.wallet_provider,
+        );
+
+        Ok(utility
+            .payNativeAndCollect(escrow_uid)
+            .value(amount)
+            .send()
+            .await?
+            .get_receipt()
+            .await?)
+    }
+
+    async fn native_payment_amount(&self, escrow_uid: FixedBytes<32>) -> eyre::Result<U256> {
+        let eas = contracts::IEAS::new(self.module.addresses.eas, &self.module.wallet_provider);
+        let escrow = eas.getAttestation(escrow_uid).call().await?;
+        let decoder = EscrowConditionDecoder::new(escrow.attester, &self.module.wallet_provider);
+        let decoded = decoder.decodeCondition(escrow.data).call().await?;
+        self.native_payment_amount_from_demand_bytes(&decoded.demand)
+    }
+
+    fn native_payment_amount_from_demand_bytes(&self, demand: &Bytes) -> eyre::Result<U256> {
+        let demand_data =
+            contracts::obligations::NativeTokenPaymentObligation::ObligationData::abi_decode(
+                demand,
+            )?;
+        Ok(demand_data.amount)
     }
 }

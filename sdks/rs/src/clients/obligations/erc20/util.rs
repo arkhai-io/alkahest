@@ -100,7 +100,7 @@ impl<'a> Util<'a> {
         let to = match purpose {
             ApprovalPurpose::Payment => self.module.addresses.payment_obligation,
             ApprovalPurpose::Escrow => self.module.addresses.escrow_obligation_default,
-            ApprovalPurpose::BarterUtils => self.module.addresses.barter_utils,
+            ApprovalPurpose::AtomicPayment => self.module.addresses.atomic_payment_utils,
         };
 
         let token_contract = ERC20Permit::new(token.address, &self.module.wallet_provider);
@@ -129,7 +129,7 @@ impl<'a> Util<'a> {
         let to = match purpose {
             ApprovalPurpose::Payment => self.module.addresses.payment_obligation,
             ApprovalPurpose::Escrow => self.module.addresses.escrow_obligation_default,
-            ApprovalPurpose::BarterUtils => self.module.addresses.barter_utils,
+            ApprovalPurpose::AtomicPayment => self.module.addresses.atomic_payment_utils,
         };
 
         let token_contract = ERC20Permit::new(token.address, &self.module.wallet_provider);

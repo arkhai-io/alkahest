@@ -10,16 +10,16 @@ type ChainAddresses = {
     easSchemaRegistry: `0x${string}`;
     erc20EscrowObligation: `0x${string}`;
     erc20PaymentObligation: `0x${string}`;
-    erc20BarterUtils: `0x${string}`;
+    erc20AtomicPaymentUtils: `0x${string}`;
     erc721EscrowObligation: `0x${string}`;
     erc721PaymentObligation: `0x${string}`;
-    erc721BarterUtils: `0x${string}`;
+    erc721AtomicPaymentUtils: `0x${string}`;
     erc1155EscrowObligation: `0x${string}`;
-    erc1155BarterUtils: `0x${string}`;
+    erc1155AtomicPaymentUtils: `0x${string}`;
     erc1155PaymentObligation: `0x${string}`;
     tokenBundleEscrowObligation: `0x${string}`;
     tokenBundlePaymentObligation: `0x${string}`;
-    tokenBundleBarterUtils: `0x${string}`;
+    tokenBundleAtomicPaymentUtils: `0x${string}`;
     attestationEscrowObligation: `0x${string}`;
     attestationReferenceEscrowObligation: `0x${string}`;
     atomicAttestationUtils: `0x${string}`;
@@ -37,7 +37,7 @@ type ChainAddresses = {
     nonexclusiveUnrevocableConfirmationArbiter: `0x${string}`;
     nativeTokenEscrowObligation: `0x${string}`;
     nativeTokenPaymentObligation: `0x${string}`;
-    nativeTokenBarterUtils: `0x${string}`;
+    nativeTokenAtomicPaymentUtils: `0x${string}`;
     recipientArbiter: `0x${string}`;
     attesterArbiter: `0x${string}`;
     schemaArbiter: `0x${string}`;
@@ -112,7 +112,7 @@ type TokenBundleFlat = {
     erc1155TokenIds: bigint[];
     erc1155Amounts: bigint[];
 };
-type ApprovalPurpose = "escrow" | "payment" | "barter";
+type ApprovalPurpose = "escrow" | "payment" | "atomicPayment";
 type Attestation = {
     uid: `0x${string}`;
     schema: `0x${string}`;
@@ -712,19 +712,6 @@ type CommitRevealDemandData = {
     bondAmount: bigint;
 };
 
-type Erc20BarterUtilsClient = ReturnType<typeof makeErc20BarterUtilsClient>;
-declare const makeErc20BarterUtilsClient: (viemClient: ViemClient, addresses: Erc20Addresses) => {
-    address: `0x${string}`;
-    payErc20AndCollect: (escrowUid: `0x${string}`) => Promise<{
-        hash: `0x${string}`;
-        attested: any;
-    }>;
-    permitAndPayErc20AndCollect: (escrowUid: `0x${string}`) => Promise<{
-        hash: `0x${string}`;
-        attested: any;
-    }>;
-};
-
 type Erc20DefaultEscrowClient = ReturnType<typeof makeErc20DefaultEscrowClient>;
 declare const makeErc20DefaultEscrowClient: (viemClient: ViemClient, addresses: Erc20Addresses) => {
     address: `0x${string}`;
@@ -833,6 +820,7 @@ type Erc20EscrowClient = {
 type Erc20PaymentClient = ReturnType<typeof makeErc20PaymentClient>;
 declare const makeErc20PaymentClient: (viemClient: ViemClient, addresses: Erc20Addresses) => {
     address: `0x${string}`;
+    atomicPaymentUtilsAddress: `0x${string}`;
     getSchema: () => Promise<`0x${string}`>;
     encodeObligationRaw: (data: {
         token: `0x${string}`;
@@ -873,6 +861,14 @@ declare const makeErc20PaymentClient: (viemClient: ViemClient, addresses: Erc20A
         hash: `0x${string}`;
         attested: any;
     }>;
+    payErc20AndCollect: (escrowUid: `0x${string}`) => Promise<{
+        hash: `0x${string}`;
+        attested: any;
+    }>;
+    permitAndPayErc20AndCollect: (escrowUid: `0x${string}`) => Promise<{
+        hash: `0x${string}`;
+        attested: any;
+    }>;
 };
 
 type Erc20UtilClient = ReturnType<typeof makeErc20UtilClient>;
@@ -886,7 +882,7 @@ declare const makeErc20UtilClient: (viemClient: ViemClient, addresses: Erc20Addr
 
 type Erc20Addresses = {
     eas: `0x${string}`;
-    barterUtils: `0x${string}`;
+    atomicPaymentUtils: `0x${string}`;
     escrowObligation: `0x${string}`;
     escrowObligationUnconditional: `0x${string}`;
     paymentObligation: `0x${string}`;
@@ -895,16 +891,6 @@ type Erc20Client = {
     util: Erc20UtilClient;
     escrow: Erc20EscrowClient;
     payment: Erc20PaymentClient;
-    barter: Erc20BarterUtilsClient;
-};
-
-type Erc721BarterUtilsClient = ReturnType<typeof makeErc721BarterUtilsClient>;
-declare const makeErc721BarterUtilsClient: (viemClient: ViemClient, addresses: Erc721Addresses) => {
-    address: `0x${string}`;
-    payErc721AndCollect: (escrowUid: `0x${string}`) => Promise<{
-        hash: `0x${string}`;
-        attested: any;
-    }>;
 };
 
 type Erc721DefaultEscrowClient = ReturnType<typeof makeErc721DefaultEscrowClient>;
@@ -1007,6 +993,7 @@ type Erc721EscrowClient = {
 type Erc721PaymentClient = ReturnType<typeof makeErc721PaymentClient>;
 declare const makeErc721PaymentClient: (viemClient: ViemClient, addresses: Erc721Addresses) => {
     address: `0x${string}`;
+    atomicPaymentUtilsAddress: `0x${string}`;
     getSchema: () => Promise<`0x${string}`>;
     encodeObligationRaw: (data: {
         token: `0x${string}`;
@@ -1043,6 +1030,10 @@ declare const makeErc721PaymentClient: (viemClient: ViemClient, addresses: Erc72
         hash: `0x${string}`;
         attested: any;
     }>;
+    payErc721AndCollect: (escrowUid: `0x${string}`) => Promise<{
+        hash: `0x${string}`;
+        attested: any;
+    }>;
 };
 
 type Erc721UtilClient = ReturnType<typeof makeErc721UtilClient>;
@@ -1054,8 +1045,8 @@ declare const makeErc721UtilClient: (viemClient: ViemClient, addresses: Erc721Ad
 
 type Erc721Addresses = {
     eas: `0x${string}`;
-    barterUtils: `0x${string}`;
-    nativeTokenBarterUtils: `0x${string}`;
+    atomicPaymentUtils: `0x${string}`;
+    nativeTokenAtomicPaymentUtils: `0x${string}`;
     escrowObligation: `0x${string}`;
     escrowObligationUnconditional: `0x${string}`;
     paymentObligation: `0x${string}`;
@@ -1064,16 +1055,6 @@ type Erc721Client = {
     util: Erc721UtilClient;
     escrow: Erc721EscrowClient;
     payment: Erc721PaymentClient;
-    barter: Erc721BarterUtilsClient;
-};
-
-type Erc1155BarterUtilsClient = ReturnType<typeof makeErc1155BarterUtilsClient>;
-declare const makeErc1155BarterUtilsClient: (viemClient: ViemClient, addresses: Erc1155Addresses) => {
-    address: `0x${string}`;
-    payErc1155AndCollect: (escrowUid: `0x${string}`) => Promise<{
-        hash: `0x${string}`;
-        attested: any;
-    }>;
 };
 
 type Erc1155DefaultEscrowClient = ReturnType<typeof makeErc1155DefaultEscrowClient>;
@@ -1182,6 +1163,7 @@ type Erc1155EscrowClient = {
 type Erc1155PaymentClient = ReturnType<typeof makeErc1155PaymentClient>;
 declare const makeErc1155PaymentClient: (viemClient: ViemClient, addresses: Erc1155Addresses) => {
     address: `0x${string}`;
+    atomicPaymentUtilsAddress: `0x${string}`;
     getSchema: () => Promise<`0x${string}`>;
     encodeObligationRaw: (data: {
         token: `0x${string}`;
@@ -1221,6 +1203,10 @@ declare const makeErc1155PaymentClient: (viemClient: ViemClient, addresses: Erc1
         hash: `0x${string}`;
         attested: any;
     }>;
+    payErc1155AndCollect: (escrowUid: `0x${string}`) => Promise<{
+        hash: `0x${string}`;
+        attested: any;
+    }>;
 };
 
 type Erc1155UtilClient = ReturnType<typeof makeErc1155UtilClient>;
@@ -1231,8 +1217,8 @@ declare const makeErc1155UtilClient: (viemClient: ViemClient, addresses: Erc1155
 
 type Erc1155Addresses = {
     eas: `0x${string}`;
-    barterUtils: `0x${string}`;
-    nativeTokenBarterUtils: `0x${string}`;
+    atomicPaymentUtils: `0x${string}`;
+    nativeTokenAtomicPaymentUtils: `0x${string}`;
     escrowObligation: `0x${string}`;
     escrowObligationUnconditional: `0x${string}`;
     paymentObligation: `0x${string}`;
@@ -1241,16 +1227,6 @@ type Erc1155Client = {
     util: Erc1155UtilClient;
     escrow: Erc1155EscrowClient;
     payment: Erc1155PaymentClient;
-    barter: Erc1155BarterUtilsClient;
-};
-
-type NativeTokenBarterUtilsClient = ReturnType<typeof makeNativeTokenBarterUtilsClient>;
-declare const makeNativeTokenBarterUtilsClient: (viemClient: ViemClient, addresses: NativeTokenAddresses) => {
-    address: `0x${string}`;
-    payNativeAndCollect: (escrowUid: `0x${string}`) => Promise<{
-        hash: `0x${string}`;
-        attested: any;
-    }>;
 };
 
 /**
@@ -1354,6 +1330,7 @@ type NativeTokenPaymentObligationData = {
 type NativeTokenPaymentClient = ReturnType<typeof makeNativeTokenPaymentClient>;
 declare const makeNativeTokenPaymentClient: (viemClient: ViemClient, addresses: NativeTokenAddresses) => {
     address: `0x${string}`;
+    atomicPaymentUtilsAddress: `0x${string}`;
     getSchema: () => Promise<`0x${string}`>;
     encodeObligationRaw: (data: {
         amount: bigint;
@@ -1382,11 +1359,15 @@ declare const makeNativeTokenPaymentClient: (viemClient: ViemClient, addresses: 
         hash: `0x${string}`;
         attested: any;
     }>;
+    payNativeAndCollect: (escrowUid: `0x${string}`) => Promise<{
+        hash: `0x${string}`;
+        attested: any;
+    }>;
 };
 
 type NativeTokenAddresses = {
     eas: `0x${string}`;
-    barterUtils: `0x${string}`;
+    atomicPaymentUtils: `0x${string}`;
     escrowObligation: `0x${string}`;
     escrowObligationUnconditional: `0x${string}`;
     paymentObligation: `0x${string}`;
@@ -1394,7 +1375,6 @@ type NativeTokenAddresses = {
 type NativeTokenClient = {
     escrow: NativeTokenEscrowClient;
     payment: NativeTokenPaymentClient;
-    barter: NativeTokenBarterUtilsClient;
 };
 
 /**
@@ -1403,15 +1383,6 @@ type NativeTokenClient = {
 type StringObligationData = {
     item: string;
     schema: `0x${string}`;
-};
-
-type TokenBundleBarterUtilsClient = ReturnType<typeof makeTokenBundleBarterUtilsClient>;
-declare const makeTokenBundleBarterUtilsClient: (viemClient: ViemClient, addresses: TokenBundleAddresses) => {
-    address: `0x${string}`;
-    payBundleAndCollect: (escrowUid: `0x${string}`) => Promise<{
-        hash: `0x${string}`;
-        attested: any;
-    }>;
 };
 
 type TokenBundleDefaultEscrowClient = ReturnType<typeof makeTokenBundleDefaultEscrowClient>;
@@ -1550,6 +1521,7 @@ type TokenBundleEscrowClient = {
 type TokenBundlePaymentClient = ReturnType<typeof makeTokenBundlePaymentClient>;
 declare const makeTokenBundlePaymentClient: (viemClient: ViemClient, addresses: TokenBundleAddresses) => {
     address: `0x${string}`;
+    atomicPaymentUtilsAddress: `0x${string}`;
     getSchema: () => Promise<`0x${string}`>;
     encodeObligationRaw: (data: {
         nativeAmount: bigint;
@@ -1604,6 +1576,10 @@ declare const makeTokenBundlePaymentClient: (viemClient: ViemClient, addresses: 
         hash: `0x${string}`;
         attested: any;
     }>;
+    payBundleAndCollect: (escrowUid: `0x${string}`) => Promise<{
+        hash: `0x${string}`;
+        attested: any;
+    }>;
 };
 
 type TokenBundleUtilClient = ReturnType<typeof makeTokenBundleUtilClient>;
@@ -1613,8 +1589,8 @@ declare const makeTokenBundleUtilClient: (viemClient: ViemClient, addresses: Tok
 
 type TokenBundleAddresses = {
     eas: `0x${string}`;
-    barterUtils: `0x${string}`;
-    nativeTokenBarterUtils: `0x${string}`;
+    atomicPaymentUtils: `0x${string}`;
+    nativeTokenAtomicPaymentUtils: `0x${string}`;
     escrowObligation: `0x${string}`;
     escrowObligationUnconditional: `0x${string}`;
     paymentObligation: `0x${string}`;
@@ -1623,7 +1599,6 @@ type TokenBundleClient = {
     util: TokenBundleUtilClient;
     escrow: TokenBundleEscrowClient;
     payment: TokenBundlePaymentClient;
-    barter: TokenBundleBarterUtilsClient;
 };
 
 /**

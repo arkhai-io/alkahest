@@ -27,12 +27,12 @@ async fn test_type_safe_address_getters() -> Result<()> {
     // Get ERC20 contract addresses
     let erc20_escrow = client.erc20_address(Erc20Contract::EscrowObligation);
     let erc20_payment = client.erc20_address(Erc20Contract::PaymentObligation);
-    let erc20_barter = client.erc20_address(Erc20Contract::BarterUtils);
+    let erc20_atomic_payment = client.erc20_address(Erc20Contract::AtomicPaymentUtils);
 
     // Verify addresses are not zero
     assert_ne!(erc20_escrow, alloy::primitives::Address::ZERO);
     assert_ne!(erc20_payment, alloy::primitives::Address::ZERO);
-    assert_ne!(erc20_barter, alloy::primitives::Address::ZERO);
+    assert_ne!(erc20_atomic_payment, alloy::primitives::Address::ZERO);
 
     // Get ERC721 contract addresses
     let erc721_escrow = client.erc721_address(Erc721Contract::EscrowObligation);
@@ -65,7 +65,7 @@ async fn test_enum_imports_for_cleaner_code() -> Result<()> {
 
     let addresses = vec![
         client.erc20_address(Eas),
-        client.erc20_address(BarterUtils),
+        client.erc20_address(AtomicPaymentUtils),
         client.erc20_address(EscrowObligation),
         client.erc20_address(PaymentObligation),
     ];
@@ -141,11 +141,13 @@ async fn test_contract_instance_creation() -> Result<()> {
     assert_eq!(*escrow_contract.address(), escrow_addr);
 
     // Similarly for other contract types
-    let barter_addr = client.erc721_address(Erc721Contract::BarterUtils);
-    let barter_contract =
-        contracts::utils::AtomicPaymentUtils::new(barter_addr, client.wallet_provider.clone());
+    let atomic_payment_addr = client.erc721_address(Erc721Contract::AtomicPaymentUtils);
+    let atomic_payment_contract = contracts::utils::AtomicPaymentUtils::new(
+        atomic_payment_addr,
+        client.wallet_provider.clone(),
+    );
 
-    assert_eq!(*barter_contract.address(), barter_addr);
+    assert_eq!(*atomic_payment_contract.address(), atomic_payment_addr);
 
     Ok(())
 }
@@ -213,13 +215,13 @@ async fn test_address_consistency_across_access_methods() -> Result<()> {
     let erc20_module = client.erc20();
 
     // Method 1: Using the type-safe getter
-    let addr1 = client.erc20_address(Erc20Contract::BarterUtils);
+    let addr1 = client.erc20_address(Erc20Contract::AtomicPaymentUtils);
 
     // Method 2: Using the module's address method
-    let addr2 = erc20_module.address(Erc20Contract::BarterUtils);
+    let addr2 = erc20_module.address(Erc20Contract::AtomicPaymentUtils);
 
     // Method 3: Direct field access
-    let addr3 = erc20_module.addresses.barter_utils;
+    let addr3 = erc20_module.addresses.atomic_payment_utils;
 
     // All three should be identical
     assert_eq!(addr1, addr2);

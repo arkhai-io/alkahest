@@ -141,7 +141,7 @@ pub struct NativeTokenData {
 pub enum ApprovalPurpose {
     Escrow,
     Payment,
-    BarterUtils,
+    AtomicPayment,
 }
 
 pub struct DecodedAttestation<T> {

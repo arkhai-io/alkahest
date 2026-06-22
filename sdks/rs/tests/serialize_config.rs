@@ -17,8 +17,8 @@ fn test_default_config_creation() {
         BASE_SEPOLIA_ADDRESSES.arbiters_addresses.eas
     );
     assert_eq!(
-        default_config.erc20_addresses.barter_utils,
-        BASE_SEPOLIA_ADDRESSES.erc20_addresses.barter_utils
+        default_config.erc20_addresses.atomic_payment_utils,
+        BASE_SEPOLIA_ADDRESSES.erc20_addresses.atomic_payment_utils
     );
 }
 
@@ -67,8 +67,8 @@ fn test_config_file_persistence() -> Result<(), Box<dyn std::error::Error>> {
         default_config.arbiters_addresses.eas
     );
     assert_eq!(
-        loaded_config.erc20_addresses.barter_utils,
-        default_config.erc20_addresses.barter_utils
+        loaded_config.erc20_addresses.atomic_payment_utils,
+        default_config.erc20_addresses.atomic_payment_utils
     );
     assert_eq!(
         loaded_config.erc721_addresses.eas,
@@ -138,8 +138,8 @@ fn test_round_trip_serialization() -> Result<(), Box<dyn std::error::Error>> {
         custom_config.erc20_addresses.eas
     );
     assert_eq!(
-        round_trip_config.erc20_addresses.barter_utils,
-        custom_config.erc20_addresses.barter_utils
+        round_trip_config.erc20_addresses.atomic_payment_utils,
+        custom_config.erc20_addresses.atomic_payment_utils
     );
     assert_eq!(
         round_trip_config.erc721_addresses.eas,

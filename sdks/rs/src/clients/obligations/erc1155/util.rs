@@ -22,7 +22,7 @@ impl<'a> Util<'a> {
     ///
     /// # Arguments
     /// * `token_contract` - The ERC1155 contract address
-    /// * `purpose` - Whether the approval is for payment, escrow, or barter utils
+    /// * `purpose` - Whether the approval is for payment, escrow, or atomic payment
     ///
     /// # Returns
     /// * `Result<TransactionReceipt>` - The transaction receipt
@@ -37,7 +37,7 @@ impl<'a> Util<'a> {
         let to = match purpose {
             ApprovalPurpose::Escrow => self.module.addresses.escrow_obligation_default,
             ApprovalPurpose::Payment => self.module.addresses.payment_obligation,
-            ApprovalPurpose::BarterUtils => self.module.addresses.barter_utils,
+            ApprovalPurpose::AtomicPayment => self.module.addresses.atomic_payment_utils,
         };
 
         let receipt = erc1155_contract
@@ -54,7 +54,7 @@ impl<'a> Util<'a> {
     ///
     /// # Arguments
     /// * `token_contract` - The ERC1155 contract address
-    /// * `purpose` - Whether to revoke payment, escrow, or barter utils approval
+    /// * `purpose` - Whether to revoke payment, escrow, or atomic payment approval
     ///
     /// # Returns
     /// * `Result<TransactionReceipt>` - The transaction receipt
@@ -69,7 +69,7 @@ impl<'a> Util<'a> {
         let to = match purpose {
             ApprovalPurpose::Escrow => self.module.addresses.escrow_obligation_default,
             ApprovalPurpose::Payment => self.module.addresses.payment_obligation,
-            ApprovalPurpose::BarterUtils => self.module.addresses.barter_utils,
+            ApprovalPurpose::AtomicPayment => self.module.addresses.atomic_payment_utils,
         };
 
         let receipt = erc1155_contract

@@ -1,5 +1,6 @@
 import { decodeAbiParameters, encodeAbiParameters, getAbiItem } from "viem";
 import { abi as tokenBundlePaymentAbi } from "../../../contracts/obligations/payment/TokenBundlePaymentObligation";
+import { abi as atomicPaymentUtilsAbi } from "../../../contracts/utils/AtomicPaymentUtils";
 import type { Demand, TokenBundle } from "../../../types";
 import {
   flattenTokenBundle,
@@ -69,6 +70,7 @@ export const makeTokenBundlePaymentClient = (viemClient: ViemClient, addresses: 
 
   return {
     address: addresses.paymentObligation,
+    atomicPaymentUtilsAddress: addresses.atomicPaymentUtils,
     getSchema,
 
     encodeObligationRaw: (data: {
@@ -155,6 +157,18 @@ export const makeTokenBundlePaymentClient = (viemClient: ViemClient, addresses: 
           },
           refUID,
         ],
+      });
+
+      const attested = await getAttestedEventFromTxHash(viemClient, hash);
+      return { hash, attested };
+    },
+
+    payBundleAndCollect: async (escrowUid: `0x${string}`) => {
+      const hash = await writeContract(viemClient, {
+        address: addresses.atomicPaymentUtils,
+        abi: atomicPaymentUtilsAbi.abi,
+        functionName: "payBundleAndCollect",
+        args: [escrowUid],
       });
 
       const attested = await getAttestedEventFromTxHash(viemClient, hash);

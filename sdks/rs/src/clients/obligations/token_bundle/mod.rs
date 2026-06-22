@@ -3,10 +3,8 @@
 //! This module provides functionality for token bundle operations including:
 //! - Escrow obligations (unconditional and default)
 //! - Payment obligations
-//! - Barter utilities for cross-token trading
 //! - Utility functions for approvals
 
-pub mod barter_utils;
 pub mod escrow;
 pub mod payment;
 pub mod util;
@@ -50,7 +48,7 @@ impl TokenBundleData {
 }
 
 /// Macro to implement From<(TokenBundleData, Address)> for TokenBundlePaymentObligation::ObligationData types.
-/// Use this in obligation modules that have a TokenBundlePaymentObligation type in their barter utils.
+/// Use this in obligation modules that have a TokenBundlePaymentObligation type in their atomic payment.
 #[macro_export]
 macro_rules! impl_token_bundle_payment_obligation {
     ($target:path) => {
@@ -84,7 +82,7 @@ macro_rules! impl_token_bundle_payment_obligation {
 }
 
 /// Macro to implement From<(TokenBundleData, ArbiterData)> for TokenBundleEscrowObligation::ObligationData types.
-/// Use this in obligation modules that have a TokenBundleEscrowObligation type in their barter utils.
+/// Use this in obligation modules that have a TokenBundleEscrowObligation type in their atomic payment.
 #[macro_export]
 macro_rules! impl_token_bundle_escrow_obligation {
     ($target:path) => {
@@ -148,7 +146,7 @@ use crate::types::{ApprovalPurpose, ProviderContext, SharedWalletProvider};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TokenBundleAddresses {
     pub eas: Address,
-    pub barter_utils: Address,
+    pub atomic_payment_utils: Address,
     pub escrow_obligation_default: Address,
     pub escrow_obligation_unconditional: Address,
     pub payment_obligation: Address,
@@ -165,8 +163,8 @@ impl Default for TokenBundleAddresses {
 pub enum TokenBundleContract {
     /// EAS (Ethereum Attestation Service) contract
     Eas,
-    /// Barter utilities contract for token bundles
-    BarterUtils,
+    /// Atomic payment utilities contract for token bundles
+    AtomicPaymentUtils,
     /// Escrow obligation contract for token bundles
     EscrowObligation,
     /// Payment obligation contract for token bundles
@@ -193,7 +191,7 @@ impl ContractModule for TokenBundleModule {
     fn address(&self, contract: Self::Contract) -> Address {
         match contract {
             TokenBundleContract::Eas => self.addresses.eas,
-            TokenBundleContract::BarterUtils => self.addresses.barter_utils,
+            TokenBundleContract::AtomicPaymentUtils => self.addresses.atomic_payment_utils,
             TokenBundleContract::EscrowObligation => self.addresses.escrow_obligation_default,
             TokenBundleContract::PaymentObligation => self.addresses.payment_obligation,
         }
@@ -236,17 +234,6 @@ impl TokenBundleModule {
     /// ```
     pub fn payment(&self) -> payment::Payment<'_> {
         payment::Payment::new(self)
-    }
-
-    /// Access barter utilities API
-    ///
-    /// # Example
-    /// ```rust,ignore
-    /// let escrow = client.token_bundle().escrow().default().create(&bid, &demand, expiration).await?;
-    /// client.token_bundle().barter().pay_bundle_and_collect(buy_attestation).await?;
-    /// ```
-    pub fn barter(&self) -> barter_utils::BarterUtils<'_> {
-        barter_utils::BarterUtils::new(self)
     }
 
     /// Access utility API (approvals)
@@ -640,17 +627,17 @@ mod tests {
             .call()
             .await?;
 
-        // Alice approves her tokens for barter
+        // Alice approves her tokens for atomic payment
         test.alice_client
             .token_bundle()
-            .approve(&alice_bundle, ApprovalPurpose::BarterUtils)
+            .approve(&alice_bundle, ApprovalPurpose::AtomicPayment)
             .await?;
 
         // Alice fulfills Bob's order
         let pay_receipt = test
             .alice_client
             .token_bundle()
-            .barter()
+            .payment()
             .pay_bundle_and_collect(buy_attestation)
             .await?;
 

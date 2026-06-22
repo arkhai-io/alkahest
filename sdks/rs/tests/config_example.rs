@@ -103,7 +103,7 @@ async fn test_custom_configuration() -> Result<()> {
         },
         erc20_addresses: Erc20Addresses {
             eas: address!("0x4200000000000000000000000000000000000021"),
-            barter_utils: address!("0x5C624f8FbbB377378cDfE8B627384A917FE839db"),
+            atomic_payment_utils: address!("0x5C624f8FbbB377378cDfE8B627384A917FE839db"),
             escrow_obligation_default: address!("0xFa76421cEe6aee41adc7f6a475b9Ef3776d500F0"),
             escrow_obligation_unconditional: Address::ZERO,
             payment_obligation: address!("0xE95d3931E15E4d96cE1d2Dd336DcEad35A708bdB"),
@@ -132,8 +132,8 @@ async fn test_custom_configuration() -> Result<()> {
         custom_config.erc20_addresses.eas
     );
     assert_eq!(
-        client_with_custom.erc20().addresses.barter_utils,
-        custom_config.erc20_addresses.barter_utils
+        client_with_custom.erc20().addresses.atomic_payment_utils,
+        custom_config.erc20_addresses.atomic_payment_utils
     );
     assert_eq!(
         client_with_custom

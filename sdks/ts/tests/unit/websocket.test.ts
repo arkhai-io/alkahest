@@ -79,9 +79,9 @@ describe("WebSocket Transport Support", () => {
 
         await testContext.bob.client.erc20.util.approve(
           { address: testContext.mockAddresses.erc20B, value: askAmount },
-          "barter",
+          "atomicPayment",
         );
-        await testContext.bob.client.erc20.barter.payErc20AndCollect(escrow.uid);
+        await testContext.bob.client.erc20.payment.payErc20AndCollect(escrow.uid);
 
         const fulfillment = await fulfillmentPromise;
         expect(fulfillment.payment).toBe(escrow.uid);

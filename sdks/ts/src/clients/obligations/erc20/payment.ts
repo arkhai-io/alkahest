@@ -1,4 +1,5 @@
 import { decodeAbiParameters, encodeAbiParameters, getAbiItem } from "viem";
+import { abi as easAbi } from "../../../contracts/IEAS";
 import { abi as erc20PaymentAbi } from "../../../contracts/obligations/payment/ERC20PaymentObligation";
 import { abi as atomicPaymentUtilsAbi } from "../../../contracts/utils/AtomicPaymentUtils";
 import type { Erc20 } from "../../../types";
@@ -53,8 +54,40 @@ export const makeErc20PaymentClient = (viemClient: ViemClient, addresses: Erc20A
       authorizationList: undefined,
     });
 
+  const getPaymentDemand = async (escrowUid: `0x${string}`) => {
+    const escrow = await viemClient.readContract({
+      address: addresses.eas,
+      abi: easAbi.abi,
+      functionName: "getAttestation",
+      args: [escrowUid],
+      authorizationList: undefined,
+    });
+
+    const [, demand] = await viemClient.readContract({
+      address: escrow.attester,
+      abi: [
+        {
+          type: "function",
+          name: "decodeCondition",
+          inputs: [{ name: "data", type: "bytes" }],
+          outputs: [
+            { name: "arbiter", type: "address" },
+            { name: "demand", type: "bytes" },
+          ],
+          stateMutability: "pure",
+        },
+      ],
+      functionName: "decodeCondition",
+      args: [escrow.data],
+      authorizationList: undefined,
+    });
+
+    return decodeAbiParameters([erc20PaymentObligationDataType], demand)[0];
+  };
+
   return {
     address: addresses.paymentObligation,
+    atomicPaymentUtilsAddress: addresses.atomicPaymentUtils,
     getSchema,
 
     encodeObligationRaw: (data: { token: `0x${string}`; amount: bigint; payee: `0x${string}` }) => {
@@ -145,13 +178,45 @@ export const makeErc20PaymentClient = (viemClient: ViemClient, addresses: Erc20A
       refUID: `0x${string}` = "0x0000000000000000000000000000000000000000000000000000000000000000",
     ) => {
       const deadline = util.getPermitDeadline();
-      const permit = await util.getPermitSignature(addresses.barterUtils, price, deadline);
+      const permit = await util.getPermitSignature(addresses.atomicPaymentUtils, price, deadline);
 
       const hash = await writeContract(viemClient, {
-        address: addresses.barterUtils,
+        address: addresses.atomicPaymentUtils,
         abi: atomicPaymentUtilsAbi.abi,
         functionName: "permitAndPayWithErc20",
         args: [price.address, price.value, payee, refUID, deadline, permit.v, permit.r, permit.s],
+      });
+
+      const attested = await getAttestedEventFromTxHash(viemClient, hash);
+      return { hash, attested };
+    },
+
+    payErc20AndCollect: async (escrowUid: `0x${string}`) => {
+      const hash = await writeContract(viemClient, {
+        address: addresses.atomicPaymentUtils,
+        abi: atomicPaymentUtilsAbi.abi,
+        functionName: "payErc20AndCollect",
+        args: [escrowUid],
+      });
+
+      const attested = await getAttestedEventFromTxHash(viemClient, hash);
+      return { hash, attested };
+    },
+
+    permitAndPayErc20AndCollect: async (escrowUid: `0x${string}`) => {
+      const deadline = util.getPermitDeadline();
+      const demand = await getPaymentDemand(escrowUid);
+      const permit = await util.getPermitSignature(
+        addresses.atomicPaymentUtils,
+        { address: demand.token, value: demand.amount },
+        deadline,
+      );
+
+      const hash = await writeContract(viemClient, {
+        address: addresses.atomicPaymentUtils,
+        abi: atomicPaymentUtilsAbi.abi,
+        functionName: "permitAndPayErc20AndCollect",
+        args: [escrowUid, deadline, permit.v, permit.r, permit.s],
       });
 
       const attested = await getAttestedEventFromTxHash(viemClient, hash);

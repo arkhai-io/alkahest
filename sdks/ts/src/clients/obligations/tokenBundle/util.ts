@@ -15,7 +15,7 @@ export const makeTokenBundleUtilClient = (viemClient: ViemClient, addresses: Tok
           ? addresses.escrowObligation
           : purpose === "payment"
             ? addresses.paymentObligation
-            : addresses.barterUtils;
+            : addresses.atomicPaymentUtils;
       const results: `0x${string}`[] = [];
 
       // Process ERC20 tokens sequentially

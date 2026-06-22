@@ -191,7 +191,7 @@ export async function deployAlkahest(
       );
     }
 
-    const barterArgs = [
+    const atomicPaymentArgs = [
       easAddress,
       erc20Payment,
       erc721Payment,
@@ -200,12 +200,12 @@ export async function deployAlkahest(
       bundlePayment,
     ];
 
-    const atomicPaymentUtils = await deploy(deployFn, AtomicPaymentUtils as Artifact, barterArgs);
-    result.erc20BarterUtils = atomicPaymentUtils;
-    result.erc721BarterUtils = atomicPaymentUtils;
-    result.erc1155BarterUtils = atomicPaymentUtils;
-    result.nativeTokenBarterUtils = atomicPaymentUtils;
-    result.tokenBundleBarterUtils = atomicPaymentUtils;
+    const atomicPaymentUtils = await deploy(deployFn, AtomicPaymentUtils as Artifact, atomicPaymentArgs);
+    result.erc20AtomicPaymentUtils = atomicPaymentUtils;
+    result.erc721AtomicPaymentUtils = atomicPaymentUtils;
+    result.erc1155AtomicPaymentUtils = atomicPaymentUtils;
+    result.nativeTokenAtomicPaymentUtils = atomicPaymentUtils;
+    result.tokenBundleAtomicPaymentUtils = atomicPaymentUtils;
     result.atomicAttestationUtils = await deploy(deployFn, AtomicAttestationUtils as Artifact, [easAddress]);
   }
 

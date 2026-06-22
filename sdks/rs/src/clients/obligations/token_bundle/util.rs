@@ -23,7 +23,7 @@ impl<'a> Util<'a> {
     ///
     /// # Arguments
     /// * `bundle` - The token bundle data containing tokens to approve
-    /// * `purpose` - Purpose of approval (escrow, payment, or barter utils)
+    /// * `purpose` - Purpose of approval (escrow, payment, or atomic payment)
     ///
     /// # Returns
     /// * `Result<Vec<TransactionReceipt>>` - A vector of transaction receipts for all approval transactions
@@ -41,7 +41,7 @@ impl<'a> Util<'a> {
         let target = match purpose {
             ApprovalPurpose::Escrow => self.module.addresses.escrow_obligation_default,
             ApprovalPurpose::Payment => self.module.addresses.payment_obligation,
-            ApprovalPurpose::BarterUtils => self.module.addresses.barter_utils,
+            ApprovalPurpose::AtomicPayment => self.module.addresses.atomic_payment_utils,
         };
 
         let mut results = Vec::new();
@@ -110,7 +110,7 @@ impl<'a> Util<'a> {
     ///
     /// # Arguments
     /// * `bundle` - The token bundle data containing ERC1155 tokens to revoke
-    /// * `purpose` - Purpose of revocation (escrow, payment, or barter utils)
+    /// * `purpose` - Purpose of revocation (escrow, payment, or atomic payment)
     ///
     /// # Returns
     /// * `Result<Vec<TransactionReceipt>>` - A vector of transaction receipts for all revoke transactions
@@ -122,7 +122,7 @@ impl<'a> Util<'a> {
         let target = match purpose {
             ApprovalPurpose::Escrow => self.module.addresses.escrow_obligation_default,
             ApprovalPurpose::Payment => self.module.addresses.payment_obligation,
-            ApprovalPurpose::BarterUtils => self.module.addresses.barter_utils,
+            ApprovalPurpose::AtomicPayment => self.module.addresses.atomic_payment_utils,
         };
 
         let mut results = Vec::new();

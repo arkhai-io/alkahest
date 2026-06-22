@@ -1,5 +1,6 @@
 import { decodeAbiParameters, encodeAbiParameters, getAbiItem } from "viem";
 import { abi as erc721PaymentAbi } from "../../../contracts/obligations/payment/ERC721PaymentObligation";
+import { abi as atomicPaymentUtilsAbi } from "../../../contracts/utils/AtomicPaymentUtils";
 import type { Erc721 } from "../../../types";
 import { getAttestation, getAttestedEventFromTxHash, type ViemClient, writeContract } from "../../../utils";
 import type { Erc721Addresses } from "./index";
@@ -54,6 +55,7 @@ export const makeErc721PaymentClient = (viemClient: ViemClient, addresses: Erc72
 
   return {
     address: addresses.paymentObligation,
+    atomicPaymentUtilsAddress: addresses.atomicPaymentUtils,
     getSchema,
 
     encodeObligationRaw: (data: { token: `0x${string}`; tokenId: bigint; payee: `0x${string}` }) => {
@@ -132,6 +134,18 @@ export const makeErc721PaymentClient = (viemClient: ViemClient, addresses: Erc72
           },
           refUID,
         ],
+      });
+
+      const attested = await getAttestedEventFromTxHash(viemClient, hash);
+      return { hash, attested };
+    },
+
+    payErc721AndCollect: async (escrowUid: `0x${string}`) => {
+      const hash = await writeContract(viemClient, {
+        address: addresses.atomicPaymentUtils,
+        abi: atomicPaymentUtilsAbi.abi,
+        functionName: "payErc721AndCollect",
+        args: [escrowUid],
       });
 
       const attested = await getAttestedEventFromTxHash(viemClient, hash);

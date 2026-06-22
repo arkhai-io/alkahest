@@ -84,7 +84,7 @@ export const makeErc20UtilClient = (viemClient: ViemClient, addresses: Erc20Addr
           ? addresses.escrowObligation
           : purpose === "payment"
             ? addresses.paymentObligation
-            : addresses.barterUtils;
+            : addresses.atomicPaymentUtils;
 
       const hash = await writeContract(viemClient, {
         address: token.address,
@@ -101,7 +101,7 @@ export const makeErc20UtilClient = (viemClient: ViemClient, addresses: Erc20Addr
           ? addresses.escrowObligation
           : purpose === "payment"
             ? addresses.paymentObligation
-            : addresses.barterUtils;
+            : addresses.atomicPaymentUtils;
 
       const currentAllowance = await readContract<bigint>(viemClient, {
         address: token.address,

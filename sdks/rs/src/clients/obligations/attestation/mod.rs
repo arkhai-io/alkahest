@@ -90,7 +90,7 @@ macro_rules! impl_from_attestation {
 pub struct AttestationAddresses {
     pub eas: Address,
     pub eas_schema_registry: Address,
-    pub barter_utils: Address,
+    pub atomic_attestation_utils: Address,
     pub escrow_obligation_default: Address,
     pub escrow_obligation_unconditional: Address,
     pub escrow_obligation_2_default: Address,
@@ -117,8 +117,8 @@ pub enum AttestationContract {
     Eas,
     /// EAS Schema Registry contract
     EasSchemaRegistry,
-    /// Barter utilities contract for attestations
-    BarterUtils,
+    /// Atomic attestation utilities contract for attestations
+    AtomicAttestationUtils,
     /// Escrow obligation contract for attestations (V1)
     EscrowObligation,
     /// Escrow obligation contract for attestations (V2)
@@ -132,7 +132,7 @@ impl ContractModule for AttestationModule {
         match contract {
             AttestationContract::Eas => self.addresses.eas,
             AttestationContract::EasSchemaRegistry => self.addresses.eas_schema_registry,
-            AttestationContract::BarterUtils => self.addresses.barter_utils,
+            AttestationContract::AtomicAttestationUtils => self.addresses.atomic_attestation_utils,
             AttestationContract::EscrowObligation => self.addresses.escrow_obligation_default,
             AttestationContract::EscrowObligation2 => self.addresses.escrow_obligation_2_default,
         }
@@ -286,7 +286,10 @@ mod tests {
             },
         };
 
-        let arbiter = test.addresses.attestation_addresses.barter_utils;
+        let arbiter = test
+            .addresses
+            .attestation_addresses
+            .atomic_attestation_utils;
         let demand = Bytes::from(vec![4, 5, 6]);
 
         let escrow_data = contracts::obligations::escrow::default_escrow::AttestationEscrowObligation::ObligationData {
@@ -324,7 +327,10 @@ mod tests {
 
         // Create sample obligation data
         let attestation_uid = FixedBytes::<32>::from_slice(&[1u8; 32]);
-        let arbiter = test.addresses.attestation_addresses.barter_utils;
+        let arbiter = test
+            .addresses
+            .attestation_addresses
+            .atomic_attestation_utils;
         let demand = Bytes::from(vec![4, 5, 6]);
 
         let escrow_data = contracts::obligations::escrow::default_escrow::AttestationReferenceEscrowObligation::ObligationData {
@@ -534,7 +540,10 @@ mod tests {
         };
 
         // Create demand data
-        let arbiter = test.addresses.attestation_addresses.barter_utils;
+        let arbiter = test
+            .addresses
+            .attestation_addresses
+            .atomic_attestation_utils;
 
         let demand = TestStruct {
             value: "test demand".to_string(),

@@ -1,6 +1,5 @@
 //! ERC721 obligations module
 
-pub mod barter_utils;
 pub mod escrow;
 pub mod payment;
 pub mod util;
@@ -25,7 +24,7 @@ impl_abi_conversions!(contracts::obligations::escrow::unconditional::Uncondition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Erc721Addresses {
     pub eas: Address,
-    pub barter_utils: Address,
+    pub atomic_payment_utils: Address,
     pub escrow_obligation_default: Address,
     pub escrow_obligation_unconditional: Address,
     pub payment_obligation: Address,
@@ -41,7 +40,7 @@ impl Default for Erc721Addresses {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Erc721Contract {
     Eas,
-    BarterUtils,
+    AtomicPaymentUtils,
     EscrowObligation,
     PaymentObligation,
 }
@@ -59,7 +58,7 @@ impl ContractModule for Erc721Module {
     fn address(&self, contract: Self::Contract) -> Address {
         match contract {
             Erc721Contract::Eas => self.addresses.eas,
-            Erc721Contract::BarterUtils => self.addresses.barter_utils,
+            Erc721Contract::AtomicPaymentUtils => self.addresses.atomic_payment_utils,
             Erc721Contract::EscrowObligation => self.addresses.escrow_obligation_default,
             Erc721Contract::PaymentObligation => self.addresses.payment_obligation,
         }
@@ -87,11 +86,6 @@ impl Erc721Module {
     /// Access payment API
     pub fn payment(&self) -> payment::Payment<'_> {
         payment::Payment::new(self)
-    }
-
-    /// Access barter utilities API
-    pub fn barter(&self) -> barter_utils::BarterUtils<'_> {
-        barter_utils::BarterUtils::new(self)
     }
 
     /// Access utility API (approvals)
@@ -176,7 +170,8 @@ mod tests {
                 token: payment.address,
                 amount: payment.value,
                 payee,
-            }.into(),
+            }
+            .into(),
         }
     }
 
@@ -191,7 +186,8 @@ mod tests {
                 token: payment.address,
                 tokenId: payment.id,
                 payee,
-            }.into(),
+            }
+            .into(),
         }
     }
 
@@ -207,7 +203,8 @@ mod tests {
                 tokenId: payment.id,
                 amount: payment.value,
                 payee,
-            }.into(),
+            }
+            .into(),
         }
     }
 
@@ -551,7 +548,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_barter_buy_erc721_for_erc721() -> eyre::Result<()> {
+    async fn test_atomic_payment_buy_erc721_for_erc721() -> eyre::Result<()> {
         // test setup
         let test = setup_test_environment().await?;
 
@@ -574,7 +571,7 @@ mod tests {
             id: U256::from(2),
         };
 
-        // alice approves token for barter
+        // alice approves token for atomic payment
         test.alice_client
             .erc721()
             .approve(&bid, ApprovalPurpose::Escrow)
@@ -613,7 +610,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_barter_pay_erc721_and_collect_for_erc721() -> eyre::Result<()> {
+    async fn test_atomic_payment_pay_erc721_and_collect_for_erc721() -> eyre::Result<()> {
         // test setup
         let test = setup_test_environment().await?;
 
@@ -644,7 +641,7 @@ mod tests {
             id: U256::from(1),
         };
 
-        // alice approves token for barter and creates buy attestation
+        // alice approves token for atomic payment and creates buy attestation
         test.alice_client
             .erc721()
             .approve(&bid, ApprovalPurpose::Escrow)
@@ -668,17 +665,17 @@ mod tests {
 
         let buy_attestation = DefaultAlkahestClient::get_attested_event(buy_receipt)?.uid;
 
-        // bob approves token for barter
+        // bob approves token for atomic payment
         test.bob_client
             .erc721()
-            .approve(&ask, ApprovalPurpose::BarterUtils)
+            .approve(&ask, ApprovalPurpose::AtomicPayment)
             .await?;
 
         // bob fulfills the buy attestation
         let _sell_receipt = test
             .bob_client
             .erc721()
-            .barter()
+            .payment()
             .pay_erc721_and_collect(buy_attestation)
             .await?;
 
@@ -725,7 +722,7 @@ mod tests {
             id: U256::from(2),
         };
 
-        // alice approves token for barter
+        // alice approves token for atomic payment
         test.alice_client
             .erc721()
             .approve(&bid, ApprovalPurpose::Escrow)
@@ -776,7 +773,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_barter_buy_erc20_with_erc721() -> eyre::Result<()> {
+    async fn test_atomic_payment_buy_erc20_with_erc721() -> eyre::Result<()> {
         // test setup
         let test = setup_test_environment().await?;
 
@@ -799,7 +796,7 @@ mod tests {
             value: U256::from(100),
         };
 
-        // alice approves token for barter
+        // alice approves token for atomic payment
         test.alice_client
             .erc721()
             .approve(&bid, ApprovalPurpose::Escrow)
@@ -838,7 +835,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_barter_buy_erc1155_with_erc721() -> eyre::Result<()> {
+    async fn test_atomic_payment_buy_erc1155_with_erc721() -> eyre::Result<()> {
         // test setup
         let test = setup_test_environment().await?;
 
@@ -862,7 +859,7 @@ mod tests {
             value: U256::from(10),
         };
 
-        // alice approves token for barter
+        // alice approves token for atomic payment
         test.alice_client
             .erc721()
             .approve(&bid, ApprovalPurpose::Escrow)
@@ -901,7 +898,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_barter_buy_bundle_with_erc721() -> eyre::Result<()> {
+    async fn test_atomic_payment_buy_bundle_with_erc721() -> eyre::Result<()> {
         // test setup
         let test = setup_test_environment().await?;
 
@@ -938,7 +935,7 @@ mod tests {
             }],
         };
 
-        // alice approves token for barter
+        // alice approves token for atomic payment
         test.alice_client
             .erc721()
             .approve(&bid, ApprovalPurpose::Escrow)
@@ -977,7 +974,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_barter_pay_erc721_and_collect_for_erc20() -> eyre::Result<()> {
+    async fn test_atomic_payment_pay_erc721_and_collect_for_erc20() -> eyre::Result<()> {
         // test setup
         let test = setup_test_environment().await?;
 
@@ -1011,7 +1008,7 @@ mod tests {
             id: U256::from(1),
         };
 
-        // bob approves tokens for barter and creates buy attestation
+        // bob approves tokens for atomic payment and creates buy attestation
         test.bob_client
             .erc20()
             .approve(&bid, ApprovalPurpose::Escrow)
@@ -1035,17 +1032,17 @@ mod tests {
 
         let buy_attestation = DefaultAlkahestClient::get_attested_event(buy_receipt)?.uid;
 
-        // alice approves her ERC721 token for barter
+        // alice approves her ERC721 token for atomic payment
         test.alice_client
             .erc721()
-            .approve(&ask, ApprovalPurpose::BarterUtils)
+            .approve(&ask, ApprovalPurpose::AtomicPayment)
             .await?;
 
         // alice fulfills bob's buy attestation with her ERC721
         let _sell_receipt = test
             .alice_client
             .erc721()
-            .barter()
+            .payment()
             .pay_erc721_and_collect(buy_attestation)
             .await?;
 
@@ -1070,7 +1067,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_barter_pay_erc721_and_collect_for_erc1155() -> eyre::Result<()> {
+    async fn test_atomic_payment_pay_erc721_and_collect_for_erc1155() -> eyre::Result<()> {
         // test setup
         let test = setup_test_environment().await?;
 
@@ -1105,7 +1102,7 @@ mod tests {
             id: U256::from(1),
         };
 
-        // bob approves tokens for barter and creates buy attestation
+        // bob approves tokens for atomic payment and creates buy attestation
         test.bob_client
             .erc1155()
             .approve_all(test.mock_addresses.erc1155_a, ApprovalPurpose::Escrow)
@@ -1129,17 +1126,17 @@ mod tests {
 
         let buy_attestation = DefaultAlkahestClient::get_attested_event(buy_receipt)?.uid;
 
-        // alice approves her token for barter
+        // alice approves her token for atomic payment
         test.alice_client
             .erc721()
-            .approve(&ask, ApprovalPurpose::BarterUtils)
+            .approve(&ask, ApprovalPurpose::AtomicPayment)
             .await?;
 
         // alice fulfills the buy attestation
         let _sell_receipt = test
             .alice_client
             .erc721()
-            .barter()
+            .payment()
             .pay_erc721_and_collect(buy_attestation)
             .await?;
 
@@ -1167,7 +1164,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_barter_pay_erc721_and_collect_for_bundle() -> eyre::Result<()> {
+    async fn test_atomic_payment_pay_erc721_and_collect_for_bundle() -> eyre::Result<()> {
         // test setup
         let test = setup_test_environment().await?;
 
@@ -1267,7 +1264,7 @@ mod tests {
 
         let buy_attestation = DefaultAlkahestClient::get_attested_event(buy_receipt)?.uid;
 
-        // alice approves her ERC721 for barter
+        // alice approves her ERC721 for atomic payment
         test.alice_client
             .erc721()
             .approve(
@@ -1275,7 +1272,7 @@ mod tests {
                     address: test.mock_addresses.erc721_a,
                     id: U256::from(1),
                 },
-                ApprovalPurpose::BarterUtils,
+                ApprovalPurpose::AtomicPayment,
             )
             .await?;
 
@@ -1283,7 +1280,7 @@ mod tests {
         let pay_receipt = test
             .alice_client
             .erc721()
-            .barter()
+            .payment()
             .pay_erc721_and_collect(buy_attestation)
             .await?;
 
