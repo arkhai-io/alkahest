@@ -1,11 +1,11 @@
 //! Obligation clients module
 //!
 //! This module contains clients for interacting with various obligation contracts:
-//! - `erc20`: ERC20 token obligations (escrow, payment, barter)
-//! - `erc721`: ERC721 token obligations (escrow, payment, barter)
-//! - `erc1155`: ERC1155 token obligations (escrow, payment, barter)
-//! - `native_token`: Native token (ETH) obligations (escrow, payment, barter)
-//! - `token_bundle`: Token bundle obligations (escrow, payment, barter)
+//! - `erc20`: ERC20 token obligations (escrow, payment)
+//! - `erc721`: ERC721 token obligations (escrow, payment)
+//! - `erc1155`: ERC1155 token obligations (escrow, payment)
+//! - `native_token`: Native token (ETH) obligations (escrow, payment)
+//! - `token_bundle`: Token bundle obligations (escrow, payment)
 //! - `attestation`: Attestation obligations
 //! - `string`: String-based obligations
 
@@ -34,5 +34,5 @@ pub use erc1155::{PyERC1155EscrowObligationData, PyERC1155PaymentObligationData}
 pub use erc20::{PyERC20EscrowObligationData, PyERC20PaymentObligationData};
 pub use erc721::{PyERC721EscrowObligationData, PyERC721PaymentObligationData};
 pub use native_token::PyNativeTokenPaymentObligationData;
-pub use token_bundle::PyTokenBundlePaymentObligationData;
 pub use string::PyStringObligationData;
+pub use token_bundle::PyTokenBundlePaymentObligationData;

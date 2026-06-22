@@ -91,4 +91,27 @@ impl Payment {
             ))
         })
     }
+
+    /// Pays the token-bundle demand for an escrow and collects the escrow atomically.
+    pub fn pay_bundle_and_collect<'py>(
+        &self,
+        py: pyo3::Python<'py>,
+        escrow_uid: String,
+    ) -> PyResult<pyo3::Bound<'py, pyo3::PyAny>> {
+        let inner = self.inner.clone();
+        pyo3_async_runtimes::tokio::future_into_py(py, async move {
+            let receipt = inner
+                .payment()
+                .pay_bundle_and_collect(escrow_uid.parse().map_err(map_parse_to_pyerr)?)
+                .await
+                .map_err(map_eyre_to_pyerr)?;
+            Ok(LogWithHash::<AttestedLog> {
+                log: get_attested_event(receipt.clone())
+                    .map_err(map_eyre_to_pyerr)?
+                    .data
+                    .into(),
+                transaction_hash: receipt.transaction_hash.to_string(),
+            })
+        })
+    }
 }

@@ -29,7 +29,7 @@ impl Util {
     ///
     /// Args:
     ///     token: The token data including address and amount
-    ///     purpose: Either "payment" or "escrow"
+    ///     purpose: Either "payment", "escrow", or "atomic_payment"
     ///
     /// Returns:
     ///     Transaction hash as string
@@ -44,7 +44,7 @@ impl Util {
             let purpose = match purpose.as_str() {
                 "payment" => alkahest_rs::types::ApprovalPurpose::Payment,
                 "escrow" => alkahest_rs::types::ApprovalPurpose::Escrow,
-                "barter" => alkahest_rs::types::ApprovalPurpose::BarterUtils,
+                "atomic_payment" => alkahest_rs::types::ApprovalPurpose::AtomicPayment,
                 _ => return Err(pyo3::exceptions::PyValueError::new_err("Invalid purpose")),
             };
             let receipt = inner
@@ -61,7 +61,7 @@ impl Util {
     ///
     /// Args:
     ///     token: The token data including address and amount
-    ///     purpose: Either "payment" or "escrow"
+    ///     purpose: Either "payment", "escrow", or "atomic_payment"
     ///
     /// Returns:
     ///     Transaction hash as string if approval was needed, None otherwise
@@ -76,7 +76,7 @@ impl Util {
             let purpose = match purpose.as_str() {
                 "payment" => alkahest_rs::types::ApprovalPurpose::Payment,
                 "escrow" => alkahest_rs::types::ApprovalPurpose::Escrow,
-                "barter" => alkahest_rs::types::ApprovalPurpose::BarterUtils,
+                "atomic_payment" => alkahest_rs::types::ApprovalPurpose::AtomicPayment,
                 _ => return Err(pyo3::exceptions::PyValueError::new_err("Invalid purpose")),
             };
             let receipt = inner

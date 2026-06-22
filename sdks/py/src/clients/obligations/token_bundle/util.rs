@@ -33,7 +33,7 @@ impl Util {
             let purpose = match purpose.as_str() {
                 "payment" => alkahest_rs::types::ApprovalPurpose::Payment,
                 "escrow" => alkahest_rs::types::ApprovalPurpose::Escrow,
-                "barter" => alkahest_rs::types::ApprovalPurpose::BarterUtils,
+                "atomic_payment" => alkahest_rs::types::ApprovalPurpose::AtomicPayment,
                 _ => return Err(map_eyre_to_pyerr(eyre::eyre!("Invalid purpose"))),
             };
             let receipts = inner
@@ -54,7 +54,7 @@ impl Util {
     ///
     /// Args:
     ///     token: The token bundle data containing ERC1155 tokens to revoke
-    ///     purpose: Either "payment", "escrow", or "barter"
+    ///     purpose: Either "payment", "escrow", or "atomic_payment"
     ///
     /// Returns:
     ///     Transaction hash of the last revoke transaction as string
@@ -69,7 +69,7 @@ impl Util {
             let purpose = match purpose.as_str() {
                 "payment" => alkahest_rs::types::ApprovalPurpose::Payment,
                 "escrow" => alkahest_rs::types::ApprovalPurpose::Escrow,
-                "barter" => alkahest_rs::types::ApprovalPurpose::BarterUtils,
+                "atomic_payment" => alkahest_rs::types::ApprovalPurpose::AtomicPayment,
                 _ => return Err(map_eyre_to_pyerr(eyre::eyre!("Invalid purpose"))),
             };
             let receipts = inner

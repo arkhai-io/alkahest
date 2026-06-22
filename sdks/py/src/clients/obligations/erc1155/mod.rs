@@ -1,6 +1,5 @@
 //! ERC1155 obligations module
 
-pub mod barter_utils;
 pub mod escrow;
 pub mod payment;
 pub mod util;
@@ -35,12 +34,6 @@ impl Erc1155Client {
     #[getter]
     pub fn payment(&self) -> payment::Payment {
         payment::Payment::new(self.inner.clone())
-    }
-
-    /// Access barter utilities API
-    #[getter]
-    pub fn barter(&self) -> barter_utils::BarterUtils {
-        barter_utils::BarterUtils::new(self.inner.clone())
     }
 
     /// Access utility API (approvals)

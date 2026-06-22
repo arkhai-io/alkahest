@@ -34,7 +34,7 @@ impl Util {
             let purpose = match purpose.as_str() {
                 "payment" => alkahest_rs::types::ApprovalPurpose::Payment,
                 "escrow" => alkahest_rs::types::ApprovalPurpose::Escrow,
-                "barter" => alkahest_rs::types::ApprovalPurpose::BarterUtils,
+                "atomic_payment" => alkahest_rs::types::ApprovalPurpose::AtomicPayment,
                 _ => return Err(map_eyre_to_pyerr(eyre::eyre!("Invalid purpose"))),
             };
             let receipt = inner
@@ -59,7 +59,7 @@ impl Util {
             let purpose = match purpose.as_str() {
                 "payment" => alkahest_rs::types::ApprovalPurpose::Payment,
                 "escrow" => alkahest_rs::types::ApprovalPurpose::Escrow,
-                "barter" => alkahest_rs::types::ApprovalPurpose::BarterUtils,
+                "atomic_payment" => alkahest_rs::types::ApprovalPurpose::AtomicPayment,
                 _ => return Err(map_eyre_to_pyerr(eyre::eyre!("Invalid purpose"))),
             };
             let receipt = inner

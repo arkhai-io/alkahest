@@ -681,8 +681,11 @@ fn alkahest_py(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<crate::types::PyErc20Addresses>()?;
     m.add_class::<crate::types::PyErc721Addresses>()?;
     m.add_class::<crate::types::PyErc1155Addresses>()?;
+    m.add_class::<crate::types::PyNativeTokenAddresses>()?;
     m.add_class::<crate::types::PyTokenBundleAddresses>()?;
     m.add_class::<crate::types::PyAttestationAddresses>()?;
+    m.add_class::<crate::types::PyHookBasedAddresses>()?;
+    m.add_class::<crate::types::PySplittersAddresses>()?;
     m.add_class::<crate::types::PyStringObligationAddresses>()?;
     m.add_class::<crate::types::PyCommitRevealObligationAddresses>()?;
     m.add_class::<crate::types::PyArbitersAddresses>()?;

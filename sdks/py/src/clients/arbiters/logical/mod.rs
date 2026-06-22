@@ -285,6 +285,10 @@ impl From<DecodedDemand> for PyDecodedDemand {
                 demand_type: "ERC8004Arbiter".to_string(),
                 raw_data: Some(data.abi_encode()),
             },
+            DecodedDemand::ReferencesEscrowArbiter => Self {
+                demand_type: "ReferencesEscrowArbiter".to_string(),
+                raw_data: None,
+            },
             DecodedDemand::AnyArbiter(_) => Self {
                 demand_type: "AnyArbiter".to_string(),
                 raw_data: None, // Nested logical arbiters not serialized

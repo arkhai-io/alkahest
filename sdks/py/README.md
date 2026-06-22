@@ -47,7 +47,8 @@ The Python SDK wraps the Rust SDK via PyO3. Some type conventions differ from Ru
 - `FixedBytes<32>` and `Address` are Python strings starting with `"0x"`
 - `Bytes` is Python `bytes` (e.g., `b"..."`)
 - Structs like `ArbiterData` and `Erc20Data` are dictionaries with field names matching the Rust struct (e.g., `{"arbiter": "0x...", "demand": b"..."}`)
-- `ApprovalPurpose` is a string: `"escrow"`, `"payment"`, or `"barter"`
+- `ApprovalPurpose` is a string: `"escrow"`, `"payment"`, or `"atomic_payment"`
+- Atomic payment collection helpers live under each token payment client, e.g. `client.erc20.payment.pay_erc20_and_collect(escrow_uid)`
 
 For arbiter demands not explicitly supported by the SDK, you'll need to manually ABI-encode the Solidity struct, e.g. with [eth_abi](https://eth-abi.readthedocs.io/en/latest/encoding.html).
 

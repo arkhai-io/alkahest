@@ -1,6 +1,5 @@
 //! TokenBundle obligations module
 
-pub mod barter_utils;
 pub mod escrow;
 pub mod payment;
 pub mod util;
@@ -35,12 +34,6 @@ impl TokenBundleClient {
     #[getter]
     pub fn payment(&self) -> payment::Payment {
         payment::Payment::new(self.inner.clone())
-    }
-
-    /// Access barter utilities API
-    #[getter]
-    pub fn barter(&self) -> barter_utils::BarterUtils {
-        barter_utils::BarterUtils::new(self.inner.clone())
     }
 
     /// Access utility API (approvals)
@@ -140,15 +133,24 @@ impl PyTokenBundlePaymentObligationData {
         };
 
         fn parse_addresses(values: &[String]) -> PyResult<Vec<Address>> {
-            values.iter().map(|value| value.parse().map_err(map_parse_to_pyerr)).collect()
+            values
+                .iter()
+                .map(|value| value.parse().map_err(map_parse_to_pyerr))
+                .collect()
         }
 
         fn parse_u256s(values: &[String]) -> PyResult<Vec<U256>> {
-            values.iter().map(|value| value.parse().map_err(map_parse_to_pyerr)).collect()
+            values
+                .iter()
+                .map(|value| value.parse().map_err(map_parse_to_pyerr))
+                .collect()
         }
 
         Ok(TokenBundlePaymentObligation::ObligationData {
-            nativeAmount: obligation.native_amount.parse().map_err(map_parse_to_pyerr)?,
+            nativeAmount: obligation
+                .native_amount
+                .parse()
+                .map_err(map_parse_to_pyerr)?,
             erc20Tokens: parse_addresses(&obligation.erc20_tokens)?,
             erc20Amounts: parse_u256s(&obligation.erc20_amounts)?,
             erc721Tokens: parse_addresses(&obligation.erc721_tokens)?,

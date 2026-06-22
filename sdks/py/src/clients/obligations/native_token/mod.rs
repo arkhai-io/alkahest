@@ -3,9 +3,7 @@
 //! This module provides functionality for native token (ETH) operations including:
 //! - Escrow obligations (unconditional and default)
 //! - Payment obligations
-//! - Barter utilities for atomic settlement
 
-pub mod barter_utils;
 pub mod escrow;
 pub mod payment;
 
@@ -16,10 +14,9 @@ use crate::error_handling::map_parse_to_pyerr;
 
 /// Client for interacting with native token (ETH) operations.
 ///
-/// Provides access to escrow, payment, and barter APIs via properties:
+/// Provides access to escrow and payment APIs via properties:
 /// - `client.native_token.escrow.default.create(...)`
 /// - `client.native_token.payment.pay(...)`
-/// - `client.native_token.barter.pay_native_and_collect(...)`
 #[pyclass]
 #[derive(Clone)]
 pub struct NativeTokenClient {
@@ -44,12 +41,6 @@ impl NativeTokenClient {
     #[getter]
     pub fn payment(&self) -> payment::Payment {
         payment::Payment::new(self.inner.clone())
-    }
-
-    /// Access barter utilities API
-    #[getter]
-    pub fn barter(&self) -> barter_utils::BarterUtils {
-        barter_utils::BarterUtils::new(self.inner.clone())
     }
 }
 

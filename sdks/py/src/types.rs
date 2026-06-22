@@ -7,7 +7,7 @@ macro_rules! client_address_config {
         #[derive(FromPyObject)]
         pub struct $name {
             pub eas: String,
-            pub barter_utils: String,
+            pub atomic_payment_utils: String,
             pub escrow_obligation_default: String,
             pub escrow_obligation_unconditional: String,
             pub payment_obligation: String,
@@ -31,11 +31,33 @@ pub struct OracleAddresses {
 pub struct AttestationAddresses {
     pub eas: String,
     pub eas_schema_registry: String,
-    pub barter_utils: String,
+    pub atomic_attestation_utils: String,
     pub escrow_obligation_default: String,
     pub escrow_obligation_unconditional: String,
     pub escrow_obligation_2_default: String,
     pub escrow_obligation_2_unconditional: String,
+}
+
+#[derive(FromPyObject)]
+pub struct HookBasedAddresses {
+    pub eas: String,
+    pub hook_escrow_obligation: String,
+    pub hooks_escrow_obligation: String,
+    pub erc20_escrow_hook: String,
+    pub erc721_escrow_hook: String,
+    pub erc1155_escrow_hook: String,
+    pub native_token_escrow_hook: String,
+    pub attestation_escrow_hook: String,
+    pub attestation_reference_escrow_hook: String,
+}
+
+#[derive(FromPyObject)]
+pub struct SplittersAddresses {
+    pub erc20_splitter: String,
+    pub erc1155_splitter: String,
+    pub native_token_splitter: String,
+    pub token_bundle_splitter: String,
+    pub token_bundle_splitter_unvalidated: String,
 }
 
 #[derive(FromPyObject)]
@@ -45,6 +67,7 @@ pub struct ArbitersAddresses {
     pub trusted_oracle_arbiter: String,
     pub intrinsics_arbiter: String,
     pub erc8004_arbiter: String,
+    pub references_escrow_arbiter: String,
     pub any_arbiter: String,
     pub all_arbiter: String,
     pub attester_arbiter: String,
@@ -123,6 +146,8 @@ pub struct DefaultExtensionConfig {
     pub erc1155_addresses: Option<Erc1155Addresses>,
     pub native_token_addresses: Option<NativeTokenAddresses>,
     pub token_bundle_addresses: Option<TokenBundleAddresses>,
+    pub hook_based_addresses: Option<HookBasedAddresses>,
+    pub splitters_addresses: Option<SplittersAddresses>,
     pub attestation_addresses: Option<AttestationAddresses>,
     pub arbiters_addresses: Option<ArbitersAddresses>,
     pub string_obligation_addresses: Option<StringObligationAddresses>,
@@ -146,7 +171,7 @@ macro_rules! try_from_address_config {
 
                 Ok(Self {
                     eas: parse_address!(eas),
-                    barter_utils: parse_address!(barter_utils),
+                    atomic_payment_utils: parse_address!(atomic_payment_utils),
                     escrow_obligation_default: parse_address!(escrow_obligation_default),
                     escrow_obligation_unconditional: parse_address!(
                         escrow_obligation_unconditional
@@ -192,11 +217,63 @@ impl TryFrom<AttestationAddresses> for alkahest_rs::clients::attestation::Attest
         Ok(Self {
             eas: parse_address!(eas),
             eas_schema_registry: parse_address!(eas_schema_registry),
-            barter_utils: parse_address!(barter_utils),
+            atomic_attestation_utils: parse_address!(atomic_attestation_utils),
             escrow_obligation_default: parse_address!(escrow_obligation_default),
             escrow_obligation_unconditional: parse_address!(escrow_obligation_unconditional),
             escrow_obligation_2_default: parse_address!(escrow_obligation_2_default),
             escrow_obligation_2_unconditional: parse_address!(escrow_obligation_2_unconditional),
+        })
+    }
+}
+
+impl TryFrom<HookBasedAddresses>
+    for alkahest_rs::clients::obligations::hook_based::HookBasedAddresses
+{
+    type Error = PyErr;
+
+    fn try_from(value: HookBasedAddresses) -> PyResult<Self> {
+        macro_rules! parse_address {
+            ($name:ident) => {
+                value
+                    .$name
+                    .parse()
+                    .map_err(|_| PyValueError::new_err("invalid address"))?
+            };
+        }
+
+        Ok(Self {
+            eas: parse_address!(eas),
+            hook_escrow_obligation: parse_address!(hook_escrow_obligation),
+            hooks_escrow_obligation: parse_address!(hooks_escrow_obligation),
+            erc20_escrow_hook: parse_address!(erc20_escrow_hook),
+            erc721_escrow_hook: parse_address!(erc721_escrow_hook),
+            erc1155_escrow_hook: parse_address!(erc1155_escrow_hook),
+            native_token_escrow_hook: parse_address!(native_token_escrow_hook),
+            attestation_escrow_hook: parse_address!(attestation_escrow_hook),
+            attestation_reference_escrow_hook: parse_address!(attestation_reference_escrow_hook),
+        })
+    }
+}
+
+impl TryFrom<SplittersAddresses> for alkahest_rs::clients::splitters::SplittersAddresses {
+    type Error = PyErr;
+
+    fn try_from(value: SplittersAddresses) -> PyResult<Self> {
+        macro_rules! parse_address {
+            ($name:ident) => {
+                value
+                    .$name
+                    .parse()
+                    .map_err(|_| PyValueError::new_err("invalid address"))?
+            };
+        }
+
+        Ok(Self {
+            erc20_splitter: parse_address!(erc20_splitter),
+            erc1155_splitter: parse_address!(erc1155_splitter),
+            native_token_splitter: parse_address!(native_token_splitter),
+            token_bundle_splitter: parse_address!(token_bundle_splitter),
+            token_bundle_splitter_unvalidated: parse_address!(token_bundle_splitter_unvalidated),
         })
     }
 }
@@ -246,6 +323,14 @@ impl TryFrom<DefaultExtensionConfig> for alkahest_rs::DefaultExtensionConfig {
                 .token_bundle_addresses
                 .and_then(|x| x.try_into().ok())
                 .unwrap_or_default(),
+            hook_based_addresses: value
+                .hook_based_addresses
+                .and_then(|x| x.try_into().ok())
+                .unwrap_or_default(),
+            splitters_addresses: value
+                .splitters_addresses
+                .and_then(|x| x.try_into().ok())
+                .unwrap_or_default(),
             attestation_addresses: value
                 .attestation_addresses
                 .and_then(|x| x.try_into().ok())
@@ -286,6 +371,7 @@ impl TryFrom<ArbitersAddresses> for alkahest_rs::clients::arbiters::ArbitersAddr
             trusted_oracle_arbiter: parse_address!(trusted_oracle_arbiter),
             intrinsics_arbiter: parse_address!(intrinsics_arbiter),
             erc8004_arbiter: parse_address!(erc8004_arbiter),
+            references_escrow_arbiter: parse_address!(references_escrow_arbiter),
             any_arbiter: parse_address!(any_arbiter),
             all_arbiter: parse_address!(all_arbiter),
             attester_arbiter: parse_address!(attester_arbiter),
@@ -575,6 +661,10 @@ pub struct PyDefaultExtensionConfig {
     #[pyo3(get)]
     pub token_bundle_addresses: Option<PyTokenBundleAddresses>,
     #[pyo3(get)]
+    pub hook_based_addresses: Option<PyHookBasedAddresses>,
+    #[pyo3(get)]
+    pub splitters_addresses: Option<PySplittersAddresses>,
+    #[pyo3(get)]
     pub attestation_addresses: Option<PyAttestationAddresses>,
     #[pyo3(get)]
     pub arbiters_addresses: Option<PyArbitersAddresses>,
@@ -596,6 +686,8 @@ impl From<&alkahest_rs::DefaultExtensionConfig> for PyDefaultExtensionConfig {
             token_bundle_addresses: Some(PyTokenBundleAddresses::from(
                 &data.token_bundle_addresses,
             )),
+            hook_based_addresses: Some(PyHookBasedAddresses::from(&data.hook_based_addresses)),
+            splitters_addresses: Some(PySplittersAddresses::from(&data.splitters_addresses)),
             attestation_addresses: Some(PyAttestationAddresses::from(&data.attestation_addresses)),
             arbiters_addresses: Some(PyArbitersAddresses::from(&data.arbiters_addresses)),
             string_obligation_addresses: Some(PyStringObligationAddresses::from(
@@ -677,7 +769,7 @@ macro_rules! py_address_struct {
             #[pyo3(get)]
             pub eas: String,
             #[pyo3(get)]
-            pub barter_utils: String,
+            pub atomic_payment_utils: String,
             #[pyo3(get)]
             pub escrow_obligation_default: String,
             #[pyo3(get)]
@@ -691,14 +783,14 @@ macro_rules! py_address_struct {
             #[new]
             pub fn new(
                 eas: String,
-                barter_utils: String,
+                atomic_payment_utils: String,
                 escrow_obligation_default: String,
                 escrow_obligation_unconditional: String,
                 payment_obligation: String,
             ) -> Self {
                 Self {
                     eas,
-                    barter_utils,
+                    atomic_payment_utils,
                     escrow_obligation_default,
                     escrow_obligation_unconditional,
                     payment_obligation,
@@ -710,7 +802,7 @@ macro_rules! py_address_struct {
             fn from(data: &$src) -> Self {
                 Self {
                     eas: format!("{:?}", data.eas),
-                    barter_utils: format!("{:?}", data.barter_utils),
+                    atomic_payment_utils: format!("{:?}", data.atomic_payment_utils),
                     escrow_obligation_default: format!("{:?}", data.escrow_obligation_default),
                     escrow_obligation_unconditional: format!(
                         "{:?}",
@@ -746,13 +838,134 @@ py_address_struct!(
 
 #[pyclass]
 #[derive(Clone)]
+pub struct PyHookBasedAddresses {
+    #[pyo3(get)]
+    pub eas: String,
+    #[pyo3(get)]
+    pub hook_escrow_obligation: String,
+    #[pyo3(get)]
+    pub hooks_escrow_obligation: String,
+    #[pyo3(get)]
+    pub erc20_escrow_hook: String,
+    #[pyo3(get)]
+    pub erc721_escrow_hook: String,
+    #[pyo3(get)]
+    pub erc1155_escrow_hook: String,
+    #[pyo3(get)]
+    pub native_token_escrow_hook: String,
+    #[pyo3(get)]
+    pub attestation_escrow_hook: String,
+    #[pyo3(get)]
+    pub attestation_reference_escrow_hook: String,
+}
+
+#[pymethods]
+impl PyHookBasedAddresses {
+    #[new]
+    #[allow(clippy::too_many_arguments)]
+    pub fn new(
+        eas: String,
+        hook_escrow_obligation: String,
+        hooks_escrow_obligation: String,
+        erc20_escrow_hook: String,
+        erc721_escrow_hook: String,
+        erc1155_escrow_hook: String,
+        native_token_escrow_hook: String,
+        attestation_escrow_hook: String,
+        attestation_reference_escrow_hook: String,
+    ) -> Self {
+        Self {
+            eas,
+            hook_escrow_obligation,
+            hooks_escrow_obligation,
+            erc20_escrow_hook,
+            erc721_escrow_hook,
+            erc1155_escrow_hook,
+            native_token_escrow_hook,
+            attestation_escrow_hook,
+            attestation_reference_escrow_hook,
+        }
+    }
+}
+
+impl From<&alkahest_rs::clients::hook_based::HookBasedAddresses> for PyHookBasedAddresses {
+    fn from(data: &alkahest_rs::clients::hook_based::HookBasedAddresses) -> Self {
+        Self {
+            eas: format!("{:?}", data.eas),
+            hook_escrow_obligation: format!("{:?}", data.hook_escrow_obligation),
+            hooks_escrow_obligation: format!("{:?}", data.hooks_escrow_obligation),
+            erc20_escrow_hook: format!("{:?}", data.erc20_escrow_hook),
+            erc721_escrow_hook: format!("{:?}", data.erc721_escrow_hook),
+            erc1155_escrow_hook: format!("{:?}", data.erc1155_escrow_hook),
+            native_token_escrow_hook: format!("{:?}", data.native_token_escrow_hook),
+            attestation_escrow_hook: format!("{:?}", data.attestation_escrow_hook),
+            attestation_reference_escrow_hook: format!(
+                "{:?}",
+                data.attestation_reference_escrow_hook
+            ),
+        }
+    }
+}
+
+#[pyclass]
+#[derive(Clone)]
+pub struct PySplittersAddresses {
+    #[pyo3(get)]
+    pub erc20_splitter: String,
+    #[pyo3(get)]
+    pub erc1155_splitter: String,
+    #[pyo3(get)]
+    pub native_token_splitter: String,
+    #[pyo3(get)]
+    pub token_bundle_splitter: String,
+    #[pyo3(get)]
+    pub token_bundle_splitter_unvalidated: String,
+}
+
+#[pymethods]
+impl PySplittersAddresses {
+    #[new]
+    pub fn new(
+        erc20_splitter: String,
+        erc1155_splitter: String,
+        native_token_splitter: String,
+        token_bundle_splitter: String,
+        token_bundle_splitter_unvalidated: String,
+    ) -> Self {
+        Self {
+            erc20_splitter,
+            erc1155_splitter,
+            native_token_splitter,
+            token_bundle_splitter,
+            token_bundle_splitter_unvalidated,
+        }
+    }
+}
+
+impl From<&alkahest_rs::clients::splitters::SplittersAddresses> for PySplittersAddresses {
+    fn from(data: &alkahest_rs::clients::splitters::SplittersAddresses) -> Self {
+        Self {
+            erc20_splitter: format!("{:?}", data.erc20_splitter),
+            erc1155_splitter: format!("{:?}", data.erc1155_splitter),
+            native_token_splitter: format!("{:?}", data.native_token_splitter),
+            token_bundle_splitter: format!("{:?}", data.token_bundle_splitter),
+            token_bundle_splitter_unvalidated: format!(
+                "{:?}",
+                data.token_bundle_splitter_unvalidated
+            ),
+        }
+    }
+}
+
+#[pyclass]
+#[derive(Clone)]
 pub struct PyAttestationAddresses {
     #[pyo3(get)]
     pub eas: String,
     #[pyo3(get)]
     pub eas_schema_registry: String,
     #[pyo3(get)]
-    pub barter_utils: String,
+    pub atomic_attestation_utils: String,
     #[pyo3(get)]
     pub escrow_obligation_default: String,
     #[pyo3(get)]
@@ -769,7 +982,7 @@ impl PyAttestationAddresses {
     pub fn new(
         eas: String,
         eas_schema_registry: String,
-        barter_utils: String,
+        atomic_attestation_utils: String,
         escrow_obligation_default: String,
         escrow_obligation_unconditional: String,
         escrow_obligation_2_default: String,
@@ -778,7 +991,7 @@ impl PyAttestationAddresses {
         Self {
             eas,
             eas_schema_registry,
-            barter_utils,
+            atomic_attestation_utils,
             escrow_obligation_default,
             escrow_obligation_unconditional,
             escrow_obligation_2_default,
@@ -792,7 +1005,7 @@ impl From<&alkahest_rs::clients::attestation::AttestationAddresses> for PyAttest
         Self {
             eas: format!("{:?}", data.eas),
             eas_schema_registry: format!("{:?}", data.eas_schema_registry),
-            barter_utils: format!("{:?}", data.barter_utils),
+            atomic_attestation_utils: format!("{:?}", data.atomic_attestation_utils),
             escrow_obligation_default: format!("{:?}", data.escrow_obligation_default),
             escrow_obligation_unconditional: format!("{:?}", data.escrow_obligation_unconditional),
             escrow_obligation_2_default: format!("{:?}", data.escrow_obligation_2_default),
@@ -816,6 +1029,8 @@ pub struct PyArbitersAddresses {
     pub intrinsics_arbiter: String,
     #[pyo3(get)]
     pub erc8004_arbiter: String,
+    #[pyo3(get)]
+    pub references_escrow_arbiter: String,
     #[pyo3(get)]
     pub any_arbiter: String,
     #[pyo3(get)]
@@ -862,6 +1077,7 @@ impl From<&alkahest_rs::clients::arbiters::ArbitersAddresses> for PyArbitersAddr
             trusted_oracle_arbiter: format!("{:?}", data.trusted_oracle_arbiter),
             intrinsics_arbiter: format!("{:?}", data.intrinsics_arbiter),
             erc8004_arbiter: format!("{:?}", data.erc8004_arbiter),
+            references_escrow_arbiter: format!("{:?}", data.references_escrow_arbiter),
             any_arbiter: format!("{:?}", data.any_arbiter),
             all_arbiter: format!("{:?}", data.all_arbiter),
             attester_arbiter: format!("{:?}", data.attester_arbiter),
