@@ -7,25 +7,45 @@ import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {EASDeployer} from "test/utils/EASDeployer.sol";
 import {AtomicPaymentUtils} from "@src/utils/atomic/AtomicPaymentUtils.sol";
 import {AtomicAttestationUtils} from "@src/utils/atomic/AtomicAttestationUtils.sol";
+import {ERC20Splitter} from "@src/utils/splitters/ERC20Splitter.sol";
+import {ERC1155Splitter} from "@src/utils/splitters/ERC1155Splitter.sol";
+import {NativeTokenSplitter} from "@src/utils/splitters/NativeTokenSplitter.sol";
+import {TokenBundleSplitter} from "@src/utils/splitters/TokenBundleSplitter.sol";
+import {TokenBundleSplitterUnvalidated} from "@src/utils/splitters/TokenBundleSplitterUnvalidated.sol";
 
 // ERC20 Contracts
 import {ERC20EscrowObligation} from "@src/obligations/escrow/default/ERC20EscrowObligation.sol";
+import {
+    UnconditionalERC20EscrowObligation
+} from "@src/obligations/escrow/unconditional/UnconditionalERC20EscrowObligation.sol";
 import {ERC20PaymentObligation} from "@src/obligations/payment/ERC20PaymentObligation.sol";
 
 // ERC721 Contracts
 import {ERC721EscrowObligation} from "@src/obligations/escrow/default/ERC721EscrowObligation.sol";
+import {
+    UnconditionalERC721EscrowObligation
+} from "@src/obligations/escrow/unconditional/UnconditionalERC721EscrowObligation.sol";
 import {ERC721PaymentObligation} from "@src/obligations/payment/ERC721PaymentObligation.sol";
 
 // ERC1155 Contracts
 import {ERC1155EscrowObligation} from "@src/obligations/escrow/default/ERC1155EscrowObligation.sol";
+import {
+    UnconditionalERC1155EscrowObligation
+} from "@src/obligations/escrow/unconditional/UnconditionalERC1155EscrowObligation.sol";
 import {ERC1155PaymentObligation} from "@src/obligations/payment/ERC1155PaymentObligation.sol";
 
 // TokenBundle Contracts
 import {TokenBundleEscrowObligation} from "@src/obligations/escrow/default/TokenBundleEscrowObligation.sol";
+import {
+    UnconditionalTokenBundleEscrowObligation
+} from "@src/obligations/escrow/unconditional/UnconditionalTokenBundleEscrowObligation.sol";
 import {TokenBundlePaymentObligation} from "@src/obligations/payment/TokenBundlePaymentObligation.sol";
 
 // Native Token Contracts
 import {NativeTokenEscrowObligation} from "@src/obligations/escrow/default/NativeTokenEscrowObligation.sol";
+import {
+    UnconditionalNativeTokenEscrowObligation
+} from "@src/obligations/escrow/unconditional/UnconditionalNativeTokenEscrowObligation.sol";
 import {NativeTokenPaymentObligation} from "@src/obligations/payment/NativeTokenPaymentObligation.sol";
 
 // Attestation Contracts
@@ -33,12 +53,29 @@ import {AttestationEscrowObligation} from "@src/obligations/escrow/default/Attes
 import {
     AttestationReferenceEscrowObligation
 } from "@src/obligations/escrow/default/AttestationReferenceEscrowObligation.sol";
+import {
+    UnconditionalAttestationEscrowObligation
+} from "@src/obligations/escrow/unconditional/UnconditionalAttestationEscrowObligation.sol";
+import {
+    UnconditionalAttestationReferenceEscrowObligation
+} from "@src/obligations/escrow/unconditional/UnconditionalAttestationReferenceEscrowObligation.sol";
+
+// Hook-based Escrow Contracts
+import {HookEscrowObligation} from "@src/obligations/escrow/hook-based/HookEscrowObligation.sol";
+import {HooksEscrowObligation} from "@src/obligations/escrow/hook-based/HooksEscrowObligation.sol";
+import {ERC20EscrowHook} from "@src/obligations/escrow/hook-based/hooks/ERC20EscrowHook.sol";
+import {ERC721EscrowHook} from "@src/obligations/escrow/hook-based/hooks/ERC721EscrowHook.sol";
+import {ERC1155EscrowHook} from "@src/obligations/escrow/hook-based/hooks/ERC1155EscrowHook.sol";
+import {NativeTokenEscrowHook} from "@src/obligations/escrow/hook-based/hooks/NativeTokenEscrowHook.sol";
+import {AttestationEscrowHook} from "@src/obligations/escrow/hook-based/hooks/AttestationEscrowHook.sol";
+import {
+    AttestationReferenceEscrowHook
+} from "@src/obligations/escrow/hook-based/hooks/AttestationReferenceEscrowHook.sol";
 
 // Arbiter Contracts
-// import {SpecificAttestationArbiter} from "@src/arbiters/SpecificAttestationArbiter.sol";
-// import {TrustedPartyArbiter} from "@src/arbiters/TrustedPartyArbiter.sol";
 import {TrivialArbiter} from "@src/arbiters/TrivialArbiter.sol";
 import {TrustedOracleArbiter} from "@src/arbiters/TrustedOracleArbiter.sol";
+import {ReferencesEscrowArbiter} from "@src/arbiters/ReferencesEscrowArbiter.sol";
 
 // Additional Arbiters
 import {AllArbiter} from "@src/arbiters/logical/AllArbiter.sol";
@@ -116,10 +153,9 @@ contract Deploy is Script {
         }
 
         // Deploy arbiters
-        // SpecificAttestationArbiter specificArbiter = new SpecificAttestationArbiter();
-        // TrustedPartyArbiter trustedPartyArbiter = new TrustedPartyArbiter();
         TrivialArbiter trivialArbiter = new TrivialArbiter();
         TrustedOracleArbiter trustedOracleArbiter = new TrustedOracleArbiter(IEAS(easAddress));
+        ReferencesEscrowArbiter referencesEscrowArbiter = new ReferencesEscrowArbiter();
 
         // Deploy Additional Arbiters
         AllArbiter allArbiter = new AllArbiter();
@@ -166,30 +202,40 @@ contract Deploy is Script {
         // Deploy ERC20 contracts
         ERC20EscrowObligation erc20Escrow =
             new ERC20EscrowObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
+        UnconditionalERC20EscrowObligation erc20UnconditionalEscrow =
+            new UnconditionalERC20EscrowObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
         ERC20PaymentObligation erc20Payment =
             new ERC20PaymentObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
 
         // Deploy ERC721 contracts
         ERC721EscrowObligation erc721Escrow =
             new ERC721EscrowObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
+        UnconditionalERC721EscrowObligation erc721UnconditionalEscrow =
+            new UnconditionalERC721EscrowObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
         ERC721PaymentObligation erc721Payment =
             new ERC721PaymentObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
 
         // Deploy ERC1155 contracts
         ERC1155EscrowObligation erc1155Escrow =
             new ERC1155EscrowObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
+        UnconditionalERC1155EscrowObligation erc1155UnconditionalEscrow =
+            new UnconditionalERC1155EscrowObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
         ERC1155PaymentObligation erc1155Payment =
             new ERC1155PaymentObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
 
         // Deploy TokenBundle contracts
         TokenBundleEscrowObligation bundleEscrow =
             new TokenBundleEscrowObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
+        UnconditionalTokenBundleEscrowObligation bundleUnconditionalEscrow =
+            new UnconditionalTokenBundleEscrowObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
         TokenBundlePaymentObligation bundlePayment =
             new TokenBundlePaymentObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
 
         // Deploy Native Token contracts
         NativeTokenEscrowObligation nativeEscrow =
             new NativeTokenEscrowObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
+        UnconditionalNativeTokenEscrowObligation nativeUnconditionalEscrow =
+            new UnconditionalNativeTokenEscrowObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
         NativeTokenPaymentObligation nativePayment =
             new NativeTokenPaymentObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
 
@@ -201,9 +247,35 @@ contract Deploy is Script {
         // Deploy attestation contracts
         AttestationEscrowObligation attestationEscrow =
             new AttestationEscrowObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
-        AttestationReferenceEscrowObligation attestationEscrow2 =
+        UnconditionalAttestationEscrowObligation attestationUnconditionalEscrow =
+            new UnconditionalAttestationEscrowObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
+        AttestationReferenceEscrowObligation attestationReferenceEscrow =
             new AttestationReferenceEscrowObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
+        UnconditionalAttestationReferenceEscrowObligation attestationReferenceUnconditionalEscrow = new UnconditionalAttestationReferenceEscrowObligation(
+            IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress)
+        );
         AtomicAttestationUtils atomicAttestationUtils = new AtomicAttestationUtils(IEAS(easAddress));
+
+        // Deploy hook-based escrow contracts and hooks
+        HookEscrowObligation hookEscrow =
+            new HookEscrowObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
+        HooksEscrowObligation hooksEscrow =
+            new HooksEscrowObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
+        ERC20EscrowHook erc20EscrowHook = new ERC20EscrowHook();
+        ERC721EscrowHook erc721EscrowHook = new ERC721EscrowHook();
+        ERC1155EscrowHook erc1155EscrowHook = new ERC1155EscrowHook();
+        NativeTokenEscrowHook nativeTokenEscrowHook = new NativeTokenEscrowHook();
+        AttestationEscrowHook attestationEscrowHook = new AttestationEscrowHook(IEAS(easAddress));
+        AttestationReferenceEscrowHook attestationReferenceEscrowHook =
+            new AttestationReferenceEscrowHook(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
+
+        // Deploy splitters
+        ERC20Splitter erc20Splitter = new ERC20Splitter(IEAS(easAddress));
+        ERC1155Splitter erc1155Splitter = new ERC1155Splitter(IEAS(easAddress));
+        NativeTokenSplitter nativeTokenSplitter = new NativeTokenSplitter(IEAS(easAddress));
+        TokenBundleSplitter tokenBundleSplitter = new TokenBundleSplitter(IEAS(easAddress));
+        TokenBundleSplitterUnvalidated tokenBundleSplitterUnvalidated =
+            new TokenBundleSplitterUnvalidated(IEAS(easAddress));
 
         vm.stopBroadcast();
 
@@ -213,10 +285,9 @@ contract Deploy is Script {
         console.log("Schema Registry:", schemaRegistryAddress);
 
         console.log("\nArbiters:");
-        // console.log("SpecificAttestationArbiter:", address(specificArbiter));
-        // console.log("TrustedPartyArbiter:", address(trustedPartyArbiter));
         console.log("TrivialArbiter:", address(trivialArbiter));
         console.log("TrustedOracleArbiter:", address(trustedOracleArbiter));
+        console.log("ReferencesEscrowArbiter:", address(referencesEscrowArbiter));
 
         console.log("\nAdditional Arbiters:");
         console.log("AllArbiter:", address(allArbiter));
@@ -252,22 +323,27 @@ contract Deploy is Script {
 
         console.log("\nERC20 Contracts:");
         console.log("ERC20EscrowObligation:", address(erc20Escrow));
+        console.log("UnconditionalERC20EscrowObligation:", address(erc20UnconditionalEscrow));
         console.log("ERC20PaymentObligation:", address(erc20Payment));
 
         console.log("\nERC721 Contracts:");
         console.log("ERC721EscrowObligation:", address(erc721Escrow));
+        console.log("UnconditionalERC721EscrowObligation:", address(erc721UnconditionalEscrow));
         console.log("ERC721PaymentObligation:", address(erc721Payment));
 
         console.log("\nERC1155 Contracts:");
         console.log("ERC1155EscrowObligation:", address(erc1155Escrow));
+        console.log("UnconditionalERC1155EscrowObligation:", address(erc1155UnconditionalEscrow));
         console.log("ERC1155PaymentObligation:", address(erc1155Payment));
 
         console.log("\nTokenBundle Contracts:");
         console.log("TokenBundleEscrowObligation:", address(bundleEscrow));
+        console.log("UnconditionalTokenBundleEscrowObligation:", address(bundleUnconditionalEscrow));
         console.log("TokenBundlePaymentObligation:", address(bundlePayment));
 
         console.log("\nNative Token Contracts:");
         console.log("NativeTokenEscrowObligation:", address(nativeEscrow));
+        console.log("UnconditionalNativeTokenEscrowObligation:", address(nativeUnconditionalEscrow));
         console.log("NativeTokenPaymentObligation:", address(nativePayment));
 
         console.log("\nPayment Utility Contracts:");
@@ -275,8 +351,29 @@ contract Deploy is Script {
 
         console.log("\nAttestation Contracts:");
         console.log("AttestationEscrowObligation:", address(attestationEscrow));
-        console.log("AttestationReferenceEscrowObligation:", address(attestationEscrow2));
+        console.log("UnconditionalAttestationEscrowObligation:", address(attestationUnconditionalEscrow));
+        console.log("AttestationReferenceEscrowObligation:", address(attestationReferenceEscrow));
+        console.log(
+            "UnconditionalAttestationReferenceEscrowObligation:", address(attestationReferenceUnconditionalEscrow)
+        );
         console.log("AtomicAttestationUtils:", address(atomicAttestationUtils));
+
+        console.log("\nHook-based Escrow Contracts:");
+        console.log("HookEscrowObligation:", address(hookEscrow));
+        console.log("HooksEscrowObligation:", address(hooksEscrow));
+        console.log("ERC20EscrowHook:", address(erc20EscrowHook));
+        console.log("ERC721EscrowHook:", address(erc721EscrowHook));
+        console.log("ERC1155EscrowHook:", address(erc1155EscrowHook));
+        console.log("NativeTokenEscrowHook:", address(nativeTokenEscrowHook));
+        console.log("AttestationEscrowHook:", address(attestationEscrowHook));
+        console.log("AttestationReferenceEscrowHook:", address(attestationReferenceEscrowHook));
+
+        console.log("\nSplitters:");
+        console.log("ERC20Splitter:", address(erc20Splitter));
+        console.log("ERC1155Splitter:", address(erc1155Splitter));
+        console.log("NativeTokenSplitter:", address(nativeTokenSplitter));
+        console.log("TokenBundleSplitter:", address(tokenBundleSplitter));
+        console.log("TokenBundleSplitterUnvalidated:", address(tokenBundleSplitterUnvalidated));
 
         // Create JSON with deployed addresses
         string memory deploymentJson = "deploymentJson";
@@ -286,18 +383,9 @@ contract Deploy is Script {
         vm.serializeAddress(deploymentJson, "easSchemaRegistry", schemaRegistryAddress);
 
         // Add arbiter addresses
-        // vm.serializeAddress(
-        //     deploymentJson,
-        //     "specificAttestationArbiter",
-        //     address(specificArbiter)
-        // );
-        // vm.serializeAddress(
-        //     deploymentJson,
-        //     "trustedPartyArbiter",
-        //     address(trustedPartyArbiter)
-        // );
         vm.serializeAddress(deploymentJson, "trivialArbiter", address(trivialArbiter));
         vm.serializeAddress(deploymentJson, "trustedOracleArbiter", address(trustedOracleArbiter));
+        vm.serializeAddress(deploymentJson, "referencesEscrowArbiter", address(referencesEscrowArbiter));
 
         // Add Additional Arbiters
         vm.serializeAddress(deploymentJson, "allArbiter", address(allArbiter));
@@ -345,36 +433,71 @@ contract Deploy is Script {
 
         // Add ERC20 addresses
         vm.serializeAddress(deploymentJson, "erc20EscrowObligation", address(erc20Escrow));
+        vm.serializeAddress(deploymentJson, "erc20UnconditionalEscrowObligation", address(erc20UnconditionalEscrow));
         vm.serializeAddress(deploymentJson, "erc20PaymentObligation", address(erc20Payment));
 
         // Add ERC721 addresses
         vm.serializeAddress(deploymentJson, "erc721EscrowObligation", address(erc721Escrow));
+        vm.serializeAddress(deploymentJson, "erc721UnconditionalEscrowObligation", address(erc721UnconditionalEscrow));
         vm.serializeAddress(deploymentJson, "erc721PaymentObligation", address(erc721Payment));
 
         // Add ERC1155 addresses
         vm.serializeAddress(deploymentJson, "erc1155EscrowObligation", address(erc1155Escrow));
+        vm.serializeAddress(deploymentJson, "erc1155UnconditionalEscrowObligation", address(erc1155UnconditionalEscrow));
         vm.serializeAddress(deploymentJson, "erc1155PaymentObligation", address(erc1155Payment));
 
         // Add TokenBundle addresses
         vm.serializeAddress(deploymentJson, "tokenBundleEscrowObligation", address(bundleEscrow));
+        vm.serializeAddress(
+            deploymentJson, "tokenBundleUnconditionalEscrowObligation", address(bundleUnconditionalEscrow)
+        );
         vm.serializeAddress(deploymentJson, "tokenBundlePaymentObligation", address(bundlePayment));
 
-        // Add atomic payment utility address under existing config keys.
-        vm.serializeAddress(deploymentJson, "erc20BarterUtils", address(atomicPaymentUtils));
-        vm.serializeAddress(deploymentJson, "erc721BarterUtils", address(atomicPaymentUtils));
-        vm.serializeAddress(deploymentJson, "erc1155BarterUtils", address(atomicPaymentUtils));
-        vm.serializeAddress(deploymentJson, "tokenBundleBarterUtils", address(atomicPaymentUtils));
-        vm.serializeAddress(deploymentJson, "nativeTokenBarterUtils", address(atomicPaymentUtils));
+        // Add atomic payment utility address under current config keys.
+        vm.serializeAddress(deploymentJson, "erc20AtomicPaymentUtils", address(atomicPaymentUtils));
+        vm.serializeAddress(deploymentJson, "erc721AtomicPaymentUtils", address(atomicPaymentUtils));
+        vm.serializeAddress(deploymentJson, "erc1155AtomicPaymentUtils", address(atomicPaymentUtils));
+        vm.serializeAddress(deploymentJson, "tokenBundleAtomicPaymentUtils", address(atomicPaymentUtils));
+        vm.serializeAddress(deploymentJson, "nativeTokenAtomicPaymentUtils", address(atomicPaymentUtils));
 
         // Add Native Token addresses
         vm.serializeAddress(deploymentJson, "nativeTokenEscrowObligation", address(nativeEscrow));
+        vm.serializeAddress(
+            deploymentJson, "nativeTokenUnconditionalEscrowObligation", address(nativeUnconditionalEscrow)
+        );
         vm.serializeAddress(deploymentJson, "nativeTokenPaymentObligation", address(nativePayment));
 
         // Add Attestation addresses
         vm.serializeAddress(deploymentJson, "attestationEscrowObligation", address(attestationEscrow));
-        vm.serializeAddress(deploymentJson, "attestationReferenceEscrowObligation", address(attestationEscrow2));
-        string memory finalJson =
-            vm.serializeAddress(deploymentJson, "atomicAttestationUtils", address(atomicAttestationUtils));
+        vm.serializeAddress(
+            deploymentJson, "attestationUnconditionalEscrowObligation", address(attestationUnconditionalEscrow)
+        );
+        vm.serializeAddress(deploymentJson, "attestationReferenceEscrowObligation", address(attestationReferenceEscrow));
+        vm.serializeAddress(
+            deploymentJson,
+            "attestationReferenceUnconditionalEscrowObligation",
+            address(attestationReferenceUnconditionalEscrow)
+        );
+        vm.serializeAddress(deploymentJson, "atomicAttestationUtils", address(atomicAttestationUtils));
+
+        // Add hook-based escrow addresses
+        vm.serializeAddress(deploymentJson, "hookEscrowObligation", address(hookEscrow));
+        vm.serializeAddress(deploymentJson, "hooksEscrowObligation", address(hooksEscrow));
+        vm.serializeAddress(deploymentJson, "erc20EscrowHook", address(erc20EscrowHook));
+        vm.serializeAddress(deploymentJson, "erc721EscrowHook", address(erc721EscrowHook));
+        vm.serializeAddress(deploymentJson, "erc1155EscrowHook", address(erc1155EscrowHook));
+        vm.serializeAddress(deploymentJson, "nativeTokenEscrowHook", address(nativeTokenEscrowHook));
+        vm.serializeAddress(deploymentJson, "attestationEscrowHook", address(attestationEscrowHook));
+        vm.serializeAddress(deploymentJson, "attestationReferenceEscrowHook", address(attestationReferenceEscrowHook));
+
+        // Add splitter addresses
+        vm.serializeAddress(deploymentJson, "erc20Splitter", address(erc20Splitter));
+        vm.serializeAddress(deploymentJson, "erc1155Splitter", address(erc1155Splitter));
+        vm.serializeAddress(deploymentJson, "nativeTokenSplitter", address(nativeTokenSplitter));
+        vm.serializeAddress(deploymentJson, "tokenBundleSplitter", address(tokenBundleSplitter));
+        string memory finalJson = vm.serializeAddress(
+            deploymentJson, "tokenBundleSplitterUnvalidated", address(tokenBundleSplitterUnvalidated)
+        );
 
         // Generate timestamp for filename
         uint256 timestamp = block.timestamp;
