@@ -90,6 +90,14 @@ pub mod arbiters {
         #[allow(missing_docs)]
         #[sol(rpc)]
         #[derive(Debug)]
+        ReferencesEscrowArbiter,
+        "src/contracts/arbiters/ReferencesEscrowArbiter.json"
+    );
+
+    sol!(
+        #[allow(missing_docs)]
+        #[sol(rpc)]
+        #[derive(Debug)]
         ERC8004Arbiter,
         "src/contracts/arbiters/ERC8004Arbiter.json"
     );

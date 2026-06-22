@@ -260,6 +260,8 @@ export const makeMinimalClient = (
     anyArbiter: contractAddresses?.anyArbiter || baseAddresses?.anyArbiter || zeroAddress,
     allArbiter: contractAddresses?.allArbiter || baseAddresses?.allArbiter || zeroAddress,
     erc8004Arbiter: contractAddresses?.erc8004Arbiter || baseAddresses?.erc8004Arbiter || zeroAddress,
+    referencesEscrowArbiter:
+      contractAddresses?.referencesEscrowArbiter || baseAddresses?.referencesEscrowArbiter || zeroAddress,
     nativeTokenAtomicPaymentUtils:
       contractAddresses?.nativeTokenAtomicPaymentUtils || baseAddresses?.nativeTokenAtomicPaymentUtils || zeroAddress,
 

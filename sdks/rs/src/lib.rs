@@ -377,10 +377,49 @@ impl<Extensions: AlkahestExtension> AlkahestClient<Extensions> {
             }
             ArbitersContract::IntrinsicsArbiter => self.arbiters().addresses.intrinsics_arbiter,
             ArbitersContract::ERC8004Arbiter => self.arbiters().addresses.erc8004_arbiter,
+            ArbitersContract::ReferencesEscrowArbiter => {
+                self.arbiters().addresses.references_escrow_arbiter
+            }
             ArbitersContract::AnyArbiter => self.arbiters().addresses.any_arbiter,
             ArbitersContract::AllArbiter => self.arbiters().addresses.all_arbiter,
             ArbitersContract::RecipientArbiter => self.arbiters().addresses.recipient_arbiter,
+            ArbitersContract::AttesterArbiter => self.arbiters().addresses.attester_arbiter,
+            ArbitersContract::SchemaArbiter => self.arbiters().addresses.schema_arbiter,
             ArbitersContract::UidArbiter => self.arbiters().addresses.uid_arbiter,
+            ArbitersContract::RefUidArbiter => self.arbiters().addresses.ref_uid_arbiter,
+            ArbitersContract::RevocableArbiter => self.arbiters().addresses.revocable_arbiter,
+            ArbitersContract::TimeAfterArbiter => self.arbiters().addresses.time_after_arbiter,
+            ArbitersContract::TimeBeforeArbiter => self.arbiters().addresses.time_before_arbiter,
+            ArbitersContract::TimeEqualArbiter => self.arbiters().addresses.time_equal_arbiter,
+            ArbitersContract::ExpirationTimeAfterArbiter => {
+                self.arbiters().addresses.expiration_time_after_arbiter
+            }
+            ArbitersContract::ExpirationTimeBeforeArbiter => {
+                self.arbiters().addresses.expiration_time_before_arbiter
+            }
+            ArbitersContract::ExpirationTimeEqualArbiter => {
+                self.arbiters().addresses.expiration_time_equal_arbiter
+            }
+            ArbitersContract::ExclusiveRevocableConfirmationArbiter => {
+                self.arbiters()
+                    .addresses
+                    .exclusive_revocable_confirmation_arbiter
+            }
+            ArbitersContract::ExclusiveUnrevocableConfirmationArbiter => {
+                self.arbiters()
+                    .addresses
+                    .exclusive_unrevocable_confirmation_arbiter
+            }
+            ArbitersContract::NonexclusiveRevocableConfirmationArbiter => {
+                self.arbiters()
+                    .addresses
+                    .nonexclusive_revocable_confirmation_arbiter
+            }
+            ArbitersContract::NonexclusiveUnrevocableConfirmationArbiter => {
+                self.arbiters()
+                    .addresses
+                    .nonexclusive_unrevocable_confirmation_arbiter
+            }
         }
     }
 

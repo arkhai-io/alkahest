@@ -99,8 +99,12 @@ export { decodeDemand as decodeUidDemand, encodeDemand as encodeUidDemand } from
 export {
   type ArbitrationMode,
   type AttestationWithDemand,
+  decodeERC8004Demand,
   decodeTrustedOracleDemand,
+  encodeERC8004Demand,
   encodeTrustedOracleDemand,
+  erc8004RequestHashFor,
+  type ERC8004ArbiterDemandData,
   type TrustedOracleArbiterDemandData,
 } from "./general";
 // Re-export types and static functions from logical arbiters

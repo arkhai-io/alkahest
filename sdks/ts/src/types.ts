@@ -48,6 +48,7 @@ export type ChainAddresses = {
   allArbiter: `0x${string}`;
   intrinsicsArbiter: `0x${string}`;
   erc8004Arbiter: `0x${string}`;
+  referencesEscrowArbiter: `0x${string}`;
 
   // Confirmation arbiters (new naming convention)
   exclusiveRevocableConfirmationArbiter: `0x${string}`;

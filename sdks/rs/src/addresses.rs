@@ -38,6 +38,7 @@ pub const BASE_SEPOLIA_ADDRESSES: DefaultExtensionConfig = DefaultExtensionConfi
         trusted_oracle_arbiter: address!("0x3664b11BcCCeCA27C21BBAB43548961eD14d4D6D"),
         intrinsics_arbiter: address!("0x24aAFec3f86CAd330600dD2397DEB8498D44bfd9"),
         erc8004_arbiter: address!("0x67B23406dd9e9EA884B3d14746ef73106b1C35d6"),
+        references_escrow_arbiter: Address::ZERO,
         // Logical arbiters
         any_arbiter: address!("0xaaC3465f340C7A2841A120F81Ce6744cda00d263"),
         all_arbiter: address!("0x0D95c1Cd62cd9C7cCCB237a3Ae08aA61Ed83381f"),
@@ -131,6 +132,7 @@ pub const ETHEREUM_SEPOLIA_ADDRESSES: DefaultExtensionConfig = DefaultExtensionC
         trusted_oracle_arbiter: address!("0x3B2a812E3eb3B729D40d866Da16c2BB2b6cDd2f2"),
         intrinsics_arbiter: address!("0xaabdDAa76651d20922d1F561f924a40F6fE7710c"),
         erc8004_arbiter: address!("0x367fEd55E65bd0FCCF8F966A04989AB61E1b5A49"),
+        references_escrow_arbiter: Address::ZERO,
         // Logical arbiters
         any_arbiter: address!("0xe968dFA581B8aBb94eC5F24d0b56163DE69511fD"),
         all_arbiter: address!("0x847F69d27E4F1A8a115aCa3F4358B079706dc9CE"),
@@ -224,6 +226,7 @@ pub const FILECOIN_CALIBRATION_ADDRESSES: DefaultExtensionConfig = DefaultExtens
         trusted_oracle_arbiter: address!("0x61dc9c2d757a1c9d0d38a281288d9ef918e77baa"),
         intrinsics_arbiter: address!("0x81dc8f2c5677b02afcafef34fa7e75d55dfaef20"),
         erc8004_arbiter: address!("0x3c1E21911C609714dBc0Ab90800c7aD8817B8e83"),
+        references_escrow_arbiter: Address::ZERO,
         // Logical arbiters
         any_arbiter: address!("0xb6890a8cb8cdefce11edc0314125b750f48bff1b"),
         all_arbiter: address!("0x49026902790a8ecb427f335ca0d097c7c5795d13"),
@@ -317,6 +320,7 @@ pub const GENLAYER_BRADBURY_ADDRESSES: DefaultExtensionConfig = DefaultExtension
         trusted_oracle_arbiter: address!("0xe968dFA581B8aBb94eC5F24d0b56163DE69511fD"),
         intrinsics_arbiter: address!("0xBE7fE4d7CEb2140eeBdf01e12D198AEBAdC1F54D"),
         erc8004_arbiter: address!("0xe483EDA58b5f9Eba06A1ad0151dA5e4a5fFC8300"),
+        references_escrow_arbiter: Address::ZERO,
         // Logical arbiters
         any_arbiter: address!("0xF486f9a62eeb085e99828e1D706bBA5dfC1bD1fD"),
         all_arbiter: address!("0xaabdDAa76651d20922d1F561f924a40F6fE7710c"),
@@ -410,6 +414,7 @@ pub const ETHEREUM_ADDRESSES: DefaultExtensionConfig = DefaultExtensionConfig {
         trusted_oracle_arbiter: address!("0x3B2a812E3eb3B729D40d866Da16c2BB2b6cDd2f2"),
         intrinsics_arbiter: address!("0xaabdDAa76651d20922d1F561f924a40F6fE7710c"),
         erc8004_arbiter: address!("0xBE7fE4d7CEb2140eeBdf01e12D198AEBAdC1F54D"),
+        references_escrow_arbiter: Address::ZERO,
         // Logical arbiters
         any_arbiter: address!("0xe968dFA581B8aBb94eC5F24d0b56163DE69511fD"),
         all_arbiter: address!("0x847F69d27E4F1A8a115aCa3F4358B079706dc9CE"),

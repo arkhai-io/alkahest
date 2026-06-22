@@ -8,6 +8,8 @@ import SchemaRegistry from "./contracts/eas/SchemaRegistry.json";
 import TrivialArbiter from "./contracts/arbiters/TrivialArbiter.json";
 import TrustedOracleArbiter from "./contracts/arbiters/TrustedOracleArbiter.json";
 import IntrinsicsArbiter from "./contracts/arbiters/IntrinsicsArbiter.json";
+import ERC8004Arbiter from "./contracts/arbiters/ERC8004Arbiter.json";
+import ReferencesEscrowArbiter from "./contracts/arbiters/ReferencesEscrowArbiter.json";
 
 // Arbiters - Logical
 import AllArbiter from "./contracts/arbiters/logical/AllArbiter.json";
@@ -125,6 +127,8 @@ export async function deployAlkahest(
     result.trivialArbiter = await deploy(deployFn, TrivialArbiter as Artifact);
     result.trustedOracleArbiter = await deploy(deployFn, TrustedOracleArbiter as Artifact, [easAddress]);
     result.intrinsicsArbiter = await deploy(deployFn, IntrinsicsArbiter as Artifact);
+    result.erc8004Arbiter = await deploy(deployFn, ERC8004Arbiter as Artifact);
+    result.referencesEscrowArbiter = await deploy(deployFn, ReferencesEscrowArbiter as Artifact);
     result.allArbiter = await deploy(deployFn, AllArbiter as Artifact);
     result.anyArbiter = await deploy(deployFn, AnyArbiter as Artifact);
 

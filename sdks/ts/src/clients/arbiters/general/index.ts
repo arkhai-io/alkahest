@@ -1,7 +1,17 @@
 import type { ChainAddresses } from "../../../types";
 import type { ViemClient } from "../../../utils";
+import { makeERC8004ArbiterClient } from "./erc8004Arbiter";
 import { makeIntrinsicsArbiterClient } from "./intrinsicsArbiter";
+import { makeReferencesEscrowArbiterClient } from "./referencesEscrowArbiter";
+import { makeTrivialArbiterClient } from "./trivialArbiter";
 import { makeTrustedOracleArbiterClient } from "./trustedOracle";
+
+export {
+  decodeDemand as decodeERC8004Demand,
+  encodeDemand as encodeERC8004Demand,
+  type ERC8004ArbiterDemandData,
+  requestHashFor as erc8004RequestHashFor,
+} from "./erc8004Arbiter";
 
 // Re-export static encode/decode functions and types from trustedOracle
 export {
@@ -23,11 +33,17 @@ export {
  * Note: SpecificAttestationArbiter has been removed (identical to UidArbiter)
  */
 export const makeGeneralArbitersClient = (viemClient: ViemClient, addresses: ChainAddresses) => {
+  const trivial = makeTrivialArbiterClient(viemClient, addresses);
   const intrinsics = makeIntrinsicsArbiterClient(viemClient, addresses);
+  const referencesEscrow = makeReferencesEscrowArbiterClient(viemClient, addresses);
   const trustedOracle = makeTrustedOracleArbiterClient(viemClient, addresses);
+  const erc8004 = makeERC8004ArbiterClient(viemClient, addresses);
 
   return {
+    trivial,
     intrinsics,
+    referencesEscrow,
     trustedOracle,
+    erc8004,
   };
 };

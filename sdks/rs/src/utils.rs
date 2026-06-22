@@ -23,7 +23,8 @@ use crate::{
     },
     contracts::{
         arbiters::{
-            IntrinsicsArbiter, TrivialArbiter, TrustedOracleArbiter,
+            ERC8004Arbiter, IntrinsicsArbiter, ReferencesEscrowArbiter, TrivialArbiter,
+            TrustedOracleArbiter,
             attestation_properties::{
                 AttesterArbiter, ExpirationTimeAfterArbiter, ExpirationTimeBeforeArbiter,
                 ExpirationTimeEqualArbiter, RecipientArbiter, RefUidArbiter, RevocableArbiter,
@@ -409,6 +410,8 @@ async fn build_shared_env() -> eyre::Result<SharedTestEnv> {
     let trusted_oracle_arbiter =
         TrustedOracleArbiter::deploy(&god_provider, eas.address().clone()).await?;
     let intrinsics_arbiter = IntrinsicsArbiter::deploy(&god_provider).await?;
+    let erc8004_arbiter = ERC8004Arbiter::deploy(&god_provider).await?;
+    let references_escrow_arbiter = ReferencesEscrowArbiter::deploy(&god_provider).await?;
     let any_arbiter = AnyArbiter::deploy(&god_provider).await?;
     let all_arbiter = AllArbiter::deploy(&god_provider).await?;
 
@@ -551,7 +554,8 @@ async fn build_shared_env() -> eyre::Result<SharedTestEnv> {
             trivial_arbiter: trivial_arbiter.address().clone(),
             trusted_oracle_arbiter: trusted_oracle_arbiter.address().clone(),
             intrinsics_arbiter: intrinsics_arbiter.address().clone(),
-            erc8004_arbiter: Address::ZERO, // Not deployed in test environment
+            erc8004_arbiter: erc8004_arbiter.address().clone(),
+            references_escrow_arbiter: references_escrow_arbiter.address().clone(),
             any_arbiter: any_arbiter.address().clone(),
             all_arbiter: all_arbiter.address().clone(),
             // Attestation property arbiters
