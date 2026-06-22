@@ -13,38 +13,55 @@ use crate::{
     types::{ProviderContext, SharedWalletProvider},
 };
 
+/// Common splitter arbiter demand data.
 type SplitterDemandData = contracts::utils::splitters::ERC20Splitter::DemandData;
+/// Split item for native/ERC20/ERC1155 amount-based splitters.
 type AmountSplit = contracts::utils::splitters::ERC20Splitter::Split;
+/// Split item for token-bundle splitters.
 type BundleSplit = contracts::utils::splitters::token_bundle::TokenBundleSplitterBase::BundleSplit;
 
 impl_abi_conversions!(SplitterDemandData);
 impl_abi_conversions!(AmountSplit);
 impl_abi_conversions!(BundleSplit);
 
+/// Contract addresses used by the splitter module.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SplittersAddresses {
+    /// ERC20Splitter contract address.
     pub erc20_splitter: Address,
+    /// ERC1155Splitter contract address.
     pub erc1155_splitter: Address,
+    /// NativeTokenSplitter contract address.
     pub native_token_splitter: Address,
+    /// TokenBundleSplitter contract address.
     pub token_bundle_splitter: Address,
+    /// TokenBundleSplitterUnvalidated contract address.
     pub token_bundle_splitter_unvalidated: Address,
 }
 
 impl Default for SplittersAddresses {
+    /// Returns Base Sepolia splitter addresses.
     fn default() -> Self {
         BASE_SEPOLIA_ADDRESSES.splitters_addresses
     }
 }
 
+/// Contracts addressable through the splitter module.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SplitterContract {
+    /// ERC20Splitter contract.
     Erc20Splitter,
+    /// ERC1155Splitter contract.
     Erc1155Splitter,
+    /// NativeTokenSplitter contract.
     NativeTokenSplitter,
+    /// TokenBundleSplitter contract.
     TokenBundleSplitter,
+    /// TokenBundleSplitterUnvalidated contract.
     TokenBundleSplitterUnvalidated,
 }
 
+/// Rust client module for splitter helpers.
 #[derive(Clone)]
 pub struct SplittersModule {
     _signer: PrivateKeySigner,
@@ -69,6 +86,7 @@ impl ContractModule for SplittersModule {
 }
 
 impl SplittersModule {
+    /// Creates a splitter module with optional custom addresses.
     pub fn new(
         signer: PrivateKeySigner,
         wallet_provider: SharedWalletProvider,
@@ -81,14 +99,17 @@ impl SplittersModule {
         })
     }
 
+    /// Encodes splitter demand data.
     pub fn encode_demand(data: &SplitterDemandData) -> Bytes {
         data.abi_encode().into()
     }
 
+    /// Decodes ABI-encoded splitter demand data.
     pub fn decode_demand(data: &Bytes) -> eyre::Result<SplitterDemandData> {
         Ok(SplitterDemandData::abi_decode(data.as_ref())?)
     }
 
+    /// Computes the splitter decision key for a fulfillment and escrow UID.
     pub fn decision_key(fulfillment: FixedBytes<32>, escrow: FixedBytes<32>) -> FixedBytes<32> {
         let mut packed = Vec::with_capacity(64);
         packed.extend_from_slice(fulfillment.as_slice());

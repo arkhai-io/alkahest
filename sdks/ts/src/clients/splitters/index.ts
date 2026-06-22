@@ -7,6 +7,7 @@ import { abi as tokenBundleSplitterUnvalidatedAbi } from "../../contracts/utils/
 import type { Attestation, ChainAddresses } from "../../types";
 import { readContract, type ViemClient, writeContract } from "../../utils";
 
+/** Deployed splitter contract addresses. */
 export type SplitterAddresses = {
   erc20Splitter: `0x${string}`;
   erc1155Splitter: `0x${string}`;
@@ -15,6 +16,7 @@ export type SplitterAddresses = {
   tokenBundleSplitterUnvalidated: `0x${string}`;
 };
 
+/** Pick splitter addresses from a full chain address map. */
 export const pickSplitterAddresses = (addresses: ChainAddresses): SplitterAddresses => ({
   erc20Splitter: addresses.erc20Splitter,
   erc1155Splitter: addresses.erc1155Splitter,
@@ -23,21 +25,33 @@ export const pickSplitterAddresses = (addresses: ChainAddresses): SplitterAddres
   tokenBundleSplitterUnvalidated: addresses.tokenBundleSplitterUnvalidated,
 });
 
+/** Common splitter arbiter demand data. */
 export type SplitterDemandData = {
+  /** Oracle address whose split decision is trusted. */
   oracle: `0x${string}`;
+  /** Opaque context bytes for the oracle. */
   data: `0x${string}`;
 };
 
+/** Split item for native/ERC20/ERC1155 amount-based splitters. */
 export type AmountSplit = {
+  /** Recipient address, or the splitter executor sentinel. */
   recipient: `0x${string}`;
+  /** Amount assigned to this recipient. */
   amount: bigint;
 };
 
+/** Split item for token-bundle splitters. */
 export type BundleSplit = {
+  /** Recipient address, or the splitter executor sentinel. */
   recipient: `0x${string}`;
+  /** Native-token amount assigned to this recipient. */
   nativeAmount: bigint;
+  /** ERC20 amounts by token index in the escrow bundle. */
   erc20Amounts: bigint[];
+  /** ERC721 token indices assigned to this recipient. */
   erc721Indices: bigint[];
+  /** ERC1155 amounts by token index in the escrow bundle. */
   erc1155Amounts: bigint[];
 };
 
@@ -45,24 +59,31 @@ const demandDataType = getAbiItem({ abi: erc20SplitterAbi.abi, name: "decodeDema
 const amountSplitType = getAbiItem({ abi: erc20SplitterAbi.abi, name: "arbitrate" }).inputs[2];
 const bundleSplitType = getAbiItem({ abi: tokenBundleSplitterAbi.abi, name: "arbitrate" }).inputs[2];
 
+/** ABI-encode splitter demand data. */
 export const encodeSplitterDemand = (data: SplitterDemandData): `0x${string}` =>
   encodeAbiParameters([demandDataType], [data]);
 
+/** Decode ABI-encoded splitter demand data. */
 export const decodeSplitterDemand = (data: `0x${string}`): SplitterDemandData =>
   decodeAbiParameters([demandDataType], data)[0] as SplitterDemandData;
 
+/** ABI-encode amount split arrays. */
 export const encodeAmountSplits = (splits: AmountSplit[]): `0x${string}` =>
   encodeAbiParameters([amountSplitType], [splits]);
 
+/** Decode ABI-encoded amount split arrays. */
 export const decodeAmountSplits = (data: `0x${string}`): AmountSplit[] =>
   decodeAbiParameters([amountSplitType], data)[0] as AmountSplit[];
 
+/** ABI-encode token-bundle split arrays. */
 export const encodeBundleSplits = (splits: BundleSplit[]): `0x${string}` =>
   encodeAbiParameters([bundleSplitType], [splits]);
 
+/** Decode ABI-encoded token-bundle split arrays. */
 export const decodeBundleSplits = (data: `0x${string}`): BundleSplit[] =>
   decodeAbiParameters([bundleSplitType], data)[0] as BundleSplit[];
 
+/** Compute the splitter decision key for a fulfillment and escrow UID. */
 export const splitterDecisionKey = (fulfillment: `0x${string}`, escrow: `0x${string}`): `0x${string}` =>
   keccak256(encodePacked(["bytes32", "bytes32"], [fulfillment, escrow]));
 
@@ -232,6 +253,7 @@ const makeBundleSplitterClient = (
     }),
 });
 
+/** Create clients for all splitter contracts. */
 export const makeSplittersClient = (viemClient: ViemClient, addresses: SplitterAddresses) => ({
   encodeDemand: encodeSplitterDemand,
   decodeDemand: decodeSplitterDemand,
@@ -247,4 +269,5 @@ export const makeSplittersClient = (viemClient: ViemClient, addresses: SplitterA
   ),
 });
 
+/** Ergonomic client for splitter contracts. */
 export type SplittersClient = ReturnType<typeof makeSplittersClient>;

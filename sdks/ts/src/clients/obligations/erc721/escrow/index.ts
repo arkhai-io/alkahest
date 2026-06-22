@@ -6,11 +6,13 @@ import { type Erc721UnconditionalEscrowClient, makeErc721UnconditionalEscrowClie
 export { type Erc721DefaultEscrowClient, makeErc721DefaultEscrowClient } from "./default";
 export { type Erc721UnconditionalEscrowClient, makeErc721UnconditionalEscrowClient } from "./unconditional";
 
+/** ERC721 escrow client namespace. */
 export type Erc721EscrowClient = {
   default: Erc721DefaultEscrowClient;
   unconditional: Erc721UnconditionalEscrowClient;
 };
 
+/** Create default and unconditional ERC721 escrow clients. */
 export const makeErc721EscrowClient = (viemClient: ViemClient, addresses: Erc721Addresses): Erc721EscrowClient => {
   return {
     default: makeErc721DefaultEscrowClient(viemClient, addresses),

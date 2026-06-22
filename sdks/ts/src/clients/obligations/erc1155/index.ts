@@ -10,6 +10,7 @@ export { type Erc1155UnconditionalEscrowClient, makeErc1155UnconditionalEscrowCl
 export { type Erc1155PaymentClient, makeErc1155PaymentClient } from "./payment";
 export { type Erc1155UtilClient, makeErc1155UtilClient } from "./util";
 
+/** Addresses required by the ERC1155 obligation clients. */
 export type Erc1155Addresses = {
   eas: `0x${string}`;
   atomicPaymentUtils: `0x${string}`;
@@ -19,6 +20,7 @@ export type Erc1155Addresses = {
   paymentObligation: `0x${string}`;
 };
 
+/** Pick ERC1155 obligation addresses from a full chain address map. */
 export const pickErc1155Addresses = (addresses: ChainAddresses): Erc1155Addresses => ({
   eas: addresses.eas,
   atomicPaymentUtils: addresses.erc1155AtomicPaymentUtils,
@@ -28,12 +30,14 @@ export const pickErc1155Addresses = (addresses: ChainAddresses): Erc1155Addresse
   paymentObligation: addresses.erc1155PaymentObligation,
 });
 
+/** ERC1155 obligation namespace client. */
 export type Erc1155Client = {
   util: Erc1155UtilClient;
   escrow: Erc1155EscrowClient;
   payment: Erc1155PaymentClient;
 };
 
+/** Create the ERC1155 utility, escrow, and payment clients. */
 export const makeErc1155Client = (viemClient: ViemClient, addresses: Erc1155Addresses): Erc1155Client => {
   return {
     util: makeErc1155UtilClient(viemClient, addresses),

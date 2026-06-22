@@ -12,34 +12,51 @@ import {BaseObligation} from "../../BaseObligation.sol";
 import {IArbiter} from "../../IArbiter.sol";
 import {ArbiterUtils} from "../../ArbiterUtils.sol";
 
+/// @title TokenBundlePaymentObligation
+/// @notice Transfers a mixed native/ERC20/ERC721/ERC1155 bundle to a payee and records the payment as an EAS attestation.
+/// @dev Bundle arrays are positionally matched; as an arbiter, the payment must reference the escrow UID and satisfy each demanded asset in order.
 contract TokenBundlePaymentObligation is BaseObligation, IArbiter {
     using ArbiterUtils for Attestation;
     using SafeERC20 for IERC20;
 
+    /// @notice Mixed-token payment terms encoded in each obligation attestation.
     struct ObligationData {
-        // Native tokens
+        /// @notice Native-token amount to pay.
         uint256 nativeAmount;
-        // ERC20
+        /// @notice ERC20 token contracts to transfer.
         address[] erc20Tokens;
+        /// @notice ERC20 amounts matching `erc20Tokens` by index.
         uint256[] erc20Amounts;
-        // ERC721
+        /// @notice ERC721 token contracts to transfer.
         address[] erc721Tokens;
+        /// @notice ERC721 token IDs matching `erc721Tokens` by index.
         uint256[] erc721TokenIds;
-        // ERC1155
+        /// @notice ERC1155 token contracts to transfer.
         address[] erc1155Tokens;
+        /// @notice ERC1155 token IDs matching `erc1155Tokens` by index.
         uint256[] erc1155TokenIds;
+        /// @notice ERC1155 amounts matching `erc1155Tokens` and `erc1155TokenIds` by index.
         uint256[] erc1155Amounts;
+        /// @notice Recipient of every asset in the bundle.
         address payee;
     }
 
+    /// @notice Emitted after a bundle payment attestation is created.
     event BundleTransferred(bytes32 indexed payment, address indexed from, address indexed to);
 
+    /// @notice Raised when parallel token and amount/ID arrays have different lengths.
     error ArrayLengthMismatch();
+    /// @notice Raised when `msg.value` is below the requested native-token amount.
     error InsufficientPayment(uint256 expected, uint256 received);
+    /// @notice Raised when a native-token transfer or refund fails.
     error NativeTokenTransferFailed(address to, uint256 amount);
+    /// @notice Raised when an ERC20 transfer does not move the requested amount.
     error ERC20TransferFailed(address token, address from, address to, uint256 amount);
+    /// @notice Raised when an ERC721 transfer fails or ownership does not move to the payee.
     error ERC721TransferFailed(address token, address from, address to, uint256 tokenId);
 
+    /// @param _eas EAS contract used to create and read payment attestations.
+    /// @param _schemaRegistry EAS schema registry used to register or reuse the bundle payment schema.
     constructor(IEAS _eas, ISchemaRegistry _schemaRegistry)
         BaseObligation(
             _eas,
@@ -49,11 +66,13 @@ contract TokenBundlePaymentObligation is BaseObligation, IArbiter {
         )
     {}
 
+    /// @notice Transfers the bundle and attests to the payment for the caller.
     function doObligation(ObligationData calldata data, bytes32 refUID) public payable returns (bytes32 uid_) {
         bytes memory encodedData = abi.encode(data);
         uid_ = _doObligationForRaw(encodedData, 0, msg.sender, refUID);
     }
 
+    /// @notice Transfers the bundle and attests to the payment for an explicit attestation recipient.
     function doObligationFor(ObligationData calldata data, address recipient, bytes32 refUID)
         public
         payable
@@ -108,6 +127,7 @@ contract TokenBundlePaymentObligation is BaseObligation, IArbiter {
         emit BundleTransferred(attestation.uid, attestation.recipient, obligationData.payee);
     }
 
+    /// @notice Reverts if any token arrays are not positionally aligned.
     function validateArrayLengths(ObligationData memory data) internal pure {
         if (data.erc20Tokens.length != data.erc20Amounts.length) {
             revert ArrayLengthMismatch();
@@ -121,6 +141,7 @@ contract TokenBundlePaymentObligation is BaseObligation, IArbiter {
         ) revert ArrayLengthMismatch();
     }
 
+    /// @notice Transfers every non-native asset in the bundle from `from` to `data.payee`.
     function transferBundle(ObligationData memory data, address from) internal {
         // Transfer ERC20s
         for (uint256 i = 0; i < data.erc20Tokens.length; i++) {
@@ -165,6 +186,7 @@ contract TokenBundlePaymentObligation is BaseObligation, IArbiter {
         }
     }
 
+    /// @inheritdoc IArbiter
     function check(Attestation memory fulfillment, bytes memory demand, bytes32 escrowUid)
         public
         view
@@ -224,11 +246,13 @@ contract TokenBundlePaymentObligation is BaseObligation, IArbiter {
         return true;
     }
 
+    /// @notice Loads and decodes bundle payment data from this contract's attestation.
     function getObligationData(bytes32 uid) public view returns (ObligationData memory) {
         Attestation memory attestation = _getAttestation(uid);
         return abi.decode(attestation.data, (ObligationData));
     }
 
+    /// @notice Decodes ABI-encoded bundle payment data.
     function decodeObligationData(bytes calldata data) public pure returns (ObligationData memory) {
         return abi.decode(data, (ObligationData));
     }

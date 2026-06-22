@@ -8,6 +8,8 @@ import {TokenBundleSplitterBase} from "./TokenBundleSplitterBase.sol";
 /// @notice Token bundle splitter with full validation of split totals
 ///         against the escrow's obligation data in arbitrate().
 ///         More expensive oracle calls, but guarantees correctness at submission time.
+/// @title TokenBundleSplitter
+/// @notice Validated token-bundle splitter that requires split totals to match the escrowed bundle.
 contract TokenBundleSplitter is TokenBundleSplitterBase {
     error InvalidNativeSplitTotal(uint256 expected, uint256 provided);
     error InvalidERC20SplitTotal(uint256 tokenIndex, uint256 expected, uint256 provided);
@@ -23,6 +25,7 @@ contract TokenBundleSplitter is TokenBundleSplitterBase {
     /// @notice Oracle submits a split decision with full validation.
     ///         Validates that all split amounts sum to the escrow totals,
     ///         and that each ERC721 is assigned to exactly one recipient.
+    /// @inheritdoc TokenBundleSplitterBase
     function arbitrate(bytes32 fulfillment, bytes32 escrow, BundleSplit[] calldata splits) external override {
         if (fulfillment == bytes32(0)) revert InvalidFulfillmentUid();
 

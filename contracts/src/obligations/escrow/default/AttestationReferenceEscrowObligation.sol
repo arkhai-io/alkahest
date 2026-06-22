@@ -10,12 +10,16 @@ import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {ISchemaResolver} from "@eas/resolver/ISchemaResolver.sol";
 import {SchemaRegistryUtils} from "../../../SchemaRegistryUtils.sol";
 
+/// @title AttestationReferenceEscrowObligation
+/// @notice Escrows a reference to an existing attestation behind an arbiter-defined fulfillment condition.
+/// @dev Uses the default escrow checks: fulfillment must reference the escrow UID and pass intrinsic attestation validation.
 contract AttestationReferenceEscrowObligation is BaseEscrowObligation, IArbiter {
     using ArbiterUtils for Attestation;
     using SchemaRegistryUtils for ISchemaRegistry;
 
     bytes32 public immutable VALIDATION_SCHEMA;
 
+    /// @notice Attestation-reference escrow terms encoded in each escrow attestation.
     struct ObligationData {
         address arbiter;
         bytes demand;
@@ -38,6 +42,7 @@ contract AttestationReferenceEscrowObligation is BaseEscrowObligation, IArbiter 
     }
 
     // Extract arbiter and demand from encoded data
+    /// @inheritdoc BaseEscrowObligation
     function decodeCondition(bytes memory data) public pure override returns (address arbiter, bytes memory demand) {
         ObligationData memory decoded = abi.decode(data, (ObligationData));
         return (decoded.arbiter, decoded.demand);
@@ -76,6 +81,7 @@ contract AttestationReferenceEscrowObligation is BaseEscrowObligation, IArbiter 
     }
 
     // Implement IArbiter
+    /// @inheritdoc IArbiter
     function check(
         Attestation memory obligation,
         bytes memory demand,
@@ -98,10 +104,12 @@ contract AttestationReferenceEscrowObligation is BaseEscrowObligation, IArbiter 
     }
 
     // Typed convenience methods
+    /// @notice Creates an escrow attestation that certifies an existing attestation reference.
     function doObligation(ObligationData calldata data, uint64 expirationTime) external returns (bytes32) {
         return _doObligationForRaw(abi.encode(data), expirationTime, msg.sender, bytes32(0));
     }
 
+    /// @notice Creates an attestation-reference escrow for an explicit recipient.
     function doObligationFor(ObligationData calldata data, uint64 expirationTime, address recipient)
         external
         returns (bytes32)
@@ -109,11 +117,13 @@ contract AttestationReferenceEscrowObligation is BaseEscrowObligation, IArbiter 
         return _doObligationForRaw(abi.encode(data), expirationTime, recipient, bytes32(0));
     }
 
+    /// @notice Loads and decodes attestation-reference escrow data from this contract's attestation.
     function getObligationData(bytes32 uid) public view returns (ObligationData memory) {
         Attestation memory attestation = _getAttestation(uid);
         return abi.decode(attestation.data, (ObligationData));
     }
 
+    /// @notice Decodes ABI-encoded attestation-reference escrow data.
     function decodeObligationData(bytes calldata data) public pure returns (ObligationData memory) {
         return abi.decode(data, (ObligationData));
     }

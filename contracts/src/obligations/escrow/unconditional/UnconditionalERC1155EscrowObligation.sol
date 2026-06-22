@@ -10,9 +10,13 @@ import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 
+/// @title UnconditionalERC1155EscrowObligation
+/// @notice Escrows ERC1155 tokens behind an arbiter-defined fulfillment condition.
+/// @dev Does not apply the default fulfillment refUID or intrinsic checks; use arbiters to add any required checks.
 contract UnconditionalERC1155EscrowObligation is BaseEscrowObligationUnconditional, IArbiter, ERC1155Holder {
     using ArbiterUtils for Attestation;
 
+    /// @notice ERC1155 escrow terms encoded in each escrow attestation.
     struct ObligationData {
         address arbiter;
         bytes demand;
@@ -30,6 +34,7 @@ contract UnconditionalERC1155EscrowObligation is BaseEscrowObligationUncondition
     {}
 
     // Extract arbiter and demand from encoded data
+    /// @inheritdoc BaseEscrowObligationUnconditional
     function decodeCondition(bytes memory data) public pure override returns (address arbiter, bytes memory demand) {
         ObligationData memory decoded = abi.decode(data, (ObligationData));
         return (decoded.arbiter, decoded.demand);
@@ -86,6 +91,7 @@ contract UnconditionalERC1155EscrowObligation is BaseEscrowObligationUncondition
     }
 
     // Implement IArbiter
+    /// @inheritdoc IArbiter
     function check(
         Attestation memory obligation,
         bytes memory demand,
@@ -107,10 +113,12 @@ contract UnconditionalERC1155EscrowObligation is BaseEscrowObligationUncondition
     }
 
     // Typed convenience methods
+    /// @notice Locks ERC1155 tokens and creates an escrow attestation for the caller.
     function doObligation(ObligationData calldata data, uint64 expirationTime) external returns (bytes32) {
         return _doObligationForRaw(abi.encode(data), expirationTime, msg.sender, bytes32(0));
     }
 
+    /// @notice Locks ERC1155 tokens and creates an escrow attestation for an explicit recipient.
     function doObligationFor(ObligationData calldata data, uint64 expirationTime, address recipient)
         external
         returns (bytes32)
@@ -118,11 +126,13 @@ contract UnconditionalERC1155EscrowObligation is BaseEscrowObligationUncondition
         return _doObligationForRaw(abi.encode(data), expirationTime, recipient, bytes32(0));
     }
 
+    /// @notice Loads and decodes ERC1155 escrow data from this contract's attestation.
     function getObligationData(bytes32 uid) public view returns (ObligationData memory) {
         Attestation memory attestation = _getAttestation(uid);
         return abi.decode(attestation.data, (ObligationData));
     }
 
+    /// @notice Decodes ABI-encoded ERC1155 escrow data.
     function decodeObligationData(bytes calldata data) public pure returns (ObligationData memory) {
         return abi.decode(data, (ObligationData));
     }

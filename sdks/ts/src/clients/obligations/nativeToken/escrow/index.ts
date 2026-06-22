@@ -18,11 +18,13 @@ export {
   type NativeTokenUnconditionalEscrowObligationData,
 } from "./unconditional";
 
+/** Native-token escrow client namespace. */
 export type NativeTokenEscrowClient = {
   default: NativeTokenDefaultEscrowClient;
   unconditional: NativeTokenUnconditionalEscrowClient;
 };
 
+/** Create default and unconditional native-token escrow clients. */
 export const makeNativeTokenEscrowClient = (
   viemClient: ViemClient,
   addresses: NativeTokenAddresses,

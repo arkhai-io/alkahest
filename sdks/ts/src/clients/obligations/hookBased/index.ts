@@ -13,6 +13,7 @@ import { abi as erc1155Abi } from "../../../contracts/IERC1155";
 import type { ChainAddresses } from "../../../types";
 import { getAttestation, getAttestedEventFromTxHash, readContract, type ViemClient, writeContract } from "../../../utils";
 
+/** Deployed hook-based escrow and hook contract addresses. */
 export type HookBasedAddresses = {
   eas: `0x${string}`;
   hookEscrowObligation: `0x${string}`;
@@ -25,6 +26,7 @@ export type HookBasedAddresses = {
   attestationReferenceEscrowHook: `0x${string}`;
 };
 
+/** Pick hook-based escrow addresses from a full chain address map. */
 export const pickHookBasedAddresses = (addresses: ChainAddresses): HookBasedAddresses => ({
   eas: addresses.eas,
   hookEscrowObligation: addresses.hookEscrowObligation,
@@ -50,39 +52,55 @@ const attestationReferenceHookDataType = getAbiItem({
   name: "encodeHookData",
 }).inputs[0];
 
+/** Obligation data for a hook-based escrow with one hook. */
 export type HookEscrowObligationData = {
+  /** Arbiter contract that validates fulfillment. */
   arbiter: `0x${string}`;
+  /** ABI-encoded arbiter demand. */
   demand: `0x${string}`;
+  /** Hook contract that locks and releases escrowed assets. */
   hook: `0x${string}`;
+  /** ABI-encoded hook-specific escrow data. */
   hookData: `0x${string}`;
 };
 
+/** Obligation data for a hook-based escrow with multiple hooks. */
 export type HooksEscrowObligationData = {
+  /** Arbiter contract that validates fulfillment. */
   arbiter: `0x${string}`;
+  /** ABI-encoded arbiter demand. */
   demand: `0x${string}`;
+  /** Hook contracts that lock and release escrowed assets. */
   hooks: `0x${string}`[];
+  /** ABI-encoded hook-specific escrow data by index. */
   hookDatas: `0x${string}`[];
+  /** Native-token values sent to each hook by index. */
   values: bigint[];
 };
 
+/** Hook data for ERC20 amount escrows. */
 export type AmountSplitHookData = {
   token: `0x${string}`;
   amount: bigint;
 };
 
+/** Hook data for single-token-ID escrows. */
 export type TokenIdHookData = {
   token: `0x${string}`;
   tokenId: bigint;
 };
 
+/** Hook data for ERC1155 amount escrows. */
 export type Erc1155HookData = TokenIdHookData & {
   amount: bigint;
 };
 
+/** Hook data for native-token escrows. */
 export type NativeTokenHookData = {
   amount: bigint;
 };
 
+/** Hook data for creating an EAS attestation as an escrow asset. */
 export type AttestationEscrowHookData = {
   attestation: {
     schema: `0x${string}`;
@@ -97,6 +115,7 @@ export type AttestationEscrowHookData = {
   };
 };
 
+/** Hook data for escrowing a reference to an existing attestation. */
 export type AttestationReferenceEscrowHookData = {
   attestationUid: `0x${string}`;
   recipient: `0x${string}`;
@@ -104,15 +123,19 @@ export type AttestationReferenceEscrowHookData = {
   validationRevocable: boolean;
 };
 
+/** ABI-encode single-hook escrow obligation data. */
 export const encodeHookEscrowObligation = (data: HookEscrowObligationData): `0x${string}` =>
   encodeAbiParameters([hookEscrowObligationDataType], [data]);
 
+/** Decode ABI-encoded single-hook escrow obligation data. */
 export const decodeHookEscrowObligation = (data: `0x${string}`): HookEscrowObligationData =>
   decodeAbiParameters([hookEscrowObligationDataType], data)[0] as HookEscrowObligationData;
 
+/** ABI-encode multi-hook escrow obligation data. */
 export const encodeHooksEscrowObligation = (data: HooksEscrowObligationData): `0x${string}` =>
   encodeAbiParameters([hooksEscrowObligationDataType], [data]);
 
+/** Decode ABI-encoded multi-hook escrow obligation data. */
 export const decodeHooksEscrowObligation = (data: `0x${string}`): HooksEscrowObligationData =>
   decodeAbiParameters([hooksEscrowObligationDataType], data)[0] as HooksEscrowObligationData;
 

@@ -7,28 +7,35 @@ import {SplitterVerification} from "./SplitterVerification.sol";
 import {BaseSplitter} from "./BaseSplitter.sol";
 import {IEscrow} from "../../IEscrow.sol";
 
+/// @title NativeTokenSplitter
+/// @notice Collects native-token escrows and distributes the received amount according to oracle-provided splits.
 contract NativeTokenSplitter is BaseSplitter {
     using SplitterVerification for Attestation;
 
+    /// @notice One native-token distribution recipient and amount.
     struct Split {
         address recipient;
         uint256 amount;
     }
 
+    /// @notice Arbiter demand identifying the trusted oracle and opaque context.
     struct DemandData {
         address oracle;
         bytes data;
     }
 
+    /// @notice Native-token escrow data decoded to validate split totals.
     struct EscrowObligationData {
         address arbiter;
         bytes demand;
         uint256 amount;
     }
 
+    /// @notice Emitted when an oracle records native-token splits for a fulfillment and escrow.
     event ArbitrationMade(
         bytes32 indexed decisionKey, bytes32 indexed fulfillmentUid, address indexed oracle, Split[] splits
     );
+    /// @notice Emitted after an escrow is collected and native-token splits are distributed.
     event EscrowCollectedAndDistributed(
         bytes32 indexed escrowUid, bytes32 indexed fulfillmentUid, address indexed fulfiller, Split[] splits
     );
@@ -41,6 +48,7 @@ contract NativeTokenSplitter is BaseSplitter {
 
     constructor(IEAS _eas) BaseSplitter(_eas) {}
 
+    /// @notice Records the caller's split decision for a fulfillment and escrow.
     function arbitrate(bytes32 fulfillment, bytes32 escrow, Split[] calldata splits) external {
         if (fulfillment == bytes32(0)) revert InvalidFulfillmentUid();
 
@@ -100,10 +108,12 @@ contract NativeTokenSplitter is BaseSplitter {
         SplitterVerification.verifyDelta(balanceBefore, address(this).balance, escrowData.amount);
     }
 
+    /// @notice Returns native-token splits recorded by an oracle for a fulfillment and escrow.
     function getSplits(address oracle, bytes32 fulfillment, bytes32 escrow) external view returns (Split[] memory) {
         return decisions[oracle][_decisionKey(fulfillment, escrow)];
     }
 
+    /// @notice Decodes ABI-encoded native-token splitter demand data.
     function decodeDemandData(bytes calldata data) external pure returns (DemandData memory) {
         return abi.decode(data, (DemandData));
     }

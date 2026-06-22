@@ -5,15 +5,19 @@ import {Attestation} from "@eas/Common.sol";
 import {IArbiter} from "../../IArbiter.sol";
 import {ArbiterUtils} from "../../ArbiterUtils.sol";
 
+/// @title UidArbiter
+/// @notice Accepts only a specific fulfillment attestation UID.
 contract UidArbiter is IArbiter {
     using ArbiterUtils for Attestation;
 
+    /// @notice Demand specifying the required fulfillment UID.
     struct DemandData {
         bytes32 uid;
     }
 
     error UidMismatched();
 
+    /// @inheritdoc IArbiter
     function check(
         Attestation memory fulfillment,
         bytes memory demand,
@@ -30,6 +34,7 @@ contract UidArbiter is IArbiter {
         return true;
     }
 
+    /// @notice Decodes ABI-encoded UID demand data.
     function decodeDemandData(bytes calldata data) public pure returns (DemandData memory) {
         return abi.decode(data, (DemandData));
     }

@@ -5,15 +5,19 @@ import {Attestation} from "@eas/Common.sol";
 import {IArbiter} from "../../IArbiter.sol";
 import {ArbiterUtils} from "../../ArbiterUtils.sol";
 
+/// @title RefUidArbiter
+/// @notice Accepts fulfillments with a specific EAS `refUID`.
 contract RefUidArbiter is IArbiter {
     using ArbiterUtils for Attestation;
 
+    /// @notice Demand specifying the required referenced attestation UID.
     struct DemandData {
         bytes32 refUID;
     }
 
     error RefUidMismatched();
 
+    /// @inheritdoc IArbiter
     function check(
         Attestation memory fulfillment,
         bytes memory demand,
@@ -30,6 +34,7 @@ contract RefUidArbiter is IArbiter {
         return true;
     }
 
+    /// @notice Decodes ABI-encoded refUID demand data.
     function decodeDemandData(bytes calldata data) public pure returns (DemandData memory) {
         return abi.decode(data, (DemandData));
     }

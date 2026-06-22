@@ -9,9 +9,13 @@ import {IEAS} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
+/// @title ERC721EscrowObligation
+/// @notice Escrows an ERC721 token behind an arbiter-defined fulfillment condition.
+/// @dev Uses the default escrow checks: fulfillment must reference the escrow UID and pass intrinsic attestation validation.
 contract ERC721EscrowObligation is BaseEscrowObligation, IArbiter {
     using ArbiterUtils for Attestation;
 
+    /// @notice ERC721 escrow terms encoded in each escrow attestation.
     struct ObligationData {
         address arbiter;
         bytes demand;
@@ -19,6 +23,7 @@ contract ERC721EscrowObligation is BaseEscrowObligation, IArbiter {
         uint256 tokenId;
     }
 
+    /// @notice Raised when the ERC721 transfer fails or ownership does not move as expected.
     error ERC721TransferFailed(address token, address from, address to, uint256 tokenId);
 
     constructor(IEAS _eas, ISchemaRegistry _schemaRegistry)
@@ -28,6 +33,7 @@ contract ERC721EscrowObligation is BaseEscrowObligation, IArbiter {
     {}
 
     // Extract arbiter and demand from encoded data
+    /// @inheritdoc BaseEscrowObligation
     function decodeCondition(bytes memory data) public pure override returns (address arbiter, bytes memory demand) {
         ObligationData memory decoded = abi.decode(data, (ObligationData));
         return (decoded.arbiter, decoded.demand);
@@ -97,6 +103,7 @@ contract ERC721EscrowObligation is BaseEscrowObligation, IArbiter {
     }
 
     // Implement IArbiter
+    /// @inheritdoc IArbiter
     function check(
         Attestation memory obligation,
         bytes memory demand,
@@ -117,10 +124,12 @@ contract ERC721EscrowObligation is BaseEscrowObligation, IArbiter {
     }
 
     // Typed convenience methods
+    /// @notice Locks the ERC721 token and creates an escrow attestation for the caller.
     function doObligation(ObligationData calldata data, uint64 expirationTime) external returns (bytes32) {
         return _doObligationForRaw(abi.encode(data), expirationTime, msg.sender, bytes32(0));
     }
 
+    /// @notice Locks the ERC721 token and creates an escrow attestation for an explicit recipient.
     function doObligationFor(ObligationData calldata data, uint64 expirationTime, address recipient)
         external
         returns (bytes32)
@@ -128,11 +137,13 @@ contract ERC721EscrowObligation is BaseEscrowObligation, IArbiter {
         return _doObligationForRaw(abi.encode(data), expirationTime, recipient, bytes32(0));
     }
 
+    /// @notice Loads and decodes ERC721 escrow data from this contract's attestation.
     function getObligationData(bytes32 uid) public view returns (ObligationData memory) {
         Attestation memory attestation = _getAttestation(uid);
         return abi.decode(attestation.data, (ObligationData));
     }
 
+    /// @notice Decodes ABI-encoded ERC721 escrow data.
     function decodeObligationData(bytes calldata data) public pure returns (ObligationData memory) {
         return abi.decode(data, (ObligationData));
     }

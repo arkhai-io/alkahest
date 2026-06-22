@@ -16,6 +16,7 @@ fn python_to_json_string(py_obj: &Bound<'_, PyAny>) -> eyre::Result<String> {
     Ok(json_string.extract::<String>()?)
 }
 
+/// Python client wrapper for `StringObligation`.
 #[pyclass]
 #[derive(Clone)]
 pub struct StringObligationClient {
@@ -23,6 +24,7 @@ pub struct StringObligationClient {
 }
 
 impl StringObligationClient {
+    /// Create a Python wrapper around the Rust string obligation module.
     pub fn new(inner: StringObligationModule) -> Self {
         Self { inner }
     }
@@ -30,6 +32,7 @@ impl StringObligationClient {
 
 #[pymethods]
 impl StringObligationClient {
+    /// Load a string obligation attestation and decode its data.
     pub fn get_obligation<'py>(
         &self,
         py: pyo3::Python<'py>,
@@ -46,6 +49,7 @@ impl StringObligationClient {
     }
 
     #[pyo3(signature = (item, ref_uid=None, schema=None))]
+    /// Create a string obligation attestation and return its UID.
     pub fn do_obligation<'py>(
         &self,
         py: pyo3::Python<'py>,
@@ -83,6 +87,7 @@ impl StringObligationClient {
     }
 
     #[pyo3(signature = (json_data, ref_uid=None, schema=None))]
+    /// JSON-serialize a Python object, create a string obligation, and return its UID.
     pub fn do_obligation_json<'py>(
         &self,
         py: pyo3::Python<'py>,
@@ -124,11 +129,14 @@ impl StringObligationClient {
     }
 }
 
+/// Python representation of string obligation data.
 #[pyclass]
 #[derive(Clone, Debug)]
 pub struct PyStringObligationData {
+    /// String payload stored in the obligation attestation.
     #[pyo3(get)]
     pub item: String,
+    /// Application-level schema or tag describing the payload format.
     #[pyo3(get)]
     pub schema: String,
 }
@@ -137,6 +145,7 @@ pub struct PyStringObligationData {
 impl PyStringObligationData {
     #[new]
     #[pyo3(signature = (item, schema=None))]
+    /// Create string obligation data.
     pub fn new(item: String, schema: Option<String>) -> Self {
         Self {
             item,
@@ -152,6 +161,7 @@ impl PyStringObligationData {
     }
 
     #[staticmethod]
+    /// ABI-encode string obligation data.
     pub fn encode(obligation: &PyStringObligationData) -> PyResult<Vec<u8>> {
         use alkahest_rs::contracts::obligations::StringObligation;
         use alloy::sol_types::SolValue;
@@ -166,6 +176,7 @@ impl PyStringObligationData {
     }
 
     #[staticmethod]
+    /// Decode ABI-encoded string obligation data.
     pub fn decode(obligation_data: Vec<u8>) -> PyResult<PyStringObligationData> {
         use alloy::primitives::Bytes;
         let bytes = Bytes::from(obligation_data);
@@ -175,6 +186,7 @@ impl PyStringObligationData {
     }
 
     #[staticmethod]
+    /// Decode ABI-encoded string obligation data as a JSON string.
     pub fn decode_json(obligation_data: Vec<u8>) -> PyResult<String> {
         use alloy::primitives::Bytes;
         let bytes = Bytes::from(obligation_data);
@@ -185,6 +197,7 @@ impl PyStringObligationData {
 
     #[staticmethod]
     #[pyo3(signature = (json_data, schema=None))]
+    /// JSON-encode a string payload and ABI-encode it as string obligation data.
     pub fn encode_json(json_data: String, schema: Option<String>) -> PyResult<Vec<u8>> {
         let json_value: serde_json::Value =
             serde_json::from_str(&json_data).map_err(map_serde_to_pyerr)?;
@@ -200,6 +213,7 @@ impl PyStringObligationData {
 
     #[staticmethod]
     #[pyo3(signature = (json_data, schema=None))]
+    /// JSON-serialize a Python object and ABI-encode it as string obligation data.
     pub fn encode_json_object(
         json_data: &Bound<'_, PyAny>,
         schema: Option<String>,
@@ -217,6 +231,7 @@ impl PyStringObligationData {
         Ok(encoded.to_vec())
     }
 
+    /// ABI-encode this string obligation data.
     pub fn encode_self(&self) -> PyResult<Vec<u8>> {
         PyStringObligationData::encode(self)
     }

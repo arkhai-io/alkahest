@@ -3,8 +3,10 @@ import type { ApprovalPurpose, Erc721 } from "../../../types";
 import { type ViemClient, writeContract } from "../../../utils";
 import type { Erc721Addresses } from "./index";
 
+/** ERC721 approval helper client. */
 export type Erc721UtilClient = ReturnType<typeof makeErc721UtilClient>;
 
+/** Create ERC721 approval helpers. */
 export const makeErc721UtilClient = (viemClient: ViemClient, addresses: Erc721Addresses) => {
   return {
     approve: async (token: Erc721, purpose: ApprovalPurpose) => {

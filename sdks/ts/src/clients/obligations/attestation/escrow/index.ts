@@ -6,6 +6,7 @@ import { type AttestationEscrowV2Client, makeAttestationEscrowV2Client } from ".
 export { type AttestationEscrowV1Client, makeAttestationEscrowV1Client } from "./v1";
 export { type AttestationEscrowV2Client, makeAttestationEscrowV2Client } from "./v2";
 
+/** Attestation escrow client namespace. */
 export type AttestationEscrowClient = {
   default: AttestationEscrowV1Client;
   reference: AttestationEscrowV2Client;
@@ -13,6 +14,7 @@ export type AttestationEscrowClient = {
   v2: AttestationEscrowV2Client;
 };
 
+/** Create attestation-value and attestation-reference escrow clients. */
 export const makeAttestationEscrowClient = (
   viemClient: ViemClient,
   addresses: AttestationAddresses,

@@ -10,6 +10,7 @@ export { type Erc721UnconditionalEscrowClient, makeErc721UnconditionalEscrowClie
 export { type Erc721PaymentClient, makeErc721PaymentClient } from "./payment";
 export { type Erc721UtilClient, makeErc721UtilClient } from "./util";
 
+/** Addresses required by the ERC721 obligation clients. */
 export type Erc721Addresses = {
   eas: `0x${string}`;
   atomicPaymentUtils: `0x${string}`;
@@ -19,6 +20,7 @@ export type Erc721Addresses = {
   paymentObligation: `0x${string}`;
 };
 
+/** Pick ERC721 obligation addresses from a full chain address map. */
 export const pickErc721Addresses = (addresses: ChainAddresses): Erc721Addresses => ({
   eas: addresses.eas,
   atomicPaymentUtils: addresses.erc721AtomicPaymentUtils,
@@ -28,12 +30,14 @@ export const pickErc721Addresses = (addresses: ChainAddresses): Erc721Addresses 
   paymentObligation: addresses.erc721PaymentObligation,
 });
 
+/** ERC721 obligation namespace client. */
 export type Erc721Client = {
   util: Erc721UtilClient;
   escrow: Erc721EscrowClient;
   payment: Erc721PaymentClient;
 };
 
+/** Create the ERC721 utility, escrow, and payment clients. */
 export const makeErc721Client = (viemClient: ViemClient, addresses: Erc721Addresses): Erc721Client => {
   return {
     util: makeErc721UtilClient(viemClient, addresses),

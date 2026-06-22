@@ -4,8 +4,10 @@ import type { ApprovalPurpose, Eip2612Props, Erc20, PermitSignature } from "../.
 import { readContract, type ViemClient, writeContract } from "../../../utils";
 import type { Erc20Addresses } from "./index";
 
+/** ERC20 approval and permit helper client. */
 export type Erc20UtilClient = ReturnType<typeof makeErc20UtilClient>;
 
+/** Create ERC20 approval and permit helpers. */
 export const makeErc20UtilClient = (viemClient: ViemClient, addresses: Erc20Addresses) => {
   const signPermit = async (props: Eip2612Props): Promise<PermitSignature> => {
     const types = {

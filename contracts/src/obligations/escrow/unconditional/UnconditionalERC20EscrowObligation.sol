@@ -10,10 +10,14 @@ import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+/// @title UnconditionalERC20EscrowObligation
+/// @notice Escrows ERC20 tokens behind an arbiter-defined fulfillment condition.
+/// @dev Does not apply the default fulfillment refUID or intrinsic checks; use arbiters to add any required checks.
 contract UnconditionalERC20EscrowObligation is BaseEscrowObligationUnconditional, IArbiter {
     using ArbiterUtils for Attestation;
     using SafeERC20 for IERC20;
 
+    /// @notice ERC20 escrow terms encoded in each escrow attestation.
     struct ObligationData {
         address arbiter;
         bytes demand;
@@ -31,6 +35,7 @@ contract UnconditionalERC20EscrowObligation is BaseEscrowObligationUnconditional
 
     // Extract arbiter and demand from encoded data
 
+    /// @inheritdoc BaseEscrowObligationUnconditional
     function decodeCondition(bytes memory data) public pure override returns (address arbiter, bytes memory demand) {
         ObligationData memory decoded = abi.decode(data, (ObligationData));
         return (decoded.arbiter, decoded.demand);
@@ -88,6 +93,7 @@ contract UnconditionalERC20EscrowObligation is BaseEscrowObligationUnconditional
     }
 
     // Implement IArbiter
+    /// @inheritdoc IArbiter
     function check(
         Attestation memory obligation,
         bytes memory demand,
@@ -108,10 +114,12 @@ contract UnconditionalERC20EscrowObligation is BaseEscrowObligationUnconditional
     }
 
     // Typed convenience methods
+    /// @notice Locks ERC20 tokens and creates an escrow attestation for the caller.
     function doObligation(ObligationData calldata data, uint64 expirationTime) external returns (bytes32) {
         return _doObligationForRaw(abi.encode(data), expirationTime, msg.sender, bytes32(0));
     }
 
+    /// @notice Locks ERC20 tokens and creates an escrow attestation for an explicit recipient.
     function doObligationFor(ObligationData calldata data, uint64 expirationTime, address recipient)
         external
         returns (bytes32)
@@ -119,11 +127,13 @@ contract UnconditionalERC20EscrowObligation is BaseEscrowObligationUnconditional
         return _doObligationForRaw(abi.encode(data), expirationTime, recipient, bytes32(0));
     }
 
+    /// @notice Loads and decodes ERC20 escrow data from this contract's attestation.
     function getObligationData(bytes32 uid) public view returns (ObligationData memory) {
         Attestation memory attestation = _getAttestation(uid);
         return abi.decode(attestation.data, (ObligationData));
     }
 
+    /// @notice Decodes ABI-encoded ERC20 escrow data.
     function decodeObligationData(bytes calldata data) public pure returns (ObligationData memory) {
         return abi.decode(data, (ObligationData));
     }

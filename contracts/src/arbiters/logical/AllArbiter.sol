@@ -5,18 +5,27 @@ import {Attestation} from "@eas/Common.sol";
 import {IArbiter} from "../../IArbiter.sol";
 import {ArbiterUtils} from "../../ArbiterUtils.sol";
 
+/// @title AllArbiter
+/// @notice Accepts a fulfillment only when every child arbiter accepts it.
+/// @dev Empty child arrays return true, matching standard all-of semantics.
 contract AllArbiter is IArbiter {
-    // validates all base arbiters arbitrate true
+    /// @notice Child arbiters and their positionally matching demand bytes.
     struct DemandData {
+        /// @notice Child arbiter contracts to query.
         address[] arbiters;
+        /// @notice ABI-encoded demand passed to each child arbiter by index.
         bytes[] demands;
     }
 
+    /// @notice Raised when child arbiter and demand arrays are not the same length.
     error MismatchedArrayLengths();
+    /// @notice Raised when the child arbiter list exceeds `MAX_ARBITERS`.
     error TooManyArbiters(uint256 provided, uint256 max);
 
+    /// @notice Maximum number of child arbiters allowed in one demand.
     uint256 public constant MAX_ARBITERS = 50;
 
+    /// @inheritdoc IArbiter
     function check(Attestation memory fulfillment, bytes memory demand, bytes32 escrowUid)
         public
         view
@@ -43,6 +52,7 @@ contract AllArbiter is IArbiter {
         return true;
     }
 
+    /// @notice Decodes ABI-encoded all-of demand data.
     function decodeDemandData(bytes calldata data) public pure returns (DemandData memory) {
         return abi.decode(data, (DemandData));
     }

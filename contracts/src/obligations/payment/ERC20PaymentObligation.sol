@@ -16,29 +16,45 @@ import {BaseObligation} from "../../BaseObligation.sol";
 import {IArbiter} from "../../IArbiter.sol";
 import {ArbiterUtils} from "../../ArbiterUtils.sol";
 
+/// @title ERC20PaymentObligation
+/// @notice Transfers ERC20 tokens to a payee and records the payment as an EAS attestation.
+/// @dev As an arbiter, accepts payment attestations that reference the escrow UID and satisfy the demanded token, payee, and minimum amount.
 contract ERC20PaymentObligation is BaseObligation, IArbiter {
     using ArbiterUtils for Attestation;
     using SafeERC20 for IERC20;
 
+    /// @notice ERC20 payment terms encoded in each obligation attestation.
     struct ObligationData {
+        /// @notice ERC20 token contract to transfer.
         address token;
+        /// @notice Amount of ERC20 tokens to transfer.
         uint256 amount;
+        /// @notice Recipient of the ERC20 payment.
         address payee;
     }
 
+    /// @notice Emitted after an ERC20 payment attestation is created.
     event PaymentMade(bytes32 indexed payment, address indexed buyer);
 
+    /// @notice Raised when the ERC20 transfer does not move the requested amount.
     error ERC20TransferFailed(address token, address from, address to, uint256 amount);
 
+    /// @param _eas EAS contract used to create and read payment attestations.
+    /// @param _schemaRegistry EAS schema registry used to register or reuse the payment schema.
     constructor(IEAS _eas, ISchemaRegistry _schemaRegistry)
         BaseObligation(_eas, _schemaRegistry, "address token, uint256 amount, address payee", true)
     {}
 
+    /// @notice Transfers ERC20 tokens and attests to the payment for the caller.
+    /// @param data Payment terms to execute and attest.
+    /// @param refUID UID this payment references, usually the escrow being fulfilled.
+    /// @return uid_ UID of the created payment attestation.
     function doObligation(ObligationData calldata data, bytes32 refUID) public returns (bytes32 uid_) {
         bytes memory encodedData = abi.encode(data);
         uid_ = _doObligationForRaw(encodedData, 0, msg.sender, refUID);
     }
 
+    /// @notice Transfers ERC20 tokens and attests to the payment for an explicit attestation recipient.
     function doObligationFor(ObligationData calldata data, address recipient, bytes32 refUID)
         public
         returns (bytes32 uid_)
@@ -76,6 +92,7 @@ contract ERC20PaymentObligation is BaseObligation, IArbiter {
         emit PaymentMade(attestation.uid, attestation.recipient);
     }
 
+    /// @inheritdoc IArbiter
     function check(Attestation memory fulfillment, bytes memory demand, bytes32 escrowUid)
         public
         view
@@ -95,11 +112,13 @@ contract ERC20PaymentObligation is BaseObligation, IArbiter {
                 && payment.payee == demandData.payee;
     }
 
+    /// @notice Loads and decodes ERC20 payment data from this contract's attestation.
     function getObligationData(bytes32 uid) public view returns (ObligationData memory) {
         Attestation memory attestation = _getAttestation(uid);
         return abi.decode(attestation.data, (ObligationData));
     }
 
+    /// @notice Decodes ABI-encoded ERC20 payment data.
     function decodeObligationData(bytes calldata data) public pure returns (ObligationData memory) {
         return abi.decode(data, (ObligationData));
     }

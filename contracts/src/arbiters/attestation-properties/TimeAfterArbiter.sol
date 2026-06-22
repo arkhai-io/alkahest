@@ -5,15 +5,19 @@ import {Attestation} from "@eas/Common.sol";
 import {IArbiter} from "../../IArbiter.sol";
 import {ArbiterUtils} from "../../ArbiterUtils.sol";
 
+/// @title TimeAfterArbiter
+/// @notice Accepts fulfillments whose creation time is at or after a demanded timestamp.
 contract TimeAfterArbiter is IArbiter {
     using ArbiterUtils for Attestation;
 
+    /// @notice Demand specifying the minimum allowed creation timestamp.
     struct DemandData {
         uint64 time;
     }
 
     error TimeNotAfter();
 
+    /// @inheritdoc IArbiter
     function check(
         Attestation memory fulfillment,
         bytes memory demand,
@@ -33,6 +37,7 @@ contract TimeAfterArbiter is IArbiter {
         return true;
     }
 
+    /// @notice Decodes ABI-encoded creation-time demand data.
     function decodeDemandData(bytes calldata data) public pure returns (DemandData memory) {
         return abi.decode(data, (DemandData));
     }

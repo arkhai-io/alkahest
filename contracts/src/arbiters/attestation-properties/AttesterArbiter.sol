@@ -5,15 +5,19 @@ import {Attestation} from "@eas/Common.sol";
 import {IArbiter} from "../../IArbiter.sol";
 import {ArbiterUtils} from "../../ArbiterUtils.sol";
 
+/// @title AttesterArbiter
+/// @notice Accepts fulfillments with a specific EAS attester.
 contract AttesterArbiter is IArbiter {
     using ArbiterUtils for Attestation;
 
+    /// @notice Demand specifying the required fulfillment attester.
     struct DemandData {
         address attester;
     }
 
     error AttesterMismatched();
 
+    /// @inheritdoc IArbiter
     function check(
         Attestation memory fulfillment,
         bytes memory demand,
@@ -30,6 +34,7 @@ contract AttesterArbiter is IArbiter {
         return true;
     }
 
+    /// @notice Decodes ABI-encoded attester demand data.
     function decodeDemandData(bytes calldata data) public pure returns (DemandData memory) {
         return abi.decode(data, (DemandData));
     }

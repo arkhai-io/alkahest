@@ -5,8 +5,10 @@ import type { ApprovalPurpose, TokenBundle } from "../../../types";
 import { type ViemClient, writeContract } from "../../../utils";
 import type { TokenBundleAddresses } from "./index";
 
+/** Approval helper client for mixed token bundles. */
 export type TokenBundleUtilClient = ReturnType<typeof makeTokenBundleUtilClient>;
 
+/** Create token-bundle approval helpers. */
 export const makeTokenBundleUtilClient = (viemClient: ViemClient, addresses: TokenBundleAddresses) => {
   return {
     approve: async (bundle: TokenBundle, purpose: ApprovalPurpose) => {

@@ -13,8 +13,10 @@ use crate::{
     types::{ProviderContext, SharedWalletProvider},
 };
 
+/// Obligation data for a hook-based escrow with one hook.
 type HookEscrowData =
     contracts::obligations::escrow::hook_based::HookEscrowObligation::ObligationData;
+/// Obligation data for a hook-based escrow with multiple hooks.
 type HooksEscrowData =
     contracts::obligations::escrow::hook_based::HooksEscrowObligation::ObligationData;
 
@@ -37,38 +39,60 @@ impl_abi_conversions!(
     contracts::obligations::escrow::hook_based::hooks::AttestationReferenceEscrowHook::HookData
 );
 
+/// Contract addresses used by the hook-based escrow module.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HookBasedAddresses {
+    /// EAS contract address.
     pub eas: Address,
+    /// HookEscrowObligation contract address.
     pub hook_escrow_obligation: Address,
+    /// HooksEscrowObligation contract address.
     pub hooks_escrow_obligation: Address,
+    /// ERC20EscrowHook contract address.
     pub erc20_escrow_hook: Address,
+    /// ERC721EscrowHook contract address.
     pub erc721_escrow_hook: Address,
+    /// ERC1155EscrowHook contract address.
     pub erc1155_escrow_hook: Address,
+    /// NativeTokenEscrowHook contract address.
     pub native_token_escrow_hook: Address,
+    /// AttestationEscrowHook contract address.
     pub attestation_escrow_hook: Address,
+    /// AttestationReferenceEscrowHook contract address.
     pub attestation_reference_escrow_hook: Address,
 }
 
 impl Default for HookBasedAddresses {
+    /// Returns Base Sepolia hook-based escrow addresses.
     fn default() -> Self {
         BASE_SEPOLIA_ADDRESSES.hook_based_addresses
     }
 }
 
+/// Contracts addressable through the hook-based escrow module.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum HookBasedContract {
+    /// EAS contract.
     Eas,
+    /// HookEscrowObligation contract.
     HookEscrowObligation,
+    /// HooksEscrowObligation contract.
     HooksEscrowObligation,
+    /// ERC20EscrowHook contract.
     Erc20EscrowHook,
+    /// ERC721EscrowHook contract.
     Erc721EscrowHook,
+    /// ERC1155EscrowHook contract.
     Erc1155EscrowHook,
+    /// NativeTokenEscrowHook contract.
     NativeTokenEscrowHook,
+    /// AttestationEscrowHook contract.
     AttestationEscrowHook,
+    /// AttestationReferenceEscrowHook contract.
     AttestationReferenceEscrowHook,
 }
 
+/// Rust client module for hook-based escrow helpers.
 #[derive(Clone)]
 pub struct HookBasedModule {
     _signer: PrivateKeySigner,
@@ -97,6 +121,7 @@ impl ContractModule for HookBasedModule {
 }
 
 impl HookBasedModule {
+    /// Creates a hook-based escrow module with optional custom addresses.
     pub fn new(
         signer: PrivateKeySigner,
         wallet_provider: SharedWalletProvider,
@@ -109,18 +134,22 @@ impl HookBasedModule {
         })
     }
 
+    /// Encodes single-hook escrow obligation data.
     pub fn encode_hook_escrow(data: &HookEscrowData) -> Bytes {
         data.abi_encode().into()
     }
 
+    /// Decodes ABI-encoded single-hook escrow obligation data.
     pub fn decode_hook_escrow(data: &Bytes) -> eyre::Result<HookEscrowData> {
         Ok(HookEscrowData::abi_decode(data.as_ref())?)
     }
 
+    /// Encodes multi-hook escrow obligation data.
     pub fn encode_hooks_escrow(data: &HooksEscrowData) -> Bytes {
         data.abi_encode().into()
     }
 
+    /// Decodes ABI-encoded multi-hook escrow obligation data.
     pub fn decode_hooks_escrow(data: &Bytes) -> eyre::Result<HooksEscrowData> {
         Ok(HooksEscrowData::abi_decode(data.as_ref())?)
     }

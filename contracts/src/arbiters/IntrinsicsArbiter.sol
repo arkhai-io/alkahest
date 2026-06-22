@@ -5,10 +5,13 @@ import {Attestation} from "@eas/Common.sol";
 import {IArbiter} from "../IArbiter.sol";
 import {ArbiterUtils} from "../ArbiterUtils.sol";
 
+/// @title IntrinsicsArbiter
+/// @notice Accepts fulfillments that pass the shared intrinsic attestation checks.
+/// @dev Reverts through `ArbiterUtils` if the fulfillment UID is zero, expired, or revoked.
 contract IntrinsicsArbiter is IArbiter {
-    // validates attestation is not expired and not revoked
     using ArbiterUtils for Attestation;
 
+    /// @inheritdoc IArbiter
     function check(
         Attestation memory fulfillment,
         bytes memory,

@@ -9,11 +9,15 @@ import {TokenBundleSplitterBase} from "./TokenBundleSplitterBase.sol";
 ///         Cheaper oracle calls, but incorrect splits will only surface
 ///         as reverts during collectAndDistribute (over-allocation) or
 ///         stranded tokens in the splitter (under-allocation).
+/// @title TokenBundleSplitterUnvalidated
+/// @notice Token-bundle splitter variant that stores oracle splits without validating totals up front.
+/// @dev Distribution can still fail later if the stored split asks for more than was collected.
 contract TokenBundleSplitterUnvalidated is TokenBundleSplitterBase {
     constructor(IEAS _eas) TokenBundleSplitterBase(_eas) {}
 
     /// @notice Oracle submits a split decision without validation.
     ///         Only checks for empty splits and zero-address recipients.
+    /// @inheritdoc TokenBundleSplitterBase
     function arbitrate(bytes32 fulfillment, bytes32 escrow, BundleSplit[] calldata splits) external override {
         if (fulfillment == bytes32(0)) revert InvalidFulfillmentUid();
 

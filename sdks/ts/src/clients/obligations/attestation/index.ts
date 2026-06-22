@@ -8,6 +8,7 @@ export { type AttestationEscrowV1Client, makeAttestationEscrowV1Client } from ".
 export { type AttestationEscrowV2Client, makeAttestationEscrowV2Client } from "./escrow/v2";
 export { type AttestationUtilClient, makeAttestationUtilClient } from "./util";
 
+/** Addresses required by the attestation escrow clients. */
 export type AttestationAddresses = {
   eas: `0x${string}`;
   atomicUtils: `0x${string}`;
@@ -17,6 +18,7 @@ export type AttestationAddresses = {
   escrowObligation2Unconditional: `0x${string}`;
 };
 
+/** Pick attestation escrow addresses from a full chain address map. */
 export const pickAttestationAddresses = (addresses: ChainAddresses): AttestationAddresses => ({
   eas: addresses.eas,
   atomicUtils: addresses.atomicAttestationUtils,
@@ -26,11 +28,13 @@ export const pickAttestationAddresses = (addresses: ChainAddresses): Attestation
   escrowObligation2Unconditional: addresses.attestationReferenceUnconditionalEscrowObligation,
 });
 
+/** Attestation escrow namespace client. */
 export type AttestationClient = {
   util: AttestationUtilClient;
   escrow: AttestationEscrowClient;
 };
 
+/** Create the attestation utility and escrow clients. */
 export const makeAttestationClient = (viemClient: ViemClient, addresses: AttestationAddresses): AttestationClient => {
   return {
     util: makeAttestationUtilClient(viemClient, addresses),

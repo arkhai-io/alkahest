@@ -12,10 +12,13 @@ import {SplitterVerification} from "./SplitterVerification.sol";
 import {BaseSplitter} from "./BaseSplitter.sol";
 import {IEscrow} from "../../IEscrow.sol";
 
+/// @title TokenBundleSplitterBase
+/// @notice Shared collection and distribution logic for token-bundle splitters.
 abstract contract TokenBundleSplitterBase is BaseSplitter, ERC1155Holder {
     using SplitterVerification for Attestation;
     using SafeERC20 for IERC20;
 
+    /// @notice One mixed-token distribution recipient and asset bundle.
     struct BundleSplit {
         address recipient;
         uint256 nativeAmount;
@@ -24,11 +27,13 @@ abstract contract TokenBundleSplitterBase is BaseSplitter, ERC1155Holder {
         uint256[] erc1155Amounts;
     }
 
+    /// @notice Arbiter demand identifying the trusted oracle and opaque context.
     struct DemandData {
         address oracle;
         bytes data;
     }
 
+    /// @notice Token-bundle escrow data decoded to validate split totals.
     struct EscrowObligationData {
         address arbiter;
         bytes demand;
@@ -66,6 +71,7 @@ abstract contract TokenBundleSplitterBase is BaseSplitter, ERC1155Holder {
     // Oracle arbitration
     // -----------------------------------------------------------------
 
+    /// @notice Records the caller's split decision for a fulfillment and escrow.
     function arbitrate(bytes32 fulfillment, bytes32 escrow, BundleSplit[] calldata splits) external virtual;
 
     function _storeDecision(address oracle, bytes32 decisionKey, BundleSplit[] calldata splits) internal {
@@ -98,6 +104,7 @@ abstract contract TokenBundleSplitterBase is BaseSplitter, ERC1155Holder {
     // -----------------------------------------------------------------
 
     /// @notice Collects a token bundle escrow and distributes assets. Reverts if any transfer fails.
+    /// @notice Collects a token-bundle escrow and distributes all assets per oracle splits.
     function collectAndDistribute(address escrowContract, bytes32 escrow, bytes32 fulfillment) external nonReentrant {
         (BundleSplit[] memory splits, EscrowObligationData memory escrowData) =
             _collectAndDecode(escrowContract, escrow, fulfillment);
@@ -289,6 +296,7 @@ abstract contract TokenBundleSplitterBase is BaseSplitter, ERC1155Holder {
     // View helpers
     // -----------------------------------------------------------------
 
+    /// @notice Returns bundle splits recorded by an oracle for a fulfillment and escrow.
     function getSplits(address oracle, bytes32 fulfillment, bytes32 escrow)
         external
         view
@@ -297,6 +305,7 @@ abstract contract TokenBundleSplitterBase is BaseSplitter, ERC1155Holder {
         return decisions[oracle][_decisionKey(fulfillment, escrow)];
     }
 
+    /// @notice Decodes ABI-encoded token-bundle splitter demand data.
     function decodeDemandData(bytes calldata data) external pure returns (DemandData memory) {
         return abi.decode(data, (DemandData));
     }

@@ -8,9 +8,13 @@ import {Attestation} from "@eas/Common.sol";
 import {IEAS, AttestationRequest, AttestationRequestData} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 
+/// @title AttestationEscrowObligation
+/// @notice Escrows native token and releases it with the fulfillment attestation data.
+/// @dev Uses the default escrow checks: fulfillment must reference the escrow UID and pass intrinsic attestation validation.
 contract AttestationEscrowObligation is BaseEscrowObligation, IArbiter {
     using ArbiterUtils for Attestation;
 
+    /// @notice Attestation escrow terms encoded in each escrow attestation.
     struct ObligationData {
         address arbiter;
         bytes demand;
@@ -31,6 +35,7 @@ contract AttestationEscrowObligation is BaseEscrowObligation, IArbiter {
     {}
 
     // Extract arbiter and demand from encoded data
+    /// @inheritdoc BaseEscrowObligation
     function decodeCondition(bytes memory data) public pure override returns (address arbiter, bytes memory demand) {
         ObligationData memory decoded = abi.decode(data, (ObligationData));
         return (decoded.arbiter, decoded.demand);
@@ -72,6 +77,7 @@ contract AttestationEscrowObligation is BaseEscrowObligation, IArbiter {
     }
 
     // Implement IArbiter
+    /// @inheritdoc IArbiter
     function check(
         Attestation memory obligation,
         bytes memory demand,
@@ -92,10 +98,12 @@ contract AttestationEscrowObligation is BaseEscrowObligation, IArbiter {
     }
 
     // Typed convenience methods
+    /// @notice Locks native token and creates an attestation escrow for the caller.
     function doObligation(ObligationData calldata data, uint64 expirationTime) external payable returns (bytes32) {
         return _doObligationForRaw(abi.encode(data), expirationTime, msg.sender, bytes32(0));
     }
 
+    /// @notice Locks native token and creates an attestation escrow for an explicit recipient.
     function doObligationFor(ObligationData calldata data, uint64 expirationTime, address recipient)
         external
         payable
@@ -104,11 +112,13 @@ contract AttestationEscrowObligation is BaseEscrowObligation, IArbiter {
         return _doObligationForRaw(abi.encode(data), expirationTime, recipient, bytes32(0));
     }
 
+    /// @notice Loads and decodes attestation escrow data from this contract's attestation.
     function getObligationData(bytes32 uid) public view returns (ObligationData memory) {
         Attestation memory attestation = _getAttestation(uid);
         return abi.decode(attestation.data, (ObligationData));
     }
 
+    /// @notice Decodes ABI-encoded attestation escrow data.
     function decodeObligationData(bytes calldata data) public pure returns (ObligationData memory) {
         return abi.decode(data, (ObligationData));
     }

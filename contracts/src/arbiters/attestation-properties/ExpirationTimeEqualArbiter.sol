@@ -5,15 +5,19 @@ import {Attestation} from "@eas/Common.sol";
 import {IArbiter} from "../../IArbiter.sol";
 import {ArbiterUtils} from "../../ArbiterUtils.sol";
 
+/// @title ExpirationTimeEqualArbiter
+/// @notice Accepts fulfillments with an exact expiration timestamp.
 contract ExpirationTimeEqualArbiter is IArbiter {
     using ArbiterUtils for Attestation;
 
+    /// @notice Demand specifying the required expiration timestamp.
     struct DemandData {
         uint64 expirationTime;
     }
 
     error ExpirationTimeNotEqual();
 
+    /// @inheritdoc IArbiter
     function check(
         Attestation memory fulfillment,
         bytes memory demand,
@@ -32,6 +36,7 @@ contract ExpirationTimeEqualArbiter is IArbiter {
         return true;
     }
 
+    /// @notice Decodes ABI-encoded expiration-time demand data.
     function decodeDemandData(bytes calldata data) public pure returns (DemandData memory) {
         return abi.decode(data, (DemandData));
     }

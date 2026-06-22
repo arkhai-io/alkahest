@@ -7,6 +7,7 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
 import {IArbiter} from "../../IArbiter.sol";
 import {SplitterVerification} from "./SplitterVerification.sol";
 
+/// @notice Minimal obligation interface used to create splitter-owned fulfillments.
 interface IObligation {
     function doObligationRaw(bytes calldata data, uint64 expirationTime, bytes32 refUID)
         external
@@ -14,11 +15,17 @@ interface IObligation {
         returns (bytes32);
 }
 
+/// @notice Common splitter arbiter demand data.
 struct SplitterDemandData {
+    /// @notice Oracle address whose split decision is trusted.
     address oracle;
+    /// @notice Opaque demand context for the oracle.
     bytes data;
 }
 
+/// @title BaseSplitter
+/// @notice Shared arbiter and fulfillment-recording base for splitter contracts.
+/// @dev Splitter decisions are keyed by `(fulfillment, escrow)` and associated with an oracle address.
 abstract contract BaseSplitter is IArbiter, ReentrancyGuard {
     using SplitterVerification for Attestation;
 
@@ -28,9 +35,11 @@ abstract contract BaseSplitter is IArbiter, ReentrancyGuard {
     /// @notice Maximum number of splits allowed per decision.
     uint256 public constant MAX_SPLITS = 50;
 
+    /// @notice Emitted by an escrow participant to request a split decision.
     event ArbitrationRequested(
         bytes32 indexed fulfillment, bytes32 indexed escrow, address indexed oracle, bytes demand
     );
+    /// @notice Emitted when the splitter creates a fulfillment and records the external fulfiller.
     event FulfillmentCreated(
         bytes32 indexed fulfillmentUid, address indexed fulfiller, address indexed obligationContract
     );
@@ -44,15 +53,20 @@ abstract contract BaseSplitter is IArbiter, ReentrancyGuard {
     error InvalidCreatedFulfillment(bytes32 fulfillment);
     error NativeTokenRefundFailed(address recipient, uint256 amount);
 
+    /// @notice EAS contract used to load escrow and fulfillment attestations.
     IEAS public eas;
 
+    /// @notice Whether an oracle has recorded a decision for a decision key.
     mapping(address => mapping(bytes32 => bool)) public hasDecision;
+    /// @notice External fulfiller recorded for splitter-owned fulfillments.
     mapping(bytes32 => address) public fulfillers;
 
+    /// @param _eas EAS contract used to load attestations.
     constructor(IEAS _eas) {
         eas = _eas;
     }
 
+    /// @notice Emits an arbitration request when called by the escrow attester or recipient.
     function requestArbitration(bytes32 _fulfillment, bytes32 _escrow, address oracle, bytes memory demand) external {
         Attestation memory escrowAttestation = eas.getAttestation(_escrow);
         if (escrowAttestation.attester != msg.sender && escrowAttestation.recipient != msg.sender) {
@@ -61,6 +75,7 @@ abstract contract BaseSplitter is IArbiter, ReentrancyGuard {
         emit ArbitrationRequested(_fulfillment, _escrow, oracle, demand);
     }
 
+    /// @inheritdoc IArbiter
     function check(Attestation memory fulfillment, bytes memory demand, bytes32 escrow)
         public
         view
@@ -73,6 +88,7 @@ abstract contract BaseSplitter is IArbiter, ReentrancyGuard {
         return hasDecision[demandData.oracle][_decisionKey(fulfillment.uid, escrow)];
     }
 
+    /// @notice Creates a fulfillment attestation addressed to this splitter and records the caller as fulfiller.
     function createFulfillment(address obligationContract, bytes calldata data, uint64 expirationTime, bytes32 refUID)
         external
         payable

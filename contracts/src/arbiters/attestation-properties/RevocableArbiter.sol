@@ -5,15 +5,19 @@ import {Attestation} from "@eas/Common.sol";
 import {IArbiter} from "../../IArbiter.sol";
 import {ArbiterUtils} from "../../ArbiterUtils.sol";
 
+/// @title RevocableArbiter
+/// @notice Accepts fulfillments whose revocability matches demand data.
 contract RevocableArbiter is IArbiter {
     using ArbiterUtils for Attestation;
 
+    /// @notice Demand specifying the required EAS revocability flag.
     struct DemandData {
         bool revocable;
     }
 
     error RevocabilityMismatched();
 
+    /// @inheritdoc IArbiter
     function check(
         Attestation memory fulfillment,
         bytes memory demand,
@@ -32,6 +36,7 @@ contract RevocableArbiter is IArbiter {
         return true;
     }
 
+    /// @notice Decodes ABI-encoded revocability demand data.
     function decodeDemandData(bytes calldata data) public pure returns (DemandData memory) {
         return abi.decode(data, (DemandData));
     }

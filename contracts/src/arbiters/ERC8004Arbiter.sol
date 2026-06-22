@@ -5,6 +5,7 @@ import {Attestation} from "@eas/Common.sol";
 import {IArbiter} from "../IArbiter.sol";
 import {ArbiterUtils} from "../ArbiterUtils.sol";
 
+/// @notice Minimal ERC-8004 ValidationRegistry interface used by `ERC8004Arbiter`.
 interface IValidationRegistry {
     function getValidationStatus(bytes32 requestHash)
         external
@@ -20,26 +21,36 @@ interface IValidationRegistry {
 }
 
 /**
- * @title ValidationRegistryArbiter
- * @notice Arbiter that wraps ERC-8004's ValidationRegistry
- * @dev The DemandData specifies a minimum response uint8 (1-100)
+ * @title ERC8004Arbiter
+ * @notice Arbiter that wraps ERC-8004's ValidationRegistry.
+ * @dev The DemandData specifies a minimum response uint8 (1-100).
  *      The validation requestHash is derived from the fulfillment attestation
  *      UID and caller-supplied binding data.
  */
 contract ERC8004Arbiter is IArbiter {
     using ArbiterUtils for Attestation;
 
+    /// @notice Demand describing the registry lookup and minimum validation result.
     struct DemandData {
+        /// @notice ERC-8004 ValidationRegistry contract to query.
         address validationRegistry;
+        /// @notice Validator address that must have produced the response.
         address validatorAddress;
+        /// @notice Minimum accepted response, from 1 through 100.
         uint8 minResponse;
+        /// @notice Opaque caller-supplied bytes included in the validation request hash.
         bytes data;
     }
 
+    /// @notice Raised when the minimum response is outside the supported 1-100 range.
     error InvalidMinResponse();
+    /// @notice Raised when the registry has no validation for the derived request hash.
     error ValidationNotFound();
+    /// @notice Raised when the registry response is below the requested minimum.
     error ResponseBelowMinimum();
+    /// @notice Raised when the registry response came from a different validator.
     error ValidatorMismatch();
+    /// @notice Raised when the fulfillment does not reference the escrow UID supplied by the escrow contract.
     error FulfillmentMustReferenceEscrow();
 
     /**
@@ -99,6 +110,9 @@ contract ERC8004Arbiter is IArbiter {
         return abi.decode(data, (DemandData));
     }
 
+    /// @notice Computes the ERC-8004 validation request hash used by this arbiter.
+    /// @param uid Fulfillment attestation UID.
+    /// @param data Opaque binding data from `DemandData`.
     function requestHashFor(bytes32 uid, bytes memory data) public pure returns (bytes32) {
         return keccak256(abi.encode(uid, data));
     }

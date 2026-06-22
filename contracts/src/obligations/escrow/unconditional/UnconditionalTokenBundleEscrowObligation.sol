@@ -13,10 +13,14 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 
+/// @title UnconditionalTokenBundleEscrowObligation
+/// @notice Escrows a mixed native/ERC20/ERC721/ERC1155 bundle behind an arbiter-defined fulfillment condition.
+/// @dev Does not apply the default fulfillment refUID or intrinsic checks; bundle arrays are positionally matched.
 contract UnconditionalTokenBundleEscrowObligation is BaseEscrowObligationUnconditional, IArbiter, ERC1155Holder {
     using ArbiterUtils for Attestation;
     using SafeERC20 for IERC20;
 
+    /// @notice Mixed-token escrow terms encoded in each escrow attestation.
     struct ObligationData {
         address arbiter;
         bytes demand;
@@ -78,6 +82,7 @@ contract UnconditionalTokenBundleEscrowObligation is BaseEscrowObligationUncondi
     }
 
     // Extract arbiter and demand from encoded data
+    /// @inheritdoc BaseEscrowObligationUnconditional
     function decodeCondition(bytes memory data) public pure override returns (address arbiter, bytes memory demand) {
         ObligationData memory decoded = abi.decode(data, (ObligationData));
         return (decoded.arbiter, decoded.demand);
@@ -293,6 +298,7 @@ contract UnconditionalTokenBundleEscrowObligation is BaseEscrowObligationUncondi
     }
 
     // Implement IArbiter
+    /// @inheritdoc IArbiter
     function check(
         Attestation memory obligation,
         bytes memory demand,
@@ -354,10 +360,12 @@ contract UnconditionalTokenBundleEscrowObligation is BaseEscrowObligationUncondi
     }
 
     // Typed convenience methods
+    /// @notice Locks the bundle and creates an escrow attestation for the caller.
     function doObligation(ObligationData calldata data, uint64 expirationTime) external payable returns (bytes32) {
         return _doObligationForRaw(abi.encode(data), expirationTime, msg.sender, bytes32(0));
     }
 
+    /// @notice Locks the bundle and creates an escrow attestation for an explicit recipient.
     function doObligationFor(ObligationData calldata data, uint64 expirationTime, address recipient)
         external
         payable
@@ -443,11 +451,13 @@ contract UnconditionalTokenBundleEscrowObligation is BaseEscrowObligationUncondi
         return true;
     }
 
+    /// @notice Loads and decodes bundle escrow data from this contract's attestation.
     function getObligationData(bytes32 uid) public view returns (ObligationData memory) {
         Attestation memory attestation = _getAttestation(uid);
         return abi.decode(attestation.data, (ObligationData));
     }
 
+    /// @notice Decodes ABI-encoded bundle escrow data.
     function decodeObligationData(bytes calldata data) public pure returns (ObligationData memory) {
         return abi.decode(data, (ObligationData));
     }

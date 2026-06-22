@@ -6,11 +6,13 @@ import { makeTokenBundleUnconditionalEscrowClient, type TokenBundleUnconditional
 export { makeTokenBundleDefaultEscrowClient, type TokenBundleDefaultEscrowClient } from "./default";
 export { makeTokenBundleUnconditionalEscrowClient, type TokenBundleUnconditionalEscrowClient } from "./unconditional";
 
+/** Token-bundle escrow client namespace. */
 export type TokenBundleEscrowClient = {
   default: TokenBundleDefaultEscrowClient;
   unconditional: TokenBundleUnconditionalEscrowClient;
 };
 
+/** Create default and unconditional token-bundle escrow clients. */
 export const makeTokenBundleEscrowClient = (
   viemClient: ViemClient,
   addresses: TokenBundleAddresses,

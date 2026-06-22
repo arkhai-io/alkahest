@@ -10,6 +10,7 @@ export { makeTokenBundleUnconditionalEscrowClient, type TokenBundleUnconditional
 export { makeTokenBundlePaymentClient, type TokenBundlePaymentClient } from "./payment";
 export { makeTokenBundleUtilClient, type TokenBundleUtilClient } from "./util";
 
+/** Addresses required by the token-bundle obligation clients. */
 export type TokenBundleAddresses = {
   eas: `0x${string}`;
   atomicPaymentUtils: `0x${string}`;
@@ -19,6 +20,7 @@ export type TokenBundleAddresses = {
   paymentObligation: `0x${string}`;
 };
 
+/** Pick token-bundle obligation addresses from a full chain address map. */
 export const pickTokenBundleAddresses = (addresses: ChainAddresses): TokenBundleAddresses => ({
   eas: addresses.eas,
   atomicPaymentUtils: addresses.tokenBundleAtomicPaymentUtils,
@@ -28,12 +30,14 @@ export const pickTokenBundleAddresses = (addresses: ChainAddresses): TokenBundle
   paymentObligation: addresses.tokenBundlePaymentObligation,
 });
 
+/** Token-bundle obligation namespace client. */
 export type TokenBundleClient = {
   util: TokenBundleUtilClient;
   escrow: TokenBundleEscrowClient;
   payment: TokenBundlePaymentClient;
 };
 
+/** Create the token-bundle utility, escrow, and payment clients. */
 export const makeTokenBundleClient = (viemClient: ViemClient, addresses: TokenBundleAddresses): TokenBundleClient => {
   return {
     util: makeTokenBundleUtilClient(viemClient, addresses),

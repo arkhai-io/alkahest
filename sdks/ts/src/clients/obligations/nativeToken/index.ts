@@ -30,6 +30,7 @@ export {
   type NativeTokenPaymentObligationData,
 } from "./payment";
 
+/** Addresses required by the native-token obligation clients. */
 export type NativeTokenAddresses = {
   eas: `0x${string}`;
   atomicPaymentUtils: `0x${string}`;
@@ -38,6 +39,7 @@ export type NativeTokenAddresses = {
   paymentObligation: `0x${string}`;
 };
 
+/** Pick native-token obligation addresses from a full chain address map. */
 export const pickNativeTokenAddresses = (addresses: ChainAddresses): NativeTokenAddresses => ({
   eas: addresses.eas,
   atomicPaymentUtils: addresses.nativeTokenAtomicPaymentUtils,
@@ -46,11 +48,13 @@ export const pickNativeTokenAddresses = (addresses: ChainAddresses): NativeToken
   paymentObligation: addresses.nativeTokenPaymentObligation,
 });
 
+/** Native-token obligation namespace client. */
 export type NativeTokenClient = {
   escrow: NativeTokenEscrowClient;
   payment: NativeTokenPaymentClient;
 };
 
+/** Create the native-token escrow and payment clients. */
 export const makeNativeTokenClient = (viemClient: ViemClient, addresses: NativeTokenAddresses): NativeTokenClient => {
   return {
     escrow: makeNativeTokenEscrowClient(viemClient, addresses),

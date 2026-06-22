@@ -9,20 +9,25 @@ import {SplitterVerification} from "./SplitterVerification.sol";
 import {BaseSplitter} from "./BaseSplitter.sol";
 import {IEscrow} from "../../IEscrow.sol";
 
+/// @title ERC20Splitter
+/// @notice Collects ERC20 escrows and distributes the received amount according to oracle-provided splits.
 contract ERC20Splitter is BaseSplitter {
     using SplitterVerification for Attestation;
     using SafeERC20 for IERC20;
 
+    /// @notice One ERC20 distribution recipient and amount.
     struct Split {
         address recipient;
         uint256 amount;
     }
 
+    /// @notice Arbiter demand identifying the trusted oracle and opaque context.
     struct DemandData {
         address oracle;
         bytes data;
     }
 
+    /// @notice ERC20 escrow data decoded to validate split totals.
     struct EscrowObligationData {
         address arbiter;
         bytes demand;
@@ -30,9 +35,11 @@ contract ERC20Splitter is BaseSplitter {
         uint256 amount;
     }
 
+    /// @notice Emitted when an oracle records ERC20 splits for a fulfillment and escrow.
     event ArbitrationMade(
         bytes32 indexed decisionKey, bytes32 indexed fulfillmentUid, address indexed oracle, Split[] splits
     );
+    /// @notice Emitted after an escrow is collected and ERC20 splits are distributed.
     event EscrowCollectedAndDistributed(
         bytes32 indexed escrowUid,
         bytes32 indexed fulfillmentUid,
@@ -49,6 +56,7 @@ contract ERC20Splitter is BaseSplitter {
 
     constructor(IEAS _eas) BaseSplitter(_eas) {}
 
+    /// @notice Records the caller's split decision for a fulfillment and escrow.
     function arbitrate(bytes32 fulfillment, bytes32 escrow, Split[] calldata splits) external {
         if (fulfillment == bytes32(0)) revert InvalidFulfillmentUid();
 
@@ -112,10 +120,12 @@ contract ERC20Splitter is BaseSplitter {
         SplitterVerification.verifyDelta(balanceBefore, IERC20(token).balanceOf(address(this)), escrowData.amount);
     }
 
+    /// @notice Returns ERC20 splits recorded by an oracle for a fulfillment and escrow.
     function getSplits(address oracle, bytes32 fulfillment, bytes32 escrow) external view returns (Split[] memory) {
         return decisions[oracle][_decisionKey(fulfillment, escrow)];
     }
 
+    /// @notice Decodes ABI-encoded ERC20 splitter demand data.
     function decodeDemandData(bytes calldata data) external pure returns (DemandData memory) {
         return abi.decode(data, (DemandData));
     }
