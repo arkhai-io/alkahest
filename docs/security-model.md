@@ -14,6 +14,27 @@ The protocol deliberately leaves many policy choices to the escrow creator,
 arbiter, oracle, splitter oracle, SDK, or application. A configuration can be
 bad, permissive, or economically irrational without being a protocol bug.
 
+## Attester Authority
+
+An EAS attestation is not automatically authoritative because it was emitted by
+a contract. Consumers must understand what paths can cause that contract to
+attest and what facts the contract enforces before attesting.
+
+An obligation-style attestation is trustworthy for a fact only when the
+contract's implementation atomically performs or verifies that fact before
+creating the attestation, and there is no alternate path for producing an
+equivalent attestation. For example, a payment obligation attestation is a proof
+of payment because the payment transfer and attestation creation happen in the
+same transaction under that contract's control.
+
+By contrast, hooks, attestation escrows, reference attestations, and other
+contracts that mint user-specified attestation data do not give that data
+independent legitimacy merely by acting as the EAS attester. Their attestations
+are only meaningful under the policy a downstream consumer applies: schema,
+content, referenced UID, escrow provenance, lifecycle context, or other explicit
+checks. If a flow needs escrow provenance, it should encode and verify that
+provenance directly rather than assuming it from the attester address alone.
+
 ## Arbiters Are Policy
 
 Escrow creators choose the arbiter and demand. The contracts support arbitrary
