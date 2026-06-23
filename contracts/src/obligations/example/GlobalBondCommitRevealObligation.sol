@@ -65,6 +65,7 @@ contract GlobalBondCommitRevealObligation is BaseObligation, BaseArbiter, Ownabl
     error IncorrectBondAmount(uint256 provided, uint256 required);
     error CommitDeadlineNotReached(bytes32 commitment);
     error RevealTooLate(bytes32 commitment);
+    error UnauthorizedReveal(address caller, address committer, address recipient);
     error EscrowCollectionFailed(address escrowContract, bytes32 escrowUid, bytes32 fulfillmentUid, bytes result);
 
     /// @notice Bond amount epochs. Updates take effect starting the next block.
@@ -122,11 +123,9 @@ contract GlobalBondCommitRevealObligation is BaseObligation, BaseArbiter, Ownabl
         uid_ = _doObligationForRaw(encodedData, 0, msg.sender, refUID);
     }
 
-    /// @notice Creates a fulfillment attestation with a specified recipient.
-    ///         Use when the attestation recipient must differ from msg.sender,
-    ///         e.g. when the recipient is a splitter contract that needs to
-    ///         collect the escrow. The commitment must have been computed
-    ///         with the recipient address as the claimer.
+    /// @notice Creates a fulfillment attestation with an explicit recipient.
+    ///         The reveal caller, original committer, and attestation recipient
+    ///         must all be the same address.
     /// @param data Revealed data (must match a prior commit) and salt.
     /// @param recipient The address to set as the attestation recipient.
     /// @param refUID Escrow attestation UID being fulfilled.
@@ -139,6 +138,8 @@ contract GlobalBondCommitRevealObligation is BaseObligation, BaseArbiter, Ownabl
     }
 
     /// @notice Reveals a fulfillment and immediately collects the target escrow.
+    /// @param recipient Recipient to set on the fulfillment attestation; must
+    ///        equal the original committer and reveal caller.
     function revealAndCollect(
         ObligationData calldata data,
         address recipient,
@@ -166,6 +167,10 @@ contract GlobalBondCommitRevealObligation is BaseObligation, BaseArbiter, Ownabl
         // Commitment must exist
         if (info.committer == address(0)) {
             revert CommitmentMissing(revealedCommitment, attestation.recipient);
+        }
+
+        if (info.committer != msg.sender || info.committer != attestation.recipient) {
+            revert UnauthorizedReveal(msg.sender, info.committer, attestation.recipient);
         }
 
         // Commitment must be from a prior block (anti-frontrun)

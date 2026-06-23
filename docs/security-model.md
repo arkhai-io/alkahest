@@ -101,3 +101,24 @@ understanding the underlying escrow, payment, and arbiter policy.
 
 Constructor-initialized helper contracts are intended for direct deployment
 unless they explicitly include proxy or clone initialization support.
+
+## Splitter Fulfillment Helpers
+
+Splitter fulfillment helpers create attestations whose recipient is the splitter
+contract, then use the splitter's oracle decision to distribute the collected
+escrow assets. The splitter being the attestation recipient is distinct from the
+splitter being a payment payee.
+
+Payment obligations attest that an on-chain payment happened atomically with
+attestation creation. The attester is the payment obligation contract. The EAS
+recipient is the party that should hold the proof of payment, which is normally
+the payer but may be another contract in an atomic helper flow. The `payee`
+encoded in the obligation data is the address that receives the actual payment.
+
+When a splitter helper creates a payment fulfillment, the EAS recipient may be
+the splitter so the splitter can later collect and distribute escrow assets. The
+payment's `payee` remains separate from that proof-recipient role. Native-token
+balance increases on the splitter during helper execution are treated as excess
+returned value and refunded to the external fulfiller, so flows should not model
+"payment to the splitter" by expecting the splitter to retain native tokens
+received during fulfillment creation.

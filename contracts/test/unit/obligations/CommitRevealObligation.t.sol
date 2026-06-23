@@ -89,6 +89,47 @@ contract CommitRevealObligationTest is Test {
         assertTrue(obligation.check(fulfillment, _demand(BOND / 2), escrowUid));
     }
 
+    function testRevealRequiresCommitterAsRecipient() public {
+        (bytes32 escrowUid,) = _makeEscrow(BOND);
+        CommitRevealObligation.ObligationData memory data = _obligationData();
+        address otherRecipient = makeAddr("otherRecipient");
+        bytes32 commitment = obligation.computeCommitment(escrowUid, otherRecipient, data);
+
+        vm.deal(claimer, BOND);
+        vm.prank(claimer);
+        obligation.commit{value: BOND}(commitment);
+
+        vm.roll(block.number + 1);
+
+        vm.prank(claimer);
+        vm.expectRevert(
+            abi.encodeWithSelector(CommitRevealObligation.UnauthorizedReveal.selector, claimer, claimer, otherRecipient)
+        );
+        obligation.doObligationFor(data, otherRecipient, escrowUid);
+    }
+
+    function testThirdPartyCannotRevealForCommitterRecipient() public {
+        (bytes32 escrowUid,) = _makeEscrow(BOND);
+        CommitRevealObligation.ObligationData memory data = _obligationData();
+        bytes32 commitment = obligation.computeCommitment(escrowUid, claimer, data);
+        address attacker = makeAddr("attacker");
+
+        vm.deal(claimer, BOND);
+        vm.prank(claimer);
+        obligation.commit{value: BOND}(commitment);
+
+        vm.roll(block.number + 1);
+
+        vm.prank(attacker);
+        vm.expectRevert(
+            abi.encodeWithSelector(CommitRevealObligation.UnauthorizedReveal.selector, attacker, claimer, claimer)
+        );
+        obligation.doObligationFor(data, claimer, escrowUid);
+
+        vm.prank(claimer);
+        obligation.doObligation(data, escrowUid);
+    }
+
     function testCommitRejectsZeroBond() public {
         (bytes32 escrowUid,) = _makeEscrow(BOND);
         CommitRevealObligation.ObligationData memory data = _obligationData();

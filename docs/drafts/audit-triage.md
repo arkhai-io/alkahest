@@ -6,6 +6,22 @@ record remains stable over time.
 
 ## Fixed
 
+### audit_agent_report_7: Commit-Reveal Reveal Caller Binding
+
+Status: fixed.
+
+Report item: `audit_agent_report_7_148d58b8-8bb1-439b-abbd-daa23352bc6c.pdf`,
+finding 6.
+
+Completed by `9bf25ff4014c59b2aed179f4dcd024ee3e4b4a8f`.
+
+`CommitRevealObligation` and the example `GlobalBondCommitRevealObligation`
+now require the stored committer, reveal caller, and fulfillment attestation
+recipient to be the same address. This prevents a third party from copying a
+pending reveal and consuming the commitment, including the splitter-specific
+case where an attacker could previously create a splitter-addressed fulfillment
+without going through splitter fulfillment recording.
+
 ### analysis(1): Splitter Public Execute Reentrancy
 
 Status: fixed.
