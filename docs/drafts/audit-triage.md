@@ -60,7 +60,7 @@ Status: fixed.
 Report item: `audit_agent_report_7_148d58b8-8bb1-439b-abbd-daa23352bc6c.pdf`,
 findings 10 and 11.
 
-Completed by `<pending commit>`.
+Completed by `31954b34988727e28123869def7d4b9008c45251`.
 
 Default and unconditional token-bundle escrow obligations now enforce
 `msg.value == nativeAmount` for every bundle, including token-only bundles with
