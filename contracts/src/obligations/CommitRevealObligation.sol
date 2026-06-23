@@ -14,9 +14,10 @@ import {ArbiterUtils} from "../ArbiterUtils.sol";
 /// @title CommitRevealObligation
 /// @notice Obligation with built-in commit-reveal anti-front-running checks.
 ///         Each commitment locks the native-token bond supplied as msg.value.
-///         Arbiter demand data specifies the exact bond amount required for a
-///         particular escrow, so this contract composes cleanly under logical
-///         arbiters that pass nested demands to check.
+///         Arbiter demand data specifies the exact bond amount and relative
+///         reveal deadline required for a particular escrow, so this contract
+///         composes cleanly under logical arbiters that pass nested demands to
+///         check.
 contract CommitRevealObligation is BaseObligation, BaseArbiter, Ownable {
     using ArbiterUtils for Attestation;
 
@@ -30,6 +31,7 @@ contract CommitRevealObligation is BaseObligation, BaseArbiter, Ownable {
     /// @dev Data supplied as this arbiter's demand.
     struct DemandData {
         uint256 bondAmount;
+        uint256 commitDeadline;
     }
 
     /// @dev Commitment details for a commitment hash.
@@ -38,6 +40,7 @@ contract CommitRevealObligation is BaseObligation, BaseArbiter, Ownable {
         uint64 commitTimestamp;
         address committer;
         uint256 bondAmount;
+        uint256 commitDeadline;
     }
 
     /// @notice commitments[commitment] => commit information.
@@ -45,7 +48,7 @@ contract CommitRevealObligation is BaseObligation, BaseArbiter, Ownable {
     /// @notice commitmentClaimed[commitment] => bond already returned/slashed.
     mapping(bytes32 => bool) public commitmentClaimed;
 
-    event Committed(bytes32 indexed commitment, address indexed claimer, uint256 amount);
+    event Committed(bytes32 indexed commitment, address indexed claimer, uint256 amount, uint256 commitDeadline);
     event BondReclaimed(bytes32 indexed fulfillmentUid, address indexed claimer, uint256 amount);
     event BondSlashed(bytes32 indexed commitment, address indexed recipient, uint256 amount);
 
@@ -62,28 +65,19 @@ contract CommitRevealObligation is BaseObligation, BaseArbiter, Ownable {
     error UnauthorizedReveal(address caller, address committer, address recipient);
     error EscrowCollectionFailed(address escrowContract, bytes32 escrowUid, bytes32 fulfillmentUid, bytes result);
 
-    /// @notice Seconds after commit within which the reveal must occur to avoid slashing.
-    uint256 public commitDeadline;
     /// @notice Recipient of slashed bonds (address(0) = burn).
     address public slashedBondRecipient;
 
-    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, uint256 _commitDeadline, address _slashedBondRecipient)
+    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, address _slashedBondRecipient)
         BaseObligation(_eas, _schemaRegistry, "bytes payload, bytes32 salt, bytes32 schema", true)
         Ownable(msg.sender)
     {
-        commitDeadline = _commitDeadline;
         slashedBondRecipient = _slashedBondRecipient;
     }
 
     // ---------------------------------------------------------------------
     // Owner-only setters
     // ---------------------------------------------------------------------
-
-    /// @notice Updates the maximum reveal delay before a commitment can be slashed.
-    /// @param _commitDeadline New deadline in seconds after the commit timestamp.
-    function setCommitDeadline(uint256 _commitDeadline) external onlyOwner {
-        commitDeadline = _commitDeadline;
-    }
 
     /// @notice Updates the recipient for slashed commitment bonds.
     /// @param _slashedBondRecipient New recipient for slashed bonds; address(0) burns the native token.
@@ -143,8 +137,9 @@ contract CommitRevealObligation is BaseObligation, BaseArbiter, Ownable {
         }
     }
 
-    /// @dev After the attestation is created, validate the commitment, enforce
-    ///      the deadline, and reclaim the committed bond atomically.
+    /// @dev After the attestation is created, validate the commitment and
+    ///      reclaim the committed bond atomically. Deadline policy is enforced
+    ///      by `check` against the escrow's demand.
     function _afterAttest(Attestation memory attestation) internal override {
         bytes32 revealedCommitment =
             keccak256(abi.encode(attestation.refUID, attestation.recipient, keccak256(attestation.data)));
@@ -163,7 +158,7 @@ contract CommitRevealObligation is BaseObligation, BaseArbiter, Ownable {
             revert CommitmentTooRecent(revealedCommitment, attestation.recipient);
         }
 
-        if (block.timestamp > uint256(info.commitTimestamp) + commitDeadline) {
+        if (block.timestamp > uint256(info.commitTimestamp) + info.commitDeadline) {
             revert RevealTooLate(revealedCommitment);
         }
 
@@ -186,7 +181,8 @@ contract CommitRevealObligation is BaseObligation, BaseArbiter, Ownable {
 
     /// @notice Records a commitment hash, locking msg.value as its bond.
     /// @param commitment keccak256(abi.encode(refUID, claimer, keccak256(abi.encode(data)))).
-    function commit(bytes32 commitment) external payable {
+    /// @param commitDeadline Relative reveal deadline, in seconds after commit, from the escrow demand.
+    function commit(bytes32 commitment, uint256 commitDeadline) external payable {
         if (commitment == bytes32(0)) revert EmptyCommitment();
         if (msg.value == 0) revert ZeroBondAmount();
 
@@ -198,10 +194,11 @@ contract CommitRevealObligation is BaseObligation, BaseArbiter, Ownable {
             commitBlock: uint64(block.number),
             commitTimestamp: uint64(block.timestamp),
             committer: msg.sender,
-            bondAmount: msg.value
+            bondAmount: msg.value,
+            commitDeadline: commitDeadline
         });
 
-        emit Committed(commitment, msg.sender, msg.value);
+        emit Committed(commitment, msg.sender, msg.value, commitDeadline);
     }
 
     /// @notice Pure helper to compute the commitment expected by this contract.
@@ -245,11 +242,13 @@ contract CommitRevealObligation is BaseObligation, BaseArbiter, Ownable {
             revert CommitmentTooRecent(revealedCommitment, obligation.recipient);
         }
 
-        if (obligation.time > info.commitTimestamp + commitDeadline) {
+        DemandData memory demandData = abi.decode(demand, (DemandData));
+        if (info.commitDeadline != demandData.commitDeadline) return false;
+
+        if (obligation.time > info.commitTimestamp + info.commitDeadline) {
             revert RevealTooLate(revealedCommitment);
         }
 
-        DemandData memory demandData = abi.decode(demand, (DemandData));
         return info.bondAmount == demandData.bondAmount;
     }
 
@@ -262,7 +261,7 @@ contract CommitRevealObligation is BaseObligation, BaseArbiter, Ownable {
     function slashBond(bytes32 commitment) external nonReentrant returns (uint256 amount) {
         CommitInfo memory info = commitments[commitment];
         if (info.committer == address(0)) revert CommitmentMissing(commitment, address(0));
-        if (block.timestamp <= info.commitTimestamp + commitDeadline) {
+        if (block.timestamp <= info.commitTimestamp + info.commitDeadline) {
             revert CommitDeadlineNotReached(commitment);
         }
         if (commitmentClaimed[commitment]) revert BondAlreadyClaimed(commitment);

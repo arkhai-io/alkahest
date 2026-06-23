@@ -121,6 +121,22 @@ prefix/minimum consideration; extra fulfillment data can represent additional
 assets, policy metadata, or composition with broader flows. Applications that
 need exact bundle equality should encode that as stricter arbiter policy.
 
+### audit_agent_report_7: Commit-Reveal Deadline Mutation
+
+Status: fixed.
+
+Report item: `audit_agent_report_7_148d58b8-8bb1-439b-abbd-daa23352bc6c.pdf`,
+finding 18.
+
+Completed by `PENDING_COMMIT`.
+
+`CommitRevealObligation` no longer has an owner-controlled global reveal
+deadline. The relative reveal deadline is part of `DemandData`, and commitments
+record the demand deadline supplied by the committer. `check` requires the
+stored deadline to match the escrow demand and enforces reveal time against that
+stored value; `slashBond` also uses the stored deadline. The slashed-bond
+recipient remains contract-level treasury/burn policy.
+
 ### analysis(1): Splitter Public Execute Reentrancy
 
 Status: fixed.

@@ -24,7 +24,7 @@ contract CommitRevealObligationTest is Test {
         (eas, schemaRegistry) = easDeployer.deployEAS();
 
         treasury = makeAddr("treasury");
-        obligation = new CommitRevealObligation(eas, schemaRegistry, COMMIT_DEADLINE, treasury);
+        obligation = new CommitRevealObligation(eas, schemaRegistry, treasury);
         nativeEscrow = new NativeTokenEscrowObligation(eas, schemaRegistry);
         claimer = makeAddr("claimer");
     }
@@ -36,7 +36,11 @@ contract CommitRevealObligationTest is Test {
     }
 
     function _demand(uint256 bondAmount) internal pure returns (bytes memory) {
-        return abi.encode(CommitRevealObligation.DemandData({bondAmount: bondAmount}));
+        return _demand(bondAmount, COMMIT_DEADLINE);
+    }
+
+    function _demand(uint256 bondAmount, uint256 commitDeadline) internal pure returns (bytes memory) {
+        return abi.encode(CommitRevealObligation.DemandData({bondAmount: bondAmount, commitDeadline: commitDeadline}));
     }
 
     function _makeEscrow(uint256 bondAmount) internal returns (bytes32 escrowUid, bytes memory demand) {
@@ -53,7 +57,7 @@ contract CommitRevealObligationTest is Test {
 
         vm.deal(claimer, BOND);
         vm.prank(claimer);
-        obligation.commit{value: BOND}(commitment);
+        obligation.commit{value: BOND}(commitment, COMMIT_DEADLINE);
 
         vm.roll(block.number + 1);
 
@@ -74,7 +78,7 @@ contract CommitRevealObligationTest is Test {
 
         vm.deal(claimer, BOND / 2);
         vm.prank(claimer);
-        obligation.commit{value: BOND / 2}(commitment);
+        obligation.commit{value: BOND / 2}(commitment, COMMIT_DEADLINE);
 
         vm.roll(block.number + 1);
 
@@ -97,7 +101,7 @@ contract CommitRevealObligationTest is Test {
 
         vm.deal(claimer, BOND);
         vm.prank(claimer);
-        obligation.commit{value: BOND}(commitment);
+        obligation.commit{value: BOND}(commitment, COMMIT_DEADLINE);
 
         vm.roll(block.number + 1);
 
@@ -116,7 +120,7 @@ contract CommitRevealObligationTest is Test {
 
         vm.deal(claimer, BOND);
         vm.prank(claimer);
-        obligation.commit{value: BOND}(commitment);
+        obligation.commit{value: BOND}(commitment, COMMIT_DEADLINE);
 
         vm.roll(block.number + 1);
 
@@ -137,7 +141,7 @@ contract CommitRevealObligationTest is Test {
 
         vm.prank(claimer);
         vm.expectRevert(CommitRevealObligation.ZeroBondAmount.selector);
-        obligation.commit{value: 0}(commitment);
+        obligation.commit{value: 0}(commitment, COMMIT_DEADLINE);
     }
 
     function testSlashBondUsesCommittedAmount() public {
@@ -148,7 +152,7 @@ contract CommitRevealObligationTest is Test {
 
         vm.deal(claimer, committedBond);
         vm.prank(claimer);
-        obligation.commit{value: committedBond}(commitment);
+        obligation.commit{value: committedBond}(commitment, COMMIT_DEADLINE);
 
         vm.warp(block.timestamp + COMMIT_DEADLINE + 1);
 
@@ -159,8 +163,60 @@ contract CommitRevealObligationTest is Test {
         assertEq(treasury.balance, treasuryBefore + committedBond, "treasury received committed bond");
     }
 
+    function testOwnerCannotMakeExistingCommitmentTooLateByChangingGlobalDeadline() public {
+        (bytes32 escrowUid, bytes memory demand) = _makeEscrow(BOND);
+        CommitRevealObligation.ObligationData memory data = _obligationData();
+        bytes32 commitment = obligation.computeCommitment(escrowUid, claimer, data);
+
+        vm.deal(claimer, BOND);
+        vm.prank(claimer);
+        obligation.commit{value: BOND}(commitment, COMMIT_DEADLINE);
+
+        vm.roll(block.number + 1);
+        vm.warp(block.timestamp + 2 minutes);
+        vm.prank(claimer);
+        bytes32 fulfillmentUid = obligation.doObligation(data, escrowUid);
+
+        Attestation memory fulfillment = eas.getAttestation(fulfillmentUid);
+        assertTrue(obligation.check(fulfillment, demand, escrowUid));
+    }
+
+    function testOwnerCannotMakeExistingCommitmentSlashableByChangingGlobalDeadline() public {
+        (bytes32 escrowUid,) = _makeEscrow(BOND);
+        CommitRevealObligation.ObligationData memory data = _obligationData();
+        bytes32 commitment = obligation.computeCommitment(escrowUid, claimer, data);
+
+        vm.deal(claimer, BOND);
+        vm.prank(claimer);
+        obligation.commit{value: BOND}(commitment, COMMIT_DEADLINE);
+
+        vm.warp(block.timestamp + 2 minutes);
+        vm.expectRevert(abi.encodeWithSelector(CommitRevealObligation.CommitDeadlineNotReached.selector, commitment));
+        obligation.slashBond(commitment);
+    }
+
+    function testCheckObligationReturnsFalseForMismatchedDeadlineDemand() public {
+        (bytes32 escrowUid, bytes memory demand) = _makeEscrow(BOND);
+        CommitRevealObligation.ObligationData memory data = _obligationData();
+        bytes32 commitment = obligation.computeCommitment(escrowUid, claimer, data);
+
+        vm.deal(claimer, BOND);
+        vm.prank(claimer);
+        obligation.commit{value: BOND}(commitment, COMMIT_DEADLINE * 2);
+
+        vm.roll(block.number + 1);
+
+        vm.prank(claimer);
+        bytes32 fulfillmentUid = obligation.doObligation(data, escrowUid);
+
+        Attestation memory fulfillment = eas.getAttestation(fulfillmentUid);
+        assertFalse(obligation.check(fulfillment, demand, escrowUid));
+        assertTrue(obligation.check(fulfillment, _demand(BOND, COMMIT_DEADLINE * 2), escrowUid));
+    }
+
     function testDecodeDemandData() public view {
         CommitRevealObligation.DemandData memory decoded = obligation.decodeDemandData(_demand(BOND));
         assertEq(decoded.bondAmount, BOND);
+        assertEq(decoded.commitDeadline, COMMIT_DEADLINE);
     }
 }

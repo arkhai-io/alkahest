@@ -195,7 +195,6 @@ contract Deploy is Script {
         CommitRevealObligation commitRevealObligation = new CommitRevealObligation(
             IEAS(easAddress),
             ISchemaRegistry(schemaRegistryAddress),
-            24 hours, // commitDeadline
             0x07dD7186410Aa0fe85670531FC6EFc9cd980c558 // slashedBondRecipient (treasury)
         );
 
