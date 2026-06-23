@@ -3,11 +3,12 @@ pragma solidity ^0.8.26;
 
 import {Attestation} from "@eas/Common.sol";
 import {IArbiter} from "../../IArbiter.sol";
+import {BaseArbiter} from "../../BaseArbiter.sol";
 import {ArbiterUtils} from "../../ArbiterUtils.sol";
 
 /// @title TimeBeforeArbiter
 /// @notice Accepts fulfillments whose creation time is at or before a demanded timestamp.
-contract TimeBeforeArbiter is IArbiter {
+contract TimeBeforeArbiter is BaseArbiter {
     using ArbiterUtils for Attestation;
 
     /// @notice Demand specifying the maximum allowed creation timestamp.

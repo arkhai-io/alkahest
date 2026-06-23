@@ -3,6 +3,7 @@ pragma solidity ^0.8.26;
 
 import {BaseEscrowObligation} from "../../../BaseEscrowObligation.sol";
 import {IArbiter} from "../../../IArbiter.sol";
+import {BaseArbiter} from "../../../BaseArbiter.sol";
 import {ArbiterUtils} from "../../../ArbiterUtils.sol";
 import {Attestation} from "@eas/Common.sol";
 import {IEAS, AttestationRequest, AttestationRequestData} from "@eas/IEAS.sol";
@@ -13,7 +14,7 @@ import {SchemaRegistryUtils} from "../../../SchemaRegistryUtils.sol";
 /// @title AttestationReferenceEscrowObligation
 /// @notice Escrows a reference to an existing attestation behind an arbiter-defined fulfillment condition.
 /// @dev Uses the default escrow checks: fulfillment must reference the escrow UID and pass intrinsic attestation validation.
-contract AttestationReferenceEscrowObligation is BaseEscrowObligation, IArbiter {
+contract AttestationReferenceEscrowObligation is BaseEscrowObligation, BaseArbiter {
     using ArbiterUtils for Attestation;
     using SchemaRegistryUtils for ISchemaRegistry;
 
@@ -39,6 +40,17 @@ contract AttestationReferenceEscrowObligation is BaseEscrowObligation, IArbiter 
         // Register the validation schema
         VALIDATION_SCHEMA =
             _schemaRegistry.registerOrReuse("bytes32 validatedAttestationUid", ISchemaResolver(address(this)), true);
+    }
+
+    /// @inheritdoc BaseEscrowObligation
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(BaseEscrowObligation, BaseArbiter)
+        returns (bool)
+    {
+        return super.supportsInterface(interfaceId);
     }
 
     // Extract arbiter and demand from encoded data

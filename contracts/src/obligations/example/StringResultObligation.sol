@@ -5,10 +5,11 @@ import {Attestation} from "@eas/Common.sol";
 import {IEAS, AttestationRequest, AttestationRequestData} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {BaseObligation} from "../../BaseObligation.sol";
+import {BaseArbiter} from "../../BaseArbiter.sol";
 import {IArbiter} from "../../IArbiter.sol";
 import {ArbiterUtils} from "../../ArbiterUtils.sol";
 
-contract StringResultObligation is BaseObligation, IArbiter {
+contract StringResultObligation is BaseObligation, BaseArbiter {
     using ArbiterUtils for Attestation;
 
     struct ObligationData {

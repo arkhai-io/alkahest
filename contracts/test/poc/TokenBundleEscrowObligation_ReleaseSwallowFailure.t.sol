@@ -11,6 +11,7 @@ import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {ERC1155} from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 
 import {IArbiter} from "@src/IArbiter.sol";
+import {BaseArbiter} from "@src/BaseArbiter.sol";
 import {StringObligation} from "@src/obligations/StringObligation.sol";
 import {TokenBundleEscrowObligation} from "@src/obligations/escrow/default/TokenBundleEscrowObligation.sol";
 
@@ -22,7 +23,7 @@ contract MockERC1155 is ERC1155 {
     }
 }
 
-contract TrueArbiter is IArbiter {
+contract TrueArbiter is BaseArbiter {
     function check(Attestation memory, bytes memory, bytes32) external pure returns (bool) {
         return true;
     }

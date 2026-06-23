@@ -4,6 +4,7 @@ pragma solidity ^0.8.26;
 import {Attestation} from "@eas/Common.sol";
 import {IEAS} from "@eas/IEAS.sol";
 import {IArbiter} from "../../IArbiter.sol";
+import {BaseArbiter} from "../../BaseArbiter.sol";
 import {ArbiterUtils} from "../../ArbiterUtils.sol";
 
 /**
@@ -17,7 +18,7 @@ import {ArbiterUtils} from "../../ArbiterUtils.sol";
  *      rather than as a standalone arbiter. That approach would allow reusing
  *      the existing TrustedOracleArbiter infrastructure while adding voting logic.
  */
-contract MajorityVoteArbiter is IArbiter {
+contract MajorityVoteArbiter is BaseArbiter {
     using ArbiterUtils for Attestation;
 
     struct DemandData {

@@ -3,11 +3,12 @@ pragma solidity ^0.8.26;
 
 import {Attestation} from "@eas/Common.sol";
 import {IArbiter} from "../../IArbiter.sol";
+import {BaseArbiter} from "../../BaseArbiter.sol";
 import {ArbiterUtils} from "../../ArbiterUtils.sol";
 
 /// @title UidArbiter
 /// @notice Accepts only a specific fulfillment attestation UID.
-contract UidArbiter is IArbiter {
+contract UidArbiter is BaseArbiter {
     using ArbiterUtils for Attestation;
 
     /// @notice Demand specifying the required fulfillment UID.

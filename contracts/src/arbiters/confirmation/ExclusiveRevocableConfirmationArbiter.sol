@@ -4,12 +4,13 @@ pragma solidity ^0.8.26;
 import {Attestation} from "@eas/Common.sol";
 import {IEAS} from "@eas/IEAS.sol";
 import {IArbiter} from "../../IArbiter.sol";
+import {BaseArbiter} from "../../BaseArbiter.sol";
 import {ArbiterUtils} from "../../ArbiterUtils.sol";
 
 /// @title ExclusiveRevocableConfirmationArbiter
 /// @notice Accepts only the currently confirmed fulfillment for an escrow, with recipient-controlled revocation.
 /// @dev The escrow attestation recipient is the confirmer; at most one fulfillment may be confirmed per escrow.
-contract ExclusiveRevocableConfirmationArbiter is IArbiter {
+contract ExclusiveRevocableConfirmationArbiter is BaseArbiter {
     using ArbiterUtils for Attestation;
 
     /// @notice Emitted when an escrow recipient confirms a fulfillment.

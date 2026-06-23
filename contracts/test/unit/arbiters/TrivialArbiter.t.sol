@@ -3,6 +3,8 @@ pragma solidity ^0.8.26;
 
 import {Test} from "forge-std/Test.sol";
 import {Attestation} from "@eas/Common.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import {IArbiter} from "@src/IArbiter.sol";
 import {TrivialArbiter} from "@src/arbiters/TrivialArbiter.sol";
 
 contract TrivialArbiterTest is Test {
@@ -10,6 +12,11 @@ contract TrivialArbiterTest is Test {
 
     function setUp() public {
         arbiter = new TrivialArbiter();
+    }
+
+    function testSupportsERC165AndIArbiter() public view {
+        assertTrue(arbiter.supportsInterface(type(IERC165).interfaceId));
+        assertTrue(arbiter.supportsInterface(type(IArbiter).interfaceId));
     }
 
     function testCheckObligationAlwaysReturnsTrue() public {

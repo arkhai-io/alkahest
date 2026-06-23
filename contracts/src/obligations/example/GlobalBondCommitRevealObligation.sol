@@ -7,6 +7,7 @@ import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ArbiterUtils} from "@src/ArbiterUtils.sol";
 import {BaseObligation} from "@src/BaseObligation.sol";
+import {BaseArbiter} from "@src/BaseArbiter.sol";
 import {IArbiter} from "@src/IArbiter.sol";
 import {IEscrow} from "@src/IEscrow.sol";
 
@@ -23,7 +24,7 @@ import {IEscrow} from "@src/IEscrow.sol";
 ///      returns the bond to the committer.
 ///   3. `slashBond()` — after the deadline, anyone can slash the bond of
 ///      a commitment that was never revealed (bond not already reclaimed).
-contract GlobalBondCommitRevealObligation is BaseObligation, IArbiter, Ownable {
+contract GlobalBondCommitRevealObligation is BaseObligation, BaseArbiter, Ownable {
     using ArbiterUtils for Attestation;
 
     /// @dev Data stored inside the fulfillment attestation.

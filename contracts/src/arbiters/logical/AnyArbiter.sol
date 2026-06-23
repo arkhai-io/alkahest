@@ -3,12 +3,13 @@ pragma solidity ^0.8.26;
 
 import {Attestation} from "@eas/Common.sol";
 import {IArbiter} from "../../IArbiter.sol";
+import {BaseArbiter} from "../../BaseArbiter.sol";
 import {ArbiterUtils} from "../../ArbiterUtils.sol";
 
 /// @title AnyArbiter
 /// @notice Accepts a fulfillment when at least one child arbiter accepts it.
 /// @dev Empty child arrays return false, matching standard any-of semantics.
-contract AnyArbiter is IArbiter {
+contract AnyArbiter is BaseArbiter {
     /// @notice Child arbiters and their positionally matching demand bytes.
     struct DemandData {
         /// @notice Child arbiter contracts to query.

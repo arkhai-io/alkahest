@@ -6,6 +6,7 @@ import {IEAS, AttestationRequest, AttestationRequestData} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {BaseObligation} from "../../BaseObligation.sol";
 import {IArbiter} from "../../IArbiter.sol";
+import {BaseArbiter} from "../../BaseArbiter.sol";
 import {ArbiterUtils} from "../../ArbiterUtils.sol";
 
 /**
@@ -27,7 +28,7 @@ import {ArbiterUtils} from "../../ArbiterUtils.sol";
  * Contrast with StringObligation which doesn't implement IArbiter because strings
  * can be validated in countless different ways depending on the use case.
  */
-contract CryptoSignatureObligation is BaseObligation, IArbiter {
+contract CryptoSignatureObligation is BaseObligation, BaseArbiter {
     using ArbiterUtils for Attestation;
 
     /**

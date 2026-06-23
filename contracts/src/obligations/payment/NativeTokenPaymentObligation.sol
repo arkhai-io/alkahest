@@ -11,13 +11,14 @@ import {
 } from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {BaseObligation} from "../../BaseObligation.sol";
+import {BaseArbiter} from "../../BaseArbiter.sol";
 import {IArbiter} from "../../IArbiter.sol";
 import {ArbiterUtils} from "../../ArbiterUtils.sol";
 
 /// @title NativeTokenPaymentObligation
 /// @notice Transfers native tokens to a payee and records the payment as an EAS attestation.
 /// @dev Refunds excess `msg.value`; as an arbiter, accepts payment attestations referencing the escrow UID with the demanded payee and minimum amount.
-contract NativeTokenPaymentObligation is BaseObligation, IArbiter {
+contract NativeTokenPaymentObligation is BaseObligation, BaseArbiter {
     using ArbiterUtils for Attestation;
 
     /// @notice Native-token payment terms encoded in each obligation attestation.

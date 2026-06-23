@@ -5,6 +5,7 @@ import {Attestation} from "@eas/Common.sol";
 import {IEAS} from "@eas/IEAS.sol";
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
+import {BaseArbiter} from "../../BaseArbiter.sol";
 import {SplitterVerification} from "./SplitterVerification.sol";
 import {BaseSplitter} from "./BaseSplitter.sol";
 import {IEscrow} from "../../IEscrow.sol";
@@ -58,6 +59,17 @@ contract ERC1155Splitter is BaseSplitter, ERC1155Holder {
     mapping(address => mapping(bytes32 => Split[])) internal decisions;
 
     constructor(IEAS _eas) BaseSplitter(_eas) {}
+
+    /// @inheritdoc BaseArbiter
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(BaseArbiter, ERC1155Holder)
+        returns (bool)
+    {
+        return super.supportsInterface(interfaceId);
+    }
 
     /// @notice Records the caller's split decision for a fulfillment and escrow.
     function arbitrate(bytes32 fulfillment, bytes32 escrow, Split[] calldata splits) external {

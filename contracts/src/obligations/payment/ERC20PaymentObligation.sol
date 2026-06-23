@@ -13,13 +13,14 @@ import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {BaseObligation} from "../../BaseObligation.sol";
+import {BaseArbiter} from "../../BaseArbiter.sol";
 import {IArbiter} from "../../IArbiter.sol";
 import {ArbiterUtils} from "../../ArbiterUtils.sol";
 
 /// @title ERC20PaymentObligation
 /// @notice Transfers ERC20 tokens to a payee and records the payment as an EAS attestation.
 /// @dev As an arbiter, accepts payment attestations that reference the escrow UID and satisfy the demanded token, payee, and minimum amount.
-contract ERC20PaymentObligation is BaseObligation, IArbiter {
+contract ERC20PaymentObligation is BaseObligation, BaseArbiter {
     using ArbiterUtils for Attestation;
     using SafeERC20 for IERC20;
 

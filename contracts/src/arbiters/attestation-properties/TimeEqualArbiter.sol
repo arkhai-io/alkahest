@@ -3,11 +3,12 @@ pragma solidity ^0.8.26;
 
 import {Attestation} from "@eas/Common.sol";
 import {IArbiter} from "../../IArbiter.sol";
+import {BaseArbiter} from "../../BaseArbiter.sol";
 import {ArbiterUtils} from "../../ArbiterUtils.sol";
 
 /// @title TimeEqualArbiter
 /// @notice Accepts fulfillments with an exact EAS creation timestamp.
-contract TimeEqualArbiter is IArbiter {
+contract TimeEqualArbiter is BaseArbiter {
     using ArbiterUtils for Attestation;
 
     /// @notice Demand specifying the required creation timestamp.

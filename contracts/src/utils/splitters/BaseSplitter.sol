@@ -5,6 +5,7 @@ import {Attestation} from "@eas/Common.sol";
 import {IEAS} from "@eas/IEAS.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {IArbiter} from "../../IArbiter.sol";
+import {BaseArbiter} from "../../BaseArbiter.sol";
 import {SplitterVerification} from "./SplitterVerification.sol";
 
 /// @notice Minimal obligation interface used to create splitter-owned fulfillments.
@@ -26,7 +27,7 @@ struct SplitterDemandData {
 /// @title BaseSplitter
 /// @notice Shared arbiter and fulfillment-recording base for splitter contracts.
 /// @dev Splitter decisions are keyed by `(fulfillment, escrow)` and associated with an oracle address.
-abstract contract BaseSplitter is IArbiter, ReentrancyGuard {
+abstract contract BaseSplitter is BaseArbiter, ReentrancyGuard {
     using SplitterVerification for Attestation;
 
     /// @notice Sentinel address meaning "the fulfiller who created the fulfillment".

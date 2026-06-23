@@ -3,6 +3,7 @@ pragma solidity ^0.8.26;
 
 import {BaseEscrowObligation} from "../../../BaseEscrowObligation.sol";
 import {IArbiter} from "../../../IArbiter.sol";
+import {BaseArbiter} from "../../../BaseArbiter.sol";
 import {ArbiterUtils} from "../../../ArbiterUtils.sol";
 import {Attestation} from "@eas/Common.sol";
 import {IEAS} from "@eas/IEAS.sol";
@@ -12,7 +13,7 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 /// @title ERC721EscrowObligation
 /// @notice Escrows an ERC721 token behind an arbiter-defined fulfillment condition.
 /// @dev Uses the default escrow checks: fulfillment must reference the escrow UID and pass intrinsic attestation validation.
-contract ERC721EscrowObligation is BaseEscrowObligation, IArbiter {
+contract ERC721EscrowObligation is BaseEscrowObligation, BaseArbiter {
     using ArbiterUtils for Attestation;
 
     /// @notice ERC721 escrow terms encoded in each escrow attestation.
@@ -31,6 +32,17 @@ contract ERC721EscrowObligation is BaseEscrowObligation, IArbiter {
             _eas, _schemaRegistry, "address arbiter, bytes demand, address token, uint256 tokenId", true
         )
     {}
+
+    /// @inheritdoc BaseEscrowObligation
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(BaseEscrowObligation, BaseArbiter)
+        returns (bool)
+    {
+        return interfaceId == type(IArbiter).interfaceId || super.supportsInterface(interfaceId);
+    }
 
     // Extract arbiter and demand from encoded data
     /// @inheritdoc BaseEscrowObligation

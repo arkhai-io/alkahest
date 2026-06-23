@@ -3,11 +3,12 @@ pragma solidity ^0.8.26;
 
 import {Attestation} from "@eas/Common.sol";
 import {IArbiter} from "../../IArbiter.sol";
+import {BaseArbiter} from "../../BaseArbiter.sol";
 import {ArbiterUtils} from "../../ArbiterUtils.sol";
 
 /// @title ExpirationTimeAfterArbiter
 /// @notice Accepts fulfillments whose expiration time is at or after a demanded timestamp.
-contract ExpirationTimeAfterArbiter is IArbiter {
+contract ExpirationTimeAfterArbiter is BaseArbiter {
     using ArbiterUtils for Attestation;
 
     /// @notice Demand specifying the minimum allowed expiration timestamp.

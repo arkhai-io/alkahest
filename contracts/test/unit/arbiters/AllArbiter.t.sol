@@ -6,22 +6,23 @@ import {Attestation} from "@eas/Common.sol";
 import {AllArbiter} from "@src/arbiters/logical/AllArbiter.sol";
 import {IntrinsicsArbiter} from "@src/arbiters/IntrinsicsArbiter.sol";
 import {IArbiter} from "@src/IArbiter.sol";
+import {BaseArbiter} from "@src/BaseArbiter.sol";
 import {ArbiterUtils} from "@src/ArbiterUtils.sol";
 
 // Mock arbiters for testing
-contract MockSuccessArbiter is IArbiter {
+contract MockSuccessArbiter is BaseArbiter {
     function check(Attestation memory, bytes memory, bytes32) public pure override returns (bool) {
         return true;
     }
 }
 
-contract MockFailArbiter is IArbiter {
+contract MockFailArbiter is BaseArbiter {
     function check(Attestation memory, bytes memory, bytes32) public pure override returns (bool) {
         return false;
     }
 }
 
-contract MockRevertArbiter is IArbiter {
+contract MockRevertArbiter is BaseArbiter {
     function check(Attestation memory, bytes memory, bytes32) public pure override returns (bool) {
         revert("Arbiter reverted");
     }

@@ -4,6 +4,7 @@ pragma solidity ^0.8.26;
 import {Attestation} from "@eas/Common.sol";
 import {IEAS} from "@eas/IEAS.sol";
 import {IArbiter} from "../../IArbiter.sol";
+import {BaseArbiter} from "../../BaseArbiter.sol";
 import {ArbiterUtils} from "../../ArbiterUtils.sol";
 
 /**
@@ -12,7 +13,7 @@ import {ArbiterUtils} from "../../ArbiterUtils.sol";
  * @dev Allows game winners with valid attestations to claim rewards from escrow.
  *      Assumes an existing game system where winners receive EAS attestations.
  */
-contract GameWinner is IArbiter {
+contract GameWinner is BaseArbiter {
     using ArbiterUtils for Attestation;
 
     /**

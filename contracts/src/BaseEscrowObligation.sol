@@ -8,12 +8,14 @@ import {ArbiterUtils} from "./ArbiterUtils.sol";
 import {Attestation} from "@eas/Common.sol";
 import {IEAS, RevocationRequest, RevocationRequestData} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
+import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 /// @title BaseEscrowObligation
 /// @notice Base escrow implementation with default fulfillment checks.
 /// @dev Does not implement `IArbiter`; concrete escrow contracts decide how their own attestations arbitrate.
 ///      Default collection requires the fulfillment to reference the escrow UID and pass intrinsic checks.
-abstract contract BaseEscrowObligation is BaseObligation, IEscrow {
+abstract contract BaseEscrowObligation is BaseObligation, IEscrow, ERC165 {
     using ArbiterUtils for Attestation;
 
     /// @notice Raised when the escrow attestation is missing, invalid, expired, revoked, or has the wrong schema.
@@ -34,6 +36,11 @@ abstract contract BaseEscrowObligation is BaseObligation, IEscrow {
     constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, string memory schema, bool revocable)
         BaseObligation(_eas, _schemaRegistry, schema, revocable)
     {}
+
+    /// @inheritdoc ERC165
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, IERC165) returns (bool) {
+        return interfaceId == type(IEscrow).interfaceId || super.supportsInterface(interfaceId);
+    }
 
     /// @notice Locks escrowed assets before the escrow attestation is created.
     /// @param data ABI-encoded escrow obligation data.

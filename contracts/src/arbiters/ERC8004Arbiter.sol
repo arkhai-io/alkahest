@@ -3,6 +3,7 @@ pragma solidity ^0.8.26;
 
 import {Attestation} from "@eas/Common.sol";
 import {IArbiter} from "../IArbiter.sol";
+import {BaseArbiter} from "../BaseArbiter.sol";
 import {ArbiterUtils} from "../ArbiterUtils.sol";
 
 /// @notice Minimal ERC-8004 ValidationRegistry interface used by `ERC8004Arbiter`.
@@ -27,7 +28,7 @@ interface IValidationRegistry {
  *      The validation requestHash is derived from the fulfillment attestation
  *      UID and caller-supplied binding data.
  */
-contract ERC8004Arbiter is IArbiter {
+contract ERC8004Arbiter is BaseArbiter {
     using ArbiterUtils for Attestation;
 
     /// @notice Demand describing the registry lookup and minimum validation result.

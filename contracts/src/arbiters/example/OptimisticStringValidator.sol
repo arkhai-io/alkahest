@@ -11,11 +11,12 @@ import {
 } from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {IArbiter} from "../../IArbiter.sol";
+import {BaseArbiter} from "../../BaseArbiter.sol";
 import {BaseObligation} from "../../BaseObligation.sol";
 import {StringResultObligation} from "../../obligations/example/StringResultObligation.sol";
 import {ArbiterUtils} from "../../ArbiterUtils.sol";
 
-contract OptimisticStringValidator is BaseObligation, IArbiter {
+contract OptimisticStringValidator is BaseObligation, BaseArbiter {
     using ArbiterUtils for Attestation;
 
     struct ValidationData {

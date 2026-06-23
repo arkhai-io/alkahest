@@ -4,12 +4,13 @@ pragma solidity ^0.8.26;
 import {Attestation} from "@eas/Common.sol";
 import {IEAS} from "@eas/IEAS.sol";
 import {IArbiter} from "../IArbiter.sol";
+import {BaseArbiter} from "../BaseArbiter.sol";
 import {ArbiterUtils} from "../ArbiterUtils.sol";
 
 /// @title TrustedOracleArbiter
 /// @notice Defers fulfillment acceptance to a trusted oracle address selected in demand data.
 /// @dev Oracle decisions are keyed by `(fulfillment.uid, demand.data)`, allowing the same decision to be reused wherever that demand context is valid.
-contract TrustedOracleArbiter is IArbiter {
+contract TrustedOracleArbiter is BaseArbiter {
     using ArbiterUtils for Attestation;
 
     /// @notice Demand specifying which oracle must have approved which opaque context.

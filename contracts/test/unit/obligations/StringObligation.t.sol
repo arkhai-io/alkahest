@@ -6,6 +6,7 @@ import {StringObligation} from "@src/obligations/StringObligation.sol";
 import {IEAS, Attestation} from "@eas/IEAS.sol";
 import {ISchemaRegistry, SchemaRecord} from "@eas/ISchemaRegistry.sol";
 import {ISchemaResolver} from "@eas/resolver/ISchemaResolver.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {SchemaRegistryUtils} from "@src/SchemaRegistryUtils.sol";
 import {EASDeployer} from "@test/utils/EASDeployer.sol";
 
@@ -33,6 +34,12 @@ contract StringObligationTest is Test {
         SchemaRecord memory schema = stringObligation.getSchema();
         assertEq(schema.uid, schemaId, "Schema UID should match");
         assertEq(schema.schema, "string item, bytes32 schema", "Schema string should match");
+    }
+
+    function testDoesNotAdvertiseERC165() public view {
+        (bool success,) =
+            address(stringObligation).staticcall(abi.encodeCall(IERC165.supportsInterface, (type(IERC165).interfaceId)));
+        assertFalse(success, "Plain obligations should not expose ERC165");
     }
 
     function testConstructorReusesExistingSchema() public {

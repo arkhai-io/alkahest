@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.26;
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 /// @title IEscrow
 /// @notice Common interface implemented by escrow obligation contracts.
-interface IEscrow {
+interface IEscrow is IERC165 {
     /// @notice Emitted when escrow assets are locked and the escrow attestation is created.
     event EscrowMade(bytes32 indexed escrowUid, address indexed escrower);
     /// @notice Emitted when an escrow is successfully collected by a fulfillment recipient.

@@ -3,6 +3,7 @@ pragma solidity ^0.8.26;
 
 import {BaseEscrowObligationUnconditional} from "../../../BaseEscrowObligationUnconditional.sol";
 import {IArbiter} from "../../../IArbiter.sol";
+import {BaseArbiter} from "../../../BaseArbiter.sol";
 import {ArbiterUtils} from "../../../ArbiterUtils.sol";
 import {Attestation} from "@eas/Common.sol";
 import {IEAS} from "@eas/IEAS.sol";
@@ -11,7 +12,7 @@ import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 /// @title UnconditionalNativeTokenEscrowObligation
 /// @notice Escrows native tokens behind an arbiter-defined fulfillment condition.
 /// @dev Does not apply the default fulfillment refUID or intrinsic checks; use arbiters to add any required checks.
-contract UnconditionalNativeTokenEscrowObligation is BaseEscrowObligationUnconditional, IArbiter {
+contract UnconditionalNativeTokenEscrowObligation is BaseEscrowObligationUnconditional, BaseArbiter {
     using ArbiterUtils for Attestation;
 
     /// @notice Native-token escrow terms encoded in each escrow attestation.
@@ -27,6 +28,17 @@ contract UnconditionalNativeTokenEscrowObligation is BaseEscrowObligationUncondi
     constructor(IEAS _eas, ISchemaRegistry _schemaRegistry)
         BaseEscrowObligationUnconditional(_eas, _schemaRegistry, "address arbiter, bytes demand, uint256 amount", true)
     {}
+
+    /// @inheritdoc BaseEscrowObligationUnconditional
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(BaseEscrowObligationUnconditional, BaseArbiter)
+        returns (bool)
+    {
+        return interfaceId == type(IArbiter).interfaceId || super.supportsInterface(interfaceId);
+    }
 
     // Extract arbiter and demand from encoded data
     /// @inheritdoc BaseEscrowObligationUnconditional

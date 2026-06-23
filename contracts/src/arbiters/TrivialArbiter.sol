@@ -3,12 +3,13 @@ pragma solidity ^0.8.26;
 
 import {Attestation} from "@eas/Common.sol";
 import {IArbiter} from "../IArbiter.sol";
+import {BaseArbiter} from "../BaseArbiter.sol";
 import {ArbiterUtils} from "../ArbiterUtils.sol";
 
 /// @title TrivialArbiter
 /// @notice Arbiter that accepts every fulfillment.
 /// @dev Intended for development, tests, or deliberately unconditional escrow demands.
-contract TrivialArbiter is IArbiter {
+contract TrivialArbiter is BaseArbiter {
     /// @inheritdoc IArbiter
     function check(
         Attestation memory,

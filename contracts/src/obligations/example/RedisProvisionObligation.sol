@@ -11,10 +11,11 @@ import {
 } from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {BaseObligation} from "../../BaseObligation.sol";
+import {BaseArbiter} from "../../BaseArbiter.sol";
 import {IArbiter} from "../../IArbiter.sol";
 import {ArbiterUtils} from "../../ArbiterUtils.sol";
 
-contract RedisProvisionObligation is BaseObligation, IArbiter {
+contract RedisProvisionObligation is BaseObligation, BaseArbiter {
     using ArbiterUtils for Attestation;
 
     struct ObligationData {

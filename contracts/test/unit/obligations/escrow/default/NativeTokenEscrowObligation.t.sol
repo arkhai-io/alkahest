@@ -7,9 +7,11 @@ import {BaseEscrowObligation} from "@src/BaseEscrowObligation.sol";
 import {ArbiterUtils} from "@src/ArbiterUtils.sol";
 import {StringObligation} from "@src/obligations/StringObligation.sol";
 import {IArbiter} from "@src/IArbiter.sol";
+import {IEscrow} from "@src/IEscrow.sol";
 import {MockArbiter} from "../../fixtures/MockArbiter.sol";
 import {IEAS, Attestation, AttestationRequestData, AttestationRequest} from "@eas/IEAS.sol";
 import {ISchemaRegistry, SchemaRecord} from "@eas/ISchemaRegistry.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 import {EASDeployer} from "@test/utils/EASDeployer.sol";
 
@@ -66,6 +68,12 @@ contract NativeTokenEscrowObligationTest is Test {
         assertEq(storedData.arbiter, data.arbiter);
         assertEq(storedData.demand, data.demand);
         assertEq(storedData.amount, data.amount);
+    }
+
+    function testSupportsERC165IEscrowAndIArbiter() public view {
+        assertTrue(escrowObligation.supportsInterface(type(IERC165).interfaceId));
+        assertTrue(escrowObligation.supportsInterface(type(IEscrow).interfaceId));
+        assertTrue(escrowObligation.supportsInterface(type(IArbiter).interfaceId));
     }
 
     function testDoObligationFor() public {

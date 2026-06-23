@@ -3,11 +3,12 @@ pragma solidity ^0.8.26;
 
 import {Attestation} from "@eas/Common.sol";
 import {IArbiter} from "../../IArbiter.sol";
+import {BaseArbiter} from "../../BaseArbiter.sol";
 import {ArbiterUtils} from "../../ArbiterUtils.sol";
 
 /// @title SchemaArbiter
 /// @notice Accepts fulfillments with a specific EAS schema UID.
-contract SchemaArbiter is IArbiter {
+contract SchemaArbiter is BaseArbiter {
     using ArbiterUtils for Attestation;
 
     /// @notice Demand specifying the required schema UID.

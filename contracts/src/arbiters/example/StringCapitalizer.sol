@@ -3,6 +3,7 @@ pragma solidity ^0.8.26;
 
 import {Attestation} from "@eas/Common.sol";
 import {IArbiter} from "../../IArbiter.sol";
+import {BaseArbiter} from "../../BaseArbiter.sol";
 import {ArbiterUtils} from "../../ArbiterUtils.sol";
 import {StringObligation} from "../../obligations/StringObligation.sol";
 
@@ -12,7 +13,7 @@ import {StringObligation} from "../../obligations/StringObligation.sol";
  * @dev Works with StringObligation attestations where the demand is a query for a string to capitalize,
  *      and check verifies if the fulfillment is the capitalized version of the string
  */
-contract StringCapitalizer is IArbiter {
+contract StringCapitalizer is BaseArbiter {
     using ArbiterUtils for Attestation;
 
     /**

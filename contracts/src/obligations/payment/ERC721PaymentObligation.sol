@@ -12,13 +12,14 @@ import {
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {BaseObligation} from "../../BaseObligation.sol";
+import {BaseArbiter} from "../../BaseArbiter.sol";
 import {IArbiter} from "../../IArbiter.sol";
 import {ArbiterUtils} from "../../ArbiterUtils.sol";
 
 /// @title ERC721PaymentObligation
 /// @notice Transfers an ERC721 token to a payee and records the payment as an EAS attestation.
 /// @dev As an arbiter, accepts payment attestations that reference the escrow UID and match the demanded token, token ID, and payee.
-contract ERC721PaymentObligation is BaseObligation, IArbiter {
+contract ERC721PaymentObligation is BaseObligation, BaseArbiter {
     using ArbiterUtils for Attestation;
 
     /// @notice ERC721 payment terms encoded in each obligation attestation.

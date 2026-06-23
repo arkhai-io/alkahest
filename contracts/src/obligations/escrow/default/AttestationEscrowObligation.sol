@@ -3,6 +3,7 @@ pragma solidity ^0.8.26;
 
 import {BaseEscrowObligation} from "../../../BaseEscrowObligation.sol";
 import {IArbiter} from "../../../IArbiter.sol";
+import {BaseArbiter} from "../../../BaseArbiter.sol";
 import {ArbiterUtils} from "../../../ArbiterUtils.sol";
 import {Attestation} from "@eas/Common.sol";
 import {IEAS, AttestationRequest, AttestationRequestData} from "@eas/IEAS.sol";
@@ -11,7 +12,7 @@ import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 /// @title AttestationEscrowObligation
 /// @notice Escrows native token and releases it with the fulfillment attestation data.
 /// @dev Uses the default escrow checks: fulfillment must reference the escrow UID and pass intrinsic attestation validation.
-contract AttestationEscrowObligation is BaseEscrowObligation, IArbiter {
+contract AttestationEscrowObligation is BaseEscrowObligation, BaseArbiter {
     using ArbiterUtils for Attestation;
 
     /// @notice Attestation escrow terms encoded in each escrow attestation.
@@ -33,6 +34,17 @@ contract AttestationEscrowObligation is BaseEscrowObligation, IArbiter {
             true
         )
     {}
+
+    /// @inheritdoc BaseEscrowObligation
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(BaseEscrowObligation, BaseArbiter)
+        returns (bool)
+    {
+        return interfaceId == type(IArbiter).interfaceId || super.supportsInterface(interfaceId);
+    }
 
     // Extract arbiter and demand from encoded data
     /// @inheritdoc BaseEscrowObligation

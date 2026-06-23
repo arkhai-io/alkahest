@@ -3,6 +3,7 @@ pragma solidity ^0.8.26;
 
 import {BaseEscrowObligationUnconditional} from "../../../BaseEscrowObligationUnconditional.sol";
 import {IArbiter} from "../../../IArbiter.sol";
+import {BaseArbiter} from "../../../BaseArbiter.sol";
 import {ArbiterUtils} from "../../../ArbiterUtils.sol";
 import {Attestation} from "@eas/Common.sol";
 import {IEAS} from "@eas/IEAS.sol";
@@ -13,7 +14,7 @@ import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155
 /// @title UnconditionalERC1155EscrowObligation
 /// @notice Escrows ERC1155 tokens behind an arbiter-defined fulfillment condition.
 /// @dev Does not apply the default fulfillment refUID or intrinsic checks; use arbiters to add any required checks.
-contract UnconditionalERC1155EscrowObligation is BaseEscrowObligationUnconditional, IArbiter, ERC1155Holder {
+contract UnconditionalERC1155EscrowObligation is BaseEscrowObligationUnconditional, BaseArbiter, ERC1155Holder {
     using ArbiterUtils for Attestation;
 
     /// @notice ERC1155 escrow terms encoded in each escrow attestation.
@@ -32,6 +33,17 @@ contract UnconditionalERC1155EscrowObligation is BaseEscrowObligationUncondition
             _eas, _schemaRegistry, "address arbiter, bytes demand, address token, uint256 tokenId, uint256 amount", true
         )
     {}
+
+    /// @inheritdoc BaseEscrowObligationUnconditional
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(BaseEscrowObligationUnconditional, BaseArbiter, ERC1155Holder)
+        returns (bool)
+    {
+        return interfaceId == type(IArbiter).interfaceId || super.supportsInterface(interfaceId);
+    }
 
     // Extract arbiter and demand from encoded data
     /// @inheritdoc BaseEscrowObligationUnconditional

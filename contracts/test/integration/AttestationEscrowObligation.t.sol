@@ -6,12 +6,13 @@ import {AttestationEscrowObligation} from "@src/obligations/escrow/default/Attes
 import {BaseEscrowObligation} from "@src/BaseEscrowObligation.sol";
 import {StringObligation} from "@src/obligations/StringObligation.sol";
 import {IArbiter} from "@src/IArbiter.sol";
+import {BaseArbiter} from "@src/BaseArbiter.sol";
 import {IEAS, AttestationRequest, AttestationRequestData} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {Attestation} from "@eas/Common.sol";
 import {EASDeployer} from "@test/utils/EASDeployer.sol";
 
-contract MockArbiter is IArbiter {
+contract MockArbiter is BaseArbiter {
     bool public shouldPass;
 
     constructor(bool _shouldPass) {

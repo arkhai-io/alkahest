@@ -8,6 +8,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
+import {BaseArbiter} from "../../BaseArbiter.sol";
 import {SplitterVerification} from "./SplitterVerification.sol";
 import {BaseSplitter} from "./BaseSplitter.sol";
 import {IEscrow} from "../../IEscrow.sol";
@@ -66,6 +67,17 @@ abstract contract TokenBundleSplitterBase is BaseSplitter, ERC1155Holder {
     mapping(address => mapping(bytes32 => BundleSplit[])) internal decisions;
 
     constructor(IEAS _eas) BaseSplitter(_eas) {}
+
+    /// @inheritdoc BaseArbiter
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(BaseArbiter, ERC1155Holder)
+        returns (bool)
+    {
+        return super.supportsInterface(interfaceId);
+    }
 
     // -----------------------------------------------------------------
     // Oracle arbitration

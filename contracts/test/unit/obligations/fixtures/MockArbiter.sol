@@ -2,6 +2,7 @@
 pragma solidity ^0.8.26;
 
 import {IArbiter} from "@src/IArbiter.sol";
+import {BaseArbiter} from "@src/BaseArbiter.sol";
 import {Attestation} from "@eas/Common.sol";
 
 /**
@@ -10,7 +11,7 @@ import {Attestation} from "@eas/Common.sol";
  * Can be configured to either accept or reject all obligation validations
  * by setting the shouldAccept flag
  */
-contract MockArbiter is IArbiter {
+contract MockArbiter is BaseArbiter {
     bool private shouldAccept;
 
     constructor(bool _shouldAccept) {

@@ -3,6 +3,7 @@ pragma solidity ^0.8.26;
 
 import {BaseEscrowObligation} from "../../../BaseEscrowObligation.sol";
 import {IArbiter} from "../../../IArbiter.sol";
+import {BaseArbiter} from "../../../BaseArbiter.sol";
 import {ArbiterUtils} from "../../../ArbiterUtils.sol";
 import {IEscrowHook} from "./IEscrowHook.sol";
 import {Attestation} from "@eas/Common.sol";
@@ -12,7 +13,7 @@ import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 /// @title HooksEscrowObligation
 /// @notice A multi-hook escrow obligation that calls each IEscrowHook directly
 ///         during lock, release, and return.
-contract HooksEscrowObligation is BaseEscrowObligation, IArbiter {
+contract HooksEscrowObligation is BaseEscrowObligation, BaseArbiter {
     using ArbiterUtils for Attestation;
 
     struct ObligationData {
@@ -37,6 +38,17 @@ contract HooksEscrowObligation is BaseEscrowObligation, IArbiter {
             true
         )
     {}
+
+    /// @inheritdoc BaseEscrowObligation
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(BaseEscrowObligation, BaseArbiter)
+        returns (bool)
+    {
+        return interfaceId == type(IArbiter).interfaceId || super.supportsInterface(interfaceId);
+    }
 
     function decodeCondition(bytes memory data) public pure override returns (address arbiter, bytes memory demand) {
         ObligationData memory decoded = abi.decode(data, (ObligationData));

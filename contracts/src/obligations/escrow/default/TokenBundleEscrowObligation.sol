@@ -3,6 +3,7 @@ pragma solidity ^0.8.26;
 
 import {BaseEscrowObligation} from "../../../BaseEscrowObligation.sol";
 import {IArbiter} from "../../../IArbiter.sol";
+import {BaseArbiter} from "../../../BaseArbiter.sol";
 import {ArbiterUtils} from "../../../ArbiterUtils.sol";
 import {Attestation} from "@eas/Common.sol";
 import {IEAS, RevocationRequest, RevocationRequestData} from "@eas/IEAS.sol";
@@ -16,7 +17,7 @@ import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155
 /// @title TokenBundleEscrowObligation
 /// @notice Escrows a mixed native/ERC20/ERC721/ERC1155 bundle behind an arbiter-defined fulfillment condition.
 /// @dev Uses the default escrow checks; bundle arrays are positionally matched.
-contract TokenBundleEscrowObligation is BaseEscrowObligation, IArbiter, ERC1155Holder {
+contract TokenBundleEscrowObligation is BaseEscrowObligation, BaseArbiter, ERC1155Holder {
     using ArbiterUtils for Attestation;
     using SafeERC20 for IERC20;
 
@@ -62,6 +63,17 @@ contract TokenBundleEscrowObligation is BaseEscrowObligation, IArbiter, ERC1155H
             true
         )
     {}
+
+    /// @inheritdoc BaseEscrowObligation
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(BaseEscrowObligation, BaseArbiter, ERC1155Holder)
+        returns (bool)
+    {
+        return interfaceId == type(IArbiter).interfaceId || super.supportsInterface(interfaceId);
+    }
 
     function validateArrayLengths(ObligationData memory data) internal pure {
         if (data.erc20Tokens.length != data.erc20Amounts.length) {

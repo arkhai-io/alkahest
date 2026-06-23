@@ -3,10 +3,11 @@ pragma solidity ^0.8.26;
 
 import {Attestation} from "@eas/Common.sol";
 import {IArbiter} from "../IArbiter.sol";
+import {BaseArbiter} from "../BaseArbiter.sol";
 
 /// @title ReferencesEscrowArbiter
 /// @notice Accepts fulfillments whose `refUID` is the escrow UID being collected.
-contract ReferencesEscrowArbiter is IArbiter {
+contract ReferencesEscrowArbiter is BaseArbiter {
     /// @notice Raised when the fulfillment does not reference the escrow UID supplied by the escrow contract.
     error EscrowReferenceMismatch();
 

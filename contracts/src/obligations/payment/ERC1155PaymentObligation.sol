@@ -12,13 +12,14 @@ import {
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {BaseObligation} from "../../BaseObligation.sol";
+import {BaseArbiter} from "../../BaseArbiter.sol";
 import {IArbiter} from "../../IArbiter.sol";
 import {ArbiterUtils} from "../../ArbiterUtils.sol";
 
 /// @title ERC1155PaymentObligation
 /// @notice Transfers ERC1155 tokens to a payee and records the payment as an EAS attestation.
 /// @dev As an arbiter, accepts payment attestations that reference the escrow UID and satisfy the demanded token, ID, payee, and minimum amount.
-contract ERC1155PaymentObligation is BaseObligation, IArbiter {
+contract ERC1155PaymentObligation is BaseObligation, BaseArbiter {
     using ArbiterUtils for Attestation;
 
     /// @notice ERC1155 payment terms encoded in each obligation attestation.

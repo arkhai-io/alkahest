@@ -3,6 +3,7 @@ pragma solidity ^0.8.26;
 
 import {BaseEscrowObligation} from "../../../BaseEscrowObligation.sol";
 import {IArbiter} from "../../../IArbiter.sol";
+import {BaseArbiter} from "../../../BaseArbiter.sol";
 import {ArbiterUtils} from "../../../ArbiterUtils.sol";
 import {IEscrowHook} from "./IEscrowHook.sol";
 import {Attestation} from "@eas/Common.sol";
@@ -19,7 +20,7 @@ import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 ///         Assets are held by the hook contracts, not by this obligation.
 ///         Hooks track deposits per-caller (msg.sender = this contract), so
 ///         no explicit authorization is required.
-contract HookEscrowObligation is BaseEscrowObligation, IArbiter {
+contract HookEscrowObligation is BaseEscrowObligation, BaseArbiter {
     using ArbiterUtils for Attestation;
 
     /// @param arbiter  The arbiter that judges fulfillment.
@@ -36,6 +37,17 @@ contract HookEscrowObligation is BaseEscrowObligation, IArbiter {
     constructor(IEAS _eas, ISchemaRegistry _schemaRegistry)
         BaseEscrowObligation(_eas, _schemaRegistry, "address arbiter, bytes demand, address hook, bytes hookData", true)
     {}
+
+    /// @inheritdoc BaseEscrowObligation
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(BaseEscrowObligation, BaseArbiter)
+        returns (bool)
+    {
+        return interfaceId == type(IArbiter).interfaceId || super.supportsInterface(interfaceId);
+    }
 
     // ──────────────────────────────────────────────
     // BaseEscrowObligation overrides

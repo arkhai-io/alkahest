@@ -6,6 +6,7 @@ import {IEAS} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {BaseObligation} from "../BaseObligation.sol";
+import {BaseArbiter} from "../BaseArbiter.sol";
 import {IArbiter} from "../IArbiter.sol";
 import {IEscrow} from "../IEscrow.sol";
 import {ArbiterUtils} from "../ArbiterUtils.sol";
@@ -16,7 +17,7 @@ import {ArbiterUtils} from "../ArbiterUtils.sol";
 ///         Arbiter demand data specifies the exact bond amount required for a
 ///         particular escrow, so this contract composes cleanly under logical
 ///         arbiters that pass nested demands to check.
-contract CommitRevealObligation is BaseObligation, IArbiter, Ownable {
+contract CommitRevealObligation is BaseObligation, BaseArbiter, Ownable {
     using ArbiterUtils for Attestation;
 
     /// @dev Data stored inside the fulfillment attestation.
