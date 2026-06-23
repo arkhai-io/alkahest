@@ -90,7 +90,7 @@ Status: fixed.
 Report item: `audit_agent_report_7_148d58b8-8bb1-439b-abbd-daa23352bc6c.pdf`,
 finding 14.
 
-Completed by `PENDING_COMMIT`.
+Completed by `9ec044fdb19924e0f1859f4a1bef4e146c381137`.
 
 `AtomicPaymentUtils` now tolerates an already-consumed ERC20 permit when the
 permit has established sufficient allowance for the utility contract. This
