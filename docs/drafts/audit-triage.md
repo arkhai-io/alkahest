@@ -45,7 +45,7 @@ Status: fixed.
 Report item: `audit_agent_report_7_148d58b8-8bb1-439b-abbd-daa23352bc6c.pdf`,
 finding 9.
 
-Completed by `<pending commit>`.
+Completed by `564d996378686ab8cf8e02fa4410259831f67dac`.
 
 `TokenBundleSplitterBase` now verifies collection deltas once per unique ERC20
 token and once per unique ERC1155 `(token, tokenId)` pair, comparing each
