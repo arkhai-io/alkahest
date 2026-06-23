@@ -32,8 +32,9 @@ contracts that mint user-specified attestation data do not give that data
 independent legitimacy merely by acting as the EAS attester. Their attestations
 are only meaningful under the policy a downstream consumer applies: schema,
 content, referenced UID, escrow provenance, lifecycle context, or other explicit
-checks. If a flow needs escrow provenance, it should encode and verify that
-provenance directly rather than assuming it from the attester address alone.
+checks. The attester address can prove which contract emitted an attestation,
+but consumers still need to verify that the contract's attestation path enforces
+the lifecycle or proof semantics they intend to rely on.
 
 ## Arbiters Are Policy
 
