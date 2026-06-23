@@ -2,6 +2,7 @@
 pragma solidity ^0.8.26;
 
 import {IEscrowHook} from "../IEscrowHook.sol";
+import {ApprovedEscrowHook} from "./ApprovedEscrowHook.sol";
 import {Attestation} from "@eas/Common.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
@@ -9,9 +10,10 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 /// @notice An IEscrowHook that escrows a single ERC721 token.
 /// @dev hookData is abi.encode(HookData).
 ///      Deposits are tracked per-caller per-token per-tokenId.
-///      Users must approve this hook contract (or setApprovalForAll)
-///      before the obligation calls onLock.
-contract ERC721EscrowHook is IEscrowHook {
+///      Users must approve this hook contract (or setApprovalForAll) and
+///      approve the escrow obligation contract in this hook before the
+///      obligation calls onLock.
+contract ERC721EscrowHook is IEscrowHook, ApprovedEscrowHook {
     struct HookData {
         address token;
         uint256 tokenId;
@@ -25,15 +27,8 @@ contract ERC721EscrowHook is IEscrowHook {
 
     // ──────────────────────────────────────────────
 
-    function onLock(
-        bytes calldata data,
-        address from,
-        address /* escrow */
-    )
-        external
-        payable
-        override
-    {
+    function onLock(bytes calldata data, address from, address escrow) external payable override {
+        _checkLockCaller(from, escrow);
         if (msg.value != 0) revert IEscrowHook.UnexpectedNativeValue();
 
         HookData memory decoded = abi.decode(data, (HookData));
@@ -61,23 +56,18 @@ contract ERC721EscrowHook is IEscrowHook {
     function onRelease(
         bytes calldata data,
         address to,
-        Attestation calldata, /* escrow */
+        Attestation calldata escrow,
         bytes32 /* fulfillmentUid */
     )
         external
         override
     {
+        _checkAttestationCaller(escrow);
         _transferOut(data, to);
     }
 
-    function onReturn(
-        bytes calldata data,
-        address to,
-        Attestation calldata /* escrow */
-    )
-        external
-        override
-    {
+    function onReturn(bytes calldata data, address to, Attestation calldata escrow) external override {
+        _checkAttestationCaller(escrow);
         _transferOut(data, to);
     }
 

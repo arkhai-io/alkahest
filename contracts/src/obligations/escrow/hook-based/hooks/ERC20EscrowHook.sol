@@ -2,6 +2,7 @@
 pragma solidity ^0.8.26;
 
 import {IEscrowHook} from "../IEscrowHook.sol";
+import {ApprovedEscrowHook} from "./ApprovedEscrowHook.sol";
 import {Attestation} from "@eas/Common.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -11,12 +12,14 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 /// @dev hookData is abi.encode(HookData).
 ///
 ///      Security model: deposits are tracked per-caller (msg.sender) per-token.
-///      Any contract can deposit via onLock and only withdraw what it deposited
-///      via onRelease/onReturn. No owner, no authorization mapping.
+///      Only hook-approved escrow contracts can deposit on behalf of a user.
+///      Approved escrows can only withdraw what they deposited via
+///      onRelease/onReturn.
 ///
-///      Users must approve this hook contract for the token before the
-///      obligation calls onLock.
-contract ERC20EscrowHook is IEscrowHook {
+///      Users must approve this hook contract for the token and approve the
+///      escrow obligation contract in this hook before the obligation calls
+///      onLock.
+contract ERC20EscrowHook is IEscrowHook, ApprovedEscrowHook {
     using SafeERC20 for IERC20;
 
     struct HookData {
@@ -33,15 +36,8 @@ contract ERC20EscrowHook is IEscrowHook {
 
     // ──────────────────────────────────────────────
 
-    function onLock(
-        bytes calldata data,
-        address from,
-        address /* escrow */
-    )
-        external
-        payable
-        override
-    {
+    function onLock(bytes calldata data, address from, address escrow) external payable override {
+        _checkLockCaller(from, escrow);
         if (msg.value != 0) revert IEscrowHook.UnexpectedNativeValue();
 
         HookData memory decoded = abi.decode(data, (HookData));
@@ -64,23 +60,18 @@ contract ERC20EscrowHook is IEscrowHook {
     function onRelease(
         bytes calldata data,
         address to,
-        Attestation calldata, /* escrow */
+        Attestation calldata escrow,
         bytes32 /* fulfillmentUid */
     )
         external
         override
     {
+        _checkAttestationCaller(escrow);
         _transferOut(data, to);
     }
 
-    function onReturn(
-        bytes calldata data,
-        address to,
-        Attestation calldata /* escrow */
-    )
-        external
-        override
-    {
+    function onReturn(bytes calldata data, address to, Attestation calldata escrow) external override {
+        _checkAttestationCaller(escrow);
         _transferOut(data, to);
     }
 

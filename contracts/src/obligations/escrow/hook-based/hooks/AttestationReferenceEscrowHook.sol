@@ -2,6 +2,7 @@
 pragma solidity ^0.8.26;
 
 import {IEscrowHook} from "../IEscrowHook.sol";
+import {ApprovedEscrowHook} from "./ApprovedEscrowHook.sol";
 import {IEAS, AttestationRequest, AttestationRequestData} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {ISchemaResolver} from "@eas/resolver/ISchemaResolver.sol";
@@ -19,7 +20,7 @@ import {SchemaRegistryUtils} from "../../../../SchemaRegistryUtils.sol";
 ///
 ///      The validation schema is registered at deploy time. The attester
 ///      of the validation attestation is this hook contract.
-contract AttestationReferenceEscrowHook is IEscrowHook, SchemaResolver {
+contract AttestationReferenceEscrowHook is IEscrowHook, ApprovedEscrowHook, SchemaResolver {
     using SchemaRegistryUtils for ISchemaRegistry;
 
     struct HookData {
@@ -46,34 +47,29 @@ contract AttestationReferenceEscrowHook is IEscrowHook, SchemaResolver {
 
     // ──────────────────────────────────────────────
 
-    function onLock(
-        bytes calldata data,
-        address,
-        /* from */
-        address /* escrow */
-    )
-        external
-        payable
-        override
-    {
+    function onLock(bytes calldata data, address from, address escrow) external payable override {
+        _checkLockCaller(from, escrow);
         if (msg.value != 0) revert IEscrowHook.UnexpectedNativeValue();
 
         bytes32 dataHash = keccak256(data);
         pending[msg.sender][dataHash]++;
     }
 
-    function onAttest(bytes calldata, Attestation calldata) external override {}
+    function onAttest(bytes calldata, Attestation calldata escrow) external view override {
+        _checkAttestationCaller(escrow);
+    }
 
     function onRelease(
         bytes calldata data,
         address,
         /* to */
-        Attestation calldata, /* escrow */
+        Attestation calldata escrow,
         bytes32 /* fulfillmentUid */
     )
         external
         override
     {
+        _checkAttestationCaller(escrow);
         bytes32 dataHash = keccak256(data);
         if (pending[msg.sender][dataHash] == 0) {
             revert NoPendingValidation(msg.sender, dataHash);
@@ -106,11 +102,12 @@ contract AttestationReferenceEscrowHook is IEscrowHook, SchemaResolver {
         bytes calldata data,
         address,
         /* to */
-        Attestation calldata /* escrow */
+        Attestation calldata escrow
     )
         external
         override
     {
+        _checkAttestationCaller(escrow);
         bytes32 dataHash = keccak256(data);
         if (pending[msg.sender][dataHash] > 0) {
             pending[msg.sender][dataHash]--;

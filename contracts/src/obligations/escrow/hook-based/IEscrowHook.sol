@@ -10,8 +10,9 @@ import {Attestation} from "@eas/Common.sol";
 ///      `data` is opaque, hook-specific configuration (e.g. token + amount).
 ///
 ///      Security model: hooks hold assets and track deposits per-caller
-///      (msg.sender). No authorization mapping is needed — the caller's
-///      deposit balance is the implicit permission to release.
+///      (msg.sender). Hook implementations that can use a user's token
+///      approvals should require the asset owner to approve the escrow
+///      obligation contract at the hook level before `onLock` can pull assets.
 interface IEscrowHook {
     error UnexpectedNativeValue();
 

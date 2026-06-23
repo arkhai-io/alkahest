@@ -2,6 +2,7 @@
 pragma solidity ^0.8.26;
 
 import {IEscrowHook} from "../IEscrowHook.sol";
+import {ApprovedEscrowHook} from "./ApprovedEscrowHook.sol";
 import {Attestation} from "@eas/Common.sol";
 
 /// @title NativeTokenEscrowHook
@@ -9,7 +10,7 @@ import {Attestation} from "@eas/Common.sol";
 /// @dev hookData is abi.encode(HookData).
 ///      ETH is forwarded via msg.value through onLock.
 ///      Deposits are tracked per-caller.
-contract NativeTokenEscrowHook is IEscrowHook {
+contract NativeTokenEscrowHook is IEscrowHook, ApprovedEscrowHook {
     struct HookData {
         uint256 amount;
     }
@@ -24,16 +25,8 @@ contract NativeTokenEscrowHook is IEscrowHook {
 
     // ──────────────────────────────────────────────
 
-    function onLock(
-        bytes calldata data,
-        address,
-        /* from */
-        address /* escrow */
-    )
-        external
-        payable
-        override
-    {
+    function onLock(bytes calldata data, address from, address escrow) external payable override {
+        _checkLockCaller(from, escrow);
         HookData memory decoded = abi.decode(data, (HookData));
 
         if (msg.value != decoded.amount) {
@@ -48,23 +41,18 @@ contract NativeTokenEscrowHook is IEscrowHook {
     function onRelease(
         bytes calldata data,
         address to,
-        Attestation calldata, /* escrow */
+        Attestation calldata escrow,
         bytes32 /* fulfillmentUid */
     )
         external
         override
     {
+        _checkAttestationCaller(escrow);
         _transferOut(data, to);
     }
 
-    function onReturn(
-        bytes calldata data,
-        address to,
-        Attestation calldata /* escrow */
-    )
-        external
-        override
-    {
+    function onReturn(bytes calldata data, address to, Attestation calldata escrow) external override {
+        _checkAttestationCaller(escrow);
         _transferOut(data, to);
     }
 

@@ -6,6 +6,7 @@ import {HookEscrowObligation} from "@src/obligations/escrow/hook-based/HookEscro
 import {HooksEscrowObligation} from "@src/obligations/escrow/hook-based/HooksEscrowObligation.sol";
 import {IEscrowHook} from "@src/obligations/escrow/hook-based/IEscrowHook.sol";
 import {ERC20EscrowHook} from "@src/obligations/escrow/hook-based/hooks/ERC20EscrowHook.sol";
+import {ApprovedEscrowHook} from "@src/obligations/escrow/hook-based/hooks/ApprovedEscrowHook.sol";
 import {ERC721EscrowHook} from "@src/obligations/escrow/hook-based/hooks/ERC721EscrowHook.sol";
 import {ERC1155EscrowHook} from "@src/obligations/escrow/hook-based/hooks/ERC1155EscrowHook.sol";
 import {NativeTokenEscrowHook} from "@src/obligations/escrow/hook-based/hooks/NativeTokenEscrowHook.sol";
@@ -87,6 +88,10 @@ contract ForwardingERC1155HookReceiver is IERC1155Receiver {
 
 /// @dev A contract that tries to call hooks directly to steal funds.
 contract HookThief {
+    function stealViaLock(ERC20EscrowHook hook, bytes memory hookData, address victim) external {
+        hook.onLock(hookData, victim, address(this));
+    }
+
     function stealViaRelease(ERC20EscrowHook hook, address token, uint256 amount) external {
         bytes memory hookData = abi.encode(ERC20EscrowHook.HookData({token: token, amount: amount}));
         hook.onRelease(hookData, msg.sender, _dummyEscrow(), bytes32(0));
@@ -98,6 +103,10 @@ contract HookThief {
     }
 
     function _dummyEscrow() internal view returns (Attestation memory) {
+        return _dummyEscrow(address(this));
+    }
+
+    function _dummyEscrow(address attester) internal pure returns (Attestation memory) {
         return Attestation({
             uid: keccak256("escrow"),
             schema: bytes32(0),
@@ -106,7 +115,7 @@ contract HookThief {
             revocationTime: 0,
             refUID: bytes32(0),
             recipient: address(0),
-            attester: address(this),
+            attester: attester,
             revocable: true,
             data: ""
         });
@@ -132,6 +141,10 @@ contract OverdrawAttacker {
     }
 
     function _dummyEscrow() internal view returns (Attestation memory) {
+        return _dummyEscrow(address(this));
+    }
+
+    function _dummyEscrow(address attester) internal pure returns (Attestation memory) {
         return Attestation({
             uid: keccak256("escrow"),
             schema: bytes32(0),
@@ -140,7 +153,7 @@ contract OverdrawAttacker {
             revocationTime: 0,
             refUID: bytes32(0),
             recipient: address(0),
-            attester: address(this),
+            attester: attester,
             revocable: true,
             data: ""
         });
@@ -167,6 +180,10 @@ contract HookEscrowObligationTest is Test {
     uint64 constant EXPIRATION = 365 days;
 
     function _dummyEscrow() internal view returns (Attestation memory) {
+        return _dummyEscrow(address(this));
+    }
+
+    function _dummyEscrow(address attester) internal pure returns (Attestation memory) {
         return Attestation({
             uid: keccak256("escrow"),
             schema: bytes32(0),
@@ -175,7 +192,7 @@ contract HookEscrowObligationTest is Test {
             revocationTime: 0,
             refUID: bytes32(0),
             recipient: address(0),
-            attester: address(this),
+            attester: attester,
             revocable: true,
             data: ""
         });
@@ -219,6 +236,7 @@ contract HookEscrowObligationTest is Test {
     function _createEscrow(uint256 amount, address arbiter, uint64 expiration) internal returns (bytes32) {
         vm.startPrank(buyer);
         token.approve(address(erc20Hook), amount);
+        erc20Hook.approveEscrow(address(escrow));
         bytes32 uid = escrow.doObligation(_obligationData(amount, arbiter), uint64(block.timestamp + expiration));
         vm.stopPrank();
         return uid;
@@ -291,8 +309,10 @@ contract HookEscrowObligationTest is Test {
         });
         vm.deal(buyer, 1 ether);
 
-        vm.prank(buyer);
+        vm.startPrank(buyer);
+        nativeHook.approveEscrow(address(escrow));
         bytes32 uid = escrow.doObligation{value: 1 ether}(data, uint64(block.timestamp + EXPIRATION));
+        vm.stopPrank();
 
         assertNotEq(uid, bytes32(0));
         assertEq(nativeHook.deposits(address(escrow)), 1 ether);
@@ -304,6 +324,7 @@ contract HookEscrowObligationTest is Test {
 
         vm.startPrank(buyer);
         token.approve(address(erc20Hook), AMOUNT);
+        erc20Hook.approveEscrow(address(escrow));
         bytes32 uid = escrow.doObligationFor(
             _obligationData(AMOUNT, address(acceptArbiter)), uint64(block.timestamp + EXPIRATION), recipient
         );
@@ -323,25 +344,30 @@ contract HookEscrowObligationTest is Test {
         erc721.mint(buyer, 1);
         erc1155.mint(buyer, 1, 10);
 
-        vm.deal(buyer, 1 ether);
+        vm.deal(address(escrow), 1 ether);
         vm.startPrank(buyer);
+        erc20Hook.approveEscrow(address(escrow));
+        erc721Hook.approveEscrow(address(escrow));
+        erc1155Hook.approveEscrow(address(escrow));
+        vm.stopPrank();
 
         vm.expectRevert(IEscrowHook.UnexpectedNativeValue.selector);
+        vm.prank(address(escrow));
         erc20Hook.onLock{value: 1 wei}(_hookData(AMOUNT), buyer, address(escrow));
 
         vm.expectRevert(IEscrowHook.UnexpectedNativeValue.selector);
+        vm.prank(address(escrow));
         erc721Hook.onLock{value: 1 wei}(
             abi.encode(ERC721EscrowHook.HookData({token: address(erc721), tokenId: 1})), buyer, address(escrow)
         );
 
         vm.expectRevert(IEscrowHook.UnexpectedNativeValue.selector);
+        vm.prank(address(escrow));
         erc1155Hook.onLock{value: 1 wei}(
             abi.encode(ERC1155EscrowHook.HookData({token: address(erc1155), tokenId: 1, amount: 10})),
             buyer,
             address(escrow)
         );
-
-        vm.stopPrank();
 
         assertEq(address(erc20Hook).balance, 0);
         assertEq(address(erc721Hook).balance, 0);
@@ -359,12 +385,14 @@ contract HookEscrowObligationTest is Test {
 
         vm.prank(buyer);
         erc1155.setApprovalForAll(address(hook), true);
+        vm.prank(buyer);
+        hook.approveEscrow(address(escrow));
 
         vm.prank(address(escrow));
         hook.onLock(data, buyer, address(escrow));
 
         vm.prank(address(escrow));
-        hook.onRelease(data, address(receiver), _dummyEscrow(), bytes32(0));
+        hook.onRelease(data, address(receiver), _dummyEscrow(address(escrow)), bytes32(0));
 
         assertEq(erc1155.balanceOf(target, 1), 10);
         assertEq(erc1155.balanceOf(address(receiver), 1), 0);
@@ -376,6 +404,7 @@ contract HookEscrowObligationTest is Test {
 
         vm.startPrank(buyer);
         token.approve(address(erc20Hook), AMOUNT);
+        erc20Hook.approveEscrow(address(escrow));
         vm.expectRevert(IEscrowHook.UnexpectedNativeValue.selector);
         escrow.doObligation{value: 1 wei}(
             _obligationData(AMOUNT, address(acceptArbiter)), uint64(block.timestamp + EXPIRATION)
@@ -518,6 +547,7 @@ contract HookEscrowObligationTest is Test {
 
         vm.startPrank(poorUser);
         token.approve(address(erc20Hook), AMOUNT);
+        erc20Hook.approveEscrow(address(escrow));
         vm.expectRevert();
         escrow.doObligation(_obligationData(AMOUNT, address(acceptArbiter)), uint64(block.timestamp + EXPIRATION));
         vm.stopPrank();
@@ -590,6 +620,7 @@ contract HooksEscrowObligationTest is Test {
         vm.startPrank(buyer);
         tokenA.approve(address(erc20Hook), AMOUNT_A);
         tokenB.approve(address(erc20Hook), AMOUNT_B);
+        erc20Hook.approveEscrow(address(escrow));
         bytes32 escrowUid = escrow.doObligation(data, uint64(block.timestamp + EXPIRATION));
         vm.stopPrank();
 
@@ -647,8 +678,10 @@ contract HooksEscrowObligationTest is Test {
         });
         vm.deal(buyer, 1 ether);
 
-        vm.prank(buyer);
+        vm.startPrank(buyer);
+        nativeHook.approveEscrow(address(escrow));
         bytes32 uid = escrow.doObligation{value: 1 ether}(data, uint64(block.timestamp + EXPIRATION));
+        vm.stopPrank();
 
         assertNotEq(uid, bytes32(0));
         assertEq(nativeHook.deposits(address(escrow)), 1 ether);
@@ -661,6 +694,7 @@ contract HooksEscrowObligationTest is Test {
         vm.startPrank(buyer);
         tokenA.approve(address(erc20Hook), AMOUNT_A);
         tokenB.approve(address(erc20Hook), AMOUNT_B);
+        erc20Hook.approveEscrow(address(escrow));
         bytes32 escrowUid = escrow.doObligation(data, uint64(block.timestamp + 100));
         vm.stopPrank();
 
@@ -743,6 +777,10 @@ contract HookEscrowAttackTest is Test {
     uint64 constant EXPIRATION = 365 days;
 
     function _dummyEscrow() internal view returns (Attestation memory) {
+        return _dummyEscrow(address(this));
+    }
+
+    function _dummyEscrow(address attester) internal pure returns (Attestation memory) {
         return Attestation({
             uid: keccak256("escrow"),
             schema: bytes32(0),
@@ -751,7 +789,7 @@ contract HookEscrowAttackTest is Test {
             revocationTime: 0,
             refUID: bytes32(0),
             recipient: address(0),
-            attester: address(this),
+            attester: attester,
             revocable: true,
             data: ""
         });
@@ -781,9 +819,27 @@ contract HookEscrowAttackTest is Test {
 
         vm.startPrank(buyer);
         token.approve(address(erc20Hook), AMOUNT);
+        erc20Hook.approveEscrow(address(escrow));
         bytes32 uid = escrow.doObligation(data, uint64(block.timestamp + EXPIRATION));
         vm.stopPrank();
         return uid;
+    }
+
+    function testAttackCannotDrainVictimAllowanceViaDirectLock() public {
+        bytes memory hookData = abi.encode(ERC20EscrowHook.HookData({token: address(token), amount: AMOUNT}));
+        HookThief thief = new HookThief();
+
+        vm.prank(buyer);
+        token.approve(address(erc20Hook), AMOUNT);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(ApprovedEscrowHook.UnauthorizedEscrowCaller.selector, buyer, address(thief))
+        );
+        thief.stealViaLock(erc20Hook, hookData, buyer);
+
+        assertEq(token.balanceOf(buyer), 1000 * 10 ** 18);
+        assertEq(token.balanceOf(address(erc20Hook)), 0);
+        assertEq(erc20Hook.deposits(address(thief), address(token)), 0);
     }
 
     /// @notice POC: Direct call to hook.onRelease by attacker with no deposit.
@@ -833,6 +889,8 @@ contract HookEscrowAttackTest is Test {
         token.transfer(address(overdrawer), smallAmount);
         vm.prank(address(overdrawer));
         token.approve(address(erc20Hook), smallAmount);
+        vm.prank(address(overdrawer));
+        erc20Hook.approveEscrow(address(overdrawer));
 
         // Attacker deposits 1 token, tries to withdraw 100
         vm.expectRevert(
@@ -865,13 +923,16 @@ contract HookEscrowAttackTest is Test {
 
         vm.startPrank(buyer);
         token.approve(address(erc20Hook), AMOUNT);
+        erc20Hook.approveEscrow(address(hooksEscrow));
         hooksEscrow.doObligation(data, uint64(block.timestamp + EXPIRATION));
         vm.stopPrank();
 
         assertEq(erc20Hook.deposits(address(hooksEscrow), address(token)), AMOUNT);
 
         vm.prank(attacker);
-        vm.expectRevert(abi.encodeWithSelector(ERC20EscrowHook.NoDeposit.selector, attacker, address(token)));
+        vm.expectRevert(
+            abi.encodeWithSelector(ApprovedEscrowHook.EscrowCallerMismatch.selector, attacker, address(this))
+        );
         erc20Hook.onRelease(hookDatas[0], attacker, _dummyEscrow(), bytes32(0));
 
         assertEq(token.balanceOf(address(erc20Hook)), AMOUNT);
@@ -885,7 +946,9 @@ contract HookEscrowAttackTest is Test {
         bytes memory hookData = abi.encode(ERC20EscrowHook.HookData({token: address(token), amount: AMOUNT}));
 
         vm.prank(attacker);
-        vm.expectRevert(abi.encodeWithSelector(ERC20EscrowHook.NoDeposit.selector, attacker, address(token)));
+        vm.expectRevert(
+            abi.encodeWithSelector(ApprovedEscrowHook.EscrowCallerMismatch.selector, attacker, address(this))
+        );
         erc20Hook.onRelease(hookData, attacker, _dummyEscrow(), bytes32(0));
     }
 
@@ -908,7 +971,7 @@ contract HookEscrowAttackTest is Test {
         erc20Hook.onRelease(
             abi.encode(ERC20EscrowHook.HookData({token: address(token), amount: AMOUNT})),
             attacker,
-            _dummyEscrow(),
+            _dummyEscrow(address(escrow2)),
             bytes32(0)
         );
 

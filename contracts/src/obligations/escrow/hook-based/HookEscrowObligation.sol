@@ -18,8 +18,8 @@ import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 ///         escrows.
 ///
 ///         Assets are held by the hook contracts, not by this obligation.
-///         Hooks track deposits per-caller (msg.sender = this contract), so
-///         no explicit authorization is required.
+///         Hooks track deposits per-caller (msg.sender = this contract). Users
+///         must approve this escrow contract in each hook before locking assets.
 contract HookEscrowObligation is BaseEscrowObligation, BaseArbiter {
     using ArbiterUtils for Attestation;
 

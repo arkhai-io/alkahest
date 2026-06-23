@@ -2,6 +2,7 @@
 pragma solidity ^0.8.26;
 
 import {IEscrowHook} from "../IEscrowHook.sol";
+import {ApprovedEscrowHook} from "./ApprovedEscrowHook.sol";
 import {Attestation} from "@eas/Common.sol";
 import {IEAS, AttestationRequest} from "@eas/IEAS.sol";
 
@@ -19,7 +20,7 @@ import {IEAS, AttestationRequest} from "@eas/IEAS.sol";
 ///      No per-caller deposit tracking needed since there are no assets.
 ///      However, we track a nonce per-caller to prevent replay of release
 ///      calls for the same escrow.
-contract AttestationEscrowHook is IEscrowHook {
+contract AttestationEscrowHook is IEscrowHook, ApprovedEscrowHook {
     struct HookData {
         AttestationRequest attestation;
     }
@@ -41,16 +42,8 @@ contract AttestationEscrowHook is IEscrowHook {
 
     // ──────────────────────────────────────────────
 
-    function onLock(
-        bytes calldata data,
-        address,
-        /* from */
-        address /* escrow */
-    )
-        external
-        payable
-        override
-    {
+    function onLock(bytes calldata data, address from, address escrow) external payable override {
+        _checkLockCaller(from, escrow);
         HookData memory decoded = abi.decode(data, (HookData));
         uint256 requiredValue = decoded.attestation.data.value;
         if (msg.value != requiredValue) revert IncorrectPayment(requiredValue, msg.value);
@@ -62,18 +55,21 @@ contract AttestationEscrowHook is IEscrowHook {
         pendingValue[msg.sender][dataHash] += requiredValue;
     }
 
-    function onAttest(bytes calldata, Attestation calldata) external override {}
+    function onAttest(bytes calldata, Attestation calldata escrow) external view override {
+        _checkAttestationCaller(escrow);
+    }
 
     function onRelease(
         bytes calldata data,
         address,
         /* to */
-        Attestation calldata, /* escrow */
+        Attestation calldata escrow,
         bytes32 /* fulfillmentUid */
     )
         external
         override
     {
+        _checkAttestationCaller(escrow);
         bytes32 dataHash = keccak256(data);
         if (pending[msg.sender][dataHash] == 0) {
             revert NoPendingAttestation(msg.sender, dataHash);
@@ -91,14 +87,8 @@ contract AttestationEscrowHook is IEscrowHook {
         }
     }
 
-    function onReturn(
-        bytes calldata data,
-        address to,
-        Attestation calldata /* escrow */
-    )
-        external
-        override
-    {
+    function onReturn(bytes calldata data, address to, Attestation calldata escrow) external override {
+        _checkAttestationCaller(escrow);
         // Clear the pending state — the attestation won't be created.
         bytes32 dataHash = keccak256(data);
         if (pending[msg.sender][dataHash] > 0) {

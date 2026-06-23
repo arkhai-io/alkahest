@@ -35,6 +35,10 @@ contract AttestationEscrowHookTest is Test {
 
         hook = new AttestationEscrowHook(eas);
         hook2 = new AttestationReferenceEscrowHook(eas, schemaRegistry);
+        vm.startPrank(caller);
+        hook.approveEscrow(caller);
+        hook2.approveEscrow(caller);
+        vm.stopPrank();
 
         testSchema = schemaRegistry.register("string testData", ISchemaResolver(address(0)), true);
         payableResolver = new PayableResolver(eas);
@@ -63,7 +67,7 @@ contract AttestationEscrowHookTest is Test {
             revocationTime: 0,
             refUID: bytes32(0),
             recipient: address(0),
-            attester: address(this),
+            attester: caller,
             revocable: true,
             data: ""
         });
@@ -88,8 +92,8 @@ contract AttestationEscrowHookTest is Test {
         bytes32 dataHash = keccak256(data);
 
         vm.startPrank(caller);
-        hook.onLock(data, caller, address(this));
-        hook.onLock(data, caller, address(this));
+        hook.onLock(data, caller, caller);
+        hook.onLock(data, caller, caller);
         assertEq(hook.pending(caller, dataHash), 2);
 
         hook.onRelease(data, recipient, _dummyEscrow(), bytes32(0));
@@ -123,7 +127,7 @@ contract AttestationEscrowHookTest is Test {
         vm.deal(caller, 1 ether);
         vm.prank(caller);
         vm.expectRevert(abi.encodeWithSelector(AttestationEscrowHook.IncorrectPayment.selector, 1 wei, 0));
-        hook.onLock(data, caller, address(this));
+        hook.onLock(data, caller, caller);
 
         assertEq(address(hook).balance, 0);
     }
@@ -148,7 +152,7 @@ contract AttestationEscrowHookTest is Test {
 
         vm.deal(caller, 1 ether);
         vm.startPrank(caller);
-        hook.onLock{value: 1 wei}(data, caller, address(this));
+        hook.onLock{value: 1 wei}(data, caller, caller);
         assertEq(hook.pending(caller, dataHash), 1);
         assertEq(hook.pendingValue(caller, dataHash), 1 wei);
         assertEq(address(hook).balance, 1 wei);
@@ -183,7 +187,7 @@ contract AttestationEscrowHookTest is Test {
         uint256 balanceBefore = caller.balance;
 
         vm.startPrank(caller);
-        hook.onLock{value: 1 wei}(data, caller, address(this));
+        hook.onLock{value: 1 wei}(data, caller, caller);
         hook.onReturn(data, caller, _dummyEscrow());
         vm.stopPrank();
 
@@ -211,8 +215,8 @@ contract AttestationEscrowHookTest is Test {
         bytes32 dataHash = keccak256(data);
 
         vm.startPrank(caller);
-        hook.onLock(data, caller, address(this));
-        hook.onLock(data, caller, address(this));
+        hook.onLock(data, caller, caller);
+        hook.onLock(data, caller, caller);
         hook.onReturn(data, caller, _dummyEscrow());
         assertEq(hook.pending(caller, dataHash), 1);
         hook.onRelease(data, recipient, _dummyEscrow(), bytes32(0));
@@ -232,8 +236,8 @@ contract AttestationEscrowHookTest is Test {
         bytes32 dataHash = keccak256(data);
 
         vm.startPrank(caller);
-        hook2.onLock(data, caller, address(this));
-        hook2.onLock(data, caller, address(this));
+        hook2.onLock(data, caller, caller);
+        hook2.onLock(data, caller, caller);
         assertEq(hook2.pending(caller, dataHash), 2);
 
         hook2.onRelease(data, recipient, _dummyEscrow(), bytes32(0));
@@ -262,7 +266,7 @@ contract AttestationEscrowHookTest is Test {
         vm.deal(caller, 1 ether);
         vm.prank(caller);
         vm.expectRevert(IEscrowHook.UnexpectedNativeValue.selector);
-        hook2.onLock{value: 1 wei}(data, caller, address(this));
+        hook2.onLock{value: 1 wei}(data, caller, caller);
 
         assertEq(address(hook2).balance, 0);
     }
@@ -293,8 +297,8 @@ contract AttestationEscrowHookTest is Test {
         bytes32 dataHash = keccak256(data);
 
         vm.startPrank(caller);
-        hook2.onLock(data, caller, address(this));
-        hook2.onLock(data, caller, address(this));
+        hook2.onLock(data, caller, caller);
+        hook2.onLock(data, caller, caller);
         hook2.onReturn(data, caller, _dummyEscrow());
         assertEq(hook2.pending(caller, dataHash), 1);
         hook2.onRelease(data, recipient, _dummyEscrow(), bytes32(0));
@@ -333,7 +337,7 @@ contract AttestationEscrowHookTest is Test {
         );
 
         vm.startPrank(caller);
-        hook2.onLock(data, caller, address(this));
+        hook2.onLock(data, caller, caller);
 
         vm.recordLogs();
         hook2.onRelease(data, otherRecipient, _dummyEscrow(), bytes32(0));
@@ -363,7 +367,7 @@ contract AttestationEscrowHookTest is Test {
         );
 
         vm.startPrank(caller);
-        hook2.onLock(data, caller, address(this));
+        hook2.onLock(data, caller, caller);
 
         vm.recordLogs();
         hook2.onRelease(data, recipient, _dummyEscrow(), bytes32(0));
