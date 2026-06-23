@@ -38,6 +38,21 @@ fail "before a finite threshold" checks. `ExpirationTimeEqualArbiter` remains
 unchanged because exact equality to zero has fixed EAS semantics: requiring a
 non-expiring attestation.
 
+### audit_agent_report_7: Duplicate Token Bundle Splitter Entries
+
+Status: fixed.
+
+Report item: `audit_agent_report_7_148d58b8-8bb1-439b-abbd-daa23352bc6c.pdf`,
+finding 9.
+
+Completed by `<pending commit>`.
+
+`TokenBundleSplitterBase` now verifies collection deltas once per unique ERC20
+token and once per unique ERC1155 `(token, tokenId)` pair, comparing each
+observed balance delta against the summed expected amount for matching bundle
+entries. Duplicate bundle entries remain valid and position-based distribution
+semantics are preserved.
+
 ### analysis(1): Splitter Public Execute Reentrancy
 
 Status: fixed.

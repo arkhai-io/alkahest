@@ -206,8 +206,11 @@ abstract contract TokenBundleSplitterBase is BaseSplitter, ERC1155Holder {
         SplitterVerification.verifyDelta(nativeBefore, address(this).balance, escrowData.nativeAmount);
 
         for (uint256 i; i < escrowData.erc20Tokens.length; ++i) {
+            if (!_isFirstERC20Occurrence(escrowData, i)) continue;
+
+            uint256 expectedAmount = _totalERC20Amount(escrowData, i);
             SplitterVerification.verifyDelta(
-                erc20Before[i], IERC20(escrowData.erc20Tokens[i]).balanceOf(address(this)), escrowData.erc20Amounts[i]
+                erc20Before[i], IERC20(escrowData.erc20Tokens[i]).balanceOf(address(this)), expectedAmount
             );
         }
 
@@ -220,11 +223,66 @@ abstract contract TokenBundleSplitterBase is BaseSplitter, ERC1155Holder {
         }
 
         for (uint256 i; i < escrowData.erc1155Tokens.length; ++i) {
+            if (!_isFirstERC1155Occurrence(escrowData, i)) continue;
+
+            uint256 expectedAmount = _totalERC1155Amount(escrowData, i);
             SplitterVerification.verifyDelta(
                 erc1155Before[i],
                 IERC1155(escrowData.erc1155Tokens[i]).balanceOf(address(this), escrowData.erc1155TokenIds[i]),
-                escrowData.erc1155Amounts[i]
+                expectedAmount
             );
+        }
+    }
+
+    function _isFirstERC20Occurrence(EscrowObligationData memory escrowData, uint256 index)
+        internal
+        pure
+        returns (bool)
+    {
+        address token = escrowData.erc20Tokens[index];
+        for (uint256 i; i < index; ++i) {
+            if (escrowData.erc20Tokens[i] == token) return false;
+        }
+        return true;
+    }
+
+    function _totalERC20Amount(EscrowObligationData memory escrowData, uint256 index)
+        internal
+        pure
+        returns (uint256 amount)
+    {
+        address token = escrowData.erc20Tokens[index];
+        for (uint256 i; i < escrowData.erc20Tokens.length; ++i) {
+            if (escrowData.erc20Tokens[i] == token) {
+                amount += escrowData.erc20Amounts[i];
+            }
+        }
+    }
+
+    function _isFirstERC1155Occurrence(EscrowObligationData memory escrowData, uint256 index)
+        internal
+        pure
+        returns (bool)
+    {
+        address token = escrowData.erc1155Tokens[index];
+        uint256 tokenId = escrowData.erc1155TokenIds[index];
+        for (uint256 i; i < index; ++i) {
+            if (escrowData.erc1155Tokens[i] == token && escrowData.erc1155TokenIds[i] == tokenId) return false;
+        }
+        return true;
+    }
+
+    function _totalERC1155Amount(EscrowObligationData memory escrowData, uint256 index)
+        internal
+        pure
+        returns (uint256 amount)
+    {
+        address token = escrowData.erc1155Tokens[index];
+        uint256 tokenId = escrowData.erc1155TokenIds[index];
+        for (uint256 i; i < escrowData.erc1155Tokens.length; ++i) {
+            if (escrowData.erc1155Tokens[i] == token && escrowData.erc1155TokenIds[i] == tokenId) {
+                amount += escrowData.erc1155Amounts[i];
+            }
         }
     }
 

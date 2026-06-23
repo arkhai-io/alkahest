@@ -148,6 +148,51 @@ contract TokenBundleSplitterTest is Test {
         return data;
     }
 
+    function _bundleDataWithDuplicateERC20() internal view returns (TokenBundleEscrowObligation.ObligationData memory) {
+        TokenBundleEscrowObligation.ObligationData memory data = _bundleDataWithoutERC721();
+        data.nativeAmount = 0;
+
+        address[] memory erc20Tokens = new address[](2);
+        erc20Tokens[0] = address(token1);
+        erc20Tokens[1] = address(token1);
+        uint256[] memory erc20Amounts = new uint256[](2);
+        erc20Amounts[0] = 60e18;
+        erc20Amounts[1] = 40e18;
+
+        data.erc20Tokens = erc20Tokens;
+        data.erc20Amounts = erc20Amounts;
+        data.erc1155Tokens = new address[](0);
+        data.erc1155TokenIds = new uint256[](0);
+        data.erc1155Amounts = new uint256[](0);
+        return data;
+    }
+
+    function _bundleDataWithDuplicateERC1155()
+        internal
+        view
+        returns (TokenBundleEscrowObligation.ObligationData memory)
+    {
+        TokenBundleEscrowObligation.ObligationData memory data = _bundleDataWithoutERC721();
+        data.nativeAmount = 0;
+
+        data.erc20Tokens = new address[](0);
+        data.erc20Amounts = new uint256[](0);
+        address[] memory erc1155Tokens = new address[](2);
+        erc1155Tokens[0] = address(multiToken);
+        erc1155Tokens[1] = address(multiToken);
+        uint256[] memory erc1155TokenIds = new uint256[](2);
+        erc1155TokenIds[0] = MULTI_ID;
+        erc1155TokenIds[1] = MULTI_ID;
+        uint256[] memory erc1155Amounts = new uint256[](2);
+        erc1155Amounts[0] = 60;
+        erc1155Amounts[1] = 40;
+
+        data.erc1155Tokens = erc1155Tokens;
+        data.erc1155TokenIds = erc1155TokenIds;
+        data.erc1155Amounts = erc1155Amounts;
+        return data;
+    }
+
     function _createEscrow() internal returns (bytes32) {
         vm.prank(buyer);
         return escrowObligation.doObligation{value: NATIVE_AMOUNT}(_bundleData(), uint64(block.timestamp + EXPIRATION));
@@ -158,6 +203,16 @@ contract TokenBundleSplitterTest is Test {
         return escrowObligation.doObligation{value: NATIVE_AMOUNT}(
             _bundleDataWithoutERC721(), uint64(block.timestamp + EXPIRATION)
         );
+    }
+
+    function _createDuplicateERC20Escrow() internal returns (bytes32) {
+        vm.prank(buyer);
+        return escrowObligation.doObligation(_bundleDataWithDuplicateERC20(), uint64(block.timestamp + EXPIRATION));
+    }
+
+    function _createDuplicateERC1155Escrow() internal returns (bytes32) {
+        vm.prank(buyer);
+        return escrowObligation.doObligation(_bundleDataWithDuplicateERC1155(), uint64(block.timestamp + EXPIRATION));
     }
 
     function _createFulfillmentViaSplitter(address _executor, bytes32 escrowUid) internal returns (bytes32) {
@@ -215,6 +270,36 @@ contract TokenBundleSplitterTest is Test {
             nativeAmount: NATIVE_AMOUNT,
             erc20Amounts: erc20Amounts,
             erc721Indices: erc721Indices,
+            erc1155Amounts: erc1155Amounts
+        });
+        return splits;
+    }
+
+    function _oneWayDuplicateERC20Split() internal view returns (TokenBundleSplitterBase.BundleSplit[] memory) {
+        TokenBundleSplitterBase.BundleSplit[] memory splits = new TokenBundleSplitterBase.BundleSplit[](1);
+        uint256[] memory erc20Amounts = new uint256[](2);
+        erc20Amounts[0] = 60e18;
+        erc20Amounts[1] = 40e18;
+        splits[0] = TokenBundleSplitterBase.BundleSplit({
+            recipient: carol,
+            nativeAmount: 0,
+            erc20Amounts: erc20Amounts,
+            erc721Indices: new uint256[](0),
+            erc1155Amounts: new uint256[](0)
+        });
+        return splits;
+    }
+
+    function _oneWayDuplicateERC1155Split() internal view returns (TokenBundleSplitterBase.BundleSplit[] memory) {
+        TokenBundleSplitterBase.BundleSplit[] memory splits = new TokenBundleSplitterBase.BundleSplit[](1);
+        uint256[] memory erc1155Amounts = new uint256[](2);
+        erc1155Amounts[0] = 60;
+        erc1155Amounts[1] = 40;
+        splits[0] = TokenBundleSplitterBase.BundleSplit({
+            recipient: carol,
+            nativeAmount: 0,
+            erc20Amounts: new uint256[](0),
+            erc721Indices: new uint256[](0),
             erc1155Amounts: erc1155Amounts
         });
         return splits;
@@ -289,6 +374,32 @@ contract TokenBundleSplitterTest is Test {
         assertEq(multiToken.balanceOf(alice, MULTI_ID), 60);
         assertEq(multiToken.balanceOf(bob, MULTI_ID), 40);
         assertEq(address(splitter).balance, 0);
+    }
+
+    function testCollectAndDistributeWithDuplicateERC20Entries() public {
+        bytes32 escrowUid = _createDuplicateERC20Escrow();
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(executor, escrowUid);
+        vm.prank(oracle);
+        splitter.arbitrate(fulfillmentUid, escrowUid, _oneWayDuplicateERC20Split());
+
+        vm.prank(alice);
+        splitter.collectAndDistribute(address(escrowObligation), escrowUid, fulfillmentUid);
+
+        assertEq(token1.balanceOf(carol), TOKEN1_AMOUNT);
+        assertEq(token1.balanceOf(address(splitter)), 0);
+    }
+
+    function testCollectAndDistributeWithDuplicateERC1155Entries() public {
+        bytes32 escrowUid = _createDuplicateERC1155Escrow();
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(executor, escrowUid);
+        vm.prank(oracle);
+        splitter.arbitrate(fulfillmentUid, escrowUid, _oneWayDuplicateERC1155Split());
+
+        vm.prank(alice);
+        splitter.collectAndDistribute(address(escrowObligation), escrowUid, fulfillmentUid);
+
+        assertEq(multiToken.balanceOf(carol, MULTI_ID), MULTI_AMOUNT);
+        assertEq(multiToken.balanceOf(address(splitter), MULTI_ID), 0);
     }
 
     function testCollectAndDistributeWithSentinel() public {
