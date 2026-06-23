@@ -128,7 +128,7 @@ Status: fixed.
 Report item: `audit_agent_report_7_148d58b8-8bb1-439b-abbd-daa23352bc6c.pdf`,
 finding 18.
 
-Completed by `PENDING_COMMIT`.
+Completed by `91328e5aaaa83ad0061d6255064ba5d931064bed`.
 
 `CommitRevealObligation` no longer has an owner-controlled global reveal
 deadline. The relative reveal deadline is part of `DemandData`, and commitments
