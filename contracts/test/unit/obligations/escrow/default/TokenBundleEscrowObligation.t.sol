@@ -814,7 +814,7 @@ contract TokenBundleEscrowObligationTest is Test {
         vm.expectEmit(true, false, false, true);
         emit TokenBundleEscrowObligation.NativeTokenTransferFailedOnRelease(address(badRecipient), NATIVE_AMOUNT);
 
-        vm.prank(alice);
+        vm.prank(address(badRecipient));
         bool success = escrow.unsafePartiallyCollectEscrow(escrowId, fulfillmentId);
         assertTrue(success);
 
@@ -869,7 +869,7 @@ contract TokenBundleEscrowObligationTest is Test {
             address(eas), abi.encodeWithSelector(IEAS.getAttestation.selector, escrowId), abi.encode(escrowAttestation)
         );
 
-        vm.prank(bob);
+        vm.prank(alice);
         vm.expectRevert(BaseEscrowObligation.UnauthorizedCall.selector);
         escrow.unsafePartiallyCollectEscrow(escrowId, fulfillmentId);
     }

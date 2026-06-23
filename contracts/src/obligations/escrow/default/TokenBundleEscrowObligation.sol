@@ -400,7 +400,7 @@ contract TokenBundleEscrowObligation is BaseEscrowObligation, BaseArbiter, ERC11
         }
 
         if (!escrow._checkIntrinsic()) revert InvalidEscrowAttestation();
-        if (msg.sender != escrow.recipient) revert UnauthorizedCall();
+        if (msg.sender != fulfillment.recipient) revert UnauthorizedCall();
 
         // Extract arbiter and demand from escrow data
         (address arbiter, bytes memory demand) = decodeCondition(escrow.data);

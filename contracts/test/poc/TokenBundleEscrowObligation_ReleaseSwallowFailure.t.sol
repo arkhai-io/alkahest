@@ -164,8 +164,8 @@ contract TokenBundleEscrowObligation_ReleaseSwallowFailure_POC is Test {
             StringObligation.ObligationData({item: "fulfillment", schema: bytes32(0)}), escrowUid
         );
 
-        // unsafePartiallyCollectEscrow allows partial collection only when the escrow recipient opts in.
-        vm.startPrank(alice);
+        // unsafePartiallyCollectEscrow allows partial collection only when the fulfillment recipient opts in.
+        vm.startPrank(address(badRecipient));
 
         // Expect events for failed transfers
         vm.expectEmit(true, false, false, true);
