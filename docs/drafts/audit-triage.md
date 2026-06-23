@@ -75,7 +75,7 @@ Status: fixed.
 Report item: `audit_agent_report_7_148d58b8-8bb1-439b-abbd-daa23352bc6c.pdf`,
 finding 13.
 
-Completed by `PENDING_COMMIT`.
+Completed by `7f2f42477b929ba669ffebec1b5181b0fb946437`.
 
 `AtomicPaymentUtils` now treats duplicate ERC20 entries in bundle payments as
 valid position-based transfers while aggregating permit and approval allowances
