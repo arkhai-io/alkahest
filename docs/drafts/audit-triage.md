@@ -373,6 +373,26 @@ policy. Escrow provenance can be encoded and checked by the integration when it
 is required, but the hook contract should not constrain all schemas or
 attestation contents to enforce that policy globally.
 
+### audit_agent_report_7: ERC1155 Transfer Semantics
+
+Status: intended token-defined semantics.
+
+Report item: `audit_agent_report_7_148d58b8-8bb1-439b-abbd-daa23352bc6c.pdf`,
+findings 15 and 16.
+
+Escrow ERC1155 lock paths already verify that the escrow or hook receives the
+amount it later promises to release. Release, return, and splitter distribution
+paths intentionally do not enforce recipient balance deltas: once a valid claim
+or reclaim happens, the contract should attempt delivery and should not keep
+assets locked forever because a token has non-standard outbound semantics.
+
+Payment obligation attestations are likewise not normalized claims that a
+payee's ERC1155 balance increased by exactly `amount`. They attest that the
+payment obligation contract executed the encoded token transfer action
+atomically with attestation creation, and the token address is part of that
+attested fact. Consumers that require stricter ERC1155 balance semantics should
+restrict accepted token contracts or compose additional policy.
+
 ### analysis(1): Example Contracts
 
 Status: out of production security scope.

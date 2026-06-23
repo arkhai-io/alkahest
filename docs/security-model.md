@@ -24,8 +24,12 @@ An obligation-style attestation is trustworthy for a fact only when the
 contract's implementation atomically performs or verifies that fact before
 creating the attestation, and there is no alternate path for producing an
 equivalent attestation. For example, a payment obligation attestation is a proof
-of payment because the payment transfer and attestation creation happen in the
-same transaction under that contract's control.
+that the payment obligation contract executed the encoded token transfer call
+atomically with attestation creation. The token address and call parameters are
+part of the attested fact. Consumers should not reinterpret that fact as
+normalized cross-token semantics such as "the payee's balance increased by
+exactly this amount" unless the relevant obligation contract explicitly enforces
+that property for that token class.
 
 By contrast, hooks, attestation escrows, reference attestations, and other
 contracts that mint user-specified attestation data do not give that data
@@ -131,11 +135,12 @@ contract, then use the splitter's oracle decision to distribute the collected
 escrow assets. The splitter being the attestation recipient is distinct from the
 splitter being a payment payee.
 
-Payment obligations attest that an on-chain payment happened atomically with
-attestation creation. The attester is the payment obligation contract. The EAS
-recipient is the party that should hold the proof of payment, which is normally
-the payer but may be another contract in an atomic helper flow. The `payee`
-encoded in the obligation data is the address that receives the actual payment.
+Payment obligations attest that the payment obligation contract executed the
+encoded payment action atomically with attestation creation. The attester is the
+payment obligation contract. The EAS recipient is the party that should hold the
+proof of payment, which is normally the payer but may be another contract in an
+atomic helper flow. The `payee` encoded in the obligation data is the target of
+the payment action.
 
 When a splitter helper creates a payment fulfillment, the EAS recipient may be
 the splitter so the splitter can later collect and distribute escrow assets. The
