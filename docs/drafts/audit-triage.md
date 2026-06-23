@@ -29,7 +29,7 @@ Status: fixed.
 Report item: `audit_agent_report_7_148d58b8-8bb1-439b-abbd-daa23352bc6c.pdf`,
 finding 7.
 
-Completed by `<pending commit>`.
+Completed by `2a570e16c3dc7cab990d87c47fd2cca5e01ede8d`.
 
 `ExpirationTimeAfterArbiter` and `ExpirationTimeBeforeArbiter` now treat
 `expirationTime == 0` as the EAS non-expiring sentinel rather than as numeric
