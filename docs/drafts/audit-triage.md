@@ -22,6 +22,22 @@ pending reveal and consuming the commitment, including the splitter-specific
 case where an attacker could previously create a splitter-addressed fulfillment
 without going through splitter fulfillment recording.
 
+### audit_agent_report_7: EAS Expiration Sentinel In Comparison Arbiters
+
+Status: fixed.
+
+Report item: `audit_agent_report_7_148d58b8-8bb1-439b-abbd-daa23352bc6c.pdf`,
+finding 7.
+
+Completed by `<pending commit>`.
+
+`ExpirationTimeAfterArbiter` and `ExpirationTimeBeforeArbiter` now treat
+`expirationTime == 0` as the EAS non-expiring sentinel rather than as numeric
+zero. Non-expiring attestations satisfy "after any finite threshold" checks and
+fail "before a finite threshold" checks. `ExpirationTimeEqualArbiter` remains
+unchanged because exact equality to zero has fixed EAS semantics: requiring a
+non-expiring attestation.
+
 ### analysis(1): Splitter Public Execute Reentrancy
 
 Status: fixed.

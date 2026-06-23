@@ -30,7 +30,7 @@ contract ExpirationTimeAfterArbiter is BaseArbiter {
         returns (bool)
     {
         DemandData memory demand_ = abi.decode(demand, (DemandData));
-        if (fulfillment.expirationTime < demand_.expirationTime) {
+        if (fulfillment.expirationTime != 0 && fulfillment.expirationTime < demand_.expirationTime) {
             revert ExpirationTimeNotAfter();
         }
 

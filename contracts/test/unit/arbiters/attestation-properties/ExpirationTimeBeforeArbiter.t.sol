@@ -66,6 +66,28 @@ contract ExpirationTimeBeforeArbiterTest is Test {
         arbiter.check(attestation, demand, bytes32(0));
     }
 
+    function testCheckObligationRejectsNonExpiringAttestation() public {
+        Attestation memory attestation = Attestation({
+            uid: bytes32(0),
+            schema: bytes32(0),
+            time: uint64(block.timestamp),
+            expirationTime: uint64(0),
+            revocationTime: uint64(0),
+            refUID: bytes32(0),
+            recipient: address(0),
+            attester: address(0),
+            revocable: true,
+            data: bytes("")
+        });
+
+        ExpirationTimeBeforeArbiter.DemandData memory demandData =
+            ExpirationTimeBeforeArbiter.DemandData({expirationTime: expirationTimeThreshold});
+        bytes memory demand = abi.encode(demandData);
+
+        vm.expectRevert(ExpirationTimeBeforeArbiter.ExpirationTimeNotBefore.selector);
+        arbiter.check(attestation, demand, bytes32(0));
+    }
+
     function testDecodeDemandData() public {
         ExpirationTimeBeforeArbiter.DemandData memory expectedDemandData =
             ExpirationTimeBeforeArbiter.DemandData({expirationTime: expirationTimeThreshold});
