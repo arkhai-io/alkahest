@@ -97,6 +97,30 @@ permit has established sufficient allowance for the utility contract. This
 prevents a copied permit transaction from griefing the atomic payment flow while
 still reverting if the required allowance is not present.
 
+### audit_agent_report_7: Token Bundle Unsafe Partial Collection Authorization
+
+Status: fixed for authorization; superset matching remains intended behavior.
+
+Report item: `audit_agent_report_7_148d58b8-8bb1-439b-abbd-daa23352bc6c.pdf`,
+finding 17.
+
+Completed by:
+
+- `0d5a750fdd2c41a682e9f7a3ced6f1b5bc9e3283`
+- `117f069cff180dd5e3885b80b4a596e1862a6eaa`
+
+Unsafe partial token-bundle collection can no longer be triggered
+permissionlessly by third parties or blocked by checking the escrow creator
+instead of the fulfillment recipient. The fulfiller whose fulfillment satisfies
+the escrow is the party authorized to use the destructive partial collection
+escape hatch.
+
+The remaining premise that bundle escrow arbiters can accept fulfillments with
+additional bundle items is intentional. Escrow demands define the required
+prefix/minimum consideration; extra fulfillment data can represent additional
+assets, policy metadata, or composition with broader flows. Applications that
+need exact bundle equality should encode that as stricter arbiter policy.
+
 ### analysis(1): Splitter Public Execute Reentrancy
 
 Status: fixed.
