@@ -53,6 +53,21 @@ observed balance delta against the summed expected amount for matching bundle
 entries. Duplicate bundle entries remain valid and position-based distribution
 semantics are preserved.
 
+### audit_agent_report_7: Zero-Native Token Bundle Stray ETH
+
+Status: fixed.
+
+Report item: `audit_agent_report_7_148d58b8-8bb1-439b-abbd-daa23352bc6c.pdf`,
+findings 10 and 11.
+
+Completed by `<pending commit>`.
+
+Default and unconditional token-bundle escrow obligations now enforce
+`msg.value == nativeAmount` for every bundle, including token-only bundles with
+`nativeAmount == 0`. This prevents accidental native token value from being
+accepted without being represented in the escrow attestation and later
+released or reclaimed.
+
 ### analysis(1): Splitter Public Execute Reentrancy
 
 Status: fixed.

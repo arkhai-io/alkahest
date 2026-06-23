@@ -105,11 +105,8 @@ contract UnconditionalTokenBundleEscrowObligation is BaseEscrowObligationUncondi
         ObligationData memory decoded = abi.decode(data, (ObligationData));
         validateArrayLengths(decoded);
 
-        // Handle native tokens
-        if (decoded.nativeAmount > 0) {
-            if (msg.value != decoded.nativeAmount) {
-                revert IncorrectPayment(decoded.nativeAmount, msg.value);
-            }
+        if (msg.value != decoded.nativeAmount) {
+            revert IncorrectPayment(decoded.nativeAmount, msg.value);
         }
 
         // Handle token bundle

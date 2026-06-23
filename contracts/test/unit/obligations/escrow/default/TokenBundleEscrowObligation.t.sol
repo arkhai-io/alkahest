@@ -269,6 +269,19 @@ contract TokenBundleEscrowObligationTest is Test {
         vm.stopPrank();
     }
 
+    function testTokenOnlyBundleRejectsUnexpectedNativeTokenPayment() public {
+        TokenBundleEscrowObligation.ObligationData memory data = createSubsetERC20Demand();
+        data.nativeAmount = 0;
+
+        vm.startPrank(alice);
+
+        vm.expectRevert(abi.encodeWithSelector(TokenBundleEscrowObligation.IncorrectPayment.selector, 0, 0.5 ether));
+
+        escrow.doObligation{value: 0.5 ether}(data, uint64(block.timestamp + EXPIRATION_TIME));
+
+        vm.stopPrank();
+    }
+
     function testArrayLengthMismatchReverts() public {
         // ERC20 mismatch
         TokenBundleEscrowObligation.ObligationData memory data1;
