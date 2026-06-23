@@ -13,7 +13,7 @@ Status: fixed.
 Report item: `audit_agent_report_7_148d58b8-8bb1-439b-abbd-daa23352bc6c.pdf`,
 finding 6.
 
-Completed by `9bf25ff4014c59b2aed179f4dcd024ee3e4b4a8f`.
+Completed by `20e8b29a87f645bf34562e50c54cca1c779a9004`.
 
 `CommitRevealObligation` and the example `GlobalBondCommitRevealObligation`
 now require the stored committer, reveal caller, and fulfillment attestation
