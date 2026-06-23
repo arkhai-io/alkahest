@@ -83,6 +83,20 @@ once per unique ERC20 token in first-occurrence order. This preserves
 per-transfer payment semantics and avoids final duplicate entries overwriting
 the allowance required for the full bundle amount.
 
+### audit_agent_report_7: ERC20 Permit Front-Run DoS In Atomic Payments
+
+Status: fixed.
+
+Report item: `audit_agent_report_7_148d58b8-8bb1-439b-abbd-daa23352bc6c.pdf`,
+finding 14.
+
+Completed by `PENDING_COMMIT`.
+
+`AtomicPaymentUtils` now tolerates an already-consumed ERC20 permit when the
+permit has established sufficient allowance for the utility contract. This
+prevents a copied permit transaction from griefing the atomic payment flow while
+still reverting if the required allowance is not present.
+
 ### analysis(1): Splitter Public Execute Reentrancy
 
 Status: fixed.

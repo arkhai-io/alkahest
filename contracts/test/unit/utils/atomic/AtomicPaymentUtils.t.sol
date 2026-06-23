@@ -39,6 +39,12 @@ contract AtomicPaymentUtilsHarness is AtomicPaymentUtils {
         _permitBundle(data, permits);
     }
 
+    function permitErc20ForTest(address token, uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s)
+        external
+    {
+        _permitErc20(token, amount, deadline, v, r, s);
+    }
+
     function approvePaymentBundleTokensForTest(TokenBundlePaymentObligation.ObligationData memory data, address spender)
         external
     {
@@ -88,6 +94,34 @@ contract AtomicPaymentUtilsTest is Test {
         utils.permitBundleForTest(data, permits);
 
         assertEq(token.allowance(owner, address(utils)), FIRST_AMOUNT + SECOND_AMOUNT);
+    }
+
+    function testPermitErc20SucceedsIfPermitWasFrontrun() public {
+        uint256 amount = FIRST_AMOUNT;
+        uint256 deadline = block.timestamp + 1 days;
+        AtomicPaymentUtils.ERC20PermitSignature memory permit = _signPermit(address(utils), amount, deadline);
+
+        token.permit(owner, address(utils), amount, deadline, permit.v, permit.r, permit.s);
+
+        vm.prank(owner);
+        utils.permitErc20ForTest(address(token), amount, deadline, permit.v, permit.r, permit.s);
+
+        assertEq(token.allowance(owner, address(utils)), amount);
+    }
+
+    function testPermitBundleSucceedsIfPermitWasFrontrun() public {
+        TokenBundlePaymentObligation.ObligationData memory data = _duplicateERC20Bundle();
+        uint256 amount = FIRST_AMOUNT + SECOND_AMOUNT;
+        uint256 deadline = block.timestamp + 1 days;
+        AtomicPaymentUtils.ERC20PermitSignature[] memory permits = new AtomicPaymentUtils.ERC20PermitSignature[](1);
+        permits[0] = _signPermit(address(utils), amount, deadline);
+
+        token.permit(owner, address(utils), amount, deadline, permits[0].v, permits[0].r, permits[0].s);
+
+        vm.prank(owner);
+        utils.permitBundleForTest(data, permits);
+
+        assertEq(token.allowance(owner, address(utils)), amount);
     }
 
     function testApprovePaymentBundleTokensAggregatesDuplicateERC20Amounts() public {

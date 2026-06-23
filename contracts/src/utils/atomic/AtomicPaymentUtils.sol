@@ -232,10 +232,18 @@ contract AtomicPaymentUtils is IERC1155Receiver {
     function _permitErc20(address token, uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s) internal {
         try IERC20Permit(token).permit(msg.sender, address(this), amount, deadline, v, r, s) {}
         catch Error(string memory reason) {
+            if (_hasSufficientPermitAllowance(token, amount)) return;
             revert PermitFailed(token, reason);
         } catch {
+            if (_hasSufficientPermitAllowance(token, amount)) return;
             revert PermitFailed(token, "Unknown error");
         }
+    }
+
+    /// @notice Allows already-consumed permits to proceed when they established the required allowance.
+    function _hasSufficientPermitAllowance(address token, uint256 amount) internal view returns (bool) {
+        uint256 allowance = IERC20(token).allowance(msg.sender, address(this));
+        return allowance >= amount;
     }
 
     /// @notice Executes ERC20 permits for each unique ERC20 token in a bundle demand.
