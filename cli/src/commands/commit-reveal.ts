@@ -12,7 +12,8 @@ export function makeCommitRevealCommand() {
   const commit = new Command("commit")
     .description("Submit a commitment hash (requires bond)")
     .requiredOption("--commitment <hex>", "Commitment hash (bytes32)")
-    .requiredOption("--bond-amount <wei>", "Bond amount in wei");
+    .requiredOption("--bond-amount <wei>", "Bond amount in wei")
+    .requiredOption("--commit-deadline <seconds>", "Relative reveal deadline in seconds after commit");
 
   commit.action(async (opts, cmd) => {
     const globalOpts = cmd.parent.parent.opts();
@@ -22,7 +23,11 @@ export function makeCommitRevealCommand() {
       const chain = resolveChain(globalOpts.chain || "base-sepolia");
       const client = createAlkahestClient(account, chain, globalOpts.rpcUrl, loadAddresses(globalOpts.addressesFile));
 
-      const result = await client.commitReveal.commit(opts.commitment as `0x${string}`, BigInt(opts.bondAmount));
+      const result = await client.commitReveal.commit(
+        opts.commitment as `0x${string}`,
+        BigInt(opts.bondAmount),
+        BigInt(opts.commitDeadline),
+      );
       outputSuccess({ hash: result.hash }, human);
     } catch (e: any) {
       outputError("COMMIT_FAILED", e.message, human);
@@ -122,8 +127,7 @@ export function makeCommitRevealCommand() {
     }
   });
 
-  const info = new Command("info")
-    .description("Show commit-reveal contract info (deadline and slashed bond recipient)");
+  const info = new Command("info").description("Show commit-reveal contract info");
 
   info.action(async (_opts, cmd) => {
     const globalOpts = cmd.parent.parent.opts();
@@ -133,12 +137,9 @@ export function makeCommitRevealCommand() {
       const chain = resolveChain(globalOpts.chain || "base-sepolia");
       const client = createAlkahestClient(account, chain, globalOpts.rpcUrl, loadAddresses(globalOpts.addressesFile));
 
-      const [commitDeadline, slashedBondRecipient] = await Promise.all([
-        client.commitReveal.getCommitDeadline(),
-        client.commitReveal.getSlashedBondRecipient(),
-      ]);
+      const slashedBondRecipient = await client.commitReveal.getSlashedBondRecipient();
 
-      outputSuccess({ commitDeadline, slashedBondRecipient }, human);
+      outputSuccess({ slashedBondRecipient }, human);
     } catch (e: any) {
       outputError("COMMIT_REVEAL_INFO_FAILED", e.message, human);
       process.exit(1);

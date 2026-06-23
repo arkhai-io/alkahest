@@ -33,6 +33,8 @@ export type CommitRevealObligationData = {
 export type CommitRevealDemandData = {
   /** Exact native-token bond amount the prior commit must have locked. */
   bondAmount: bigint;
+  /** Relative reveal deadline, in seconds after the commit timestamp. */
+  commitDeadline: bigint;
 };
 
 /** Contract addresses needed by the commit-reveal client. */
@@ -89,7 +91,7 @@ export const makeCommitRevealObligationClient = (viemClient: ViemClient, address
     /** Decodes obligation attestation bytes into reveal data. */
     decode,
 
-    /** Encodes arbiter demand data requiring an exact committed bond amount. */
+    /** Encodes arbiter demand data requiring an exact committed bond amount and reveal deadline. */
     encodeDemand: (data: CommitRevealDemandData) => {
       return encodeAbiParameters([commitRevealDemandType], [data]);
     },
@@ -169,13 +171,13 @@ export const makeCommitRevealObligationClient = (viemClient: ViemClient, address
       return { hash, result };
     },
 
-    /** Submits a commitment hash and locks `bondAmount` as the commitment bond. */
-    commit: async (commitment: `0x${string}`, bondAmount: bigint) => {
+    /** Submits a commitment hash, locks `bondAmount`, and records the demand reveal deadline. */
+    commit: async (commitment: `0x${string}`, bondAmount: bigint, commitDeadline: bigint) => {
       const { request } = await viemClient.simulateContract({
         address: contractAddress,
         abi,
         functionName: "commit",
-        args: [commitment],
+        args: [commitment, commitDeadline],
         value: bondAmount,
       });
 
@@ -209,14 +211,6 @@ export const makeCommitRevealObligationClient = (viemClient: ViemClient, address
       const hash = await viemClient.writeContract(request);
       return { hash };
     },
-
-    /** Reads the reveal deadline, in seconds after a commit timestamp. */
-    getCommitDeadline: async () =>
-      await viemClient.readContract({
-        address: contractAddress,
-        abi,
-        functionName: "commitDeadline",
-      }),
 
     /** Reads the configured recipient of slashed commitment bonds. */
     getSlashedBondRecipient: async () =>

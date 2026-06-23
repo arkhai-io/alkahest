@@ -230,11 +230,12 @@ impl CommitRevealObligationModule {
         Ok(receipt)
     }
 
-    /// Submits a commitment and locks `bond_amount` as native-token bond.
+    /// Submits a commitment, locks `bond_amount`, and records the demand reveal deadline.
     pub async fn commit(
         &self,
         commitment: FixedBytes<32>,
         bond_amount: U256,
+        commit_deadline: U256,
     ) -> eyre::Result<TransactionReceipt> {
         let contract = contracts::obligations::CommitRevealObligation::new(
             self.addresses.obligation,
@@ -242,7 +243,7 @@ impl CommitRevealObligationModule {
         );
 
         let receipt = contract
-            .commit(commitment)
+            .commit(commitment, commit_deadline)
             .value(bond_amount)
             .send()
             .await?
@@ -289,17 +290,6 @@ impl CommitRevealObligationModule {
         Ok(receipt)
     }
 
-    /// Reads the reveal deadline, in seconds after the commit timestamp.
-    pub async fn commit_deadline(&self) -> eyre::Result<U256> {
-        let contract = contracts::obligations::CommitRevealObligation::new(
-            self.addresses.obligation,
-            &*self.wallet_provider,
-        );
-
-        let result = contract.commitDeadline().call().await?;
-        Ok(result)
-    }
-
     /// Reads the configured recipient of slashed commitment bonds.
     pub async fn slashed_bond_recipient(&self) -> eyre::Result<Address> {
         let contract = contracts::obligations::CommitRevealObligation::new(
@@ -315,7 +305,7 @@ impl CommitRevealObligationModule {
     pub async fn get_commitment(
         &self,
         commitment: FixedBytes<32>,
-    ) -> eyre::Result<(u64, u64, Address, U256)> {
+    ) -> eyre::Result<(u64, u64, Address, U256, U256)> {
         let contract = contracts::obligations::CommitRevealObligation::new(
             self.addresses.obligation,
             &*self.wallet_provider,
@@ -327,6 +317,7 @@ impl CommitRevealObligationModule {
             result.commitTimestamp,
             result.committer,
             result.bondAmount,
+            result.commitDeadline,
         ))
     }
 
@@ -425,12 +416,14 @@ mod tests {
     fn test_encode_decode_demand_roundtrip() {
         let data = contracts::obligations::CommitRevealObligation::DemandData {
             bondAmount: U256::from(10_000_000_000_000_000u64),
+            commitDeadline: U256::from(3600u64),
         };
 
         let encoded = CommitRevealObligationModule::encode_demand(&data);
         let decoded = CommitRevealObligationModule::decode_demand(&encoded).unwrap();
 
         assert_eq!(decoded.bondAmount, data.bondAmount);
+        assert_eq!(decoded.commitDeadline, data.commitDeadline);
     }
 
     #[test]

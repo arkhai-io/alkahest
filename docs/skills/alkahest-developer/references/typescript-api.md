@@ -178,14 +178,12 @@ client
     ├── encode({ payload, salt, schema })
     ├── decode(bytes)                      // => { payload, salt, schema }
     ├── doObligation(data, refUID?)
-    ├── commit(commitment)                 // sends bond as ETH
+    ├── commit(commitment, bondAmount, commitDeadline)
     ├── computeCommitment(refUID, claimer, data)
     ├── reclaimBond(fulfillmentUid)
     ├── slashBond(commitment)
-    ├── getBondAmount()
-    ├── getCommitDeadline()
     ├── getSlashedBondRecipient()
-    ├── getCommitment(commitment)          // => { claimer, amount, claimed }
+    ├── getCommitment(commitment)
     ├── isCommitmentClaimed(commitment)
     ├── getSchema()
     └── getObligation(uid)

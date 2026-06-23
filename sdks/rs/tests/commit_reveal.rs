@@ -24,8 +24,10 @@ async fn test_commit_reveal_full_lifecycle() -> eyre::Result<()> {
     let expiration = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() + 3600;
 
     let bond_amount = U256::from(10_000_000_000_000_000u64); // 0.01 ETH
+    let commit_deadline = U256::from(3600u64);
     let demand = CommitRevealObligation::DemandData {
         bondAmount: bond_amount,
+        commitDeadline: commit_deadline,
     };
 
     let arbiter = test.addresses.commit_reveal_obligation_addresses.obligation;
@@ -71,12 +73,12 @@ async fn test_commit_reveal_full_lifecycle() -> eyre::Result<()> {
     let commit_receipt = test
         .bob_client
         .commit_reveal()
-        .commit(commitment, bond_amount)
+        .commit(commitment, bond_amount, commit_deadline)
         .await?;
     assert!(commit_receipt.status());
 
     // Verify commitment is stored
-    let (commit_block, _commit_ts, committer, committed_bond_amount) = test
+    let (commit_block, _commit_ts, committer, committed_bond_amount, committed_deadline) = test
         .bob_client
         .commit_reveal()
         .get_commitment(commitment)
@@ -84,6 +86,7 @@ async fn test_commit_reveal_full_lifecycle() -> eyre::Result<()> {
     assert!(commit_block > 0);
     assert_eq!(committer, test.bob.address());
     assert_eq!(committed_bond_amount, bond_amount);
+    assert_eq!(committed_deadline, commit_deadline);
 
     // ── 3. Bob reveals (creates fulfillment attestation referencing escrow) ──
     // In Anvil automining mode, the next tx is in a new block, satisfying the
@@ -126,8 +129,10 @@ async fn test_commit_reveal_bond_slash() -> eyre::Result<()> {
     let escrow_amount = U256::from(2_000_000_000_000_000_000u128); // 2 ETH
     let expiration = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() + 7200;
     let bond_amount = U256::from(10_000_000_000_000_000u64); // 0.01 ETH
+    let commit_deadline = U256::from(3600u64);
     let demand = CommitRevealObligation::DemandData {
         bondAmount: bond_amount,
+        commitDeadline: commit_deadline,
     };
 
     let arbiter = test.addresses.commit_reveal_obligation_addresses.obligation;
@@ -173,13 +178,12 @@ async fn test_commit_reveal_bond_slash() -> eyre::Result<()> {
     let commit_receipt = test
         .bob_client
         .commit_reveal()
-        .commit(commitment, bond_amount)
+        .commit(commitment, bond_amount, commit_deadline)
         .await?;
     assert!(commit_receipt.status());
 
     // ── 3. Advance time past the commit deadline without revealing ──
-    let deadline = test.bob_client.commit_reveal().commit_deadline().await?;
-    let deadline_secs: u64 = deadline.try_into()?;
+    let deadline_secs: u64 = commit_deadline.try_into()?;
     test.god_provider
         .anvil_increase_time(deadline_secs + 1)
         .await?;

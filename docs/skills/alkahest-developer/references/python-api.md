@@ -105,14 +105,12 @@ client
 │
 ├── commit_reveal
 │   ├── do_obligation(payload, salt, schema, ref_uid?) -> str (uid)
-│   ├── commit(commitment) -> str (tx_hash)
+│   ├── commit(commitment, bond_amount, commit_deadline) -> str (tx_hash)
 │   ├── compute_commitment(ref_uid, claimer, payload, salt, schema) -> str
 │   ├── reclaim_bond(obligation_uid) -> str (tx_hash)
 │   ├── slash_bond(commitment) -> str (tx_hash)
-│   ├── bond_amount() -> str (U256 as string)
-│   ├── commit_deadline() -> str
 │   ├── slashed_bond_recipient() -> str (address)
-│   ├── get_commitment(commitment) -> tuple(u64, u64, str)
+│   ├── get_commitment(commitment) -> tuple(u64, u64, str, str, str)
 │   ├── is_commitment_claimed(commitment) -> bool
 │   └── get_obligation(uid) -> PyDecodedAttestation[PyCommitRevealObligationData]
 │

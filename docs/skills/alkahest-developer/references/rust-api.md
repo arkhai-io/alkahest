@@ -110,7 +110,7 @@ client
 │
 ├── commit_reveal()
 │   ├── do_obligation(&data, ref_uid) -> Receipt
-│   ├── commit(commitment) -> Receipt          // sends bond as ETH
+│   ├── commit(commitment, bond_amount, commit_deadline) -> Receipt
 │   ├── compute_commitment(ref_uid, claimer, &data) -> FixedBytes<32>
 │   ├── reveal(ref_uid, claimer, &data) -> Receipt
 │   ├── claim(ref_uid, claimer_data) -> Receipt

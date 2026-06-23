@@ -79,18 +79,23 @@ impl CommitRevealObligationClient {
         })
     }
 
-    /// Submit a commitment hash and lock `bond_amount` as native-token bond.
+    /// Submit a commitment hash, lock `bond_amount`, and record the demand reveal deadline.
     pub fn commit<'py>(
         &self,
         py: pyo3::Python<'py>,
         commitment: String,
         bond_amount: u128,
+        commit_deadline: u128,
     ) -> PyResult<pyo3::Bound<'py, pyo3::PyAny>> {
         let inner = self.inner.clone();
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let commitment: FixedBytes<32> = commitment.parse().map_err(map_parse_to_pyerr)?;
             let receipt = inner
-                .commit(commitment, U256::from(bond_amount))
+                .commit(
+                    commitment,
+                    U256::from(bond_amount),
+                    U256::from(commit_deadline),
+                )
                 .await
                 .map_err(map_eyre_to_pyerr)?;
             Ok(format!(
@@ -152,18 +157,6 @@ impl CommitRevealObligationClient {
         })
     }
 
-    /// Read the reveal deadline, in seconds after the commit timestamp.
-    pub fn commit_deadline<'py>(
-        &self,
-        py: pyo3::Python<'py>,
-    ) -> PyResult<pyo3::Bound<'py, pyo3::PyAny>> {
-        let inner = self.inner.clone();
-        pyo3_async_runtimes::tokio::future_into_py(py, async move {
-            let result = inner.commit_deadline().await.map_err(map_eyre_to_pyerr)?;
-            Ok(result.to_string())
-        })
-    }
-
     /// Read the configured recipient of slashed commitment bonds.
     pub fn slashed_bond_recipient<'py>(
         &self,
@@ -188,7 +181,7 @@ impl CommitRevealObligationClient {
         let inner = self.inner.clone();
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let commitment: FixedBytes<32> = commitment.parse().map_err(map_parse_to_pyerr)?;
-            let (commit_block, commit_timestamp, committer, bond_amount) = inner
+            let (commit_block, commit_timestamp, committer, bond_amount, commit_deadline) = inner
                 .get_commitment(commitment)
                 .await
                 .map_err(map_eyre_to_pyerr)?;
@@ -197,6 +190,7 @@ impl CommitRevealObligationClient {
                 commit_timestamp,
                 format!("{:?}", committer),
                 bond_amount.to_string(),
+                commit_deadline.to_string(),
             ))
         })
     }
@@ -309,20 +303,26 @@ pub struct PyCommitRevealDemandData {
     /// Exact native-token bond amount required, encoded as a base-10 string.
     #[pyo3(get)]
     pub bond_amount: String,
+    /// Relative reveal deadline in seconds after commit, encoded as a base-10 string.
+    #[pyo3(get)]
+    pub commit_deadline: String,
 }
 
 #[pymethods]
 impl PyCommitRevealDemandData {
     #[new]
     /// Create commit-reveal demand data.
-    pub fn new(bond_amount: String) -> Self {
-        Self { bond_amount }
+    pub fn new(bond_amount: String, commit_deadline: String) -> Self {
+        Self {
+            bond_amount,
+            commit_deadline,
+        }
     }
 
     fn __repr__(&self) -> String {
         format!(
-            "PyCommitRevealDemandData(bond_amount='{}')",
-            self.bond_amount
+            "PyCommitRevealDemandData(bond_amount='{}', commit_deadline='{}')",
+            self.bond_amount, self.commit_deadline
         )
     }
 
@@ -333,6 +333,8 @@ impl PyCommitRevealDemandData {
 
         let demand_data = alkahest_rs::contracts::obligations::CommitRevealObligation::DemandData {
             bondAmount: U256::from_str_radix(&demand.bond_amount, 10)
+                .map_err(map_parse_to_pyerr)?,
+            commitDeadline: U256::from_str_radix(&demand.commit_deadline, 10)
                 .map_err(map_parse_to_pyerr)?,
         };
 
@@ -361,6 +363,7 @@ impl From<alkahest_rs::contracts::obligations::CommitRevealObligation::DemandDat
     fn from(data: alkahest_rs::contracts::obligations::CommitRevealObligation::DemandData) -> Self {
         Self {
             bond_amount: data.bondAmount.to_string(),
+            commit_deadline: data.commitDeadline.to_string(),
         }
     }
 }

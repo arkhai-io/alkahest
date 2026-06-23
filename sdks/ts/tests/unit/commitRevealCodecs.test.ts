@@ -104,11 +104,13 @@ describe("CommitRevealObligation Codec", () => {
   test("should encode and decode CommitReveal demand data", () => {
     const data: CommitRevealDemandData = {
       bondAmount: 10_000_000_000_000_000n,
+      commitDeadline: 3600n,
     };
 
     const encoded = encodeDemand(data);
     const decoded = decodeDemand(encoded);
 
     expect(decoded.bondAmount).toBe(data.bondAmount);
+    expect(decoded.commitDeadline).toBe(data.commitDeadline);
   });
 });

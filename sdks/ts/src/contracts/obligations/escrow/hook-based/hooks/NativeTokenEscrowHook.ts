@@ -2,6 +2,43 @@ export const abi = {
   "abi": [
     {
       "type": "function",
+      "name": "approveEscrow",
+      "inputs": [
+        {
+          "name": "escrow",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "approvedEscrows",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
       "name": "decodeHookData",
       "inputs": [
         {
@@ -70,6 +107,30 @@ export const abi = {
         }
       ],
       "stateMutability": "pure"
+    },
+    {
+      "type": "function",
+      "name": "isEscrowApproved",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "escrow",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
     },
     {
       "type": "function",
@@ -151,12 +212,12 @@ export const abi = {
           "internalType": "bytes"
         },
         {
-          "name": "",
+          "name": "from",
           "type": "address",
           "internalType": "address"
         },
         {
-          "name": "",
+          "name": "escrow",
           "type": "address",
           "internalType": "address"
         }
@@ -179,7 +240,7 @@ export const abi = {
           "internalType": "address"
         },
         {
-          "name": "",
+          "name": "escrow",
           "type": "tuple",
           "internalType": "struct Attestation",
           "components": [
@@ -259,7 +320,7 @@ export const abi = {
           "internalType": "address"
         },
         {
-          "name": "",
+          "name": "escrow",
           "type": "tuple",
           "internalType": "struct Attestation",
           "components": [
@@ -318,6 +379,60 @@ export const abi = {
       ],
       "outputs": [],
       "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "unapproveEscrow",
+      "inputs": [
+        {
+          "name": "escrow",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "event",
+      "name": "EscrowApproval",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "escrow",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "approved",
+          "type": "bool",
+          "indexed": false,
+          "internalType": "bool"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "error",
+      "name": "EscrowCallerMismatch",
+      "inputs": [
+        {
+          "name": "caller",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "escrow",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
     },
     {
       "type": "error",
@@ -385,30 +500,50 @@ export const abi = {
     },
     {
       "type": "error",
+      "name": "UnauthorizedEscrowCaller",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "caller",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
       "name": "UnexpectedNativeValue",
       "inputs": []
     }
   ],
   "bytecode": {
-    "object": "0x608080604052346015576104b1908161001a8239f35b5f80fdfe60806040526004361015610011575f80fd5b5f3560e01c80630fa37a1f146102a95780631dc8160b14610211578063561ca525146101aa578063a533219c14610151578063be1e753b146100fa578063f73085df146100a55763fc7e286d14610066575f80fd5b346100a15760203660031901126100a1576004356001600160a01b038116908190036100a1575f525f602052602060405f2054604051908152f35b5f80fd5b346100a15760203660031901126100a15760043567ffffffffffffffff81116100a1576100f16100db60209236906004016102d6565b5f6040516100e881610330565b52810190610382565b60405190518152f35b346100a15760403660031901126100a15760043567ffffffffffffffff81116100a15761012b9036906004016102d6565b505060243567ffffffffffffffff81116100a1576101409060031990360301126100a157005b346100a15760203660031901126100a1576040516040602082019160043583526020815261017f8282610360565b8151928391602083525180918160208501528484015e5f828201840152601f01601f19168101030190f35b346100a15760603660031901126100a15760043567ffffffffffffffff81116100a1576101db9036906004016102d6565b6101e3610304565b9060443567ffffffffffffffff81116100a1576101409060031990360301126100a15761020f926103a0565b005b60603660031901126100a15760043567ffffffffffffffff81116100a15761024061025a9136906004016102d6565b610248610304565b5061025161031a565b50810190610382565b8051803403610293575051335f525f60205260405f20805491820180921161027f5755005b634e487b7160e01b5f52601160045260245ffd5b630d35e92160e01b5f526004523460245260445ffd5b346100a15760803660031901126100a15760043567ffffffffffffffff81116100a1576101db9036906004015b9181601f840112156100a15782359167ffffffffffffffff83116100a157602083818601950101116100a157565b602435906001600160a01b03821682036100a157565b604435906001600160a01b03821682036100a157565b6020810190811067ffffffffffffffff82111761034c57604052565b634e487b7160e01b5f52604160045260245ffd5b90601f8019910116810190811067ffffffffffffffff82111761034c57604052565b908160209103126100a1576040519061039a82610330565b35815290565b6103ac91810190610382565b90335f525f60205260405f2054801561046857825180821061044f57508251810390811161027f57335f525f60205260405f205560018060a01b0316905f8080808451865af13d1561044a573d67ffffffffffffffff811161034c5760405190610420601f8201601f191660200183610360565b81525f60203d92013e5b15610433575050565b51906338f0620160e21b5f5260045260245260445ffd5b61042a565b632fc28c5360e01b5f523360045260245260445260645ffd5b6325ed2d4960e11b5f523360045260245ffdfea2646970667358221220c776f4b185cb446a9f2b4ff7469df922c6a82d8a0352824e9becadd34e549d5e64736f6c634300081b0033",
-    "sourceMap": "385:2937:119:-:0;;;;;;;;;;;;;;;;;",
+    "object": "0x608080604052346015576106ef908161001a8239f35b5f80fdfe60806040526004361015610011575f80fd5b5f3560e01c80630fa37a1f14610486578063136befcf146102b35780631dc8160b1461037f578063297ae412146103095780633d0e5a6a146102b35780634591152814610245578063561ca525146101d3578063a533219c1461017a578063be1e753b14610123578063f73085df146100ce5763fc7e286d14610092575f80fd5b346100ca5760203660031901126100ca576001600160a01b036100b36104f7565b165f526001602052602060405f2054604051908152f35b5f80fd5b346100ca5760203660031901126100ca5760043567ffffffffffffffff81116100ca5761011a61010460209236906004016104b3565b5f6040516101118161050d565b5281019061055f565b60405190518152f35b346100ca5760403660031901126100ca5760043567ffffffffffffffff81116100ca576101549036906004016104b3565b505060243567ffffffffffffffff81116100ca576101409060031990360301126100ca57005b346100ca5760203660031901126100ca57604051604060208201916004358352602081526101a8828261053d565b8151928391602083525180918160208501528484015e5f828201840152601f01601f19168101030190f35b346100ca5760603660031901126100ca5760043567ffffffffffffffff81116100ca576102049036906004016104b3565b61020c6104e1565b906044359267ffffffffffffffff84116100ca5761014060031985360301126100ca5761023e61024394600401610591565b6105dc565b005b346100ca5760203660031901126100ca5761025e6104f7565b335f818152602081815260408083206001600160a01b0395909516808452948252808320805460ff19169055519182527fbfe3408398a6b959bc04ab1cfde500aff4ee06af8ed2483286cc8d1feeb85ed991a3005b346100ca5760403660031901126100ca576102cc6104f7565b6102d46104e1565b9060018060a01b03165f525f60205260405f209060018060a01b03165f52602052602060ff60405f2054166040519015158152f35b346100ca5760203660031901126100ca576103226104f7565b335f818152602081815260408083206001600160a01b039590951680845294825291829020805460ff1916600190811790915591519182527fbfe3408398a6b959bc04ab1cfde500aff4ee06af8ed2483286cc8d1feeb85ed991a3005b60603660031901126100ca5760043567ffffffffffffffff81116100ca576103ab9036906004016104b3565b906103b46104e1565b6044356001600160a01b038116908190036100ca5780330361047057506001600160a01b03165f8181526020818152604080832033845290915290205490929060ff161561045957610409925081019061055f565b8051803403610443575051335f52600160205260405f20805491820180921161042f5755005b634e487b7160e01b5f52601160045260245ffd5b630d35e92160e01b5f526004523460245260445ffd5b826310d5e09d60e11b5f526004523360245260445ffd5b6303e011e160e31b5f523360045260245260445ffd5b346100ca5760803660031901126100ca5760043567ffffffffffffffff81116100ca576102049036906004015b9181601f840112156100ca5782359167ffffffffffffffff83116100ca57602083818601950101116100ca57565b602435906001600160a01b03821682036100ca57565b600435906001600160a01b03821682036100ca57565b6020810190811067ffffffffffffffff82111761052957604052565b634e487b7160e01b5f52604160045260245ffd5b90601f8019910116810190811067ffffffffffffffff82111761052957604052565b908160209103126100ca57604051906105778261050d565b35815290565b356001600160a01b03811681036100ca5790565b60e0016001600160a01b036105a58261057d565b1633036105af5750565b6105b89061057d565b6303e011e160e31b5f908152336004526001600160a01b0391909116602452604490fd5b6105e89181019061055f565b90335f52600160205260405f205480156106a657825180821061068d57508251810390811161042f57335f52600160205260405f205560018060a01b0316905f8080808451865af13d15610688573d67ffffffffffffffff8111610529576040519061065e601f8201601f19166020018361053d565b81525f60203d92013e5b15610671575050565b51906338f0620160e21b5f5260045260245260445ffd5b610668565b632fc28c5360e01b5f523360045260245260445260645ffd5b6325ed2d4960e11b5f523360045260245ffdfea26469706673582212201e7746cf02656326eaba17572fba5c904e90b44273ad4dae891e2d871487b83164736f6c634300081b0033",
+    "sourceMap": "446:2939:131:-:0;;;;;;;;;;;;;;;;;",
     "linkReferences": {}
   },
   "deployedBytecode": {
-    "object": "0x60806040526004361015610011575f80fd5b5f3560e01c80630fa37a1f146102a95780631dc8160b14610211578063561ca525146101aa578063a533219c14610151578063be1e753b146100fa578063f73085df146100a55763fc7e286d14610066575f80fd5b346100a15760203660031901126100a1576004356001600160a01b038116908190036100a1575f525f602052602060405f2054604051908152f35b5f80fd5b346100a15760203660031901126100a15760043567ffffffffffffffff81116100a1576100f16100db60209236906004016102d6565b5f6040516100e881610330565b52810190610382565b60405190518152f35b346100a15760403660031901126100a15760043567ffffffffffffffff81116100a15761012b9036906004016102d6565b505060243567ffffffffffffffff81116100a1576101409060031990360301126100a157005b346100a15760203660031901126100a1576040516040602082019160043583526020815261017f8282610360565b8151928391602083525180918160208501528484015e5f828201840152601f01601f19168101030190f35b346100a15760603660031901126100a15760043567ffffffffffffffff81116100a1576101db9036906004016102d6565b6101e3610304565b9060443567ffffffffffffffff81116100a1576101409060031990360301126100a15761020f926103a0565b005b60603660031901126100a15760043567ffffffffffffffff81116100a15761024061025a9136906004016102d6565b610248610304565b5061025161031a565b50810190610382565b8051803403610293575051335f525f60205260405f20805491820180921161027f5755005b634e487b7160e01b5f52601160045260245ffd5b630d35e92160e01b5f526004523460245260445ffd5b346100a15760803660031901126100a15760043567ffffffffffffffff81116100a1576101db9036906004015b9181601f840112156100a15782359167ffffffffffffffff83116100a157602083818601950101116100a157565b602435906001600160a01b03821682036100a157565b604435906001600160a01b03821682036100a157565b6020810190811067ffffffffffffffff82111761034c57604052565b634e487b7160e01b5f52604160045260245ffd5b90601f8019910116810190811067ffffffffffffffff82111761034c57604052565b908160209103126100a1576040519061039a82610330565b35815290565b6103ac91810190610382565b90335f525f60205260405f2054801561046857825180821061044f57508251810390811161027f57335f525f60205260405f205560018060a01b0316905f8080808451865af13d1561044a573d67ffffffffffffffff811161034c5760405190610420601f8201601f191660200183610360565b81525f60203d92013e5b15610433575050565b51906338f0620160e21b5f5260045260245260445ffd5b61042a565b632fc28c5360e01b5f523360045260245260445260645ffd5b6325ed2d4960e11b5f523360045260245ffdfea2646970667358221220c776f4b185cb446a9f2b4ff7469df922c6a82d8a0352824e9becadd34e549d5e64736f6c634300081b0033",
-    "sourceMap": "385:2937:119:-:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;385:2937:119;;;;;;-1:-1:-1;;;;;385:2937:119;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;385:2937:119;;;;;;;;;;;3285:28;385:2937;;;;;;;;:::i;:::-;;;;;;;:::i;:::-;;3285:28;;;;:::i;:::-;385:2937;;;;;;;;;;;;;-1:-1:-1;;385:2937:119;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;385:2937:119;;;;;;;;3150:20;;385:2937;;;;;;3150:20;;;;;;:::i;:::-;385:2937;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;385:2937:119;;;;;;;;;;;;;-1:-1:-1;;385:2937:119;;;;;;;;;;;;;;;;;;:::i;:::-;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;1927:2;;;:::i;:::-;385:2937;;;;-1:-1:-1;;385:2937:119;;;;;;;;;;;;1216:28;385:2937;;;;;;:::i;:::-;;;:::i;:::-;;;;:::i;:::-;;1216:28;;;;:::i;:::-;385:2937;;1259:9;;:27;1255:108;;385:2937;;1382:10;385:2937;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;1255:108;1309:43;;;385:2937;1309:43;385:2937;;1259:9;385:2937;;;;1309:43;385:2937;;;;;;-1:-1:-1;;385:2937:119;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::o;:::-;;;;-1:-1:-1;;;;;385:2937:119;;;;;;:::o;:::-;;;;-1:-1:-1;;;;;385:2937:119;;;;;;:::o;:::-;;;;;;;;;;;;;;;:::o;:::-;;;;-1:-1:-1;385:2937:119;;;;;-1:-1:-1;385:2937:119;;;;3150:20;;385:2937;;;;;;;;;;;;;;;;:::o;:::-;;;;;;;;;;;;;;;:::i;:::-;;;;;:::o;2090:631::-;2190:28;2090:631;2190:28;;;;:::i;:::-;2258:10;;2249:8;385:2937;2249:8;385:2937;;;2249:8;385:2937;;2283:14;;2279:73;;385:2937;;2365:26;;;2361:122;;385:2937;;;;;;;;;;2258:10;2249:8;385:2937;2249:8;385:2937;;;2249:8;385:2937;;;;;;;;;2249:8;385:2937;;;;;2571:43;;;385:2937;;;;;;;;;;;;;;3150:20;385:2937;;-1:-1:-1;;385:2937:119;;;;;:::i;:::-;;;2249:8;385:2937;;;;;;2628:8;2624:91;;2090:631;;:::o;2624:91::-;385:2937;2659:45;;;;2249:8;2659:45;;385:2937;;;;2249:8;2659:45;385:2937;;;2361:122;2414:58;;;2249:8;2414:58;2258:10;2414:58;385:2937;;;;;;2249:8;2414:58;2279:73;2320:21;;;2249:8;2320:21;2258:10;2320:21;385:2937;;2249:8;2320:21",
+    "object": "0x60806040526004361015610011575f80fd5b5f3560e01c80630fa37a1f14610486578063136befcf146102b35780631dc8160b1461037f578063297ae412146103095780633d0e5a6a146102b35780634591152814610245578063561ca525146101d3578063a533219c1461017a578063be1e753b14610123578063f73085df146100ce5763fc7e286d14610092575f80fd5b346100ca5760203660031901126100ca576001600160a01b036100b36104f7565b165f526001602052602060405f2054604051908152f35b5f80fd5b346100ca5760203660031901126100ca5760043567ffffffffffffffff81116100ca5761011a61010460209236906004016104b3565b5f6040516101118161050d565b5281019061055f565b60405190518152f35b346100ca5760403660031901126100ca5760043567ffffffffffffffff81116100ca576101549036906004016104b3565b505060243567ffffffffffffffff81116100ca576101409060031990360301126100ca57005b346100ca5760203660031901126100ca57604051604060208201916004358352602081526101a8828261053d565b8151928391602083525180918160208501528484015e5f828201840152601f01601f19168101030190f35b346100ca5760603660031901126100ca5760043567ffffffffffffffff81116100ca576102049036906004016104b3565b61020c6104e1565b906044359267ffffffffffffffff84116100ca5761014060031985360301126100ca5761023e61024394600401610591565b6105dc565b005b346100ca5760203660031901126100ca5761025e6104f7565b335f818152602081815260408083206001600160a01b0395909516808452948252808320805460ff19169055519182527fbfe3408398a6b959bc04ab1cfde500aff4ee06af8ed2483286cc8d1feeb85ed991a3005b346100ca5760403660031901126100ca576102cc6104f7565b6102d46104e1565b9060018060a01b03165f525f60205260405f209060018060a01b03165f52602052602060ff60405f2054166040519015158152f35b346100ca5760203660031901126100ca576103226104f7565b335f818152602081815260408083206001600160a01b039590951680845294825291829020805460ff1916600190811790915591519182527fbfe3408398a6b959bc04ab1cfde500aff4ee06af8ed2483286cc8d1feeb85ed991a3005b60603660031901126100ca5760043567ffffffffffffffff81116100ca576103ab9036906004016104b3565b906103b46104e1565b6044356001600160a01b038116908190036100ca5780330361047057506001600160a01b03165f8181526020818152604080832033845290915290205490929060ff161561045957610409925081019061055f565b8051803403610443575051335f52600160205260405f20805491820180921161042f5755005b634e487b7160e01b5f52601160045260245ffd5b630d35e92160e01b5f526004523460245260445ffd5b826310d5e09d60e11b5f526004523360245260445ffd5b6303e011e160e31b5f523360045260245260445ffd5b346100ca5760803660031901126100ca5760043567ffffffffffffffff81116100ca576102049036906004015b9181601f840112156100ca5782359167ffffffffffffffff83116100ca57602083818601950101116100ca57565b602435906001600160a01b03821682036100ca57565b600435906001600160a01b03821682036100ca57565b6020810190811067ffffffffffffffff82111761052957604052565b634e487b7160e01b5f52604160045260245ffd5b90601f8019910116810190811067ffffffffffffffff82111761052957604052565b908160209103126100ca57604051906105778261050d565b35815290565b356001600160a01b03811681036100ca5790565b60e0016001600160a01b036105a58261057d565b1633036105af5750565b6105b89061057d565b6303e011e160e31b5f908152336004526001600160a01b0391909116602452604490fd5b6105e89181019061055f565b90335f52600160205260405f205480156106a657825180821061068d57508251810390811161042f57335f52600160205260405f205560018060a01b0316905f8080808451865af13d15610688573d67ffffffffffffffff8111610529576040519061065e601f8201601f19166020018361053d565b81525f60203d92013e5b15610671575050565b51906338f0620160e21b5f5260045260245260445ffd5b610668565b632fc28c5360e01b5f523360045260245260445260645ffd5b6325ed2d4960e11b5f523360045260245ffdfea26469706673582212201e7746cf02656326eaba17572fba5c904e90b44273ad4dae891e2d871487b83164736f6c634300081b0033",
+    "sourceMap": "446:2939:131:-:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;446:2939:131;;;;-1:-1:-1;;;;;446:2939:131;;:::i;:::-;;;;641:43;446:2939;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;446:2939:131;;;;;;;;;;;3348:28;446:2939;;;;;;;;:::i;:::-;;;;;;;:::i;:::-;;3348:28;;;;:::i;:::-;446:2939;;;;;;;;;;;;;-1:-1:-1;;446:2939:131;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;446:2939:131;;;;;;;;3213:20;;446:2939;;;;;;3213:20;;;;;;:::i;:::-;446:2939;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;446:2939:131;;;;;;;;;;;;;-1:-1:-1;;446:2939:131;;;;;;;;;;;;;;;;;;:::i;:::-;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;1770:6;1806:2;446:2939;;;1770:6;:::i;:::-;1806:2;:::i;:::-;446:2939;;;;;;;-1:-1:-1;;446:2939:131;;;;;;:::i;:::-;990:10:125;446:2939:131;;;;;;;;;;;;-1:-1:-1;;;;;446:2939:131;;;;;;;;;;;;;;;-1:-1:-1;;446:2939:131;;;;;;;1400:39:125;;;446:2939:131;;;;;;;-1:-1:-1;;446:2939:131;;;;;;:::i;:::-;;;:::i;:::-;;;;;;;;;;;;;;;;1208:30:125;446:2939:131;;;;;;-1:-1:-1;446:2939:131;;;;;;-1:-1:-1;446:2939:131;;;;;;;;;;;;;;;;;-1:-1:-1;;446:2939:131;;;;;;:::i;:::-;784:10:125;446:2939:131;;;;;;;;;;;;-1:-1:-1;;;;;446:2939:131;;;;;;;;;;;;;;;;-1:-1:-1;;446:2939:131;;;;;;;;;;;;;1400:39:125;;;446:2939:131;;;;-1:-1:-1;;446:2939:131;;;;;;;;;;;;;;;;;;:::i;:::-;;;;:::i;:::-;;;-1:-1:-1;;;;;446:2939:131;;;;;;;;1537:10:125;;:20;1533:73;;-1:-1:-1;;;;;;446:2939:131;;;;;;;;;;;;;1537:10:125;446:2939:131;;;;;;;;;;;;;1620:35:125;1616:91;;1259:28:131;;;;;;;:::i;:::-;446:2939;;1302:9;;:27;1298:108;;446:2939;;1537:10:125;446:2939:131;;1416:8;446:2939;;;;;;;;;;;;;;;;;;;;;;;;;;;;;1298:108;1352:43;;;446:2939;1352:43;446:2939;;1302:9;446:2939;;;;1352:43;1616:91:125;1664:43;;;;446:2939:131;1664:43:125;446:2939:131;;1537:10:125;446:2939:131;;;;1664:43:125;1533:73;1566:40;;;446:2939:131;1566:40:125;1537:10;446:2939:131;;;;;;1566:40:125;446:2939:131;;;;;;-1:-1:-1;;446:2939:131;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::o;:::-;;;;-1:-1:-1;;;;;446:2939:131;;;;;;:::o;:::-;;;;-1:-1:-1;;;;;446:2939:131;;;;;;:::o;:::-;;;;;;;;;;;;;;;:::o;:::-;;;;-1:-1:-1;446:2939:131;;;;;-1:-1:-1;446:2939:131;;;;3213:20;;446:2939;;;;;;;;;;;;;;;;:::o;:::-;;;;;;;;;;;;;;;:::i;:::-;;;;;:::o;:::-;;-1:-1:-1;;;;;446:2939:131;;;;;;;:::o;1720:184:125:-;1824:15;;-1:-1:-1;;;;;1824:15:125;;;:::i;:::-;446:2939:131;1810:10:125;:29;1806:91;;1720:184;:::o;1806:91::-;1881:15;;;:::i;:::-;-1:-1:-1;;;;1848:49:125;;;1810:10;1848:49;446:2939:131;-1:-1:-1;;;;;446:2939:131;;;;;;;;1848:49:125;2153:631:131;2253:28;2153:631;2253:28;;;;:::i;:::-;2321:10;;-1:-1:-1;446:2939:131;2312:8;446:2939;;;-1:-1:-1;446:2939:131;;2346:14;;2342:73;;446:2939;;2428:26;;;2424:122;;446:2939;;;;;;;;;;2321:10;-1:-1:-1;446:2939:131;2312:8;446:2939;;;-1:-1:-1;446:2939:131;;;;;;;;;-1:-1:-1;446:2939:131;;;;;2634:43;;;446:2939;;;;;;;;;;;;;;1566:40:125;446:2939:131;;-1:-1:-1;;446:2939:131;;;;;:::i;:::-;;;-1:-1:-1;446:2939:131;;;;;;2691:8;2687:91;;2153:631;;:::o;2687:91::-;446:2939;2722:45;;;;-1:-1:-1;2722:45:131;;446:2939;;;;-1:-1:-1;2722:45:131;446:2939;;;2424:122;2477:58;;;-1:-1:-1;2477:58:131;2321:10;2477:58;446:2939;;;;;;-1:-1:-1;2477:58:131;2342:73;2383:21;;;-1:-1:-1;2383:21:131;2321:10;2383:21;446:2939;;-1:-1:-1;2383:21:131",
     "linkReferences": {}
   },
   "methodIdentifiers": {
+    "approveEscrow(address)": "297ae412",
+    "approvedEscrows(address,address)": "136befcf",
     "decodeHookData(bytes)": "f73085df",
     "deposits(address)": "fc7e286d",
     "encodeHookData((uint256))": "a533219c",
+    "isEscrowApproved(address,address)": "3d0e5a6a",
     "onAttest(bytes,(bytes32,bytes32,uint64,uint64,uint64,bytes32,address,address,bool,bytes))": "be1e753b",
     "onLock(bytes,address,address)": "1dc8160b",
     "onRelease(bytes,address,(bytes32,bytes32,uint64,uint64,uint64,bytes32,address,address,bool,bytes),bytes32)": "0fa37a1f",
-    "onReturn(bytes,address,(bytes32,bytes32,uint64,uint64,uint64,bytes32,address,address,bool,bytes))": "561ca525"
+    "onReturn(bytes,address,(bytes32,bytes32,uint64,uint64,uint64,bytes32,address,address,bool,bytes))": "561ca525",
+    "unapproveEscrow(address)": "45911528"
   },
-  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.27+commit.40a35a09\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"expected\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"received\",\"type\":\"uint256\"}],\"name\":\"IncorrectPayment\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"caller\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"requested\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"available\",\"type\":\"uint256\"}],\"name\":\"InsufficientDeposit\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"NativeTokenTransferFailed\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"caller\",\"type\":\"address\"}],\"name\":\"NoDeposit\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"UnexpectedNativeValue\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"}],\"name\":\"decodeHookData\",\"outputs\":[{\"components\":[{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"internalType\":\"struct NativeTokenEscrowHook.HookData\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"pure\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"deposits\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"internalType\":\"struct NativeTokenEscrowHook.HookData\",\"name\":\"hookData\",\"type\":\"tuple\"}],\"name\":\"encodeHookData\",\"outputs\":[{\"internalType\":\"bytes\",\"name\":\"\",\"type\":\"bytes\"}],\"stateMutability\":\"pure\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"\",\"type\":\"bytes\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"uid\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"schema\",\"type\":\"bytes32\"},{\"internalType\":\"uint64\",\"name\":\"time\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"expirationTime\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"revocationTime\",\"type\":\"uint64\"},{\"internalType\":\"bytes32\",\"name\":\"refUID\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"attester\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"revocable\",\"type\":\"bool\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"}],\"internalType\":\"struct Attestation\",\"name\":\"\",\"type\":\"tuple\"}],\"name\":\"onAttest\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"},{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"onLock\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"uid\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"schema\",\"type\":\"bytes32\"},{\"internalType\":\"uint64\",\"name\":\"time\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"expirationTime\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"revocationTime\",\"type\":\"uint64\"},{\"internalType\":\"bytes32\",\"name\":\"refUID\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"attester\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"revocable\",\"type\":\"bool\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"}],\"internalType\":\"struct Attestation\",\"name\":\"\",\"type\":\"tuple\"},{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"onRelease\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"uid\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"schema\",\"type\":\"bytes32\"},{\"internalType\":\"uint64\",\"name\":\"time\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"expirationTime\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"revocationTime\",\"type\":\"uint64\"},{\"internalType\":\"bytes32\",\"name\":\"refUID\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"attester\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"revocable\",\"type\":\"bool\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"}],\"internalType\":\"struct Attestation\",\"name\":\"\",\"type\":\"tuple\"}],\"name\":\"onReturn\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"details\":\"hookData is abi.encode(HookData).      ETH is forwarded via msg.value through onLock.      Deposits are tracked per-caller.\",\"kind\":\"dev\",\"methods\":{},\"title\":\"NativeTokenEscrowHook\",\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"deposits(address)\":{\"notice\":\"Tracks deposits: caller (obligation) \\u2192 amount held.\"}},\"notice\":\"An IEscrowHook that escrows native ETH.\",\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/obligations/escrow/hook-based/hooks/NativeTokenEscrowHook.sol\":\"NativeTokenEscrowHook\"},\"evmVersion\":\"prague\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@eas/=lib/eas-contracts/contracts/\",\":@erc8004/=lib/erc-8004-contracts/contracts/\",\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@src/=src/\",\":@test/=test/\",\":ds-test/=lib/openzeppelin-contracts/lib/forge-std/lib/ds-test/src/\",\":eas-contracts/=lib/eas-contracts/contracts/\",\":erc-8004-contracts/=lib/erc-8004-contracts/contracts/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":eth-gas-reporter/=lib/eas-contracts/node_modules/eth-gas-reporter/\",\":forge-std/=lib/forge-std/src/\",\":halmos-cheatcodes/=lib/openzeppelin-contracts/lib/halmos-cheatcodes/src/\",\":hardhat-deploy/=lib/eas-contracts/node_modules/hardhat-deploy/\",\":hardhat/=lib/eas-contracts/node_modules/hardhat/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\"],\"viaIR\":true},\"sources\":{\"lib/eas-contracts/contracts/Common.sol\":{\"keccak256\":\"0x957bd2e6d0d6d637f86208b135c29fbaf4412cb08e5e7a61ede16b80561bf685\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://da1dc9aedbb1d4d39c46c2235918d3adfbc5741dd34a46010cf425d134e7936d\",\"dweb:/ipfs/QmWUk6bXnLaghS2riF3GTFEeURCzgYFMA5woa6AsgPwEgc\"]},\"src/obligations/escrow/hook-based/IEscrowHook.sol\":{\"keccak256\":\"0x6d403063eb1f39ab87beda332e88cf0f8974feb0e3c0e22cd13fe0c51c2eaf7b\",\"license\":\"UNLICENSED\",\"urls\":[\"bzz-raw://e4e09e0507fdec7127d47e3550e11f5099df38f877fe3d3b0202f516f206aef7\",\"dweb:/ipfs/QmYmGCTv6jVpePJWabCkiE26CAu9ydCNFA47QeP6qevXLc\"]},\"src/obligations/escrow/hook-based/hooks/NativeTokenEscrowHook.sol\":{\"keccak256\":\"0x8c681be63a0efd7cd06fb62dbfc492ca6d6f41a8d6096326e9c52cdec831c74e\",\"license\":\"UNLICENSED\",\"urls\":[\"bzz-raw://d5d9b099885c421b5543be0d1438d1cb0afcde0f7d6a738cebbed7d5b420250e\",\"dweb:/ipfs/QmaVoT394n8bvsHVsYSkZva4dJZLVfP5qfXMyzDX9rikJk\"]}},\"version\":1}",
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.27+commit.40a35a09\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"caller\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"escrow\",\"type\":\"address\"}],\"name\":\"EscrowCallerMismatch\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"expected\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"received\",\"type\":\"uint256\"}],\"name\":\"IncorrectPayment\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"caller\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"requested\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"available\",\"type\":\"uint256\"}],\"name\":\"InsufficientDeposit\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"NativeTokenTransferFailed\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"caller\",\"type\":\"address\"}],\"name\":\"NoDeposit\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"caller\",\"type\":\"address\"}],\"name\":\"UnauthorizedEscrowCaller\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"UnexpectedNativeValue\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"escrow\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"approved\",\"type\":\"bool\"}],\"name\":\"EscrowApproval\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"escrow\",\"type\":\"address\"}],\"name\":\"approveEscrow\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"approvedEscrows\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"}],\"name\":\"decodeHookData\",\"outputs\":[{\"components\":[{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"internalType\":\"struct NativeTokenEscrowHook.HookData\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"pure\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"deposits\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"internalType\":\"struct NativeTokenEscrowHook.HookData\",\"name\":\"hookData\",\"type\":\"tuple\"}],\"name\":\"encodeHookData\",\"outputs\":[{\"internalType\":\"bytes\",\"name\":\"\",\"type\":\"bytes\"}],\"stateMutability\":\"pure\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"escrow\",\"type\":\"address\"}],\"name\":\"isEscrowApproved\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"\",\"type\":\"bytes\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"uid\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"schema\",\"type\":\"bytes32\"},{\"internalType\":\"uint64\",\"name\":\"time\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"expirationTime\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"revocationTime\",\"type\":\"uint64\"},{\"internalType\":\"bytes32\",\"name\":\"refUID\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"attester\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"revocable\",\"type\":\"bool\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"}],\"internalType\":\"struct Attestation\",\"name\":\"\",\"type\":\"tuple\"}],\"name\":\"onAttest\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"},{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"escrow\",\"type\":\"address\"}],\"name\":\"onLock\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"uid\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"schema\",\"type\":\"bytes32\"},{\"internalType\":\"uint64\",\"name\":\"time\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"expirationTime\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"revocationTime\",\"type\":\"uint64\"},{\"internalType\":\"bytes32\",\"name\":\"refUID\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"attester\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"revocable\",\"type\":\"bool\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"}],\"internalType\":\"struct Attestation\",\"name\":\"escrow\",\"type\":\"tuple\"},{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"onRelease\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"uid\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"schema\",\"type\":\"bytes32\"},{\"internalType\":\"uint64\",\"name\":\"time\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"expirationTime\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"revocationTime\",\"type\":\"uint64\"},{\"internalType\":\"bytes32\",\"name\":\"refUID\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"attester\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"revocable\",\"type\":\"bool\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"}],\"internalType\":\"struct Attestation\",\"name\":\"escrow\",\"type\":\"tuple\"}],\"name\":\"onReturn\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"escrow\",\"type\":\"address\"}],\"name\":\"unapproveEscrow\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"details\":\"hookData is abi.encode(HookData).      ETH is forwarded via msg.value through onLock.      Deposits are tracked per-caller.\",\"kind\":\"dev\",\"methods\":{\"onLock(bytes,address,address)\":{\"params\":{\"data\":\"Hook-specific parameters (e.g. token address, amount).\",\"escrow\":\"The escrow obligation contract that initiated the lock.\",\"from\":\"The address providing the assets.\"}},\"onReturn(bytes,address,(bytes32,bytes32,uint64,uint64,uint64,bytes32,address,address,bool,bytes))\":{\"params\":{\"data\":\"The same hook data that was passed to onLock.\",\"escrow\":\"The full escrow attestation.\",\"to\":\"The address to return assets to (original creator).\"}}},\"title\":\"NativeTokenEscrowHook\",\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"approveEscrow(address)\":{\"notice\":\"Approves an escrow obligation contract to use this hook for the caller.\"},\"approvedEscrows(address,address)\":{\"notice\":\"owner -> escrow obligation contract -> approved.\"},\"deposits(address)\":{\"notice\":\"Tracks deposits: caller (obligation) \\u2192 amount held.\"},\"isEscrowApproved(address,address)\":{\"notice\":\"Returns whether `owner` approved `escrow` to use this hook.\"},\"onLock(bytes,address,address)\":{\"notice\":\"Lock assets into escrow on behalf of `from`.\"},\"onReturn(bytes,address,(bytes32,bytes32,uint64,uint64,uint64,bytes32,address,address,bool,bytes))\":{\"notice\":\"Return escrowed assets to the original owner on expiry.\"},\"unapproveEscrow(address)\":{\"notice\":\"Revokes a previously approved escrow obligation contract for the caller.\"}},\"notice\":\"An IEscrowHook that escrows native ETH.\",\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/obligations/escrow/hook-based/hooks/NativeTokenEscrowHook.sol\":\"NativeTokenEscrowHook\"},\"evmVersion\":\"prague\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@eas/=lib/eas-contracts/contracts/\",\":@erc8004/=lib/erc-8004-contracts/contracts/\",\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@src/=src/\",\":@test/=test/\",\":ds-test/=lib/openzeppelin-contracts/lib/forge-std/lib/ds-test/src/\",\":eas-contracts/=lib/eas-contracts/contracts/\",\":erc-8004-contracts/=lib/erc-8004-contracts/contracts/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":eth-gas-reporter/=lib/eas-contracts/node_modules/eth-gas-reporter/\",\":forge-std/=lib/forge-std/src/\",\":halmos-cheatcodes/=lib/openzeppelin-contracts/lib/halmos-cheatcodes/src/\",\":hardhat-deploy/=lib/eas-contracts/node_modules/hardhat-deploy/\",\":hardhat/=lib/eas-contracts/node_modules/hardhat/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\"],\"viaIR\":true},\"sources\":{\"lib/eas-contracts/contracts/Common.sol\":{\"keccak256\":\"0x957bd2e6d0d6d637f86208b135c29fbaf4412cb08e5e7a61ede16b80561bf685\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://da1dc9aedbb1d4d39c46c2235918d3adfbc5741dd34a46010cf425d134e7936d\",\"dweb:/ipfs/QmWUk6bXnLaghS2riF3GTFEeURCzgYFMA5woa6AsgPwEgc\"]},\"src/obligations/escrow/hook-based/IEscrowHook.sol\":{\"keccak256\":\"0xd3fc834a7567e72a02ff970cc71c2d9fcf872fc8ea83e1d73357a7694d969baa\",\"license\":\"UNLICENSED\",\"urls\":[\"bzz-raw://1be4aa57352b743cbd5bbd370f5125a78df824a727bc8895753d80491b29105e\",\"dweb:/ipfs/QmVtv77CcE2buipxU4prSC45B2dLGhZSgtvPbsJbiRC2sg\"]},\"src/obligations/escrow/hook-based/hooks/ApprovedEscrowHook.sol\":{\"keccak256\":\"0xa247440e9d0c0ed1c837e88e151044df0cee1eea54a4b662056049c7a752475f\",\"license\":\"UNLICENSED\",\"urls\":[\"bzz-raw://6ea5cd7b217a18457635cc47d11a3e240ff831d3aa7555208398737e956b8e34\",\"dweb:/ipfs/QmU8idc7ajWnKq3HVY93WhbFcLfH1TEn5V6Lema87iECtg\"]},\"src/obligations/escrow/hook-based/hooks/NativeTokenEscrowHook.sol\":{\"keccak256\":\"0xeebc69e5aad438dd0a481874947434d04d9fb32ea77d41576d7f1ab870b92144\",\"license\":\"UNLICENSED\",\"urls\":[\"bzz-raw://7871525721852fa091e152df91dce77277964bf33d56e23bc81bc5c8a35570ab\",\"dweb:/ipfs/QmRKVQhNL8qGYQbFm3boaPCAsTLrP398HMkyfQCHfqaJyU\"]}},\"version\":1}",
   "metadata": {
     "compiler": {
       "version": "0.8.27+commit.40a35a09"
@@ -416,6 +551,22 @@ export const abi = {
     "language": "Solidity",
     "output": {
       "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "caller",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "escrow",
+              "type": "address"
+            }
+          ],
+          "type": "error",
+          "name": "EscrowCallerMismatch"
+        },
         {
           "inputs": [
             {
@@ -481,9 +632,86 @@ export const abi = {
           "name": "NoDeposit"
         },
         {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "caller",
+              "type": "address"
+            }
+          ],
+          "type": "error",
+          "name": "UnauthorizedEscrowCaller"
+        },
+        {
           "inputs": [],
           "type": "error",
           "name": "UnexpectedNativeValue"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "address",
+              "name": "escrow",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "bool",
+              "name": "approved",
+              "type": "bool",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "EscrowApproval",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "escrow",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "approveEscrow"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "approvedEscrows",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
         },
         {
           "inputs": [
@@ -553,6 +781,30 @@ export const abi = {
               "internalType": "bytes",
               "name": "",
               "type": "bytes"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "escrow",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "isEscrowApproved",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
             }
           ]
         },
@@ -634,12 +886,12 @@ export const abi = {
             },
             {
               "internalType": "address",
-              "name": "",
+              "name": "from",
               "type": "address"
             },
             {
               "internalType": "address",
-              "name": "",
+              "name": "escrow",
               "type": "address"
             }
           ],
@@ -661,7 +913,7 @@ export const abi = {
             },
             {
               "internalType": "struct Attestation",
-              "name": "",
+              "name": "escrow",
               "type": "tuple",
               "components": [
                 {
@@ -740,7 +992,7 @@ export const abi = {
             },
             {
               "internalType": "struct Attestation",
-              "name": "",
+              "name": "escrow",
               "type": "tuple",
               "components": [
                 {
@@ -799,18 +1051,63 @@ export const abi = {
           "stateMutability": "nonpayable",
           "type": "function",
           "name": "onReturn"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "escrow",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "unapproveEscrow"
         }
       ],
       "devdoc": {
         "kind": "dev",
-        "methods": {},
+        "methods": {
+          "onLock(bytes,address,address)": {
+            "params": {
+              "data": "Hook-specific parameters (e.g. token address, amount).",
+              "escrow": "The escrow obligation contract that initiated the lock.",
+              "from": "The address providing the assets."
+            }
+          },
+          "onReturn(bytes,address,(bytes32,bytes32,uint64,uint64,uint64,bytes32,address,address,bool,bytes))": {
+            "params": {
+              "data": "The same hook data that was passed to onLock.",
+              "escrow": "The full escrow attestation.",
+              "to": "The address to return assets to (original creator)."
+            }
+          }
+        },
         "version": 1
       },
       "userdoc": {
         "kind": "user",
         "methods": {
+          "approveEscrow(address)": {
+            "notice": "Approves an escrow obligation contract to use this hook for the caller."
+          },
+          "approvedEscrows(address,address)": {
+            "notice": "owner -> escrow obligation contract -> approved."
+          },
           "deposits(address)": {
             "notice": "Tracks deposits: caller (obligation) → amount held."
+          },
+          "isEscrowApproved(address,address)": {
+            "notice": "Returns whether `owner` approved `escrow` to use this hook."
+          },
+          "onLock(bytes,address,address)": {
+            "notice": "Lock assets into escrow on behalf of `from`."
+          },
+          "onReturn(bytes,address,(bytes32,bytes32,uint64,uint64,uint64,bytes32,address,address,bool,bytes))": {
+            "notice": "Return escrowed assets to the original owner on expiry."
+          },
+          "unapproveEscrow(address)": {
+            "notice": "Revokes a previously approved escrow obligation contract for the caller."
           }
         },
         "version": 1
@@ -858,23 +1155,31 @@ export const abi = {
         "license": "MIT"
       },
       "src/obligations/escrow/hook-based/IEscrowHook.sol": {
-        "keccak256": "0x6d403063eb1f39ab87beda332e88cf0f8974feb0e3c0e22cd13fe0c51c2eaf7b",
+        "keccak256": "0xd3fc834a7567e72a02ff970cc71c2d9fcf872fc8ea83e1d73357a7694d969baa",
         "urls": [
-          "bzz-raw://e4e09e0507fdec7127d47e3550e11f5099df38f877fe3d3b0202f516f206aef7",
-          "dweb:/ipfs/QmYmGCTv6jVpePJWabCkiE26CAu9ydCNFA47QeP6qevXLc"
+          "bzz-raw://1be4aa57352b743cbd5bbd370f5125a78df824a727bc8895753d80491b29105e",
+          "dweb:/ipfs/QmVtv77CcE2buipxU4prSC45B2dLGhZSgtvPbsJbiRC2sg"
+        ],
+        "license": "UNLICENSED"
+      },
+      "src/obligations/escrow/hook-based/hooks/ApprovedEscrowHook.sol": {
+        "keccak256": "0xa247440e9d0c0ed1c837e88e151044df0cee1eea54a4b662056049c7a752475f",
+        "urls": [
+          "bzz-raw://6ea5cd7b217a18457635cc47d11a3e240ff831d3aa7555208398737e956b8e34",
+          "dweb:/ipfs/QmU8idc7ajWnKq3HVY93WhbFcLfH1TEn5V6Lema87iECtg"
         ],
         "license": "UNLICENSED"
       },
       "src/obligations/escrow/hook-based/hooks/NativeTokenEscrowHook.sol": {
-        "keccak256": "0x8c681be63a0efd7cd06fb62dbfc492ca6d6f41a8d6096326e9c52cdec831c74e",
+        "keccak256": "0xeebc69e5aad438dd0a481874947434d04d9fb32ea77d41576d7f1ab870b92144",
         "urls": [
-          "bzz-raw://d5d9b099885c421b5543be0d1438d1cb0afcde0f7d6a738cebbed7d5b420250e",
-          "dweb:/ipfs/QmaVoT394n8bvsHVsYSkZva4dJZLVfP5qfXMyzDX9rikJk"
+          "bzz-raw://7871525721852fa091e152df91dce77277964bf33d56e23bc81bc5c8a35570ab",
+          "dweb:/ipfs/QmRKVQhNL8qGYQbFm3boaPCAsTLrP398HMkyfQCHfqaJyU"
         ],
         "license": "UNLICENSED"
       }
     },
     "version": 1
   },
-  "id": 119
+  "id": 131
 } as const;

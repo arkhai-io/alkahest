@@ -260,7 +260,7 @@ const commitment = await client.commitReveal.computeCommitment(
   escrowUid, claimerAddress, { payload, salt, schema },
 );
 // 2. Commit (sends bond as ETH)
-await client.commitReveal.commit(commitment);
+await client.commitReveal.commit(commitment, bondAmount, commitDeadline);
 // 3. Wait 1+ blocks, then reveal
 const { attested } = await client.commitReveal.doObligation(
   { payload, salt, schema }, escrowUid,
@@ -274,7 +274,7 @@ await client.commitReveal.reclaimBond(attested.uid);
 let commitment = client.commit_reveal().compute_commitment(
     escrow_uid, claimer, &obligation_data,
 ).await?;
-client.commit_reveal().commit(commitment).await?;
+client.commit_reveal().commit(commitment, bond_amount, commit_deadline).await?;
 // wait 1+ blocks
 let receipt = client.commit_reveal().do_obligation(&obligation_data, Some(escrow_uid)).await?;
 client.commit_reveal().reclaim_bond(obligation_uid).await?;
@@ -285,7 +285,7 @@ client.commit_reveal().reclaim_bond(obligation_uid).await?;
 commitment = await client.commit_reveal.compute_commitment(
     escrow_uid, claimer, payload, salt, schema,
 )
-await client.commit_reveal.commit(commitment)
+await client.commit_reveal.commit(commitment, bond_amount, commit_deadline)
 # wait 1+ blocks
 uid = await client.commit_reveal.do_obligation(payload, salt, schema, ref_uid=escrow_uid)
 await client.commit_reveal.reclaim_bond(uid)

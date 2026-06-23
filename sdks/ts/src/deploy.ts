@@ -242,7 +242,6 @@ export async function deployAlkahest(
     result.commitRevealObligation = await deploy(deployFn, CommitRevealObligation as Artifact, [
       easAddress,
       easSrAddress,
-      3600n,
       "0x0000000000000000000000000000000000000000",
     ]);
   }

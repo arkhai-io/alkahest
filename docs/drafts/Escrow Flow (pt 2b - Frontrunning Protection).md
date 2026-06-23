@@ -226,8 +226,12 @@ const commitment = await bobClient.commitReveal.computeCommitment(
   obligationData,
 );
 
-// Submit the commitment with bond (bondAmount is fetched automatically)
-const { hash: commitTx } = await bobClient.commitReveal.commit(commitment);
+// Submit the commitment with bond and the demand's commit deadline
+const { hash: commitTx } = await bobClient.commitReveal.commit(
+  commitment,
+  bondAmount,
+  commitDeadline,
+);
 ```
 
 **Rust**
@@ -249,10 +253,10 @@ let commitment = bob_client
     .compute_commitment(escrow_uid, bob_address, data.clone())
     .await?;
 
-// Submit the commitment with bond (bondAmount is fetched automatically)
+// Submit the commitment with bond and the demand's commit deadline
 let commit_receipt = bob_client
     .commit_reveal()
-    .commit(commitment)
+    .commit(commitment, bond_amount, commit_deadline)
     .await?;
 ```
 
@@ -275,8 +279,8 @@ commitment = await bob_client.commit_reveal.compute_commitment(
     schema,
 )
 
-# Submit the commitment with bond (bondAmount is fetched automatically)
-commit_tx = await bob_client.commit_reveal.commit(commitment)
+# Submit the commitment with bond and the demand's commit deadline
+commit_tx = await bob_client.commit_reveal.commit(commitment, bond_amount, commit_deadline)
 ```
 
 **CLI**
@@ -550,9 +554,9 @@ commitRevealObligation.slashBond(commitment);
 **TypeScript**
 
 ```typescript
-// Check the deadline first
-const deadline = await bobClient.commitReveal.getCommitDeadline();
-const [commitBlock, commitTimestamp, committer] = await bobClient.commitReveal.getCommitment(commitment);
+// Check the commitment's recorded deadline first
+const [commitBlock, commitTimestamp, committer, bondAmount, deadline] =
+  await bobClient.commitReveal.getCommitment(commitment);
 
 // Slash if deadline has passed
 const { hash: slashTx } = await anyClient.commitReveal.slashBond(commitment);
@@ -561,9 +565,8 @@ const { hash: slashTx } = await anyClient.commitReveal.slashBond(commitment);
 **Rust**
 
 ```rust
-// Check the deadline first
-let deadline = client.commit_reveal().commit_deadline().await?;
-let (commit_block, commit_timestamp, committer) = client
+// Check the commitment's recorded deadline first
+let (commit_block, commit_timestamp, committer, bond_amount, deadline) = client
     .commit_reveal()
     .get_commitment(commitment)
     .await?;
@@ -578,9 +581,8 @@ let slash_receipt = client
 **Python**
 
 ```python
-# Check the deadline first
-deadline = await client.commit_reveal.commit_deadline()
-(commit_block, commit_timestamp, committer) = await client.commit_reveal.get_commitment(commitment)
+# Check the commitment's recorded deadline first
+(commit_block, commit_timestamp, committer, bond_amount, deadline) = await client.commit_reveal.get_commitment(commitment)
 
 # Slash if deadline has passed
 slash_tx = await client.commit_reveal.slash_bond(commitment)
@@ -596,10 +598,8 @@ alkahest --private-key 0xANY_KEY commit-reveal slash-bond \
 
 ## Configuration
 
-CommitRevealObligation has three owner-configurable parameters:
+CommitRevealObligation has one owner-configurable parameter:
 
-- **`bondAmount`**: Fixed ETH amount required with each commit. Discourages spam commits and provides economic security.
-- **`commitDeadline`**: Seconds after a commit within which the reveal must occur to avoid slashing.
 - **`slashedBondRecipient`**: Address that receives slashed bonds (`address(0)` = burn).
 
 You can query these via the CLI or SDK:
@@ -607,24 +607,18 @@ You can query these via the CLI or SDK:
 **TypeScript**
 
 ```typescript
-const bondAmount = await client.commitReveal.getBondAmount();
-const deadline = await client.commitReveal.getCommitDeadline();
 const recipient = await client.commitReveal.getSlashedBondRecipient();
 ```
 
 **Rust**
 
 ```rust
-let bond_amount = client.commit_reveal().bond_amount().await?;
-let deadline = client.commit_reveal().commit_deadline().await?;
 let recipient = client.commit_reveal().slashed_bond_recipient().await?;
 ```
 
 **Python**
 
 ```python
-bond_amount = await client.commit_reveal.bond_amount()
-deadline = await client.commit_reveal.commit_deadline()
 recipient = await client.commit_reveal.slashed_bond_recipient()
 ```
 
@@ -632,5 +626,5 @@ recipient = await client.commit_reveal.slashed_bond_recipient()
 
 ```bash
 alkahest --private-key 0xKEY commit-reveal info
-# → { "bondAmount": "...", "commitDeadline": "...", "slashedBondRecipient": "0x..." }
+# -> { "slashedBondRecipient": "0x..." }
 ```

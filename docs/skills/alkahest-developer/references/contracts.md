@@ -42,7 +42,7 @@ Payments transfer assets immediately upon attestation creation (no escrow hold).
 
 ### CommitRevealObligation details
 
-- `commit(commitment)` — submit hash commitment with ETH bond
+- `commit(commitment, commitDeadline)` — submit hash commitment with ETH bond
 - `doObligation(data, refUID)` — reveal fulfillment data
 - `computeCommitment(refUID, claimer, data)` — compute expected commitment hash
 - `reclaimBond(fulfillmentUid)` — reclaim bond after valid reveal

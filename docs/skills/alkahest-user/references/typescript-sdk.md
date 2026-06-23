@@ -124,8 +124,8 @@ const commitment = await client.commitReveal.computeCommitment(
   { payload: "0x...", salt: "0x...", schema: "0x..." },
 );
 
-// 2. Commit with bond
-await client.commitReveal.commit(commitment);
+// 2. Commit with bond and the demand's commit deadline
+await client.commitReveal.commit(commitment, bondAmount, commitDeadline);
 
 // 3. Wait at least 1 block, then reveal
 const { attested } = await client.commitReveal.doObligation(

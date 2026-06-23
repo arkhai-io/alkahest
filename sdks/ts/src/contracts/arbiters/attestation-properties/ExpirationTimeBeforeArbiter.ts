@@ -108,26 +108,46 @@ export const abi = {
       "stateMutability": "pure"
     },
     {
+      "type": "function",
+      "name": "supportsInterface",
+      "inputs": [
+        {
+          "name": "interfaceId",
+          "type": "bytes4",
+          "internalType": "bytes4"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
       "type": "error",
       "name": "ExpirationTimeNotBefore",
       "inputs": []
     }
   ],
   "bytecode": {
-    "object": "0x6080806040523460155761032d908161001a8239f35b5f80fdfe60806040526004361015610011575f80fd5b5f3560e01c8063838a68d9146101be57638da3721a1461002f575f80fd5b346101a65760603660031901126101a6576004356001600160401b0381116101a65761014060031982360301126101a65760405161014081018181106001600160401b038211176101aa57604052816004013581526024820135602082015261009a60448301610269565b60408201526100ab60648301610269565b91606082019283526100bf60848201610269565b608083015260a481013560a08301526100da60c4820161027d565b60c08301526100eb60e4820161027d565b60e083015261010481013580151581036101a6576101008301526101248101356001600160401b0381116101a65761012091600461012c9236920101610291565b9101526024356001600160401b0381116101a65761014e903690600401610291565b6020818051810103126101a657602061016561024a565b910151916001600160401b038316928381036101a6576001600160401b03925251161161019757602060405160018152f35b636f0197bb60e01b5f5260045ffd5b5f80fd5b634e487b7160e01b5f52604160045260245ffd5b346101a65760203660031901126101a6576004356001600160401b0381116101a657366023820112156101a65780600401356001600160401b0381116101a65781013660248201116101a6576020905f61021661024a565b52829003126101a657602090610236602461022f61024a565b9201610269565b8091526001600160401b0360405191168152f35b60405190602082018281106001600160401b038211176101aa57604052565b35906001600160401b03821682036101a657565b35906001600160a01b03821682036101a657565b81601f820112156101a6578035906001600160401b0382116101aa5760405192601f8301601f19908116603f011684016001600160401b038111858210176101aa57604052828452602083830101116101a657815f92602080930183860137830101529056fea264697066735822122052f40b56ebd536d4b848265e3aa341f650d9e53ed2e7e802dd74e5bf1687721064736f6c634300081b0033",
-    "sourceMap": "209:760:95:-:0;;;;;;;;;;;;;;;;;",
+    "object": "0x608080604052346015576103a4908161001a8239f35b5f80fdfe6080806040526004361015610012575f80fd5b5f3560e01c90816301ffc9a71461026e57508063838a68d9146101e257638da3721a1461003d575f80fd5b346101ca5760603660031901126101ca576004356001600160401b0381116101ca5761014060031982360301126101ca5760405161014081018181106001600160401b038211176101ce5760405281600401358152602482013560208201526100a8604483016102e0565b60408201526100b9606483016102e0565b91606082019283526100cd608482016102e0565b608083015260a481013560a08301526100e860c482016102f4565b60c08301526100f960e482016102f4565b60e083015261010481013580151581036101ca576101008301526101248101356001600160401b0381116101ca5761012091600461013a9236920101610308565b9101526024356001600160401b0381116101ca5761015c903690600401610308565b6020818051810103126101ca5760206101736102c1565b910151916001600160401b038316928381036101ca576001600160401b03925251169081159182156101c0575b50506101b157602060405160018152f35b636f0197bb60e01b5f5260045ffd5b1190505f806101a0565b5f80fd5b634e487b7160e01b5f52604160045260245ffd5b346101ca5760203660031901126101ca576004356001600160401b0381116101ca57366023820112156101ca5780600401356001600160401b0381116101ca5781013660248201116101ca576020905f61023a6102c1565b52829003126101ca5760209061025a60246102536102c1565b92016102e0565b8091526001600160401b0360405191168152f35b346101ca5760203660031901126101ca576004359063ffffffff60e01b82168092036101ca576020916346d1b90d60e11b81149081156102b0575b5015158152f35b6301ffc9a760e01b149050836102a9565b60405190602082018281106001600160401b038211176101ce57604052565b35906001600160401b03821682036101ca57565b35906001600160a01b03821682036101ca57565b81601f820112156101ca578035906001600160401b0382116101ce5760405192601f8301601f19908116603f011684016001600160401b038111858210176101ce57604052828452602083830101116101ca57815f92602080930183860137830101529056fea2646970667358221220620838421d3a2169fd037bc97d570b93c1869ddd4636f6a7fb83eebf15eb160264736f6c634300081b0033",
+    "sourceMap": "392:968:30:-:0;;;;;;;;;;;;;;;;;",
     "linkReferences": {}
   },
   "deployedBytecode": {
-    "object": "0x60806040526004361015610011575f80fd5b5f3560e01c8063838a68d9146101be57638da3721a1461002f575f80fd5b346101a65760603660031901126101a6576004356001600160401b0381116101a65761014060031982360301126101a65760405161014081018181106001600160401b038211176101aa57604052816004013581526024820135602082015261009a60448301610269565b60408201526100ab60648301610269565b91606082019283526100bf60848201610269565b608083015260a481013560a08301526100da60c4820161027d565b60c08301526100eb60e4820161027d565b60e083015261010481013580151581036101a6576101008301526101248101356001600160401b0381116101a65761012091600461012c9236920101610291565b9101526024356001600160401b0381116101a65761014e903690600401610291565b6020818051810103126101a657602061016561024a565b910151916001600160401b038316928381036101a6576001600160401b03925251161161019757602060405160018152f35b636f0197bb60e01b5f5260045ffd5b5f80fd5b634e487b7160e01b5f52604160045260245ffd5b346101a65760203660031901126101a6576004356001600160401b0381116101a657366023820112156101a65780600401356001600160401b0381116101a65781013660248201116101a6576020905f61021661024a565b52829003126101a657602090610236602461022f61024a565b9201610269565b8091526001600160401b0360405191168152f35b60405190602082018281106001600160401b038211176101aa57604052565b35906001600160401b03821682036101a657565b35906001600160a01b03821682036101a657565b81601f820112156101a6578035906001600160401b0382116101aa5760405192601f8301601f19908116603f011684016001600160401b038111858210176101aa57604052828452602083830101116101a657815f92602080930183860137830101529056fea264697066735822122052f40b56ebd536d4b848265e3aa341f650d9e53ed2e7e802dd74e5bf1687721064736f6c634300081b0033",
-    "sourceMap": "209:760:95:-:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;209:760:95;;;;;;-1:-1:-1;;;;;209:760:95;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;;;;209:760:95;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;;;;209:760:95;;;;;;;;;;;;;;:::i;:::-;;;;;;-1:-1:-1;;;;;209:760:95;;;;;;;;;;;:::i;:::-;;;;;636:32;;209:760;;;;;;;:::i;:::-;636:32;;209:760;;-1:-1:-1;;;;;209:760:95;;;;;;;;-1:-1:-1;;;;;209:760:95;;;;682:51;678:114;;209:760;;;;;;;678:114;756:25;;;209:760;756:25;209:760;;756:25;209:760;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;209:760:95;;;;;;-1:-1:-1;;;;;209:760:95;;;;;;;;;;;;;;;;-1:-1:-1;;;;;209:760:95;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;:::i;:::-;;;;:::i;:::-;;;;-1:-1:-1;;;;;209:760:95;;;;;;;;;;;;;;;;;-1:-1:-1;;;;;209:760:95;;;;;;;:::o;:::-;;;-1:-1:-1;;;;;209:760:95;;;;;;:::o;:::-;;;-1:-1:-1;;;;;209:760:95;;;;;;:::o;:::-;;;;;;;;;;;;-1:-1:-1;;;;;209:760:95;;;;;;;;;;-1:-1:-1;;209:760:95;;;;;;;;-1:-1:-1;;;;;209:760:95;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;209:760:95;;;;;;;;;;;;;;:::o",
+    "object": "0x6080806040526004361015610012575f80fd5b5f3560e01c90816301ffc9a71461026e57508063838a68d9146101e257638da3721a1461003d575f80fd5b346101ca5760603660031901126101ca576004356001600160401b0381116101ca5761014060031982360301126101ca5760405161014081018181106001600160401b038211176101ce5760405281600401358152602482013560208201526100a8604483016102e0565b60408201526100b9606483016102e0565b91606082019283526100cd608482016102e0565b608083015260a481013560a08301526100e860c482016102f4565b60c08301526100f960e482016102f4565b60e083015261010481013580151581036101ca576101008301526101248101356001600160401b0381116101ca5761012091600461013a9236920101610308565b9101526024356001600160401b0381116101ca5761015c903690600401610308565b6020818051810103126101ca5760206101736102c1565b910151916001600160401b038316928381036101ca576001600160401b03925251169081159182156101c0575b50506101b157602060405160018152f35b636f0197bb60e01b5f5260045ffd5b1190505f806101a0565b5f80fd5b634e487b7160e01b5f52604160045260245ffd5b346101ca5760203660031901126101ca576004356001600160401b0381116101ca57366023820112156101ca5780600401356001600160401b0381116101ca5781013660248201116101ca576020905f61023a6102c1565b52829003126101ca5760209061025a60246102536102c1565b92016102e0565b8091526001600160401b0360405191168152f35b346101ca5760203660031901126101ca576004359063ffffffff60e01b82168092036101ca576020916346d1b90d60e11b81149081156102b0575b5015158152f35b6301ffc9a760e01b149050836102a9565b60405190602082018281106001600160401b038211176101ce57604052565b35906001600160401b03821682036101ca57565b35906001600160a01b03821682036101ca57565b81601f820112156101ca578035906001600160401b0382116101ce5760405192601f8301601f19908116603f011684016001600160401b038111858210176101ce57604052828452602083830101116101ca57815f92602080930183860137830101529056fea2646970667358221220620838421d3a2169fd037bc97d570b93c1869ddd4636f6a7fb83eebf15eb160264736f6c634300081b0033",
+    "sourceMap": "392:968:30:-:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;392:968:30;;;;;;-1:-1:-1;;;;;392:968:30;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;;;;392:968:30;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;;;;392:968:30;;;;;;;;;;;;;;:::i;:::-;;;;;;-1:-1:-1;;;;;392:968:30;;;;;;;;;;;:::i;:::-;;;;;927:32;;392:968;;;;;;;:::i;:::-;927:32;;392:968;;-1:-1:-1;;;;;392:968:30;;;;;;;;-1:-1:-1;;;;;392:968:30;;;;973:31;;;:86;;;;;392:968;969:149;;;;392:968;;;;;;;969:149;1082:25;;;392:968;1082:25;392:968;;1082:25;973:86;1008:51;;-1:-1:-1;973:86:30;;;;392:968;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;392:968:30;;;;;;-1:-1:-1;;;;;392:968:30;;;;;;;;;;;;;;;;-1:-1:-1;;;;;392:968:30;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;:::i;:::-;;;;:::i;:::-;;;;-1:-1:-1;;;;;392:968:30;;;;;;;;;;;;;-1:-1:-1;;392:968:30;;;;;;;;;;;;;;;;;;;-1:-1:-1;;;573:41:27;;;:81;;;;392:968:30;;;;;;;573:81:27;-1:-1:-1;;;829:40:24;;-1:-1:-1;573:81:27;;;392:968:30;;;;;;;;;;-1:-1:-1;;;;;392:968:30;;;;;;;:::o;:::-;;;-1:-1:-1;;;;;392:968:30;;;;;;:::o;:::-;;;-1:-1:-1;;;;;392:968:30;;;;;;:::o;:::-;;;;;;;;;;;;-1:-1:-1;;;;;392:968:30;;;;;;;;;;-1:-1:-1;;392:968:30;;;;;;;;-1:-1:-1;;;;;392:968:30;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;392:968:30;;;;;;;;;;;;;;:::o",
     "linkReferences": {}
   },
   "methodIdentifiers": {
     "check((bytes32,bytes32,uint64,uint64,uint64,bytes32,address,address,bool,bytes),bytes,bytes32)": "8da3721a",
-    "decodeDemandData(bytes)": "838a68d9"
+    "decodeDemandData(bytes)": "838a68d9",
+    "supportsInterface(bytes4)": "01ffc9a7"
   },
-  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.27+commit.40a35a09\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"ExpirationTimeNotBefore\",\"type\":\"error\"},{\"inputs\":[{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"uid\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"schema\",\"type\":\"bytes32\"},{\"internalType\":\"uint64\",\"name\":\"time\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"expirationTime\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"revocationTime\",\"type\":\"uint64\"},{\"internalType\":\"bytes32\",\"name\":\"refUID\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"attester\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"revocable\",\"type\":\"bool\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"}],\"internalType\":\"struct Attestation\",\"name\":\"fulfillment\",\"type\":\"tuple\"},{\"internalType\":\"bytes\",\"name\":\"demand\",\"type\":\"bytes\"},{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"check\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"pure\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"}],\"name\":\"decodeDemandData\",\"outputs\":[{\"components\":[{\"internalType\":\"uint64\",\"name\":\"expirationTime\",\"type\":\"uint64\"}],\"internalType\":\"struct ExpirationTimeBeforeArbiter.DemandData\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"pure\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/arbiters/attestation-properties/ExpirationTimeBeforeArbiter.sol\":\"ExpirationTimeBeforeArbiter\"},\"evmVersion\":\"prague\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@eas/=lib/eas-contracts/contracts/\",\":@erc8004/=lib/erc-8004-contracts/contracts/\",\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@src/=src/\",\":@test/=test/\",\":ds-test/=lib/openzeppelin-contracts/lib/forge-std/lib/ds-test/src/\",\":eas-contracts/=lib/eas-contracts/contracts/\",\":erc-8004-contracts/=lib/erc-8004-contracts/contracts/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":eth-gas-reporter/=lib/eas-contracts/node_modules/eth-gas-reporter/\",\":forge-std/=lib/forge-std/src/\",\":halmos-cheatcodes/=lib/openzeppelin-contracts/lib/halmos-cheatcodes/src/\",\":hardhat-deploy/=lib/eas-contracts/node_modules/hardhat-deploy/\",\":hardhat/=lib/eas-contracts/node_modules/hardhat/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\"],\"viaIR\":true},\"sources\":{\"lib/eas-contracts/contracts/Common.sol\":{\"keccak256\":\"0x957bd2e6d0d6d637f86208b135c29fbaf4412cb08e5e7a61ede16b80561bf685\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://da1dc9aedbb1d4d39c46c2235918d3adfbc5741dd34a46010cf425d134e7936d\",\"dweb:/ipfs/QmWUk6bXnLaghS2riF3GTFEeURCzgYFMA5woa6AsgPwEgc\"]},\"src/ArbiterUtils.sol\":{\"keccak256\":\"0x54728ba8cb791c33416c1a55b643d81bd9ccdb62211b776b315be718d1eab03f\",\"license\":\"UNLICENSED\",\"urls\":[\"bzz-raw://23a3d32630b34c3ab24d67b42d685a4217174c6f2a5cf9748e6f01d7c37fc1f2\",\"dweb:/ipfs/QmaZ54diVZkeXHfuYKpC8buHyBvZ6dpSpVztgmgJmwzmZM\"]},\"src/IArbiter.sol\":{\"keccak256\":\"0x60c3517336022ba2e637a7614c05c264c4a896a13eee19f28abd705d53cbfae5\",\"license\":\"UNLICENSED\",\"urls\":[\"bzz-raw://d54682c0f79f53ea184a0b03ae8986ae53453194005d6db2508c4e7941c5757b\",\"dweb:/ipfs/QmaRFve7sohhfW1ZQBHEJEeBGC5C4N9BLGGEETpMpoUxBx\"]},\"src/arbiters/attestation-properties/ExpirationTimeBeforeArbiter.sol\":{\"keccak256\":\"0x1699f868836f76daf7f28ab9044598d245fd62d07672466261239203717dbb79\",\"license\":\"UNLICENSED\",\"urls\":[\"bzz-raw://5e4522d4f10bd97f0d1bed2e42fde7353318d37b071c7e79a2cfaf852f35ccdc\",\"dweb:/ipfs/Qma9YnpLDzQj7ek6A6mxCHscTszpkypbtwYnm2bUb2YjZj\"]}},\"version\":1}",
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.27+commit.40a35a09\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"ExpirationTimeNotBefore\",\"type\":\"error\"},{\"inputs\":[{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"uid\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"schema\",\"type\":\"bytes32\"},{\"internalType\":\"uint64\",\"name\":\"time\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"expirationTime\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"revocationTime\",\"type\":\"uint64\"},{\"internalType\":\"bytes32\",\"name\":\"refUID\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"attester\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"revocable\",\"type\":\"bool\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"}],\"internalType\":\"struct Attestation\",\"name\":\"fulfillment\",\"type\":\"tuple\"},{\"internalType\":\"bytes\",\"name\":\"demand\",\"type\":\"bytes\"},{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"check\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"pure\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"}],\"name\":\"decodeDemandData\",\"outputs\":[{\"components\":[{\"internalType\":\"uint64\",\"name\":\"expirationTime\",\"type\":\"uint64\"}],\"internalType\":\"struct ExpirationTimeBeforeArbiter.DemandData\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"pure\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes4\",\"name\":\"interfaceId\",\"type\":\"bytes4\"}],\"name\":\"supportsInterface\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"check((bytes32,bytes32,uint64,uint64,uint64,bytes32,address,address,bool,bytes),bytes,bytes32)\":{\"params\":{\"demand\":\"Arbiter-specific demand data encoded by the escrow creator.\",\"escrowUid\":\"The UID of the escrow attestation being fulfilled.\",\"fulfillment\":\"The EAS attestation being used as fulfillment.\"}},\"supportsInterface(bytes4)\":{\"details\":\"Returns true if this contract implements the interface defined by `interfaceId`. See the corresponding https://eips.ethereum.org/EIPS/eip-165#how-interfaces-are-identified[ERC section] to learn more about how these ids are created. This function call must use less than 30 000 gas.\"}},\"title\":\"ExpirationTimeBeforeArbiter\",\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"check((bytes32,bytes32,uint64,uint64,uint64,bytes32,address,address,bool,bytes),bytes,bytes32)\":{\"notice\":\"Returns true when `fulfillment` satisfies `demand` for `escrowUid`.\"},\"decodeDemandData(bytes)\":{\"notice\":\"Decodes ABI-encoded expiration-time demand data.\"}},\"notice\":\"Accepts fulfillments whose expiration time is at or before a demanded timestamp.\",\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/arbiters/attestation-properties/ExpirationTimeBeforeArbiter.sol\":\"ExpirationTimeBeforeArbiter\"},\"evmVersion\":\"prague\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@eas/=lib/eas-contracts/contracts/\",\":@erc8004/=lib/erc-8004-contracts/contracts/\",\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@src/=src/\",\":@test/=test/\",\":ds-test/=lib/openzeppelin-contracts/lib/forge-std/lib/ds-test/src/\",\":eas-contracts/=lib/eas-contracts/contracts/\",\":erc-8004-contracts/=lib/erc-8004-contracts/contracts/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":eth-gas-reporter/=lib/eas-contracts/node_modules/eth-gas-reporter/\",\":forge-std/=lib/forge-std/src/\",\":halmos-cheatcodes/=lib/openzeppelin-contracts/lib/halmos-cheatcodes/src/\",\":hardhat-deploy/=lib/eas-contracts/node_modules/hardhat-deploy/\",\":hardhat/=lib/eas-contracts/node_modules/hardhat/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\"],\"viaIR\":true},\"sources\":{\"lib/eas-contracts/contracts/Common.sol\":{\"keccak256\":\"0x957bd2e6d0d6d637f86208b135c29fbaf4412cb08e5e7a61ede16b80561bf685\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://da1dc9aedbb1d4d39c46c2235918d3adfbc5741dd34a46010cf425d134e7936d\",\"dweb:/ipfs/QmWUk6bXnLaghS2riF3GTFEeURCzgYFMA5woa6AsgPwEgc\"]},\"lib/openzeppelin-contracts/contracts/utils/introspection/ERC165.sol\":{\"keccak256\":\"0x2d9dc2fe26180f74c11c13663647d38e259e45f95eb88f57b61d2160b0109d3e\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://81233d1f98060113d9922180bb0f14f8335856fe9f339134b09335e9f678c377\",\"dweb:/ipfs/QmWh6R35SarhAn4z2wH8SU456jJSYL2FgucfTFgbHJJN4E\"]},\"lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol\":{\"keccak256\":\"0x8891738ffe910f0cf2da09566928589bf5d63f4524dd734fd9cedbac3274dd5c\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://971f954442df5c2ef5b5ebf1eb245d7105d9fbacc7386ee5c796df1d45b21617\",\"dweb:/ipfs/QmadRjHbkicwqwwh61raUEapaVEtaLMcYbQZWs9gUkgj3u\"]},\"src/ArbiterUtils.sol\":{\"keccak256\":\"0xb87e2bfb9c7292daf6426fbedc09c8683b92841d1b92e7359c0ff94d42be632f\",\"license\":\"UNLICENSED\",\"urls\":[\"bzz-raw://3acf498c3c59891d76db768ea57d8f7f6b4010dcbaf44a5f93d95d72f0b12441\",\"dweb:/ipfs/QmVbkioM8dWwYxqatm1dyo9PRFNZ6c7Kbang7pozbnyS7j\"]},\"src/BaseArbiter.sol\":{\"keccak256\":\"0x27fa97834bcd6e592f3b534e64859b208c688363d33fb9b62436d009ffff3ed1\",\"license\":\"UNLICENSED\",\"urls\":[\"bzz-raw://b61ac6195ae644325adf77fdb301651cddfca4b63d9db5123ee075869f3784aa\",\"dweb:/ipfs/QmYRu5hER8gaMjqyY5bDV9EAwVN12CbS3Z2bW8dLp7sPSE\"]},\"src/IArbiter.sol\":{\"keccak256\":\"0x00f3f5d8460c738eff4a776cf309efe38342fcc951abfe97d1c2e285acb1e330\",\"license\":\"UNLICENSED\",\"urls\":[\"bzz-raw://7201a176f3d5c3d01ca13bbcd9ef5587effe8fabf20e0b8f81f2d6ee362269b9\",\"dweb:/ipfs/QmXn9aSvoGPQuNTxe3mM47RNQ1bfYCEczQCYsDDM9ohc8M\"]},\"src/arbiters/attestation-properties/ExpirationTimeBeforeArbiter.sol\":{\"keccak256\":\"0x1bbede8b1ae643bda27725ae8e40df053b300d33f0c4b0921d30367927ec66aa\",\"license\":\"UNLICENSED\",\"urls\":[\"bzz-raw://2397fa6a1581b51440963ed279b396f66ffc2fb6b9b9dbb97003309e4e72ffd1\",\"dweb:/ipfs/QmR56CUpUWpkgAypbWQNpjKiEidSbYpv7j9pGWAFGBfTtw\"]}},\"version\":1}",
   "metadata": {
     "compiler": {
       "version": "0.8.27+commit.40a35a09"
@@ -246,16 +266,53 @@ export const abi = {
               ]
             }
           ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes4",
+              "name": "interfaceId",
+              "type": "bytes4"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "supportsInterface",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
         }
       ],
       "devdoc": {
         "kind": "dev",
-        "methods": {},
+        "methods": {
+          "check((bytes32,bytes32,uint64,uint64,uint64,bytes32,address,address,bool,bytes),bytes,bytes32)": {
+            "params": {
+              "demand": "Arbiter-specific demand data encoded by the escrow creator.",
+              "escrowUid": "The UID of the escrow attestation being fulfilled.",
+              "fulfillment": "The EAS attestation being used as fulfillment."
+            }
+          },
+          "supportsInterface(bytes4)": {
+            "details": "Returns true if this contract implements the interface defined by `interfaceId`. See the corresponding https://eips.ethereum.org/EIPS/eip-165#how-interfaces-are-identified[ERC section] to learn more about how these ids are created. This function call must use less than 30 000 gas."
+          }
+        },
         "version": 1
       },
       "userdoc": {
         "kind": "user",
-        "methods": {},
+        "methods": {
+          "check((bytes32,bytes32,uint64,uint64,uint64,bytes32,address,address,bool,bytes),bytes,bytes32)": {
+            "notice": "Returns true when `fulfillment` satisfies `demand` for `escrowUid`."
+          },
+          "decodeDemandData(bytes)": {
+            "notice": "Decodes ABI-encoded expiration-time demand data."
+          }
+        },
         "version": 1
       }
     },
@@ -300,32 +357,56 @@ export const abi = {
         ],
         "license": "MIT"
       },
-      "src/ArbiterUtils.sol": {
-        "keccak256": "0x54728ba8cb791c33416c1a55b643d81bd9ccdb62211b776b315be718d1eab03f",
+      "lib/openzeppelin-contracts/contracts/utils/introspection/ERC165.sol": {
+        "keccak256": "0x2d9dc2fe26180f74c11c13663647d38e259e45f95eb88f57b61d2160b0109d3e",
         "urls": [
-          "bzz-raw://23a3d32630b34c3ab24d67b42d685a4217174c6f2a5cf9748e6f01d7c37fc1f2",
-          "dweb:/ipfs/QmaZ54diVZkeXHfuYKpC8buHyBvZ6dpSpVztgmgJmwzmZM"
+          "bzz-raw://81233d1f98060113d9922180bb0f14f8335856fe9f339134b09335e9f678c377",
+          "dweb:/ipfs/QmWh6R35SarhAn4z2wH8SU456jJSYL2FgucfTFgbHJJN4E"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol": {
+        "keccak256": "0x8891738ffe910f0cf2da09566928589bf5d63f4524dd734fd9cedbac3274dd5c",
+        "urls": [
+          "bzz-raw://971f954442df5c2ef5b5ebf1eb245d7105d9fbacc7386ee5c796df1d45b21617",
+          "dweb:/ipfs/QmadRjHbkicwqwwh61raUEapaVEtaLMcYbQZWs9gUkgj3u"
+        ],
+        "license": "MIT"
+      },
+      "src/ArbiterUtils.sol": {
+        "keccak256": "0xb87e2bfb9c7292daf6426fbedc09c8683b92841d1b92e7359c0ff94d42be632f",
+        "urls": [
+          "bzz-raw://3acf498c3c59891d76db768ea57d8f7f6b4010dcbaf44a5f93d95d72f0b12441",
+          "dweb:/ipfs/QmVbkioM8dWwYxqatm1dyo9PRFNZ6c7Kbang7pozbnyS7j"
+        ],
+        "license": "UNLICENSED"
+      },
+      "src/BaseArbiter.sol": {
+        "keccak256": "0x27fa97834bcd6e592f3b534e64859b208c688363d33fb9b62436d009ffff3ed1",
+        "urls": [
+          "bzz-raw://b61ac6195ae644325adf77fdb301651cddfca4b63d9db5123ee075869f3784aa",
+          "dweb:/ipfs/QmYRu5hER8gaMjqyY5bDV9EAwVN12CbS3Z2bW8dLp7sPSE"
         ],
         "license": "UNLICENSED"
       },
       "src/IArbiter.sol": {
-        "keccak256": "0x60c3517336022ba2e637a7614c05c264c4a896a13eee19f28abd705d53cbfae5",
+        "keccak256": "0x00f3f5d8460c738eff4a776cf309efe38342fcc951abfe97d1c2e285acb1e330",
         "urls": [
-          "bzz-raw://d54682c0f79f53ea184a0b03ae8986ae53453194005d6db2508c4e7941c5757b",
-          "dweb:/ipfs/QmaRFve7sohhfW1ZQBHEJEeBGC5C4N9BLGGEETpMpoUxBx"
+          "bzz-raw://7201a176f3d5c3d01ca13bbcd9ef5587effe8fabf20e0b8f81f2d6ee362269b9",
+          "dweb:/ipfs/QmXn9aSvoGPQuNTxe3mM47RNQ1bfYCEczQCYsDDM9ohc8M"
         ],
         "license": "UNLICENSED"
       },
       "src/arbiters/attestation-properties/ExpirationTimeBeforeArbiter.sol": {
-        "keccak256": "0x1699f868836f76daf7f28ab9044598d245fd62d07672466261239203717dbb79",
+        "keccak256": "0x1bbede8b1ae643bda27725ae8e40df053b300d33f0c4b0921d30367927ec66aa",
         "urls": [
-          "bzz-raw://5e4522d4f10bd97f0d1bed2e42fde7353318d37b071c7e79a2cfaf852f35ccdc",
-          "dweb:/ipfs/Qma9YnpLDzQj7ek6A6mxCHscTszpkypbtwYnm2bUb2YjZj"
+          "bzz-raw://2397fa6a1581b51440963ed279b396f66ffc2fb6b9b9dbb97003309e4e72ffd1",
+          "dweb:/ipfs/QmR56CUpUWpkgAypbWQNpjKiEidSbYpv7j9pGWAFGBfTtw"
         ],
         "license": "UNLICENSED"
       }
     },
     "version": 1
   },
-  "id": 95
+  "id": 30
 } as const;
