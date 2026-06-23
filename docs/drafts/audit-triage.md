@@ -328,6 +328,22 @@ from a pending validation request.
 
 ## Not Issues
 
+### audit_agent_report_7: Attestation Hook Direct Calls
+
+Status: intended responsibility split.
+
+Report item: `audit_agent_report_7_148d58b8-8bb1-439b-abbd-daa23352bc6c.pdf`,
+finding 12.
+
+Attestation hooks do not have intrinsic protocol authority or reputation merely
+because they can issue EAS attestations. The content of the attestation and the
+consumer's chosen trust policy determine whether it matters. A downstream
+consumer that treats a hook contract's attester identity as authoritative
+without checking the relevant escrow provenance has selected an insufficient
+policy. Escrow provenance can be encoded and checked by the integration when it
+is required, but the hook contract should not constrain all schemas or
+attestation contents to enforce that policy globally.
+
 ### analysis(1): Example Contracts
 
 Status: out of production security scope.
