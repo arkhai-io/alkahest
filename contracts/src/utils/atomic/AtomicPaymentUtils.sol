@@ -174,7 +174,7 @@ contract AtomicPaymentUtils is IERC1155Receiver {
 
     /// @notice Permits all ERC20 bundle items, pays the bundle demand, and immediately collects the escrow.
     /// @param escrowUid UID of the escrow attestation to satisfy and collect.
-    /// @param permits One ERC20 permit signature for each ERC20 token in the bundle demand.
+    /// @param permits One ERC20 permit signature for each unique ERC20 token, in first-occurrence order.
     /// @return UID of the payment fulfillment attestation.
     function permitAndPayBundleAndCollect(bytes32 escrowUid, ERC20PermitSignature[] calldata permits)
         external
@@ -238,18 +238,22 @@ contract AtomicPaymentUtils is IERC1155Receiver {
         }
     }
 
-    /// @notice Executes ERC20 permits for each ERC20 item in a bundle demand.
+    /// @notice Executes ERC20 permits for each unique ERC20 token in a bundle demand.
     function _permitBundle(
         TokenBundlePaymentObligation.ObligationData memory data,
         ERC20PermitSignature[] calldata permits
     ) internal {
-        if (permits.length != data.erc20Tokens.length) {
+        if (permits.length != _uniqueERC20TokenCount(data)) {
             revert InvalidSignatureLength();
         }
 
+        uint256 permitIndex;
         for (uint256 i = 0; i < data.erc20Tokens.length; i++) {
+            if (!_isFirstERC20TokenOccurrence(data, i)) continue;
+
+            ERC20PermitSignature calldata permit = permits[permitIndex++];
             _permitErc20(
-                data.erc20Tokens[i], data.erc20Amounts[i], permits[i].deadline, permits[i].v, permits[i].r, permits[i].s
+                data.erc20Tokens[i], _totalERC20TokenAmount(data, i), permit.deadline, permit.v, permit.r, permit.s
             );
         }
     }
@@ -275,7 +279,9 @@ contract AtomicPaymentUtils is IERC1155Receiver {
         internal
     {
         for (uint256 i = 0; i < data.erc20Tokens.length; i++) {
-            IERC20(data.erc20Tokens[i]).forceApprove(spender, data.erc20Amounts[i]);
+            if (!_isFirstERC20TokenOccurrence(data, i)) continue;
+
+            IERC20(data.erc20Tokens[i]).forceApprove(spender, _totalERC20TokenAmount(data, i));
         }
 
         for (uint256 i = 0; i < data.erc721Tokens.length; i++) {
@@ -284,6 +290,43 @@ contract AtomicPaymentUtils is IERC1155Receiver {
 
         for (uint256 i = 0; i < data.erc1155Tokens.length; i++) {
             IERC1155(data.erc1155Tokens[i]).setApprovalForAll(spender, true);
+        }
+    }
+
+    /// @notice Counts unique ERC20 token addresses in the bundle.
+    function _uniqueERC20TokenCount(TokenBundlePaymentObligation.ObligationData memory data)
+        internal
+        pure
+        returns (uint256 count)
+    {
+        for (uint256 i = 0; i < data.erc20Tokens.length; i++) {
+            if (_isFirstERC20TokenOccurrence(data, i)) count++;
+        }
+    }
+
+    /// @notice Checks whether `index` is the first bundle entry for its ERC20 token address.
+    function _isFirstERC20TokenOccurrence(TokenBundlePaymentObligation.ObligationData memory data, uint256 index)
+        internal
+        pure
+        returns (bool)
+    {
+        address token = data.erc20Tokens[index];
+        for (uint256 i = 0; i < index; i++) {
+            if (data.erc20Tokens[i] == token) return false;
+        }
+
+        return true;
+    }
+
+    /// @notice Sums all ERC20 amounts for the token at `index`.
+    function _totalERC20TokenAmount(TokenBundlePaymentObligation.ObligationData memory data, uint256 index)
+        internal
+        pure
+        returns (uint256 totalAmount)
+    {
+        address token = data.erc20Tokens[index];
+        for (uint256 i = 0; i < data.erc20Tokens.length; i++) {
+            if (data.erc20Tokens[i] == token) totalAmount += data.erc20Amounts[i];
         }
     }
 

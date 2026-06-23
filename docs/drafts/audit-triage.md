@@ -68,6 +68,21 @@ Default and unconditional token-bundle escrow obligations now enforce
 accepted without being represented in the escrow attestation and later
 released or reclaimed.
 
+### audit_agent_report_7: Duplicate ERC20 Atomic Bundle Permits And Approvals
+
+Status: fixed.
+
+Report item: `audit_agent_report_7_148d58b8-8bb1-439b-abbd-daa23352bc6c.pdf`,
+finding 13.
+
+Completed by `PENDING_COMMIT`.
+
+`AtomicPaymentUtils` now treats duplicate ERC20 entries in bundle payments as
+valid position-based transfers while aggregating permit and approval allowances
+once per unique ERC20 token in first-occurrence order. This preserves
+per-transfer payment semantics and avoids final duplicate entries overwriting
+the allowance required for the full bundle amount.
+
 ### analysis(1): Splitter Public Execute Reentrancy
 
 Status: fixed.
