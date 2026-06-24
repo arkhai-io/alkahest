@@ -105,6 +105,11 @@ function installWebSocketErrorSuppression() {
 
 export interface SetupTestEnvironmentOptions {
   anvilOptions?: Partial<Parameters<typeof createAnvil>[0]>;
+  eas?: boolean;
+  easAddress?: `0x${string}`;
+  easSrAddress?: `0x${string}`;
+  deployMocks?: boolean;
+  setupMockState?: boolean;
 }
 
 export async function setupTestEnvironment(options?: SetupTestEnvironmentOptions): Promise<TestContext> {
@@ -219,7 +224,12 @@ export async function setupTestEnvironment(options?: SetupTestEnvironmentOptions
     return receipt.contractAddress as `0x${string}`;
   };
 
-  const deployed = await deployAlkahest(deployFn, { eas: true });
+  const deployEas = options?.eas ?? (!options?.easAddress && !options?.easSrAddress);
+  const deployed = await deployAlkahest(deployFn, {
+    eas: deployEas,
+    easAddress: options?.easAddress,
+    easSrAddress: options?.easSrAddress,
+  });
 
   const zeroAddr = "0x0000000000000000000000000000000000000000" as `0x${string}`;
   const addresses: TestContext_Addresses = {
@@ -235,6 +245,9 @@ export async function setupTestEnvironment(options?: SetupTestEnvironmentOptions
     return deployContractHelper(contract, [addresses.eas, addresses.easSchemaRegistry]);
   };
 
+  const deployMocks = options?.deployMocks ?? true;
+  const setupMockState = options?.setupMockState ?? deployMocks;
+
   // Deploy mock tokens
   const mockAddresses: TestContext["mockAddresses"] = {
     erc20A: "" as `0x${string}`,
@@ -248,79 +261,26 @@ export async function setupTestEnvironment(options?: SetupTestEnvironmentOptions
     erc1155C: "" as `0x${string}`,
   };
 
-  mockAddresses.erc20A = await deployContractHelper(MockERC20Permit, ["Token A", "TKA"]);
-  mockAddresses.erc20B = await deployContractHelper(MockERC20Permit, ["Token B", "TKB"]);
-  mockAddresses.erc20C = await deployContractHelper(MockERC20Permit, ["Token C", "TKC"]);
-  mockAddresses.erc721A = await deployContractHelper(MockERC721);
-  mockAddresses.erc721B = await deployContractHelper(MockERC721);
-  mockAddresses.erc721C = await deployContractHelper(MockERC721);
-  mockAddresses.erc1155A = await deployContractHelper(MockERC1155);
-  mockAddresses.erc1155B = await deployContractHelper(MockERC1155);
-  mockAddresses.erc1155C = await deployContractHelper(MockERC1155);
+  if (deployMocks) {
+    mockAddresses.erc20A = await deployContractHelper(MockERC20Permit, ["Token A", "TKA"]);
+    mockAddresses.erc20B = await deployContractHelper(MockERC20Permit, ["Token B", "TKB"]);
+    mockAddresses.erc20C = await deployContractHelper(MockERC20Permit, ["Token C", "TKC"]);
+    mockAddresses.erc721A = await deployContractHelper(MockERC721);
+    mockAddresses.erc721B = await deployContractHelper(MockERC721);
+    mockAddresses.erc721C = await deployContractHelper(MockERC721);
+    mockAddresses.erc1155A = await deployContractHelper(MockERC1155);
+    mockAddresses.erc1155B = await deployContractHelper(MockERC1155);
+    mockAddresses.erc1155C = await deployContractHelper(MockERC1155);
+  }
 
   // Distribute tokens to test accounts
-  await testClient.writeContract({
-    address: mockAddresses.erc20A,
-    abi: MockERC20Permit.abi,
-    functionName: "transfer",
-    args: [aliceAddress, parseEther("1000")],
-  });
-
-  await testClient.writeContract({
-    address: mockAddresses.erc20B,
-    abi: MockERC20Permit.abi,
-    functionName: "transfer",
-    args: [bobAddress, parseEther("1000")],
-  });
-
-  await testClient.writeContract({
-    address: mockAddresses.erc721A,
-    abi: MockERC721.abi,
-    functionName: "mint",
-    args: [aliceAddress],
-  });
-
-  await testClient.writeContract({
-    address: mockAddresses.erc721B,
-    abi: MockERC721.abi,
-    functionName: "mint",
-    args: [bobAddress],
-  });
-
-  await testClient.writeContract({
-    address: mockAddresses.erc1155A,
-    abi: MockERC1155.abi,
-    functionName: "mint",
-    args: [aliceAddress, 1n, 100n],
-  });
-
-  await testClient.writeContract({
-    address: mockAddresses.erc1155B,
-    abi: MockERC1155.abi,
-    functionName: "mint",
-    args: [bobAddress, 1n, 100n],
-  });
-
-  await testClient.writeContract({
-    address: mockAddresses.erc20C,
-    abi: MockERC20Permit.abi,
-    functionName: "transfer",
-    args: [charlieAddress, parseEther("1000")],
-  });
-
-  await testClient.writeContract({
-    address: mockAddresses.erc721C,
-    abi: MockERC721.abi,
-    functionName: "mint",
-    args: [charlieAddress],
-  });
-
-  await testClient.writeContract({
-    address: mockAddresses.erc1155C,
-    abi: MockERC1155.abi,
-    functionName: "mint",
-    args: [charlieAddress, 1n, 100n],
-  });
+  if (setupMockState) {
+    await seedMockTokenState(testClient, mockAddresses, {
+      alice: aliceAddress,
+      bob: bobAddress,
+      charlie: charlieAddress,
+    });
+  }
 
   // Create Alkahest clients
   const aliceClient = makeClient(aliceWalletClient, addresses);
@@ -399,4 +359,87 @@ export async function setupTestEnvironment(options?: SetupTestEnvironmentOptions
     addresses,
     mockAddresses,
   };
+}
+
+export async function seedMockTokenState(
+  testClient: any,
+  mockAddresses: TestContext["mockAddresses"],
+  recipients: { alice: `0x${string}`; bob: `0x${string}`; charlie: `0x${string}` },
+) {
+  if (
+    !mockAddresses.erc20A ||
+    !mockAddresses.erc20B ||
+    !mockAddresses.erc20C ||
+    !mockAddresses.erc721A ||
+    !mockAddresses.erc721B ||
+    !mockAddresses.erc721C ||
+    !mockAddresses.erc1155A ||
+    !mockAddresses.erc1155B ||
+    !mockAddresses.erc1155C
+  ) {
+    throw new Error("Cannot seed mock token state without deployed mock addresses.");
+  }
+
+  await testClient.writeContract({
+    address: mockAddresses.erc20A,
+    abi: MockERC20Permit.abi,
+    functionName: "transfer",
+    args: [recipients.alice, parseEther("1000")],
+  });
+
+  await testClient.writeContract({
+    address: mockAddresses.erc20B,
+    abi: MockERC20Permit.abi,
+    functionName: "transfer",
+    args: [recipients.bob, parseEther("1000")],
+  });
+
+  await testClient.writeContract({
+    address: mockAddresses.erc721A,
+    abi: MockERC721.abi,
+    functionName: "mint",
+    args: [recipients.alice],
+  });
+
+  await testClient.writeContract({
+    address: mockAddresses.erc721B,
+    abi: MockERC721.abi,
+    functionName: "mint",
+    args: [recipients.bob],
+  });
+
+  await testClient.writeContract({
+    address: mockAddresses.erc1155A,
+    abi: MockERC1155.abi,
+    functionName: "mint",
+    args: [recipients.alice, 1n, 100n],
+  });
+
+  await testClient.writeContract({
+    address: mockAddresses.erc1155B,
+    abi: MockERC1155.abi,
+    functionName: "mint",
+    args: [recipients.bob, 1n, 100n],
+  });
+
+  await testClient.writeContract({
+    address: mockAddresses.erc20C,
+    abi: MockERC20Permit.abi,
+    functionName: "transfer",
+    args: [recipients.charlie, parseEther("1000")],
+  });
+
+  await testClient.writeContract({
+    address: mockAddresses.erc721C,
+    abi: MockERC721.abi,
+    functionName: "mint",
+    args: [recipients.charlie],
+  });
+
+  await testClient.writeContract({
+    address: mockAddresses.erc1155C,
+    abi: MockERC1155.abi,
+    functionName: "mint",
+    args: [recipients.charlie, 1n, 100n],
+  });
 }

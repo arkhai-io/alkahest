@@ -1,10 +1,65 @@
 use crate::types::PyDefaultExtensionConfig;
 use alkahest_rs::{
     types::WalletProvider,
-    utils::{setup_test_environment, MockAddresses, TestContext},
+    utils::{
+        deploy_alkahest as deploy_alkahest_rs, get_wallet_provider, setup_test_environment,
+        DeployAlkahestOptions, EasAddresses, MockAddresses, TestContext,
+    },
 };
-use alloy::hex;
+use alloy::{hex, primitives::Address, signers::local::PrivateKeySigner};
 use pyo3::{pyclass, pymethods, PyResult};
+use std::str::FromStr;
+
+#[pyo3::pyfunction]
+#[pyo3(signature = (private_key, rpc_url, deploy_eas=true, eas=None, schema_registry=None))]
+pub fn deploy_alkahest<'py>(
+    py: pyo3::Python<'py>,
+    private_key: String,
+    rpc_url: String,
+    deploy_eas: bool,
+    eas: Option<String>,
+    schema_registry: Option<String>,
+) -> PyResult<pyo3::Bound<'py, pyo3::PyAny>> {
+    use pyo3_async_runtimes::tokio::future_into_py;
+
+    let signer = PrivateKeySigner::from_str(&private_key)
+        .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+    let eas_addresses = parse_eas_addresses(eas, schema_registry)?;
+
+    future_into_py(py, async move {
+        let provider = get_wallet_provider(signer, rpc_url)
+            .await
+            .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+        let config = deploy_alkahest_rs(
+            &provider,
+            DeployAlkahestOptions {
+                eas: eas_addresses,
+                deploy_eas,
+            },
+        )
+        .await
+        .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+        Ok(PyDefaultExtensionConfig::from(&config))
+    })
+}
+
+fn parse_eas_addresses(
+    eas: Option<String>,
+    schema_registry: Option<String>,
+) -> PyResult<Option<EasAddresses>> {
+    match (eas, schema_registry) {
+        (Some(eas), Some(schema_registry)) => Ok(Some(EasAddresses {
+            eas: Address::from_str(&eas)
+                .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?,
+            schema_registry: Address::from_str(&schema_registry)
+                .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?,
+        })),
+        (None, None) => Ok(None),
+        _ => Err(pyo3::exceptions::PyValueError::new_err(
+            "eas and schema_registry must be provided together",
+        )),
+    }
+}
 
 #[pyclass]
 #[derive(Clone)]
@@ -14,6 +69,33 @@ pub struct PyWalletProvider {
 }
 #[pymethods]
 impl PyWalletProvider {
+    #[pyo3(signature = (deploy_eas=true, eas=None, schema_registry=None))]
+    pub fn deploy_alkahest<'py>(
+        &self,
+        py: pyo3::Python<'py>,
+        deploy_eas: bool,
+        eas: Option<String>,
+        schema_registry: Option<String>,
+    ) -> PyResult<pyo3::Bound<'py, pyo3::PyAny>> {
+        use pyo3_async_runtimes::tokio::future_into_py;
+
+        let provider = self.inner.clone();
+        let eas_addresses = parse_eas_addresses(eas, schema_registry)?;
+
+        future_into_py(py, async move {
+            let config = deploy_alkahest_rs(
+                &provider,
+                DeployAlkahestOptions {
+                    eas: eas_addresses,
+                    deploy_eas,
+                },
+            )
+            .await
+            .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+            Ok(PyDefaultExtensionConfig::from(&config))
+        })
+    }
+
     pub fn anvil_increase_time<'py>(
         &self,
         py: pyo3::Python<'py>,

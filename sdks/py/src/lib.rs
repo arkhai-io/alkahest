@@ -36,7 +36,7 @@ use clients::{
 use pyo3::{
     pyclass, pymethods, pymodule,
     types::{PyAnyMethods, PyModule, PyModuleMethods},
-    Bound, FromPyObject, PyAny, PyResult, Python,
+    wrap_pyfunction, Bound, FromPyObject, PyAny, PyResult, Python,
 };
 use tokio::runtime::Runtime;
 use types::{DefaultExtensionConfig, EscowClaimedLog};
@@ -636,6 +636,7 @@ fn alkahest_py(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyTrustedOracleArbiterDemandData>()?;
     m.add_class::<EnvTestManager>()?;
     m.add_class::<PyWalletProvider>()?;
+    m.add_function(wrap_pyfunction!(crate::utils::deploy_alkahest, m)?)?;
     m.add_class::<PyMockERC20>()?;
     m.add_class::<PyMockERC721>()?;
     m.add_class::<PyMockERC1155>()?;

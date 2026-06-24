@@ -257,6 +257,281 @@ fn anvil_test_endpoint(anvil: &alloy::node_bindings::AnvilInstance) -> String {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+pub struct EasAddresses {
+    pub eas: Address,
+    pub schema_registry: Address,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct DeployAlkahestOptions {
+    pub eas: Option<EasAddresses>,
+    pub deploy_eas: bool,
+}
+
+impl Default for DeployAlkahestOptions {
+    fn default() -> Self {
+        Self {
+            eas: None,
+            deploy_eas: true,
+        }
+    }
+}
+
+pub async fn deploy_alkahest(
+    provider: &WalletProvider,
+    options: DeployAlkahestOptions,
+) -> eyre::Result<DefaultExtensionConfig> {
+    let eas_addresses = if options.deploy_eas {
+        let schema_registry = SchemaRegistry::deploy(provider).await?;
+        let eas = EAS::deploy(provider, schema_registry.address().clone()).await?;
+        EasAddresses {
+            eas: eas.address().clone(),
+            schema_registry: schema_registry.address().clone(),
+        }
+    } else {
+        options.eas.ok_or_else(|| {
+            eyre::eyre!("EAS and SchemaRegistry addresses are required when deploy_eas is false")
+        })?
+    };
+
+    let eas_address = eas_addresses.eas;
+    let schema_registry_address = eas_addresses.schema_registry;
+
+    // Deploy core arbiters
+    let trivial_arbiter = TrivialArbiter::deploy(provider).await?;
+    let trusted_oracle_arbiter = TrustedOracleArbiter::deploy(provider, eas_address).await?;
+    let intrinsics_arbiter = IntrinsicsArbiter::deploy(provider).await?;
+    let erc8004_arbiter = ERC8004Arbiter::deploy(provider).await?;
+    let references_escrow_arbiter = ReferencesEscrowArbiter::deploy(provider).await?;
+    let any_arbiter = AnyArbiter::deploy(provider).await?;
+    let all_arbiter = AllArbiter::deploy(provider).await?;
+
+    let attester_arbiter = AttesterArbiter::deploy(provider).await?;
+    let expiration_time_after_arbiter = ExpirationTimeAfterArbiter::deploy(provider).await?;
+    let expiration_time_before_arbiter = ExpirationTimeBeforeArbiter::deploy(provider).await?;
+    let expiration_time_equal_arbiter = ExpirationTimeEqualArbiter::deploy(provider).await?;
+    let recipient_arbiter = RecipientArbiter::deploy(provider).await?;
+    let ref_uid_arbiter = RefUidArbiter::deploy(provider).await?;
+    let revocable_arbiter = RevocableArbiter::deploy(provider).await?;
+    let schema_arbiter = SchemaArbiter::deploy(provider).await?;
+    let time_after_arbiter = TimeAfterArbiter::deploy(provider).await?;
+    let time_before_arbiter = TimeBeforeArbiter::deploy(provider).await?;
+    let time_equal_arbiter = TimeEqualArbiter::deploy(provider).await?;
+    let uid_arbiter = UidArbiter::deploy(provider).await?;
+
+    let exclusive_revocable_confirmation_arbiter =
+        ExclusiveRevocableConfirmationArbiter::deploy(provider, eas_address).await?;
+    let exclusive_unrevocable_confirmation_arbiter =
+        ExclusiveUnrevocableConfirmationArbiter::deploy(provider, eas_address).await?;
+    let nonexclusive_revocable_confirmation_arbiter =
+        NonexclusiveRevocableConfirmationArbiter::deploy(provider, eas_address).await?;
+    let nonexclusive_unrevocable_confirmation_arbiter =
+        NonexclusiveUnrevocableConfirmationArbiter::deploy(provider, eas_address).await?;
+
+    macro_rules! deploy_obligation {
+        ($name:ident) => {
+            $name::deploy(provider, eas_address, schema_registry_address).await?
+        };
+    }
+
+    let attestation_escrow_obligation = deploy_obligation!(AttestationEscrowObligation);
+    let attestation_reference_escrow_obligation =
+        deploy_obligation!(AttestationReferenceEscrowObligation);
+    let bundle_escrow_obligation = deploy_obligation!(TokenBundleEscrowObligation);
+    let bundle_payment_obligation = deploy_obligation!(TokenBundlePaymentObligation);
+    let erc20_escrow_obligation = deploy_obligation!(ERC20EscrowObligation);
+    let erc20_payment_obligation = deploy_obligation!(ERC20PaymentObligation);
+    let erc721_escrow_obligation = deploy_obligation!(ERC721EscrowObligation);
+    let erc721_payment_obligation = deploy_obligation!(ERC721PaymentObligation);
+    let erc1155_escrow_obligation = deploy_obligation!(ERC1155EscrowObligation);
+    let erc1155_payment_obligation = deploy_obligation!(ERC1155PaymentObligation);
+    let native_token_escrow_obligation = deploy_obligation!(NativeTokenEscrowObligation);
+    let native_token_payment_obligation = deploy_obligation!(NativeTokenPaymentObligation);
+
+    let unconditional_attestation_escrow_obligation =
+        deploy_obligation!(UnconditionalAttestationEscrowObligation);
+    let unconditional_attestation_reference_escrow_obligation =
+        deploy_obligation!(UnconditionalAttestationReferenceEscrowObligation);
+    let unconditional_bundle_escrow_obligation =
+        deploy_obligation!(UnconditionalTokenBundleEscrowObligation);
+    let unconditional_erc20_escrow_obligation =
+        deploy_obligation!(UnconditionalERC20EscrowObligation);
+    let unconditional_erc721_escrow_obligation =
+        deploy_obligation!(UnconditionalERC721EscrowObligation);
+    let unconditional_erc1155_escrow_obligation =
+        deploy_obligation!(UnconditionalERC1155EscrowObligation);
+    let unconditional_native_token_escrow_obligation =
+        deploy_obligation!(UnconditionalNativeTokenEscrowObligation);
+
+    let string_obligation =
+        StringObligation::deploy(provider, eas_address, schema_registry_address).await?;
+    let commit_reveal_obligation = CommitRevealObligation::deploy(
+        provider,
+        eas_address,
+        schema_registry_address,
+        Address::ZERO,
+    )
+    .await?;
+
+    let atomic_attestation_utils = AtomicAttestationUtils::deploy(provider, eas_address).await?;
+    let atomic_payment_utils = AtomicPaymentUtils::deploy(
+        provider,
+        eas_address,
+        erc20_payment_obligation.address().clone(),
+        erc721_payment_obligation.address().clone(),
+        erc1155_payment_obligation.address().clone(),
+        native_token_payment_obligation.address().clone(),
+        bundle_payment_obligation.address().clone(),
+    )
+    .await?;
+
+    let hook_escrow_obligation =
+        HookEscrowObligation::deploy(provider, eas_address, schema_registry_address).await?;
+    let hooks_escrow_obligation =
+        HooksEscrowObligation::deploy(provider, eas_address, schema_registry_address).await?;
+    let erc20_escrow_hook = ERC20EscrowHook::deploy(provider).await?;
+    let erc721_escrow_hook = ERC721EscrowHook::deploy(provider).await?;
+    let erc1155_escrow_hook = ERC1155EscrowHook::deploy(provider).await?;
+    let native_token_escrow_hook = NativeTokenEscrowHook::deploy(provider).await?;
+    let attestation_escrow_hook = AttestationEscrowHook::deploy(provider, eas_address).await?;
+    let attestation_reference_escrow_hook =
+        AttestationReferenceEscrowHook::deploy(provider, eas_address, schema_registry_address)
+            .await?;
+
+    let erc20_splitter = ERC20Splitter::deploy(provider, eas_address).await?;
+    let erc1155_splitter = ERC1155Splitter::deploy(provider, eas_address).await?;
+    let native_token_splitter = NativeTokenSplitter::deploy(provider, eas_address).await?;
+    let token_bundle_splitter = TokenBundleSplitter::deploy(provider, eas_address).await?;
+    let token_bundle_splitter_unvalidated =
+        TokenBundleSplitterUnvalidated::deploy(provider, eas_address).await?;
+
+    Ok(DefaultExtensionConfig {
+        arbiters_addresses: ArbitersAddresses {
+            eas: eas_address,
+            trivial_arbiter: trivial_arbiter.address().clone(),
+            trusted_oracle_arbiter: trusted_oracle_arbiter.address().clone(),
+            intrinsics_arbiter: intrinsics_arbiter.address().clone(),
+            erc8004_arbiter: erc8004_arbiter.address().clone(),
+            references_escrow_arbiter: references_escrow_arbiter.address().clone(),
+            any_arbiter: any_arbiter.address().clone(),
+            all_arbiter: all_arbiter.address().clone(),
+            attester_arbiter: attester_arbiter.address().clone(),
+            expiration_time_after_arbiter: expiration_time_after_arbiter.address().clone(),
+            expiration_time_before_arbiter: expiration_time_before_arbiter.address().clone(),
+            expiration_time_equal_arbiter: expiration_time_equal_arbiter.address().clone(),
+            recipient_arbiter: recipient_arbiter.address().clone(),
+            ref_uid_arbiter: ref_uid_arbiter.address().clone(),
+            revocable_arbiter: revocable_arbiter.address().clone(),
+            schema_arbiter: schema_arbiter.address().clone(),
+            time_after_arbiter: time_after_arbiter.address().clone(),
+            time_before_arbiter: time_before_arbiter.address().clone(),
+            time_equal_arbiter: time_equal_arbiter.address().clone(),
+            uid_arbiter: uid_arbiter.address().clone(),
+            exclusive_revocable_confirmation_arbiter: exclusive_revocable_confirmation_arbiter
+                .address()
+                .clone(),
+            exclusive_unrevocable_confirmation_arbiter: exclusive_unrevocable_confirmation_arbiter
+                .address()
+                .clone(),
+            nonexclusive_revocable_confirmation_arbiter:
+                nonexclusive_revocable_confirmation_arbiter
+                    .address()
+                    .clone(),
+            nonexclusive_unrevocable_confirmation_arbiter:
+                nonexclusive_unrevocable_confirmation_arbiter
+                    .address()
+                    .clone(),
+        },
+        string_obligation_addresses: StringObligationAddresses {
+            eas: eas_address,
+            obligation: string_obligation.address().clone(),
+        },
+        commit_reveal_obligation_addresses: CommitRevealObligationAddresses {
+            eas: eas_address,
+            obligation: commit_reveal_obligation.address().clone(),
+        },
+        erc20_addresses: Erc20Addresses {
+            eas: eas_address,
+            atomic_payment_utils: atomic_payment_utils.address().clone(),
+            escrow_obligation_default: erc20_escrow_obligation.address().clone(),
+            escrow_obligation_unconditional: unconditional_erc20_escrow_obligation
+                .address()
+                .clone(),
+            payment_obligation: erc20_payment_obligation.address().clone(),
+        },
+        erc721_addresses: Erc721Addresses {
+            eas: eas_address,
+            atomic_payment_utils: atomic_payment_utils.address().clone(),
+            escrow_obligation_default: erc721_escrow_obligation.address().clone(),
+            escrow_obligation_unconditional: unconditional_erc721_escrow_obligation
+                .address()
+                .clone(),
+            payment_obligation: erc721_payment_obligation.address().clone(),
+        },
+        erc1155_addresses: Erc1155Addresses {
+            eas: eas_address,
+            atomic_payment_utils: atomic_payment_utils.address().clone(),
+            escrow_obligation_default: erc1155_escrow_obligation.address().clone(),
+            escrow_obligation_unconditional: unconditional_erc1155_escrow_obligation
+                .address()
+                .clone(),
+            payment_obligation: erc1155_payment_obligation.address().clone(),
+        },
+        native_token_addresses: NativeTokenAddresses {
+            eas: eas_address,
+            atomic_payment_utils: atomic_payment_utils.address().clone(),
+            escrow_obligation_default: native_token_escrow_obligation.address().clone(),
+            escrow_obligation_unconditional: unconditional_native_token_escrow_obligation
+                .address()
+                .clone(),
+            payment_obligation: native_token_payment_obligation.address().clone(),
+        },
+        token_bundle_addresses: TokenBundleAddresses {
+            eas: eas_address,
+            atomic_payment_utils: atomic_payment_utils.address().clone(),
+            escrow_obligation_default: bundle_escrow_obligation.address().clone(),
+            escrow_obligation_unconditional: unconditional_bundle_escrow_obligation
+                .address()
+                .clone(),
+            payment_obligation: bundle_payment_obligation.address().clone(),
+        },
+        hook_based_addresses: HookBasedAddresses {
+            eas: eas_address,
+            hook_escrow_obligation: hook_escrow_obligation.address().clone(),
+            hooks_escrow_obligation: hooks_escrow_obligation.address().clone(),
+            erc20_escrow_hook: erc20_escrow_hook.address().clone(),
+            erc721_escrow_hook: erc721_escrow_hook.address().clone(),
+            erc1155_escrow_hook: erc1155_escrow_hook.address().clone(),
+            native_token_escrow_hook: native_token_escrow_hook.address().clone(),
+            attestation_escrow_hook: attestation_escrow_hook.address().clone(),
+            attestation_reference_escrow_hook: attestation_reference_escrow_hook.address().clone(),
+        },
+        splitters_addresses: SplittersAddresses {
+            erc20_splitter: erc20_splitter.address().clone(),
+            erc1155_splitter: erc1155_splitter.address().clone(),
+            native_token_splitter: native_token_splitter.address().clone(),
+            token_bundle_splitter: token_bundle_splitter.address().clone(),
+            token_bundle_splitter_unvalidated: token_bundle_splitter_unvalidated.address().clone(),
+        },
+        attestation_addresses: AttestationAddresses {
+            eas: eas_address,
+            eas_schema_registry: schema_registry_address,
+            atomic_attestation_utils: atomic_attestation_utils.address().clone(),
+            escrow_obligation_default: attestation_escrow_obligation.address().clone(),
+            escrow_obligation_unconditional: unconditional_attestation_escrow_obligation
+                .address()
+                .clone(),
+            attestation_reference_escrow_obligation_default:
+                attestation_reference_escrow_obligation.address().clone(),
+            attestation_reference_escrow_obligation_unconditional:
+                unconditional_attestation_reference_escrow_obligation
+                    .address()
+                    .clone(),
+        },
+    })
+}
+
 /// Shared singleton holding the once-per-process anvil + deployed contracts.
 /// Tests acquire `setup_lock` for the duration of their run, revert anvil
 /// to the post-deploy snapshot, and operate on fresh signers funded from
@@ -323,11 +598,7 @@ pub async fn setup_test_environment() -> eyre::Result<TestContext> {
     let charlie = PrivateKeySigner::random();
 
     let funding = U256::from(10_u128).pow(U256::from(20)); // 100 ETH
-    for (label, to) in [
-        ("alice", alice.address()),
-        ("bob", bob.address()),
-        ("charlie", charlie.address()),
-    ] {
+    for to in [alice.address(), bob.address(), charlie.address()] {
         let tx = TransactionRequest::default()
             .with_to(to)
             .with_value(funding);
@@ -393,8 +664,7 @@ async fn build_shared_env() -> eyre::Result<SharedTestEnv> {
     let god_provider = get_wallet_provider(god.clone(), rpc_url.clone()).await?;
     let god_provider_ = god_provider.clone();
 
-    let schema_registry = SchemaRegistry::deploy(&god_provider).await?;
-    let eas = EAS::deploy(&god_provider, schema_registry.address().clone()).await?;
+    let addresses = deploy_alkahest(&god_provider, DeployAlkahestOptions::default()).await?;
 
     let mock_erc20_a =
         MockERC20Permit::deploy(&god_provider, "Mock Erc20".into(), "TK1".into()).await?;
@@ -404,275 +674,6 @@ async fn build_shared_env() -> eyre::Result<SharedTestEnv> {
     let mock_erc721_b = MockERC721::deploy(&god_provider).await?;
     let mock_erc1155_a = MockERC1155::deploy(&god_provider).await?;
     let mock_erc1155_b = MockERC1155::deploy(&god_provider).await?;
-
-    // Deploy core arbiters
-    let trivial_arbiter = TrivialArbiter::deploy(&god_provider).await?;
-    let trusted_oracle_arbiter =
-        TrustedOracleArbiter::deploy(&god_provider, eas.address().clone()).await?;
-    let intrinsics_arbiter = IntrinsicsArbiter::deploy(&god_provider).await?;
-    let erc8004_arbiter = ERC8004Arbiter::deploy(&god_provider).await?;
-    let references_escrow_arbiter = ReferencesEscrowArbiter::deploy(&god_provider).await?;
-    let any_arbiter = AnyArbiter::deploy(&god_provider).await?;
-    let all_arbiter = AllArbiter::deploy(&god_provider).await?;
-
-    // Deploy attestation property arbiters (non-composing only - composing arbiters removed)
-    let attester_arbiter = AttesterArbiter::deploy(&god_provider).await?;
-    let expiration_time_after_arbiter = ExpirationTimeAfterArbiter::deploy(&god_provider).await?;
-    let expiration_time_before_arbiter = ExpirationTimeBeforeArbiter::deploy(&god_provider).await?;
-    let expiration_time_equal_arbiter = ExpirationTimeEqualArbiter::deploy(&god_provider).await?;
-    let recipient_arbiter = RecipientArbiter::deploy(&god_provider).await?;
-    let ref_uid_arbiter = RefUidArbiter::deploy(&god_provider).await?;
-    let revocable_arbiter = RevocableArbiter::deploy(&god_provider).await?;
-    let schema_arbiter = SchemaArbiter::deploy(&god_provider).await?;
-    let time_after_arbiter = TimeAfterArbiter::deploy(&god_provider).await?;
-    let time_before_arbiter = TimeBeforeArbiter::deploy(&god_provider).await?;
-    let time_equal_arbiter = TimeEqualArbiter::deploy(&god_provider).await?;
-    let uid_arbiter = UidArbiter::deploy(&god_provider).await?;
-
-    // Deploy confirmation arbiters (new naming convention)
-    let exclusive_revocable_confirmation_arbiter =
-        ExclusiveRevocableConfirmationArbiter::deploy(&god_provider, eas.address().clone()).await?;
-    let exclusive_unrevocable_confirmation_arbiter =
-        ExclusiveUnrevocableConfirmationArbiter::deploy(&god_provider, eas.address().clone())
-            .await?;
-    let nonexclusive_revocable_confirmation_arbiter =
-        NonexclusiveRevocableConfirmationArbiter::deploy(&god_provider, eas.address().clone())
-            .await?;
-    let nonexclusive_unrevocable_confirmation_arbiter =
-        NonexclusiveUnrevocableConfirmationArbiter::deploy(&god_provider, eas.address().clone())
-            .await?;
-
-    macro_rules! deploy_obligation {
-        ($name:ident) => {
-            $name::deploy(
-                &god_provider,
-                eas.address().clone(),
-                schema_registry.address().clone(),
-            )
-            .await?
-        };
-    }
-
-    // Deploy default obligations
-    let attestation_escrow_obligation = deploy_obligation!(AttestationEscrowObligation);
-    let attestation_reference_escrow_obligation =
-        deploy_obligation!(AttestationReferenceEscrowObligation);
-    let bundle_escrow_obligation = deploy_obligation!(TokenBundleEscrowObligation);
-    let bundle_payment_obligation = deploy_obligation!(TokenBundlePaymentObligation);
-    let erc20_escrow_obligation = deploy_obligation!(ERC20EscrowObligation);
-    let erc20_payment_obligation = deploy_obligation!(ERC20PaymentObligation);
-    let erc721_escrow_obligation = deploy_obligation!(ERC721EscrowObligation);
-    let erc721_payment_obligation = deploy_obligation!(ERC721PaymentObligation);
-    let erc1155_escrow_obligation = deploy_obligation!(ERC1155EscrowObligation);
-    let erc1155_payment_obligation = deploy_obligation!(ERC1155PaymentObligation);
-    let native_token_escrow_obligation = deploy_obligation!(NativeTokenEscrowObligation);
-    let native_token_payment_obligation = deploy_obligation!(NativeTokenPaymentObligation);
-
-    // Deploy unconditional obligations
-    let unconditional_attestation_escrow_obligation =
-        deploy_obligation!(UnconditionalAttestationEscrowObligation);
-    let unconditional_attestation_reference_escrow_obligation =
-        deploy_obligation!(UnconditionalAttestationReferenceEscrowObligation);
-    let unconditional_bundle_escrow_obligation =
-        deploy_obligation!(UnconditionalTokenBundleEscrowObligation);
-    let unconditional_erc20_escrow_obligation =
-        deploy_obligation!(UnconditionalERC20EscrowObligation);
-    let unconditional_erc721_escrow_obligation =
-        deploy_obligation!(UnconditionalERC721EscrowObligation);
-    let unconditional_erc1155_escrow_obligation =
-        deploy_obligation!(UnconditionalERC1155EscrowObligation);
-    let unconditional_native_token_escrow_obligation =
-        deploy_obligation!(UnconditionalNativeTokenEscrowObligation);
-
-    let string_obligation = StringObligation::deploy(
-        &god_provider,
-        eas.address().clone(),
-        schema_registry.address().clone(),
-    )
-    .await?;
-
-    let commit_reveal_obligation = CommitRevealObligation::deploy(
-        &god_provider,
-        eas.address().clone(),
-        schema_registry.address().clone(),
-        Address::ZERO, // burn slashed bonds
-    )
-    .await?;
-
-    // Deploy atomic utils
-    let atomic_attestation_utils =
-        AtomicAttestationUtils::deploy(&god_provider, eas.address().clone()).await?;
-    let atomic_payment_utils = AtomicPaymentUtils::deploy(
-        &god_provider,
-        eas.address().clone(),
-        erc20_payment_obligation.address().clone(),
-        erc721_payment_obligation.address().clone(),
-        erc1155_payment_obligation.address().clone(),
-        native_token_payment_obligation.address().clone(),
-        bundle_payment_obligation.address().clone(),
-    )
-    .await?;
-    let hook_escrow_obligation = HookEscrowObligation::deploy(
-        &god_provider,
-        eas.address().clone(),
-        schema_registry.address().clone(),
-    )
-    .await?;
-    let hooks_escrow_obligation = HooksEscrowObligation::deploy(
-        &god_provider,
-        eas.address().clone(),
-        schema_registry.address().clone(),
-    )
-    .await?;
-    let erc20_escrow_hook = ERC20EscrowHook::deploy(&god_provider).await?;
-    let erc721_escrow_hook = ERC721EscrowHook::deploy(&god_provider).await?;
-    let erc1155_escrow_hook = ERC1155EscrowHook::deploy(&god_provider).await?;
-    let native_token_escrow_hook = NativeTokenEscrowHook::deploy(&god_provider).await?;
-    let attestation_escrow_hook =
-        AttestationEscrowHook::deploy(&god_provider, eas.address().clone()).await?;
-    let attestation_reference_escrow_hook = AttestationReferenceEscrowHook::deploy(
-        &god_provider,
-        eas.address().clone(),
-        schema_registry.address().clone(),
-    )
-    .await?;
-    let erc20_splitter = ERC20Splitter::deploy(&god_provider, eas.address().clone()).await?;
-    let erc1155_splitter = ERC1155Splitter::deploy(&god_provider, eas.address().clone()).await?;
-    let native_token_splitter =
-        NativeTokenSplitter::deploy(&god_provider, eas.address().clone()).await?;
-    let token_bundle_splitter =
-        TokenBundleSplitter::deploy(&god_provider, eas.address().clone()).await?;
-    let token_bundle_splitter_unvalidated =
-        TokenBundleSplitterUnvalidated::deploy(&god_provider, eas.address().clone()).await?;
-
-    // Per-test wallets are created in setup_test_environment(); the
-    // shared singleton only needs the deployer-derived state.
-    let addresses = DefaultExtensionConfig {
-        arbiters_addresses: ArbitersAddresses {
-            eas: eas.address().clone(),
-            trivial_arbiter: trivial_arbiter.address().clone(),
-            trusted_oracle_arbiter: trusted_oracle_arbiter.address().clone(),
-            intrinsics_arbiter: intrinsics_arbiter.address().clone(),
-            erc8004_arbiter: erc8004_arbiter.address().clone(),
-            references_escrow_arbiter: references_escrow_arbiter.address().clone(),
-            any_arbiter: any_arbiter.address().clone(),
-            all_arbiter: all_arbiter.address().clone(),
-            // Attestation property arbiters
-            attester_arbiter: attester_arbiter.address().clone(),
-            expiration_time_after_arbiter: expiration_time_after_arbiter.address().clone(),
-            expiration_time_before_arbiter: expiration_time_before_arbiter.address().clone(),
-            expiration_time_equal_arbiter: expiration_time_equal_arbiter.address().clone(),
-            recipient_arbiter: recipient_arbiter.address().clone(),
-            ref_uid_arbiter: ref_uid_arbiter.address().clone(),
-            revocable_arbiter: revocable_arbiter.address().clone(),
-            schema_arbiter: schema_arbiter.address().clone(),
-            time_after_arbiter: time_after_arbiter.address().clone(),
-            time_before_arbiter: time_before_arbiter.address().clone(),
-            time_equal_arbiter: time_equal_arbiter.address().clone(),
-            uid_arbiter: uid_arbiter.address().clone(),
-            // Confirmation arbiters
-            exclusive_revocable_confirmation_arbiter: exclusive_revocable_confirmation_arbiter
-                .address()
-                .clone(),
-            exclusive_unrevocable_confirmation_arbiter: exclusive_unrevocable_confirmation_arbiter
-                .address()
-                .clone(),
-            nonexclusive_revocable_confirmation_arbiter:
-                nonexclusive_revocable_confirmation_arbiter
-                    .address()
-                    .clone(),
-            nonexclusive_unrevocable_confirmation_arbiter:
-                nonexclusive_unrevocable_confirmation_arbiter
-                    .address()
-                    .clone(),
-        },
-        string_obligation_addresses: StringObligationAddresses {
-            eas: eas.address().clone(),
-            obligation: string_obligation.address().clone(),
-        },
-        commit_reveal_obligation_addresses: CommitRevealObligationAddresses {
-            eas: eas.address().clone(),
-            obligation: commit_reveal_obligation.address().clone(),
-        },
-        erc20_addresses: Erc20Addresses {
-            eas: eas.address().clone(),
-            atomic_payment_utils: atomic_payment_utils.address().clone(),
-            escrow_obligation_default: erc20_escrow_obligation.address().clone(),
-            escrow_obligation_unconditional: unconditional_erc20_escrow_obligation
-                .address()
-                .clone(),
-            payment_obligation: erc20_payment_obligation.address().clone(),
-        },
-        erc721_addresses: Erc721Addresses {
-            eas: eas.address().clone(),
-            atomic_payment_utils: atomic_payment_utils.address().clone(),
-            escrow_obligation_default: erc721_escrow_obligation.address().clone(),
-            escrow_obligation_unconditional: unconditional_erc721_escrow_obligation
-                .address()
-                .clone(),
-            payment_obligation: erc721_payment_obligation.address().clone(),
-        },
-        erc1155_addresses: Erc1155Addresses {
-            eas: eas.address().clone(),
-            atomic_payment_utils: atomic_payment_utils.address().clone(),
-            escrow_obligation_default: erc1155_escrow_obligation.address().clone(),
-            escrow_obligation_unconditional: unconditional_erc1155_escrow_obligation
-                .address()
-                .clone(),
-            payment_obligation: erc1155_payment_obligation.address().clone(),
-        },
-        native_token_addresses: NativeTokenAddresses {
-            eas: eas.address().clone(),
-            atomic_payment_utils: atomic_payment_utils.address().clone(),
-            escrow_obligation_default: native_token_escrow_obligation.address().clone(),
-            escrow_obligation_unconditional: unconditional_native_token_escrow_obligation
-                .address()
-                .clone(),
-            payment_obligation: native_token_payment_obligation.address().clone(),
-        },
-        token_bundle_addresses: TokenBundleAddresses {
-            eas: eas.address().clone(),
-            atomic_payment_utils: atomic_payment_utils.address().clone(),
-            escrow_obligation_default: bundle_escrow_obligation.address().clone(),
-            escrow_obligation_unconditional: unconditional_bundle_escrow_obligation
-                .address()
-                .clone(),
-            payment_obligation: bundle_payment_obligation.address().clone(),
-        },
-        hook_based_addresses: HookBasedAddresses {
-            eas: eas.address().clone(),
-            hook_escrow_obligation: hook_escrow_obligation.address().clone(),
-            hooks_escrow_obligation: hooks_escrow_obligation.address().clone(),
-            erc20_escrow_hook: erc20_escrow_hook.address().clone(),
-            erc721_escrow_hook: erc721_escrow_hook.address().clone(),
-            erc1155_escrow_hook: erc1155_escrow_hook.address().clone(),
-            native_token_escrow_hook: native_token_escrow_hook.address().clone(),
-            attestation_escrow_hook: attestation_escrow_hook.address().clone(),
-            attestation_reference_escrow_hook: attestation_reference_escrow_hook.address().clone(),
-        },
-        splitters_addresses: SplittersAddresses {
-            erc20_splitter: erc20_splitter.address().clone(),
-            erc1155_splitter: erc1155_splitter.address().clone(),
-            native_token_splitter: native_token_splitter.address().clone(),
-            token_bundle_splitter: token_bundle_splitter.address().clone(),
-            token_bundle_splitter_unvalidated: token_bundle_splitter_unvalidated.address().clone(),
-        },
-        attestation_addresses: AttestationAddresses {
-            eas: eas.address().clone(),
-            eas_schema_registry: schema_registry.address().clone(),
-            atomic_attestation_utils: atomic_attestation_utils.address().clone(),
-            escrow_obligation_default: attestation_escrow_obligation.address().clone(),
-            escrow_obligation_unconditional: unconditional_attestation_escrow_obligation
-                .address()
-                .clone(),
-            attestation_reference_escrow_obligation_default:
-                attestation_reference_escrow_obligation.address().clone(),
-            attestation_reference_escrow_obligation_unconditional:
-                unconditional_attestation_reference_escrow_obligation
-                    .address()
-                    .clone(),
-        },
-    };
 
     let mock_addresses = MockAddresses {
         erc20_a: mock_erc20_a.address().clone(),
