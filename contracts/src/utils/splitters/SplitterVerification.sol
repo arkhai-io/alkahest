@@ -2,7 +2,7 @@
 pragma solidity ^0.8.26;
 
 import {Attestation} from "@eas/Common.sol";
-import {ArbiterUtils} from "../../ArbiterUtils.sol";
+import {ArbiterUtils} from "../../libraries/ArbiterUtils.sol";
 
 /// @notice Minimal escrow metadata interface used by splitter verification helpers.
 interface ISplitterEscrowObligation {

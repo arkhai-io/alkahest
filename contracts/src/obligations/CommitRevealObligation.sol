@@ -9,7 +9,7 @@ import {BaseObligation} from "../BaseObligation.sol";
 import {BaseArbiter} from "../BaseArbiter.sol";
 import {IArbiter} from "../IArbiter.sol";
 import {IEscrow} from "../IEscrow.sol";
-import {ArbiterUtils} from "../ArbiterUtils.sol";
+import {ArbiterUtils} from "../libraries/ArbiterUtils.sol";
 
 /// @title CommitRevealObligation
 /// @notice Obligation with built-in commit-reveal anti-front-running checks.

@@ -14,7 +14,7 @@ import {IArbiter} from "../../IArbiter.sol";
 import {BaseArbiter} from "../../BaseArbiter.sol";
 import {BaseObligation} from "../../BaseObligation.sol";
 import {StringResultObligation} from "../../obligations/example/StringResultObligation.sol";
-import {ArbiterUtils} from "../../ArbiterUtils.sol";
+import {ArbiterUtils} from "../../libraries/ArbiterUtils.sol";
 
 contract OptimisticStringValidator is BaseObligation, BaseArbiter {
     using ArbiterUtils for Attestation;

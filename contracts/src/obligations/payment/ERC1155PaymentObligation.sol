@@ -14,7 +14,7 @@ import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {BaseObligation} from "../../BaseObligation.sol";
 import {BaseArbiter} from "../../BaseArbiter.sol";
 import {IArbiter} from "../../IArbiter.sol";
-import {ArbiterUtils} from "../../ArbiterUtils.sol";
+import {ArbiterUtils} from "../../libraries/ArbiterUtils.sol";
 
 /// @title ERC1155PaymentObligation
 /// @notice Transfers ERC1155 tokens to a payee and records the payment as an EAS attestation.

@@ -4,7 +4,7 @@ pragma solidity ^0.8.26;
 import "forge-std/Test.sol";
 import {NativeTokenEscrowObligation} from "@src/obligations/escrow/default/NativeTokenEscrowObligation.sol";
 import {BaseEscrowObligation} from "@src/BaseEscrowObligation.sol";
-import {ArbiterUtils} from "@src/ArbiterUtils.sol";
+import {ArbiterUtils} from "@src/libraries/ArbiterUtils.sol";
 import {StringObligation} from "@src/obligations/StringObligation.sol";
 import {IArbiter} from "@src/IArbiter.sol";
 import {IEscrow} from "@src/IEscrow.sol";

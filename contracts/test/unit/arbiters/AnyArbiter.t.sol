@@ -7,7 +7,7 @@ import {AnyArbiter} from "@src/arbiters/logical/AnyArbiter.sol";
 import {IntrinsicsArbiter} from "@src/arbiters/IntrinsicsArbiter.sol";
 import {IArbiter} from "@src/IArbiter.sol";
 import {BaseArbiter} from "@src/BaseArbiter.sol";
-import {ArbiterUtils} from "@src/ArbiterUtils.sol";
+import {ArbiterUtils} from "@src/libraries/ArbiterUtils.sol";
 
 // Mock arbiters for testing
 contract MockSuccessArbiter is BaseArbiter {

@@ -11,7 +11,7 @@ import {
 import {IEAS, Attestation, AttestationRequest, AttestationRequestData} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {ISchemaResolver} from "@eas/resolver/ISchemaResolver.sol";
-import {SchemaRegistryUtils} from "@src/eas/SchemaRegistryUtils.sol";
+import {SchemaRegistryUtils} from "@src/libraries/SchemaRegistryUtils.sol";
 import {EASDeployer} from "@test/utils/EASDeployer.sol";
 import {PayableResolver} from "../../fixtures/PayableResolver.sol";
 

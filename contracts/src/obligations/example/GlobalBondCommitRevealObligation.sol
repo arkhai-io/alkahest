@@ -5,7 +5,7 @@ import {Attestation} from "@eas/Common.sol";
 import {IEAS} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {ArbiterUtils} from "@src/ArbiterUtils.sol";
+import {ArbiterUtils} from "@src/libraries/ArbiterUtils.sol";
 import {BaseObligation} from "@src/BaseObligation.sol";
 import {BaseArbiter} from "@src/BaseArbiter.sol";
 import {IArbiter} from "@src/IArbiter.sol";

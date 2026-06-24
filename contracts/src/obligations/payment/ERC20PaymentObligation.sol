@@ -15,7 +15,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {BaseObligation} from "../../BaseObligation.sol";
 import {BaseArbiter} from "../../BaseArbiter.sol";
 import {IArbiter} from "../../IArbiter.sol";
-import {ArbiterUtils} from "../../ArbiterUtils.sol";
+import {ArbiterUtils} from "../../libraries/ArbiterUtils.sol";
 
 /// @title ERC20PaymentObligation
 /// @notice Transfers ERC20 tokens to a payee and records the payment as an EAS attestation.

@@ -7,7 +7,7 @@ import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {BaseObligation} from "../../BaseObligation.sol";
 import {IArbiter} from "../../IArbiter.sol";
 import {BaseArbiter} from "../../BaseArbiter.sol";
-import {ArbiterUtils} from "../../ArbiterUtils.sol";
+import {ArbiterUtils} from "../../libraries/ArbiterUtils.sol";
 
 /**
  * @title CryptoSignatureObligation

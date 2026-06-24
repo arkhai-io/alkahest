@@ -8,7 +8,7 @@ import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {ISchemaResolver} from "@eas/resolver/ISchemaResolver.sol";
 import {SchemaResolver} from "@eas/resolver/SchemaResolver.sol";
 import {Attestation} from "@eas/Common.sol";
-import {SchemaRegistryUtils} from "../../../../eas/SchemaRegistryUtils.sol";
+import {SchemaRegistryUtils} from "../../../../libraries/SchemaRegistryUtils.sol";
 
 /// @title AttestationReferenceEscrowHook
 /// @notice An IEscrowHook that creates a validation attestation referencing

@@ -4,12 +4,12 @@ pragma solidity ^0.8.26;
 import {BaseEscrowObligationUnconditional} from "../../../BaseEscrowObligationUnconditional.sol";
 import {IArbiter} from "../../../IArbiter.sol";
 import {BaseArbiter} from "../../../BaseArbiter.sol";
-import {ArbiterUtils} from "../../../ArbiterUtils.sol";
+import {ArbiterUtils} from "../../../libraries/ArbiterUtils.sol";
 import {Attestation} from "@eas/Common.sol";
 import {IEAS, AttestationRequest, AttestationRequestData} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {ISchemaResolver} from "@eas/resolver/ISchemaResolver.sol";
-import {SchemaRegistryUtils} from "../../../eas/SchemaRegistryUtils.sol";
+import {SchemaRegistryUtils} from "../../../libraries/SchemaRegistryUtils.sol";
 
 /// @title UnconditionalAttestationReferenceEscrowObligation
 /// @notice Escrows a reference to an existing attestation behind an arbiter-defined fulfillment condition.

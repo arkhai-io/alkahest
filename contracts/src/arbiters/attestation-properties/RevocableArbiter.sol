@@ -4,7 +4,7 @@ pragma solidity ^0.8.26;
 import {Attestation} from "@eas/Common.sol";
 import {IArbiter} from "../../IArbiter.sol";
 import {BaseArbiter} from "../../BaseArbiter.sol";
-import {ArbiterUtils} from "../../ArbiterUtils.sol";
+import {ArbiterUtils} from "../../libraries/ArbiterUtils.sol";
 
 /// @title RevocableArbiter
 /// @notice Accepts fulfillments whose revocability matches demand data.

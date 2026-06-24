@@ -7,7 +7,7 @@ import {IEAS, Attestation} from "@eas/IEAS.sol";
 import {ISchemaRegistry, SchemaRecord} from "@eas/ISchemaRegistry.sol";
 import {ISchemaResolver} from "@eas/resolver/ISchemaResolver.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import {SchemaRegistryUtils} from "@src/eas/SchemaRegistryUtils.sol";
+import {SchemaRegistryUtils} from "@src/libraries/SchemaRegistryUtils.sol";
 import {EASDeployer} from "@test/utils/EASDeployer.sol";
 
 contract StringObligationTest is Test {

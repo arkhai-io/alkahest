@@ -4,7 +4,7 @@ pragma solidity ^0.8.26;
 import {Test} from "forge-std/Test.sol";
 import {Attestation} from "@eas/Common.sol";
 import {IntrinsicsArbiter} from "@src/arbiters/IntrinsicsArbiter.sol";
-import {ArbiterUtils} from "@src/ArbiterUtils.sol";
+import {ArbiterUtils} from "@src/libraries/ArbiterUtils.sol";
 
 contract IntrinsicsArbiterTest is Test {
     IntrinsicsArbiter arbiter;

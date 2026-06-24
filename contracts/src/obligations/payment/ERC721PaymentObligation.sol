@@ -14,7 +14,7 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {BaseObligation} from "../../BaseObligation.sol";
 import {BaseArbiter} from "../../BaseArbiter.sol";
 import {IArbiter} from "../../IArbiter.sol";
-import {ArbiterUtils} from "../../ArbiterUtils.sol";
+import {ArbiterUtils} from "../../libraries/ArbiterUtils.sol";
 
 /// @title ERC721PaymentObligation
 /// @notice Transfers an ERC721 token to a payee and records the payment as an EAS attestation.

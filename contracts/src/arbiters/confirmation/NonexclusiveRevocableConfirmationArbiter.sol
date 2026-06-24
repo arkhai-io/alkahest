@@ -5,7 +5,7 @@ import {Attestation} from "@eas/Common.sol";
 import {IEAS} from "@eas/IEAS.sol";
 import {IArbiter} from "../../IArbiter.sol";
 import {BaseArbiter} from "../../BaseArbiter.sol";
-import {ArbiterUtils} from "../../ArbiterUtils.sol";
+import {ArbiterUtils} from "../../libraries/ArbiterUtils.sol";
 
 /// @title NonexclusiveRevocableConfirmationArbiter
 /// @notice Accepts any fulfillment confirmed for an escrow, with recipient-controlled revocation.

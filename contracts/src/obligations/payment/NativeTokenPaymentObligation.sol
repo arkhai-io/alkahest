@@ -13,7 +13,7 @@ import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {BaseObligation} from "../../BaseObligation.sol";
 import {BaseArbiter} from "../../BaseArbiter.sol";
 import {IArbiter} from "../../IArbiter.sol";
-import {ArbiterUtils} from "../../ArbiterUtils.sol";
+import {ArbiterUtils} from "../../libraries/ArbiterUtils.sol";
 
 /// @title NativeTokenPaymentObligation
 /// @notice Transfers native tokens to a payee and records the payment as an EAS attestation.
