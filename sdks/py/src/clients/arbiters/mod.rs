@@ -36,8 +36,8 @@ pub use confirmation::{
 
 // Re-export logical types
 pub use logical::{
-    AllArbiter, AnyArbiter, Logical, PyDecodedAllArbiterDemandData, PyDecodedAnyArbiterDemandData,
-    PyDecodedDemand,
+    AllArbiter, AllArbiterDemandData, AnyArbiter, AnyArbiterDemandData, Logical,
+    PyDecodedAllArbiterDemandData, PyDecodedAnyArbiterDemandData, PyDecodedDemand,
 };
 
 // Re-export attestation properties types

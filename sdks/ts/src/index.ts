@@ -19,6 +19,7 @@ import { makeDefaultExtension } from "./extensions";
 import type { ChainAddresses, Demand } from "./types";
 import {
   type DecodedDemandResult,
+  type DecodersRecord,
   decodeDemandWithAddresses,
   getAttestation,
   getOptimalPollingInterval,
@@ -86,7 +87,7 @@ export type MinimalClient = ExtendableClient<{
     demandAbi: DemandData,
     fulfillment: { refUID: `0x${string}` },
   ) => Promise<[Awaited<ReturnType<typeof getAttestation>>, DecodeAbiParametersReturnType<DemandData>]>;
-  decodeDemand: (demand: Demand) => DecodedDemandResult;
+  decodeDemand: (demand: Demand, extraDecoders?: Partial<DecodersRecord>) => DecodedDemandResult;
 }>;
 
 // Type for the default extensions
@@ -541,8 +542,8 @@ export const makeMinimalClient = (
      * console.log(decoded.children); // nested demands if composing arbiter
      * ```
      */
-    decodeDemand: (demand: Demand): DecodedDemandResult => {
-      return decodeDemandWithAddresses(demand, addresses);
+    decodeDemand: (demand: Demand, extraDecoders: Partial<DecodersRecord> = {}): DecodedDemandResult => {
+      return decodeDemandWithAddresses(demand, addresses, extraDecoders);
     },
   };
 

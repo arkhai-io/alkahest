@@ -23,9 +23,12 @@ use alloy::{
 use serde::{Deserialize, Serialize};
 
 mod attestation_properties;
+mod codec;
 mod confirmation;
 mod logical;
 mod trusted_oracle;
+
+pub use codec::{ArbiterDemandCodec, ArbiterDemandCodecRegistry, DecodedExtensionDemand};
 
 // Re-export confirmation types
 pub use confirmation::ConfirmationArbiterType;
@@ -83,12 +86,121 @@ pub struct ArbitersModule {
     pub(crate) poll_interval: std::time::Duration,
 
     pub addresses: ArbitersAddresses,
+    pub demand_codecs: ArbiterDemandCodecRegistry,
 }
 
 impl Default for ArbitersAddresses {
     fn default() -> Self {
         BASE_SEPOLIA_ADDRESSES.arbiters_addresses
     }
+}
+
+pub fn default_demand_codecs(addresses: &ArbitersAddresses) -> ArbiterDemandCodecRegistry {
+    let mut registry = ArbiterDemandCodecRegistry::new();
+
+    registry.register_fn(addresses.trivial_arbiter, |_, _, _: Bytes| {
+        Ok(DecodedDemand::TrivialArbiter)
+    });
+    registry.register_fn(addresses.intrinsics_arbiter, |_, _, _: Bytes| {
+        Ok(DecodedDemand::IntrinsicsArbiter)
+    });
+    registry.register_fn(addresses.references_escrow_arbiter, |_, _, _: Bytes| {
+        Ok(DecodedDemand::ReferencesEscrowArbiter)
+    });
+    registry.register_fn(addresses.trusted_oracle_arbiter, |_, _, demand: Bytes| {
+        let demand: contracts::arbiters::TrustedOracleArbiter::DemandData = demand.try_into()?;
+        Ok(DecodedDemand::TrustedOracle(demand))
+    });
+    registry.register_fn(addresses.erc8004_arbiter, |_, _, demand: Bytes| {
+        let demand: contracts::arbiters::ERC8004Arbiter::DemandData = demand.try_into()?;
+        Ok(DecodedDemand::ERC8004Arbiter(demand))
+    });
+    registry.register_fn(
+        addresses.any_arbiter,
+        |registry: &ArbiterDemandCodecRegistry, _, demand: Bytes| {
+            let demand: contracts::arbiters::logical::AnyArbiter::DemandData = demand.try_into()?;
+            Ok(DecodedDemand::AnyArbiter(
+                logical::decode_any_arbiter_demands_with_registry(registry, demand)?,
+            ))
+        },
+    );
+    registry.register_fn(
+        addresses.all_arbiter,
+        |registry: &ArbiterDemandCodecRegistry, _, demand: Bytes| {
+            let demand: contracts::arbiters::logical::AllArbiter::DemandData = demand.try_into()?;
+            Ok(DecodedDemand::AllArbiter(
+                logical::decode_all_arbiter_demands_with_registry(registry, demand)?,
+            ))
+        },
+    );
+    registry.register_fn(addresses.attester_arbiter, |_, _, demand: Bytes| {
+        let demand: contracts::arbiters::attestation_properties::AttesterArbiter::DemandData =
+            demand.try_into()?;
+        Ok(DecodedDemand::AttesterArbiter(demand))
+    });
+    registry.register_fn(
+        addresses.expiration_time_after_arbiter,
+        |_, _, demand: Bytes| {
+            let demand: contracts::arbiters::attestation_properties::ExpirationTimeAfterArbiter::DemandData = demand.try_into()?;
+            Ok(DecodedDemand::ExpirationTimeAfterArbiter(demand))
+        },
+    );
+    registry.register_fn(
+        addresses.expiration_time_before_arbiter,
+        |_, _, demand: Bytes| {
+            let demand: contracts::arbiters::attestation_properties::ExpirationTimeBeforeArbiter::DemandData = demand.try_into()?;
+            Ok(DecodedDemand::ExpirationTimeBeforeArbiter(demand))
+        },
+    );
+    registry.register_fn(
+        addresses.expiration_time_equal_arbiter,
+        |_, _, demand: Bytes| {
+            let demand: contracts::arbiters::attestation_properties::ExpirationTimeEqualArbiter::DemandData = demand.try_into()?;
+            Ok(DecodedDemand::ExpirationTimeEqualArbiter(demand))
+        },
+    );
+    registry.register_fn(addresses.recipient_arbiter, |_, _, demand: Bytes| {
+        let demand: contracts::arbiters::attestation_properties::RecipientArbiter::DemandData =
+            demand.try_into()?;
+        Ok(DecodedDemand::RecipientArbiter(demand))
+    });
+    registry.register_fn(addresses.ref_uid_arbiter, |_, _, demand: Bytes| {
+        let demand: contracts::arbiters::attestation_properties::RefUidArbiter::DemandData =
+            demand.try_into()?;
+        Ok(DecodedDemand::RefUidArbiter(demand))
+    });
+    registry.register_fn(addresses.revocable_arbiter, |_, _, demand: Bytes| {
+        let demand: contracts::arbiters::attestation_properties::RevocableArbiter::DemandData =
+            demand.try_into()?;
+        Ok(DecodedDemand::RevocableArbiter(demand))
+    });
+    registry.register_fn(addresses.schema_arbiter, |_, _, demand: Bytes| {
+        let demand: contracts::arbiters::attestation_properties::SchemaArbiter::DemandData =
+            demand.try_into()?;
+        Ok(DecodedDemand::SchemaArbiter(demand))
+    });
+    registry.register_fn(addresses.time_after_arbiter, |_, _, demand: Bytes| {
+        let demand: contracts::arbiters::attestation_properties::TimeAfterArbiter::DemandData =
+            demand.try_into()?;
+        Ok(DecodedDemand::TimeAfterArbiter(demand))
+    });
+    registry.register_fn(addresses.time_before_arbiter, |_, _, demand: Bytes| {
+        let demand: contracts::arbiters::attestation_properties::TimeBeforeArbiter::DemandData =
+            demand.try_into()?;
+        Ok(DecodedDemand::TimeBeforeArbiter(demand))
+    });
+    registry.register_fn(addresses.time_equal_arbiter, |_, _, demand: Bytes| {
+        let demand: contracts::arbiters::attestation_properties::TimeEqualArbiter::DemandData =
+            demand.try_into()?;
+        Ok(DecodedDemand::TimeEqualArbiter(demand))
+    });
+    registry.register_fn(addresses.uid_arbiter, |_, _, demand: Bytes| {
+        let demand: contracts::arbiters::attestation_properties::UidArbiter::DemandData =
+            demand.try_into()?;
+        Ok(DecodedDemand::UidArbiter(demand))
+    });
+
+    registry
 }
 
 /// Available contracts in the Arbiters module
@@ -221,13 +333,33 @@ impl ArbitersModule {
         poll_interval: std::time::Duration,
         addresses: Option<ArbitersAddresses>,
     ) -> eyre::Result<Self> {
+        let addresses = addresses.unwrap_or_default();
+        let demand_codecs = default_demand_codecs(&addresses);
+
         Ok(ArbitersModule {
             signer,
             public_provider,
             wallet_provider,
             poll_interval,
-            addresses: addresses.unwrap_or_default(),
+            addresses,
+            demand_codecs,
         })
+    }
+
+    pub fn demand_codecs(&self) -> &ArbiterDemandCodecRegistry {
+        &self.demand_codecs
+    }
+
+    pub fn demand_codecs_mut(&mut self) -> &mut ArbiterDemandCodecRegistry {
+        &mut self.demand_codecs
+    }
+
+    pub fn register_demand_codec<C>(&mut self, arbiter: Address, codec: C) -> &mut Self
+    where
+        C: ArbiterDemandCodec + 'static,
+    {
+        self.demand_codecs.register(arbiter, codec);
+        self
     }
 
     /// Access trusted oracle arbiter API for arbitration functionality
@@ -302,6 +434,18 @@ pub enum DecodedDemand {
         arbiter: Address,
         raw_data: alloy::primitives::Bytes,
     },
+
+    // Extension arbiter decoded by a caller-provided registry entry.
+    Extension(DecodedExtensionDemand),
+}
+
+impl DecodedDemand {
+    pub fn extension<T>(arbiter: Address, raw_data: Bytes, data: T) -> Self
+    where
+        T: std::any::Any + Send + Sync,
+    {
+        Self::Extension(DecodedExtensionDemand::new(arbiter, raw_data, data))
+    }
 }
 
 impl ArbitersModule {
@@ -311,89 +455,7 @@ impl ArbitersModule {
         arbiter_addr: Address,
         demand_bytes: &alloy::primitives::Bytes,
     ) -> eyre::Result<DecodedDemand> {
-        let addresses = &self.addresses;
-
-        let decoded = if arbiter_addr == addresses.trivial_arbiter {
-            DecodedDemand::TrivialArbiter
-        } else if arbiter_addr == addresses.intrinsics_arbiter {
-            DecodedDemand::IntrinsicsArbiter
-        } else if arbiter_addr == addresses.references_escrow_arbiter {
-            DecodedDemand::ReferencesEscrowArbiter
-
-        // Core arbiters with demand data
-        } else if arbiter_addr == addresses.trusted_oracle_arbiter {
-            let demand: contracts::arbiters::TrustedOracleArbiter::DemandData =
-                demand_bytes.try_into()?;
-            DecodedDemand::TrustedOracle(demand)
-        } else if arbiter_addr == addresses.erc8004_arbiter {
-            let demand: contracts::arbiters::ERC8004Arbiter::DemandData =
-                demand_bytes.try_into()?;
-            DecodedDemand::ERC8004Arbiter(demand)
-
-        // Logical arbiters
-        } else if arbiter_addr == addresses.any_arbiter {
-            let demand: contracts::arbiters::logical::AnyArbiter::DemandData =
-                demand_bytes.try_into()?;
-            DecodedDemand::AnyArbiter(self.decode_any_arbiter_demands(demand)?)
-        } else if arbiter_addr == addresses.all_arbiter {
-            let demand: contracts::arbiters::logical::AllArbiter::DemandData =
-                demand_bytes.try_into()?;
-            DecodedDemand::AllArbiter(self.decode_all_arbiter_demands(demand)?)
-
-        // Attestation property arbiters (non-composing)
-        } else if arbiter_addr == addresses.attester_arbiter {
-            let demand: contracts::arbiters::attestation_properties::AttesterArbiter::DemandData =
-                demand_bytes.try_into()?;
-            DecodedDemand::AttesterArbiter(demand)
-        } else if arbiter_addr == addresses.expiration_time_after_arbiter {
-            let demand: contracts::arbiters::attestation_properties::ExpirationTimeAfterArbiter::DemandData = demand_bytes.try_into()?;
-            DecodedDemand::ExpirationTimeAfterArbiter(demand)
-        } else if arbiter_addr == addresses.expiration_time_before_arbiter {
-            let demand: contracts::arbiters::attestation_properties::ExpirationTimeBeforeArbiter::DemandData = demand_bytes.try_into()?;
-            DecodedDemand::ExpirationTimeBeforeArbiter(demand)
-        } else if arbiter_addr == addresses.expiration_time_equal_arbiter {
-            let demand: contracts::arbiters::attestation_properties::ExpirationTimeEqualArbiter::DemandData = demand_bytes.try_into()?;
-            DecodedDemand::ExpirationTimeEqualArbiter(demand)
-        } else if arbiter_addr == addresses.recipient_arbiter {
-            let demand: contracts::arbiters::attestation_properties::RecipientArbiter::DemandData =
-                demand_bytes.try_into()?;
-            DecodedDemand::RecipientArbiter(demand)
-        } else if arbiter_addr == addresses.ref_uid_arbiter {
-            let demand: contracts::arbiters::attestation_properties::RefUidArbiter::DemandData =
-                demand_bytes.try_into()?;
-            DecodedDemand::RefUidArbiter(demand)
-        } else if arbiter_addr == addresses.revocable_arbiter {
-            let demand: contracts::arbiters::attestation_properties::RevocableArbiter::DemandData =
-                demand_bytes.try_into()?;
-            DecodedDemand::RevocableArbiter(demand)
-        } else if arbiter_addr == addresses.schema_arbiter {
-            let demand: contracts::arbiters::attestation_properties::SchemaArbiter::DemandData =
-                demand_bytes.try_into()?;
-            DecodedDemand::SchemaArbiter(demand)
-        } else if arbiter_addr == addresses.time_after_arbiter {
-            let demand: contracts::arbiters::attestation_properties::TimeAfterArbiter::DemandData =
-                demand_bytes.try_into()?;
-            DecodedDemand::TimeAfterArbiter(demand)
-        } else if arbiter_addr == addresses.time_before_arbiter {
-            let demand: contracts::arbiters::attestation_properties::TimeBeforeArbiter::DemandData =
-                demand_bytes.try_into()?;
-            DecodedDemand::TimeBeforeArbiter(demand)
-        } else if arbiter_addr == addresses.time_equal_arbiter {
-            let demand: contracts::arbiters::attestation_properties::TimeEqualArbiter::DemandData =
-                demand_bytes.try_into()?;
-            DecodedDemand::TimeEqualArbiter(demand)
-        } else if arbiter_addr == addresses.uid_arbiter {
-            let demand: contracts::arbiters::attestation_properties::UidArbiter::DemandData =
-                demand_bytes.try_into()?;
-            DecodedDemand::UidArbiter(demand)
-        } else {
-            DecodedDemand::Unknown {
-                arbiter: arbiter_addr,
-                raw_data: demand_bytes.clone(),
-            }
-        };
-
-        Ok(decoded)
+        self.demand_codecs.decode(arbiter_addr, demand_bytes)
     }
 
     /// Access logical arbiters API for structured decode functionality
@@ -423,8 +485,33 @@ impl ArbitersModule {
 #[cfg(test)]
 mod tests {
     use alloy::primitives::{Bytes, FixedBytes, address};
+    use alloy::sol_types::SolValue as _;
 
     use super::*;
+
+    #[derive(Debug, PartialEq, Eq)]
+    struct TestExtensionDemand {
+        payload: Vec<u8>,
+    }
+
+    struct TestExtensionCodec;
+
+    impl ArbiterDemandCodec for TestExtensionCodec {
+        fn decode(
+            &self,
+            _registry: &ArbiterDemandCodecRegistry,
+            arbiter: Address,
+            demand: Bytes,
+        ) -> eyre::Result<DecodedDemand> {
+            Ok(DecodedDemand::extension(
+                arbiter,
+                demand.clone(),
+                TestExtensionDemand {
+                    payload: demand.to_vec(),
+                },
+            ))
+        }
+    }
 
     #[test]
     fn erc8004_demand_encode_decode_roundtrip() {
@@ -452,5 +539,43 @@ mod tests {
         );
 
         assert_ne!(hash, FixedBytes::<32>::default());
+    }
+
+    #[test]
+    fn demand_codec_registry_decodes_extensions_inside_logical_arbiters() {
+        let addresses = ArbitersAddresses::default();
+        let extension_arbiter = address!("0x3333333333333333333333333333333333333333");
+        let extension_payload = Bytes::from_static(&[0xab, 0xcd]);
+        let all_demand = contracts::arbiters::logical::AllArbiter::DemandData {
+            arbiters: vec![addresses.trivial_arbiter, extension_arbiter],
+            demands: vec![Bytes::new(), extension_payload.clone()],
+        };
+        let encoded = all_demand.abi_encode().into();
+
+        let mut registry = default_demand_codecs(&addresses);
+        registry.register(extension_arbiter, TestExtensionCodec);
+
+        let decoded = registry.decode(addresses.all_arbiter, &encoded).unwrap();
+        let DecodedDemand::AllArbiter(decoded_all) = decoded else {
+            panic!("expected AllArbiter demand");
+        };
+
+        assert!(matches!(
+            decoded_all.demands.first(),
+            Some(DecodedDemand::TrivialArbiter)
+        ));
+
+        let Some(DecodedDemand::Extension(extension)) = decoded_all.demands.get(1) else {
+            panic!("expected extension demand");
+        };
+
+        assert_eq!(extension.arbiter, extension_arbiter);
+        assert_eq!(extension.raw_data, extension_payload);
+        assert_eq!(
+            extension.downcast_ref::<TestExtensionDemand>(),
+            Some(&TestExtensionDemand {
+                payload: vec![0xab, 0xcd],
+            })
+        );
     }
 }

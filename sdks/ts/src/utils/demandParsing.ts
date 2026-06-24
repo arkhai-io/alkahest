@@ -35,9 +35,13 @@ export type DecodedDemandResult = {
  * This maps arbiter addresses to their decode functions for recursive demand parsing
  *
  * @param addresses - ChainAddresses containing all arbiter addresses
+ * @param extraDecoders - Optional extension arbiter decoders keyed by arbiter address
  * @returns DecodersRecord mapping addresses to decoder functions
  */
-export const createDecodersFromAddresses = (addresses: ChainAddresses): DecodersRecord => {
+export const createDecodersFromAddresses = (
+  addresses: ChainAddresses,
+  extraDecoders: Partial<DecodersRecord> = {},
+): DecodersRecord => {
   const decoders: DecodersRecord = {};
 
   // Logical arbiters (composing - return children)
@@ -104,6 +108,12 @@ export const createDecodersFromAddresses = (addresses: ChainAddresses): Decoders
   // Note: Confirmation arbiters don't have DemandData - they are action-based (confirm/revoke)
   // TrivialArbiter and IntrinsicsArbiter don't have DemandData either
 
+  for (const [arbiter, decoder] of Object.entries(extraDecoders)) {
+    if (decoder) {
+      decoders[arbiter.toLowerCase() as Address] = decoder;
+    }
+  }
+
   return decoders;
 };
 
@@ -151,10 +161,15 @@ export const decodeDemand = (demand: Demand, decoders: DecodersRecord): DecodedD
  *
  * @param demand - The demand to decode {arbiter: Address, demand: Bytes}
  * @param addresses - ChainAddresses containing all arbiter addresses
+ * @param extraDecoders - Optional extension arbiter decoders keyed by arbiter address
  * @returns Decoded demand with optional children for composing arbiters
  */
-export const decodeDemandWithAddresses = (demand: Demand, addresses: ChainAddresses): DecodedDemandResult => {
-  const decoders = createDecodersFromAddresses(addresses);
+export const decodeDemandWithAddresses = (
+  demand: Demand,
+  addresses: ChainAddresses,
+  extraDecoders: Partial<DecodersRecord> = {},
+): DecodedDemandResult => {
+  const decoders = createDecodersFromAddresses(addresses, extraDecoders);
   return decodeDemand(demand, decoders);
 };
 

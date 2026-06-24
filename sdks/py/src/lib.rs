@@ -684,6 +684,8 @@ fn alkahest_py(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<crate::clients::arbiters::Logical>()?;
     m.add_class::<crate::clients::arbiters::AllArbiter>()?;
     m.add_class::<crate::clients::arbiters::AnyArbiter>()?;
+    m.add_class::<crate::clients::arbiters::AllArbiterDemandData>()?;
+    m.add_class::<crate::clients::arbiters::AnyArbiterDemandData>()?;
     m.add_class::<crate::clients::arbiters::PyDecodedAllArbiterDemandData>()?;
     m.add_class::<crate::clients::arbiters::PyDecodedAnyArbiterDemandData>()?;
     m.add_class::<crate::clients::arbiters::PyDecodedDemand>()?;

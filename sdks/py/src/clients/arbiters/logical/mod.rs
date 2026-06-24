@@ -15,6 +15,46 @@ use pyo3::{pyclass, pymethods, PyResult};
 
 use crate::error_handling::map_eyre_to_pyerr;
 
+fn parse_arbiter_addresses(arbiters: &[String]) -> PyResult<Vec<alloy::primitives::Address>> {
+    arbiters
+        .iter()
+        .map(|s| {
+            s.parse().map_err(|e| {
+                pyo3::PyErr::new::<pyo3::exceptions::PyValueError, _>(format!(
+                    "Invalid address: {}",
+                    e
+                ))
+            })
+        })
+        .collect::<PyResult<Vec<_>>>()
+}
+
+fn encode_all_demand_data(arbiters: Vec<String>, demands: Vec<Vec<u8>>) -> PyResult<Vec<u8>> {
+    let arbiter_addresses = parse_arbiter_addresses(&arbiters)?;
+    let demand_bytes: Vec<alloy::primitives::Bytes> =
+        demands.into_iter().map(|d| d.into()).collect();
+
+    let demand_data = AllArbiterContract::DemandData {
+        arbiters: arbiter_addresses,
+        demands: demand_bytes,
+    };
+
+    Ok(demand_data.abi_encode())
+}
+
+fn encode_any_demand_data(arbiters: Vec<String>, demands: Vec<Vec<u8>>) -> PyResult<Vec<u8>> {
+    let arbiter_addresses = parse_arbiter_addresses(&arbiters)?;
+    let demand_bytes: Vec<alloy::primitives::Bytes> =
+        demands.into_iter().map(|d| d.into()).collect();
+
+    let demand_data = AnyArbiterContract::DemandData {
+        arbiters: arbiter_addresses,
+        demands: demand_bytes,
+    };
+
+    Ok(demand_data.abi_encode())
+}
+
 /// Logical arbiters API accessor
 #[pyclass]
 #[derive(Clone)]
@@ -89,27 +129,7 @@ impl AllArbiter {
     /// Encode AllArbiter demand data from Python to raw bytes
     #[staticmethod]
     pub fn encode(arbiters: Vec<String>, demands: Vec<Vec<u8>>) -> PyResult<Vec<u8>> {
-        let arbiter_addresses: Vec<alloy::primitives::Address> = arbiters
-            .iter()
-            .map(|s| {
-                s.parse().map_err(|e| {
-                    pyo3::PyErr::new::<pyo3::exceptions::PyValueError, _>(format!(
-                        "Invalid address: {}",
-                        e
-                    ))
-                })
-            })
-            .collect::<PyResult<Vec<_>>>()?;
-
-        let demand_bytes: Vec<alloy::primitives::Bytes> =
-            demands.into_iter().map(|d| d.into()).collect();
-
-        let demand_data = AllArbiterContract::DemandData {
-            arbiters: arbiter_addresses,
-            demands: demand_bytes,
-        };
-
-        Ok(demand_data.abi_encode())
+        AllArbiterDemandData::new(arbiters, demands).encode_self()
     }
 }
 
@@ -149,27 +169,117 @@ impl AnyArbiter {
     /// Encode AnyArbiter demand data from Python to raw bytes
     #[staticmethod]
     pub fn encode(arbiters: Vec<String>, demands: Vec<Vec<u8>>) -> PyResult<Vec<u8>> {
-        let arbiter_addresses: Vec<alloy::primitives::Address> = arbiters
-            .iter()
-            .map(|s| {
-                s.parse().map_err(|e| {
-                    pyo3::PyErr::new::<pyo3::exceptions::PyValueError, _>(format!(
-                        "Invalid address: {}",
-                        e
-                    ))
-                })
-            })
-            .collect::<PyResult<Vec<_>>>()?;
+        AnyArbiterDemandData::new(arbiters, demands).encode_self()
+    }
+}
 
-        let demand_bytes: Vec<alloy::primitives::Bytes> =
-            demands.into_iter().map(|d| d.into()).collect();
+/// Raw Python representation of AllArbiter DemandData.
+///
+/// This only ABI-encodes/decodes the Solidity struct fields. Use
+/// ``client.arbiters.logical.all.decode(...)`` when child demand bytes should
+/// be recursively interpreted with a deployment's arbiter address table.
+#[pyclass]
+#[derive(Clone, Debug)]
+pub struct AllArbiterDemandData {
+    #[pyo3(get)]
+    pub arbiters: Vec<String>,
+    #[pyo3(get)]
+    pub demands: Vec<Vec<u8>>,
+}
 
-        let demand_data = AnyArbiterContract::DemandData {
-            arbiters: arbiter_addresses,
-            demands: demand_bytes,
-        };
+#[pymethods]
+impl AllArbiterDemandData {
+    #[new]
+    pub fn new(arbiters: Vec<String>, demands: Vec<Vec<u8>>) -> Self {
+        Self { arbiters, demands }
+    }
 
-        Ok(demand_data.abi_encode())
+    fn __repr__(&self) -> String {
+        format!(
+            "AllArbiterDemandData(arbiters={}, demands={})",
+            self.arbiters.len(),
+            self.demands.len()
+        )
+    }
+
+    #[staticmethod]
+    pub fn encode(demand_data: &AllArbiterDemandData) -> PyResult<Vec<u8>> {
+        encode_all_demand_data(demand_data.arbiters.clone(), demand_data.demands.clone())
+    }
+
+    #[staticmethod]
+    pub fn decode(demand_bytes: Vec<u8>) -> PyResult<AllArbiterDemandData> {
+        let decoded = AllArbiterContract::DemandData::abi_decode(&demand_bytes)
+            .map_err(|e| map_eyre_to_pyerr(eyre::eyre!("Failed to decode: {}", e)))?;
+        Ok(decoded.into())
+    }
+
+    pub fn encode_self(&self) -> PyResult<Vec<u8>> {
+        AllArbiterDemandData::encode(self)
+    }
+}
+
+impl From<AllArbiterContract::DemandData> for AllArbiterDemandData {
+    fn from(data: AllArbiterContract::DemandData) -> Self {
+        Self {
+            arbiters: data.arbiters.iter().map(|a| format!("{:?}", a)).collect(),
+            demands: data.demands.into_iter().map(|d| d.to_vec()).collect(),
+        }
+    }
+}
+
+/// Raw Python representation of AnyArbiter DemandData.
+///
+/// This only ABI-encodes/decodes the Solidity struct fields. Use
+/// ``client.arbiters.logical.any.decode(...)`` when child demand bytes should
+/// be recursively interpreted with a deployment's arbiter address table.
+#[pyclass]
+#[derive(Clone, Debug)]
+pub struct AnyArbiterDemandData {
+    #[pyo3(get)]
+    pub arbiters: Vec<String>,
+    #[pyo3(get)]
+    pub demands: Vec<Vec<u8>>,
+}
+
+#[pymethods]
+impl AnyArbiterDemandData {
+    #[new]
+    pub fn new(arbiters: Vec<String>, demands: Vec<Vec<u8>>) -> Self {
+        Self { arbiters, demands }
+    }
+
+    fn __repr__(&self) -> String {
+        format!(
+            "AnyArbiterDemandData(arbiters={}, demands={})",
+            self.arbiters.len(),
+            self.demands.len()
+        )
+    }
+
+    #[staticmethod]
+    pub fn encode(demand_data: &AnyArbiterDemandData) -> PyResult<Vec<u8>> {
+        encode_any_demand_data(demand_data.arbiters.clone(), demand_data.demands.clone())
+    }
+
+    #[staticmethod]
+    pub fn decode(demand_bytes: Vec<u8>) -> PyResult<AnyArbiterDemandData> {
+        let decoded = AnyArbiterContract::DemandData::abi_decode(&demand_bytes)
+            .map_err(|e| map_eyre_to_pyerr(eyre::eyre!("Failed to decode: {}", e)))?;
+        Ok(decoded.into())
+    }
+
+    pub fn encode_self(&self) -> PyResult<Vec<u8>> {
+        AnyArbiterDemandData::encode(self)
+    }
+}
+
+impl From<AnyArbiterContract::DemandData> for AnyArbiterDemandData {
+    fn from(data: AnyArbiterContract::DemandData) -> Self {
+        Self {
+            arbiters: data.arbiters.iter().map(|a| format!("{:?}", a)).collect(),
+            demands: data.demands.into_iter().map(|d| d.to_vec()).collect(),
+        }
     }
 }
 
@@ -348,6 +458,10 @@ impl From<DecodedDemand> for PyDecodedDemand {
             DecodedDemand::Unknown { arbiter, raw_data } => Self {
                 demand_type: format!("Unknown({})", arbiter),
                 raw_data: Some(raw_data.to_vec()),
+            },
+            DecodedDemand::Extension(data) => Self {
+                demand_type: format!("Extension({})", data.type_name),
+                raw_data: Some(data.raw_data.to_vec()),
             },
         }
     }
