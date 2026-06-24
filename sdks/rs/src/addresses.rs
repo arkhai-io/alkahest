@@ -34,96 +34,111 @@ const UNRELEASED_SPLITTERS_ADDRESSES: SplittersAddresses = SplittersAddresses {
 pub const BASE_SEPOLIA_ADDRESSES: DefaultExtensionConfig = DefaultExtensionConfig {
     arbiters_addresses: ArbitersAddresses {
         eas: address!("0x4200000000000000000000000000000000000021"),
-        trivial_arbiter: address!("0x50EDa6c29C740bfbA6875422287025D985b96b7b"),
-        trusted_oracle_arbiter: address!("0x3664b11BcCCeCA27C21BBAB43548961eD14d4D6D"),
-        intrinsics_arbiter: address!("0x24aAFec3f86CAd330600dD2397DEB8498D44bfd9"),
-        erc8004_arbiter: address!("0x67B23406dd9e9EA884B3d14746ef73106b1C35d6"),
-        references_escrow_arbiter: Address::ZERO,
-        // Logical arbiters
-        any_arbiter: address!("0xaaC3465f340C7A2841A120F81Ce6744cda00d263"),
-        all_arbiter: address!("0x0D95c1Cd62cd9C7cCCB237a3Ae08aA61Ed83381f"),
-        // Attestation property arbiters (non-composing only)
-        attester_arbiter: address!("0xB0d19784373EC5FDd2E44A2b594B10FE9bBecC94"),
-        expiration_time_after_arbiter: address!("0x05Ae296859454612a9a346B2EeBE6915319993Ec"),
-        expiration_time_before_arbiter: address!("0x698008cC7F4714D331Aa27278BfE6B74FA925cF7"),
-        expiration_time_equal_arbiter: address!("0x4d05EA86C2C0af7CA94dc71Da45aba9368e664e4"),
-        recipient_arbiter: address!("0xE6CB55B60b6B47B45de05df75B48D656E4bD3730"),
-        ref_uid_arbiter: address!("0xdEc95668f431639AAE975CfA9101Bb2A5b5803F6"),
-        revocable_arbiter: address!("0x550eF7e901F612914651f3c92c0798eBab037AF6"),
-        schema_arbiter: address!("0xc15Ef82Adf03820dA8a0705200602107a06652BE"),
-        time_after_arbiter: address!("0xd88274b04194bebA06B32D3F67265e4b530F4C4d"),
-        time_before_arbiter: address!("0xEC177a4FA6c42B1EA2bbEC70F3FFaE2aCD94e4aF"),
-        time_equal_arbiter: address!("0x0E16A9f94aD457214d5e8AdD30c64D8c6FD4a416"),
-        uid_arbiter: address!("0x0Be4E6D777D5C1AE3DDF338AF2398A279571511b"),
-        // Confirmation arbiters (new naming convention)
+        trivial_arbiter: address!("0xa42Df9aDF17f26Ff1eD5206cf83E5dab88bD3523"),
+        trusted_oracle_arbiter: address!("0x504f496F696c41558070a933c90a98604c3f4475"),
+        intrinsics_arbiter: address!("0xd78d4404E2E1a9033eEf1ac69BF488f6a4Ea9aC0"),
+        erc8004_arbiter: address!("0x65dE059a0B2A060E842B8106B1BE365bf5f2F80f"),
+        references_escrow_arbiter: address!("0x335441cc9813558067e5b3a4c39AF8a9cFb6fAF8"),
+        any_arbiter: address!("0xaF67e09D889e0df9d404059283A1FA7BA7Ac7d88"),
+        all_arbiter: address!("0x9F78AAca04A2c005618c3B214e609B13Bbe66356"),
+        attester_arbiter: address!("0xa50365B53232f54cf6C60f0f432ad64169A6e76e"),
+        expiration_time_after_arbiter: address!("0xd8C0Ab60B431061a079C8b4e0BaCf7CbF6aEA29d"),
+        expiration_time_before_arbiter: address!("0xcae48f46d89cd2d78118a84d8CA589Ee7d29C98c"),
+        expiration_time_equal_arbiter: address!("0x9354ca2BdB314BB41C78CBff4C4443718a8813DF"),
+        recipient_arbiter: address!("0x507CFD91DD2d2b8E7F93812414d8Ce9dC5404F62"),
+        ref_uid_arbiter: address!("0xafA3c1593ca451DA36dB7fD36077BcFFf7B4c717"),
+        revocable_arbiter: address!("0x6a9e076cf1Df39D029A7B6d48A1Ab36B3cC28639"),
+        schema_arbiter: address!("0xA8f8e66d12b97EbE93C79b36D015666DEC2Dd151"),
+        time_after_arbiter: address!("0x24D729f6f8Fc3DF5EB42939276cF2Efe9fF963d6"),
+        time_before_arbiter: address!("0xCE156DEAB9B4A525640a0BC2Ad9966d13f9a134a"),
+        time_equal_arbiter: address!("0x5dc2d28f06DDB3e60b76fab033F672126572c976"),
+        uid_arbiter: address!("0x9F06F7E040d57e21964cCa4D91CBC57b25C55D67"),
         exclusive_revocable_confirmation_arbiter: address!(
-            "0xBA0e678f4F1a62f5d737F9289B7e1F2F8580DD8D"
+            "0xf6388A7b78c4A130249160CbcC609530D267B59B"
         ),
         exclusive_unrevocable_confirmation_arbiter: address!(
-            "0x141Bfd94A1C2B2728dF693657d1C7589b06A139E"
+            "0x21F1402b4006B4A799502F948cfED187E66e9bb9"
         ),
         nonexclusive_revocable_confirmation_arbiter: address!(
-            "0xB78A1870C5412EBa6042a5b1dE895E8f879AbeC6"
+            "0xC4876Bf97a5C24E26e8286fF7a3391c20A8a0A6e"
         ),
         nonexclusive_unrevocable_confirmation_arbiter: address!(
-            "0x74FaFAAEa1bA879E73Cd7e38ec6F3ff86554D4B7"
+            "0x9F8AF67d89B674513eFAdf29ed936c4704A64fEb"
         ),
     },
     string_obligation_addresses: StringObligationAddresses {
         eas: address!("0x4200000000000000000000000000000000000021"),
-        obligation: address!("0x544873C22A3228798F91a71C4ef7a9bFe96E7CE0"),
+        obligation: address!("0x22d3203992CCC7Dfb2Ec12D87E15b0d8698De35b"),
     },
     commit_reveal_obligation_addresses: CommitRevealObligationAddresses {
         eas: address!("0x4200000000000000000000000000000000000021"),
-        obligation: address!("0x447b11ce03237f0C674eF7F16c913c3B2e8ef494"),
+        obligation: address!("0x14d0B7D4ed6915CE0b1a0d54F9D5912584dB550E"),
     },
     erc20_addresses: Erc20Addresses {
         eas: address!("0x4200000000000000000000000000000000000021"),
-        atomic_payment_utils: address!("0x946Ef4E912897B4A24b9250513dfeE3fc4303Dde"),
-        escrow_obligation_default: address!("0x1Fe964348Ec42D9Bb1A072503ce8b4744266FF43"),
-        escrow_obligation_unconditional: Address::ZERO, // TODO: Add actual address when deployed
-        payment_obligation: address!("0x8d13d7542E64D9Da29AB66B6E9b4a6583C64b3F6"),
+        atomic_payment_utils: address!("0x4c597Ee412A4414e80Ddb79Fde1Fb704bc1358c0"),
+        escrow_obligation_default: address!("0x5c55EFa334A7FceF530a081D19Be98E871EdbB83"),
+        escrow_obligation_unconditional: address!("0x56AcF1b3A736C5524b8836534D15445322a50a2B"),
+        payment_obligation: address!("0x0f953267E8d835b9f33b361C963F126775316dcA"),
     },
     erc721_addresses: Erc721Addresses {
         eas: address!("0x4200000000000000000000000000000000000021"),
-        atomic_payment_utils: address!("0x707f280Fa738b4cc175A369d450f2f603094cbAf"),
-        escrow_obligation_default: address!("0x7675a56b2880EF059cFC725E715E1139D689c07B"),
-        escrow_obligation_unconditional: Address::ZERO, // TODO: Add actual address when deployed
-        payment_obligation: address!("0x9Daf829f183cA46ad2146F489E7d14335C9B59a9"),
+        atomic_payment_utils: address!("0x4c597Ee412A4414e80Ddb79Fde1Fb704bc1358c0"),
+        escrow_obligation_default: address!("0x0850d8F7015Ba183227925cd100968e82aCb266A"),
+        escrow_obligation_unconditional: address!("0x63A26965Ea23A61219128a57392f8a2A4E7be140"),
+        payment_obligation: address!("0x2e8aa787750853ce422E487dacad385296F81169"),
     },
     erc1155_addresses: Erc1155Addresses {
         eas: address!("0x4200000000000000000000000000000000000021"),
-        atomic_payment_utils: address!("0x4E4F0F883B1fEC20F219E0c8D2ec0061FE3c1328"),
-        escrow_obligation_default: address!("0xB8A3107DA5428a34f818ea4229233fBAe59C16F2"),
-        escrow_obligation_unconditional: Address::ZERO, // TODO: Add actual address when deployed
-        payment_obligation: address!("0x6f71429bD940Bf3345780a8E5F5cf3BcdffE80C1"),
+        atomic_payment_utils: address!("0x4c597Ee412A4414e80Ddb79Fde1Fb704bc1358c0"),
+        escrow_obligation_default: address!("0x267C98D752C6B9F9B354471A08F72aaCb9eC8567"),
+        escrow_obligation_unconditional: address!("0x62c1351503Ef1308FfF550cD594c95F3112F61aB"),
+        payment_obligation: address!("0x1F559CE3f65374593ff39EC5a74ea36db0b817d1"),
     },
     native_token_addresses: NativeTokenAddresses {
         eas: address!("0x4200000000000000000000000000000000000021"),
-        atomic_payment_utils: address!("0xaaB70Cfc37C5E73e185E2976609A82Ba22A4310d"),
-        escrow_obligation_default: address!("0x8a1172D32B8cEf14094cF1E7d6F3d1A36D949FDe"),
-        escrow_obligation_unconditional: Address::ZERO, // TODO: Add actual address when deployed
-        payment_obligation: address!("0xAB1E9714fbD4f9B5546e891B7Ba392b08c44c37A"),
+        atomic_payment_utils: address!("0x4c597Ee412A4414e80Ddb79Fde1Fb704bc1358c0"),
+        escrow_obligation_default: address!("0x5d83C1Cb608e891F7B2Bcc12294d1e64aBB8eC7F"),
+        escrow_obligation_unconditional: address!("0x58368eE14F75FA38366E7da12707Ec501e3F042a"),
+        payment_obligation: address!("0xd53357af507f4c865A6345a05dC9849BB3eFD7c7"),
     },
     token_bundle_addresses: TokenBundleAddresses {
         eas: address!("0x4200000000000000000000000000000000000021"),
-        atomic_payment_utils: address!("0x47C033F49D5A1559AC48f27571204a29b8E728b8"),
-        escrow_obligation_default: address!("0x38e8E5684aFB24A88cD9B276032bCBD19C4b9d6e"),
-        escrow_obligation_unconditional: Address::ZERO, // TODO: Add actual address when deployed
-        payment_obligation: address!("0xFa5446475De31fa3c6457E2b62EA5a8F8172Cd29"),
+        atomic_payment_utils: address!("0x4c597Ee412A4414e80Ddb79Fde1Fb704bc1358c0"),
+        escrow_obligation_default: address!("0xC52c611c0C9A11fF625B93f9D1fb9E74C45d9859"),
+        escrow_obligation_unconditional: address!("0xa5ba8B7382093525F5F6739cCff910376D63c1ba"),
+        payment_obligation: address!("0x7F445E83779Df77cAB8E71eC3C5E2Bffe4EB1314"),
     },
-    hook_based_addresses: UNRELEASED_HOOK_BASED_ADDRESSES,
-    splitters_addresses: UNRELEASED_SPLITTERS_ADDRESSES,
+    hook_based_addresses: HookBasedAddresses {
+        eas: address!("0x4200000000000000000000000000000000000021"),
+        hook_escrow_obligation: address!("0x5aD1B5f0eE7A520311B4b8d8f758d48934851981"),
+        hooks_escrow_obligation: address!("0xa21a3A6db8b00303D7e919Ea8983CFd2DC6Ed1d3"),
+        erc20_escrow_hook: address!("0xEF0473fE3777b45C68455f90d4edCC1A8673c518"),
+        erc721_escrow_hook: address!("0x80016D907E87989457C0253D42e0a4348476DBb3"),
+        erc1155_escrow_hook: address!("0xC2045eF34C8789dE4744272706a8800A03cE1f11"),
+        native_token_escrow_hook: address!("0xFeE4003D97e77251091D9C686ba4da4E46D98c05"),
+        attestation_escrow_hook: address!("0x2fd54cC36e441B2a3c0202B621208db046C18ea3"),
+        attestation_reference_escrow_hook: address!("0x335cE1C9DFA441C2db31914502E5CeD9b38DCBFD"),
+    },
+    splitters_addresses: SplittersAddresses {
+        erc20_splitter: address!("0xd6816aC123844edb88f0AF146Cc565C6663DE97B"),
+        erc1155_splitter: address!("0xB386B657F66c8eAb3A3335d590Eef4a0871e63a3"),
+        native_token_splitter: address!("0xa32161d10B31f3eB5BfC0EEfDE64784e01CBD9E1"),
+        token_bundle_splitter: address!("0xceC0D468b29cA55FEA224e2b66AC5694036aA24d"),
+        token_bundle_splitter_unvalidated: address!("0x6c1c55E13E5Ec8668dad15dbe1B461E7814643a1"),
+    },
     attestation_addresses: AttestationAddresses {
         eas: address!("0x4200000000000000000000000000000000000021"),
         eas_schema_registry: address!("0x4200000000000000000000000000000000000020"),
-        atomic_attestation_utils: Address::ZERO,
-        escrow_obligation_default: address!("0x9D133Cbd51270a2A410465F82dAFFD6c1C87322D"),
-        escrow_obligation_unconditional: Address::ZERO, // TODO: Add actual address when deployed
+        atomic_attestation_utils: address!("0x886f7cE4bF11dBDbA163bEE866533965177ae680"),
+        escrow_obligation_default: address!("0xFa299C13D7F17B6a3E63b1bE985F93020Db1169C"),
+        escrow_obligation_unconditional: address!("0x61504DB9850e54fEb9f0681631BE8906a75B3bB9"),
         attestation_reference_escrow_obligation_default: address!(
-            "0xa076e9ca47f192E6AfB67817608E382074CF0Dcf"
+            "0x18a38eE1e1609e21b29F9bec07Ea6633BB5E8368"
         ),
-        attestation_reference_escrow_obligation_unconditional: Address::ZERO, // TODO: Add actual address when deployed
+        attestation_reference_escrow_obligation_unconditional: address!(
+            "0x7833cD2ADD07CD7bD0DA20020663D6857fDa1E6C"
+        ),
     },
 };
 
