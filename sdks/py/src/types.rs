@@ -653,6 +653,37 @@ pub struct LogWithHash<T> {
 
 #[pyclass]
 #[derive(Clone)]
+pub struct PyContractAddressInfo {
+    #[pyo3(get)]
+    pub address: String,
+    #[pyo3(get)]
+    pub section: String,
+    #[pyo3(get)]
+    pub field: String,
+    #[pyo3(get)]
+    pub escrow_kind: Option<String>,
+}
+
+#[pymethods]
+impl PyContractAddressInfo {
+    #[new]
+    pub fn new(
+        address: String,
+        section: String,
+        field: String,
+        escrow_kind: Option<String>,
+    ) -> Self {
+        Self {
+            address,
+            section,
+            field,
+            escrow_kind,
+        }
+    }
+}
+
+#[pyclass]
+#[derive(Clone)]
 pub struct PyDefaultExtensionConfig {
     #[pyo3(get)]
     pub erc20_addresses: Option<PyErc20Addresses>,
@@ -749,6 +780,27 @@ impl PyDefaultExtensionConfig {
     fn default_config(_cls: &Bound<'_, PyType>) -> Self {
         Self::from(&alkahest_rs::addresses::BASE_SEPOLIA_ADDRESSES)
     }
+
+    /// Return all config slots that match `address`.
+    fn lookup_address(&self, address: &str) -> Vec<PyContractAddressInfo> {
+        let needle = normalize_address(address);
+        self.address_infos_inner()
+            .into_iter()
+            .filter(|info| normalize_address(&info.address) == needle)
+            .collect()
+    }
+
+    /// Return a reverse index from lower-case address to matching config slots.
+    fn address_index(&self) -> std::collections::HashMap<String, Vec<PyContractAddressInfo>> {
+        let mut index = std::collections::HashMap::new();
+        for info in self.address_infos_inner() {
+            index
+                .entry(normalize_address(&info.address))
+                .or_insert_with(Vec::new)
+                .push(info);
+        }
+        index
+    }
 }
 
 impl PyDefaultExtensionConfig {
@@ -760,6 +812,477 @@ impl PyDefaultExtensionConfig {
             "genlayer_bradbury".to_string(),
         ]
     }
+
+    fn address_infos_inner(&self) -> Vec<PyContractAddressInfo> {
+        let mut out = Vec::new();
+
+        if let Some(section) = &self.arbiters_addresses {
+            add_py_info(&mut out, &section.eas, "arbiters_addresses", "eas", None);
+            add_py_info(
+                &mut out,
+                &section.trivial_arbiter,
+                "arbiters_addresses",
+                "trivial_arbiter",
+                None,
+            );
+            add_py_info(
+                &mut out,
+                &section.trusted_oracle_arbiter,
+                "arbiters_addresses",
+                "trusted_oracle_arbiter",
+                None,
+            );
+            add_py_info(
+                &mut out,
+                &section.intrinsics_arbiter,
+                "arbiters_addresses",
+                "intrinsics_arbiter",
+                None,
+            );
+            add_py_info(
+                &mut out,
+                &section.erc8004_arbiter,
+                "arbiters_addresses",
+                "erc8004_arbiter",
+                None,
+            );
+            add_py_info(
+                &mut out,
+                &section.references_escrow_arbiter,
+                "arbiters_addresses",
+                "references_escrow_arbiter",
+                None,
+            );
+            add_py_info(
+                &mut out,
+                &section.any_arbiter,
+                "arbiters_addresses",
+                "any_arbiter",
+                None,
+            );
+            add_py_info(
+                &mut out,
+                &section.all_arbiter,
+                "arbiters_addresses",
+                "all_arbiter",
+                None,
+            );
+            add_py_info(
+                &mut out,
+                &section.attester_arbiter,
+                "arbiters_addresses",
+                "attester_arbiter",
+                None,
+            );
+            add_py_info(
+                &mut out,
+                &section.expiration_time_after_arbiter,
+                "arbiters_addresses",
+                "expiration_time_after_arbiter",
+                None,
+            );
+            add_py_info(
+                &mut out,
+                &section.expiration_time_before_arbiter,
+                "arbiters_addresses",
+                "expiration_time_before_arbiter",
+                None,
+            );
+            add_py_info(
+                &mut out,
+                &section.expiration_time_equal_arbiter,
+                "arbiters_addresses",
+                "expiration_time_equal_arbiter",
+                None,
+            );
+            add_py_info(
+                &mut out,
+                &section.recipient_arbiter,
+                "arbiters_addresses",
+                "recipient_arbiter",
+                None,
+            );
+            add_py_info(
+                &mut out,
+                &section.ref_uid_arbiter,
+                "arbiters_addresses",
+                "ref_uid_arbiter",
+                None,
+            );
+            add_py_info(
+                &mut out,
+                &section.revocable_arbiter,
+                "arbiters_addresses",
+                "revocable_arbiter",
+                None,
+            );
+            add_py_info(
+                &mut out,
+                &section.schema_arbiter,
+                "arbiters_addresses",
+                "schema_arbiter",
+                None,
+            );
+            add_py_info(
+                &mut out,
+                &section.time_after_arbiter,
+                "arbiters_addresses",
+                "time_after_arbiter",
+                None,
+            );
+            add_py_info(
+                &mut out,
+                &section.time_before_arbiter,
+                "arbiters_addresses",
+                "time_before_arbiter",
+                None,
+            );
+            add_py_info(
+                &mut out,
+                &section.time_equal_arbiter,
+                "arbiters_addresses",
+                "time_equal_arbiter",
+                None,
+            );
+            add_py_info(
+                &mut out,
+                &section.uid_arbiter,
+                "arbiters_addresses",
+                "uid_arbiter",
+                None,
+            );
+            add_py_info(
+                &mut out,
+                &section.exclusive_revocable_confirmation_arbiter,
+                "arbiters_addresses",
+                "exclusive_revocable_confirmation_arbiter",
+                None,
+            );
+            add_py_info(
+                &mut out,
+                &section.exclusive_unrevocable_confirmation_arbiter,
+                "arbiters_addresses",
+                "exclusive_unrevocable_confirmation_arbiter",
+                None,
+            );
+            add_py_info(
+                &mut out,
+                &section.nonexclusive_revocable_confirmation_arbiter,
+                "arbiters_addresses",
+                "nonexclusive_revocable_confirmation_arbiter",
+                None,
+            );
+            add_py_info(
+                &mut out,
+                &section.nonexclusive_unrevocable_confirmation_arbiter,
+                "arbiters_addresses",
+                "nonexclusive_unrevocable_confirmation_arbiter",
+                None,
+            );
+        }
+
+        add_py_payment_infos(
+            &mut out,
+            self.erc20_addresses.as_ref(),
+            "erc20_addresses",
+            "erc20",
+        );
+        add_py_payment_infos(
+            &mut out,
+            self.erc721_addresses.as_ref(),
+            "erc721_addresses",
+            "erc721",
+        );
+        add_py_payment_infos(
+            &mut out,
+            self.erc1155_addresses.as_ref(),
+            "erc1155_addresses",
+            "erc1155",
+        );
+        add_py_payment_infos(
+            &mut out,
+            self.native_token_addresses.as_ref(),
+            "native_token_addresses",
+            "native_token",
+        );
+        add_py_payment_infos(
+            &mut out,
+            self.token_bundle_addresses.as_ref(),
+            "token_bundle_addresses",
+            "token_bundle",
+        );
+
+        if let Some(section) = &self.hook_based_addresses {
+            add_py_info(&mut out, &section.eas, "hook_based_addresses", "eas", None);
+            add_py_info(
+                &mut out,
+                &section.hook_escrow_obligation,
+                "hook_based_addresses",
+                "hook_escrow_obligation",
+                None,
+            );
+            add_py_info(
+                &mut out,
+                &section.hooks_escrow_obligation,
+                "hook_based_addresses",
+                "hooks_escrow_obligation",
+                None,
+            );
+            add_py_info(
+                &mut out,
+                &section.erc20_escrow_hook,
+                "hook_based_addresses",
+                "erc20_escrow_hook",
+                None,
+            );
+            add_py_info(
+                &mut out,
+                &section.erc721_escrow_hook,
+                "hook_based_addresses",
+                "erc721_escrow_hook",
+                None,
+            );
+            add_py_info(
+                &mut out,
+                &section.erc1155_escrow_hook,
+                "hook_based_addresses",
+                "erc1155_escrow_hook",
+                None,
+            );
+            add_py_info(
+                &mut out,
+                &section.native_token_escrow_hook,
+                "hook_based_addresses",
+                "native_token_escrow_hook",
+                None,
+            );
+            add_py_info(
+                &mut out,
+                &section.attestation_escrow_hook,
+                "hook_based_addresses",
+                "attestation_escrow_hook",
+                None,
+            );
+            add_py_info(
+                &mut out,
+                &section.attestation_reference_escrow_hook,
+                "hook_based_addresses",
+                "attestation_reference_escrow_hook",
+                None,
+            );
+        }
+
+        if let Some(section) = &self.splitters_addresses {
+            add_py_info(
+                &mut out,
+                &section.erc20_splitter,
+                "splitters_addresses",
+                "erc20_splitter",
+                None,
+            );
+            add_py_info(
+                &mut out,
+                &section.erc1155_splitter,
+                "splitters_addresses",
+                "erc1155_splitter",
+                None,
+            );
+            add_py_info(
+                &mut out,
+                &section.native_token_splitter,
+                "splitters_addresses",
+                "native_token_splitter",
+                None,
+            );
+            add_py_info(
+                &mut out,
+                &section.token_bundle_splitter,
+                "splitters_addresses",
+                "token_bundle_splitter",
+                None,
+            );
+            add_py_info(
+                &mut out,
+                &section.token_bundle_splitter_unvalidated,
+                "splitters_addresses",
+                "token_bundle_splitter_unvalidated",
+                None,
+            );
+        }
+
+        if let Some(section) = &self.attestation_addresses {
+            add_py_info(&mut out, &section.eas, "attestation_addresses", "eas", None);
+            add_py_info(
+                &mut out,
+                &section.eas_schema_registry,
+                "attestation_addresses",
+                "eas_schema_registry",
+                None,
+            );
+            add_py_info(
+                &mut out,
+                &section.atomic_attestation_utils,
+                "attestation_addresses",
+                "atomic_attestation_utils",
+                None,
+            );
+            add_py_info(
+                &mut out,
+                &section.escrow_obligation_default,
+                "attestation_addresses",
+                "escrow_obligation_default",
+                Some("attestation_escrow_obligation_default"),
+            );
+            add_py_info(
+                &mut out,
+                &section.escrow_obligation_unconditional,
+                "attestation_addresses",
+                "escrow_obligation_unconditional",
+                Some("attestation_escrow_obligation_unconditional"),
+            );
+            add_py_info(
+                &mut out,
+                &section.attestation_reference_escrow_obligation_default,
+                "attestation_addresses",
+                "attestation_reference_escrow_obligation_default",
+                Some("attestation_reference_escrow_obligation_default"),
+            );
+            add_py_info(
+                &mut out,
+                &section.attestation_reference_escrow_obligation_unconditional,
+                "attestation_addresses",
+                "attestation_reference_escrow_obligation_unconditional",
+                Some("attestation_reference_escrow_obligation_unconditional"),
+            );
+        }
+
+        if let Some(section) = &self.string_obligation_addresses {
+            add_py_info(
+                &mut out,
+                &section.eas,
+                "string_obligation_addresses",
+                "eas",
+                None,
+            );
+            add_py_info(
+                &mut out,
+                &section.obligation,
+                "string_obligation_addresses",
+                "obligation",
+                None,
+            );
+        }
+        if let Some(section) = &self.commit_reveal_obligation_addresses {
+            add_py_info(
+                &mut out,
+                &section.eas,
+                "commit_reveal_obligation_addresses",
+                "eas",
+                None,
+            );
+            add_py_info(
+                &mut out,
+                &section.obligation,
+                "commit_reveal_obligation_addresses",
+                "obligation",
+                None,
+            );
+        }
+
+        out
+    }
+}
+
+fn normalize_address(address: &str) -> String {
+    address.trim().to_ascii_lowercase()
+}
+
+fn add_py_payment_infos(
+    out: &mut Vec<PyContractAddressInfo>,
+    section: Option<&impl PyPaymentAddresses>,
+    section_name: &str,
+    escrow_prefix: &str,
+) {
+    if let Some(section) = section {
+        add_py_info(out, section.eas(), section_name, "eas", None);
+        add_py_info(
+            out,
+            section.atomic_payment_utils(),
+            section_name,
+            "atomic_payment_utils",
+            None,
+        );
+        add_py_info(
+            out,
+            section.escrow_obligation_default(),
+            section_name,
+            "escrow_obligation_default",
+            Some(&format!("{escrow_prefix}_escrow_obligation_default")),
+        );
+        add_py_info(
+            out,
+            section.escrow_obligation_unconditional(),
+            section_name,
+            "escrow_obligation_unconditional",
+            Some(&format!("{escrow_prefix}_escrow_obligation_unconditional")),
+        );
+        add_py_info(
+            out,
+            section.payment_obligation(),
+            section_name,
+            "payment_obligation",
+            None,
+        );
+    }
+}
+
+fn add_py_info(
+    out: &mut Vec<PyContractAddressInfo>,
+    address: &str,
+    section: &str,
+    field: &str,
+    escrow_kind: Option<&str>,
+) {
+    out.push(PyContractAddressInfo {
+        address: address.to_string(),
+        section: section.to_string(),
+        field: field.to_string(),
+        escrow_kind: escrow_kind.map(str::to_string),
+    });
+}
+
+trait PyPaymentAddresses {
+    fn eas(&self) -> &str;
+    fn atomic_payment_utils(&self) -> &str;
+    fn escrow_obligation_default(&self) -> &str;
+    fn escrow_obligation_unconditional(&self) -> &str;
+    fn payment_obligation(&self) -> &str;
+}
+
+macro_rules! impl_py_payment_addresses {
+    ($name:ident) => {
+        impl PyPaymentAddresses for $name {
+            fn eas(&self) -> &str {
+                &self.eas
+            }
+
+            fn atomic_payment_utils(&self) -> &str {
+                &self.atomic_payment_utils
+            }
+
+            fn escrow_obligation_default(&self) -> &str {
+                &self.escrow_obligation_default
+            }
+
+            fn escrow_obligation_unconditional(&self) -> &str {
+                &self.escrow_obligation_unconditional
+            }
+
+            fn payment_obligation(&self) -> &str {
+                &self.payment_obligation
+            }
+        }
+    };
 }
 
 macro_rules! py_address_struct {
@@ -836,6 +1359,12 @@ py_address_struct!(
     PyNativeTokenAddresses,
     alkahest_rs::clients::native_token::NativeTokenAddresses
 );
+
+impl_py_payment_addresses!(PyErc20Addresses);
+impl_py_payment_addresses!(PyErc721Addresses);
+impl_py_payment_addresses!(PyErc1155Addresses);
+impl_py_payment_addresses!(PyTokenBundleAddresses);
+impl_py_payment_addresses!(PyNativeTokenAddresses);
 
 #[pyclass]
 #[derive(Clone)]
