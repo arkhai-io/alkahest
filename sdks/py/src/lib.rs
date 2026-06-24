@@ -663,6 +663,7 @@ fn alkahest_py(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyCommitRevealObligationData>()?;
     m.add_class::<PyCommitRevealDemandData>()?;
     m.add_class::<PyErc20Data>()?;
+    m.add_class::<crate::types::PyContractAddressInfo>()?;
     m.add_class::<crate::types::PyDefaultExtensionConfig>()?;
 
     // Arbiters Client and related types

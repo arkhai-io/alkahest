@@ -25,6 +25,7 @@ use crate::clients::{
 /// Type alias for the default AlkahestClient with BaseExtensions
 pub type DefaultAlkahestClient = AlkahestClient<BaseExtensions>;
 
+pub mod address_index;
 pub mod addresses;
 pub mod clients;
 pub mod contracts;
@@ -35,6 +36,7 @@ pub mod types;
 pub mod utils;
 
 // Re-export contract types from client modules
+pub use address_index::ContractAddressInfo;
 pub use clients::arbiters::ArbitersContract;
 pub use clients::attestation::AttestationContract;
 pub use clients::commit_reveal_obligation::CommitRevealObligationContract;

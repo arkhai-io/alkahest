@@ -557,6 +557,7 @@ export { setupTestEnvironment, type TestContext } from "../tests/utils/setup";
 export * from "./clients/arbiters";
 export * from "./clients/obligations";
 export * from "./clients/splitters";
+export * from "./addressIndex";
 export * from "./config";
 // Export contract ABIs
 export * as contracts from "./contracts";
