@@ -6,6 +6,34 @@ finished.
 
 ## Remaining
 
+### [ ] Filecoin Calibration Deployment Compatibility
+
+Filecoin Calibration should be treated as a chain-specific deployment
+compatibility target, not as a reason to change default resolver inheritance or
+schema registration semantics. Default contracts should keep upstream EAS
+`SchemaResolver` behavior and normal `SchemaRegistryUtils.registerOrReuse(...)`.
+
+If Calibration deployment continues to fail on constructor-time schema lookups,
+use an explicit compatibility deploy path that opts into
+`CompatibilitySchemaRegistryUtils` or an equivalent direct-registration flow.
+This path should be selected by deploy tooling for the affected chain/version,
+not by default protocol contracts.
+
+### [ ] SDK Deployment Utilities
+
+Promote the current SDK test setup utilities into reusable deployment helpers.
+They should distinguish between deploying to an already-running Anvil endpoint
+and spawning/managing their own Anvil instance. The managed-Anvil mode remains
+the default test harness path, while the running-Anvil mode should behave like
+any other explicit RPC target.
+
+The helpers should accept target chain/RPC settings, deploy EAS or consume
+existing EAS + Schema Registry addresses, deploy Alkahest contracts, and
+optionally deploy or seed mock state. Chain-specific compatibility choices,
+such as schema-registration behavior needed for Filecoin Calibration, should
+live in these deploy helpers or deploy scripts rather than changing default
+protocol contract architecture.
+
 ### [ ] Python SDK API and Docs Alignment
 
 The Python SDK reference still describes the legacy `barter_utils` /

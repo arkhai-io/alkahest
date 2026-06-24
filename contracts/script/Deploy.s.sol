@@ -4,7 +4,6 @@ pragma solidity ^0.8.26;
 import "forge-std/Script.sol";
 import {IEAS} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
-import {EASDeployer} from "test/utils/EASDeployer.sol";
 import {AtomicPaymentUtils} from "@src/utils/atomic/AtomicPaymentUtils.sol";
 import {AtomicAttestationUtils} from "@src/utils/atomic/AtomicAttestationUtils.sol";
 import {ERC20Splitter} from "@src/utils/splitters/ERC20Splitter.sol";
@@ -118,7 +117,7 @@ import {StringObligation} from "@src/obligations/StringObligation.sol";
 import {CommitRevealObligation} from "@src/obligations/CommitRevealObligation.sol";
 
 contract Deploy is Script {
-    function run() external {
+    function run() external virtual {
         // Load environment variables
         string memory easAddressStr = vm.envString("EAS_ADDRESS");
         string memory easSrAddressStr = vm.envString("EAS_SR_ADDRESS");
@@ -130,28 +129,13 @@ contract Deploy is Script {
             vm.startBroadcast();
         }
 
-        // Deploy EAS and schema registry if needed
-        address easAddress;
-        address schemaRegistryAddress;
+        address easAddress = vm.parseAddress(easAddressStr);
+        address schemaRegistryAddress = vm.parseAddress(easSrAddressStr);
 
-        bool shouldDeployEAS = keccak256(abi.encodePacked(easAddressStr)) == keccak256(abi.encodePacked("deploy"));
-        bool shouldDeploySR = keccak256(abi.encodePacked(easSrAddressStr)) == keccak256(abi.encodePacked("deploy"));
+        _deploy(easAddress, schemaRegistryAddress);
+    }
 
-        if (shouldDeployEAS || shouldDeploySR) {
-            require(
-                shouldDeployEAS && shouldDeploySR,
-                "Both EAS_ADDRESS and EAS_SR_ADDRESS must be 'deploy' or both must be addresses"
-            );
-
-            EASDeployer easDeployer = new EASDeployer();
-            (IEAS eas, ISchemaRegistry schemaRegistry) = easDeployer.deployEAS();
-            easAddress = address(eas);
-            schemaRegistryAddress = address(schemaRegistry);
-        } else {
-            easAddress = vm.parseAddress(easAddressStr);
-            schemaRegistryAddress = vm.parseAddress(easSrAddressStr);
-        }
-
+    function _deploy(address easAddress, address schemaRegistryAddress) internal {
         // Deploy arbiters
         TrivialArbiter trivialArbiter = new TrivialArbiter();
         TrustedOracleArbiter trustedOracleArbiter = new TrustedOracleArbiter(IEAS(easAddress));

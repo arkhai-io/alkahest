@@ -8,7 +8,7 @@ import {SchemaResolver} from "@eas/resolver/SchemaResolver.sol";
 import {ISchemaResolver} from "@eas/resolver/ISchemaResolver.sol";
 import {Attestation} from "@eas/Common.sol";
 import {AttestationRequest, AttestationRequestData} from "@eas/IEAS.sol";
-import {SchemaRegistryUtils} from "./SchemaRegistryUtils.sol";
+import {SchemaRegistryUtils} from "./eas/SchemaRegistryUtils.sol";
 
 /// @title BaseAttester
 /// @notice Shared resolver and schema-registration base for contracts that create their own EAS attestations.

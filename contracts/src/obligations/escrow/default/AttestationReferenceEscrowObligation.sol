@@ -9,7 +9,7 @@ import {Attestation} from "@eas/Common.sol";
 import {IEAS, AttestationRequest, AttestationRequestData} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {ISchemaResolver} from "@eas/resolver/ISchemaResolver.sol";
-import {SchemaRegistryUtils} from "../../../SchemaRegistryUtils.sol";
+import {SchemaRegistryUtils} from "../../../eas/SchemaRegistryUtils.sol";
 
 /// @title AttestationReferenceEscrowObligation
 /// @notice Escrows a reference to an existing attestation behind an arbiter-defined fulfillment condition.
