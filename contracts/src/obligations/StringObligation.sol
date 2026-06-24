@@ -17,8 +17,8 @@ contract StringObligation is BaseObligation {
 
     /// @param _eas EAS contract used to create and read obligation attestations.
     /// @param _schemaRegistry EAS schema registry used to register or reuse the string schema.
-    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, bool compatibilitySchemaRegistration)
-        BaseObligation(_eas, _schemaRegistry, "string item, bytes32 schema", true, compatibilitySchemaRegistration)
+    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry)
+        BaseObligation(_eas, _schemaRegistry, "string item, bytes32 schema", true)
     {}
 
     /// @notice Creates a string obligation attestation for the caller.

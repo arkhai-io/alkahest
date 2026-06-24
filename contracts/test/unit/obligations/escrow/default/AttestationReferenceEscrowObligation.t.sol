@@ -44,8 +44,8 @@ contract AttestationReferenceEscrowObligationTest is Test {
         EASDeployer easDeployer = new EASDeployer();
         (eas, schemaRegistry) = easDeployer.deployEAS();
 
-        escrowObligation = new AttestationReferenceEscrowObligation(eas, schemaRegistry, false);
-        stringObligation = new StringObligation(eas, schemaRegistry, false);
+        escrowObligation = new AttestationReferenceEscrowObligation(eas, schemaRegistry);
+        stringObligation = new StringObligation(eas, schemaRegistry);
         mockArbiter = new MockArbiter(true);
         rejectingArbiter = new MockArbiter(false);
 

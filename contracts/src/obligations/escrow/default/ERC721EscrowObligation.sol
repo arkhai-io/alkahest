@@ -27,13 +27,9 @@ contract ERC721EscrowObligation is BaseEscrowObligation, BaseArbiter {
     /// @notice Raised when the ERC721 transfer fails or ownership does not move as expected.
     error ERC721TransferFailed(address token, address from, address to, uint256 tokenId);
 
-    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, bool compatibilitySchemaRegistration)
+    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry)
         BaseEscrowObligation(
-            _eas,
-            _schemaRegistry,
-            "address arbiter, bytes demand, address token, uint256 tokenId",
-            true,
-            compatibilitySchemaRegistration
+            _eas, _schemaRegistry, "address arbiter, bytes demand, address token, uint256 tokenId", true
         )
     {}
 

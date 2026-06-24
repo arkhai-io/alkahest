@@ -26,13 +26,12 @@ contract AttestationEscrowObligation is BaseEscrowObligation, BaseArbiter {
     error IncorrectPayment(uint256 expected, uint256 received);
     error NativeTokenTransferFailed(address to, uint256 amount);
 
-    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, bool compatibilitySchemaRegistration)
+    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry)
         BaseEscrowObligation(
             _eas,
             _schemaRegistry,
             "address arbiter, bytes demand, tuple(bytes32 schema, tuple(address recipient, uint64 expirationTime, bool revocable, bytes32 refUID, bytes data, uint256 value) data) attestation",
-            true,
-            compatibilitySchemaRegistration
+            true
         )
     {}
 

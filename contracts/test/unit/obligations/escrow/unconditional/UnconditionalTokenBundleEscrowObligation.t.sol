@@ -38,7 +38,7 @@ contract UnconditionalTokenBundleEscrowObligationTest is Test {
         EASDeployer easDeployer = new EASDeployer();
         (IEAS eas, ISchemaRegistry schemaRegistry) = easDeployer.deployEAS();
 
-        escrow = new UnconditionalTokenBundleEscrowObligation(eas, schemaRegistry, false);
+        escrow = new UnconditionalTokenBundleEscrowObligation(eas, schemaRegistry);
         token = new MockUnconditionalBundleERC20();
         arbiter = new MockUnconditionalBundleArbiter();
 

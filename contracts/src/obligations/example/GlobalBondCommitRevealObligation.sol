@@ -81,10 +81,7 @@ contract GlobalBondCommitRevealObligation is BaseObligation, BaseArbiter, Ownabl
         uint256 _bondAmount,
         uint256 _commitDeadline,
         address _slashedBondRecipient
-    )
-        BaseObligation(_eas, _schemaRegistry, "bytes payload, bytes32 salt, bytes32 schema", true, false)
-        Ownable(msg.sender)
-    {
+    ) BaseObligation(_eas, _schemaRegistry, "bytes payload, bytes32 salt, bytes32 schema", true) Ownable(msg.sender) {
         bondEpochs.push(BondEpoch({startBlock: 0, amount: _bondAmount}));
         commitDeadline = _commitDeadline;
         slashedBondRecipient = _slashedBondRecipient;

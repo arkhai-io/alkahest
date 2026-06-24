@@ -48,7 +48,7 @@ contract CryptoSignatureObligationTest is Test {
 
         // Deploy contracts
         cryptoSigObligation = new CryptoSignatureObligation(eas, schemaRegistry);
-        erc20Escrow = new ERC20EscrowObligation(eas, schemaRegistry, false);
+        erc20Escrow = new ERC20EscrowObligation(eas, schemaRegistry);
 
         // Deploy mock token
         paymentToken = new MockERC20("Test Token", "TEST");

@@ -24,7 +24,7 @@ contract ERC1155SplitterRefundingStringObligation is StringObligation {
     uint256 public immutable refundAmount;
 
     constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, uint256 _refundAmount)
-        StringObligation(_eas, _schemaRegistry, false)
+        StringObligation(_eas, _schemaRegistry)
     {
         refundAmount = _refundAmount;
     }
@@ -58,8 +58,8 @@ contract ERC1155SplitterTest is Test {
         EASDeployer easDeployer = new EASDeployer();
         (eas, schemaRegistry) = easDeployer.deployEAS();
         splitter = new ERC1155Splitter(eas);
-        escrowObligation = new ERC1155EscrowObligation(eas, schemaRegistry, false);
-        stringObligation = new StringObligation(eas, schemaRegistry, false);
+        escrowObligation = new ERC1155EscrowObligation(eas, schemaRegistry);
+        stringObligation = new StringObligation(eas, schemaRegistry);
         token = new MockERC1155();
         token.mint(buyer, TOKEN_ID, 1000);
         vm.deal(executor, 1 ether);

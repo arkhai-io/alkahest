@@ -4,19 +4,17 @@ pragma solidity ^0.8.26;
 import {IArbiter} from "./IArbiter.sol";
 import {IEAS} from "@eas/IEAS.sol";
 import {ISchemaRegistry, SchemaRecord} from "@eas/ISchemaRegistry.sol";
+import {SchemaResolver} from "@eas/resolver/SchemaResolver.sol";
 import {ISchemaResolver} from "@eas/resolver/ISchemaResolver.sol";
 import {Attestation} from "@eas/Common.sol";
 import {AttestationRequest, AttestationRequestData} from "@eas/IEAS.sol";
-import {CompatibilitySchemaRegistryUtils} from "./eas/CompatibilitySchemaRegistryUtils.sol";
-import {EASSchemaResolver} from "./eas/EASSchemaResolver.sol";
 import {SchemaRegistryUtils} from "./eas/SchemaRegistryUtils.sol";
 
 /// @title BaseAttester
 /// @notice Shared resolver and schema-registration base for contracts that create their own EAS attestations.
 /// @dev The resolver accepts attestations and revocations only when this contract is the attester.
-abstract contract BaseAttester is EASSchemaResolver {
+abstract contract BaseAttester is SchemaResolver {
     using SchemaRegistryUtils for ISchemaRegistry;
-    using CompatibilitySchemaRegistryUtils for ISchemaRegistry;
 
     /// @notice EAS schema registry used to register or reuse the attestation schema.
     ISchemaRegistry internal immutable schemaRegistry;
@@ -31,26 +29,17 @@ abstract contract BaseAttester is EASSchemaResolver {
     error NotFromThisAttester();
 
     /// @param _eas EAS contract used to create and read attestations.
-    /// @param _schemaRegistry EAS schema registry used to register `schema`.
+    /// @param _schemaRegistry EAS schema registry used to register or reuse `schema`.
     /// @param schema Human-readable EAS schema string.
     /// @param revocable Whether attestations created under `schema` are revocable.
-    /// @param compatibilitySchemaRegistration Use direct registration without constructor-time schema lookup.
-    constructor(
-        IEAS _eas,
-        ISchemaRegistry _schemaRegistry,
-        string memory schema,
-        bool revocable,
-        bool compatibilitySchemaRegistration
-    ) EASSchemaResolver(_eas) {
+    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, string memory schema, bool revocable) SchemaResolver(_eas) {
         eas = _eas;
         schemaRegistry = _schemaRegistry;
         ATTESTATION_SCHEMA_REVOCABLE = revocable;
-        ATTESTATION_SCHEMA = compatibilitySchemaRegistration
-            ? schemaRegistry.registerDirect(schema, ISchemaResolver(address(this)), revocable)
-            : schemaRegistry.registerOrReuse(schema, ISchemaResolver(address(this)), revocable);
+        ATTESTATION_SCHEMA = schemaRegistry.registerOrReuse(schema, ISchemaResolver(address(this)), revocable);
     }
 
-    /// @inheritdoc EASSchemaResolver
+    /// @inheritdoc SchemaResolver
     function onAttest(
         Attestation calldata attestation,
         uint256 /* value */
@@ -64,7 +53,7 @@ abstract contract BaseAttester is EASSchemaResolver {
         return attestation.attester == address(this);
     }
 
-    /// @inheritdoc EASSchemaResolver
+    /// @inheritdoc SchemaResolver
     function onRevoke(
         Attestation calldata attestation,
         uint256 /* value */

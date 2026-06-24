@@ -58,13 +58,12 @@ contract TokenBundlePaymentObligation is BaseObligation, BaseArbiter {
 
     /// @param _eas EAS contract used to create and read payment attestations.
     /// @param _schemaRegistry EAS schema registry used to register or reuse the bundle payment schema.
-    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, bool compatibilitySchemaRegistration)
+    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry)
         BaseObligation(
             _eas,
             _schemaRegistry,
             "uint256 nativeAmount, address[] erc20Tokens, uint256[] erc20Amounts, address[] erc721Tokens, uint256[] erc721TokenIds, address[] erc1155Tokens, uint256[] erc1155TokenIds, uint256[] erc1155Amounts, address payee",
-            true,
-            compatibilitySchemaRegistration
+            true
         )
     {}
 

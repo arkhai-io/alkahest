@@ -22,7 +22,7 @@ contract StringObligationTest is Test {
         (eas, schemaRegistry) = easDeployer.deployEAS();
 
         testUser = makeAddr("testUser");
-        stringObligation = new StringObligation(eas, schemaRegistry, false);
+        stringObligation = new StringObligation(eas, schemaRegistry);
     }
 
     function testConstructor() public view {
@@ -51,7 +51,7 @@ contract StringObligationTest is Test {
             schemaRegistry.register("string item, bytes32 schema", ISchemaResolver(predicted), true);
         assertEq(registeredSchema, expectedSchema);
 
-        StringObligation reusedSchemaObligation = new StringObligation(eas, schemaRegistry, false);
+        StringObligation reusedSchemaObligation = new StringObligation(eas, schemaRegistry);
         assertEq(reusedSchemaObligation.ATTESTATION_SCHEMA(), expectedSchema);
         assertEq(reusedSchemaObligation.getSchema().uid, expectedSchema);
     }

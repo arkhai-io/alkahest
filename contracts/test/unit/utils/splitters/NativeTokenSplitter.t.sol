@@ -15,7 +15,7 @@ contract NativeSplitterRefundingStringObligation is StringObligation {
     uint256 public immutable refundAmount;
 
     constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, uint256 _refundAmount)
-        StringObligation(_eas, _schemaRegistry, false)
+        StringObligation(_eas, _schemaRegistry)
     {
         refundAmount = _refundAmount;
     }
@@ -47,8 +47,8 @@ contract NativeTokenSplitterTest is Test {
         EASDeployer easDeployer = new EASDeployer();
         (eas, schemaRegistry) = easDeployer.deployEAS();
         splitter = new NativeTokenSplitter(eas);
-        escrowObligation = new NativeTokenEscrowObligation(eas, schemaRegistry, false);
-        stringObligation = new StringObligation(eas, schemaRegistry, false);
+        escrowObligation = new NativeTokenEscrowObligation(eas, schemaRegistry);
+        stringObligation = new StringObligation(eas, schemaRegistry);
         vm.deal(buyer, 10 ether);
         vm.deal(executor, 1 ether);
     }

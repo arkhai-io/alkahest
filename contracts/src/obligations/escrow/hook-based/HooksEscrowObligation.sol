@@ -30,13 +30,12 @@ contract HooksEscrowObligation is BaseEscrowObligation, BaseArbiter {
 
     uint256 public constant MAX_HOOKS = 50;
 
-    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, bool compatibilitySchemaRegistration)
+    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry)
         BaseEscrowObligation(
             _eas,
             _schemaRegistry,
             "address arbiter, bytes demand, address[] hooks, bytes[] hookDatas, uint256[] values",
-            true,
-            compatibilitySchemaRegistration
+            true
         )
     {}
 

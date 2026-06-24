@@ -39,8 +39,7 @@ contract ApiResultObligation is BaseObligation {
             _eas,
             _schemaRegistry,
             "string endpoint,string method,uint16 statusCode,string headers,string body,uint256 timestamp",
-            true,
-            false
+            true // revocable
         )
     {}
 

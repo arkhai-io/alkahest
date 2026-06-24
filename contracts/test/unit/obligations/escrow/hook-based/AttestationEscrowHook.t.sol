@@ -34,7 +34,7 @@ contract AttestationEscrowHookTest is Test {
         (eas, schemaRegistry) = easDeployer.deployEAS();
 
         hook = new AttestationEscrowHook(eas);
-        hook2 = new AttestationReferenceEscrowHook(eas, schemaRegistry, false);
+        hook2 = new AttestationReferenceEscrowHook(eas, schemaRegistry);
         vm.startPrank(caller);
         hook.approveEscrow(caller);
         hook2.approveEscrow(caller);
@@ -280,7 +280,7 @@ contract AttestationEscrowHookTest is Test {
             schemaRegistry.register("bytes32 validatedAttestationUid", ISchemaResolver(predicted), true);
         assertEq(registeredSchema, expectedSchema);
 
-        AttestationReferenceEscrowHook reusedSchemaHook = new AttestationReferenceEscrowHook(eas, schemaRegistry, false);
+        AttestationReferenceEscrowHook reusedSchemaHook = new AttestationReferenceEscrowHook(eas, schemaRegistry);
         assertEq(reusedSchemaHook.VALIDATION_SCHEMA(), expectedSchema);
         assertEq(schemaRegistry.getSchema(expectedSchema).uid, expectedSchema);
     }

@@ -31,7 +31,7 @@ contract StringCapitalizerTest is Test {
         bob = vm.addr(BOB_PRIVATE_KEY);
 
         // Deploy contracts
-        stringObligation = new StringObligation(eas, schemaRegistry, false);
+        stringObligation = new StringObligation(eas, schemaRegistry);
         capitalizer = new StringCapitalizer();
 
         // Fund test accounts

@@ -28,13 +28,9 @@ contract UnconditionalERC1155EscrowObligation is BaseEscrowObligationUncondition
 
     error ERC1155TransferFailed(address token, address from, address to, uint256 tokenId, uint256 amount);
 
-    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, bool compatibilitySchemaRegistration)
+    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry)
         BaseEscrowObligationUnconditional(
-            _eas,
-            _schemaRegistry,
-            "address arbiter, bytes demand, address token, uint256 tokenId, uint256 amount",
-            true,
-            compatibilitySchemaRegistration
+            _eas, _schemaRegistry, "address arbiter, bytes demand, address token, uint256 tokenId, uint256 amount", true
         )
     {}
 

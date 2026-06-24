@@ -12,17 +12,12 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
 /// @dev Child contracts customize behavior by overriding `_beforeAttest` and `_afterAttest`.
 abstract contract BaseObligation is BaseAttester, ReentrancyGuard {
     /// @param _eas EAS contract used to create and read attestations.
-    /// @param _schemaRegistry EAS schema registry used to register `schema`.
+    /// @param _schemaRegistry EAS schema registry used to register or reuse `schema`.
     /// @param schema Human-readable EAS schema string for this obligation.
     /// @param revocable Whether attestations created under `schema` are revocable.
-    /// @param compatibilitySchemaRegistration Use direct registration without constructor-time schema lookup.
-    constructor(
-        IEAS _eas,
-        ISchemaRegistry _schemaRegistry,
-        string memory schema,
-        bool revocable,
-        bool compatibilitySchemaRegistration
-    ) BaseAttester(_eas, _schemaRegistry, schema, revocable, compatibilitySchemaRegistration) {}
+    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, string memory schema, bool revocable)
+        BaseAttester(_eas, _schemaRegistry, schema, revocable)
+    {}
 
     /// @notice Creates an obligation attestation from pre-encoded data.
     /// @param data ABI-encoded obligation data.

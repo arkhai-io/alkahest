@@ -46,7 +46,7 @@ contract AttestationEscrowObligationTest is Test {
         EASDeployer easDeployer = new EASDeployer();
         (eas, schemaRegistry) = easDeployer.deployEAS();
 
-        escrowObligation = new AttestationEscrowObligation(eas, schemaRegistry, false);
+        escrowObligation = new AttestationEscrowObligation(eas, schemaRegistry);
         mockArbiter = new MockArbiter(true);
         rejectingArbiter = new MockArbiter(false);
 
@@ -146,7 +146,7 @@ contract AttestationEscrowObligationTest is Test {
         vm.stopPrank();
 
         // Create a fulfillment attestation using StringObligation that references the escrow
-        StringObligation stringObligation = new StringObligation(eas, schemaRegistry, false);
+        StringObligation stringObligation = new StringObligation(eas, schemaRegistry);
 
         vm.startPrank(attester);
         fulfillmentUid = stringObligation.doObligation(
@@ -203,7 +203,7 @@ contract AttestationEscrowObligationTest is Test {
         bytes32 escrowUid = escrowObligation.doObligation{value: 1 wei}(data, uint64(block.timestamp + EXPIRATION_TIME));
         assertEq(address(escrowObligation).balance, 1 wei);
 
-        StringObligation stringObligation = new StringObligation(eas, schemaRegistry, false);
+        StringObligation stringObligation = new StringObligation(eas, schemaRegistry);
         vm.prank(attester);
         bytes32 fulfillmentUid = stringObligation.doObligation(
             StringObligation.ObligationData({item: "fulfillment data", schema: bytes32(0)}), escrowUid
@@ -240,7 +240,7 @@ contract AttestationEscrowObligationTest is Test {
     // Test payment collection with rejected fulfillment
     function test_RevertWhen_FulfillmentRejected() public {
         // Create StringObligation for fulfillment
-        StringObligation stringObligation = new StringObligation(eas, schemaRegistry, false);
+        StringObligation stringObligation = new StringObligation(eas, schemaRegistry);
 
         // Create an escrow attestation with rejecting arbiter
         vm.startPrank(requester);

@@ -30,17 +30,12 @@ abstract contract BaseEscrowObligationUnconditional is BaseObligation, IEscrow, 
     error RevocationFailed(bytes32 attestationId);
 
     /// @param _eas EAS contract used to create, read, and revoke escrow attestations.
-    /// @param _schemaRegistry EAS schema registry used to register `schema`.
+    /// @param _schemaRegistry EAS schema registry used to register or reuse `schema`.
     /// @param schema Human-readable EAS schema string for the concrete escrow.
     /// @param revocable Whether escrow attestations are revocable.
-    /// @param compatibilitySchemaRegistration Use direct registration without constructor-time schema lookup.
-    constructor(
-        IEAS _eas,
-        ISchemaRegistry _schemaRegistry,
-        string memory schema,
-        bool revocable,
-        bool compatibilitySchemaRegistration
-    ) BaseObligation(_eas, _schemaRegistry, schema, revocable, compatibilitySchemaRegistration) {}
+    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, string memory schema, bool revocable)
+        BaseObligation(_eas, _schemaRegistry, schema, revocable)
+    {}
 
     /// @inheritdoc ERC165
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, IERC165) returns (bool) {

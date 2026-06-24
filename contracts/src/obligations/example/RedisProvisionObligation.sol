@@ -53,8 +53,7 @@ contract RedisProvisionObligation is BaseObligation, BaseArbiter {
             _eas,
             _schemaRegistry,
             "address user, uint256 capacity, uint256 egress, uint256 cpus, string memory serverName, string memory url",
-            true,
-            false
+            true
         )
     {}
 

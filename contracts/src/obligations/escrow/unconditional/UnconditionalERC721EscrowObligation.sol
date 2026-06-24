@@ -26,13 +26,9 @@ contract UnconditionalERC721EscrowObligation is BaseEscrowObligationUnconditiona
 
     error ERC721TransferFailed(address token, address from, address to, uint256 tokenId);
 
-    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, bool compatibilitySchemaRegistration)
+    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry)
         BaseEscrowObligationUnconditional(
-            _eas,
-            _schemaRegistry,
-            "address arbiter, bytes demand, address token, uint256 tokenId",
-            true,
-            compatibilitySchemaRegistration
+            _eas, _schemaRegistry, "address arbiter, bytes demand, address token, uint256 tokenId", true
         )
     {}
 

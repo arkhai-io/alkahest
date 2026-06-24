@@ -84,7 +84,7 @@ contract ERC1155EscrowObligationTest is Test {
         EASDeployer easDeployer = new EASDeployer();
         (eas, schemaRegistry) = easDeployer.deployEAS();
 
-        escrowObligation = new ERC1155EscrowObligation(eas, schemaRegistry, false);
+        escrowObligation = new ERC1155EscrowObligation(eas, schemaRegistry);
         token = new MockERC1155();
         mockArbiter = new MockArbiter(true);
         rejectingArbiter = new MockArbiter(false);
@@ -195,7 +195,7 @@ contract ERC1155EscrowObligationTest is Test {
         vm.stopPrank();
 
         // Create a fulfillment attestation using a StringObligation
-        StringObligation stringObligation = new StringObligation(eas, schemaRegistry, false);
+        StringObligation stringObligation = new StringObligation(eas, schemaRegistry);
 
         vm.prank(seller);
         bytes32 fulfillmentUid = stringObligation.doObligation(
@@ -230,7 +230,7 @@ contract ERC1155EscrowObligationTest is Test {
         bytes32 paymentUid = escrowObligation.doObligation(data, uint64(block.timestamp + EXPIRATION_TIME));
         vm.stopPrank();
 
-        StringObligation stringObligation = new StringObligation(eas, schemaRegistry, false);
+        StringObligation stringObligation = new StringObligation(eas, schemaRegistry);
         vm.prank(address(receiver));
         bytes32 fulfillmentUid = stringObligation.doObligation(
             StringObligation.ObligationData({item: "fulfillment data", schema: bytes32(0)}), paymentUid
@@ -260,7 +260,7 @@ contract ERC1155EscrowObligationTest is Test {
         vm.stopPrank();
 
         // Create a fulfillment attestation using a StringObligation
-        StringObligation stringObligation = new StringObligation(eas, schemaRegistry, false);
+        StringObligation stringObligation = new StringObligation(eas, schemaRegistry);
 
         vm.prank(seller);
         bytes32 fulfillmentUid = stringObligation.doObligation(

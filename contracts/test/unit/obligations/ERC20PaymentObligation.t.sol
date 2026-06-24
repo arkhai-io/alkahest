@@ -33,7 +33,7 @@ contract ERC20PaymentObligationTest is Test {
         EASDeployer easDeployer = new EASDeployer();
         (eas, schemaRegistry) = easDeployer.deployEAS();
 
-        paymentObligation = new ERC20PaymentObligation(eas, schemaRegistry, false);
+        paymentObligation = new ERC20PaymentObligation(eas, schemaRegistry);
         token = new MockERC20();
 
         payer = makeAddr("payer");

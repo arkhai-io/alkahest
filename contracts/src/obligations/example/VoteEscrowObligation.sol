@@ -60,8 +60,7 @@ contract VoteEscrowObligation is BaseEscrowObligation {
             _eas,
             _schemaRegistry,
             "address votingContract,uint256 proposalId,uint8 support,address arbiter,bytes demand",
-            true,
-            false
+            true // Revocable
         )
     {}
 

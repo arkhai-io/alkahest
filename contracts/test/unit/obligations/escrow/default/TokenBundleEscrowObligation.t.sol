@@ -128,7 +128,7 @@ contract TokenBundleEscrowObligationTest is Test {
         arbiter = new MockArbiter();
 
         // Deploy escrow contract
-        escrow = new TokenBundleEscrowObligation(eas, schemaRegistry, false);
+        escrow = new TokenBundleEscrowObligation(eas, schemaRegistry);
 
         // Setup test accounts
         vm.deal(alice, 10 ether);

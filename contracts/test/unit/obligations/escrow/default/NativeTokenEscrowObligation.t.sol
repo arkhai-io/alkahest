@@ -33,12 +33,12 @@ contract NativeTokenEscrowObligationTest is Test {
         EASDeployer easDeployer = new EASDeployer();
         (eas, schemaRegistry) = easDeployer.deployEAS();
 
-        escrowObligation = new NativeTokenEscrowObligation(eas, schemaRegistry, false);
+        escrowObligation = new NativeTokenEscrowObligation(eas, schemaRegistry);
         // Create a second instance with a different schema ID (different resolver = different schema)
-        wrongSchemaObligation = new NativeTokenEscrowObligation(eas, schemaRegistry, false);
+        wrongSchemaObligation = new NativeTokenEscrowObligation(eas, schemaRegistry);
         mockArbiter = new MockArbiter(true);
         rejectingArbiter = new MockArbiter(false);
-        stringObligation = new StringObligation(eas, schemaRegistry, false);
+        stringObligation = new StringObligation(eas, schemaRegistry);
 
         buyer = makeAddr("buyer");
         seller = makeAddr("seller");

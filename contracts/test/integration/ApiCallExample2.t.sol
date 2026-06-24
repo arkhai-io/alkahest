@@ -76,7 +76,7 @@ contract ApiCallExample2Test is Test {
         // Deploy contracts
         apiResultObligation = new ApiResultObligation(eas, schemaRegistry);
         trustedOracleArbiter = new TrustedOracleArbiter(eas);
-        erc20EscrowObligation = new ERC20EscrowObligation(eas, schemaRegistry, false);
+        erc20EscrowObligation = new ERC20EscrowObligation(eas, schemaRegistry);
 
         // Deploy and distribute tokens
         paymentToken = new MockToken();

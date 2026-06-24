@@ -9,7 +9,6 @@ import {Attestation} from "@eas/Common.sol";
 import {IEAS, AttestationRequest, AttestationRequestData} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {ISchemaResolver} from "@eas/resolver/ISchemaResolver.sol";
-import {CompatibilitySchemaRegistryUtils} from "../../../eas/CompatibilitySchemaRegistryUtils.sol";
 import {SchemaRegistryUtils} from "../../../eas/SchemaRegistryUtils.sol";
 
 /// @title UnconditionalAttestationReferenceEscrowObligation
@@ -17,7 +16,6 @@ import {SchemaRegistryUtils} from "../../../eas/SchemaRegistryUtils.sol";
 /// @dev Does not apply the default fulfillment refUID or intrinsic checks; use arbiters to add any required checks.
 contract UnconditionalAttestationReferenceEscrowObligation is BaseEscrowObligationUnconditional, BaseArbiter {
     using ArbiterUtils for Attestation;
-    using CompatibilitySchemaRegistryUtils for ISchemaRegistry;
     using SchemaRegistryUtils for ISchemaRegistry;
 
     bytes32 public immutable VALIDATION_SCHEMA;
@@ -31,19 +29,17 @@ contract UnconditionalAttestationReferenceEscrowObligation is BaseEscrowObligati
         bool validationRevocable;
     }
 
-    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, bool compatibilitySchemaRegistration)
+    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry)
         BaseEscrowObligationUnconditional(
             _eas,
             _schemaRegistry,
             "address arbiter, bytes demand, bytes32 attestationUid, uint64 validationExpirationTime, bool validationRevocable",
-            true,
-            compatibilitySchemaRegistration
+            true
         )
     {
         // Register the validation schema
-        VALIDATION_SCHEMA = compatibilitySchemaRegistration
-            ? _schemaRegistry.registerDirect("bytes32 validatedAttestationUid", ISchemaResolver(address(this)), true)
-            : _schemaRegistry.registerOrReuse("bytes32 validatedAttestationUid", ISchemaResolver(address(this)), true);
+        VALIDATION_SCHEMA =
+            _schemaRegistry.registerOrReuse("bytes32 validatedAttestationUid", ISchemaResolver(address(this)), true);
     }
 
     /// @inheritdoc BaseEscrowObligationUnconditional

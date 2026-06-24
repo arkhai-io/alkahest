@@ -42,7 +42,7 @@ contract ERC721PaymentObligationTest is Test {
         EASDeployer easDeployer = new EASDeployer();
         (eas, schemaRegistry) = easDeployer.deployEAS();
 
-        paymentObligation = new ERC721PaymentObligation(eas, schemaRegistry, false);
+        paymentObligation = new ERC721PaymentObligation(eas, schemaRegistry);
         token = new MockERC721();
 
         payer = makeAddr("payer");

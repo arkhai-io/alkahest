@@ -47,8 +47,8 @@ contract TokenBundleEscrowObligation_ReleaseSwallowFailure_POC is Test {
     function testPOC_TokenBundle_NowReverts() public {
         (IEAS eas, ISchemaRegistry schemaRegistry) = _deployEAS();
 
-        TokenBundleEscrowObligation escrow = new TokenBundleEscrowObligation(eas, schemaRegistry, false);
-        StringObligation stringObligation = new StringObligation(eas, schemaRegistry, false);
+        TokenBundleEscrowObligation escrow = new TokenBundleEscrowObligation(eas, schemaRegistry);
+        StringObligation stringObligation = new StringObligation(eas, schemaRegistry);
         TrueArbiter arbiter = new TrueArbiter();
 
         MockERC1155 token = new MockERC1155();
@@ -118,8 +118,8 @@ contract TokenBundleEscrowObligation_ReleaseSwallowFailure_POC is Test {
     function testPOC_TokenBundle_UnsafePartialAllowed() public {
         (IEAS eas, ISchemaRegistry schemaRegistry) = _deployEAS();
 
-        TokenBundleEscrowObligation escrow = new TokenBundleEscrowObligation(eas, schemaRegistry, false);
-        StringObligation stringObligation = new StringObligation(eas, schemaRegistry, false);
+        TokenBundleEscrowObligation escrow = new TokenBundleEscrowObligation(eas, schemaRegistry);
+        StringObligation stringObligation = new StringObligation(eas, schemaRegistry);
         TrueArbiter arbiter = new TrueArbiter();
 
         MockERC1155 token = new MockERC1155();

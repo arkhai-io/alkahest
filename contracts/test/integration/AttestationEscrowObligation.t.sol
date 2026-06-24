@@ -47,7 +47,7 @@ contract AttestationEscrowObligationTest is Test {
         mockArbiter = new MockArbiter(true);
         failingArbiter = new MockArbiter(false);
 
-        escrowObligation = new AttestationEscrowObligation(eas, schemaRegistry, false);
+        escrowObligation = new AttestationEscrowObligation(eas, schemaRegistry);
     }
 
     function testCreateEscrow() public {
@@ -95,7 +95,7 @@ contract AttestationEscrowObligationTest is Test {
         bytes32 escrowId = escrowObligation.doObligation(obligationData, uint64(block.timestamp + 1 days));
 
         // Create fulfillment attestation using StringObligation that references the escrow
-        StringObligation stringObligation = new StringObligation(eas, schemaRegistry, false);
+        StringObligation stringObligation = new StringObligation(eas, schemaRegistry);
 
         vm.prank(bob);
         bytes32 fulfillmentId = stringObligation.doObligation(

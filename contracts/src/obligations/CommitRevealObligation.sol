@@ -68,15 +68,8 @@ contract CommitRevealObligation is BaseObligation, BaseArbiter, Ownable {
     /// @notice Recipient of slashed bonds (address(0) = burn).
     address public slashedBondRecipient;
 
-    constructor(
-        IEAS _eas,
-        ISchemaRegistry _schemaRegistry,
-        bool compatibilitySchemaRegistration,
-        address _slashedBondRecipient
-    )
-        BaseObligation(
-            _eas, _schemaRegistry, "bytes payload, bytes32 salt, bytes32 schema", true, compatibilitySchemaRegistration
-        )
+    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, address _slashedBondRecipient)
+        BaseObligation(_eas, _schemaRegistry, "bytes payload, bytes32 salt, bytes32 schema", true)
         Ownable(msg.sender)
     {
         slashedBondRecipient = _slashedBondRecipient;

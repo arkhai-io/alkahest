@@ -38,7 +38,7 @@ contract ERC1155PaymentObligationTest is Test {
         EASDeployer easDeployer = new EASDeployer();
         (eas, schemaRegistry) = easDeployer.deployEAS();
 
-        paymentObligation = new ERC1155PaymentObligation(eas, schemaRegistry, false);
+        paymentObligation = new ERC1155PaymentObligation(eas, schemaRegistry);
         token = new MockERC1155();
 
         payer = makeAddr("payer");

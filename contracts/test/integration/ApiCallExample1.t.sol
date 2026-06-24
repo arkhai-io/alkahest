@@ -67,9 +67,9 @@ contract ApiCallExample1Test is Test {
         charlie = vm.addr(CHARLIE_PRIVATE_KEY);
 
         // Deploy contracts
-        stringObligation = new StringObligation(eas, schemaRegistry, false);
+        stringObligation = new StringObligation(eas, schemaRegistry);
         trustedOracleArbiter = new TrustedOracleArbiter(eas);
-        erc20EscrowObligation = new ERC20EscrowObligation(eas, schemaRegistry, false);
+        erc20EscrowObligation = new ERC20EscrowObligation(eas, schemaRegistry);
 
         // Deploy and distribute tokens
         paymentToken = new MockToken();
