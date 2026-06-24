@@ -7,7 +7,7 @@ An MCP (Model Context Protocol) server that provides intelligent documentation a
 - **Smart Search**: Full-text search across contracts, SDK modules, and guides
 - **Contract Documentation**: Detailed info including functions, events, errors, schemas, and deployed addresses
 - **SDK Documentation**: Client method listings with hierarchical module structure
-- **Deployment Info**: Contract addresses per chain (Base Sepolia, Filecoin Calibration, Monad)
+- **Deployment Info**: Contract addresses per chain (Base Sepolia, Ethereum, Monad)
 - **Guide Access**: Documentation guides with code examples
 
 ## Quick Setup (Copy-Paste)

@@ -154,7 +154,7 @@ async fn test_contract_instance_creation() -> Result<()> {
 
 #[tokio::test]
 async fn test_custom_network_configuration() -> Result<()> {
-    use alkahest_rs::addresses::{BASE_SEPOLIA_ADDRESSES, FILECOIN_CALIBRATION_ADDRESSES};
+    use alkahest_rs::addresses::{BASE_SEPOLIA_ADDRESSES, ETHEREUM_SEPOLIA_ADDRESSES};
 
     let test_context = setup_test_environment().await?;
     let rpc_url = test_context.anvil.ws_endpoint();
@@ -167,20 +167,20 @@ async fn test_custom_network_configuration() -> Result<()> {
     )
     .await?;
 
-    // Create client with Filecoin Calibration addresses
-    let filecoin_client = DefaultAlkahestClient::with_base_extensions(
+    // Create client with Ethereum Sepolia addresses
+    let sepolia_client = DefaultAlkahestClient::with_base_extensions(
         test_context.alice.clone(),
         &rpc_url,
-        Some(FILECOIN_CALIBRATION_ADDRESSES),
+        Some(ETHEREUM_SEPOLIA_ADDRESSES),
     )
     .await?;
 
     // Get the same contract from both clients
     let base_escrow = base_client.erc20_address(Erc20Contract::EscrowObligation);
-    let filecoin_escrow = filecoin_client.erc20_address(Erc20Contract::EscrowObligation);
+    let sepolia_escrow = sepolia_client.erc20_address(Erc20Contract::EscrowObligation);
 
     // Addresses should be different between networks
-    assert_ne!(base_escrow, filecoin_escrow);
+    assert_ne!(base_escrow, sepolia_escrow);
 
     // Verify each client uses its respective network addresses
     assert_eq!(
@@ -190,8 +190,8 @@ async fn test_custom_network_configuration() -> Result<()> {
             .escrow_obligation_default
     );
     assert_eq!(
-        filecoin_escrow,
-        FILECOIN_CALIBRATION_ADDRESSES
+        sepolia_escrow,
+        ETHEREUM_SEPOLIA_ADDRESSES
             .erc20_addresses
             .escrow_obligation_default
     );

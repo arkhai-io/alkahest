@@ -103,7 +103,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
         properties: {
           chain: {
             type: "string",
-            description: "Chain name (e.g., 'base-sepolia', 'filecoin', 'monad')",
+            description: "Chain name (e.g., 'base-sepolia', 'ethereum', 'monad')",
           },
         },
         required: ["chain"],

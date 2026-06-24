@@ -1,6 +1,6 @@
 use alkahest_rs::{
     DefaultExtensionConfig,
-    addresses::{BASE_SEPOLIA_ADDRESSES, FILECOIN_CALIBRATION_ADDRESSES},
+    addresses::{BASE_SEPOLIA_ADDRESSES, ETHEREUM_SEPOLIA_ADDRESSES},
 };
 use serde_json;
 use std::fs;
@@ -82,15 +82,15 @@ fn test_config_file_persistence() -> Result<(), Box<dyn std::error::Error>> {
 fn test_custom_config_with_mixed_networks() -> Result<(), Box<dyn std::error::Error>> {
     // Create a custom config mixing different network addresses
     let custom_config = DefaultExtensionConfig {
-        arbiters_addresses: FILECOIN_CALIBRATION_ADDRESSES.arbiters_addresses.clone(),
+        arbiters_addresses: ETHEREUM_SEPOLIA_ADDRESSES.arbiters_addresses.clone(),
         erc20_addresses: BASE_SEPOLIA_ADDRESSES.erc20_addresses.clone(),
-        ..FILECOIN_CALIBRATION_ADDRESSES
+        ..ETHEREUM_SEPOLIA_ADDRESSES
     };
 
     // Verify it uses mixed addresses
     assert_eq!(
         custom_config.arbiters_addresses.eas,
-        FILECOIN_CALIBRATION_ADDRESSES.arbiters_addresses.eas
+        ETHEREUM_SEPOLIA_ADDRESSES.arbiters_addresses.eas
     );
     assert_eq!(
         custom_config.erc20_addresses.eas,
@@ -113,9 +113,9 @@ fn test_custom_config_with_mixed_networks() -> Result<(), Box<dyn std::error::Er
 #[test]
 fn test_round_trip_serialization() -> Result<(), Box<dyn std::error::Error>> {
     let custom_config = DefaultExtensionConfig {
-        arbiters_addresses: FILECOIN_CALIBRATION_ADDRESSES.arbiters_addresses.clone(),
+        arbiters_addresses: ETHEREUM_SEPOLIA_ADDRESSES.arbiters_addresses.clone(),
         erc20_addresses: BASE_SEPOLIA_ADDRESSES.erc20_addresses.clone(),
-        ..FILECOIN_CALIBRATION_ADDRESSES
+        ..ETHEREUM_SEPOLIA_ADDRESSES
     };
 
     // Serialize to JSON
@@ -173,7 +173,7 @@ fn test_multiple_configs_in_same_directory() -> Result<(), Box<dyn std::error::E
 
     // Create and save custom config
     let custom_config = DefaultExtensionConfig {
-        arbiters_addresses: FILECOIN_CALIBRATION_ADDRESSES.arbiters_addresses.clone(),
+        arbiters_addresses: ETHEREUM_SEPOLIA_ADDRESSES.arbiters_addresses.clone(),
         ..BASE_SEPOLIA_ADDRESSES
     };
     let custom_path = temp_dir.path().join("custom_config.json");
@@ -242,7 +242,7 @@ fn test_config_comparison() {
     );
 
     let config3 = DefaultExtensionConfig {
-        arbiters_addresses: FILECOIN_CALIBRATION_ADDRESSES.arbiters_addresses.clone(),
+        arbiters_addresses: ETHEREUM_SEPOLIA_ADDRESSES.arbiters_addresses.clone(),
         ..BASE_SEPOLIA_ADDRESSES
     };
 
@@ -254,18 +254,18 @@ fn test_config_comparison() {
 }
 
 #[test]
-fn test_base_sepolia_vs_filecoin_addresses() {
-    // Verify that Base Sepolia and Filecoin Calibration have different addresses
+fn test_base_sepolia_vs_ethereum_sepolia_addresses() {
+    // Verify that Base Sepolia and Ethereum Sepolia have different addresses
     assert_ne!(
         BASE_SEPOLIA_ADDRESSES.arbiters_addresses.eas,
-        FILECOIN_CALIBRATION_ADDRESSES.arbiters_addresses.eas
+        ETHEREUM_SEPOLIA_ADDRESSES.arbiters_addresses.eas
     );
     assert_ne!(
         BASE_SEPOLIA_ADDRESSES.erc20_addresses.eas,
-        FILECOIN_CALIBRATION_ADDRESSES.erc20_addresses.eas
+        ETHEREUM_SEPOLIA_ADDRESSES.erc20_addresses.eas
     );
     assert_ne!(
         BASE_SEPOLIA_ADDRESSES.erc721_addresses.eas,
-        FILECOIN_CALIBRATION_ADDRESSES.erc721_addresses.eas
+        ETHEREUM_SEPOLIA_ADDRESSES.erc721_addresses.eas
     );
 }

@@ -206,65 +206,6 @@ export const contractAddresses: Record<string, ChainAddresses> = {
     tokenBundleSplitter: "0x0F235Bf6e5725791e118A25b4903856030525EF0",
     tokenBundleSplitterUnvalidated: "0x4621C947D713cC7f63a377EE4D05eea789ab0956",
   },
-  "Filecoin Calibration": {
-    ...unreleasedAddresses,
-    eas: "0x3c79a0225380fB6F3CB990FfC4E3D5aF4546b524",
-    easSchemaRegistry: "0x2BB94a4E6eC0D81dE7f81007b572Ac09A5BE37b4",
-
-    erc20AtomicPaymentUtils: "0xb5800e34602154ce92c5eb0e7cb455306d7d590e",
-    erc20EscrowObligation: "0x6bcec91a89a63d50368bce54cb9ed0399992c18b",
-    erc20PaymentObligation: "0x33f6f558c1fcac597f2b635bc50554055ff98165",
-
-    erc721AtomicPaymentUtils: "0x797a737defb8cae0a30324ecfa52eaab9c0a5fd6",
-    erc721EscrowObligation: "0x99f5335b95e1c0be4c218a59aae26efc50d5673f",
-    erc721PaymentObligation: "0x5b6bff4dc108c58b97721330666f56c8028c097c",
-
-    erc1155AtomicPaymentUtils: "0x850d8df3ff0149bd5a9191a958b287b25564716b",
-    erc1155EscrowObligation: "0xf9dbc74553faecac775201113198085c4d572805",
-    erc1155PaymentObligation: "0x4cb076af47f0f3909ebafd88cbc0c4cc8dee17dd",
-
-    tokenBundleAtomicPaymentUtils: "0xfca2c2df4023a0a418bf354b5bfff1ebfe0520a9",
-    tokenBundleEscrowObligation: "0x902ac1997bd29a037263e0d80952c80d69d9afd4",
-    tokenBundlePaymentObligation: "0xc1b02efec19a171ecbb7c8ad54b9617e80fdf40f",
-
-    atomicAttestationUtils: "0x0000000000000000000000000000000000000000",
-    attestationEscrowObligation: "0xd59c6c6cb025e76a0a1e706c62a9df38b04694e2",
-    attestationReferenceEscrowObligation: "0xa22b4d9fe7a746d44be1e724bb1a26593bca2c1b",
-
-    stringObligation: "0x66c3f78258823b9b899ab14b11e1dcf978c060d7",
-    commitRevealObligation: "0x32889Ee549d61Ed5D14f2D499fCc809a4feC0dD8",
-
-    trivialArbiter: "0xd56bd862e7bebd0bd7356603e9e52b32c241e2ae",
-    trustedOracleArbiter: "0x61dc9c2d757a1c9d0d38a281288d9ef918e77baa",
-    allArbiter: "0x49026902790a8ecb427f335ca0d097c7c5795d13",
-    anyArbiter: "0xb6890a8cb8cdefce11edc0314125b750f48bff1b",
-    intrinsicsArbiter: "0x81dc8f2c5677b02afcafef34fa7e75d55dfaef20",
-    erc8004Arbiter: "0x3c1E21911C609714dBc0Ab90800c7aD8817B8e83",
-    referencesEscrowArbiter: zeroAddress,
-    nativeTokenEscrowObligation: "0x7490102a8b821c70679508426823f26c9bab4714",
-    nativeTokenPaymentObligation: "0xd511278d5b9e5f8f9b99d01ea326b8232c133be5",
-    nativeTokenAtomicPaymentUtils: "0x3c07027874650794eae300c603f066af182ea86a",
-
-    // Confirmation arbiters (new naming convention)
-    exclusiveRevocableConfirmationArbiter: "0xa740634e718c8727853d1e69963303d5cb8ea44c",
-    exclusiveUnrevocableConfirmationArbiter: "0xb3d71c6f96cdd41e56dd9870b232225c379f2890",
-    nonexclusiveRevocableConfirmationArbiter: "0x831b40ae79d391c7d56209802b9745fe0743dbf5",
-    nonexclusiveUnrevocableConfirmationArbiter: "0xfeaa2fa295d1453ba382b7ee0e3f66c489a6d9bb",
-
-    // Attestation Properties Arbiters
-    recipientArbiter: "0xe0d55949e6e1590f26ef37a1d01df52fbb1b2fce",
-    attesterArbiter: "0xe571d48d05962c57c95e48b8a7375466d1d02487",
-    schemaArbiter: "0x9d5817ff5519f45bf8ed6c3ada638b874dbcb540",
-    uidArbiter: "0xaa9aef96068f2be679ae8781a4fc33ff4798758f",
-    refUidArbiter: "0x546526311e6639399fdc583df84eee8b123d79d5",
-    revocableArbiter: "0xe8d45cf2471882730a7e0ac142966df07ae148d4",
-    timeAfterArbiter: "0x2725a6869b42edfd155889098408ccb3b1ed060e",
-    timeBeforeArbiter: "0x014aa3dc53004b50bc13aa1d85a83bcca5c0671a",
-    timeEqualArbiter: "0x1c21a8fb4f69adb0ccdd22d8c125f8689bf227af",
-    expirationTimeAfterArbiter: "0xbd90af50fb667724338eb8da541f923f1822ac3c",
-    expirationTimeBeforeArbiter: "0xbcce130337f2d8029982a14471d8686afcef20ff",
-    expirationTimeEqualArbiter: "0x98d5bc7593143e55e9949da97603126cae0bfd7f",
-  },
   "GenLayer Bradbury": {
     ...unreleasedAddresses,
     eas: "0xaC18Fa0DE3123215404a0C5f6d02ed9B2D0D0d98",
@@ -385,4 +326,4 @@ export const contractAddresses: Record<string, ChainAddresses> = {
   },
 } as const;
 
-export const supportedChains = ["Base Sepolia", "Sepolia", "Filecoin Calibration", "GenLayer Bradbury", "Ethereum"];
+export const supportedChains = ["Base Sepolia", "Sepolia", "GenLayer Bradbury", "Ethereum"];

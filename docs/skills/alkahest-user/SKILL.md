@@ -15,7 +15,7 @@ Alkahest is an EAS-based (Ethereum Attestation Service) escrow protocol for trus
 - **Oracle arbitration** — off-chain validation with on-chain decision submission
 - **Commit-reveal** — frontrunning protection for self-contained fulfillment data
 
-Supported chains: Base Sepolia, Sepolia, Filecoin Calibration, Ethereum mainnet.
+Supported chains: Base Sepolia, Sepolia, Ethereum mainnet.
 
 ## Roles
 
@@ -49,7 +49,7 @@ Provide a wallet via one of (in priority order):
 ### Global Flags
 
 ```
---chain <name>          base-sepolia (default) | sepolia | filecoin-calibration | ethereum
+--chain <name>          base-sepolia (default) | sepolia | ethereum
 --rpc-url <url>         Custom RPC URL (overrides chain default)
 --human                 Human-readable output (default: JSON)
 ```

@@ -13,7 +13,7 @@ let client = AlkahestClient::with_base_extensions(
 ).await?;
 
 // With specific chain addresses
-use alkahest_rs::{ETHEREUM_SEPOLIA_ADDRESSES, FILECOIN_CALIBRATION_ADDRESSES, ETHEREUM_ADDRESSES};
+use alkahest_rs::{ETHEREUM_SEPOLIA_ADDRESSES, ETHEREUM_ADDRESSES};
 let client = AlkahestClient::with_base_extensions(
     "0xPRIVATE_KEY",
     "https://rpc-url",
@@ -228,7 +228,6 @@ let demand = AllArbiter::DemandData {
 use alkahest_rs::{
     BASE_SEPOLIA_ADDRESSES,           // Default
     ETHEREUM_SEPOLIA_ADDRESSES,
-    FILECOIN_CALIBRATION_ADDRESSES,
     ETHEREUM_ADDRESSES,
 };
 ```

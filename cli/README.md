@@ -37,7 +37,7 @@ Ledger support requires optional packages: `npm install @ledgerhq/hw-transport-n
 ## Global Flags
 
 ```
---chain <name>            base-sepolia (default) | sepolia | filecoin-calibration | ethereum | anvil
+--chain <name>            base-sepolia (default) | sepolia | ethereum | anvil
 --private-key <key>       0x-prefixed private key
 --mnemonic <phrase>       BIP39 mnemonic
 --ledger                  Use Ledger hardware wallet

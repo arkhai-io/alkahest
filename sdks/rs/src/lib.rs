@@ -559,7 +559,7 @@ impl<Extensions: AlkahestExtension> AlkahestClient<Extensions> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::addresses::{BASE_SEPOLIA_ADDRESSES, FILECOIN_CALIBRATION_ADDRESSES};
+    use crate::addresses::{BASE_SEPOLIA_ADDRESSES, ETHEREUM_SEPOLIA_ADDRESSES};
 
     #[test]
     fn test_default_extension_config_uses_base_sepolia() {
@@ -595,14 +595,14 @@ mod tests {
     #[test]
     fn test_custom_config_with_struct_update_syntax() {
         let custom_config = DefaultExtensionConfig {
-            arbiters_addresses: FILECOIN_CALIBRATION_ADDRESSES.arbiters_addresses,
+            arbiters_addresses: ETHEREUM_SEPOLIA_ADDRESSES.arbiters_addresses,
             ..BASE_SEPOLIA_ADDRESSES
         };
 
-        // Verify arbiter addresses are from Filecoin
+        // Verify arbiter addresses are from the alternate preset.
         assert_eq!(
             custom_config.arbiters_addresses.eas,
-            FILECOIN_CALIBRATION_ADDRESSES.arbiters_addresses.eas
+            ETHEREUM_SEPOLIA_ADDRESSES.arbiters_addresses.eas
         );
 
         // Verify other addresses are still from Base Sepolia
@@ -687,9 +687,9 @@ mod tests {
     fn test_serialize_custom_config() {
         // Create a custom config mixing addresses from different networks
         let custom_config = DefaultExtensionConfig {
-            arbiters_addresses: FILECOIN_CALIBRATION_ADDRESSES.arbiters_addresses,
+            arbiters_addresses: ETHEREUM_SEPOLIA_ADDRESSES.arbiters_addresses,
             erc20_addresses: BASE_SEPOLIA_ADDRESSES.erc20_addresses,
-            ..FILECOIN_CALIBRATION_ADDRESSES
+            ..ETHEREUM_SEPOLIA_ADDRESSES
         };
 
         // Serialize to JSON
@@ -705,7 +705,7 @@ mod tests {
             deserialized_config.arbiters_addresses.eas
         );
         assert_eq!(
-            FILECOIN_CALIBRATION_ADDRESSES.arbiters_addresses.eas,
+            ETHEREUM_SEPOLIA_ADDRESSES.arbiters_addresses.eas,
             deserialized_config.arbiters_addresses.eas
         );
         assert_eq!(

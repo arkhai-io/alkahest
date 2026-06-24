@@ -156,50 +156,6 @@ Atomic utilities combine payment + escrow collection into single-transaction set
 | ExpirationTimeBeforeArbiter | `0xFAf8a07709dB9f90d0A0415876CfE00D904cd40B` |
 | ExpirationTimeEqualArbiter | `0x7c782ac7741BB78DB7491Ee222af0a04f7f2bc0b` |
 
-### Filecoin Calibration
-
-| Contract | Address |
-|----------|---------|
-| EAS | `0x3c79a0225380fB6F3CB990FfC4E3D5aF4546b524` |
-| EAS Schema Registry | `0x2BB94a4E6eC0D81dE7f81007b572Ac09A5BE37b4` |
-| ERC20EscrowObligation | `0x6bcec91a89a63d50368bce54cb9ed0399992c18b` |
-| ERC20PaymentObligation | `0x33f6f558c1fcac597f2b635bc50554055ff98165` |
-| ERC721EscrowObligation | `0x99f5335b95e1c0be4c218a59aae26efc50d5673f` |
-| ERC721PaymentObligation | `0x5b6bff4dc108c58b97721330666f56c8028c097c` |
-| ERC1155EscrowObligation | `0xf9dbc74553faecac775201113198085c4d572805` |
-| ERC1155PaymentObligation | `0x4cb076af47f0f3909ebafd88cbc0c4cc8dee17dd` |
-| NativeTokenEscrowObligation | `0x7490102a8b821c70679508426823f26c9bab4714` |
-| NativeTokenPaymentObligation | `0xd511278d5b9e5f8f9b99d01ea326b8232c133be5` |
-| TokenBundleEscrowObligation | `0x902ac1997bd29a037263e0d80952c80d69d9afd4` |
-| TokenBundlePaymentObligation | `0xc1b02efec19a171ecbb7c8ad54b9617e80fdf40f` |
-| AttestationEscrowObligation | `0xd59c6c6cb025e76a0a1e706c62a9df38b04694e2` |
-| AttestationReferenceEscrowObligation | `0xa22b4d9fe7a746d44be1e724bb1a26593bca2c1b` |
-| AtomicAttestationUtils | `0x0000000000000000000000000000000000000000` |
-| StringObligation | `0x66c3f78258823b9b899ab14b11e1dcf978c060d7` |
-| CommitRevealObligation | `0x32889Ee549d61Ed5D14f2D499fCc809a4feC0dD8` |
-| TrivialArbiter | `0xd56bd862e7bebd0bd7356603e9e52b32c241e2ae` |
-| TrustedOracleArbiter | `0x61dc9c2d757a1c9d0d38a281288d9ef918e77baa` |
-| AllArbiter | `0x49026902790a8ecb427f335ca0d097c7c5795d13` |
-| AnyArbiter | `0xb6890a8cb8cdefce11edc0314125b750f48bff1b` |
-| IntrinsicsArbiter | `0x81dc8f2c5677b02afcafef34fa7e75d55dfaef20` |
-| ERC8004Arbiter | `0x3c1E21911C609714dBc0Ab90800c7aD8817B8e83` |
-| ExclusiveRevocableConfirmationArbiter | `0xa740634e718c8727853d1e69963303d5cb8ea44c` |
-| ExclusiveUnrevocableConfirmationArbiter | `0xb3d71c6f96cdd41e56dd9870b232225c379f2890` |
-| NonexclusiveRevocableConfirmationArbiter | `0x831b40ae79d391c7d56209802b9745fe0743dbf5` |
-| NonexclusiveUnrevocableConfirmationArbiter | `0xfeaa2fa295d1453ba382b7ee0e3f66c489a6d9bb` |
-| RecipientArbiter | `0xe0d55949e6e1590f26ef37a1d01df52fbb1b2fce` |
-| AttesterArbiter | `0xe571d48d05962c57c95e48b8a7375466d1d02487` |
-| SchemaArbiter | `0x9d5817ff5519f45bf8ed6c3ada638b874dbcb540` |
-| UidArbiter | `0xaa9aef96068f2be679ae8781a4fc33ff4798758f` |
-| RefUidArbiter | `0x546526311e6639399fdc583df84eee8b123d79d5` |
-| RevocableArbiter | `0xe8d45cf2471882730a7e0ac142966df07ae148d4` |
-| TimeAfterArbiter | `0x2725a6869b42edfd155889098408ccb3b1ed060e` |
-| TimeBeforeArbiter | `0x014aa3dc53004b50bc13aa1d85a83bcca5c0671a` |
-| TimeEqualArbiter | `0x1c21a8fb4f69adb0ccdd22d8c125f8689bf227af` |
-| ExpirationTimeAfterArbiter | `0xbd90af50fb667724338eb8da541f923f1822ac3c` |
-| ExpirationTimeBeforeArbiter | `0xbcce130337f2d8029982a14471d8686afcef20ff` |
-| ExpirationTimeEqualArbiter | `0x98d5bc7593143e55e9949da97603126cae0bfd7f` |
-
 ### Ethereum Mainnet
 
 | Contract | Address |

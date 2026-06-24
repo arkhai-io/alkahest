@@ -1,9 +1,8 @@
-import { baseSepolia, sepolia, filecoinCalibration, mainnet, foundry, type Chain } from "viem/chains";
+import { baseSepolia, sepolia, mainnet, foundry, type Chain } from "viem/chains";
 
 export const chainMap: Record<string, Chain> = {
   "base-sepolia": baseSepolia,
   sepolia: sepolia,
-  "filecoin-calibration": filecoinCalibration,
   ethereum: mainnet,
   anvil: foundry,
 };
@@ -12,7 +11,6 @@ export const chainMap: Record<string, Chain> = {
 export const chainNameToCliName: Record<string, string> = {
   "Base Sepolia": "base-sepolia",
   Sepolia: "sepolia",
-  "Filecoin Calibration": "filecoin-calibration",
   Ethereum: "ethereum",
   Foundry: "anvil",
 };

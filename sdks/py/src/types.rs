@@ -712,7 +712,6 @@ impl PyDefaultExtensionConfig {
     ///   "base_sepolia"        — default; matches the Rust `Default` impl
     ///   "ethereum_sepolia"
     ///   "ethereum_mainnet"
-    ///   "filecoin_calibration"
     ///   "genlayer_bradbury"
     ///
     /// For local anvil or any chain not in this list, construct a
@@ -726,7 +725,6 @@ impl PyDefaultExtensionConfig {
             "ethereum_mainnet" | "ethereum" | "mainnet" => {
                 &alkahest_rs::addresses::ETHEREUM_ADDRESSES
             }
-            "filecoin_calibration" => &alkahest_rs::addresses::FILECOIN_CALIBRATION_ADDRESSES,
             "genlayer_bradbury" => &alkahest_rs::addresses::GENLAYER_BRADBURY_ADDRESSES,
             other => {
                 return Err(PyValueError::new_err(format!(
@@ -759,7 +757,6 @@ impl PyDefaultExtensionConfig {
             "base_sepolia".to_string(),
             "ethereum_sepolia".to_string(),
             "ethereum_mainnet".to_string(),
-            "filecoin_calibration".to_string(),
             "genlayer_bradbury".to_string(),
         ]
     }

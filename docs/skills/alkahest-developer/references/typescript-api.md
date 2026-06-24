@@ -31,7 +31,7 @@ const extended = minimal.extend((base) => ({
 ```typescript
 import { contractAddresses, supportedChains } from "@alkahest/ts-sdk";
 
-// Chains: "Base Sepolia", "Sepolia", "Filecoin Calibration", "Ethereum"
+// Chains: "Base Sepolia", "Sepolia", "Ethereum"
 const addresses = contractAddresses["Base Sepolia"];
 ```
 

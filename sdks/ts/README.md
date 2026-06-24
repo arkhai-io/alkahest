@@ -10,7 +10,7 @@ npm install alkahest-ts viem
 
 ## Usage
 
-Initialize a client with a viem wallet. The client auto-detects contract addresses for supported chains (Base Sepolia, Filecoin Calibration).
+Initialize a client with a viem wallet. The client auto-detects contract addresses for supported chains.
 
 ```ts
 import { makeClient } from "alkahest-ts";

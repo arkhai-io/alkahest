@@ -38,7 +38,7 @@ async def main():
 asyncio.run(main())
 ```
 
-Defaults to Base Sepolia addresses. Pass a custom `DefaultExtensionConfig` as the third argument for other networks (e.g., Filecoin Calibration).
+Defaults to Base Sepolia addresses. Pass a custom `DefaultExtensionConfig` as the third argument for other networks.
 
 ## API Notes
 

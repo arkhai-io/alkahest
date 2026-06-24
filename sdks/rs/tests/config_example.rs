@@ -1,6 +1,6 @@
 use alkahest_rs::{
     AlkahestClient, DefaultAlkahestClient, DefaultExtensionConfig,
-    addresses::{BASE_SEPOLIA_ADDRESSES, FILECOIN_CALIBRATION_ADDRESSES},
+    addresses::{BASE_SEPOLIA_ADDRESSES, ETHEREUM_SEPOLIA_ADDRESSES},
     clients::{arbiters::ArbitersAddresses, erc20::Erc20Addresses},
     extensions::{HasArbiters as _, HasErc20 as _, HasErc721 as _},
     utils::setup_test_environment,
@@ -58,30 +58,30 @@ async fn test_explicit_base_sepolia_configuration() -> Result<()> {
 }
 
 #[tokio::test]
-async fn test_filecoin_calibration_configuration() -> Result<()> {
+async fn test_ethereum_sepolia_configuration() -> Result<()> {
     let test_context = setup_test_environment().await?;
     let rpc_url = test_context.anvil.ws_endpoint();
 
-    let client_with_filecoin: DefaultAlkahestClient = AlkahestClient::with_base_extensions(
+    let client_with_sepolia: DefaultAlkahestClient = AlkahestClient::with_base_extensions(
         test_context.alice.clone(),
         &rpc_url,
-        Some(FILECOIN_CALIBRATION_ADDRESSES),
+        Some(ETHEREUM_SEPOLIA_ADDRESSES),
     )
     .await?;
 
-    // Verify Filecoin Calibration addresses are used
+    // Verify Ethereum Sepolia addresses are used
     assert_eq!(
-        client_with_filecoin.erc20().addresses.eas,
-        FILECOIN_CALIBRATION_ADDRESSES.erc20_addresses.eas
+        client_with_sepolia.erc20().addresses.eas,
+        ETHEREUM_SEPOLIA_ADDRESSES.erc20_addresses.eas
     );
     assert_eq!(
-        client_with_filecoin.arbiters().addresses.eas,
-        FILECOIN_CALIBRATION_ADDRESSES.arbiters_addresses.eas
+        client_with_sepolia.arbiters().addresses.eas,
+        ETHEREUM_SEPOLIA_ADDRESSES.arbiters_addresses.eas
     );
 
     // Verify they're different from Base Sepolia
     assert_ne!(
-        client_with_filecoin.erc20().addresses.eas,
+        client_with_sepolia.erc20().addresses.eas,
         BASE_SEPOLIA_ADDRESSES.erc20_addresses.eas
     );
 
@@ -185,11 +185,11 @@ async fn test_mixed_network_configuration() -> Result<()> {
     let test_context = setup_test_environment().await?;
     let rpc_url = test_context.anvil.ws_endpoint();
 
-    // Create a config that mixes Filecoin arbiters with Base Sepolia ERC20
+    // Create a config that mixes Ethereum Sepolia arbiters with Base Sepolia ERC20
     let mixed_config = DefaultExtensionConfig {
-        arbiters_addresses: FILECOIN_CALIBRATION_ADDRESSES.arbiters_addresses.clone(),
+        arbiters_addresses: ETHEREUM_SEPOLIA_ADDRESSES.arbiters_addresses.clone(),
         erc20_addresses: BASE_SEPOLIA_ADDRESSES.erc20_addresses.clone(),
-        ..FILECOIN_CALIBRATION_ADDRESSES
+        ..ETHEREUM_SEPOLIA_ADDRESSES
     };
 
     let client_with_mixed: DefaultAlkahestClient = AlkahestClient::with_base_extensions(
@@ -202,7 +202,7 @@ async fn test_mixed_network_configuration() -> Result<()> {
     // Verify the mixed configuration is applied correctly
     assert_eq!(
         client_with_mixed.arbiters().addresses.eas,
-        FILECOIN_CALIBRATION_ADDRESSES.arbiters_addresses.eas
+        ETHEREUM_SEPOLIA_ADDRESSES.arbiters_addresses.eas
     );
     assert_eq!(
         client_with_mixed.erc20().addresses.eas,
