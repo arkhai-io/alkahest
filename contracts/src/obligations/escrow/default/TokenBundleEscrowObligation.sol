@@ -55,12 +55,13 @@ contract TokenBundleEscrowObligation is BaseEscrowObligation, BaseArbiter, ERC11
 
     uint256 public constant MAX_BUNDLE_ITEMS = 50;
 
-    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry)
+    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, bool compatibilitySchemaRegistration)
         BaseEscrowObligation(
             _eas,
             _schemaRegistry,
             "address arbiter, bytes demand, uint256 nativeAmount, address[] erc20Tokens, uint256[] erc20Amounts, address[] erc721Tokens, uint256[] erc721TokenIds, address[] erc1155Tokens, uint256[] erc1155TokenIds, uint256[] erc1155Amounts",
-            true
+            true,
+            compatibilitySchemaRegistration
         )
     {}
 

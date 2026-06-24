@@ -25,8 +25,14 @@ contract NativeTokenEscrowObligation is BaseEscrowObligation, BaseArbiter {
     error IncorrectPayment(uint256 expected, uint256 received);
     error NativeTokenTransferFailed(address to, uint256 amount);
 
-    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry)
-        BaseEscrowObligation(_eas, _schemaRegistry, "address arbiter, bytes demand, uint256 amount", true)
+    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, bool compatibilitySchemaRegistration)
+        BaseEscrowObligation(
+            _eas,
+            _schemaRegistry,
+            "address arbiter, bytes demand, uint256 amount",
+            true,
+            compatibilitySchemaRegistration
+        )
     {}
 
     /// @inheritdoc BaseEscrowObligation

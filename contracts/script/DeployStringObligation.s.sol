@@ -13,12 +13,14 @@ contract DeployStringObligation is Script {
         address easAddress = vm.envAddress("EAS_ADDRESS");
         address schemaRegistryAddress = vm.envAddress("EAS_SR_ADDRESS");
         uint256 deployerPrivateKey = vm.envUint("DEPLOYMENT_KEY");
+        bool compatibilitySchemaRegistration = vm.envOr("COMPATIBILITY_SCHEMA_REGISTRATION", false);
 
         vm.startBroadcast(deployerPrivateKey);
 
         // Deploy
-        StringObligation stringObligation =
-            new StringObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
+        StringObligation stringObligation = new StringObligation(
+            IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress), compatibilitySchemaRegistration
+        );
 
         vm.stopBroadcast();
 

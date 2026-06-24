@@ -59,7 +59,11 @@ contract CryptoSignatureObligation is BaseObligation, BaseArbiter {
 
     constructor(IEAS _eas, ISchemaRegistry _schemaRegistry)
         BaseObligation(
-            _eas, _schemaRegistry, "bytes signature,address signerAddress,uint256 timestamp,string metadata", true
+            _eas,
+            _schemaRegistry,
+            "bytes signature,address signerAddress,uint256 timestamp,string metadata",
+            true,
+            false
         )
     {}
 

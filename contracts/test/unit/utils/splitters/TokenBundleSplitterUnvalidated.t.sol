@@ -71,8 +71,8 @@ contract TokenBundleSplitterUnvalidatedTest is Test {
         EASDeployer easDeployer = new EASDeployer();
         (eas, schemaRegistry) = easDeployer.deployEAS();
         splitter = new TokenBundleSplitterUnvalidated(eas);
-        escrowObligation = new TokenBundleEscrowObligation(eas, schemaRegistry);
-        stringObligation = new StringObligation(eas, schemaRegistry);
+        escrowObligation = new TokenBundleEscrowObligation(eas, schemaRegistry, false);
+        stringObligation = new StringObligation(eas, schemaRegistry, false);
         token1 = new MockERC20U();
         token2 = new MockERC20U();
         nft = new MockERC721U();

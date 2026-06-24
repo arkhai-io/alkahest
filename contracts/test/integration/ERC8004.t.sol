@@ -103,8 +103,8 @@ contract ERC8004IntegrationTest is Test {
 
         // Deploy our contracts
         arbiter = new ERC8004Arbiter();
-        escrowObligation = new ERC20EscrowObligation(eas, schemaRegistry);
-        fulfillmentObligation = new StringObligation(eas, schemaRegistry);
+        escrowObligation = new ERC20EscrowObligation(eas, schemaRegistry, false);
+        fulfillmentObligation = new StringObligation(eas, schemaRegistry, false);
         token = new MockERC20();
 
         // Deploy ERC-8004 upgradeable contracts via proxy

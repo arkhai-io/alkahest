@@ -41,7 +41,7 @@ contract ERC20SplitterRefundingStringObligation is StringObligation {
     uint256 public immutable refundAmount;
 
     constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, uint256 _refundAmount)
-        StringObligation(_eas, _schemaRegistry)
+        StringObligation(_eas, _schemaRegistry, false)
     {
         refundAmount = _refundAmount;
     }
@@ -54,7 +54,7 @@ contract ERC20SplitterRefundingStringObligation is StringObligation {
 
 contract NoOpERC20EscrowObligation is BaseObligation {
     constructor(IEAS eas, ISchemaRegistry schemaRegistry)
-        BaseObligation(eas, schemaRegistry, "address arbiter, bytes demand, address token, uint256 amount", true)
+        BaseObligation(eas, schemaRegistry, "address arbiter, bytes demand, address token, uint256 amount", true, false)
     {}
 
     function collect(bytes32, bytes32) external pure returns (bytes memory) {
@@ -85,8 +85,8 @@ contract ERC20SplitterTest is Test {
         (eas, schemaRegistry) = easDeployer.deployEAS();
 
         splitter = new ERC20Splitter(eas);
-        escrowObligation = new ERC20EscrowObligation(eas, schemaRegistry);
-        stringObligation = new StringObligation(eas, schemaRegistry);
+        escrowObligation = new ERC20EscrowObligation(eas, schemaRegistry, false);
+        stringObligation = new StringObligation(eas, schemaRegistry, false);
         token = new MockERC20();
 
         token.transfer(buyer, 1000 * 10 ** 18);

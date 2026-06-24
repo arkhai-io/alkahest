@@ -28,9 +28,13 @@ contract UnconditionalERC20EscrowObligation is BaseEscrowObligationUnconditional
 
     error ERC20TransferFailed(address token, address from, address to, uint256 amount);
 
-    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry)
+    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, bool compatibilitySchemaRegistration)
         BaseEscrowObligationUnconditional(
-            _eas, _schemaRegistry, "address arbiter, bytes demand, address token, uint256 amount", true
+            _eas,
+            _schemaRegistry,
+            "address arbiter, bytes demand, address token, uint256 amount",
+            true,
+            compatibilitySchemaRegistration
         )
     {}
 

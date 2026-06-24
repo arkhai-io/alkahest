@@ -51,7 +51,7 @@ contract VoteEscrowObligationTest is Test {
         voteEscrow = new VoteEscrowObligation(eas, schemaRegistry);
 
         // Deploy StringObligation for creating fulfillment attestations
-        stringObligation = new StringObligation(eas, schemaRegistry);
+        stringObligation = new StringObligation(eas, schemaRegistry, false);
 
         // Deploy TrivialArbiter (simple arbiter for testing that always returns true)
         trivialArbiter = new TrivialArbiter();

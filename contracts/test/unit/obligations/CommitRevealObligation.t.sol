@@ -24,8 +24,8 @@ contract CommitRevealObligationTest is Test {
         (eas, schemaRegistry) = easDeployer.deployEAS();
 
         treasury = makeAddr("treasury");
-        obligation = new CommitRevealObligation(eas, schemaRegistry, treasury);
-        nativeEscrow = new NativeTokenEscrowObligation(eas, schemaRegistry);
+        obligation = new CommitRevealObligation(eas, schemaRegistry, false, treasury);
+        nativeEscrow = new NativeTokenEscrowObligation(eas, schemaRegistry, false);
         claimer = makeAddr("claimer");
     }
 

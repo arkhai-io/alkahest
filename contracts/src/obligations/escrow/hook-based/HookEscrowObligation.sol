@@ -34,8 +34,14 @@ contract HookEscrowObligation is BaseEscrowObligation, BaseArbiter {
         bytes hookData;
     }
 
-    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry)
-        BaseEscrowObligation(_eas, _schemaRegistry, "address arbiter, bytes demand, address hook, bytes hookData", true)
+    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, bool compatibilitySchemaRegistration)
+        BaseEscrowObligation(
+            _eas,
+            _schemaRegistry,
+            "address arbiter, bytes demand, address hook, bytes hookData",
+            true,
+            compatibilitySchemaRegistration
+        )
     {}
 
     /// @inheritdoc BaseEscrowObligation

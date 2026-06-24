@@ -73,11 +73,11 @@ contract AtomicPaymentUtilsTest is Test {
         EASDeployer easDeployer = new EASDeployer();
         (IEAS eas, ISchemaRegistry schemaRegistry) = easDeployer.deployEAS();
 
-        ERC20PaymentObligation erc20Payment = new ERC20PaymentObligation(eas, schemaRegistry);
-        ERC721PaymentObligation erc721Payment = new ERC721PaymentObligation(eas, schemaRegistry);
-        ERC1155PaymentObligation erc1155Payment = new ERC1155PaymentObligation(eas, schemaRegistry);
-        NativeTokenPaymentObligation nativePayment = new NativeTokenPaymentObligation(eas, schemaRegistry);
-        TokenBundlePaymentObligation bundlePayment = new TokenBundlePaymentObligation(eas, schemaRegistry);
+        ERC20PaymentObligation erc20Payment = new ERC20PaymentObligation(eas, schemaRegistry, false);
+        ERC721PaymentObligation erc721Payment = new ERC721PaymentObligation(eas, schemaRegistry, false);
+        ERC1155PaymentObligation erc1155Payment = new ERC1155PaymentObligation(eas, schemaRegistry, false);
+        NativeTokenPaymentObligation nativePayment = new NativeTokenPaymentObligation(eas, schemaRegistry, false);
+        TokenBundlePaymentObligation bundlePayment = new TokenBundlePaymentObligation(eas, schemaRegistry, false);
 
         utils = new AtomicPaymentUtilsHarness(
             eas, erc20Payment, erc721Payment, erc1155Payment, nativePayment, bundlePayment

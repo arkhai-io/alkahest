@@ -30,7 +30,7 @@ contract AtomicAttestationUtilsTest is Test {
 
         alice = vm.addr(ALICE_PRIVATE_KEY);
         trivialArbiter = new TrivialArbiter();
-        referenceEscrow = new AttestationReferenceEscrowObligation(eas, schemaRegistry);
+        referenceEscrow = new AttestationReferenceEscrowObligation(eas, schemaRegistry, false);
         atomicUtils = new AtomicAttestationUtils(eas);
 
         testSchema = schemaRegistry.register("bool value", ISchemaResolver(address(0)), true);

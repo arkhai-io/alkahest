@@ -9,6 +9,7 @@ import {Attestation} from "@eas/Common.sol";
 import {IEAS, AttestationRequest, AttestationRequestData} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {ISchemaResolver} from "@eas/resolver/ISchemaResolver.sol";
+import {CompatibilitySchemaRegistryUtils} from "../../../eas/CompatibilitySchemaRegistryUtils.sol";
 import {SchemaRegistryUtils} from "../../../eas/SchemaRegistryUtils.sol";
 
 /// @title AttestationReferenceEscrowObligation
@@ -16,6 +17,7 @@ import {SchemaRegistryUtils} from "../../../eas/SchemaRegistryUtils.sol";
 /// @dev Uses the default escrow checks: fulfillment must reference the escrow UID and pass intrinsic attestation validation.
 contract AttestationReferenceEscrowObligation is BaseEscrowObligation, BaseArbiter {
     using ArbiterUtils for Attestation;
+    using CompatibilitySchemaRegistryUtils for ISchemaRegistry;
     using SchemaRegistryUtils for ISchemaRegistry;
 
     bytes32 public immutable VALIDATION_SCHEMA;
@@ -29,17 +31,19 @@ contract AttestationReferenceEscrowObligation is BaseEscrowObligation, BaseArbit
         bool validationRevocable;
     }
 
-    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry)
+    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, bool compatibilitySchemaRegistration)
         BaseEscrowObligation(
             _eas,
             _schemaRegistry,
             "address arbiter, bytes demand, bytes32 attestationUid, uint64 validationExpirationTime, bool validationRevocable",
-            true
+            true,
+            compatibilitySchemaRegistration
         )
     {
         // Register the validation schema
-        VALIDATION_SCHEMA =
-            _schemaRegistry.registerOrReuse("bytes32 validatedAttestationUid", ISchemaResolver(address(this)), true);
+        VALIDATION_SCHEMA = compatibilitySchemaRegistration
+            ? _schemaRegistry.registerDirect("bytes32 validatedAttestationUid", ISchemaResolver(address(this)), true)
+            : _schemaRegistry.registerOrReuse("bytes32 validatedAttestationUid", ISchemaResolver(address(this)), true);
     }
 
     /// @inheritdoc BaseEscrowObligation

@@ -26,7 +26,7 @@ contract GlobalBondCommitRevealObligationTest is Test {
 
         treasury = makeAddr("treasury");
         obligation = new GlobalBondCommitRevealObligation(eas, schemaRegistry, BOND, COMMIT_DEADLINE, treasury);
-        nativeEscrow = new NativeTokenEscrowObligation(eas, schemaRegistry);
+        nativeEscrow = new NativeTokenEscrowObligation(eas, schemaRegistry, false);
         claimer = makeAddr("claimer");
     }
 

@@ -122,6 +122,7 @@ contract Deploy is Script {
         string memory easAddressStr = vm.envString("EAS_ADDRESS");
         string memory easSrAddressStr = vm.envString("EAS_SR_ADDRESS");
         uint256 deployerPrivateKey = vm.envOr("DEPLOYMENT_KEY", uint256(0));
+        bool compatibilitySchemaRegistration = vm.envOr("COMPATIBILITY_SCHEMA_REGISTRATION", false);
 
         if (deployerPrivateKey != 0) {
             vm.startBroadcast(deployerPrivateKey);
@@ -132,10 +133,10 @@ contract Deploy is Script {
         address easAddress = vm.parseAddress(easAddressStr);
         address schemaRegistryAddress = vm.parseAddress(easSrAddressStr);
 
-        _deploy(easAddress, schemaRegistryAddress);
+        _deploy(easAddress, schemaRegistryAddress, compatibilitySchemaRegistration);
     }
 
-    function _deploy(address easAddress, address schemaRegistryAddress) internal {
+    function _deploy(address easAddress, address schemaRegistryAddress, bool compatibilitySchemaRegistration) internal {
         // Deploy arbiters
         TrivialArbiter trivialArbiter = new TrivialArbiter();
         TrustedOracleArbiter trustedOracleArbiter = new TrustedOracleArbiter(IEAS(easAddress));
@@ -172,55 +173,72 @@ contract Deploy is Script {
         UidArbiter uidArbiter = new UidArbiter();
 
         // Deploy StringObligation
-        StringObligation stringObligation =
-            new StringObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
+        StringObligation stringObligation = new StringObligation(
+            IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress), compatibilitySchemaRegistration
+        );
 
         // Deploy CommitRevealObligation
         CommitRevealObligation commitRevealObligation = new CommitRevealObligation(
             IEAS(easAddress),
             ISchemaRegistry(schemaRegistryAddress),
+            compatibilitySchemaRegistration,
             0x07dD7186410Aa0fe85670531FC6EFc9cd980c558 // slashedBondRecipient (treasury)
         );
 
         // Deploy ERC20 contracts
-        ERC20EscrowObligation erc20Escrow =
-            new ERC20EscrowObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
-        UnconditionalERC20EscrowObligation erc20UnconditionalEscrow =
-            new UnconditionalERC20EscrowObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
-        ERC20PaymentObligation erc20Payment =
-            new ERC20PaymentObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
+        ERC20EscrowObligation erc20Escrow = new ERC20EscrowObligation(
+            IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress), compatibilitySchemaRegistration
+        );
+        UnconditionalERC20EscrowObligation erc20UnconditionalEscrow = new UnconditionalERC20EscrowObligation(
+            IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress), compatibilitySchemaRegistration
+        );
+        ERC20PaymentObligation erc20Payment = new ERC20PaymentObligation(
+            IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress), compatibilitySchemaRegistration
+        );
 
         // Deploy ERC721 contracts
-        ERC721EscrowObligation erc721Escrow =
-            new ERC721EscrowObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
-        UnconditionalERC721EscrowObligation erc721UnconditionalEscrow =
-            new UnconditionalERC721EscrowObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
-        ERC721PaymentObligation erc721Payment =
-            new ERC721PaymentObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
+        ERC721EscrowObligation erc721Escrow = new ERC721EscrowObligation(
+            IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress), compatibilitySchemaRegistration
+        );
+        UnconditionalERC721EscrowObligation erc721UnconditionalEscrow = new UnconditionalERC721EscrowObligation(
+            IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress), compatibilitySchemaRegistration
+        );
+        ERC721PaymentObligation erc721Payment = new ERC721PaymentObligation(
+            IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress), compatibilitySchemaRegistration
+        );
 
         // Deploy ERC1155 contracts
-        ERC1155EscrowObligation erc1155Escrow =
-            new ERC1155EscrowObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
-        UnconditionalERC1155EscrowObligation erc1155UnconditionalEscrow =
-            new UnconditionalERC1155EscrowObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
-        ERC1155PaymentObligation erc1155Payment =
-            new ERC1155PaymentObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
+        ERC1155EscrowObligation erc1155Escrow = new ERC1155EscrowObligation(
+            IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress), compatibilitySchemaRegistration
+        );
+        UnconditionalERC1155EscrowObligation erc1155UnconditionalEscrow = new UnconditionalERC1155EscrowObligation(
+            IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress), compatibilitySchemaRegistration
+        );
+        ERC1155PaymentObligation erc1155Payment = new ERC1155PaymentObligation(
+            IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress), compatibilitySchemaRegistration
+        );
 
         // Deploy TokenBundle contracts
-        TokenBundleEscrowObligation bundleEscrow =
-            new TokenBundleEscrowObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
-        UnconditionalTokenBundleEscrowObligation bundleUnconditionalEscrow =
-            new UnconditionalTokenBundleEscrowObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
-        TokenBundlePaymentObligation bundlePayment =
-            new TokenBundlePaymentObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
+        TokenBundleEscrowObligation bundleEscrow = new TokenBundleEscrowObligation(
+            IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress), compatibilitySchemaRegistration
+        );
+        UnconditionalTokenBundleEscrowObligation bundleUnconditionalEscrow = new UnconditionalTokenBundleEscrowObligation(
+            IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress), compatibilitySchemaRegistration
+        );
+        TokenBundlePaymentObligation bundlePayment = new TokenBundlePaymentObligation(
+            IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress), compatibilitySchemaRegistration
+        );
 
         // Deploy Native Token contracts
-        NativeTokenEscrowObligation nativeEscrow =
-            new NativeTokenEscrowObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
-        UnconditionalNativeTokenEscrowObligation nativeUnconditionalEscrow =
-            new UnconditionalNativeTokenEscrowObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
-        NativeTokenPaymentObligation nativePayment =
-            new NativeTokenPaymentObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
+        NativeTokenEscrowObligation nativeEscrow = new NativeTokenEscrowObligation(
+            IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress), compatibilitySchemaRegistration
+        );
+        UnconditionalNativeTokenEscrowObligation nativeUnconditionalEscrow = new UnconditionalNativeTokenEscrowObligation(
+            IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress), compatibilitySchemaRegistration
+        );
+        NativeTokenPaymentObligation nativePayment = new NativeTokenPaymentObligation(
+            IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress), compatibilitySchemaRegistration
+        );
 
         // Deploy atomic payment utility contract
         AtomicPaymentUtils atomicPaymentUtils = new AtomicPaymentUtils(
@@ -228,29 +246,35 @@ contract Deploy is Script {
         );
 
         // Deploy attestation contracts
-        AttestationEscrowObligation attestationEscrow =
-            new AttestationEscrowObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
-        UnconditionalAttestationEscrowObligation attestationUnconditionalEscrow =
-            new UnconditionalAttestationEscrowObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
-        AttestationReferenceEscrowObligation attestationReferenceEscrow =
-            new AttestationReferenceEscrowObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
+        AttestationEscrowObligation attestationEscrow = new AttestationEscrowObligation(
+            IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress), compatibilitySchemaRegistration
+        );
+        UnconditionalAttestationEscrowObligation attestationUnconditionalEscrow = new UnconditionalAttestationEscrowObligation(
+            IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress), compatibilitySchemaRegistration
+        );
+        AttestationReferenceEscrowObligation attestationReferenceEscrow = new AttestationReferenceEscrowObligation(
+            IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress), compatibilitySchemaRegistration
+        );
         UnconditionalAttestationReferenceEscrowObligation attestationReferenceUnconditionalEscrow = new UnconditionalAttestationReferenceEscrowObligation(
-            IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress)
+            IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress), compatibilitySchemaRegistration
         );
         AtomicAttestationUtils atomicAttestationUtils = new AtomicAttestationUtils(IEAS(easAddress));
 
         // Deploy hook-based escrow contracts and hooks
-        HookEscrowObligation hookEscrow =
-            new HookEscrowObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
-        HooksEscrowObligation hooksEscrow =
-            new HooksEscrowObligation(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
+        HookEscrowObligation hookEscrow = new HookEscrowObligation(
+            IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress), compatibilitySchemaRegistration
+        );
+        HooksEscrowObligation hooksEscrow = new HooksEscrowObligation(
+            IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress), compatibilitySchemaRegistration
+        );
         ERC20EscrowHook erc20EscrowHook = new ERC20EscrowHook();
         ERC721EscrowHook erc721EscrowHook = new ERC721EscrowHook();
         ERC1155EscrowHook erc1155EscrowHook = new ERC1155EscrowHook();
         NativeTokenEscrowHook nativeTokenEscrowHook = new NativeTokenEscrowHook();
         AttestationEscrowHook attestationEscrowHook = new AttestationEscrowHook(IEAS(easAddress));
-        AttestationReferenceEscrowHook attestationReferenceEscrowHook =
-            new AttestationReferenceEscrowHook(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
+        AttestationReferenceEscrowHook attestationReferenceEscrowHook = new AttestationReferenceEscrowHook(
+            IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress), compatibilitySchemaRegistration
+        );
 
         // Deploy splitters
         ERC20Splitter erc20Splitter = new ERC20Splitter(IEAS(easAddress));

@@ -22,7 +22,7 @@ contract MockBaseObligation is BaseObligation {
     address public lastAfterAttestRecipient;
 
     constructor(IEAS _eas, ISchemaRegistry _schemaRegistry)
-        BaseObligation(_eas, _schemaRegistry, "string data", true)
+        BaseObligation(_eas, _schemaRegistry, "string data", true, false)
     {}
 
     // Override hooks to track calls

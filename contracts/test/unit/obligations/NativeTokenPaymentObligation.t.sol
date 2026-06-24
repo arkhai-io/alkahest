@@ -26,7 +26,7 @@ contract NativeTokenPaymentObligationTest is Test {
         EASDeployer easDeployer = new EASDeployer();
         (eas, schemaRegistry) = easDeployer.deployEAS();
 
-        paymentObligation = new NativeTokenPaymentObligation(eas, schemaRegistry);
+        paymentObligation = new NativeTokenPaymentObligation(eas, schemaRegistry, false);
 
         buyer = makeAddr("buyer");
         seller = makeAddr("seller");

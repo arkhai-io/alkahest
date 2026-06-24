@@ -50,7 +50,7 @@ contract ERC721EscrowObligationTest is Test {
         EASDeployer easDeployer = new EASDeployer();
         (eas, schemaRegistry) = easDeployer.deployEAS();
 
-        escrowObligation = new ERC721EscrowObligation(eas, schemaRegistry);
+        escrowObligation = new ERC721EscrowObligation(eas, schemaRegistry, false);
         token = new MockERC721();
         mockArbiter = new MockArbiter(true);
         rejectingArbiter = new MockArbiter(false);
@@ -146,7 +146,7 @@ contract ERC721EscrowObligationTest is Test {
         vm.stopPrank();
 
         // Create a fulfillment attestation using a StringObligation
-        StringObligation stringObligation = new StringObligation(eas, schemaRegistry);
+        StringObligation stringObligation = new StringObligation(eas, schemaRegistry, false);
 
         vm.prank(seller);
         bytes32 fulfillmentUid = stringObligation.doObligation(
@@ -176,7 +176,7 @@ contract ERC721EscrowObligationTest is Test {
         vm.stopPrank();
 
         // Create a fulfillment attestation using a StringObligation
-        StringObligation stringObligation = new StringObligation(eas, schemaRegistry);
+        StringObligation stringObligation = new StringObligation(eas, schemaRegistry, false);
 
         vm.prank(seller);
         bytes32 fulfillmentUid = stringObligation.doObligation(

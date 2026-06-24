@@ -202,11 +202,11 @@ contract HookEscrowObligationTest is Test {
         EASDeployer easDeployer = new EASDeployer();
         (eas, schemaRegistry) = easDeployer.deployEAS();
 
-        escrow = new HookEscrowObligation(eas, schemaRegistry);
+        escrow = new HookEscrowObligation(eas, schemaRegistry, false);
         erc20Hook = new ERC20EscrowHook();
         acceptArbiter = new MockArbiter(true);
         rejectArbiter = new MockArbiter(false);
-        stringObligation = new StringObligation(eas, schemaRegistry);
+        stringObligation = new StringObligation(eas, schemaRegistry, false);
         token = new MockERC20();
 
         buyer = makeAddr("buyer");
@@ -578,10 +578,10 @@ contract HooksEscrowObligationTest is Test {
         EASDeployer easDeployer = new EASDeployer();
         (eas, schemaRegistry) = easDeployer.deployEAS();
 
-        escrow = new HooksEscrowObligation(eas, schemaRegistry);
+        escrow = new HooksEscrowObligation(eas, schemaRegistry, false);
         erc20Hook = new ERC20EscrowHook();
         acceptArbiter = new MockArbiter(true);
-        stringObligation = new StringObligation(eas, schemaRegistry);
+        stringObligation = new StringObligation(eas, schemaRegistry, false);
         tokenA = new MockERC20();
         tokenB = new MockERC20();
 
@@ -799,10 +799,10 @@ contract HookEscrowAttackTest is Test {
         EASDeployer easDeployer = new EASDeployer();
         (eas, schemaRegistry) = easDeployer.deployEAS();
 
-        escrow = new HookEscrowObligation(eas, schemaRegistry);
+        escrow = new HookEscrowObligation(eas, schemaRegistry, false);
         erc20Hook = new ERC20EscrowHook();
         acceptArbiter = new MockArbiter(true);
-        stringObligation = new StringObligation(eas, schemaRegistry);
+        stringObligation = new StringObligation(eas, schemaRegistry, false);
         token = new MockERC20();
 
         buyer = makeAddr("buyer");
@@ -904,7 +904,7 @@ contract HookEscrowAttackTest is Test {
     /// @notice POC: Multi-hook deposits are keyed to HooksEscrowObligation,
     ///         so direct external hook calls cannot release them.
     function testAttackCannotDirectlyReleaseMultiHookDeposit() public {
-        HooksEscrowObligation hooksEscrow = new HooksEscrowObligation(eas, schemaRegistry);
+        HooksEscrowObligation hooksEscrow = new HooksEscrowObligation(eas, schemaRegistry, false);
 
         address[] memory hooks = new address[](1);
         hooks[0] = address(erc20Hook);
@@ -959,7 +959,7 @@ contract HookEscrowAttackTest is Test {
         _createLegitEscrow();
 
         // Deploy a second obligation contract
-        HookEscrowObligation escrow2 = new HookEscrowObligation(eas, schemaRegistry);
+        HookEscrowObligation escrow2 = new HookEscrowObligation(eas, schemaRegistry, false);
 
         // escrow2 has zero deposits in erc20Hook
         assertEq(erc20Hook.deposits(address(escrow2), address(token)), 0);

@@ -29,9 +29,13 @@ contract ERC20EscrowObligation is BaseEscrowObligation, BaseArbiter {
     /// @notice Raised when the ERC20 transfer does not move the requested amount.
     error ERC20TransferFailed(address token, address from, address to, uint256 amount);
 
-    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry)
+    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, bool compatibilitySchemaRegistration)
         BaseEscrowObligation(
-            _eas, _schemaRegistry, "address arbiter, bytes demand, address token, uint256 amount", true
+            _eas,
+            _schemaRegistry,
+            "address arbiter, bytes demand, address token, uint256 amount",
+            true,
+            compatibilitySchemaRegistration
         )
     {}
 

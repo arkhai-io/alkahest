@@ -25,8 +25,14 @@ contract UnconditionalNativeTokenEscrowObligation is BaseEscrowObligationUncondi
     error IncorrectPayment(uint256 expected, uint256 received);
     error NativeTokenTransferFailed(address to, uint256 amount);
 
-    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry)
-        BaseEscrowObligationUnconditional(_eas, _schemaRegistry, "address arbiter, bytes demand, uint256 amount", true)
+    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, bool compatibilitySchemaRegistration)
+        BaseEscrowObligationUnconditional(
+            _eas,
+            _schemaRegistry,
+            "address arbiter, bytes demand, uint256 amount",
+            true,
+            compatibilitySchemaRegistration
+        )
     {}
 
     /// @inheritdoc BaseEscrowObligationUnconditional

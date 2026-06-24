@@ -42,7 +42,7 @@ contract EscrowCommitRevealOracleGasTest is Test {
 
         commitReveal = new GlobalBondCommitRevealObligation(eas, schemaRegistry, BOND, 1 hours, address(0));
         trustedOracleArbiter = new TrustedOracleArbiter(eas);
-        erc20Escrow = new ERC20EscrowObligation(eas, schemaRegistry);
+        erc20Escrow = new ERC20EscrowObligation(eas, schemaRegistry, false);
 
         paymentToken = new MockToken();
 

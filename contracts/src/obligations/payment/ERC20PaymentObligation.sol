@@ -42,8 +42,10 @@ contract ERC20PaymentObligation is BaseObligation, BaseArbiter {
 
     /// @param _eas EAS contract used to create and read payment attestations.
     /// @param _schemaRegistry EAS schema registry used to register or reuse the payment schema.
-    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry)
-        BaseObligation(_eas, _schemaRegistry, "address token, uint256 amount, address payee", true)
+    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, bool compatibilitySchemaRegistration)
+        BaseObligation(
+            _eas, _schemaRegistry, "address token, uint256 amount, address payee", true, compatibilitySchemaRegistration
+        )
     {}
 
     /// @notice Transfers ERC20 tokens and attests to the payment for the caller.

@@ -97,7 +97,7 @@ contract TokenBundlePaymentObligationTest is Test {
         multiToken = new MockERC1155();
 
         // Deploy obligation contract
-        obligation = new TokenBundlePaymentObligation(eas, schemaRegistry);
+        obligation = new TokenBundlePaymentObligation(eas, schemaRegistry, false);
 
         // Setup test accounts
         vm.deal(alice, 10 ether);

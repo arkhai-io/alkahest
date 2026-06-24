@@ -24,7 +24,7 @@ contract StringResultObligation is BaseObligation, BaseArbiter {
     error InvalidDemand();
 
     constructor(IEAS _eas, ISchemaRegistry _schemaRegistry)
-        BaseObligation(_eas, _schemaRegistry, "string result", true)
+        BaseObligation(_eas, _schemaRegistry, "string result", true, false)
     {}
 
     function doObligation(ObligationData calldata data, bytes32 refUID) public returns (bytes32) {

@@ -6,8 +6,9 @@ import {ApprovedEscrowHook} from "./ApprovedEscrowHook.sol";
 import {IEAS, AttestationRequest, AttestationRequestData} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {ISchemaResolver} from "@eas/resolver/ISchemaResolver.sol";
-import {SchemaResolver} from "@eas/resolver/SchemaResolver.sol";
 import {Attestation} from "@eas/Common.sol";
+import {CompatibilitySchemaRegistryUtils} from "../../../../eas/CompatibilitySchemaRegistryUtils.sol";
+import {EASSchemaResolver} from "../../../../eas/EASSchemaResolver.sol";
 import {SchemaRegistryUtils} from "../../../../eas/SchemaRegistryUtils.sol";
 
 /// @title AttestationReferenceEscrowHook
@@ -20,7 +21,8 @@ import {SchemaRegistryUtils} from "../../../../eas/SchemaRegistryUtils.sol";
 ///
 ///      The validation schema is registered at deploy time. The attester
 ///      of the validation attestation is this hook contract.
-contract AttestationReferenceEscrowHook is IEscrowHook, ApprovedEscrowHook, SchemaResolver {
+contract AttestationReferenceEscrowHook is IEscrowHook, ApprovedEscrowHook, EASSchemaResolver {
+    using CompatibilitySchemaRegistryUtils for ISchemaRegistry;
     using SchemaRegistryUtils for ISchemaRegistry;
 
     struct HookData {
@@ -39,10 +41,13 @@ contract AttestationReferenceEscrowHook is IEscrowHook, ApprovedEscrowHook, Sche
     error AttestationCreationFailed();
     error NoPendingValidation(address caller, bytes32 hookDataHash);
 
-    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry) SchemaResolver(_eas) {
+    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, bool compatibilitySchemaRegistration)
+        EASSchemaResolver(_eas)
+    {
         eas = _eas;
-        VALIDATION_SCHEMA =
-            _schemaRegistry.registerOrReuse("bytes32 validatedAttestationUid", ISchemaResolver(address(this)), true);
+        VALIDATION_SCHEMA = compatibilitySchemaRegistration
+            ? _schemaRegistry.registerDirect("bytes32 validatedAttestationUid", ISchemaResolver(address(this)), true)
+            : _schemaRegistry.registerOrReuse("bytes32 validatedAttestationUid", ISchemaResolver(address(this)), true);
     }
 
     // ──────────────────────────────────────────────

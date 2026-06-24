@@ -43,7 +43,7 @@ contract BundleSplitterRefundingStringObligation is StringObligation {
     uint256 public immutable refundAmount;
 
     constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, uint256 _refundAmount)
-        StringObligation(_eas, _schemaRegistry)
+        StringObligation(_eas, _schemaRegistry, false)
     {
         refundAmount = _refundAmount;
     }
@@ -86,8 +86,8 @@ contract TokenBundleSplitterTest is Test {
         EASDeployer easDeployer = new EASDeployer();
         (eas, schemaRegistry) = easDeployer.deployEAS();
         splitter = new TokenBundleSplitter(eas);
-        escrowObligation = new TokenBundleEscrowObligation(eas, schemaRegistry);
-        stringObligation = new StringObligation(eas, schemaRegistry);
+        escrowObligation = new TokenBundleEscrowObligation(eas, schemaRegistry, false);
+        stringObligation = new StringObligation(eas, schemaRegistry, false);
         token1 = new MockERC20T();
         token2 = new MockERC20T();
         nft = new MockERC721T();

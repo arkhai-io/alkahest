@@ -34,7 +34,7 @@ contract OptimisticStringValidator is BaseObligation, BaseArbiter {
     StringResultObligation public immutable resultObligation;
 
     constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, StringResultObligation _baseObligation)
-        BaseObligation(_eas, _schemaRegistry, "string query, uint64 mediationPeriod", true)
+        BaseObligation(_eas, _schemaRegistry, "string query, uint64 mediationPeriod", true, false)
     {
         resultObligation = _baseObligation;
     }

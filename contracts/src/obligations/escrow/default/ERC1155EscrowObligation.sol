@@ -28,9 +28,13 @@ contract ERC1155EscrowObligation is BaseEscrowObligation, BaseArbiter, ERC1155Ho
 
     error ERC1155TransferFailed(address token, address from, address to, uint256 tokenId, uint256 amount);
 
-    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry)
+    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, bool compatibilitySchemaRegistration)
         BaseEscrowObligation(
-            _eas, _schemaRegistry, "address arbiter, bytes demand, address token, uint256 tokenId, uint256 amount", true
+            _eas,
+            _schemaRegistry,
+            "address arbiter, bytes demand, address token, uint256 tokenId, uint256 amount",
+            true,
+            compatibilitySchemaRegistration
         )
     {}
 

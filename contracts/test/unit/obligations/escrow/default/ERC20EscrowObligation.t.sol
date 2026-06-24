@@ -42,7 +42,7 @@ contract ERC20EscrowObligationTest is Test {
         EASDeployer easDeployer = new EASDeployer();
         (eas, schemaRegistry) = easDeployer.deployEAS();
 
-        escrowObligation = new ERC20EscrowObligation(eas, schemaRegistry);
+        escrowObligation = new ERC20EscrowObligation(eas, schemaRegistry, false);
         token = new MockERC20();
         mockArbiter = new MockArbiter(true);
         rejectingArbiter = new MockArbiter(false);
@@ -140,7 +140,7 @@ contract ERC20EscrowObligationTest is Test {
 
         // Create a fulfillment attestation using a separate obligation (can be any other contract)
         // We'll use a simple string obligation for this purpose
-        StringObligation stringObligation = new StringObligation(eas, schemaRegistry);
+        StringObligation stringObligation = new StringObligation(eas, schemaRegistry, false);
 
         vm.prank(seller);
         bytes32 fulfillmentUid = stringObligation.doObligation(
@@ -171,7 +171,7 @@ contract ERC20EscrowObligationTest is Test {
         vm.stopPrank();
 
         // Create a fulfillment attestation using a separate obligation
-        StringObligation stringObligation = new StringObligation(eas, schemaRegistry);
+        StringObligation stringObligation = new StringObligation(eas, schemaRegistry, false);
 
         vm.prank(seller);
         bytes32 fulfillmentUid = stringObligation.doObligation(
