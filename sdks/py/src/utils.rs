@@ -3,7 +3,7 @@ use alkahest_rs::{
     types::WalletProvider,
     utils::{
         deploy_alkahest as deploy_alkahest_rs, get_wallet_provider, setup_test_environment,
-        DeployAlkahestOptions, EasAddresses, MockAddresses, TestContext,
+        DeployAlkahestOptions, EasAddresses, EasSetup, MockAddresses, TestContext,
     },
 };
 use alloy::{hex, primitives::Address, signers::local::PrivateKeySigner};
@@ -33,8 +33,7 @@ pub fn deploy_alkahest<'py>(
         let config = deploy_alkahest_rs(
             &provider,
             DeployAlkahestOptions {
-                eas: eas_addresses,
-                deploy_eas,
+                eas: eas_setup(deploy_eas, eas_addresses)?,
             },
         )
         .await
@@ -57,6 +56,19 @@ fn parse_eas_addresses(
         (None, None) => Ok(None),
         _ => Err(pyo3::exceptions::PyValueError::new_err(
             "eas and schema_registry must be provided together",
+        )),
+    }
+}
+
+fn eas_setup(deploy_eas: bool, eas: Option<EasAddresses>) -> PyResult<EasSetup> {
+    match (deploy_eas, eas) {
+        (true, None) => Ok(EasSetup::Deploy),
+        (false, Some(eas)) => Ok(EasSetup::Existing(eas)),
+        (true, Some(_)) => Err(pyo3::exceptions::PyValueError::new_err(
+            "existing EAS addresses cannot be provided when deploy_eas is true",
+        )),
+        (false, None) => Err(pyo3::exceptions::PyValueError::new_err(
+            "eas and schema_registry are required when deploy_eas is false",
         )),
     }
 }
@@ -86,8 +98,7 @@ impl PyWalletProvider {
             let config = deploy_alkahest_rs(
                 &provider,
                 DeployAlkahestOptions {
-                    eas: eas_addresses,
-                    deploy_eas,
+                    eas: eas_setup(deploy_eas, eas_addresses)?,
                 },
             )
             .await

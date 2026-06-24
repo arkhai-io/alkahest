@@ -103,6 +103,31 @@ function installWebSocketErrorSuppression() {
   wsErrorSuppressionInstalled = true;
 }
 
+export type AlkahestChainSetup =
+  | {
+      type: "managedAnvil";
+      anvilOptions?: Partial<Parameters<typeof createAnvil>[0]>;
+    };
+
+export type AlkahestEasSetup =
+  | { type: "deploy" }
+  | {
+      type: "existing";
+      easAddress: `0x${string}`;
+      easSrAddress: `0x${string}`;
+    };
+
+export type AlkahestMockSetup = {
+  deploy: boolean;
+  setupState: boolean;
+};
+
+export interface SetupAlkahestEnvironmentOptions {
+  chain?: AlkahestChainSetup;
+  eas?: AlkahestEasSetup;
+  mocks?: AlkahestMockSetup;
+}
+
 export interface SetupTestEnvironmentOptions {
   anvilOptions?: Partial<Parameters<typeof createAnvil>[0]>;
   eas?: boolean;
@@ -113,7 +138,35 @@ export interface SetupTestEnvironmentOptions {
 }
 
 export async function setupTestEnvironment(options?: SetupTestEnvironmentOptions): Promise<TestContext> {
+  let eas: AlkahestEasSetup;
+  if (options?.easAddress || options?.easSrAddress) {
+    if (!options.easAddress || !options.easSrAddress) {
+      throw new Error("easAddress and easSrAddress must be provided together.");
+    }
+    eas = { type: "existing", easAddress: options.easAddress, easSrAddress: options.easSrAddress };
+  } else if (options?.eas === false) {
+    throw new Error("easAddress and easSrAddress are required when eas is false.");
+  } else {
+    eas = { type: "deploy" };
+  }
+
+  return setupAlkahestEnvironment({
+    chain: { type: "managedAnvil", anvilOptions: options?.anvilOptions },
+    eas,
+    mocks: {
+      deploy: options?.deployMocks ?? true,
+      setupState: options?.setupMockState ?? options?.deployMocks ?? true,
+    },
+  });
+}
+
+export async function setupAlkahestEnvironment(options?: SetupAlkahestEnvironmentOptions): Promise<TestContext> {
   installWebSocketErrorSuppression();
+
+  const chainSetup = options?.chain ?? { type: "managedAnvil" as const };
+  if (chainSetup.type !== "managedAnvil") {
+    throw new Error("Only managedAnvil chain setup is currently supported by the TS test environment.");
+  }
 
   const port = Math.floor(Math.random() * 10000) + 50000;
 
@@ -123,7 +176,7 @@ export async function setupTestEnvironment(options?: SetupTestEnvironmentOptions
     chainId: 31337,
   };
 
-  const anvilConfig = { ...defaultAnvilConfig, ...options?.anvilOptions };
+  const anvilConfig = { ...defaultAnvilConfig, ...chainSetup.anvilOptions };
   const anvil = createAnvil(anvilConfig);
   await anvil.start();
 
@@ -224,11 +277,11 @@ export async function setupTestEnvironment(options?: SetupTestEnvironmentOptions
     return receipt.contractAddress as `0x${string}`;
   };
 
-  const deployEas = options?.eas ?? (!options?.easAddress && !options?.easSrAddress);
+  const easSetup = options?.eas ?? { type: "deploy" as const };
   const deployed = await deployAlkahest(deployFn, {
-    eas: deployEas,
-    easAddress: options?.easAddress,
-    easSrAddress: options?.easSrAddress,
+    eas: easSetup.type === "deploy",
+    easAddress: easSetup.type === "existing" ? easSetup.easAddress : undefined,
+    easSrAddress: easSetup.type === "existing" ? easSetup.easSrAddress : undefined,
   });
 
   const zeroAddr = "0x0000000000000000000000000000000000000000" as `0x${string}`;
@@ -245,8 +298,7 @@ export async function setupTestEnvironment(options?: SetupTestEnvironmentOptions
     return deployContractHelper(contract, [addresses.eas, addresses.easSchemaRegistry]);
   };
 
-  const deployMocks = options?.deployMocks ?? true;
-  const setupMockState = options?.setupMockState ?? deployMocks;
+  const mockSetup = options?.mocks ?? { deploy: true, setupState: true };
 
   // Deploy mock tokens
   const mockAddresses: TestContext["mockAddresses"] = {
@@ -261,7 +313,7 @@ export async function setupTestEnvironment(options?: SetupTestEnvironmentOptions
     erc1155C: "" as `0x${string}`,
   };
 
-  if (deployMocks) {
+  if (mockSetup.deploy) {
     mockAddresses.erc20A = await deployContractHelper(MockERC20Permit, ["Token A", "TKA"]);
     mockAddresses.erc20B = await deployContractHelper(MockERC20Permit, ["Token B", "TKB"]);
     mockAddresses.erc20C = await deployContractHelper(MockERC20Permit, ["Token C", "TKC"]);
@@ -274,7 +326,7 @@ export async function setupTestEnvironment(options?: SetupTestEnvironmentOptions
   }
 
   // Distribute tokens to test accounts
-  if (setupMockState) {
+  if (mockSetup.setupState) {
     await seedMockTokenState(testClient, mockAddresses, {
       alice: aliceAddress,
       bob: bobAddress,

@@ -264,35 +264,64 @@ pub struct EasAddresses {
 }
 
 #[derive(Debug, Clone, Copy)]
-pub struct DeployAlkahestOptions {
-    pub eas: Option<EasAddresses>,
-    pub deploy_eas: bool,
+pub enum EasSetup {
+    Deploy,
+    Existing(EasAddresses),
 }
 
-impl Default for DeployAlkahestOptions {
+impl Default for EasSetup {
+    fn default() -> Self {
+        Self::Deploy
+    }
+}
+
+#[derive(Debug, Clone, Copy, Default)]
+pub struct DeployAlkahestOptions {
+    pub eas: EasSetup,
+}
+
+#[derive(Debug, Clone, Copy, Default)]
+pub enum ChainSetup {
+    #[default]
+    ManagedAnvil,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct MockSetup {
+    pub deploy: bool,
+    pub setup_state: bool,
+}
+
+impl Default for MockSetup {
     fn default() -> Self {
         Self {
-            eas: None,
-            deploy_eas: true,
+            deploy: true,
+            setup_state: true,
         }
     }
+}
+
+#[derive(Debug, Clone, Copy, Default)]
+pub struct AlkahestEnvironmentOptions {
+    pub chain: ChainSetup,
+    pub eas: EasSetup,
+    pub mocks: MockSetup,
 }
 
 pub async fn deploy_alkahest(
     provider: &WalletProvider,
     options: DeployAlkahestOptions,
 ) -> eyre::Result<DefaultExtensionConfig> {
-    let eas_addresses = if options.deploy_eas {
-        let schema_registry = SchemaRegistry::deploy(provider).await?;
-        let eas = EAS::deploy(provider, schema_registry.address().clone()).await?;
-        EasAddresses {
-            eas: eas.address().clone(),
-            schema_registry: schema_registry.address().clone(),
+    let eas_addresses = match options.eas {
+        EasSetup::Deploy => {
+            let schema_registry = SchemaRegistry::deploy(provider).await?;
+            let eas = EAS::deploy(provider, schema_registry.address().clone()).await?;
+            EasAddresses {
+                eas: eas.address().clone(),
+                schema_registry: schema_registry.address().clone(),
+            }
         }
-    } else {
-        options.eas.ok_or_else(|| {
-            eyre::eyre!("EAS and SchemaRegistry addresses are required when deploy_eas is false")
-        })?
+        EasSetup::Existing(eas) => eas,
     };
 
     let eas_address = eas_addresses.eas;
@@ -568,21 +597,28 @@ async fn shared_env() -> eyre::Result<Arc<SharedTestEnv>> {
 
 pub async fn setup_test_environment() -> eyre::Result<TestContext> {
     let env = shared_env().await?;
-    // Acquire the cross-test serialization mutex for the duration of
-    // this test. Stored in TestContext via the _test_guard field so
-    // dropping the context releases it.
-    let test_guard = env.setup_lock.clone().lock_owned().await;
+    setup_context_from_env(env, true).await
+}
 
-    // Build a fresh god_provider per test rather than sharing across the
-    // suite — alloy's persistent backend task can die between test
-    // invocations, and reusing it surfaces as
-    // "backend connection task has stopped" on the next test.
+pub async fn setup_alkahest_environment(
+    options: AlkahestEnvironmentOptions,
+) -> eyre::Result<TestContext> {
+    match options.chain {
+        ChainSetup::ManagedAnvil => {
+            let env = Arc::new(build_shared_env_with_options(options).await?);
+            setup_context_from_env(env, false).await
+        }
+    }
+}
+
+async fn setup_context_from_env(
+    env: Arc<SharedTestEnv>,
+    reset_snapshot: bool,
+) -> eyre::Result<TestContext> {
+    let test_guard = env.setup_lock.clone().lock_owned().await;
     let god_provider = get_wallet_provider(env.god.clone(), env.rpc_url.clone()).await?;
 
-    // Revert chain to the post-deploy snapshot, then re-snapshot.
-    // evm_revert consumes the snapshot id, so we always pair it with
-    // a fresh evm_snapshot.
-    {
+    if reset_snapshot {
         let mut snapshot = env.snapshot_id.lock().await;
         let _: bool = god_provider
             .raw_request("evm_revert".into(), [*snapshot])
@@ -591,8 +627,6 @@ pub async fn setup_test_environment() -> eyre::Result<TestContext> {
         *snapshot = new_snapshot;
     }
 
-    // Fresh signers per test — evm_revert wipes per-test funding,
-    // so we re-fund alice/bob/charlie from god each time.
     let alice = PrivateKeySigner::random();
     let bob = PrivateKeySigner::random();
     let charlie = PrivateKeySigner::random();
@@ -609,9 +643,6 @@ pub async fn setup_test_environment() -> eyre::Result<TestContext> {
             .await?;
     }
 
-    // Tight poll interval for tests so HTTP-transport runs don't burn
-    // through the 5s test deadlines that ws subscriptions hit instantly.
-    // Production clients keep the 7s default.
     let test_poll_interval = Some(Duration::from_millis(250));
     let alice_client = AlkahestClient::with_base_extensions_with_poll_interval(
         alice.clone(),
@@ -652,6 +683,12 @@ pub async fn setup_test_environment() -> eyre::Result<TestContext> {
 }
 
 async fn build_shared_env() -> eyre::Result<SharedTestEnv> {
+    build_shared_env_with_options(AlkahestEnvironmentOptions::default()).await
+}
+
+async fn build_shared_env_with_options(
+    options: AlkahestEnvironmentOptions,
+) -> eyre::Result<SharedTestEnv> {
     let anvil = alloy::node_bindings::Anvil::new().try_spawn()?;
     eprintln!(
         "[shared_env] anvil spawned (ws={}, http={})",
@@ -664,24 +701,43 @@ async fn build_shared_env() -> eyre::Result<SharedTestEnv> {
     let god_provider = get_wallet_provider(god.clone(), rpc_url.clone()).await?;
     let god_provider_ = god_provider.clone();
 
-    let addresses = deploy_alkahest(&god_provider, DeployAlkahestOptions::default()).await?;
+    let addresses =
+        deploy_alkahest(&god_provider, DeployAlkahestOptions { eas: options.eas }).await?;
 
-    let mock_erc20_a =
-        MockERC20Permit::deploy(&god_provider, "Mock Erc20".into(), "TK1".into()).await?;
-    let mock_erc20_b =
-        MockERC20Permit::deploy(&god_provider, "Mock Erc20".into(), "TK2".into()).await?;
-    let mock_erc721_a = MockERC721::deploy(&god_provider).await?;
-    let mock_erc721_b = MockERC721::deploy(&god_provider).await?;
-    let mock_erc1155_a = MockERC1155::deploy(&god_provider).await?;
-    let mock_erc1155_b = MockERC1155::deploy(&god_provider).await?;
+    let (mock_erc20_a, mock_erc20_b, mock_erc721_a, mock_erc721_b, mock_erc1155_a, mock_erc1155_b) =
+        if options.mocks.deploy {
+            (
+                MockERC20Permit::deploy(&god_provider, "Mock Erc20".into(), "TK1".into())
+                    .await?
+                    .address()
+                    .clone(),
+                MockERC20Permit::deploy(&god_provider, "Mock Erc20".into(), "TK2".into())
+                    .await?
+                    .address()
+                    .clone(),
+                MockERC721::deploy(&god_provider).await?.address().clone(),
+                MockERC721::deploy(&god_provider).await?.address().clone(),
+                MockERC1155::deploy(&god_provider).await?.address().clone(),
+                MockERC1155::deploy(&god_provider).await?.address().clone(),
+            )
+        } else {
+            (
+                Address::ZERO,
+                Address::ZERO,
+                Address::ZERO,
+                Address::ZERO,
+                Address::ZERO,
+                Address::ZERO,
+            )
+        };
 
     let mock_addresses = MockAddresses {
-        erc20_a: mock_erc20_a.address().clone(),
-        erc20_b: mock_erc20_b.address().clone(),
-        erc721_a: mock_erc721_a.address().clone(),
-        erc721_b: mock_erc721_b.address().clone(),
-        erc1155_a: mock_erc1155_a.address().clone(),
-        erc1155_b: mock_erc1155_b.address().clone(),
+        erc20_a: mock_erc20_a,
+        erc20_b: mock_erc20_b,
+        erc721_a: mock_erc721_a,
+        erc721_b: mock_erc721_b,
+        erc1155_a: mock_erc1155_a,
+        erc1155_b: mock_erc1155_b,
     };
 
     // Capture the post-deploy state so per-test reverts can return here.
