@@ -12,8 +12,8 @@ library CompatibilitySchemaRegistryUtils {
     /// @notice Raised when the registry returns an unexpected UID.
     error SchemaRegistrationFailed(bytes32 expected, bytes32 actual);
 
-    /// @notice Registers a schema directly and verifies the deterministic UID returned by EAS.
-    function registerDirect(
+    /// @notice Registers a schema without a constructor-time lookup and verifies the deterministic UID returned by EAS.
+    function registerWithoutLookup(
         ISchemaRegistry schemaRegistry,
         string memory schema,
         ISchemaResolver resolver,
