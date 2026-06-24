@@ -13,6 +13,12 @@ import { abi as erc1155Abi } from "../../../contracts/IERC1155";
 import type { ChainAddresses } from "../../../types";
 import { getAttestation, getAttestedEventFromTxHash, readContract, type ViemClient, writeContract } from "../../../utils";
 
+/**
+ * Security note: the underlying hook-based escrow contracts and hooks were not
+ * included in professional manual audits and have only been reviewed by
+ * automated audit tooling so far.
+ */
+
 /** Deployed hook-based escrow and hook contract addresses. */
 export type HookBasedAddresses = {
   eas: `0x${string}`;

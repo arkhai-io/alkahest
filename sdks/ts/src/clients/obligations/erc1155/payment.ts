@@ -144,6 +144,11 @@ export const makeErc1155PaymentClient = (viemClient: ViemClient, addresses: Erc1
       return { hash, attested };
     },
 
+    /**
+     * Security note: uses AtomicPaymentUtils, which was not included in the
+     * professional manual audits and has only been reviewed by automated audit
+     * tooling so far.
+     */
     payErc1155AndCollect: async (escrowUid: `0x${string}`) => {
       const hash = await writeContract(viemClient, {
         address: addresses.atomicPaymentUtils,

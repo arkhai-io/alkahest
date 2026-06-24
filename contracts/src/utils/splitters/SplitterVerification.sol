@@ -11,6 +11,8 @@ interface ISplitterEscrowObligation {
 
 /// @title SplitterVerification
 /// @notice Shared attestation and balance-delta checks used by splitter contracts.
+/// @dev Security note: Splitter helpers have not been included in professional manual audits
+///      and have only been reviewed by automated audit tooling so far.
 library SplitterVerification {
     using ArbiterUtils for Attestation;
 

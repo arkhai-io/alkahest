@@ -10,6 +10,9 @@ import {Attestation} from "@eas/Common.sol";
 /// @dev hookData is abi.encode(HookData).
 ///      ETH is forwarded via msg.value through onLock.
 ///      Deposits are tracked per-caller.
+///
+///      Security note: This contract has not been included in professional manual audits and
+///      has only been reviewed by automated audit tooling so far.
 contract NativeTokenEscrowHook is IEscrowHook, ApprovedEscrowHook {
     struct HookData {
         uint256 amount;

@@ -163,6 +163,11 @@ export const makeTokenBundlePaymentClient = (viemClient: ViemClient, addresses: 
       return { hash, attested };
     },
 
+    /**
+     * Security note: uses AtomicPaymentUtils, which was not included in the
+     * professional manual audits and has only been reviewed by automated audit
+     * tooling so far.
+     */
     payBundleAndCollect: async (escrowUid: `0x${string}`) => {
       const hash = await writeContract(viemClient, {
         address: addresses.atomicPaymentUtils,

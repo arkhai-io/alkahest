@@ -12,6 +12,8 @@ import {TokenBundleSplitterBase} from "./TokenBundleSplitterBase.sol";
 /// @title TokenBundleSplitterUnvalidated
 /// @notice Token-bundle splitter variant that stores oracle splits without validating totals up front.
 /// @dev Distribution can still fail later if the stored split asks for more than was collected.
+/// @dev Security note: This contract has not been included in professional manual audits and
+///      has only been reviewed by automated audit tooling so far.
 contract TokenBundleSplitterUnvalidated is TokenBundleSplitterBase {
     constructor(IEAS _eas) TokenBundleSplitterBase(_eas) {}
 

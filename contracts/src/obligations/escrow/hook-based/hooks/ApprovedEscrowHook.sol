@@ -5,6 +5,8 @@ import {Attestation} from "@eas/Common.sol";
 
 /// @title ApprovedEscrowHook
 /// @notice Shared escrow-caller approval checks for hook implementations.
+/// @dev Security note: Hook implementations have not been included in professional manual audits
+///      and have only been reviewed by automated audit tooling so far.
 abstract contract ApprovedEscrowHook {
     /// @notice owner -> escrow obligation contract -> approved.
     mapping(address => mapping(address => bool)) public approvedEscrows;

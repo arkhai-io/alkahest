@@ -2,6 +2,10 @@
 //!
 //! Mirrors the Rust SDK splitter helpers: address access, demand/split codecs,
 //! and decision-key computation.
+//!
+//! Security note: the underlying splitter contracts have not been included in
+//! professional manual audits and have only been reviewed by automated audit
+//! tooling so far.
 
 use alkahest_rs::{contracts, extensions::SplittersModule};
 use alloy::{

@@ -19,6 +19,9 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 ///      Users must approve this hook contract for the token and approve the
 ///      escrow obligation contract in this hook before the obligation calls
 ///      onLock.
+///
+///      Security note: This contract has not been included in professional manual audits and
+///      has only been reviewed by automated audit tooling so far.
 contract ERC20EscrowHook is IEscrowHook, ApprovedEscrowHook {
     using SafeERC20 for IERC20;
 

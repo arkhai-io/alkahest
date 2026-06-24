@@ -93,6 +93,10 @@ pub enum HookBasedContract {
 }
 
 /// Rust client module for hook-based escrow helpers.
+///
+/// Security note: the underlying hook-based escrow contracts and hooks have not
+/// been included in professional manual audits and have only been reviewed by
+/// automated audit tooling so far.
 #[derive(Clone)]
 pub struct HookBasedModule {
     _signer: PrivateKeySigner,

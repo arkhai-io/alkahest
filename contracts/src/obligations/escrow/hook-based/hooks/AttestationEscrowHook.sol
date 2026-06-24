@@ -20,6 +20,9 @@ import {IEAS, AttestationRequest} from "@eas/IEAS.sol";
 ///      No per-caller deposit tracking needed since there are no assets.
 ///      However, we track a nonce per-caller to prevent replay of release
 ///      calls for the same escrow.
+///
+///      Security note: This contract has not been included in professional manual audits and
+///      has only been reviewed by automated audit tooling so far.
 contract AttestationEscrowHook is IEscrowHook, ApprovedEscrowHook {
     struct HookData {
         AttestationRequest attestation;

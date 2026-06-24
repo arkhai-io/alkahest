@@ -61,6 +61,11 @@ impl Payment {
     }
 
     /// Pays the native-token demand for an escrow and collects the escrow atomically.
+    /// Pay a native-token payment obligation and collect the matching escrow atomically.
+    ///
+    /// Security note: uses AtomicPaymentUtils, which has not been included in
+    /// professional manual audits and has only been reviewed by automated audit
+    /// tooling so far.
     pub fn pay_native_and_collect<'py>(
         &self,
         py: pyo3::Python<'py>,

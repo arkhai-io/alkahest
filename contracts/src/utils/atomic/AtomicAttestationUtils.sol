@@ -11,6 +11,8 @@ import {
 
 /// @title AtomicAttestationUtils
 /// @notice Helpers that create an EAS attestation and an attestation-reference escrow in one transaction.
+/// @dev Security note: This contract has not been included in professional manual audits and
+///      has only been reviewed by automated audit tooling so far.
 contract AtomicAttestationUtils {
     /// @notice EAS contract used to create attestations.
     IEAS public immutable eas;

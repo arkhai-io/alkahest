@@ -106,6 +106,11 @@ impl<'a> Payment<'a> {
         Ok((approval_receipts, payment_receipt, revoke_receipts))
     }
 
+    /// Pays a token-bundle payment obligation and collects the matching escrow atomically.
+    ///
+    /// Security note: uses AtomicPaymentUtils, which has not been included in
+    /// professional manual audits and has only been reviewed by automated audit
+    /// tooling so far.
     pub async fn pay_bundle_and_collect(
         &self,
         escrow_uid: FixedBytes<32>,

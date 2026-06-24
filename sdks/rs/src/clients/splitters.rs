@@ -62,6 +62,10 @@ pub enum SplitterContract {
 }
 
 /// Rust client module for splitter helpers.
+///
+/// Security note: the underlying splitter contracts have not been included in
+/// professional manual audits and have only been reviewed by automated audit
+/// tooling so far.
 #[derive(Clone)]
 pub struct SplittersModule {
     _signer: PrivateKeySigner,

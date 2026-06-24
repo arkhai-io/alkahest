@@ -20,6 +20,9 @@ import {SchemaRegistryUtils} from "../../../../libraries/SchemaRegistryUtils.sol
 ///
 ///      The validation schema is registered at deploy time. The attester
 ///      of the validation attestation is this hook contract.
+///
+///      Security note: This contract has not been included in professional manual audits and
+///      has only been reviewed by automated audit tooling so far.
 contract AttestationReferenceEscrowHook is IEscrowHook, ApprovedEscrowHook, SchemaResolver {
     using SchemaRegistryUtils for ISchemaRegistry;
 

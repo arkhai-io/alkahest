@@ -2,6 +2,12 @@ import { abi as atomicAttestationUtilsAbi } from "../../../contracts/utils/Atomi
 import { getAttestedEventsFromTxHash, type ViemClient } from "../../../utils";
 import type { AttestationAddresses } from "./index";
 
+/**
+ * Security note: the underlying AtomicAttestationUtils contract was not
+ * included in professional manual audits and has only been reviewed by
+ * automated audit tooling so far.
+ */
+
 /** Atomic attestation helper client. */
 export type AttestationUtilClient = ReturnType<typeof makeAttestationUtilClient>;
 

@@ -14,6 +14,9 @@ import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155
 ///      Users must call setApprovalForAll on the ERC1155 contract for this
 ///      hook and approve the escrow obligation contract in this hook before the
 ///      obligation calls onLock.
+///
+///      Security note: This contract has not been included in professional manual audits and
+///      has only been reviewed by automated audit tooling so far.
 contract ERC1155EscrowHook is IEscrowHook, ApprovedEscrowHook, ERC1155Holder {
     struct HookData {
         address token;

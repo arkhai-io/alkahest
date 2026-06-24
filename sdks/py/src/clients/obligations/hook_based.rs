@@ -2,6 +2,10 @@
 //!
 //! Mirrors the Rust SDK hook-based escrow helpers for address access and
 //! ABI codecs.
+//!
+//! Security note: the underlying hook-based escrow contracts and hooks have not
+//! been included in professional manual audits and have only been reviewed by
+//! automated audit tooling so far.
 
 use alkahest_rs::{contracts, extensions::HookBasedModule};
 use alloy::{

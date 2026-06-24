@@ -11,6 +11,8 @@ import {IEscrow} from "../../IEscrow.sol";
 
 /// @title ERC20Splitter
 /// @notice Collects ERC20 escrows and distributes the received amount according to oracle-provided splits.
+/// @dev Security note: This contract has not been included in professional manual audits and
+///      has only been reviewed by automated audit tooling so far.
 contract ERC20Splitter is BaseSplitter {
     using SplitterVerification for Attestation;
     using SafeERC20 for IERC20;

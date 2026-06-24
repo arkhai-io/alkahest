@@ -117,7 +117,11 @@ pub enum AttestationContract {
     Eas,
     /// EAS Schema Registry contract
     EasSchemaRegistry,
-    /// Atomic attestation utilities contract for attestations
+    /// Atomic attestation utilities contract for attestations.
+    ///
+    /// Security note: the underlying contract has not been included in
+    /// professional manual audits and has only been reviewed by automated audit
+    /// tooling so far.
     AtomicAttestationUtils,
     /// Default escrow obligation contract for attestations
     DefaultEscrowObligation,

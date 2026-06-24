@@ -7,6 +7,12 @@ import { abi as tokenBundleSplitterUnvalidatedAbi } from "../../contracts/utils/
 import type { Attestation, ChainAddresses } from "../../types";
 import { readContract, type ViemClient, writeContract } from "../../utils";
 
+/**
+ * Security note: the underlying splitter contracts were not included in the
+ * professional manual audits and have only been reviewed by automated audit
+ * tooling so far.
+ */
+
 /** Deployed splitter contract addresses. */
 export type SplitterAddresses = {
   erc20Splitter: `0x${string}`;

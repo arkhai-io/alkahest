@@ -93,6 +93,11 @@ impl Payment {
     }
 
     /// Pays the token-bundle demand for an escrow and collects the escrow atomically.
+    /// Pay a token-bundle payment obligation and collect the matching escrow atomically.
+    ///
+    /// Security note: uses AtomicPaymentUtils, which has not been included in
+    /// professional manual audits and has only been reviewed by automated audit
+    /// tooling so far.
     pub fn pay_bundle_and_collect<'py>(
         &self,
         py: pyo3::Python<'py>,

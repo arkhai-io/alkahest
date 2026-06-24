@@ -85,6 +85,11 @@ impl Payment {
     }
 
     /// Pays the ERC721 demand for an escrow and collects the escrow atomically.
+    /// Pay an ERC721 payment obligation and collect the matching escrow atomically.
+    ///
+    /// Security note: uses AtomicPaymentUtils, which has not been included in
+    /// professional manual audits and has only been reviewed by automated audit
+    /// tooling so far.
     pub fn pay_erc721_and_collect<'py>(
         &self,
         py: pyo3::Python<'py>,

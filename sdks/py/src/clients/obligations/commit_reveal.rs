@@ -7,6 +7,9 @@ use crate::error_handling::{map_eyre_to_pyerr, map_parse_to_pyerr};
 use crate::contract::PyDecodedAttestation;
 
 /// Python client wrapper for `CommitRevealObligation`.
+///
+/// Security note: the underlying contract has not been included in professional
+/// manual audits and has only been reviewed by automated audit tooling so far.
 #[pyclass]
 #[derive(Clone)]
 pub struct CommitRevealObligationClient {

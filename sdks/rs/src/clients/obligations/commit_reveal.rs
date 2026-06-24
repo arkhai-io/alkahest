@@ -27,6 +27,9 @@ pub struct CommitRevealObligationAddresses {
 }
 
 /// Rust client module for `CommitRevealObligation`.
+///
+/// Security note: the underlying contract has not been included in professional
+/// manual audits and has only been reviewed by automated audit tooling so far.
 #[derive(Clone)]
 pub struct CommitRevealObligationModule {
     _signer: PrivateKeySigner,

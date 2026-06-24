@@ -15,6 +15,8 @@ import {IEscrow} from "../../IEscrow.sol";
 
 /// @title TokenBundleSplitterBase
 /// @notice Shared collection and distribution logic for token-bundle splitters.
+/// @dev Security note: Token-bundle splitter contracts were not included in the
+///      professional manual audits and have only been reviewed by automated audit tooling so far.
 abstract contract TokenBundleSplitterBase is BaseSplitter, ERC1155Holder {
     using SplitterVerification for Attestation;
     using SafeERC20 for IERC20;

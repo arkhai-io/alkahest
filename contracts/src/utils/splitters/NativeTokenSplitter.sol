@@ -9,6 +9,8 @@ import {IEscrow} from "../../IEscrow.sol";
 
 /// @title NativeTokenSplitter
 /// @notice Collects native-token escrows and distributes the received amount according to oracle-provided splits.
+/// @dev Security note: This contract has not been included in professional manual audits and
+///      has only been reviewed by automated audit tooling so far.
 contract NativeTokenSplitter is BaseSplitter {
     using SplitterVerification for Attestation;
 

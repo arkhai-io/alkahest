@@ -104,7 +104,11 @@ pub enum ArbitersContract {
     IntrinsicsArbiter,
     /// ERC8004 arbiter
     ERC8004Arbiter,
-    /// References escrow arbiter
+    /// References escrow arbiter.
+    ///
+    /// Security note: the underlying contract has not been included in
+    /// professional manual audits and has only been reviewed by automated audit
+    /// tooling so far.
     ReferencesEscrowArbiter,
     /// Any arbiter (logical OR)
     AnyArbiter,

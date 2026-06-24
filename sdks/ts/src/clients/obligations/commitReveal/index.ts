@@ -19,6 +19,12 @@ const commitRevealDemandDecodeFunction = getAbiItem({
 
 const commitRevealDemandType = commitRevealDemandDecodeFunction.outputs[0];
 
+/**
+ * Security note: the underlying CommitRevealObligation contract was not
+ * included in professional manual audits and has only been reviewed by
+ * automated audit tooling so far.
+ */
+
 /** Data revealed in a commit-reveal fulfillment attestation. */
 export type CommitRevealObligationData = {
   /** Arbitrary self-contained payload being revealed. */

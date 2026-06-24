@@ -13,6 +13,9 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 ///      Users must approve this hook contract (or setApprovalForAll) and
 ///      approve the escrow obligation contract in this hook before the
 ///      obligation calls onLock.
+///
+///      Security note: This contract has not been included in professional manual audits and
+///      has only been reviewed by automated audit tooling so far.
 contract ERC721EscrowHook is IEscrowHook, ApprovedEscrowHook {
     struct HookData {
         address token;

@@ -12,6 +12,8 @@ import {IEscrow} from "../../IEscrow.sol";
 
 /// @title ERC1155Splitter
 /// @notice Collects ERC1155 escrows and distributes the received amount according to oracle-provided splits.
+/// @dev Security note: This contract has not been included in professional manual audits and
+///      has only been reviewed by automated audit tooling so far.
 contract ERC1155Splitter is BaseSplitter, ERC1155Holder {
     using SplitterVerification for Attestation;
 

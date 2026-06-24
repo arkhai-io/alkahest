@@ -13,6 +13,9 @@ import {Attestation} from "@eas/Common.sol";
 ///      (msg.sender). Hook implementations that can use a user's token
 ///      approvals should require the asset owner to approve the escrow
 ///      obligation contract at the hook level before `onLock` can pull assets.
+///
+///      Security note: Hook-based escrow contracts were not included in the
+///      professional manual audits and have only been reviewed by automated audit tooling so far.
 interface IEscrowHook {
     error UnexpectedNativeValue();
 

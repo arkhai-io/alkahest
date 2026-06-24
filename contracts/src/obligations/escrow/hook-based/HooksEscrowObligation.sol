@@ -13,6 +13,8 @@ import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 /// @title HooksEscrowObligation
 /// @notice A multi-hook escrow obligation that calls each IEscrowHook directly
 ///         during lock, release, and return.
+/// @dev Security note: This contract has not been included in professional manual audits and
+///      has only been reviewed by automated audit tooling so far.
 contract HooksEscrowObligation is BaseEscrowObligation, BaseArbiter {
     using ArbiterUtils for Attestation;
 

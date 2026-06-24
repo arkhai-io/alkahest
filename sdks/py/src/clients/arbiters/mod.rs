@@ -100,6 +100,10 @@ impl PyArbitrationMadeLog {
 /// - Confirmation arbiters (exclusive/nonexclusive, revocable/unrevocable)
 /// - Logical arbiters (AllArbiter, AnyArbiter)
 /// - Trusted oracle arbitration
+///
+/// Security note: the ReferencesEscrowArbiter surface exposed by this client
+/// has not been included in professional manual audits and has only been
+/// reviewed by automated audit tooling so far.
 #[pyclass]
 #[derive(Clone)]
 pub struct ArbitersClient {

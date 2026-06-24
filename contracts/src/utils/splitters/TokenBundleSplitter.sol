@@ -10,6 +10,8 @@ import {TokenBundleSplitterBase} from "./TokenBundleSplitterBase.sol";
 ///         More expensive oracle calls, but guarantees correctness at submission time.
 /// @title TokenBundleSplitter
 /// @notice Validated token-bundle splitter that requires split totals to match the escrowed bundle.
+/// @dev Security note: This contract has not been included in professional manual audits and
+///      has only been reviewed by automated audit tooling so far.
 contract TokenBundleSplitter is TokenBundleSplitterBase {
     error InvalidNativeSplitTotal(uint256 expected, uint256 provided);
     error InvalidERC20SplitTotal(uint256 tokenIndex, uint256 expected, uint256 provided);

@@ -208,6 +208,11 @@ export const makeNativeTokenPaymentClient = (viemClient: ViemClient, addresses: 
       return { hash, attested };
     },
 
+    /**
+     * Security note: uses AtomicPaymentUtils, which was not included in the
+     * professional manual audits and has only been reviewed by automated audit
+     * tooling so far.
+     */
     payNativeAndCollect: async (escrowUid: `0x${string}`) => {
       const demand = await getPaymentDemand(escrowUid);
       const hash = await viemClient.writeContract({

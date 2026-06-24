@@ -18,6 +18,8 @@ import {ArbiterUtils} from "../libraries/ArbiterUtils.sol";
 ///         reveal deadline required for a particular escrow, so this contract
 ///         composes cleanly under logical arbiters that pass nested demands to
 ///         check.
+/// @dev Security note: This contract has not been included in professional manual audits and
+///      has only been reviewed by automated audit tooling so far.
 contract CommitRevealObligation is BaseObligation, BaseArbiter, Ownable {
     using ArbiterUtils for Attestation;
 

@@ -153,6 +153,11 @@ impl<'a> Payment<'a> {
         Ok(receipt)
     }
 
+    /// Pays an ERC20 payment obligation and collects the matching escrow atomically.
+    ///
+    /// Security note: uses AtomicPaymentUtils, which has not been included in
+    /// professional manual audits and has only been reviewed by automated audit
+    /// tooling so far.
     pub async fn pay_erc20_and_collect(
         &self,
         escrow_uid: FixedBytes<32>,
@@ -170,6 +175,11 @@ impl<'a> Payment<'a> {
             .await?)
     }
 
+    /// Pays with an ERC20 permit and collects the matching escrow atomically.
+    ///
+    /// Security note: uses AtomicPaymentUtils, which has not been included in
+    /// professional manual audits and has only been reviewed by automated audit
+    /// tooling so far.
     pub async fn permit_and_pay_erc20_and_collect(
         &self,
         escrow_uid: FixedBytes<32>,

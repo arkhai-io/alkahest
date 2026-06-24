@@ -132,6 +132,11 @@ impl Payment {
     }
 
     /// Pays the ERC20 demand for an escrow and collects the escrow atomically.
+    /// Pay an ERC20 payment obligation and collect the matching escrow atomically.
+    ///
+    /// Security note: uses AtomicPaymentUtils, which has not been included in
+    /// professional manual audits and has only been reviewed by automated audit
+    /// tooling so far.
     pub fn pay_erc20_and_collect<'py>(
         &self,
         py: pyo3::Python<'py>,
@@ -155,6 +160,11 @@ impl Payment {
     }
 
     /// Pays the ERC20 demand for an escrow using permit and collects atomically.
+    /// Pay with an ERC20 permit and collect the matching escrow atomically.
+    ///
+    /// Security note: uses AtomicPaymentUtils, which has not been included in
+    /// professional manual audits and has only been reviewed by automated audit
+    /// tooling so far.
     pub fn permit_and_pay_erc20_and_collect<'py>(
         &self,
         py: pyo3::Python<'py>,

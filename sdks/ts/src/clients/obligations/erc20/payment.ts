@@ -191,6 +191,11 @@ export const makeErc20PaymentClient = (viemClient: ViemClient, addresses: Erc20A
       return { hash, attested };
     },
 
+    /**
+     * Security note: uses AtomicPaymentUtils, which was not included in the
+     * professional manual audits and has only been reviewed by automated audit
+     * tooling so far.
+     */
     payErc20AndCollect: async (escrowUid: `0x${string}`) => {
       const hash = await writeContract(viemClient, {
         address: addresses.atomicPaymentUtils,
@@ -203,6 +208,11 @@ export const makeErc20PaymentClient = (viemClient: ViemClient, addresses: Erc20A
       return { hash, attested };
     },
 
+    /**
+     * Security note: uses AtomicPaymentUtils, which was not included in the
+     * professional manual audits and has only been reviewed by automated audit
+     * tooling so far.
+     */
     permitAndPayErc20AndCollect: async (escrowUid: `0x${string}`) => {
       const deadline = util.getPermitDeadline();
       const demand = await getPaymentDemand(escrowUid);
