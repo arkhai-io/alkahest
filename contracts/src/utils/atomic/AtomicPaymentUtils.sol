@@ -16,12 +16,6 @@ import {NativeTokenPaymentObligation} from "../../obligations/payment/NativeToke
 import {TokenBundlePaymentObligation} from "../../obligations/payment/TokenBundlePaymentObligation.sol";
 import {IEscrow} from "../../IEscrow.sol";
 
-/// @notice Minimal interface for escrow contracts whose attestation data contains an arbiter and demand.
-interface IEscrowConditionDecoder {
-    /// @notice Decodes an escrow attestation's condition into arbiter and demand data.
-    function decodeCondition(bytes memory data) external pure returns (address arbiter, bytes memory demand);
-}
-
 /// @title AtomicPaymentUtils
 /// @notice Helper contract that pays a payment obligation and collects the matching escrow in one transaction.
 /// @dev Payment demand data is read from the escrow attestation, so callers do not need to provide duplicate terms.
@@ -219,7 +213,7 @@ contract AtomicPaymentUtils is IERC1155Receiver {
     {
         escrow = eas.getAttestation(escrowUid);
         if (escrow.uid == bytes32(0) || escrow.uid != escrowUid) revert AttestationNotFound(escrowUid);
-        (, demand) = IEscrowConditionDecoder(escrow.attester).decodeCondition(escrow.data);
+        (, demand) = IEscrow(escrow.attester).decodeCondition(escrow.data);
     }
 
     /// @notice Calls the escrow contract to collect with the freshly-created fulfillment UID.
