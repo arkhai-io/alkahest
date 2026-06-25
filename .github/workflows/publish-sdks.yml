@@ -1,9 +1,12 @@
-name: Publish SDKs
+name: Publish Packages
 
 on:
   push:
     branches: [main]
-    paths: ['sdks/**']
+    paths:
+      - 'sdks/**'
+      - 'cli/**'
+      - '.github/workflows/publish-sdks.yml'
   workflow_dispatch:
 
 concurrency:
@@ -19,10 +22,11 @@ permissions:
 #   npm       - configure at https://www.npmjs.com/package/alkahest-ts → Settings → Trusted Publisher
 #   crates.io - configure at https://crates.io/crates/alkahest-rs/settings
 #   PyPI      - configure at https://pypi.org/manage/project/alkahest-py/settings/publishing/
+#   CLI npm   - configure at https://www.npmjs.com/package/alkahest-cli → Settings → Trusted Publisher
 
 jobs:
   # ──────────────────────────────────────────────
-  # Detect which SDKs have changed files
+  # Detect which packages have changed files
   # ──────────────────────────────────────────────
   detect-changes:
     runs-on: ubuntu-latest
@@ -30,6 +34,7 @@ jobs:
       ts: ${{ github.event_name == 'workflow_dispatch' || steps.filter.outputs.ts }}
       rs: ${{ github.event_name == 'workflow_dispatch' || steps.filter.outputs.rs }}
       py: ${{ github.event_name == 'workflow_dispatch' || steps.filter.outputs.py }}
+      cli: ${{ github.event_name == 'workflow_dispatch' || steps.filter.outputs.cli }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
@@ -44,6 +49,9 @@ jobs:
             py:
               - 'sdks/py/**'
               - 'sdks/rs/**'
+            cli:
+              - 'cli/**'
+              - '.github/workflows/publish-sdks.yml'
 
   # ──────────────────────────────────────────────
   # TypeScript → npm
@@ -84,6 +92,51 @@ jobs:
           else
             echo "publish=true" >> "$GITHUB_OUTPUT"
             echo "::notice::alkahest-ts v$LOCAL → npm (current: v$REMOTE)"
+          fi
+
+      - name: Publish to npm
+        if: steps.version.outputs.publish == 'true'
+        run: npm publish --access public
+
+  # ──────────────────────────────────────────────
+  # CLI → npm
+  # ──────────────────────────────────────────────
+  publish-cli:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.cli == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    defaults:
+      run:
+        working-directory: cli
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build
+        run: bun run build
+
+      - name: Check if version already published
+        id: version
+        run: |
+          LOCAL=$(node -p "require('./package.json').version")
+          REMOTE=$(npm view alkahest-cli version 2>/dev/null || echo "0.0.0")
+          echo "local=$LOCAL" >> "$GITHUB_OUTPUT"
+          echo "remote=$REMOTE" >> "$GITHUB_OUTPUT"
+          if [ "$LOCAL" = "$REMOTE" ]; then
+            echo "::notice::alkahest-cli v$LOCAL already on npm — skipping publish"
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::alkahest-cli v$LOCAL → npm (current: v$REMOTE)"
           fi
 
       - name: Publish to npm
