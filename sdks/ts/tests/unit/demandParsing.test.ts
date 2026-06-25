@@ -173,6 +173,24 @@ describe("Demand Parsing and Static Codecs", () => {
       expect(result.arbiter).toBe(unknownDemand.arbiter);
       expect(result.decoded).toEqual({ raw: "0x" });
     });
+
+    test("should merge extension decoders by address", () => {
+      const extensionArbiter = "0x9999999999999999999999999999999999999999" as `0x${string}`;
+      const decoders = createDecodersFromAddresses(mockAddresses, {
+        [extensionArbiter]: (data) => ({ extension: true, data }),
+      });
+
+      const result = decodeDemand(
+        {
+          arbiter: extensionArbiter,
+          demand: "0x1234",
+        },
+        decoders,
+      );
+
+      expect(result.isUnknown).toBeUndefined();
+      expect(result.decoded).toEqual({ extension: true, data: "0x1234" });
+    });
   });
 
   describe("Demand Decoding", () => {
@@ -253,6 +271,30 @@ describe("Demand Parsing and Static Codecs", () => {
       expect(result.children![0]!.arbiter).toBe(mockAddresses.anyArbiter);
       // The nested AnyArbiter should have its own children
       expect(result.children![0]!.children).toBeDefined();
+    });
+
+    test("should decode extension arbiters inside composing demands", () => {
+      const extensionArbiter = "0x9999999999999999999999999999999999999999" as `0x${string}`;
+      const composedDemand: Demand = {
+        arbiter: mockAddresses.anyArbiter,
+        demand: AnyArbiter.encodeDemand({
+          arbiters: [extensionArbiter] as `0x${string}`[],
+          demands: ["0xdeadbeef"] as `0x${string}`[],
+        }),
+      };
+
+      const result = decodeDemandWithAddresses(composedDemand, mockAddresses, {
+        [extensionArbiter]: (data) => ({ type: "ExtensionDemand", data }),
+      });
+
+      expect(result.arbiter).toBe(mockAddresses.anyArbiter);
+      expect(result.children).toHaveLength(1);
+      expect(result.children![0]!.arbiter).toBe(extensionArbiter);
+      expect(result.children![0]!.isUnknown).toBeUndefined();
+      expect(result.children![0]!.decoded).toEqual({
+        type: "ExtensionDemand",
+        data: "0xdeadbeef",
+      });
     });
   });
 

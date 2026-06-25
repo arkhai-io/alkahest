@@ -8,7 +8,7 @@
 use alloy::primitives::Address;
 
 use crate::{
-    clients::arbiters::{ArbitersModule, DecodedDemand},
+    clients::arbiters::{ArbiterDemandCodecRegistry, ArbitersModule, DecodedDemand},
     contracts::arbiters::logical::{
         AllArbiter as AllArbiterContract, AnyArbiter as AnyArbiterContract,
     },
@@ -101,29 +101,35 @@ impl ArbitersModule {
         &self,
         demand_data: AllArbiterContract::DemandData,
     ) -> eyre::Result<DecodedAllArbiterDemandData> {
-        if demand_data.arbiters.len() != demand_data.demands.len() {
-            return Err(eyre::eyre!(
-                "AllArbiter has mismatched arrays: {} arbiters vs {} demands",
-                demand_data.arbiters.len(),
-                demand_data.demands.len()
-            ));
-        }
-
-        let arbiters = demand_data.arbiters.clone();
-        let mut decoded_demands = Vec::new();
-
-        for (arbiter_addr, demand_bytes) in
-            demand_data.arbiters.iter().zip(demand_data.demands.iter())
-        {
-            let decoded = self.decode_arbiter_demand(*arbiter_addr, demand_bytes)?;
-            decoded_demands.push(decoded);
-        }
-
-        Ok(DecodedAllArbiterDemandData {
-            arbiters,
-            demands: decoded_demands,
-        })
+        decode_all_arbiter_demands_with_registry(&self.demand_codecs, demand_data)
     }
+}
+
+pub(crate) fn decode_all_arbiter_demands_with_registry(
+    registry: &ArbiterDemandCodecRegistry,
+    demand_data: AllArbiterContract::DemandData,
+) -> eyre::Result<DecodedAllArbiterDemandData> {
+    if demand_data.arbiters.len() != demand_data.demands.len() {
+        return Err(eyre::eyre!(
+            "AllArbiter has mismatched arrays: {} arbiters vs {} demands",
+            demand_data.arbiters.len(),
+            demand_data.demands.len()
+        ));
+    }
+
+    let arbiters = demand_data.arbiters.clone();
+    let mut decoded_demands = Vec::new();
+
+    for (arbiter_addr, demand_bytes) in demand_data.arbiters.iter().zip(demand_data.demands.iter())
+    {
+        let decoded = registry.decode(*arbiter_addr, demand_bytes)?;
+        decoded_demands.push(decoded);
+    }
+
+    Ok(DecodedAllArbiterDemandData {
+        arbiters,
+        demands: decoded_demands,
+    })
 }
 
 /// AnyArbiter-specific API for convenient access to decode functionality
@@ -155,27 +161,33 @@ impl ArbitersModule {
         &self,
         demand_data: AnyArbiterContract::DemandData,
     ) -> eyre::Result<DecodedAnyArbiterDemandData> {
-        if demand_data.arbiters.len() != demand_data.demands.len() {
-            return Err(eyre::eyre!(
-                "AnyArbiter has mismatched arrays: {} arbiters vs {} demands",
-                demand_data.arbiters.len(),
-                demand_data.demands.len()
-            ));
-        }
-
-        let arbiters = demand_data.arbiters.clone();
-        let mut decoded_demands = Vec::new();
-
-        for (arbiter_addr, demand_bytes) in
-            demand_data.arbiters.iter().zip(demand_data.demands.iter())
-        {
-            let decoded = self.decode_arbiter_demand(*arbiter_addr, demand_bytes)?;
-            decoded_demands.push(decoded);
-        }
-
-        Ok(DecodedAnyArbiterDemandData {
-            arbiters,
-            demands: decoded_demands,
-        })
+        decode_any_arbiter_demands_with_registry(&self.demand_codecs, demand_data)
     }
+}
+
+pub(crate) fn decode_any_arbiter_demands_with_registry(
+    registry: &ArbiterDemandCodecRegistry,
+    demand_data: AnyArbiterContract::DemandData,
+) -> eyre::Result<DecodedAnyArbiterDemandData> {
+    if demand_data.arbiters.len() != demand_data.demands.len() {
+        return Err(eyre::eyre!(
+            "AnyArbiter has mismatched arrays: {} arbiters vs {} demands",
+            demand_data.arbiters.len(),
+            demand_data.demands.len()
+        ));
+    }
+
+    let arbiters = demand_data.arbiters.clone();
+    let mut decoded_demands = Vec::new();
+
+    for (arbiter_addr, demand_bytes) in demand_data.arbiters.iter().zip(demand_data.demands.iter())
+    {
+        let decoded = registry.decode(*arbiter_addr, demand_bytes)?;
+        decoded_demands.push(decoded);
+    }
+
+    Ok(DecodedAnyArbiterDemandData {
+        arbiters,
+        demands: decoded_demands,
+    })
 }
