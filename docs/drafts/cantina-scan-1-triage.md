@@ -90,7 +90,9 @@ Local fix:
 
 ### ALKA-30: AttestationEscrowObligation Self-Schema Mint
 
-Status: fixed locally, pending commit.
+Status: fixed.
+
+Completed by `e3c8885196d2e4639b045b419ce2a92b5b38dab2`.
 
 Severity in report: Critical.
 
