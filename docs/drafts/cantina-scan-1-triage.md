@@ -59,6 +59,26 @@ Severity in report: Critical.
 Report title: `Proxy escrows can collect a different escrow and redistribute the
 victim assets under attacker-controlled splits`.
 
+Current assessment: valid.
+
+The splitter collection functions accept `escrowContract` as a caller-supplied
+argument. They verify that the supplied escrow attestation was authored by that
+contract and verify the expected asset balance delta after `collect()`, but they
+do not prove that the external call consumed the same escrow/fulfillment pair.
+A malicious escrow-like contract can attest a fake escrow with attacker-chosen
+splitter demand, proxy `collect()` into a real already-collectible escrow whose
+fulfillment recipient is the splitter, and satisfy the splitter's balance-delta
+check with the victim assets.
+
+Checking that the expected escrow was revoked after the call is insufficient by
+itself because the malicious escrow-like contract can also revoke the fake
+attestation it authored. The robust fix is to bind splitter settlement to known
+escrow implementations instead of accepting arbitrary `escrowContract` values
+from the caller. Likely implementation directions:
+
+- give each splitter immutable canonical escrow contract address(es), or
+- introduce a vetted escrow allowlist/factory registry shared by splitters.
+
 ### ALKA-30: AttestationEscrowObligation Self-Schema Mint
 
 Status: open.
