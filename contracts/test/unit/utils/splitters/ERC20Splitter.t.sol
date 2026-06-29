@@ -9,6 +9,7 @@ import {ERC20EscrowObligation} from "@src/obligations/escrow/default/ERC20Escrow
 import {StringObligation} from "@src/obligations/StringObligation.sol";
 import {BaseObligation} from "@src/BaseObligation.sol";
 import {BaseEscrowObligation} from "@src/BaseEscrowObligation.sol";
+import {IEscrow} from "@src/IEscrow.sol";
 import {IEAS, Attestation, AttestationRequest, AttestationRequestData} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -44,6 +45,26 @@ contract NoOpERC20EscrowObligation is BaseObligation {
 
     function collect(bytes32, bytes32) external pure returns (bytes memory) {
         return "";
+    }
+}
+
+contract ProxyERC20EscrowObligation is BaseObligation {
+    address public victimEscrowContract;
+    bytes32 public victimEscrowUid;
+    bytes32 public victimFulfillmentUid;
+
+    constructor(IEAS eas, ISchemaRegistry schemaRegistry)
+        BaseObligation(eas, schemaRegistry, "address arbiter, bytes demand, address token, uint256 amount", true)
+    {}
+
+    function arm(address escrowContract, bytes32 escrowUid, bytes32 fulfillmentUid) external {
+        victimEscrowContract = escrowContract;
+        victimEscrowUid = escrowUid;
+        victimFulfillmentUid = fulfillmentUid;
+    }
+
+    function collect(bytes32, bytes32) external returns (bytes memory) {
+        return IEscrow(victimEscrowContract).collect(victimEscrowUid, victimFulfillmentUid);
     }
 }
 
@@ -441,6 +462,48 @@ contract ERC20SplitterTest is Test {
 
         assertEq(token.balanceOf(address(splitter)), AMOUNT);
         assertEq(token.balanceOf(alice), 0);
+    }
+
+    function testCollectAndDistributeRejectsProxyEscrowSubstitution() public {
+        bytes32 victimEscrowUid = _createEscrow(buyer, AMOUNT, uint64(block.timestamp + EXPIRATION));
+        bytes32 victimFulfillmentUid = _createFulfillmentViaSplitter(executor, victimEscrowUid);
+
+        ERC20Splitter.Split[] memory victimSplits = new ERC20Splitter.Split[](2);
+        victimSplits[0] = ERC20Splitter.Split({recipient: alice, amount: 60 * 10 ** 18});
+        victimSplits[1] = ERC20Splitter.Split({recipient: bob, amount: 40 * 10 ** 18});
+        vm.prank(oracle);
+        splitter.arbitrate(victimFulfillmentUid, victimEscrowUid, victimSplits);
+
+        address attacker = makeAddr("attacker");
+        ProxyERC20EscrowObligation proxyEscrow = new ProxyERC20EscrowObligation(eas, schemaRegistry);
+        bytes memory fakeDemand = abi.encode(ERC20Splitter.DemandData({oracle: attacker, data: bytes("")}));
+        bytes memory fakeEscrowData = abi.encode(
+            ERC20Splitter.EscrowObligationData({
+                arbiter: address(splitter), demand: fakeDemand, token: address(token), amount: AMOUNT
+            })
+        );
+
+        vm.prank(attacker);
+        bytes32 fakeEscrowUid = proxyEscrow.doObligationRaw(fakeEscrowData, 0, bytes32(0));
+        bytes32 fakeFulfillmentUid = _createFulfillmentViaSplitter(attacker, fakeEscrowUid);
+
+        ERC20Splitter.Split[] memory attackerSplits = new ERC20Splitter.Split[](1);
+        attackerSplits[0] = ERC20Splitter.Split({recipient: attacker, amount: AMOUNT});
+        vm.prank(attacker);
+        splitter.arbitrate(fakeFulfillmentUid, fakeEscrowUid, attackerSplits);
+
+        proxyEscrow.arm(address(escrowObligation), victimEscrowUid, victimFulfillmentUid);
+
+        vm.prank(attacker);
+        vm.expectRevert(BaseEscrowObligation.InvalidEscrowAttestation.selector);
+        splitter.collectAndDistribute(fakeEscrowUid, fakeFulfillmentUid);
+
+        Attestation memory victimEscrow = eas.getAttestation(victimEscrowUid);
+        assertEq(victimEscrow.revocationTime, 0, "victim escrow was not consumed through proxy escrow");
+        assertEq(token.balanceOf(attacker), 0);
+        assertEq(token.balanceOf(alice), 0);
+        assertEq(token.balanceOf(bob), 0);
+        assertEq(token.balanceOf(address(escrowObligation)), AMOUNT);
     }
 
     function testDirectCollectRejectsFulfillmentRecipientNotSplitter() public {

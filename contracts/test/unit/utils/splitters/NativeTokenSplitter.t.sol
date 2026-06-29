@@ -6,10 +6,33 @@ import {BaseSplitter} from "@src/utils/splitters/BaseSplitter.sol";
 import {NativeTokenSplitter} from "@src/utils/splitters/NativeTokenSplitter.sol";
 import {NativeTokenEscrowObligation} from "@src/obligations/escrow/default/NativeTokenEscrowObligation.sol";
 import {StringObligation} from "@src/obligations/StringObligation.sol";
+import {IEscrow} from "@src/IEscrow.sol";
 import {IEAS, Attestation} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
 
 import {EASDeployer} from "@test/utils/EASDeployer.sol";
+
+contract CollectVictimNativeEscrowObligation is StringObligation {
+    IEscrow internal immutable escrow;
+    bytes32 internal immutable victimEscrow;
+    bytes32 internal immutable victimFulfillment;
+
+    constructor(
+        IEAS _eas,
+        ISchemaRegistry _schemaRegistry,
+        IEscrow _escrow,
+        bytes32 _victimEscrow,
+        bytes32 _victimFulfillment
+    ) StringObligation(_eas, _schemaRegistry) {
+        escrow = _escrow;
+        victimEscrow = _victimEscrow;
+        victimFulfillment = _victimFulfillment;
+    }
+
+    function _afterAttest(Attestation memory) internal override {
+        escrow.collect(victimEscrow, victimFulfillment);
+    }
+}
 
 contract NativeTokenSplitterTest is Test {
     NativeTokenSplitter public splitter;
@@ -59,6 +82,35 @@ contract NativeTokenSplitterTest is Test {
         assertEq(splitter.fulfillers(fulfillmentUid), executor);
         Attestation memory f = eas.getAttestation(fulfillmentUid);
         assertEq(f.recipient, address(splitter));
+    }
+
+    function testCreateFulfillmentDoesNotRefundVictimEscrowCollectedByMaliciousObligation() public {
+        bytes32 victimEscrowUid = _createEscrow(buyer, AMOUNT, uint64(block.timestamp + EXPIRATION));
+        bytes32 victimFulfillmentUid = _createFulfillmentViaSplitter(executor, victimEscrowUid);
+
+        NativeTokenSplitter.Split[] memory splits = new NativeTokenSplitter.Split[](1);
+        splits[0] = NativeTokenSplitter.Split({recipient: alice, amount: AMOUNT});
+        vm.prank(oracle);
+        splitter.arbitrate(victimFulfillmentUid, victimEscrowUid, splits);
+
+        CollectVictimNativeEscrowObligation maliciousObligation = new CollectVictimNativeEscrowObligation(
+            eas, schemaRegistry, IEscrow(address(escrowObligation)), victimEscrowUid, victimFulfillmentUid
+        );
+        bytes memory attackData =
+            abi.encode(StringObligation.ObligationData({item: "attacker-fulfillment", schema: bytes32(0)}));
+
+        address attacker = makeAddr("attacker");
+        uint256 attackerBalanceBefore = attacker.balance;
+
+        vm.prank(attacker);
+        splitter.createFulfillment(address(maliciousObligation), attackData, 0, bytes32(0));
+
+        assertEq(attacker.balance, attackerBalanceBefore, "attacker does not receive victim escrow as refund");
+        assertEq(address(splitter).balance, AMOUNT, "victim escrow remains in splitter until distributed");
+        assertEq(alice.balance, 0, "victim split has not been distributed through fake refund path");
+
+        Attestation memory victimEscrow = eas.getAttestation(victimEscrowUid);
+        assertGt(victimEscrow.revocationTime, 0, "malicious obligation consumed victim escrow");
     }
 
     function testCollectAndDistribute() public {
