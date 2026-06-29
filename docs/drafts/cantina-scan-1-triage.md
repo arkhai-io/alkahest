@@ -52,7 +52,7 @@ Related items to review together: ALKA-25.
 
 ### ALKA-16: Proxy Escrow Substitution
 
-Status: open.
+Status: fixed locally, pending commit.
 
 Severity in report: Critical.
 
@@ -74,10 +74,17 @@ Checking that the expected escrow was revoked after the call is insufficient by
 itself because the malicious escrow-like contract can also revoke the fake
 attestation it authored. The robust fix is to bind splitter settlement to known
 escrow implementations instead of accepting arbitrary `escrowContract` values
-from the caller. Likely implementation directions:
+from the caller.
 
-- give each splitter immutable canonical escrow contract address(es), or
-- introduce a vetted escrow allowlist/factory registry shared by splitters.
+Local fix:
+
+- Each packaged splitter now takes its corresponding packaged escrow obligation
+  as a constructor dependency and stores it immutably.
+- `collectAndDistribute()` and `unsafePartiallyCollectAndDistribute()` no
+  longer accept caller-supplied escrow contract addresses.
+- Splitter collection verifies and calls only the stored canonical escrow
+  obligation, preventing fake escrow contracts from proxying collection of an
+  unrelated real escrow into the splitter.
 
 ### ALKA-30: AttestationEscrowObligation Self-Schema Mint
 

@@ -5,7 +5,7 @@ import {Attestation} from "@eas/Common.sol";
 import {IEAS} from "@eas/IEAS.sol";
 import {SplitterVerification} from "./SplitterVerification.sol";
 import {BaseSplitter} from "./BaseSplitter.sol";
-import {IEscrow} from "../../IEscrow.sol";
+import {NativeTokenEscrowObligation} from "../../obligations/escrow/default/NativeTokenEscrowObligation.sol";
 
 /// @title NativeTokenSplitter
 /// @notice Collects native-token escrows and distributes the received amount according to oracle-provided splits.
@@ -48,7 +48,7 @@ contract NativeTokenSplitter is BaseSplitter {
 
     mapping(address => mapping(bytes32 => Split[])) internal decisions;
 
-    constructor(IEAS _eas) BaseSplitter(_eas) {}
+    constructor(IEAS _eas, NativeTokenEscrowObligation _escrowObligation) BaseSplitter(_eas, _escrowObligation) {}
 
     /// @notice Records the caller's split decision for a fulfillment and escrow.
     function arbitrate(bytes32 fulfillment, bytes32 escrow, Split[] calldata splits) external {
@@ -65,8 +65,8 @@ contract NativeTokenSplitter is BaseSplitter {
     }
 
     /// @notice Collects a native token escrow and distributes ETH. Reverts if any transfer fails.
-    function collectAndDistribute(address escrowContract, bytes32 escrow, bytes32 fulfillment) external nonReentrant {
-        Split[] memory splits = _collectAndDecode(escrowContract, escrow, fulfillment);
+    function collectAndDistribute(bytes32 escrow, bytes32 fulfillment) external nonReentrant {
+        Split[] memory splits = _collectAndDecode(escrow, fulfillment);
         address fulfiller = _recordedFulfiller(fulfillment);
         for (uint256 i; i < splits.length; ++i) {
             address recipient = _resolveSentinel(splits[i].recipient, fulfillment, fulfiller);
@@ -77,11 +77,8 @@ contract NativeTokenSplitter is BaseSplitter {
     }
 
     /// @notice Unsafe partial distribution -- continues on individual transfer failures.
-    function unsafePartiallyCollectAndDistribute(address escrowContract, bytes32 escrow, bytes32 fulfillment)
-        external
-        nonReentrant
-    {
-        Split[] memory splits = _collectAndDecode(escrowContract, escrow, fulfillment);
+    function unsafePartiallyCollectAndDistribute(bytes32 escrow, bytes32 fulfillment) external nonReentrant {
+        Split[] memory splits = _collectAndDecode(escrow, fulfillment);
         address fulfiller = _recordedFulfiller(fulfillment);
         for (uint256 i; i < splits.length; ++i) {
             address recipient = _resolveSentinel(splits[i].recipient, fulfillment, fulfiller);
@@ -93,12 +90,9 @@ contract NativeTokenSplitter is BaseSplitter {
         emit EscrowCollectedAndDistributed(escrow, fulfillment, fulfiller, splits);
     }
 
-    function _collectAndDecode(address escrowContract, bytes32 escrow, bytes32 fulfillment)
-        internal
-        returns (Split[] memory splits)
-    {
+    function _collectAndDecode(bytes32 escrow, bytes32 fulfillment) internal returns (Split[] memory splits) {
         Attestation memory escrowAttestation = eas.getAttestation(escrow);
-        escrowAttestation.verifyEscrowAttestation(escrowContract);
+        escrowAttestation.verifyEscrowAttestation(address(escrowObligation));
         Attestation memory fulfillmentAttestation = eas.getAttestation(fulfillment);
         fulfillmentAttestation.verifyFulfillmentRecipient();
 
@@ -106,7 +100,7 @@ contract NativeTokenSplitter is BaseSplitter {
         DemandData memory demandData = abi.decode(escrowData.demand, (DemandData));
         splits = decisions[demandData.oracle][_decisionKey(fulfillment, escrow)];
         uint256 balanceBefore = address(this).balance;
-        IEscrow(escrowContract).collect(escrow, fulfillment);
+        escrowObligation.collect(escrow, fulfillment);
         SplitterVerification.verifyDelta(balanceBefore, address(this).balance, escrowData.amount);
     }
 

@@ -31,8 +31,8 @@ contract NativeTokenSplitterTest is Test {
     function setUp() public {
         EASDeployer easDeployer = new EASDeployer();
         (eas, schemaRegistry) = easDeployer.deployEAS();
-        splitter = new NativeTokenSplitter(eas);
         escrowObligation = new NativeTokenEscrowObligation(eas, schemaRegistry);
+        splitter = new NativeTokenSplitter(eas, escrowObligation);
         stringObligation = new StringObligation(eas, schemaRegistry);
         vm.deal(buyer, 10 ether);
         vm.deal(executor, 1 ether);
@@ -73,7 +73,7 @@ contract NativeTokenSplitterTest is Test {
         splitter.arbitrate(fulfillmentUid, escrowUid, splits);
 
         vm.prank(carol);
-        splitter.collectAndDistribute(address(escrowObligation), escrowUid, fulfillmentUid);
+        splitter.collectAndDistribute(escrowUid, fulfillmentUid);
 
         assertEq(alice.balance, 0.6 ether);
         assertEq(bob.balance, 0.4 ether);
@@ -95,7 +95,7 @@ contract NativeTokenSplitterTest is Test {
 
         // Different caller — sentinel resolves to executor
         vm.prank(carol);
-        splitter.collectAndDistribute(address(escrowObligation), escrowUid, fulfillmentUid);
+        splitter.collectAndDistribute(escrowUid, fulfillmentUid);
 
         assertEq(executor.balance, executorBalBefore + 0.6 ether, "Executor gets sentinel share");
         assertEq(bob.balance, 0.4 ether);

@@ -69,8 +69,8 @@ contract ERC20SplitterTest is Test {
         EASDeployer easDeployer = new EASDeployer();
         (eas, schemaRegistry) = easDeployer.deployEAS();
 
-        splitter = new ERC20Splitter(eas);
         escrowObligation = new ERC20EscrowObligation(eas, schemaRegistry);
+        splitter = new ERC20Splitter(eas, escrowObligation);
         stringObligation = new StringObligation(eas, schemaRegistry);
         token = new MockERC20();
 
@@ -336,7 +336,7 @@ contract ERC20SplitterTest is Test {
 
         // Anyone can call collectAndDistribute
         vm.prank(carol);
-        splitter.collectAndDistribute(address(escrowObligation), escrowUid, fulfillmentUid);
+        splitter.collectAndDistribute(escrowUid, fulfillmentUid);
 
         assertEq(token.balanceOf(alice), 60 * 10 ** 18);
         assertEq(token.balanceOf(bob), 40 * 10 ** 18);
@@ -357,7 +357,7 @@ contract ERC20SplitterTest is Test {
 
         // A DIFFERENT address calls collectAndDistribute — sentinel still resolves to executor
         vm.prank(carol);
-        splitter.collectAndDistribute(address(escrowObligation), escrowUid, fulfillmentUid);
+        splitter.collectAndDistribute(escrowUid, fulfillmentUid);
 
         assertEq(token.balanceOf(executor), 50 * 10 ** 18, "Executor should receive sentinel share");
         assertEq(token.balanceOf(carol), 0, "Caller should NOT receive sentinel share");
@@ -383,7 +383,7 @@ contract ERC20SplitterTest is Test {
         splitter.arbitrate(fulfillmentUid, escrowUid, splits);
 
         vm.expectRevert(abi.encodeWithSelector(BaseSplitter.NoFulfillerRecorded.selector, fulfillmentUid));
-        splitter.collectAndDistribute(address(escrowObligation), escrowUid, fulfillmentUid);
+        splitter.collectAndDistribute(escrowUid, fulfillmentUid);
     }
 
     function testCollectAndDistributeSingleRecipient() public {
@@ -396,7 +396,7 @@ contract ERC20SplitterTest is Test {
         vm.prank(oracle);
         splitter.arbitrate(fulfillmentUid, escrowUid, splits);
 
-        splitter.collectAndDistribute(address(escrowObligation), escrowUid, fulfillmentUid);
+        splitter.collectAndDistribute(escrowUid, fulfillmentUid);
         assertEq(token.balanceOf(carol), AMOUNT);
     }
 
@@ -412,10 +412,10 @@ contract ERC20SplitterTest is Test {
 
         vm.expectEmit(true, true, true, true);
         emit ERC20Splitter.EscrowCollectedAndDistributed(escrowUid, fulfillmentUid, executor, address(token), splits);
-        splitter.collectAndDistribute(address(escrowObligation), escrowUid, fulfillmentUid);
+        splitter.collectAndDistribute(escrowUid, fulfillmentUid);
     }
 
-    function testCollectAndDistributeRejectsNoOpEscrowWithoutReceipt() public {
+    function testCollectAndDistributeRejectsNonCanonicalEscrowAttestation() public {
         NoOpERC20EscrowObligation fakeEscrow = new NoOpERC20EscrowObligation(eas, schemaRegistry);
 
         bytes memory demand = abi.encode(ERC20Splitter.DemandData({oracle: oracle, data: bytes("")}));
@@ -436,8 +436,8 @@ contract ERC20SplitterTest is Test {
 
         token.mint(address(splitter), AMOUNT);
 
-        vm.expectRevert(abi.encodeWithSelector(SplitterVerification.InvalidCollectedAmount.selector, AMOUNT, 0));
-        splitter.collectAndDistribute(address(fakeEscrow), fakeEscrowUid, fulfillmentUid);
+        vm.expectRevert(BaseEscrowObligation.InvalidEscrowAttestation.selector);
+        splitter.collectAndDistribute(fakeEscrowUid, fulfillmentUid);
 
         assertEq(token.balanceOf(address(splitter)), AMOUNT);
         assertEq(token.balanceOf(alice), 0);

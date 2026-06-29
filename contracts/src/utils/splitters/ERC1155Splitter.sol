@@ -8,7 +8,7 @@ import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155
 import {BaseArbiter} from "../../BaseArbiter.sol";
 import {SplitterVerification} from "./SplitterVerification.sol";
 import {BaseSplitter} from "./BaseSplitter.sol";
-import {IEscrow} from "../../IEscrow.sol";
+import {ERC1155EscrowObligation} from "../../obligations/escrow/default/ERC1155EscrowObligation.sol";
 
 /// @title ERC1155Splitter
 /// @notice Collects ERC1155 escrows and distributes the received amount according to oracle-provided splits.
@@ -60,7 +60,7 @@ contract ERC1155Splitter is BaseSplitter, ERC1155Holder {
 
     mapping(address => mapping(bytes32 => Split[])) internal decisions;
 
-    constructor(IEAS _eas) BaseSplitter(_eas) {}
+    constructor(IEAS _eas, ERC1155EscrowObligation _escrowObligation) BaseSplitter(_eas, _escrowObligation) {}
 
     /// @inheritdoc BaseArbiter
     function supportsInterface(bytes4 interfaceId)
@@ -88,8 +88,8 @@ contract ERC1155Splitter is BaseSplitter, ERC1155Holder {
     }
 
     /// @notice Collects an ERC1155 escrow and distributes tokens. Reverts if any transfer fails.
-    function collectAndDistribute(address escrowContract, bytes32 escrow, bytes32 fulfillment) external nonReentrant {
-        (Split[] memory splits, address token, uint256 tokenId) = _collectAndDecode(escrowContract, escrow, fulfillment);
+    function collectAndDistribute(bytes32 escrow, bytes32 fulfillment) external nonReentrant {
+        (Split[] memory splits, address token, uint256 tokenId) = _collectAndDecode(escrow, fulfillment);
         address fulfiller = _recordedFulfiller(fulfillment);
         for (uint256 i; i < splits.length; ++i) {
             address recipient = _resolveSentinel(splits[i].recipient, fulfillment, fulfiller);
@@ -102,11 +102,8 @@ contract ERC1155Splitter is BaseSplitter, ERC1155Holder {
     }
 
     /// @notice Unsafe partial distribution -- continues on individual transfer failures.
-    function unsafePartiallyCollectAndDistribute(address escrowContract, bytes32 escrow, bytes32 fulfillment)
-        external
-        nonReentrant
-    {
-        (Split[] memory splits, address token, uint256 tokenId) = _collectAndDecode(escrowContract, escrow, fulfillment);
+    function unsafePartiallyCollectAndDistribute(bytes32 escrow, bytes32 fulfillment) external nonReentrant {
+        (Split[] memory splits, address token, uint256 tokenId) = _collectAndDecode(escrow, fulfillment);
         address fulfiller = _recordedFulfiller(fulfillment);
         for (uint256 i; i < splits.length; ++i) {
             address recipient = _resolveSentinel(splits[i].recipient, fulfillment, fulfiller);
@@ -118,12 +115,12 @@ contract ERC1155Splitter is BaseSplitter, ERC1155Holder {
         emit EscrowCollectedAndDistributed(escrow, fulfillment, fulfiller, token, tokenId, splits);
     }
 
-    function _collectAndDecode(address escrowContract, bytes32 escrow, bytes32 fulfillment)
+    function _collectAndDecode(bytes32 escrow, bytes32 fulfillment)
         internal
         returns (Split[] memory splits, address token, uint256 tokenId)
     {
         Attestation memory escrowAttestation = eas.getAttestation(escrow);
-        escrowAttestation.verifyEscrowAttestation(escrowContract);
+        escrowAttestation.verifyEscrowAttestation(address(escrowObligation));
         Attestation memory fulfillmentAttestation = eas.getAttestation(fulfillment);
         fulfillmentAttestation.verifyFulfillmentRecipient();
 
@@ -133,7 +130,7 @@ contract ERC1155Splitter is BaseSplitter, ERC1155Holder {
         token = escrowData.token;
         tokenId = escrowData.tokenId;
         uint256 balanceBefore = IERC1155(token).balanceOf(address(this), tokenId);
-        IEscrow(escrowContract).collect(escrow, fulfillment);
+        escrowObligation.collect(escrow, fulfillment);
         SplitterVerification.verifyDelta(
             balanceBefore, IERC1155(token).balanceOf(address(this), tokenId), escrowData.amount
         );

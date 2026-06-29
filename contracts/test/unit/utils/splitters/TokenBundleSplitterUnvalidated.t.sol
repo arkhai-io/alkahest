@@ -70,8 +70,8 @@ contract TokenBundleSplitterUnvalidatedTest is Test {
     function setUp() public {
         EASDeployer easDeployer = new EASDeployer();
         (eas, schemaRegistry) = easDeployer.deployEAS();
-        splitter = new TokenBundleSplitterUnvalidated(eas);
         escrowObligation = new TokenBundleEscrowObligation(eas, schemaRegistry);
+        splitter = new TokenBundleSplitterUnvalidated(eas, escrowObligation);
         stringObligation = new StringObligation(eas, schemaRegistry);
         token1 = new MockERC20U();
         token2 = new MockERC20U();
@@ -195,7 +195,7 @@ contract TokenBundleSplitterUnvalidatedTest is Test {
         splitter.arbitrate(fulfillmentUid, escrowUid, _twoWaySplit());
 
         vm.prank(carol);
-        splitter.collectAndDistribute(address(escrowObligation), escrowUid, fulfillmentUid);
+        splitter.collectAndDistribute(escrowUid, fulfillmentUid);
 
         assertEq(alice.balance, 0.6 ether);
         assertEq(bob.balance, 0.4 ether);
@@ -216,7 +216,7 @@ contract TokenBundleSplitterUnvalidatedTest is Test {
 
         uint256 executorBalBefore = executor.balance;
         vm.prank(carol);
-        splitter.collectAndDistribute(address(escrowObligation), escrowUid, fulfillmentUid);
+        splitter.collectAndDistribute(escrowUid, fulfillmentUid);
 
         assertEq(executor.balance, executorBalBefore + 0.6 ether, "Executor gets sentinel share");
         assertEq(token1.balanceOf(executor), 60e18);

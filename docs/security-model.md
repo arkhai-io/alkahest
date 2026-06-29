@@ -153,3 +153,11 @@ execution can come from unrelated escrow collection or other external transfers,
 not only from unused value returned by the called obligation. Paid fulfillment
 flows should pass the exact native value required by the called obligation or
 handle refunds inside that obligation's own API.
+
+Each packaged splitter is bound to its corresponding packaged escrow obligation.
+Splitter collection does not accept arbitrary escrow contract addresses from
+callers, because a third-party escrow-like contract could otherwise attest a
+syntactically compatible escrow while proxying collection of a different real
+escrow into the splitter. Applications that need custom splitter settlement
+logic should deploy a custom splitter with its own explicit escrow trust
+boundary.

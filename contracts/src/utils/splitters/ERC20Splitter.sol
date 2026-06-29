@@ -7,7 +7,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {SplitterVerification} from "./SplitterVerification.sol";
 import {BaseSplitter} from "./BaseSplitter.sol";
-import {IEscrow} from "../../IEscrow.sol";
+import {ERC20EscrowObligation} from "../../obligations/escrow/default/ERC20EscrowObligation.sol";
 
 /// @title ERC20Splitter
 /// @notice Collects ERC20 escrows and distributes the received amount according to oracle-provided splits.
@@ -56,7 +56,7 @@ contract ERC20Splitter is BaseSplitter {
 
     mapping(address => mapping(bytes32 => Split[])) internal decisions;
 
-    constructor(IEAS _eas) BaseSplitter(_eas) {}
+    constructor(IEAS _eas, ERC20EscrowObligation _escrowObligation) BaseSplitter(_eas, _escrowObligation) {}
 
     /// @notice Records the caller's split decision for a fulfillment and escrow.
     function arbitrate(bytes32 fulfillment, bytes32 escrow, Split[] calldata splits) external {
@@ -74,8 +74,8 @@ contract ERC20Splitter is BaseSplitter {
 
     /// @notice Collects an ERC20 escrow and distributes tokens per oracle splits.
     ///         Reverts if any transfer fails.
-    function collectAndDistribute(address escrowContract, bytes32 escrow, bytes32 fulfillment) external nonReentrant {
-        (Split[] memory splits, address token) = _collectAndDecode(escrowContract, escrow, fulfillment);
+    function collectAndDistribute(bytes32 escrow, bytes32 fulfillment) external nonReentrant {
+        (Split[] memory splits, address token) = _collectAndDecode(escrow, fulfillment);
         address fulfiller = _recordedFulfiller(fulfillment);
         for (uint256 i; i < splits.length; ++i) {
             address recipient = _resolveSentinel(splits[i].recipient, fulfillment, fulfiller);
@@ -88,11 +88,8 @@ contract ERC20Splitter is BaseSplitter {
     /// @notice Unsafe partial distribution -- continues on individual transfer failures.
     /// @dev Use only as a last resort when collectAndDistribute is permanently blocked.
     ///      Failed transfers emit events but do not revert. Stuck tokens remain in the splitter.
-    function unsafePartiallyCollectAndDistribute(address escrowContract, bytes32 escrow, bytes32 fulfillment)
-        external
-        nonReentrant
-    {
-        (Split[] memory splits, address token) = _collectAndDecode(escrowContract, escrow, fulfillment);
+    function unsafePartiallyCollectAndDistribute(bytes32 escrow, bytes32 fulfillment) external nonReentrant {
+        (Split[] memory splits, address token) = _collectAndDecode(escrow, fulfillment);
         address fulfiller = _recordedFulfiller(fulfillment);
         for (uint256 i; i < splits.length; ++i) {
             address recipient = _resolveSentinel(splits[i].recipient, fulfillment, fulfiller);
@@ -104,12 +101,9 @@ contract ERC20Splitter is BaseSplitter {
         emit EscrowCollectedAndDistributed(escrow, fulfillment, fulfiller, token, splits);
     }
 
-    function _collectAndDecode(address escrowContract, bytes32 escrow, bytes32 fulfillment)
-        internal
-        returns (Split[] memory splits, address token)
-    {
+    function _collectAndDecode(bytes32 escrow, bytes32 fulfillment) internal returns (Split[] memory splits, address token) {
         Attestation memory escrowAttestation = eas.getAttestation(escrow);
-        escrowAttestation.verifyEscrowAttestation(escrowContract);
+        escrowAttestation.verifyEscrowAttestation(address(escrowObligation));
         Attestation memory fulfillmentAttestation = eas.getAttestation(fulfillment);
         fulfillmentAttestation.verifyFulfillmentRecipient();
 
@@ -118,7 +112,7 @@ contract ERC20Splitter is BaseSplitter {
         splits = decisions[demandData.oracle][_decisionKey(fulfillment, escrow)];
         token = escrowData.token;
         uint256 balanceBefore = IERC20(token).balanceOf(address(this));
-        IEscrow(escrowContract).collect(escrow, fulfillment);
+        escrowObligation.collect(escrow, fulfillment);
         SplitterVerification.verifyDelta(balanceBefore, IERC20(token).balanceOf(address(this)), escrowData.amount);
     }
 

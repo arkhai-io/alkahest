@@ -3,6 +3,7 @@ pragma solidity ^0.8.26;
 
 import {Attestation} from "@eas/Common.sol";
 import {IEAS} from "@eas/IEAS.sol";
+import {TokenBundleEscrowObligation} from "../../obligations/escrow/default/TokenBundleEscrowObligation.sol";
 import {TokenBundleSplitterBase} from "./TokenBundleSplitterBase.sol";
 
 /// @notice Token bundle splitter with full validation of split totals
@@ -22,7 +23,9 @@ contract TokenBundleSplitter is TokenBundleSplitterBase {
     error MissingERC721Assignment(uint256 tokenIndex);
     error InvalidERC721Index(uint256 index, uint256 max);
 
-    constructor(IEAS _eas) TokenBundleSplitterBase(_eas) {}
+    constructor(IEAS _eas, TokenBundleEscrowObligation _escrowObligation)
+        TokenBundleSplitterBase(_eas, _escrowObligation)
+    {}
 
     /// @notice Oracle submits a split decision with full validation.
     ///         Validates that all split amounts sum to the escrow totals,

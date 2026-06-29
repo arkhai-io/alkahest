@@ -6,6 +6,7 @@ import {IEAS} from "@eas/IEAS.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {IArbiter} from "../../IArbiter.sol";
 import {BaseArbiter} from "../../BaseArbiter.sol";
+import {IEscrow} from "../../IEscrow.sol";
 import {SplitterVerification} from "./SplitterVerification.sol";
 
 /// @notice Minimal obligation interface used to create splitter-owned fulfillments.
@@ -57,6 +58,8 @@ abstract contract BaseSplitter is BaseArbiter, ReentrancyGuard {
 
     /// @notice EAS contract used to load escrow and fulfillment attestations.
     IEAS public eas;
+    /// @notice Canonical escrow obligation this splitter is allowed to collect.
+    IEscrow public immutable escrowObligation;
 
     /// @notice Whether an oracle has recorded a decision for a decision key.
     mapping(address => mapping(bytes32 => bool)) public hasDecision;
@@ -64,8 +67,10 @@ abstract contract BaseSplitter is BaseArbiter, ReentrancyGuard {
     mapping(bytes32 => address) public fulfillers;
 
     /// @param _eas EAS contract used to load attestations.
-    constructor(IEAS _eas) {
+    /// @param _escrowObligation Canonical escrow obligation this splitter settles.
+    constructor(IEAS _eas, IEscrow _escrowObligation) {
         eas = _eas;
+        escrowObligation = _escrowObligation;
     }
 
     /// @notice Emits an arbitration request when called by the escrow attester or recipient.

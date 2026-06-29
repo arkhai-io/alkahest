@@ -253,12 +253,12 @@ contract Deploy is Script {
             new AttestationReferenceEscrowHook(IEAS(easAddress), ISchemaRegistry(schemaRegistryAddress));
 
         // Deploy splitters
-        ERC20Splitter erc20Splitter = new ERC20Splitter(IEAS(easAddress));
-        ERC1155Splitter erc1155Splitter = new ERC1155Splitter(IEAS(easAddress));
-        NativeTokenSplitter nativeTokenSplitter = new NativeTokenSplitter(IEAS(easAddress));
-        TokenBundleSplitter tokenBundleSplitter = new TokenBundleSplitter(IEAS(easAddress));
+        ERC20Splitter erc20Splitter = new ERC20Splitter(IEAS(easAddress), erc20Escrow);
+        ERC1155Splitter erc1155Splitter = new ERC1155Splitter(IEAS(easAddress), erc1155Escrow);
+        NativeTokenSplitter nativeTokenSplitter = new NativeTokenSplitter(IEAS(easAddress), nativeEscrow);
+        TokenBundleSplitter tokenBundleSplitter = new TokenBundleSplitter(IEAS(easAddress), bundleEscrow);
         TokenBundleSplitterUnvalidated tokenBundleSplitterUnvalidated =
-            new TokenBundleSplitterUnvalidated(IEAS(easAddress));
+            new TokenBundleSplitterUnvalidated(IEAS(easAddress), bundleEscrow);
 
         vm.stopBroadcast();
 

@@ -3,6 +3,7 @@ pragma solidity ^0.8.26;
 
 import {Attestation} from "@eas/Common.sol";
 import {IEAS} from "@eas/IEAS.sol";
+import {TokenBundleEscrowObligation} from "../../obligations/escrow/default/TokenBundleEscrowObligation.sol";
 import {TokenBundleSplitterBase} from "./TokenBundleSplitterBase.sol";
 
 /// @notice Token bundle splitter without validation of split totals.
@@ -15,7 +16,9 @@ import {TokenBundleSplitterBase} from "./TokenBundleSplitterBase.sol";
 /// @dev Security note: This contract has not been included in professional manual audits and
 ///      has only been reviewed by automated audit tooling so far.
 contract TokenBundleSplitterUnvalidated is TokenBundleSplitterBase {
-    constructor(IEAS _eas) TokenBundleSplitterBase(_eas) {}
+    constructor(IEAS _eas, TokenBundleEscrowObligation _escrowObligation)
+        TokenBundleSplitterBase(_eas, _escrowObligation)
+    {}
 
     /// @notice Oracle submits a split decision without validation.
     ///         Only checks for empty splits and zero-address recipients.

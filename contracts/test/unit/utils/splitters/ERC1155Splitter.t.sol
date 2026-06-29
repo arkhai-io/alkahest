@@ -42,8 +42,8 @@ contract ERC1155SplitterTest is Test {
     function setUp() public {
         EASDeployer easDeployer = new EASDeployer();
         (eas, schemaRegistry) = easDeployer.deployEAS();
-        splitter = new ERC1155Splitter(eas);
         escrowObligation = new ERC1155EscrowObligation(eas, schemaRegistry);
+        splitter = new ERC1155Splitter(eas, escrowObligation);
         stringObligation = new StringObligation(eas, schemaRegistry);
         token = new MockERC1155();
         token.mint(buyer, TOKEN_ID, 1000);
@@ -91,7 +91,7 @@ contract ERC1155SplitterTest is Test {
         splitter.arbitrate(fulfillmentUid, escrowUid, splits);
 
         vm.prank(carol);
-        splitter.collectAndDistribute(address(escrowObligation), escrowUid, fulfillmentUid);
+        splitter.collectAndDistribute(escrowUid, fulfillmentUid);
 
         assertEq(token.balanceOf(alice, TOKEN_ID), 60);
         assertEq(token.balanceOf(bob, TOKEN_ID), 40);
@@ -111,7 +111,7 @@ contract ERC1155SplitterTest is Test {
 
         // Different caller — sentinel still resolves to executor
         vm.prank(carol);
-        splitter.collectAndDistribute(address(escrowObligation), escrowUid, fulfillmentUid);
+        splitter.collectAndDistribute(escrowUid, fulfillmentUid);
 
         assertEq(token.balanceOf(executor, TOKEN_ID), 60, "Executor gets sentinel share");
         assertEq(token.balanceOf(carol, TOKEN_ID), 0, "Caller does NOT get sentinel share");
