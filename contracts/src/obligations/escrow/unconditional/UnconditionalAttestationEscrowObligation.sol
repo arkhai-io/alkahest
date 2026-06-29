@@ -65,6 +65,7 @@ contract UnconditionalAttestationEscrowObligation is BaseEscrowObligationUncondi
     // Create the escrowed attestation
     function _releaseEscrow(Attestation memory escrow, address, bytes32) internal override returns (bytes memory) {
         ObligationData memory decoded = abi.decode(escrow.data, (ObligationData));
+        if (decoded.attestation.schema == ATTESTATION_SCHEMA) revert InvalidEscrowAttestation();
 
         bytes32 attestationUid;
         try eas.attest{value: decoded.attestation.data.value}(decoded.attestation) returns (bytes32 uid) {

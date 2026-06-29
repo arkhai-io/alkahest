@@ -90,12 +90,27 @@ Local fix:
 
 ### ALKA-30: AttestationEscrowObligation Self-Schema Mint
 
-Status: open.
+Status: fixed locally, pending commit.
 
 Severity in report: Critical.
 
 Report title: `AttestationEscrowObligation can mint unbacked escrows under its
 own schema`.
+
+Current assessment: valid.
+
+`AttestationEscrowObligation` and
+`UnconditionalAttestationEscrowObligation` allowed `_releaseEscrow()` to call
+`eas.attest()` for their own `ATTESTATION_SCHEMA`. That minted escrow-shaped
+attestations through the release path rather than the lock path, so embedded
+native value accounting could be forged against pooled contract balance.
+
+Local fix:
+
+- Both attestation escrow variants reject release requests where the promised
+  attestation schema equals their own `ATTESTATION_SCHEMA`.
+- Added a regression test proving a self-schema release attempt reverts before
+  minting an inner escrow attestation.
 
 ### ALKA-25: createFulfillment Refunds Unrelated ETH Inflows
 
