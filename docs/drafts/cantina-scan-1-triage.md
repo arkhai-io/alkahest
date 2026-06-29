@@ -14,7 +14,9 @@ after branches move. Status values:
 
 ### ALKA-8: BaseSplitter Refund Proxy
 
-Status: fixed locally, pending commit.
+Status: fixed.
+
+Completed by `774f2e39c0c76da257142683dc66daf53aac2f5c`.
 
 Severity in report: Critical.
 
