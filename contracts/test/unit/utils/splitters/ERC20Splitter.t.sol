@@ -37,21 +37,6 @@ contract ReturningObligation {
     }
 }
 
-contract ERC20SplitterRefundingStringObligation is StringObligation {
-    uint256 public immutable refundAmount;
-
-    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, uint256 _refundAmount)
-        StringObligation(_eas, _schemaRegistry)
-    {
-        refundAmount = _refundAmount;
-    }
-
-    function _afterAttest(Attestation memory attestation) internal override {
-        (bool success,) = payable(attestation.recipient).call{value: refundAmount}("");
-        require(success, "refund failed");
-    }
-}
-
 contract NoOpERC20EscrowObligation is BaseObligation {
     constructor(IEAS eas, ISchemaRegistry schemaRegistry)
         BaseObligation(eas, schemaRegistry, "address arbiter, bytes demand, address token, uint256 amount", true)
@@ -300,27 +285,6 @@ contract ERC20SplitterTest is Test {
         Attestation memory fulfillment = eas.getAttestation(fulfillmentUid);
         assertEq(fulfillment.recipient, address(splitter), "Splitter should be recipient");
         assertEq(fulfillment.refUID, escrowUid, "Should reference escrow");
-    }
-
-    function testCreateFulfillmentRefundsNativeBalanceIncreaseToFulfiller() public {
-        bytes32 escrowUid = _createEscrow(buyer, AMOUNT, uint64(block.timestamp + EXPIRATION));
-        uint256 refundAmount = 0.3 ether;
-        uint256 spentAmount = 0.1 ether;
-        ERC20SplitterRefundingStringObligation refundingObligation =
-            new ERC20SplitterRefundingStringObligation(eas, schemaRegistry, refundAmount);
-        bytes memory obligationData =
-            abi.encode(StringObligation.ObligationData({item: "fulfillment", schema: bytes32(0)}));
-
-        uint256 executorBalanceBefore = executor.balance;
-
-        vm.prank(executor);
-        bytes32 fulfillmentUid = splitter.createFulfillment{value: refundAmount + spentAmount}(
-            address(refundingObligation), obligationData, 0, escrowUid
-        );
-
-        assertEq(splitter.fulfillers(fulfillmentUid), executor, "Fulfiller should be recorded");
-        assertEq(executor.balance, executorBalanceBefore - spentAmount, "executor only pays non-refunded value");
-        assertEq(address(splitter).balance, 0, "refund is not stranded in splitter");
     }
 
     function testCreateFulfillmentRejectsSpoofedUid() public {

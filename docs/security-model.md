@@ -144,8 +144,12 @@ the payment action.
 
 When a splitter helper creates a payment fulfillment, the EAS recipient may be
 the splitter so the splitter can later collect and distribute escrow assets. The
-payment's `payee` remains separate from that proof-recipient role. Native-token
-balance increases on the splitter during helper execution are treated as excess
-returned value and refunded to the external fulfiller, so flows should not model
-"payment to the splitter" by expecting the splitter to retain native tokens
-received during fulfillment creation.
+payment's `payee` remains separate from that proof-recipient role.
+
+Splitter fulfillment helpers may forward native value to the obligation contract
+they call, but they do not proxy refunds by inspecting splitter balance changes.
+That behavior was intentionally removed because a balance increase during helper
+execution can come from unrelated escrow collection or other external transfers,
+not only from unused value returned by the called obligation. Paid fulfillment
+flows should pass the exact native value required by the called obligation or
+handle refunds inside that obligation's own API.

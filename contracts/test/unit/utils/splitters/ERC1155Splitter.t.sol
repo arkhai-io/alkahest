@@ -20,21 +20,6 @@ contract MockERC1155 is ERC1155 {
     }
 }
 
-contract ERC1155SplitterRefundingStringObligation is StringObligation {
-    uint256 public immutable refundAmount;
-
-    constructor(IEAS _eas, ISchemaRegistry _schemaRegistry, uint256 _refundAmount)
-        StringObligation(_eas, _schemaRegistry)
-    {
-        refundAmount = _refundAmount;
-    }
-
-    function _afterAttest(Attestation memory attestation) internal override {
-        (bool success,) = payable(attestation.recipient).call{value: refundAmount}("");
-        require(success, "refund failed");
-    }
-}
-
 contract ERC1155SplitterTest is Test {
     ERC1155Splitter public splitter;
     ERC1155EscrowObligation public escrowObligation;
@@ -92,27 +77,6 @@ contract ERC1155SplitterTest is Test {
         assertEq(splitter.fulfillers(fulfillmentUid), executor);
         Attestation memory f = eas.getAttestation(fulfillmentUid);
         assertEq(f.recipient, address(splitter));
-    }
-
-    function testCreateFulfillmentRefundsNativeBalanceIncreaseToFulfiller() public {
-        bytes32 escrowUid = _createEscrow(buyer, TOKEN_ID, AMOUNT, uint64(block.timestamp + EXPIRATION));
-        uint256 refundAmount = 0.3 ether;
-        uint256 spentAmount = 0.1 ether;
-        ERC1155SplitterRefundingStringObligation refundingObligation =
-            new ERC1155SplitterRefundingStringObligation(eas, schemaRegistry, refundAmount);
-        bytes memory obligationData =
-            abi.encode(StringObligation.ObligationData({item: "fulfillment", schema: bytes32(0)}));
-
-        uint256 executorBalanceBefore = executor.balance;
-
-        vm.prank(executor);
-        bytes32 fulfillmentUid = splitter.createFulfillment{value: refundAmount + spentAmount}(
-            address(refundingObligation), obligationData, 0, escrowUid
-        );
-
-        assertEq(splitter.fulfillers(fulfillmentUid), executor, "Fulfiller should be recorded");
-        assertEq(executor.balance, executorBalanceBefore - spentAmount, "executor only pays non-refunded value");
-        assertEq(address(splitter).balance, 0, "refund is not stranded in splitter");
     }
 
     function testCollectAndDistribute() public {
