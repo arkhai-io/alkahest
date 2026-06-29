@@ -52,7 +52,9 @@ Related items to review together: ALKA-25.
 
 ### ALKA-16: Proxy Escrow Substitution
 
-Status: fixed locally, pending commit.
+Status: fixed.
+
+Completed by `27436721ed908f9ff35776d814796b81660284ba`.
 
 Severity in report: Critical.
 
