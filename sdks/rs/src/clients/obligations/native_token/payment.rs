@@ -8,7 +8,7 @@ use alloy::sol;
 use alloy::sol_types::SolValue;
 
 use crate::addresses::ensure_deployed_contract;
-use crate::clients::obligations::atomic_payment_safety::ensure_packaged_escrow_attester;
+use crate::atomic_payment_safety::ensure_packaged_escrow_attester;
 use crate::contracts;
 use crate::types::{DecodedAttestation, NativeTokenData};
 

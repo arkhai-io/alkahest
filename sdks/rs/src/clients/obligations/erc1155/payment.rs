@@ -6,7 +6,7 @@ use alloy::primitives::{Address, FixedBytes};
 use alloy::rpc::types::TransactionReceipt;
 use alloy::sol_types::SolValue;
 
-use crate::clients::obligations::atomic_payment_safety::ensure_packaged_escrow_attester;
+use crate::atomic_payment_safety::ensure_packaged_escrow_attester;
 use crate::contracts;
 use crate::types::{ApprovalPurpose, DecodedAttestation, Erc1155Data};
 
