@@ -1,6 +1,6 @@
 import type { ChainAddresses } from "../../../types";
 import type { ViemClient } from "../../../utils";
-import { pickPackagedEscrowObligations } from "../../../atomicPaymentSafety";
+import { pickPackagedEscrowObligations } from "../../../utils/contractSafety";
 import { makeTokenBundleEscrowClient, type TokenBundleEscrowClient } from "./escrow";
 import { makeTokenBundlePaymentClient, type TokenBundlePaymentClient } from "./payment";
 import { makeTokenBundleUtilClient, type TokenBundleUtilClient } from "./util";
