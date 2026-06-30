@@ -248,7 +248,8 @@ Local fix:
   `_unchecked` variants are available for integrations that have independently
   validated a custom escrow contract.
 - Python wrappers call the Rust safe methods, so they inherit the same default
-  behavior.
+  behavior, and expose matching `_unchecked` variants for integrations that
+  intentionally settle custom escrow contracts.
 
 ### ALKA-32: TokenBundleSplitterUnvalidated Stranded Balance Drain
 
