@@ -253,12 +253,29 @@ Local fix:
 
 ### ALKA-32: TokenBundleSplitterUnvalidated Stranded Balance Drain
 
-Status: open.
+Status: not an issue.
 
 Severity in report: High.
 
 Report title: `TokenBundleSplitterUnvalidated can steal previously stranded
 native, ERC20, and ERC1155 balances through later over-allocation`.
+
+Current assessment: expected consequence of stranded splitter balances.
+
+`TokenBundleSplitterUnvalidated` intentionally skips split-total validation.
+Over-allocation can only distribute assets already held by the splitter plus
+assets collected in the current settlement. The current settlement is still
+verified by balance deltas, so this does not let an attacker collect or redirect
+an unrelated active escrow. It only affects balances that were previously
+stranded in the splitter, for example because an intended flow was bypassed or a
+partial/failed settlement left residual assets.
+
+The protocol does not assign an authorized collector to stranded splitter
+balances, and intended splitter flows should not leave persistent balances in
+the contract. Treating those balances as recoverable by later valid splitter
+execution is acceptable; adding accounting to protect them would undermine the
+purpose of the unvalidated cheaper splitter variant and add complexity for an
+out-of-model state.
 
 ### ALKA-28: SDK Configs Send Payable Calls To Zero Address
 
