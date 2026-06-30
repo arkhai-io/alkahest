@@ -222,12 +222,33 @@ only attacker-favorable transfers`.
 
 ### ALKA-33: AtomicPaymentUtils Arbitrary Attesters
 
-Status: open.
+Status: fixed in `860e314154abefd28f0a48be09d3a875c7d3f29b`.
 
 Severity in report: High.
 
 Report title: `AtomicPaymentUtils accepts arbitrary attesters and can pay
 attacker-defined demands without any real escrow`.
+
+Current assessment: valid SDK/integration hardening item, not a contract-level
+authorization break.
+
+`AtomicPaymentUtils` is a convenience contract that pays the demand decoded from
+the supplied escrow attestation and then calls `collect()` on that attestation's
+attester. A malicious attester cannot independently steal from unrelated
+lifecycles; the caller or integration must choose to settle that malicious UID.
+However, SDK pay-and-collect helpers are an ergonomic path where users may rely
+on the SDK to interpret the UID safely before spending funds.
+
+Local fix:
+
+- TypeScript payment clients now fetch the escrow attestation before calling
+  `AtomicPaymentUtils` and require its attester to be one of the configured
+  packaged escrow obligations for the same chain.
+- Rust payment clients now do the same for the default safe methods; explicit
+  `_unchecked` variants are available for integrations that have independently
+  validated a custom escrow contract.
+- Python wrappers call the Rust safe methods, so they inherit the same default
+  behavior.
 
 ### ALKA-32: TokenBundleSplitterUnvalidated Stranded Balance Drain
 
