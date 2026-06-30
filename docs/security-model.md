@@ -125,6 +125,13 @@ atomic by themselves, such as creating a fulfillment and collecting an escrow in
 one transaction. Helpers are optional protocol utilities, not a replacement for
 understanding the underlying escrow, payment, and arbiter policy.
 
+Collection races are protocol concerns when the expected flow necessarily
+separates fulfillment creation or validation from escrow collection, such as
+async oracle or splitter decisions that enable an already-created fulfillment.
+When a provided helper lets the fulfiller create the fulfillment and collect the
+escrow atomically, racing those two steps is generally an integration issue
+rather than a critical protocol failure.
+
 Constructor-initialized helper contracts are intended for direct deployment
 unless they explicitly include proxy or clone initialization support.
 
