@@ -116,18 +116,46 @@ Local fix:
 
 ### ALKA-25: createFulfillment Refunds Unrelated ETH Inflows
 
-Status: open.
+Status: fixed.
+
+Completed by `774f2e39c0c76da257142683dc66daf53aac2f5c`.
 
 Severity in report: Critical.
 
 Report title: `createFulfillment refunds unrelated ETH inflows and lets a
 malicious obligation steal collectible native escrows`.
 
+Current assessment: duplicate of ALKA-8.
+
+This report describes the same balance-delta refund proxy as ALKA-8. The fix
+removed blanket native balance refunding from `BaseSplitter.createFulfillment()`.
+Regression coverage was added in `8da780b90919ee8728fed5921b9acff554cf6d8e`.
+
 ### ALKA-17: Proxy Collect Fulfillment Substitution
 
-Status: open.
+Status: fixed.
+
+Completed by `27436721ed908f9ff35776d814796b81660284ba`.
 
 Severity in report: Critical.
+
+Report title: `Proxy collect can substitute a different fulfillment and redirect
+EXECUTOR_SENTINEL payouts to an attacker-recorded fulfiller`.
+
+Current assessment: duplicate of ALKA-16 with `EXECUTOR_SENTINEL` as the payout
+consequence.
+
+The reported path relies on a malicious caller-supplied escrow contract whose
+`collect()` ignores the fake `(escrow, fulfillment)` and proxies collection of a
+different real escrow/fulfillment pair. The splitter would then resolve
+`EXECUTOR_SENTINEL` using the fake fulfillment's recorded fulfiller rather than
+the real consumed fulfillment.
+
+The ALKA-16 fix removes the caller-supplied escrow contract from splitter
+settlement. Packaged splitters now verify and call only their immutable packaged
+escrow obligation, so a proxy escrow cannot substitute a different consumed
+fulfillment. Regression coverage for the proxy substitution path was added in
+`8da780b90919ee8728fed5921b9acff554cf6d8e`.
 
 Report title: `Proxy collect can substitute a different fulfillment and redirect
 EXECUTOR_SENTINEL payouts to an attacker-recorded fulfiller`.
