@@ -7,10 +7,8 @@ use alloy::rpc::types::TransactionReceipt;
 use alloy::sol;
 use alloy::sol_types::SolValue;
 
-use crate::clients::{
-    contract_safety::ensure_deployed_contract,
-    obligations::atomic_payment_safety::ensure_packaged_escrow_attester,
-};
+use crate::addresses::ensure_deployed_contract;
+use crate::clients::obligations::atomic_payment_safety::ensure_packaged_escrow_attester;
 use crate::contracts;
 use crate::types::{DecodedAttestation, NativeTokenData};
 
