@@ -6,9 +6,9 @@ record remains stable over time.
 
 Report files:
 
-- `../reports/audit-agent-2026-06-23-report-7.pdf`
-- `../reports/octane-2026-04-13-analysis-1-fix-octane-audit.md`
-- `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`
+- `../reports/audit-agent-2026-06-23.pdf`
+- `../reports/octane-2026-04-13-1.md`
+- `../reports/octane-2026-04-13-2.md`
 
 ## Fixed
 
@@ -16,7 +16,7 @@ Report files:
 
 Status: fixed.
 
-Report item: `../reports/audit-agent-2026-06-23-report-7.pdf`,
+Report item: `../reports/audit-agent-2026-06-23.pdf`,
 finding 6.
 
 Completed by `20e8b29a87f645bf34562e50c54cca1c779a9004`.
@@ -32,7 +32,7 @@ without going through splitter fulfillment recording.
 
 Status: fixed.
 
-Report item: `../reports/audit-agent-2026-06-23-report-7.pdf`,
+Report item: `../reports/audit-agent-2026-06-23.pdf`,
 finding 7.
 
 Completed by `2a570e16c3dc7cab990d87c47fd2cca5e01ede8d`.
@@ -48,7 +48,7 @@ non-expiring attestation.
 
 Status: fixed.
 
-Report item: `../reports/audit-agent-2026-06-23-report-7.pdf`,
+Report item: `../reports/audit-agent-2026-06-23.pdf`,
 finding 9.
 
 Completed by `564d996378686ab8cf8e02fa4410259831f67dac`.
@@ -63,7 +63,7 @@ semantics are preserved.
 
 Status: fixed.
 
-Report item: `../reports/audit-agent-2026-06-23-report-7.pdf`,
+Report item: `../reports/audit-agent-2026-06-23.pdf`,
 findings 10 and 11.
 
 Completed by `31954b34988727e28123869def7d4b9008c45251`.
@@ -78,7 +78,7 @@ released or reclaimed.
 
 Status: fixed.
 
-Report item: `../reports/audit-agent-2026-06-23-report-7.pdf`,
+Report item: `../reports/audit-agent-2026-06-23.pdf`,
 finding 13.
 
 Completed by `7f2f42477b929ba669ffebec1b5181b0fb946437`.
@@ -93,7 +93,7 @@ the allowance required for the full bundle amount.
 
 Status: fixed.
 
-Report item: `../reports/audit-agent-2026-06-23-report-7.pdf`,
+Report item: `../reports/audit-agent-2026-06-23.pdf`,
 finding 14.
 
 Completed by `9ec044fdb19924e0f1859f4a1bef4e146c381137`.
@@ -107,7 +107,7 @@ still reverting if the required allowance is not present.
 
 Status: fixed for authorization; superset matching remains intended behavior.
 
-Report item: `../reports/audit-agent-2026-06-23-report-7.pdf`,
+Report item: `../reports/audit-agent-2026-06-23.pdf`,
 finding 17.
 
 Completed by:
@@ -131,7 +131,7 @@ need exact bundle equality should encode that as stricter arbiter policy.
 
 Status: fixed.
 
-Report item: `../reports/audit-agent-2026-06-23-report-7.pdf`,
+Report item: `../reports/audit-agent-2026-06-23.pdf`,
 finding 18.
 
 Completed by `91328e5aaaa83ad0061d6255064ba5d931064bed`.
@@ -147,7 +147,7 @@ recipient remains contract-level treasury/burn policy.
 
 Status: fixed.
 
-Report item: `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, issue 1.
+Report item: `../reports/octane-2026-04-13-2.md`, issue 1.
 
 Completed by `ed826e02d8a9b65403b2b052d0ceade8fc6ba229` and
 `173d34cc14104d8f77a8325fb1799f80ccf9655e`.
@@ -163,8 +163,8 @@ Status: fixed.
 
 Report items:
 
-- `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, issue 2.
-- `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, warning 1.
+- `../reports/octane-2026-04-13-2.md`, issue 2.
+- `../reports/octane-2026-04-13-2.md`, warning 1.
 
 Completed across:
 
@@ -184,9 +184,9 @@ Status: fixed.
 
 Report items:
 
-- `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, issue 3.
-- `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, issue 10.
-- `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, warning 6.
+- `../reports/octane-2026-04-13-2.md`, issue 3.
+- `../reports/octane-2026-04-13-2.md`, issue 10.
+- `../reports/octane-2026-04-13-2.md`, warning 6.
 
 Completed across:
 
@@ -208,10 +208,10 @@ Status: fixed.
 
 Report items:
 
-- `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, issue 14.
-- `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, issue 22.
-- `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, issue 27.
-- `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, warning 4.
+- `../reports/octane-2026-04-13-2.md`, issue 14.
+- `../reports/octane-2026-04-13-2.md`, issue 22.
+- `../reports/octane-2026-04-13-2.md`, issue 27.
+- `../reports/octane-2026-04-13-2.md`, warning 4.
 
 Completed across:
 
@@ -229,8 +229,8 @@ Status: fixed.
 
 Report items:
 
-- `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, issue 8.
-- `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, warning 8.
+- `../reports/octane-2026-04-13-2.md`, issue 8.
+- `../reports/octane-2026-04-13-2.md`, warning 8.
 
 Completed across:
 
@@ -248,7 +248,7 @@ post-attest context including the created EAS UID.
 
 Status: fixed.
 
-Report item: `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, issue 21.
+Report item: `../reports/octane-2026-04-13-2.md`, issue 21.
 
 Completed by `a8439519c5a4b6083776e3b1e8cc73e44c5434ec`.
 
@@ -259,7 +259,7 @@ attestation delivery remains compatible with payable resolvers.
 
 Status: fixed.
 
-Report item: `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, issue 25.
+Report item: `../reports/octane-2026-04-13-2.md`, issue 25.
 
 Completed by `5c03d3a3f00fe9dbcd06175806de80bf726c3b3e`.
 
@@ -271,7 +271,7 @@ callback.
 
 Status: fixed.
 
-Report item: `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, issue 10.
+Report item: `../reports/octane-2026-04-13-2.md`, issue 10.
 
 Completed by `1b5738b11f509374c9f9c4ef82e4210a84214b3c`.
 
@@ -289,7 +289,7 @@ and the ERC721 escrow hook follows the same pattern.
 
 Status: fixed.
 
-Report item: `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, warning 7.
+Report item: `../reports/octane-2026-04-13-2.md`, warning 7.
 
 Completed across:
 
@@ -303,7 +303,7 @@ token transfers do not create silent out-of-system balances.
 
 Status: fixed.
 
-Report item: `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, issue 31.
+Report item: `../reports/octane-2026-04-13-2.md`, issue 31.
 
 Completed by `ebe3abcf1b7ada0910ca61da8b641fd939d8757f`.
 
@@ -315,7 +315,7 @@ registering unnecessary duplicate schemas during construction.
 Status: fixed for hardcoded certification lifetime; referenced-attestation
 freshness remains integration policy.
 
-Report item: `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, issue 18.
+Report item: `../reports/octane-2026-04-13-2.md`, issue 18.
 
 Completed by `53ef8ee11b4da1c63cb6a5873b205432356bc079`.
 
@@ -339,8 +339,8 @@ Completed by `49825afc14c68869934f24f74acfbccaf749e158`.
 
 Report items:
 
-- `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, issue 9.
-- `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, warning 3 request-hash variant.
+- `../reports/octane-2026-04-13-2.md`, issue 9.
+- `../reports/octane-2026-04-13-2.md`, warning 3 request-hash variant.
 
 `ERC8004Arbiter.DemandData` now includes caller-supplied `bytes data`, and the
 ERC-8004 validation request hash is derived from the fulfillment UID and that
@@ -352,10 +352,10 @@ Status: fixed for default escrows; explicit escape hatch retained.
 
 Report items:
 
-- `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, issue 6.
-- `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, confirmation invalid-UID
+- `../reports/octane-2026-04-13-2.md`, issue 6.
+- `../reports/octane-2026-04-13-2.md`, confirmation invalid-UID
   variant.
-- `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, warning 11.
+- `../reports/octane-2026-04-13-2.md`, warning 11.
 
 Completed across:
 
@@ -377,8 +377,8 @@ Status: fixed.
 
 Report items:
 
-- `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, issue 7.
-- `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, atomic push / unsafe
+- `../reports/octane-2026-04-13-2.md`, issue 7.
+- `../reports/octane-2026-04-13-2.md`, atomic push / unsafe
   partial related variant.
 
 Completed by `0d5a750fdd2c41a682e9f7a3ced6f1b5bc9e3283`.
@@ -392,7 +392,7 @@ destructive partial path.
 
 Status: fixed.
 
-Report item: `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, issue 8.
+Report item: `../reports/octane-2026-04-13-2.md`, issue 8.
 
 Completed by `ced4c99c2439567d0a2424846df3f89192283538`.
 
@@ -407,7 +407,7 @@ from a pending validation request.
 
 Status: intended responsibility split.
 
-Report item: `../reports/audit-agent-2026-06-23-report-7.pdf`,
+Report item: `../reports/audit-agent-2026-06-23.pdf`,
 finding 12.
 
 Attestation hooks do not have intrinsic protocol authority or reputation merely
@@ -423,7 +423,7 @@ attestation contents to enforce that policy globally.
 
 Status: intended token-defined semantics.
 
-Report item: `../reports/audit-agent-2026-06-23-report-7.pdf`,
+Report item: `../reports/audit-agent-2026-06-23.pdf`,
 findings 15 and 16.
 
 Escrow ERC1155 lock paths already verify that the escrow or hook receives the
@@ -445,21 +445,21 @@ Status: out of production security scope.
 
 Report items:
 
-- `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, issue 26.
-- `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, issue 33.
-- `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, issue 34.
-- `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, issue 35.
-- `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, issue 17.
-- `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, issue 19.
-- `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, issue 17 in warnings.
-- `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, issue 19 in warnings.
-- `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, `StringResultObligation`
+- `../reports/octane-2026-04-13-2.md`, issue 26.
+- `../reports/octane-2026-04-13-2.md`, issue 33.
+- `../reports/octane-2026-04-13-2.md`, issue 34.
+- `../reports/octane-2026-04-13-2.md`, issue 35.
+- `../reports/octane-2026-04-13-2.md`, issue 17.
+- `../reports/octane-2026-04-13-2.md`, issue 19.
+- `../reports/octane-2026-04-13-2.md`, issue 17 in warnings.
+- `../reports/octane-2026-04-13-2.md`, issue 19 in warnings.
+- `../reports/octane-2026-04-13-2.md`, `StringResultObligation`
   length-only variant.
-- `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, `ApiCallExample1/2`
+- `../reports/octane-2026-04-13-2.md`, `ApiCallExample1/2`
   nonzero-oracle variant.
-- `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, `VoteEscrowObligation`
+- `../reports/octane-2026-04-13-2.md`, `VoteEscrowObligation`
   support-range, external-call, and data-hash variants.
-- `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, `MajorityVoteArbiter`
+- `../reports/octane-2026-04-13-2.md`, `MajorityVoteArbiter`
   unchecked-subtraction variant.
 
 Example contracts are not production protocol components and are not intended to
@@ -472,9 +472,9 @@ Status: intended behavior.
 
 Report items:
 
-- `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, issue 4.
-- `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, issue 17.
-- `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, order-sensitive
+- `../reports/octane-2026-04-13-2.md`, issue 4.
+- `../reports/octane-2026-04-13-2.md`, issue 17.
+- `../reports/octane-2026-04-13-2.md`, order-sensitive
   `AllArbiter` variant.
 
 `AllArbiter([])` returning true and `AnyArbiter([])` returning false are
@@ -488,13 +488,13 @@ Status: intended responsibility split.
 
 Report items:
 
-- `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, issue 18.
-- `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, issue 13 recipient-binding
+- `../reports/octane-2026-04-13-2.md`, issue 18.
+- `../reports/octane-2026-04-13-2.md`, issue 13 recipient-binding
   variant.
-- `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, issue 14.
-- `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, warning 4 recipient
+- `../reports/octane-2026-04-13-2.md`, issue 14.
+- `../reports/octane-2026-04-13-2.md`, warning 4 recipient
   capability variants.
-- `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, warning 6 self-recipient
+- `../reports/octane-2026-04-13-2.md`, warning 6 self-recipient
   variant.
 
 Recipient selection is intentionally controlled by the escrow creator, fulfiller,
@@ -510,8 +510,8 @@ Status: intended responsibility split.
 
 Report items:
 
-- `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, issue 13.
-- `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, promise-only arbiter
+- `../reports/octane-2026-04-13-2.md`, issue 13.
+- `../reports/octane-2026-04-13-2.md`, promise-only arbiter
   variant.
 
 The `IArbiter` implementation bundled with escrow obligations answers whether
@@ -530,7 +530,7 @@ semantics that differ from the rest of the escrow family.
 
 Status: deployment-mode constraint.
 
-Report item: `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, issue 15.
+Report item: `../reports/octane-2026-04-13-2.md`, issue 15.
 
 The BarterUtils contracts are ordinary constructor-initialized helper contracts,
 and the repository deployment paths instantiate them directly. Deploying these
@@ -551,10 +551,10 @@ Status: intended responsibility split.
 
 Report items:
 
-- `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, issue 5.
-- `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, registry-call variant.
-- `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, issue 12.
-- `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, permissive-arbiter variant.
+- `../reports/octane-2026-04-13-2.md`, issue 5.
+- `../reports/octane-2026-04-13-2.md`, registry-call variant.
+- `../reports/octane-2026-04-13-2.md`, issue 12.
+- `../reports/octane-2026-04-13-2.md`, permissive-arbiter variant.
 
 Escrow creators choose their arbiter, arbiter demand, and external registry
 configuration. The protocol supports arbitrary arbiters and registries; a bad or
@@ -566,7 +566,7 @@ should not centralize allowlists for user-selected policy components.
 
 Status: no contract change.
 
-Report item: `../reports/octane-2026-04-13-analysis-2-main-arb-grant.md`, issue 16.
+Report item: `../reports/octane-2026-04-13-2.md`, issue 16.
 
 Splitter `requestArbitration` events are non-authoritative hints, matching the
 general oracle-request pattern used by `TrustedOracleArbiter`. A caller-chosen
