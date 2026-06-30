@@ -9,6 +9,7 @@ import {
   type ViemClient,
   writeContract,
 } from "../../../utils";
+import { getAtomicPaymentEscrowAttestation, type AtomicPaymentOptions } from "../atomicPaymentSafety";
 import type { TokenBundleAddresses } from "./index";
 import { makeTokenBundleUtilClient } from "./util";
 
@@ -168,7 +169,8 @@ export const makeTokenBundlePaymentClient = (viemClient: ViemClient, addresses: 
      * professional manual audits and has only been reviewed by automated audit
      * tooling so far.
      */
-    payBundleAndCollect: async (escrowUid: `0x${string}`) => {
+    payBundleAndCollect: async (escrowUid: `0x${string}`, options?: AtomicPaymentOptions) => {
+      await getAtomicPaymentEscrowAttestation(viemClient, addresses, escrowUid, options);
       const hash = await writeContract(viemClient, {
         address: addresses.atomicPaymentUtils,
         abi: atomicPaymentUtilsAbi.abi,

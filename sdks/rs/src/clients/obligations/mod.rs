@@ -1,3 +1,4 @@
+pub(crate) mod atomic_payment_safety;
 pub mod attestation;
 pub mod commit_reveal;
 pub mod erc1155;

@@ -1,9 +1,9 @@
 import { type Address, decodeAbiParameters, encodeAbiParameters, getAbiItem } from "viem";
-import { abi as easAbi } from "../../../contracts/IEAS";
 import { abi as nativeTokenPaymentAbi } from "../../../contracts/obligations/payment/NativeTokenPaymentObligation";
 import { abi as atomicPaymentUtilsAbi } from "../../../contracts/utils/AtomicPaymentUtils";
 import type { Demand } from "../../../types";
 import { getAttestation, getAttestedEventFromTxHash, type ViemClient } from "../../../utils";
+import { getAtomicPaymentEscrowAttestation, type AtomicPaymentOptions } from "../atomicPaymentSafety";
 import type { NativeTokenAddresses } from "./index";
 
 const nativePaymentDoObligationFunction = getAbiItem({
@@ -66,14 +66,8 @@ export const makeNativeTokenPaymentClient = (viemClient: ViemClient, addresses: 
       authorizationList: undefined,
     });
 
-  const getPaymentDemand = async (escrowUid: `0x${string}`) => {
-    const escrow = await viemClient.readContract({
-      address: addresses.eas,
-      abi: easAbi.abi,
-      functionName: "getAttestation",
-      args: [escrowUid],
-      authorizationList: undefined,
-    });
+  const getPaymentDemand = async (escrowUid: `0x${string}`, options?: AtomicPaymentOptions) => {
+    const escrow = await getAtomicPaymentEscrowAttestation(viemClient, addresses, escrowUid, options);
 
     const [, demand] = await viemClient.readContract({
       address: escrow.attester,
@@ -213,8 +207,8 @@ export const makeNativeTokenPaymentClient = (viemClient: ViemClient, addresses: 
      * professional manual audits and has only been reviewed by automated audit
      * tooling so far.
      */
-    payNativeAndCollect: async (escrowUid: `0x${string}`) => {
-      const demand = await getPaymentDemand(escrowUid);
+    payNativeAndCollect: async (escrowUid: `0x${string}`, options?: AtomicPaymentOptions) => {
+      const demand = await getPaymentDemand(escrowUid, options);
       const hash = await viemClient.writeContract({
         address: addresses.atomicPaymentUtils,
         abi: atomicPaymentUtilsAbi.abi,
