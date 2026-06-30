@@ -8,9 +8,7 @@ they cover.
 
 - `reports/zellic-2026-06-30.pdf`: professional manual audit report
   from Zellic.
-- `reports/audit-agent-2026-06-23.pdf`: Audit Agent report. This is not
-  redundant with the markdown reports; the Cantina scan references one related
-  item, but the triage covers multiple findings from this PDF.
+- `reports/audit-agent-2026-06-23.pdf`: Nethermind Audit Agent report.
 - `reports/octane-2026-04-13-1.md`: Octane automated
   analysis for the `fix-octane-audit` context.
 - `reports/octane-2026-04-13-2.md`: Octane automated
