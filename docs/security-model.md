@@ -161,6 +161,13 @@ not only from unused value returned by the called obligation. Paid fulfillment
 flows should pass the exact native value required by the called obligation or
 handle refunds inside that obligation's own API.
 
+Unsafe partial splitter settlement is a recovery path, not the default
+settlement path. It is authorized for the recorded fulfiller of splitter-created
+fulfillments and for the fulfillment attester so direct splitter-recipient
+fulfillments can still recover. Integrations should not use programmable or
+untrusted contract attesters as splitter fulfillments unless they trust that
+contract's call surface not to trigger partial settlement unexpectedly.
+
 Each packaged splitter is bound to its corresponding packaged escrow obligation.
 Splitter collection does not accept arbitrary escrow contract addresses from
 callers, because a third-party escrow-like contract could otherwise attest a
