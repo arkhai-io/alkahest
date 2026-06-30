@@ -162,7 +162,7 @@ EXECUTOR_SENTINEL payouts to an attacker-recorded fulfiller`.
 
 ### ALKA-5: CommitReveal Fulfillment Replay
 
-Status: fixed locally, pending commit hash.
+Status: fixed in `1552d8aa8f99042440a1b837b2a823a35d1135a5`.
 
 Severity in report: Critical.
 
