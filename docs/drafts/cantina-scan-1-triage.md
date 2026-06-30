@@ -180,7 +180,7 @@ later unconditional escrows`.
 
 ### ALKA-31: Direct Escrow Collection Bricks Splitter Settlement
 
-Status: fixed locally, pending commit hash.
+Status: fixed in `21e0a69d1772b0e07e99f174b498cab9e83b9944`.
 
 Severity in report: High.
 
