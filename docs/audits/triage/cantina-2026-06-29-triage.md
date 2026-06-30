@@ -309,7 +309,7 @@ Local fix:
 
 ### ALKA-2: Commit-Reveal Post-Reveal Settlement Theft
 
-Status: acknowledged integration issue; no contract patch.
+Status: addressed with optional commitment-oracle primitive.
 
 Severity in report: High.
 
@@ -339,6 +339,17 @@ payload privately to the oracle before the public EAS reveal, or that the oracle
 binds approval to the intended fulfillment UID, recipient, and demand context.
 An oracle that approves copied public reveal payloads for new recipients is
 making a policy decision outside the secrecy guarantee commit-reveal provides.
+
+Local fix:
+
+- Added `CommitmentTrustedOracleArbiter`, which lets a trusted oracle approve a
+  future attestation intent before the fulfillment UID exists.
+- The approved intent binds the eventual attester, schema, recipient,
+  expiration time, revocability, refUID, and data hash. A copied reveal with a
+  different recipient therefore has a different intent hash and does not satisfy
+  the original oracle approval.
+- Added focused contract tests covering pre-fulfillment approval, copied reveal
+  rejection, demand-context scoping, and intent-hash field binding.
 
 Documentation update:
 

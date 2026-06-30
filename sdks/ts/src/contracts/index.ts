@@ -25,6 +25,7 @@ export * as ReferencesEscrowArbiter from "./arbiters/ReferencesEscrowArbiter";
 export * as AllArbiter from "./arbiters/logical/AllArbiter";
 export * as AnyArbiter from "./arbiters/logical/AnyArbiter";
 // Arbiters
+export * as CommitmentTrustedOracleArbiter from "./arbiters/CommitmentTrustedOracleArbiter";
 export * as TrivialArbiter from "./arbiters/TrivialArbiter";
 export * as TrustedOracleArbiter from "./arbiters/TrustedOracleArbiter";
 export * as ERC20Permit from "./ERC20Permit";
@@ -34,7 +35,7 @@ export * as IERC20 from "./IERC20";
 export * as IERC721 from "./IERC721";
 export * as IERC1155 from "./IERC1155";
 export * as ISchemaRegistry from "./ISchemaRegistry";
-export * as SchemaRegistryUtils from "./SchemaRegistryUtils";
+export * as SchemaRegistryUtils from "./libraries/SchemaRegistryUtils";
 // Obligations - Escrow (default)
 export * as AttestationEscrowObligation from "./obligations/escrow/default/AttestationEscrowObligation";
 export * as AttestationReferenceEscrowObligation from "./obligations/escrow/default/AttestationReferenceEscrowObligation";

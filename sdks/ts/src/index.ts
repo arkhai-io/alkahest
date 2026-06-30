@@ -285,6 +285,10 @@ export const makeMinimalClient = (
 
     trivialArbiter: contractAddresses?.trivialArbiter || baseAddresses?.trivialArbiter || zeroAddress,
     trustedOracleArbiter: contractAddresses?.trustedOracleArbiter || baseAddresses?.trustedOracleArbiter || zeroAddress,
+    commitmentTrustedOracleArbiter:
+      contractAddresses?.commitmentTrustedOracleArbiter ||
+      baseAddresses?.commitmentTrustedOracleArbiter ||
+      zeroAddress,
     intrinsicsArbiter: contractAddresses?.intrinsicsArbiter || baseAddresses?.intrinsicsArbiter || zeroAddress,
     anyArbiter: contractAddresses?.anyArbiter || baseAddresses?.anyArbiter || zeroAddress,
     allArbiter: contractAddresses?.allArbiter || baseAddresses?.allArbiter || zeroAddress,

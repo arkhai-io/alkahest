@@ -147,7 +147,7 @@ impl CommitRevealObligationModule {
         );
 
         let receipt = contract
-            .doObligation(data, ref_uid.unwrap_or(FixedBytes::<32>::default()))
+            .doObligation_0(data, ref_uid.unwrap_or(FixedBytes::<32>::default()))
             .send()
             .await?
             .get_receipt()
@@ -169,7 +169,7 @@ impl CommitRevealObligationModule {
         );
 
         let receipt = contract
-            .doObligationFor(
+            .doObligationFor_0(
                 data,
                 recipient,
                 ref_uid.unwrap_or(FixedBytes::<32>::default()),
@@ -224,7 +224,7 @@ impl CommitRevealObligationModule {
         );
 
         let receipt = contract
-            .revealAndCollect(data, recipient, escrow_contract, escrow_uid)
+            .revealAndCollect_0(data, recipient, escrow_contract, escrow_uid)
             .send()
             .await?
             .get_receipt()
@@ -269,7 +269,7 @@ impl CommitRevealObligationModule {
         );
 
         let result = contract
-            .computeCommitment(ref_uid, claimer, data)
+            .computeCommitment_1(claimer, ref_uid, data)
             .call()
             .await?;
 

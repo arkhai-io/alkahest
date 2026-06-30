@@ -14,6 +14,7 @@ import { decodeDemand as decodeTimeEqualDemand } from "../clients/arbiters/attes
 import { decodeDemand as decodeUidDemand } from "../clients/arbiters/attestationProperties/uidArbiter";
 // Import static decode functions from general arbiters
 import { decodeDemand as decodeERC8004Demand } from "../clients/arbiters/general/erc8004Arbiter";
+import { decodeDemand as decodeCommitmentTrustedOracleDemand } from "../clients/arbiters/general/commitmentTrustedOracle";
 import { decodeDemand as decodeReferencesEscrowDemand } from "../clients/arbiters/general/referencesEscrowArbiter";
 import { decodeDemand as decodeTrustedOracleDemand } from "../clients/arbiters/general/trustedOracle";
 import type { DecodersRecord, DemandDecoder, RecursivelyDecodedDemand } from "../clients/arbiters/logical";
@@ -96,6 +97,10 @@ export const createDecodersFromAddresses = (
   // General arbiters
   if (addresses.trustedOracleArbiter) {
     decoders[addresses.trustedOracleArbiter.toLowerCase() as Address] = decodeTrustedOracleDemand as DemandDecoder;
+  }
+  if (addresses.commitmentTrustedOracleArbiter) {
+    decoders[addresses.commitmentTrustedOracleArbiter.toLowerCase() as Address] =
+      decodeCommitmentTrustedOracleDemand as DemandDecoder;
   }
   if (addresses.erc8004Arbiter) {
     decoders[addresses.erc8004Arbiter.toLowerCase() as Address] = decodeERC8004Demand as DemandDecoder;

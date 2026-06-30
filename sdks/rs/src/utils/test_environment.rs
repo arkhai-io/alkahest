@@ -22,8 +22,8 @@ use crate::{
     },
     contracts::{
         arbiters::{
-            ERC8004Arbiter, IntrinsicsArbiter, ReferencesEscrowArbiter, TrivialArbiter,
-            TrustedOracleArbiter,
+            CommitmentTrustedOracleArbiter, ERC8004Arbiter, IntrinsicsArbiter,
+            ReferencesEscrowArbiter, TrivialArbiter, TrustedOracleArbiter,
             attestation_properties::{
                 AttesterArbiter, ExpirationTimeAfterArbiter, ExpirationTimeBeforeArbiter,
                 ExpirationTimeEqualArbiter, RecipientArbiter, RefUidArbiter, RevocableArbiter,
@@ -251,6 +251,8 @@ async fn build_shared_env() -> eyre::Result<SharedTestEnv> {
     let trivial_arbiter = TrivialArbiter::deploy(&god_provider).await?;
     let trusted_oracle_arbiter =
         TrustedOracleArbiter::deploy(&god_provider, eas.address().clone()).await?;
+    let commitment_trusted_oracle_arbiter =
+        CommitmentTrustedOracleArbiter::deploy(&god_provider).await?;
     let intrinsics_arbiter = IntrinsicsArbiter::deploy(&god_provider).await?;
     let erc8004_arbiter = ERC8004Arbiter::deploy(&god_provider).await?;
     let references_escrow_arbiter = ReferencesEscrowArbiter::deploy(&god_provider).await?;
@@ -378,14 +380,36 @@ async fn build_shared_env() -> eyre::Result<SharedTestEnv> {
         schema_registry.address().clone(),
     )
     .await?;
-    let erc20_splitter = ERC20Splitter::deploy(&god_provider, eas.address().clone()).await?;
-    let erc1155_splitter = ERC1155Splitter::deploy(&god_provider, eas.address().clone()).await?;
-    let native_token_splitter =
-        NativeTokenSplitter::deploy(&god_provider, eas.address().clone()).await?;
-    let token_bundle_splitter =
-        TokenBundleSplitter::deploy(&god_provider, eas.address().clone()).await?;
-    let token_bundle_splitter_unvalidated =
-        TokenBundleSplitterUnvalidated::deploy(&god_provider, eas.address().clone()).await?;
+    let erc20_splitter = ERC20Splitter::deploy(
+        &god_provider,
+        eas.address().clone(),
+        erc20_escrow_obligation.address().clone(),
+    )
+    .await?;
+    let erc1155_splitter = ERC1155Splitter::deploy(
+        &god_provider,
+        eas.address().clone(),
+        erc1155_escrow_obligation.address().clone(),
+    )
+    .await?;
+    let native_token_splitter = NativeTokenSplitter::deploy(
+        &god_provider,
+        eas.address().clone(),
+        native_token_escrow_obligation.address().clone(),
+    )
+    .await?;
+    let token_bundle_splitter = TokenBundleSplitter::deploy(
+        &god_provider,
+        eas.address().clone(),
+        bundle_escrow_obligation.address().clone(),
+    )
+    .await?;
+    let token_bundle_splitter_unvalidated = TokenBundleSplitterUnvalidated::deploy(
+        &god_provider,
+        eas.address().clone(),
+        bundle_escrow_obligation.address().clone(),
+    )
+    .await?;
 
     // Per-test wallets are created in setup_test_environment(); the
     // shared singleton only needs the deployer-derived state.
@@ -394,6 +418,7 @@ async fn build_shared_env() -> eyre::Result<SharedTestEnv> {
             eas: eas.address().clone(),
             trivial_arbiter: trivial_arbiter.address().clone(),
             trusted_oracle_arbiter: trusted_oracle_arbiter.address().clone(),
+            commitment_trusted_oracle_arbiter: commitment_trusted_oracle_arbiter.address().clone(),
             intrinsics_arbiter: intrinsics_arbiter.address().clone(),
             erc8004_arbiter: erc8004_arbiter.address().clone(),
             references_escrow_arbiter: references_escrow_arbiter.address().clone(),

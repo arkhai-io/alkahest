@@ -32,6 +32,7 @@ const unreleasedAddresses = {
   commitRevealObligation: zeroAddress,
   trivialArbiter: zeroAddress,
   trustedOracleArbiter: zeroAddress,
+  commitmentTrustedOracleArbiter: zeroAddress,
   allArbiter: zeroAddress,
   anyArbiter: zeroAddress,
   intrinsicsArbiter: zeroAddress,
@@ -97,6 +98,7 @@ const unreleasedAddresses = {
   | "commitRevealObligation"
   | "trivialArbiter"
   | "trustedOracleArbiter"
+  | "commitmentTrustedOracleArbiter"
   | "allArbiter"
   | "anyArbiter"
   | "intrinsicsArbiter"
@@ -169,6 +171,7 @@ export const contractAddresses: Record<string, ChainAddresses> = {
 
     trivialArbiter: "0xa42Df9aDF17f26Ff1eD5206cf83E5dab88bD3523",
     trustedOracleArbiter: "0x504f496F696c41558070a933c90a98604c3f4475",
+    commitmentTrustedOracleArbiter: zeroAddress,
     allArbiter: "0x9F78AAca04A2c005618c3B214e609B13Bbe66356",
     anyArbiter: "0xaF67e09D889e0df9d404059283A1FA7BA7Ac7d88",
     intrinsicsArbiter: "0xd78d4404E2E1a9033eEf1ac69BF488f6a4Ea9aC0",
@@ -248,6 +251,7 @@ export const contractAddresses: Record<string, ChainAddresses> = {
 
     trivialArbiter: "0xD56bD862e7BEbD0BD7356603e9E52B32c241E2AE",
     trustedOracleArbiter: "0x61dC9c2D757A1C9D0d38A281288d9ef918e77Baa",
+    commitmentTrustedOracleArbiter: zeroAddress,
     allArbiter: "0xb6890A8Cb8CDeFcE11Edc0314125b750F48BFF1B",
     anyArbiter: "0x81dC8f2C5677b02aFcAFef34Fa7E75D55dfAEF20",
     intrinsicsArbiter: "0x7B20A4b25af2a2637C240622d6C3875DeA609A64",

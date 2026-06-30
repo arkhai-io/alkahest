@@ -74,6 +74,7 @@ import {
 // Arbiter Contracts
 import {TrivialArbiter} from "@src/arbiters/TrivialArbiter.sol";
 import {TrustedOracleArbiter} from "@src/arbiters/TrustedOracleArbiter.sol";
+import {CommitmentTrustedOracleArbiter} from "@src/arbiters/CommitmentTrustedOracleArbiter.sol";
 import {ReferencesEscrowArbiter} from "@src/arbiters/ReferencesEscrowArbiter.sol";
 
 // Additional Arbiters
@@ -139,6 +140,7 @@ contract Deploy is Script {
         // Deploy arbiters
         TrivialArbiter trivialArbiter = new TrivialArbiter();
         TrustedOracleArbiter trustedOracleArbiter = new TrustedOracleArbiter(IEAS(easAddress));
+        CommitmentTrustedOracleArbiter commitmentTrustedOracleArbiter = new CommitmentTrustedOracleArbiter();
         ReferencesEscrowArbiter referencesEscrowArbiter = new ReferencesEscrowArbiter();
 
         // Deploy Additional Arbiters
@@ -269,6 +271,7 @@ contract Deploy is Script {
         console.log("\nArbiters:");
         console.log("TrivialArbiter:", address(trivialArbiter));
         console.log("TrustedOracleArbiter:", address(trustedOracleArbiter));
+        console.log("CommitmentTrustedOracleArbiter:", address(commitmentTrustedOracleArbiter));
         console.log("ReferencesEscrowArbiter:", address(referencesEscrowArbiter));
 
         console.log("\nAdditional Arbiters:");
@@ -367,6 +370,7 @@ contract Deploy is Script {
         // Add arbiter addresses
         vm.serializeAddress(deploymentJson, "trivialArbiter", address(trivialArbiter));
         vm.serializeAddress(deploymentJson, "trustedOracleArbiter", address(trustedOracleArbiter));
+        vm.serializeAddress(deploymentJson, "commitmentTrustedOracleArbiter", address(commitmentTrustedOracleArbiter));
         vm.serializeAddress(deploymentJson, "referencesEscrowArbiter", address(referencesEscrowArbiter));
 
         // Add Additional Arbiters

@@ -82,6 +82,14 @@ pub mod arbiters {
         #[allow(missing_docs)]
         #[sol(rpc)]
         #[derive(Debug)]
+        CommitmentTrustedOracleArbiter,
+        "src/contracts/arbiters/CommitmentTrustedOracleArbiter.json"
+    );
+
+    sol!(
+        #[allow(missing_docs)]
+        #[sol(rpc)]
+        #[derive(Debug)]
         IntrinsicsArbiter,
         "src/contracts/arbiters/IntrinsicsArbiter.json"
     );

@@ -7,6 +7,7 @@ import SchemaRegistry from "./contracts/eas/SchemaRegistry.json";
 // Arbiters - General
 import TrivialArbiter from "./contracts/arbiters/TrivialArbiter.json";
 import TrustedOracleArbiter from "./contracts/arbiters/TrustedOracleArbiter.json";
+import CommitmentTrustedOracleArbiter from "./contracts/arbiters/CommitmentTrustedOracleArbiter.json";
 import IntrinsicsArbiter from "./contracts/arbiters/IntrinsicsArbiter.json";
 import ERC8004Arbiter from "./contracts/arbiters/ERC8004Arbiter.json";
 import ReferencesEscrowArbiter from "./contracts/arbiters/ReferencesEscrowArbiter.json";
@@ -133,6 +134,7 @@ export async function deployAlkahest(
     // Core arbiters
     result.trivialArbiter = await deploy(deployFn, TrivialArbiter as Artifact);
     result.trustedOracleArbiter = await deploy(deployFn, TrustedOracleArbiter as Artifact, [easAddress]);
+    result.commitmentTrustedOracleArbiter = await deploy(deployFn, CommitmentTrustedOracleArbiter as Artifact);
     result.intrinsicsArbiter = await deploy(deployFn, IntrinsicsArbiter as Artifact);
     result.erc8004Arbiter = await deploy(deployFn, ERC8004Arbiter as Artifact);
     result.referencesEscrowArbiter = await deploy(deployFn, ReferencesEscrowArbiter as Artifact);

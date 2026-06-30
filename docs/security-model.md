@@ -150,6 +150,11 @@ approval to the intended fulfillment UID, recipient, and demand context. An
 oracle that approves copied public reveal payloads for new recipients is making
 a policy decision outside the secrecy guarantee that commit-reveal provides.
 
+`CommitmentTrustedOracleArbiter` supports this pre-reveal pattern by letting a
+trusted oracle approve an attestation intent before the EAS fulfillment UID
+exists. The later fulfillment must match the approved attester, schema,
+recipient, expiration time, revocability, refUID, and data hash.
+
 ## Splitter Fulfillment Helpers
 
 Splitter fulfillment helpers create attestations whose recipient is the splitter

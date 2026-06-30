@@ -405,6 +405,9 @@ impl<Extensions: AlkahestExtension> AlkahestClient<Extensions> {
             ArbitersContract::TrustedOracleArbiter => {
                 self.arbiters().addresses.trusted_oracle_arbiter
             }
+            ArbitersContract::CommitmentTrustedOracleArbiter => {
+                self.arbiters().addresses.commitment_trusted_oracle_arbiter
+            }
             ArbitersContract::IntrinsicsArbiter => self.arbiters().addresses.intrinsics_arbiter,
             ArbitersContract::ERC8004Arbiter => self.arbiters().addresses.erc8004_arbiter,
             ArbitersContract::ReferencesEscrowArbiter => {
