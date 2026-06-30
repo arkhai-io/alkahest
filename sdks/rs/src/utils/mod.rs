@@ -79,6 +79,8 @@ use crate::{
     types::{PublicProvider, WalletProvider},
 };
 
+pub(crate) mod contract_safety;
+
 /// Default polling interval for HTTP transports, matching Alloy's
 /// [`RpcClient::poll_interval`] default of 7 seconds.
 pub const DEFAULT_POLL_INTERVAL: Duration = Duration::from_secs(7);

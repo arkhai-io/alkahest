@@ -27,7 +27,6 @@ pub type DefaultAlkahestClient = AlkahestClient<BaseExtensions>;
 
 pub mod address_index;
 pub mod addresses;
-pub(crate) mod atomic_payment_safety;
 pub mod clients;
 pub mod contracts;
 pub mod extensions;

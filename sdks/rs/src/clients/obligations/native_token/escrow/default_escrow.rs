@@ -7,7 +7,7 @@ use alloy::rpc::types::TransactionReceipt;
 use alloy::sol_types::SolValue as _;
 
 use crate::types::{ArbiterData, DecodedAttestation, NativeTokenData};
-use crate::{addresses::ensure_deployed_contract, contracts};
+use crate::{contracts, utils::contract_safety::ensure_deployed_contract};
 
 use super::super::NativeTokenModule;
 

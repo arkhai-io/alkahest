@@ -4,9 +4,9 @@ use alloy::primitives::{Address, FixedBytes};
 use alloy::rpc::types::TransactionReceipt;
 use alloy::sol_types::SolValue;
 
-use crate::atomic_payment_safety::ensure_packaged_escrow_attester;
 use crate::contracts;
 use crate::types::{ApprovalPurpose, DecodedAttestation, Erc721Data};
+use crate::utils::contract_safety::ensure_packaged_escrow_attester;
 
 use super::Erc721Module;
 
