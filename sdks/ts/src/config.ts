@@ -67,6 +67,11 @@ const unreleasedAddresses = {
   nativeTokenSplitter: zeroAddress,
   tokenBundleSplitter: zeroAddress,
   tokenBundleSplitterUnvalidated: zeroAddress,
+  commitmentERC20Splitter: zeroAddress,
+  commitmentERC1155Splitter: zeroAddress,
+  commitmentNativeTokenSplitter: zeroAddress,
+  commitmentTokenBundleSplitter: zeroAddress,
+  commitmentTokenBundleSplitterUnvalidated: zeroAddress,
 } satisfies Pick<
   ChainAddresses,
   | "erc20EscrowObligation"
@@ -133,6 +138,11 @@ const unreleasedAddresses = {
   | "nativeTokenSplitter"
   | "tokenBundleSplitter"
   | "tokenBundleSplitterUnvalidated"
+  | "commitmentERC20Splitter"
+  | "commitmentERC1155Splitter"
+  | "commitmentNativeTokenSplitter"
+  | "commitmentTokenBundleSplitter"
+  | "commitmentTokenBundleSplitterUnvalidated"
 >;
 
 export const contractAddresses: Record<string, ChainAddresses> = {
@@ -215,6 +225,11 @@ export const contractAddresses: Record<string, ChainAddresses> = {
     nativeTokenSplitter: "0xa32161d10B31f3eB5BfC0EEfDE64784e01CBD9E1",
     tokenBundleSplitter: "0xceC0D468b29cA55FEA224e2b66AC5694036aA24d",
     tokenBundleSplitterUnvalidated: "0x6c1c55E13E5Ec8668dad15dbe1B461E7814643a1",
+    commitmentERC20Splitter: zeroAddress,
+    commitmentERC1155Splitter: zeroAddress,
+    commitmentNativeTokenSplitter: zeroAddress,
+    commitmentTokenBundleSplitter: zeroAddress,
+    commitmentTokenBundleSplitterUnvalidated: zeroAddress,
   },
   "Sepolia": {
     eas: "0xC2679fBD37d54388Ce493F1DB75320D236e1815e",
@@ -295,6 +310,11 @@ export const contractAddresses: Record<string, ChainAddresses> = {
     nativeTokenSplitter: "0xdA1fD1aC28C1d09E723e5a23Cd16554C87D0D09C",
     tokenBundleSplitter: "0x0F235Bf6e5725791e118A25b4903856030525EF0",
     tokenBundleSplitterUnvalidated: "0x4621C947D713cC7f63a377EE4D05eea789ab0956",
+    commitmentERC20Splitter: zeroAddress,
+    commitmentERC1155Splitter: zeroAddress,
+    commitmentNativeTokenSplitter: zeroAddress,
+    commitmentTokenBundleSplitter: zeroAddress,
+    commitmentTokenBundleSplitterUnvalidated: zeroAddress,
   },
   "GenLayer Bradbury": {
     ...unreleasedAddresses,

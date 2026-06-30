@@ -16,7 +16,7 @@ import { abi as recipientArbiterAbi } from "../../src/contracts/arbiters/attesta
 import { abi as schemaArbiterAbi } from "../../src/contracts/arbiters/attestation-properties/SchemaArbiter";
 import { abi as uidArbiterAbi } from "../../src/contracts/arbiters/attestation-properties/UidArbiter";
 // Import contract artifacts needed for tests
-import { abi as trustedOracleArbiterAbi } from "../../src/contracts/arbiters/TrustedOracleArbiter";
+import { abi as trustedOracleArbiterAbi } from "../../src/contracts/arbiters/trusted-oracle/TrustedOracleArbiter";
 import { setupTestEnvironment, type TestContext } from "../utils/setup";
 import { teardownTestEnvironment } from "../utils/teardownTestEnvironment";
 

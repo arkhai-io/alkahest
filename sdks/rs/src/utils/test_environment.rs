@@ -69,6 +69,11 @@ use crate::{
             AtomicAttestationUtils, AtomicPaymentUtils,
             splitters::{
                 ERC20Splitter, ERC1155Splitter, NativeTokenSplitter,
+                commitment::{
+                    CommitmentERC20Splitter, CommitmentERC1155Splitter,
+                    CommitmentNativeTokenSplitter, token_bundle::CommitmentTokenBundleSplitter,
+                    token_bundle_unvalidated::CommitmentTokenBundleSplitterUnvalidated,
+                },
                 token_bundle::TokenBundleSplitter,
                 token_bundle_unvalidated::TokenBundleSplitterUnvalidated,
             },
@@ -410,6 +415,37 @@ async fn build_shared_env() -> eyre::Result<SharedTestEnv> {
         bundle_escrow_obligation.address().clone(),
     )
     .await?;
+    let commitment_erc20_splitter = CommitmentERC20Splitter::deploy(
+        &god_provider,
+        eas.address().clone(),
+        erc20_escrow_obligation.address().clone(),
+    )
+    .await?;
+    let commitment_erc1155_splitter = CommitmentERC1155Splitter::deploy(
+        &god_provider,
+        eas.address().clone(),
+        erc1155_escrow_obligation.address().clone(),
+    )
+    .await?;
+    let commitment_native_token_splitter = CommitmentNativeTokenSplitter::deploy(
+        &god_provider,
+        eas.address().clone(),
+        native_token_escrow_obligation.address().clone(),
+    )
+    .await?;
+    let commitment_token_bundle_splitter = CommitmentTokenBundleSplitter::deploy(
+        &god_provider,
+        eas.address().clone(),
+        bundle_escrow_obligation.address().clone(),
+    )
+    .await?;
+    let commitment_token_bundle_splitter_unvalidated =
+        CommitmentTokenBundleSplitterUnvalidated::deploy(
+            &god_provider,
+            eas.address().clone(),
+            bundle_escrow_obligation.address().clone(),
+        )
+        .await?;
 
     // Per-test wallets are created in setup_test_environment(); the
     // shared singleton only needs the deployer-derived state.
@@ -523,6 +559,14 @@ async fn build_shared_env() -> eyre::Result<SharedTestEnv> {
             native_token_splitter: native_token_splitter.address().clone(),
             token_bundle_splitter: token_bundle_splitter.address().clone(),
             token_bundle_splitter_unvalidated: token_bundle_splitter_unvalidated.address().clone(),
+            commitment_erc20_splitter: commitment_erc20_splitter.address().clone(),
+            commitment_erc1155_splitter: commitment_erc1155_splitter.address().clone(),
+            commitment_native_token_splitter: commitment_native_token_splitter.address().clone(),
+            commitment_token_bundle_splitter: commitment_token_bundle_splitter.address().clone(),
+            commitment_token_bundle_splitter_unvalidated:
+                commitment_token_bundle_splitter_unvalidated
+                    .address()
+                    .clone(),
         },
         attestation_addresses: AttestationAddresses {
             eas: eas.address().clone(),

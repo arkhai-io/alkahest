@@ -6,7 +6,7 @@ import {
   keccak256,
   parseAbiItem,
 } from "viem";
-import { abi as commitmentTrustedOracleArbiterAbi } from "../../../contracts/arbiters/CommitmentTrustedOracleArbiter";
+import { abi as commitmentTrustedOracleArbiterAbi } from "../../../contracts/arbiters/trusted-oracle/CommitmentTrustedOracleArbiter";
 import type { Attestation, ChainAddresses } from "../../../types";
 import type { ViemClient } from "../../../utils";
 

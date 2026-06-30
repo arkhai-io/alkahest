@@ -2,9 +2,9 @@
 pragma solidity ^0.8.26;
 
 import "forge-std/Test.sol";
-import {BaseSplitter} from "@src/utils/splitters/BaseSplitter.sol";
-import {TokenBundleSplitterUnvalidated} from "@src/utils/splitters/TokenBundleSplitterUnvalidated.sol";
-import {TokenBundleSplitterBase} from "@src/utils/splitters/TokenBundleSplitterBase.sol";
+import {BaseSplitter} from "@src/utils/splitters/default/BaseSplitter.sol";
+import {TokenBundleSplitterUnvalidated} from "@src/utils/splitters/default/TokenBundleSplitterUnvalidated.sol";
+import {TokenBundleSplitterBase} from "@src/utils/splitters/default/TokenBundleSplitterBase.sol";
 import {TokenBundleEscrowObligation} from "@src/obligations/escrow/default/TokenBundleEscrowObligation.sol";
 import {StringObligation} from "@src/obligations/StringObligation.sol";
 import {IEAS, Attestation} from "@eas/IEAS.sol";

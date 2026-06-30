@@ -17,7 +17,7 @@ import { abi as allArbiterAbi } from "../../src/contracts/arbiters/logical/AllAr
 import { abi as anyArbiterAbi } from "../../src/contracts/arbiters/logical/AnyArbiter";
 // Import contract artifacts needed for tests
 import { abi as trivialArbiterAbi } from "../../src/contracts/arbiters/TrivialArbiter";
-import { abi as trustedOracleArbiterAbi } from "../../src/contracts/arbiters/TrustedOracleArbiter";
+import { abi as trustedOracleArbiterAbi } from "../../src/contracts/arbiters/trusted-oracle/TrustedOracleArbiter";
 import { setupTestEnvironment, type TestContext } from "../utils/setup";
 import { teardownTestEnvironment } from "../utils/teardownTestEnvironment";
 

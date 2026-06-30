@@ -7,7 +7,7 @@ import {
   getAbiItem,
   parseAbiItem,
 } from "viem";
-import { abi as trustedOracleArbiterAbi } from "../../../contracts/arbiters/TrustedOracleArbiter";
+import { abi as trustedOracleArbiterAbi } from "../../../contracts/arbiters/trusted-oracle/TrustedOracleArbiter";
 import type { Attestation, ChainAddresses } from "../../../types";
 import { getAttestation, getOptimalPollingInterval, type ViemClient } from "../../../utils";
 

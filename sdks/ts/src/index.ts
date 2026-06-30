@@ -269,6 +269,24 @@ export const makeMinimalClient = (
       contractAddresses?.tokenBundleSplitterUnvalidated ||
       baseAddresses?.tokenBundleSplitterUnvalidated ||
       zeroAddress,
+    commitmentERC20Splitter:
+      contractAddresses?.commitmentERC20Splitter || baseAddresses?.commitmentERC20Splitter || zeroAddress,
+    commitmentERC1155Splitter:
+      contractAddresses?.commitmentERC1155Splitter ||
+      baseAddresses?.commitmentERC1155Splitter ||
+      zeroAddress,
+    commitmentNativeTokenSplitter:
+      contractAddresses?.commitmentNativeTokenSplitter ||
+      baseAddresses?.commitmentNativeTokenSplitter ||
+      zeroAddress,
+    commitmentTokenBundleSplitter:
+      contractAddresses?.commitmentTokenBundleSplitter ||
+      baseAddresses?.commitmentTokenBundleSplitter ||
+      zeroAddress,
+    commitmentTokenBundleSplitterUnvalidated:
+      contractAddresses?.commitmentTokenBundleSplitterUnvalidated ||
+      baseAddresses?.commitmentTokenBundleSplitterUnvalidated ||
+      zeroAddress,
 
     stringObligation: contractAddresses?.stringObligation || baseAddresses?.stringObligation || zeroAddress,
     commitRevealObligation:

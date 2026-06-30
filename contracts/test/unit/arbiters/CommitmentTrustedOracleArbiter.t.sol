@@ -5,7 +5,7 @@ import {Test} from "forge-std/Test.sol";
 import {Attestation} from "@eas/Common.sol";
 import {IEAS} from "@eas/IEAS.sol";
 import {ISchemaRegistry} from "@eas/ISchemaRegistry.sol";
-import {CommitmentTrustedOracleArbiter} from "@src/arbiters/CommitmentTrustedOracleArbiter.sol";
+import {CommitmentTrustedOracleArbiter} from "@src/arbiters/trusted-oracle/CommitmentTrustedOracleArbiter.sol";
 import {CommitRevealObligation} from "@src/obligations/CommitRevealObligation.sol";
 import {NativeTokenEscrowObligation} from "@src/obligations/escrow/default/NativeTokenEscrowObligation.sol";
 import {EASDeployer} from "@test/utils/EASDeployer.sol";

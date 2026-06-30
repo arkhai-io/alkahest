@@ -45,6 +45,11 @@ export type ChainAddresses = {
   nativeTokenSplitter: `0x${string}`;
   tokenBundleSplitter: `0x${string}`;
   tokenBundleSplitterUnvalidated: `0x${string}`;
+  commitmentERC20Splitter: `0x${string}`;
+  commitmentERC1155Splitter: `0x${string}`;
+  commitmentNativeTokenSplitter: `0x${string}`;
+  commitmentTokenBundleSplitter: `0x${string}`;
+  commitmentTokenBundleSplitterUnvalidated: `0x${string}`;
 
   stringObligation: `0x${string}`;
   commitRevealObligation: `0x${string}`;
