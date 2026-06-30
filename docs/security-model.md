@@ -2,7 +2,7 @@
 
 This document records protocol-level assumptions that are easy to misread when
 reviewing Alkahest contracts. It is not an audit log. Issue-by-issue audit
-classification lives in `docs/audits/triage/audit-agent-and-octane-2026-04-triage.md`.
+classification lives in `docs/audits/triage/audit-agent-octane-2026-04-13-2026-06-23-triage.md`.
 
 ## Core Model
 

@@ -1,6 +1,6 @@
 # Cantina Scan #1 Triage
 
-Tracking items from `../reports/cantina-scan-1-findings.md`.
+Tracking items from `../reports/cantina-2026-06-29-scan-1.md`.
 
 Use absolute commit hashes for completed fixes so this record remains stable
 after branches move. Status values:
