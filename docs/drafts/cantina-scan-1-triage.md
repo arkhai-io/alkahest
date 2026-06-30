@@ -17,6 +17,8 @@ after branches move. Status values:
 Status: fixed.
 
 Completed by `774f2e39c0c76da257142683dc66daf53aac2f5c`.
+Additional regression coverage in
+`8da780b90919ee8728fed5921b9acff554cf6d8e`.
 
 Severity in report: Critical.
 
@@ -55,6 +57,8 @@ Related items to review together: ALKA-25.
 Status: fixed.
 
 Completed by `27436721ed908f9ff35776d814796b81660284ba`.
+Additional proxy-substitution regression coverage in
+`8da780b90919ee8728fed5921b9acff554cf6d8e`.
 
 Severity in report: Critical.
 
@@ -181,6 +185,8 @@ later unconditional escrows`.
 ### ALKA-31: Direct Escrow Collection Bricks Splitter Settlement
 
 Status: fixed in `21e0a69d1772b0e07e99f174b498cab9e83b9944`.
+Follow-up simplification and security-model documentation in
+`057d593005c28c22dddc0f19f83a497ef3f6aee0`.
 
 Severity in report: High.
 
