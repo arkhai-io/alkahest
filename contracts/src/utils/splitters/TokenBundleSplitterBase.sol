@@ -133,6 +133,7 @@ abstract contract TokenBundleSplitterBase is BaseSplitter, ERC1155Holder {
     /// @dev Use only as a last resort when collectAndDistribute is permanently blocked.
     ///      Failed transfers emit events but do not revert. Stuck tokens remain in the splitter.
     function unsafePartiallyCollectAndDistribute(bytes32 escrow, bytes32 fulfillment) external nonReentrant {
+        _authorizePartialSettlement(fulfillment);
         (BundleSplit[] memory splits, EscrowObligationData memory escrowData) = _collectAndDecode(escrow, fulfillment);
         address fulfiller = _recordedFulfiller(fulfillment);
         for (uint256 s; s < splits.length; ++s) {

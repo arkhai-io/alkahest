@@ -55,6 +55,7 @@ abstract contract BaseSplitter is BaseArbiter, ReentrancyGuard {
     error InvalidFulfillmentUid();
     error FulfillerAlreadyRecorded(bytes32 fulfillment);
     error InvalidCreatedFulfillment(bytes32 fulfillment);
+    error UnauthorizedPartialSettlement(bytes32 fulfillment, address caller);
 
     /// @notice EAS contract used to load escrow and fulfillment attestations.
     IEAS public eas;
@@ -130,6 +131,14 @@ abstract contract BaseSplitter is BaseArbiter, ReentrancyGuard {
         activeSettlement = decisionKey;
         result = escrowObligation.collect(escrow, fulfillment);
         activeSettlement = bytes32(0);
+    }
+
+    function _authorizePartialSettlement(bytes32 fulfillment) internal view {
+        address fulfiller = fulfillers[fulfillment];
+        Attestation memory fulfillmentAttestation = eas.getAttestation(fulfillment);
+        if (msg.sender != fulfiller && msg.sender != fulfillmentAttestation.attester) {
+            revert UnauthorizedPartialSettlement(fulfillment, msg.sender);
+        }
     }
 
     function _recordedFulfiller(bytes32 fulfillment) internal view returns (address fulfiller) {

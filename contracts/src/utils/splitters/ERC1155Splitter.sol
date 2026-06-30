@@ -103,6 +103,7 @@ contract ERC1155Splitter is BaseSplitter, ERC1155Holder {
 
     /// @notice Unsafe partial distribution -- continues on individual transfer failures.
     function unsafePartiallyCollectAndDistribute(bytes32 escrow, bytes32 fulfillment) external nonReentrant {
+        _authorizePartialSettlement(fulfillment);
         (Split[] memory splits, address token, uint256 tokenId) = _collectAndDecode(escrow, fulfillment);
         address fulfiller = _recordedFulfiller(fulfillment);
         for (uint256 i; i < splits.length; ++i) {

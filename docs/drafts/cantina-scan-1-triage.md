@@ -204,9 +204,18 @@ the underlying escrow directly`.
 
 ### ALKA-34: Unsafe Partial Splitter Settlement
 
-Status: open.
+Status: fixed locally, pending commit hash.
 
 Severity in report: High.
+
+Resolution: splitter partial settlement is now authorized. Each
+`unsafePartiallyCollectAndDistribute` path requires the caller to be either the
+recorded fulfiller for a splitter-created fulfillment or the EAS attester of the
+fulfillment. This preserves partial recovery for the executor and for direct
+splitter-recipient fulfillments, while preventing unrelated outsiders from
+forcing escrow revocation and partial distribution. Token-bundle escrow partial
+collection already had recipient-side authorization; this fix covers the
+splitter-specific case where the fulfillment recipient is the splitter contract.
 
 Report title: `Public unsafe partial splitter settlement lets outsiders finalize
 only attacker-favorable transfers`.

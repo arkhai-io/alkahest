@@ -78,6 +78,7 @@ contract NativeTokenSplitter is BaseSplitter {
 
     /// @notice Unsafe partial distribution -- continues on individual transfer failures.
     function unsafePartiallyCollectAndDistribute(bytes32 escrow, bytes32 fulfillment) external nonReentrant {
+        _authorizePartialSettlement(fulfillment);
         Split[] memory splits = _collectAndDecode(escrow, fulfillment);
         address fulfiller = _recordedFulfiller(fulfillment);
         for (uint256 i; i < splits.length; ++i) {

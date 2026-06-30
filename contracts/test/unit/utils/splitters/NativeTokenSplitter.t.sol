@@ -35,6 +35,12 @@ contract CollectVictimNativeEscrowObligation is StringObligation {
     }
 }
 
+contract RejectingNativeRecipient {
+    receive() external payable {
+        revert("NO_ETH");
+    }
+}
+
 contract NativeTokenSplitterTest is Test {
     NativeTokenSplitter public splitter;
     NativeTokenEscrowObligation public escrowObligation;
@@ -154,6 +160,74 @@ contract NativeTokenSplitterTest is Test {
 
         assertEq(executor.balance, executorBalBefore + 0.6 ether, "Executor gets sentinel share");
         assertEq(bob.balance, 0.4 ether);
+    }
+
+    function testUnsafePartialSettlementRequiresFulfillerOrAttester() public {
+        RejectingNativeRecipient rejectingRecipient = new RejectingNativeRecipient();
+        bytes32 escrowUid = _createEscrow(buyer, AMOUNT, uint64(block.timestamp + EXPIRATION));
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(executor, escrowUid);
+
+        NativeTokenSplitter.Split[] memory splits = new NativeTokenSplitter.Split[](2);
+        splits[0] = NativeTokenSplitter.Split({recipient: splitter.EXECUTOR_SENTINEL(), amount: 0.6 ether});
+        splits[1] = NativeTokenSplitter.Split({recipient: address(rejectingRecipient), amount: 0.4 ether});
+
+        vm.prank(oracle);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
+
+        vm.prank(carol);
+        vm.expectRevert(
+            abi.encodeWithSelector(BaseSplitter.UnauthorizedPartialSettlement.selector, fulfillmentUid, carol)
+        );
+        splitter.unsafePartiallyCollectAndDistribute(escrowUid, fulfillmentUid);
+
+        Attestation memory escrowAfterUnauthorized = eas.getAttestation(escrowUid);
+        assertEq(escrowAfterUnauthorized.revocationTime, 0, "unauthorized partial call leaves escrow live");
+
+        vm.prank(carol);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                NativeTokenSplitter.NativeTokenTransferFailed.selector, address(rejectingRecipient), 0.4 ether
+            )
+        );
+        splitter.collectAndDistribute(escrowUid, fulfillmentUid);
+
+        uint256 executorBalanceBefore = executor.balance;
+        vm.prank(executor);
+        splitter.unsafePartiallyCollectAndDistribute(escrowUid, fulfillmentUid);
+
+        assertEq(executor.balance, executorBalanceBefore + 0.6 ether);
+        assertEq(address(rejectingRecipient).balance, 0);
+        assertEq(address(splitter).balance, 0.4 ether);
+    }
+
+    function testUnsafePartialSettlementAllowsFulfillmentAttester() public {
+        RejectingNativeRecipient rejectingRecipient = new RejectingNativeRecipient();
+        bytes32 escrowUid = _createEscrow(buyer, AMOUNT, uint64(block.timestamp + EXPIRATION));
+
+        bytes memory obligationData =
+            abi.encode(StringObligation.ObligationData({item: "manual fulfillment", schema: bytes32(0)}));
+        vm.prank(address(splitter));
+        bytes32 fulfillmentUid = stringObligation.doObligationRaw(obligationData, 0, escrowUid);
+
+        NativeTokenSplitter.Split[] memory splits = new NativeTokenSplitter.Split[](2);
+        splits[0] = NativeTokenSplitter.Split({recipient: alice, amount: 0.6 ether});
+        splits[1] = NativeTokenSplitter.Split({recipient: address(rejectingRecipient), amount: 0.4 ether});
+
+        vm.prank(oracle);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
+
+        vm.prank(carol);
+        vm.expectRevert(
+            abi.encodeWithSelector(BaseSplitter.UnauthorizedPartialSettlement.selector, fulfillmentUid, carol)
+        );
+        splitter.unsafePartiallyCollectAndDistribute(escrowUid, fulfillmentUid);
+
+        vm.prank(address(stringObligation));
+        splitter.unsafePartiallyCollectAndDistribute(escrowUid, fulfillmentUid);
+
+        assertEq(alice.balance, 0.6 ether);
+        assertEq(address(rejectingRecipient).balance, 0);
+        assertEq(address(splitter).balance, 0.4 ether);
     }
 
     function testCheckObligationRejectsDifferentFulfillment() public {
