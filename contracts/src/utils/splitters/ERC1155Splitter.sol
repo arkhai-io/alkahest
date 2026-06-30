@@ -130,7 +130,7 @@ contract ERC1155Splitter is BaseSplitter, ERC1155Holder {
         token = escrowData.token;
         tokenId = escrowData.tokenId;
         uint256 balanceBefore = IERC1155(token).balanceOf(address(this), tokenId);
-        escrowObligation.collect(escrow, fulfillment);
+        _collectEscrow(escrow, fulfillment);
         SplitterVerification.verifyDelta(
             balanceBefore, IERC1155(token).balanceOf(address(this), tokenId), escrowData.amount
         );

@@ -120,8 +120,7 @@ abstract contract TokenBundleSplitterBase is BaseSplitter, ERC1155Holder {
     /// @notice Collects a token bundle escrow and distributes assets. Reverts if any transfer fails.
     /// @notice Collects a token-bundle escrow and distributes all assets per oracle splits.
     function collectAndDistribute(bytes32 escrow, bytes32 fulfillment) external nonReentrant {
-        (BundleSplit[] memory splits, EscrowObligationData memory escrowData) =
-            _collectAndDecode(escrow, fulfillment);
+        (BundleSplit[] memory splits, EscrowObligationData memory escrowData) = _collectAndDecode(escrow, fulfillment);
         address fulfiller = _recordedFulfiller(fulfillment);
         for (uint256 s; s < splits.length; ++s) {
             address recipient = _resolveSentinel(splits[s].recipient, fulfillment, fulfiller);
@@ -134,8 +133,7 @@ abstract contract TokenBundleSplitterBase is BaseSplitter, ERC1155Holder {
     /// @dev Use only as a last resort when collectAndDistribute is permanently blocked.
     ///      Failed transfers emit events but do not revert. Stuck tokens remain in the splitter.
     function unsafePartiallyCollectAndDistribute(bytes32 escrow, bytes32 fulfillment) external nonReentrant {
-        (BundleSplit[] memory splits, EscrowObligationData memory escrowData) =
-            _collectAndDecode(escrow, fulfillment);
+        (BundleSplit[] memory splits, EscrowObligationData memory escrowData) = _collectAndDecode(escrow, fulfillment);
         address fulfiller = _recordedFulfiller(fulfillment);
         for (uint256 s; s < splits.length; ++s) {
             address recipient = _resolveSentinel(splits[s].recipient, fulfillment, fulfiller);
@@ -164,7 +162,7 @@ abstract contract TokenBundleSplitterBase is BaseSplitter, ERC1155Holder {
         uint256 nativeBefore = address(this).balance;
         uint256[] memory erc20Before = _erc20Balances(escrowData);
         uint256[] memory erc1155Before = _erc1155Balances(escrowData);
-        escrowObligation.collect(escrow, fulfillment);
+        _collectEscrow(escrow, fulfillment);
         _verifyCollectedDeltas(escrowData, nativeBefore, erc20Before, erc1155Before);
     }
 

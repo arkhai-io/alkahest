@@ -134,7 +134,7 @@ contract ERC1155SplitterTest is Test {
         assertFalse(splitter.check(attackerF, demand, escrowUid));
 
         Attestation memory f = eas.getAttestation(fulfillmentUid);
-        assertTrue(splitter.check(f, demand, escrowUid));
+        assertFalse(splitter.check(f, demand, escrowUid));
     }
 
     function testArbitrateRejectsZeroFulfillment() public {

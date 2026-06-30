@@ -234,7 +234,7 @@ contract ERC20SplitterTest is Test {
     // check
     // -----------------------------------------------------------------
 
-    function testCheckObligationReturnsTrueWhenDecisionExists() public {
+    function testCheckObligationReturnsFalseWhenDecisionExistsOutsideSettlement() public {
         bytes32 escrowUid = _createEscrow(buyer, AMOUNT, uint64(block.timestamp + EXPIRATION));
         bytes32 fulfillmentUid = _createFulfillmentViaSplitter(executor, escrowUid);
 
@@ -245,7 +245,7 @@ contract ERC20SplitterTest is Test {
 
         bytes memory demand = abi.encode(ERC20Splitter.DemandData({oracle: oracle, data: bytes("")}));
         Attestation memory fulfillmentAttestation = eas.getAttestation(fulfillmentUid);
-        assertTrue(splitter.check(fulfillmentAttestation, demand, escrowUid));
+        assertFalse(splitter.check(fulfillmentAttestation, demand, escrowUid));
     }
 
     function testCheckObligationReturnsFalseWhenNoDecision() public {
@@ -356,6 +356,34 @@ contract ERC20SplitterTest is Test {
         splitter.arbitrate(fulfillmentUid, escrowUid, splits);
 
         // Anyone can call collectAndDistribute
+        vm.prank(carol);
+        splitter.collectAndDistribute(escrowUid, fulfillmentUid);
+
+        assertEq(token.balanceOf(alice), 60 * 10 ** 18);
+        assertEq(token.balanceOf(bob), 40 * 10 ** 18);
+        assertEq(token.balanceOf(address(splitter)), 0);
+    }
+
+    function testDirectEscrowCollectCannotBypassSplitterSettlement() public {
+        bytes32 escrowUid = _createEscrow(buyer, AMOUNT, uint64(block.timestamp + EXPIRATION));
+        bytes32 fulfillmentUid = _createFulfillmentViaSplitter(executor, escrowUid);
+
+        ERC20Splitter.Split[] memory splits = new ERC20Splitter.Split[](2);
+        splits[0] = ERC20Splitter.Split({recipient: alice, amount: 60 * 10 ** 18});
+        splits[1] = ERC20Splitter.Split({recipient: bob, amount: 40 * 10 ** 18});
+
+        vm.prank(oracle);
+        splitter.arbitrate(fulfillmentUid, escrowUid, splits);
+
+        vm.prank(carol);
+        vm.expectRevert(BaseEscrowObligation.InvalidFulfillment.selector);
+        escrowObligation.collect(escrowUid, fulfillmentUid);
+
+        Attestation memory escrowAttestation = eas.getAttestation(escrowUid);
+        assertEq(escrowAttestation.revocationTime, 0, "direct collect should not consume escrow");
+        assertEq(token.balanceOf(address(splitter)), 0, "direct collect should not strand tokens");
+        assertEq(token.balanceOf(address(escrowObligation)), AMOUNT, "escrow should still hold tokens");
+
         vm.prank(carol);
         splitter.collectAndDistribute(escrowUid, fulfillmentUid);
 

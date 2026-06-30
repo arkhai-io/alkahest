@@ -4,6 +4,7 @@ pragma solidity ^0.8.26;
 import "forge-std/Test.sol";
 import {BaseSplitter} from "@src/utils/splitters/BaseSplitter.sol";
 import {NativeTokenSplitter} from "@src/utils/splitters/NativeTokenSplitter.sol";
+import {BaseEscrowObligation} from "@src/BaseEscrowObligation.sol";
 import {NativeTokenEscrowObligation} from "@src/obligations/escrow/default/NativeTokenEscrowObligation.sol";
 import {StringObligation} from "@src/obligations/StringObligation.sol";
 import {IEscrow} from "@src/IEscrow.sol";
@@ -84,7 +85,7 @@ contract NativeTokenSplitterTest is Test {
         assertEq(f.recipient, address(splitter));
     }
 
-    function testCreateFulfillmentDoesNotRefundVictimEscrowCollectedByMaliciousObligation() public {
+    function testCreateFulfillmentRejectsVictimEscrowCollectedByMaliciousObligation() public {
         bytes32 victimEscrowUid = _createEscrow(buyer, AMOUNT, uint64(block.timestamp + EXPIRATION));
         bytes32 victimFulfillmentUid = _createFulfillmentViaSplitter(executor, victimEscrowUid);
 
@@ -103,14 +104,16 @@ contract NativeTokenSplitterTest is Test {
         uint256 attackerBalanceBefore = attacker.balance;
 
         vm.prank(attacker);
+        vm.expectRevert(BaseEscrowObligation.InvalidFulfillment.selector);
         splitter.createFulfillment(address(maliciousObligation), attackData, 0, bytes32(0));
 
         assertEq(attacker.balance, attackerBalanceBefore, "attacker does not receive victim escrow as refund");
-        assertEq(address(splitter).balance, AMOUNT, "victim escrow remains in splitter until distributed");
+        assertEq(address(splitter).balance, 0, "victim escrow is not collected into splitter");
+        assertEq(address(escrowObligation).balance, AMOUNT, "victim escrow remains locked");
         assertEq(alice.balance, 0, "victim split has not been distributed through fake refund path");
 
         Attestation memory victimEscrow = eas.getAttestation(victimEscrowUid);
-        assertGt(victimEscrow.revocationTime, 0, "malicious obligation consumed victim escrow");
+        assertEq(victimEscrow.revocationTime, 0, "malicious obligation does not consume victim escrow");
     }
 
     function testCollectAndDistribute() public {

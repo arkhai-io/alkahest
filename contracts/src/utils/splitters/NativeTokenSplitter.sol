@@ -100,7 +100,7 @@ contract NativeTokenSplitter is BaseSplitter {
         DemandData memory demandData = abi.decode(escrowData.demand, (DemandData));
         splits = decisions[demandData.oracle][_decisionKey(fulfillment, escrow)];
         uint256 balanceBefore = address(this).balance;
-        escrowObligation.collect(escrow, fulfillment);
+        _collectEscrow(escrow, fulfillment);
         SplitterVerification.verifyDelta(balanceBefore, address(this).balance, escrowData.amount);
     }
 

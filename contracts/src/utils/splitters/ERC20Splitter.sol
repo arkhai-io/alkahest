@@ -101,7 +101,10 @@ contract ERC20Splitter is BaseSplitter {
         emit EscrowCollectedAndDistributed(escrow, fulfillment, fulfiller, token, splits);
     }
 
-    function _collectAndDecode(bytes32 escrow, bytes32 fulfillment) internal returns (Split[] memory splits, address token) {
+    function _collectAndDecode(bytes32 escrow, bytes32 fulfillment)
+        internal
+        returns (Split[] memory splits, address token)
+    {
         Attestation memory escrowAttestation = eas.getAttestation(escrow);
         escrowAttestation.verifyEscrowAttestation(address(escrowObligation));
         Attestation memory fulfillmentAttestation = eas.getAttestation(fulfillment);
@@ -112,7 +115,7 @@ contract ERC20Splitter is BaseSplitter {
         splits = decisions[demandData.oracle][_decisionKey(fulfillment, escrow)];
         token = escrowData.token;
         uint256 balanceBefore = IERC20(token).balanceOf(address(this));
-        escrowObligation.collect(escrow, fulfillment);
+        _collectEscrow(escrow, fulfillment);
         SplitterVerification.verifyDelta(balanceBefore, IERC20(token).balanceOf(address(this)), escrowData.amount);
     }
 

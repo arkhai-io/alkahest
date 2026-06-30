@@ -180,9 +180,18 @@ later unconditional escrows`.
 
 ### ALKA-31: Direct Escrow Collection Bricks Splitter Settlement
 
-Status: open.
+Status: fixed locally, pending commit hash.
 
 Severity in report: High.
+
+Resolution: splitters now require an active splitter-initiated settlement for
+their arbiter `check` to accept an oracle decision. `collectAndDistribute` and
+`unsafePartiallyCollectAndDistribute` open this transient gate only around the
+canonical escrow `collect` call for the matching `(fulfillment, escrow)` pair.
+Direct calls to the underlying escrow therefore fail before revocation and leave
+the escrow assets locked for the intended splitter settlement path. Regression
+coverage verifies that direct ERC20 escrow collection cannot strand funds in the
+splitter, while permissionless splitter collection still succeeds.
 
 Report title: `Any caller can permanently brick splitter settlements by calling
 the underlying escrow directly`.

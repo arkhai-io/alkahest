@@ -63,6 +63,8 @@ abstract contract BaseSplitter is BaseArbiter, ReentrancyGuard {
 
     /// @notice Whether an oracle has recorded a decision for a decision key.
     mapping(address => mapping(bytes32 => bool)) public hasDecision;
+    /// @notice Whether the splitter is currently collecting the escrow for a decision key.
+    mapping(bytes32 => bool) public activeSettlement;
     /// @notice External fulfiller recorded for splitter-owned fulfillments.
     mapping(bytes32 => address) public fulfillers;
 
@@ -92,7 +94,8 @@ abstract contract BaseSplitter is BaseArbiter, ReentrancyGuard {
     {
         fulfillment.verifyFulfillmentRecipient();
         SplitterDemandData memory demandData = abi.decode(demand, (SplitterDemandData));
-        return hasDecision[demandData.oracle][_decisionKey(fulfillment.uid, escrow)];
+        bytes32 decisionKey = _decisionKey(fulfillment.uid, escrow);
+        return activeSettlement[decisionKey] && hasDecision[demandData.oracle][decisionKey];
     }
 
     /// @notice Creates a fulfillment attestation addressed to this splitter and records the caller as fulfiller.
@@ -120,6 +123,13 @@ abstract contract BaseSplitter is BaseArbiter, ReentrancyGuard {
 
     function _setDecisionRecorded(address oracle, bytes32 decisionKey) internal {
         hasDecision[oracle][decisionKey] = true;
+    }
+
+    function _collectEscrow(bytes32 escrow, bytes32 fulfillment) internal returns (bytes memory result) {
+        bytes32 decisionKey = _decisionKey(fulfillment, escrow);
+        activeSettlement[decisionKey] = true;
+        result = escrowObligation.collect(escrow, fulfillment);
+        activeSettlement[decisionKey] = false;
     }
 
     function _recordedFulfiller(bytes32 fulfillment) internal view returns (address fulfiller) {
