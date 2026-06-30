@@ -3,7 +3,7 @@ import { abi as nativeTokenPaymentAbi } from "../../../contracts/obligations/pay
 import { abi as atomicPaymentUtilsAbi } from "../../../contracts/utils/AtomicPaymentUtils";
 import type { Demand } from "../../../types";
 import { assertDeployedContract, getAttestation, getAttestedEventFromTxHash, type ViemClient } from "../../../utils";
-import { getAtomicPaymentEscrowAttestation, type AtomicPaymentOptions } from "../atomicPaymentSafety";
+import { getAtomicPaymentEscrowAttestation, type AtomicPaymentOptions } from "../../../contractSafety";
 import type { NativeTokenAddresses } from "./index";
 
 const nativePaymentDoObligationFunction = getAbiItem({

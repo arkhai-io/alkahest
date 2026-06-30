@@ -1,6 +1,6 @@
 import { isAddressEqual, zeroAddress } from "viem";
-import type { ChainAddresses } from "../../types";
-import { getAttestation, type ViemClient } from "../../utils";
+import type { ChainAddresses } from "./types";
+import { getAttestation, type ViemClient } from "./utils";
 
 export type AtomicPaymentOptions = {
   /**
