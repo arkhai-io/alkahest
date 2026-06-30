@@ -316,6 +316,9 @@ Severity in report: High.
 Implementation commit:
 `301e0c0197443211d7c683368946cd443971c422`.
 
+Commitment splitter variant implementation:
+`4758c6bd374e2b94a298edcd0498388af494e57b`.
+
 Report title: `Oracle-gated commit-reveal still allows post-reveal settlement
 theft before collect`.
 
@@ -351,6 +354,11 @@ Local fix:
   expiration time, revocability, refUID, and data hash. A copied reveal with a
   different recipient therefore has a different intent hash and does not satisfy
   the original oracle approval.
+- Added commitment splitter variants under
+  `contracts/src/utils/splitters/commitment/` so splitter-oracle decisions can
+  use the same pre-fulfillment intent model. These variants let the oracle
+  approve the future splitter-owned fulfillment intent, then allow the executor
+  to create the fulfillment and collect/distribute atomically.
 - Added focused contract tests covering pre-fulfillment approval, copied reveal
   rejection, demand-context scoping, and intent-hash field binding.
 
