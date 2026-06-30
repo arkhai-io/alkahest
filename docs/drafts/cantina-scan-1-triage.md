@@ -162,9 +162,18 @@ EXECUTOR_SENTINEL payouts to an attacker-recorded fulfiller`.
 
 ### ALKA-5: CommitReveal Fulfillment Replay
 
-Status: open.
+Status: fixed locally, pending commit hash.
 
 Severity in report: Critical.
+
+Resolution: split the contract into explicit global and escrow-bound variants.
+`CommitRevealObligation` now intentionally omits escrow binding from the
+commitment preimage and from `checkObligation`, so one reveal can satisfy
+multiple compatible unconditional escrows. The old escrow-scoped behavior was
+renamed to `EscrowBoundCommitRevealObligation`, and its `checkObligation` path
+now requires the fulfillment attestation's `refUID` to equal the escrow UID
+being checked. Regression coverage verifies that the global variant accepts a
+different escrow UID, while the escrow-bound variant rejects it.
 
 Report title: `CommitRevealObligation replays one revealed fulfillment across
 later unconditional escrows`.

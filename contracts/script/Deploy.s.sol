@@ -115,6 +115,7 @@ import {StringObligation} from "@src/obligations/StringObligation.sol";
 
 // Commit Reveal Obligation
 import {CommitRevealObligation} from "@src/obligations/CommitRevealObligation.sol";
+import {EscrowBoundCommitRevealObligation} from "@src/obligations/EscrowBoundCommitRevealObligation.sol";
 
 contract Deploy is Script {
     function run() external virtual {
@@ -177,6 +178,11 @@ contract Deploy is Script {
 
         // Deploy CommitRevealObligation
         CommitRevealObligation commitRevealObligation = new CommitRevealObligation(
+            IEAS(easAddress),
+            ISchemaRegistry(schemaRegistryAddress),
+            0x07dD7186410Aa0fe85670531FC6EFc9cd980c558 // slashedBondRecipient (treasury)
+        );
+        EscrowBoundCommitRevealObligation escrowBoundCommitRevealObligation = new EscrowBoundCommitRevealObligation(
             IEAS(easAddress),
             ISchemaRegistry(schemaRegistryAddress),
             0x07dD7186410Aa0fe85670531FC6EFc9cd980c558 // slashedBondRecipient (treasury)
@@ -303,6 +309,7 @@ contract Deploy is Script {
 
         console.log("\nCommit Reveal Obligation:");
         console.log("CommitRevealObligation:", address(commitRevealObligation));
+        console.log("EscrowBoundCommitRevealObligation:", address(escrowBoundCommitRevealObligation));
 
         console.log("\nERC20 Contracts:");
         console.log("ERC20EscrowObligation:", address(erc20Escrow));
