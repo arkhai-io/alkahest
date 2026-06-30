@@ -135,6 +135,21 @@ rather than a critical protocol failure.
 Constructor-initialized helper contracts are intended for direct deployment
 unless they explicitly include proxy or clone initialization support.
 
+## Commit-Reveal With Oracles
+
+`CommitRevealObligation` hides fulfillment data only until the fulfillment is
+revealed on-chain. After the reveal transaction, the payload, salt, recipient,
+reference UID, and expiration time are public EAS attestation fields and can be
+copied into another commitment/reveal lifecycle.
+
+For synchronous settlement, users should prefer atomic reveal-and-collect flows
+where the fulfillment is revealed and collected in the same transaction. For
+async oracle settlement, the intended model is that the fulfiller reveals the
+payload privately to the oracle first, or that the oracle otherwise binds its
+approval to the intended fulfillment UID, recipient, and demand context. An
+oracle that approves copied public reveal payloads for new recipients is making
+a policy decision outside the secrecy guarantee that commit-reveal provides.
+
 ## Splitter Fulfillment Helpers
 
 Splitter fulfillment helpers create attestations whose recipient is the splitter

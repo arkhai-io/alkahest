@@ -309,12 +309,41 @@ Local fix:
 
 ### ALKA-2: Commit-Reveal Post-Reveal Settlement Theft
 
-Status: open.
+Status: acknowledged integration issue; no contract patch.
 
 Severity in report: High.
 
 Report title: `Oracle-gated commit-reveal still allows post-reveal settlement
 theft before collect`.
+
+Current assessment: the reported behavior is real for an unsafe oracle flow, but
+it is outside what `CommitRevealObligation` promises to enforce by itself.
+
+`CommitRevealObligation` provides secrecy only until the public reveal. Once the
+fulfillment attestation exists, its data, salt, recipient, reference UID, and
+expiration time are public EAS fields. A later committer can copy that public
+payload into their own commitment/reveal lifecycle if another arbiter or oracle
+is willing to approve the copied fulfillment.
+
+The contract intentionally does not reserve an escrow for the first revealer.
+The current commit-reveal design is globally reusable: one fulfillment
+attestation can satisfy multiple escrows that intentionally accept the same EAS
+attestation, and escrow binding is composed separately with arbiters such as
+`ReferencesEscrowArbiter`. Adding per-escrow reservation to
+`CommitRevealObligation` would reintroduce escrow-specific settlement semantics
+into a general EAS obligation.
+
+For synchronous flows, the provided mitigation is atomic reveal-and-collect. For
+async oracle-gated flows, the intended model is that the fulfiller reveals the
+payload privately to the oracle before the public EAS reveal, or that the oracle
+binds approval to the intended fulfillment UID, recipient, and demand context.
+An oracle that approves copied public reveal payloads for new recipients is
+making a policy decision outside the secrecy guarantee commit-reveal provides.
+
+Documentation update:
+
+- `docs/security-model.md` now documents the commit-reveal/oracle integration
+  model.
 
 ### ALKA-19: SDK Presets Wire Unreleased Surfaces To Zero Address
 
