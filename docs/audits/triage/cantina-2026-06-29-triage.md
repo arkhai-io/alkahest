@@ -313,6 +313,9 @@ Status: addressed with optional commitment-oracle primitive.
 
 Severity in report: High.
 
+Implementation commit:
+`301e0c0197443211d7c683368946cd443971c422`.
+
 Report title: `Oracle-gated commit-reveal still allows post-reveal settlement
 theft before collect`.
 
