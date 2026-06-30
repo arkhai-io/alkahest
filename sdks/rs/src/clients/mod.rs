@@ -1,4 +1,5 @@
 pub mod arbiters;
+pub(crate) mod contract_safety;
 pub mod obligations;
 pub mod splitters;
 

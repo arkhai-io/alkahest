@@ -1,5 +1,5 @@
 import { abi as atomicAttestationUtilsAbi } from "../../../contracts/utils/AtomicAttestationUtils";
-import { getAttestedEventsFromTxHash, type ViemClient } from "../../../utils";
+import { assertDeployedContract, getAttestedEventsFromTxHash, type ViemClient } from "../../../utils";
 import type { AttestationAddresses } from "./index";
 
 /**
@@ -42,6 +42,8 @@ export const makeAttestationUtilClient = (viemClient: ViemClient, addresses: Att
       escrowData: ReferenceEscrowData,
       escrowExpirationTime: bigint,
     ) => {
+      assertDeployedContract(addresses.atomicUtils, "AtomicAttestationUtils");
+      assertDeployedContract(addresses.attestationReferenceEscrowObligation, "AttestationReferenceEscrowObligation");
       const hash = await viemClient.writeContract({
         address: addresses.atomicUtils,
         abi: atomicAttestationUtilsAbi.abi,

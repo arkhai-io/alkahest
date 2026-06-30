@@ -1,4 +1,14 @@
-import { type Account, type Chain, type PublicActions, parseEventLogs, type Transport, type WalletClient } from "viem";
+import {
+  type Account,
+  type Address,
+  type Chain,
+  type PublicActions,
+  isAddressEqual,
+  parseEventLogs,
+  type Transport,
+  type WalletClient,
+  zeroAddress,
+} from "viem";
 import { contractAddresses } from "../config";
 import { abi as easAbi, abi as iEasAbi } from "../contracts/IEAS";
 import type { ChainAddresses, TokenBundle, TokenBundleFlat } from "../types";
@@ -94,10 +104,18 @@ export const flattenTokenBundle = (bundle: TokenBundle): TokenBundleFlat => ({
   erc1155Amounts: bundle.erc1155s.map((x) => x.value),
 });
 
+/** Throw when a configured SDK contract address is not deployed for this chain. */
+export const assertDeployedContract = (address: Address, label: string = "contract") => {
+  if (isAddressEqual(address, zeroAddress)) {
+    throw new Error(`${label} is not deployed for this chain`);
+  }
+};
+
 /**
  * Wrapper for viemClient.writeContract that adds required chain parameter
  */
 export const writeContract = async (viemClient: ViemClient, params: Parameters<ViemClient["writeContract"]>[0]) => {
+  assertDeployedContract(params.address, String(params.functionName ?? "contract"));
   return viemClient.writeContract({
     ...params,
     chain: viemClient.chain,

@@ -7,7 +7,10 @@ use alloy::rpc::types::TransactionReceipt;
 use alloy::sol;
 use alloy::sol_types::SolValue;
 
-use crate::clients::obligations::atomic_payment_safety::ensure_packaged_escrow_attester;
+use crate::clients::{
+    contract_safety::ensure_deployed_contract,
+    obligations::atomic_payment_safety::ensure_packaged_escrow_attester,
+};
 use crate::contracts;
 use crate::types::{DecodedAttestation, NativeTokenData};
 
@@ -70,6 +73,10 @@ impl<'a> Payment<'a> {
         price: &NativeTokenData,
         payee: Address,
     ) -> eyre::Result<TransactionReceipt> {
+        ensure_deployed_contract(
+            self.module.addresses.payment_obligation,
+            "NativeTokenPaymentObligation",
+        )?;
         let payment_obligation_contract = contracts::obligations::NativeTokenPaymentObligation::new(
             self.module.addresses.payment_obligation,
             &self.module.wallet_provider,
@@ -124,6 +131,10 @@ impl<'a> Payment<'a> {
         escrow_uid: FixedBytes<32>,
         amount: U256,
     ) -> eyre::Result<TransactionReceipt> {
+        ensure_deployed_contract(
+            self.module.addresses.atomic_payment_utils,
+            "AtomicPaymentUtils",
+        )?;
         let utility = contracts::utils::AtomicPaymentUtils::new(
             self.module.addresses.atomic_payment_utils,
             &self.module.wallet_provider,

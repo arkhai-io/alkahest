@@ -279,12 +279,33 @@ out-of-model state.
 
 ### ALKA-28: SDK Configs Send Payable Calls To Zero Address
 
-Status: open.
+Status: fixed.
 
 Severity in report: High.
 
 Report title: `Supported Ethereum and GenLayer SDK configs send payable helper
 calls to 0x0`.
+
+Current assessment: valid SDK configuration-safety issue.
+
+Address fields remain non-optional because configured contracts are expected to
+exist for a fully supported chain. Zero addresses in partial deployment presets
+therefore represent configuration errors, not normal optional state. SDK helper
+methods must fail before submitting a transaction to a missing configured
+contract, especially for value-bearing calls.
+
+Local fix:
+
+- TypeScript added `assertDeployedContract()` and applies it in the shared
+  `writeContract()` helper.
+- TypeScript direct simulate/write paths that bypass the shared helper now
+  preflight `AtomicAttestationUtils`, attestation-reference escrow, native-token
+  escrow, native-token unconditional escrow, native-token payment, and native
+  atomic payment utility addresses before value-bearing calls.
+- Rust added `ensure_deployed_contract()` and applies it before native-token
+  default/unconditional escrow creation, native-token payment, and native-token
+  atomic payment collection. Python inherits these checks through its Rust
+  wrappers.
 
 ### ALKA-2: Commit-Reveal Post-Reveal Settlement Theft
 

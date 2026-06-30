@@ -2,7 +2,7 @@ import { type Address, decodeAbiParameters, encodeAbiParameters, getAbiItem } fr
 import { abi as nativeTokenPaymentAbi } from "../../../contracts/obligations/payment/NativeTokenPaymentObligation";
 import { abi as atomicPaymentUtilsAbi } from "../../../contracts/utils/AtomicPaymentUtils";
 import type { Demand } from "../../../types";
-import { getAttestation, getAttestedEventFromTxHash, type ViemClient } from "../../../utils";
+import { assertDeployedContract, getAttestation, getAttestedEventFromTxHash, type ViemClient } from "../../../utils";
 import { getAtomicPaymentEscrowAttestation, type AtomicPaymentOptions } from "../atomicPaymentSafety";
 import type { NativeTokenAddresses } from "./index";
 
@@ -171,6 +171,7 @@ export const makeNativeTokenPaymentClient = (viemClient: ViemClient, addresses: 
       data: NativeTokenPaymentObligationData,
       refUID: `0x${string}` = "0x0000000000000000000000000000000000000000000000000000000000000000",
     ) => {
+      assertDeployedContract(addresses.paymentObligation, "NativeTokenPaymentObligation");
       const { request } = await viemClient.simulateContract({
         address: addresses.paymentObligation,
         abi: nativeTokenPaymentAbi.abi,
@@ -189,6 +190,7 @@ export const makeNativeTokenPaymentClient = (viemClient: ViemClient, addresses: 
       recipient: `0x${string}`,
       refUID: `0x${string}` = "0x0000000000000000000000000000000000000000000000000000000000000000",
     ) => {
+      assertDeployedContract(addresses.paymentObligation, "NativeTokenPaymentObligation");
       const { request } = await viemClient.simulateContract({
         address: addresses.paymentObligation,
         abi: nativeTokenPaymentAbi.abi,
@@ -209,6 +211,7 @@ export const makeNativeTokenPaymentClient = (viemClient: ViemClient, addresses: 
      */
     payNativeAndCollect: async (escrowUid: `0x${string}`, options?: AtomicPaymentOptions) => {
       const demand = await getPaymentDemand(escrowUid, options);
+      assertDeployedContract(addresses.atomicPaymentUtils, "AtomicPaymentUtils");
       const hash = await viemClient.writeContract({
         address: addresses.atomicPaymentUtils,
         abi: atomicPaymentUtilsAbi.abi,
