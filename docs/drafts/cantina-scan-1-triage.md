@@ -204,7 +204,7 @@ the underlying escrow directly`.
 
 ### ALKA-34: Unsafe Partial Splitter Settlement
 
-Status: fixed locally, pending commit hash.
+Status: fixed in `9c157b984bc4e654029de8184c8a630a2cf2b151`.
 
 Severity in report: High.
 
