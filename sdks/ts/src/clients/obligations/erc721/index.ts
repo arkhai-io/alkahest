@@ -1,6 +1,6 @@
 import type { ChainAddresses } from "../../../types";
 import type { ViemClient } from "../../../utils";
-import { pickPackagedEscrowObligations } from "../../../contractSafety";
+import { pickPackagedEscrowObligations } from "../atomicPaymentSafety";
 import { type Erc721EscrowClient, makeErc721EscrowClient } from "./escrow";
 import { type Erc721PaymentClient, makeErc721PaymentClient } from "./payment";
 import { type Erc721UtilClient, makeErc721UtilClient } from "./util";

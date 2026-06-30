@@ -3,7 +3,7 @@ import { abi as erc1155PaymentAbi } from "../../../contracts/obligations/payment
 import { abi as atomicPaymentUtilsAbi } from "../../../contracts/utils/AtomicPaymentUtils";
 import type { Erc1155 } from "../../../types";
 import { getAttestation, getAttestedEventFromTxHash, type ViemClient, writeContract } from "../../../utils";
-import { getAtomicPaymentEscrowAttestation, type AtomicPaymentOptions } from "../../../contractSafety";
+import { getAtomicPaymentEscrowAttestation, type AtomicPaymentOptions } from "../atomicPaymentSafety";
 import type { Erc1155Addresses } from "./index";
 import { makeErc1155UtilClient } from "./util";
 

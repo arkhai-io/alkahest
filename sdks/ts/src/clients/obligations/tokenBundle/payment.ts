@@ -9,7 +9,7 @@ import {
   type ViemClient,
   writeContract,
 } from "../../../utils";
-import { getAtomicPaymentEscrowAttestation, type AtomicPaymentOptions } from "../../../contractSafety";
+import { getAtomicPaymentEscrowAttestation, type AtomicPaymentOptions } from "../atomicPaymentSafety";
 import type { TokenBundleAddresses } from "./index";
 import { makeTokenBundleUtilClient } from "./util";
 
