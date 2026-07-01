@@ -560,12 +560,38 @@ Verification:
 
 ### ALKA-10: TrustedOracle Status Helper Context
 
-Status: open.
+Status: fixed.
+
+Completed by `0674f58827458eba8dff1622412f2404076c62aa`.
 
 Severity in report: Medium.
 
 Report title: `TrustedOracle arbitration status helpers treat any
 fulfillment-level event as the final decision`.
+
+Current assessment: valid SDK correctness issue.
+
+`TrustedOracleArbiter.check()` accepts a decision only when the oracle has
+recorded the specific key `keccak256(fulfillmentUid, DemandData.data)`.
+The SDK status helpers were querying `ArbitrationMade` logs only by
+`fulfillmentUid` and `oracle`, so a decision for the same fulfillment/oracle but
+a different context could be treated as final by off-chain tooling.
+
+Local fix:
+
+- Added demand-context parameters to `checkExistingArbitration()` and
+  `waitForArbitration()`.
+- Derived and filtered on the emitted `decisionKey` in those helpers.
+- Updated `arbitrateMany({ mode: "pastUnarbitrated" | "allUnarbitrated" })`
+  dedupe to filter by `decisionKey`, not just fulfillment/oracle.
+- Added regression coverage for a wrong-key event that must not suppress the
+  valid arbitration path.
+
+Verification:
+
+- `bun run build` passed.
+- `bun test tests/unit/oracle.test.ts` passed with Anvil escalation.
+- `bun test tests/unit/generalArbiters.test.ts` passed with Anvil escalation.
 
 ### ALKA-7: AttestationReferenceEscrowObligation Revocability
 
