@@ -488,12 +488,38 @@ the current Sepolia manifest.
 
 ### ALKA-21: TypeScript Bundle Clients Native Value
 
-Status: open.
+Status: fixed.
+
+Completed by `5da299ead5e5e37204a274784a37b63753351d08`.
 
 Severity in report: Medium.
 
 Report title: `Shipped TypeScript bundle clients cannot represent or forward
 native value, breaking every mixed-native bundle flow`.
+
+Current assessment: valid SDK bug.
+
+The token bundle contracts support native-token legs, but the TypeScript
+ergonomic bundle type omitted `nativeAmount`, `flattenTokenBundle()` always
+encoded zero native value, and the high-level payment, escrow, and atomic
+bundle collection helpers did not forward `msg.value`.
+
+Local fix:
+
+- Added optional `nativeAmount` to the TypeScript `TokenBundle` type.
+- Preserved `nativeAmount` when flattening bundle inputs.
+- Forwarded native value in bundle payment creation, bundle escrow creation,
+  and atomic `payBundleAndCollect()`.
+- Added regression coverage for native bundle flattening, encoding, and atomic
+  collection value forwarding.
+
+Verification:
+
+- `bun test tests/unit/tokenBundleNative.test.ts` passed.
+- `bun run build` passed.
+- `bun test tests/unit` was rerun with escalation for Anvil spawning; the
+  token-bundle tests passed, but the suite still has unrelated failures in the
+  websocket Anvil timeout and commit-reveal lifecycle ABI argument tests.
 
 ### ALKA-3: TrustedOracle Authorizer Hidden By Demand Helpers
 
