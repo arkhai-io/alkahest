@@ -369,12 +369,42 @@ Documentation update:
 
 ### ALKA-19: SDK Presets Wire Unreleased Surfaces To Zero Address
 
-Status: open.
+Status: fixed.
 
 Severity in report: High.
 
 Report title: `Supported-chain presets silently wire unreleased hook and
 splitter surfaces to address(0), allowing ETH burns`.
+
+Runtime zero-address guards:
+`d25f00b921f4f183e000f0d1adfc09134a0f9356`.
+
+Commit-reveal value-send follow-up:
+`71a724063524447ac02cda887ca2dab4d85b71b2`.
+
+Current assessment: addressed by the SDK zero-address guard work from ALKA-28,
+with one additional direct value-bearing commit-reveal path fixed during review.
+
+The report's concrete burn path depended on TypeScript SDK helpers sending
+native value to configured zero addresses for unreleased hook/splitter surfaces.
+Those helpers now use the shared SDK `writeContract()` wrapper, which rejects
+`address(0)` before broadcasting. Splitter helper writes also route through that
+same wrapper.
+
+The separate direct value-bearing SDK paths that bypass the shared wrapper have
+explicit guards:
+
+- TypeScript guards atomic attestation, attestation-reference escrow,
+  native-token default/unconditional escrow, native-token payment, native atomic
+  payment, and commit-reveal bond/raw-value calls.
+- Rust guards native-token default/unconditional escrow, native-token payment,
+  native atomic payment, and commit-reveal bond/raw-value calls. Python inherits
+  the Rust wrapper behavior.
+
+Supported-chain presets may still contain zero placeholders for unreleased or
+not-yet-deployed surfaces, but packaged value-bearing SDK helpers now fail
+closed before sending funds. Remaining zero-address presentation and decoder
+ergonomics are tracked by the separate address-metadata items.
 
 ### ALKA-9: TrustedOracle Manual Arbitration Helper Key Mismatch
 
