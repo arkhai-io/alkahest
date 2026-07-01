@@ -175,6 +175,6 @@ Variants: `exclusiveRevocable`, `exclusiveUnrevocable`, `nonexclusiveRevocable`,
 ```typescript
 const attestation = await client.getAttestation(uid);
 const data = client.extractObligationData(erc20EscrowObligationAbi, attestation);
-const demandData = client.extractDemandData(trustedOracleArbiterDemandAbi, escrowAttestation);
+const condition = client.decodeEscrowCondition(escrowAttestation);
 const decoded = client.decodeDemand({ arbiter: arbiterAddress, demand: demandBytes });
 ```
