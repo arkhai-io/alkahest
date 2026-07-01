@@ -14,6 +14,14 @@ The protocol deliberately leaves many policy choices to the escrow creator,
 arbiter, oracle, splitter oracle, SDK, or application. A configuration can be
 bad, permissive, or economically irrational without being a protocol bug.
 
+Attacks that require a user or integration to intentionally choose a malicious
+external contract are not protocol-level issues when the effects are confined to
+flows coordinated through that malicious contract. For example, if a helper
+validates that a fulfillment was attested by the caller-selected obligation
+contract, then a malicious obligation can only equivocate about attestations it
+created itself. That is an integration trust failure, not a breach of unrelated
+escrows or attestations produced by independent contracts.
+
 ## Attester Authority
 
 An EAS attestation is not automatically authoritative because it was emitted by
