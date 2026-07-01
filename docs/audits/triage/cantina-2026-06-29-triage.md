@@ -408,12 +408,37 @@ ergonomics are tracked by the separate address-metadata items.
 
 ### ALKA-9: TrustedOracle Manual Arbitration Helper Key Mismatch
 
-Status: open.
+Status: fixed.
 
 Severity in report: Medium.
 
 Report title: `TrustedOracle manual arbitration helper records a decision key
 that collect() never checks`.
+
+Fixed by:
+`25c6bd929fb52663a4564062d66f0a242afd0f7c`.
+
+Current assessment: valid SDK API ambiguity, not a Solidity arbiter bug.
+
+`TrustedOracleArbiter.check()` intentionally verifies decisions under
+`keccak256(fulfillment.uid, DemandData.data)`, while the on-chain
+`arbitrate()` entry point accepts that raw inner decision context. The previous
+manual SDK helpers were named as if they accepted the escrow demand, but
+forwarded the supplied bytes directly. Passing the full encoded
+`TrustedOracleArbiter.DemandData` therefore recorded a decision under a key that
+`check()` would never read.
+
+Local fix:
+
+- TypeScript now exposes `arbitrateForDemand()` for the encoded outer demand
+  and `arbitrateRaw()` for the inner decision context.
+- Rust/Python mirror this as `arbitrate_for_demand()` and `arbitrate_raw()`.
+- The demand-based helpers decode `DemandData`, verify the demanded oracle is
+  the calling client, and submit only `DemandData.data` to the contract.
+- Rust automated arbitration paths now decode and verify event demand bytes
+  before submitting decisions, matching the existing TypeScript behavior.
+- Added TypeScript coverage proving that `arbitrateForDemand()` rejects the
+  wrong oracle and records a decision accepted by `check()`.
 
 ### ALKA-23: Stale Commit-Reveal Docs
 
