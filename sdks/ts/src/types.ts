@@ -157,8 +157,10 @@ export type Demand = {
   demand: `0x${string}`;
 };
 
-/** Mixed token bundle without native-token amount. */
+/** Mixed token bundle used by payment and escrow helpers. */
 export type TokenBundle = {
+  /** Native token amount, or zero/omitted for no native token leg. */
+  nativeAmount?: bigint;
   erc20s: Erc20[];
   erc721s: Erc721[];
   erc1155s: Erc1155[];

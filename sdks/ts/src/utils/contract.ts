@@ -8,16 +8,19 @@ import {
 import { assertDeployedContract } from "./contractSafety";
 
 export type ViemClient = WalletClient<Transport, Chain, Account> & PublicActions;
+type WriteContractParams = Omit<Parameters<ViemClient["writeContract"]>[0], "value"> & {
+  value?: bigint;
+};
 
 /**
  * Wrapper for viemClient.writeContract that adds required chain parameter.
  */
-export const writeContract = async (viemClient: ViemClient, params: Parameters<ViemClient["writeContract"]>[0]) => {
+export const writeContract = async (viemClient: ViemClient, params: WriteContractParams) => {
   assertDeployedContract(params.address, String(params.functionName ?? "contract"));
   return viemClient.writeContract({
     ...params,
     chain: viemClient.chain,
-  });
+  } as Parameters<ViemClient["writeContract"]>[0]);
 };
 
 /**

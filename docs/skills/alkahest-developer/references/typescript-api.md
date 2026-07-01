@@ -43,7 +43,7 @@ Auto-detected from viem client's chain. Override with second arg to `makeClient`
 type Erc20 = { address: `0x${string}`; value: bigint };
 type Erc721 = { address: `0x${string}`; id: bigint };
 type Erc1155 = { address: `0x${string}`; id: bigint; value: bigint };
-type TokenBundle = { erc20s: Erc20[]; erc721s: Erc721[]; erc1155s: Erc1155[] };
+type TokenBundle = { nativeAmount?: bigint; erc20s: Erc20[]; erc721s: Erc721[]; erc1155s: Erc1155[] };
 type Demand = { arbiter: `0x${string}`; demand: `0x${string}` };
 type Attestation = {
   uid: `0x${string}`; schema: `0x${string}`; time: bigint;
