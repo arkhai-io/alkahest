@@ -926,9 +926,28 @@ still-pending request for the same fulfillment and oracle.
 
 ### ALKA-22: Confirmation Request Helper Escrow Binding
 
-Status: open.
+Status: fixed in `2bf3ef55ee103ccabf8b8e9acf30d6d84891b603`.
 
 Severity in report: Low.
 
 Report title: `Confirmation request helpers collapse the (fulfillment, escrow)
 authority key and can route confirmations to the wrong escrow`.
+
+Current assessment: valid SDK helper issue.
+
+On-chain confirmation requests and confirmations are scoped by
+`(fulfillment, confirmer, escrow)`, while the SDK wait helpers previously
+searched only by `(fulfillment, confirmer)`. In multi-escrow flows this could
+surface an older request for the same fulfillment and confirmer but the wrong
+escrow.
+
+Local fix:
+
+- TypeScript confirmation request wait helpers now require `escrow` and filter
+  `ConfirmationRequested` logs by all three indexed fields.
+- Rust confirmation request wait helpers now require `escrow` and include
+  `topic3(escrow)` in the event filter.
+- Python wrappers now require `escrow`, pass it through to Rust, and expose the
+  returned request's escrow in `PyConfirmationRequestedLog`.
+- Added TypeScript regression coverage for all four confirmation helper
+  variants.
