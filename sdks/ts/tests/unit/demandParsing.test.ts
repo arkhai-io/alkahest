@@ -1,10 +1,12 @@
 import { describe, expect, test } from "bun:test";
+import { createWalletClient, custom, encodeAbiParameters, parseAbiParameters } from "viem";
 import {
   AllArbiter,
   AnyArbiter,
   createDecodersFromAddresses,
   decodeDemand,
   decodeDemandWithAddresses,
+  makeClient,
 } from "../../src";
 import { encodeDemand as encodeTrustedOracleDemand } from "../../src/clients/arbiters/general/trustedOracle";
 import type { ChainAddresses, Demand } from "../../src/types";
@@ -150,6 +152,48 @@ describe("Demand Parsing and Static Codecs", () => {
       expect(decoded.children![0]!.demand).toBe(demand.demands[0]!);
       expect(decoded.children![1]!.arbiter).toBe(demand.arbiters[1]!);
       expect(decoded.children![1]!.demand).toBe(demand.demands[1]!);
+    });
+  });
+
+  describe("Escrow condition decoding", () => {
+    test("decodes escrow condition through generic arbiter codecs without hiding TrustedOracle authority", () => {
+      const wallet = createWalletClient({
+        account: mockAddresses.recipientArbiter,
+        chain: {
+          id: 31337,
+          name: "anvil",
+          nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+          rpcUrls: { default: { http: ["http://127.0.0.1:8545"] } },
+        },
+        transport: custom({ request: async () => undefined }),
+      });
+      const client = makeClient(wallet, mockAddresses);
+      const paymentDemandAbi = parseAbiParameters("(address token, uint256 amount, address payee)");
+      const paymentDemand = encodeAbiParameters(paymentDemandAbi, [
+        {
+          token: mockAddresses.erc20PaymentObligation.toLowerCase() as `0x${string}`,
+          amount: 123n,
+          payee: mockAddresses.erc20EscrowObligation.toLowerCase() as `0x${string}`,
+        },
+      ]);
+      const demand = encodeTrustedOracleDemand({
+        oracle: mockAddresses.recipientArbiter.toLowerCase() as `0x${string}`,
+        data: paymentDemand,
+      });
+      const escrowData = encodeAbiParameters(parseAbiParameters("(address arbiter, bytes demand)"), [
+        {
+          arbiter: mockAddresses.trustedOracleArbiter,
+          demand,
+        },
+      ]);
+
+      const condition = client.decodeEscrowCondition({ data: escrowData });
+
+      expect(condition.arbiter).toBe(mockAddresses.trustedOracleArbiter);
+      expect(condition.demand).toBe(demand);
+      expect(condition.decoded.arbiter).toBe(mockAddresses.trustedOracleArbiter);
+      expect(condition.decoded.decoded.oracle).toBe(mockAddresses.recipientArbiter.toLowerCase());
+      expect(condition.decoded.decoded.data).toBe(paymentDemand);
     });
   });
 

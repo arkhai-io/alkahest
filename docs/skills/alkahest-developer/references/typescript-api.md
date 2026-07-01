@@ -65,9 +65,8 @@ client
 ├── getAttestedEventFromTxHash(hash)  // Extract Attested event from tx
 ├── waitForFulfillment(contract, escrowUid, pollingInterval?)
 ├── extractObligationData(abi, attestation)
-├── extractDemandData(abi, escrowAttestation)
 ├── getEscrowAttestation(fulfillment)
-├── getEscrowAndDemand(demandAbi, fulfillment)
+├── decodeEscrowCondition(escrowAttestation)
 ├── decodeDemand({ arbiter, demand })
 │
 ├── arbiters
