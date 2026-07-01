@@ -232,7 +232,7 @@ async fn run_async_uptime_oracle_example(test: &TestContext) -> eyre::Result<()>
                 let decision = uptime >= job.min_uptime;
                 worker_arbiters
                     .trusted_oracle()
-                    .arbitrate(uid, job.demand.clone(), decision)
+                    .arbitrate_raw(uid, job.demand.clone(), decision)
                     .await
                     .expect("oracle arbitration tx should succeed");
             } else {

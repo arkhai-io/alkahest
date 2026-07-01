@@ -78,7 +78,7 @@ async def run_worker(ctx: SchedulerContext, oracle_client) -> None:
             # Submit decision on-chain manually
             # This is the key difference from sync oracles: we call arbitrate()
             # directly instead of returning True/False from the callback
-            await oracle_client.oracle.arbitrate(uid, list(job.demand), decision)
+            await oracle_client.oracle.arbitrate_raw(uid, list(job.demand), decision)
         else:
             # Wait for new work or timeout
             ctx.notify.clear()

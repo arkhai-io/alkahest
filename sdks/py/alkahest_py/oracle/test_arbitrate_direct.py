@@ -14,7 +14,7 @@ from alkahest_py import (
 
 @pytest.mark.asyncio
 async def test_arbitrate_direct(env, alice_client, bob_client, charlie_client):
-    """Test direct arbitration using oracle_client.arbitrate()"""
+    """Test direct arbitration using oracle_client.arbitrate_raw()"""
 
     # Setup escrow
     mock_erc20 = MockERC20(env.mock_addresses.erc20_a, env.god_wallet_provider)
@@ -50,7 +50,7 @@ async def test_arbitrate_direct(env, alice_client, bob_client, charlie_client):
 
     # Charlie (oracle) arbitrates directly
     oracle_client = charlie_client.oracle
-    tx_hash = await oracle_client.arbitrate(fulfillment_uid, inner_demand_data, True)
+    tx_hash = await oracle_client.arbitrate_raw(fulfillment_uid, inner_demand_data, True)
     assert tx_hash is not None, "Arbitration should return a transaction hash"
     assert tx_hash.startswith("0x"), f"Transaction hash should start with 0x, got {tx_hash}"
 
@@ -91,7 +91,7 @@ async def test_wait_for_arbitration(env, alice_client, bob_client, charlie_clien
 
     # Charlie (oracle) arbitrates
     oracle_client = charlie_client.oracle
-    await oracle_client.arbitrate(fulfillment_uid, inner_demand_data, True)
+    await oracle_client.arbitrate_raw(fulfillment_uid, inner_demand_data, True)
 
     # Wait for arbitration event (should find it immediately since it's already done)
     event = await oracle_client.wait_for_arbitration(

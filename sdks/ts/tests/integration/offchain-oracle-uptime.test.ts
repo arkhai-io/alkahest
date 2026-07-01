@@ -108,7 +108,7 @@ function startSchedulerWorker(ctx: SchedulerContext, arbiters: ArbiterModule) {
 
       const uptime = successes / totalChecks;
       const decision = uptime >= job.minUptime;
-      await arbiters.general.trustedOracle.arbitrate(uid, job.demandData, decision);
+      await arbiters.general.trustedOracle.arbitrateRaw(uid, job.demandData, decision);
     }
   })();
 

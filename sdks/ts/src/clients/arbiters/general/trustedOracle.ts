@@ -5,6 +5,7 @@ import {
   decodeAbiParameters,
   encodeAbiParameters,
   getAbiItem,
+  isAddressEqual,
   parseAbiItem,
 } from "viem";
 import { abi as trustedOracleArbiterAbi } from "../../../contracts/arbiters/trusted-oracle/TrustedOracleArbiter";
@@ -132,6 +133,16 @@ export const makeTrustedOracleArbiterClient = (viemClient: ViemClient, addresses
       chain: viemClient.chain,
     });
 
+  const decisionContextFromDemand = (demand: `0x${string}`): `0x${string}` => {
+    const decoded = decodeDemand(demand);
+    if (!isAddressEqual(decoded.oracle, viemClient.account.address)) {
+      throw new Error(
+        `TrustedOracle demand is for oracle ${decoded.oracle}, not this client ${viemClient.account.address}`,
+      );
+    }
+    return decoded.data;
+  };
+
   /**
    * Request arbitration for a fulfillment
    */
@@ -241,7 +252,7 @@ export const makeTrustedOracleArbiterClient = (viemClient: ViemClient, addresses
         // check computes: keccak256(obligation.uid, demand_.data)
         // so arbitrate must use the same inner data
         // Handle empty demand case (contextless arbitration)
-        const innerData = awd.demand && awd.demand !== "0x" ? decodeDemand(awd.demand).data : "0x";
+        const innerData = decisionContextFromDemand(awd.demand);
         const hash = await arbitrateOnchain(awd.attestation.uid, innerData, decision);
         decisionResults.push({ hash, attestation: awd.attestation, decision });
       }
@@ -281,7 +292,7 @@ export const makeTrustedOracleArbiterClient = (viemClient: ViemClient, addresses
             // check computes: keccak256(obligation.uid, demand_.data)
             // so arbitrate must use the same inner data
             // Handle empty demand case (contextless arbitration)
-            const innerData = demand && demand !== "0x" ? decodeDemand(demand).data : "0x";
+            const innerData = decisionContextFromDemand(demand);
             const hash = await arbitrateOnchain(attestation.uid, innerData, decisionResult);
 
             const decision = {
@@ -307,20 +318,25 @@ export const makeTrustedOracleArbiterClient = (viemClient: ViemClient, addresses
     decodeDemand,
 
     /**
-     * Arbitrate on the validity of a fulfillment satisfying a demand
+     * Arbitrate on the validity of a fulfillment satisfying an encoded TrustedOracleArbiter demand.
      * @param fulfillmentUid - bytes32 fulfillment UID
-     * @param demand - bytes demand data
+     * @param demand - encoded TrustedOracleArbiter.DemandData bytes
      * @param decision - bool decision
      * @returns transaction hash
      */
-    arbitrate: async (fulfillmentUid: `0x${string}`, demand: `0x${string}`, decision: boolean) => {
-      const hash = await viemClient.writeContract({
-        address: addresses.trustedOracleArbiter,
-        abi: trustedOracleArbiterAbi.abi,
-        functionName: "arbitrate",
-        args: [fulfillmentUid, demand, decision],
-      });
-      return hash;
+    arbitrateForDemand: async (fulfillmentUid: `0x${string}`, demand: `0x${string}`, decision: boolean) => {
+      return await arbitrateOnchain(fulfillmentUid, decisionContextFromDemand(demand), decision);
+    },
+
+    /**
+     * Arbitrate with the raw inner decision context used in the on-chain decision key.
+     * @param fulfillmentUid - bytes32 fulfillment UID
+     * @param decisionContext - TrustedOracleArbiter.DemandData.data bytes
+     * @param decision - bool decision
+     * @returns transaction hash
+     */
+    arbitrateRaw: async (fulfillmentUid: `0x${string}`, decisionContext: `0x${string}`, decision: boolean) => {
+      return await arbitrateOnchain(fulfillmentUid, decisionContext, decision);
     },
 
     /**
