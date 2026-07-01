@@ -668,12 +668,29 @@ Local fix:
 
 ### ALKA-18: Top-Level Demand Extractors Hide Alternate Branches
 
-Status: open.
+Status: fixed.
+
+Helper replacement completed by `f37103668e76f257bcdd3b1353622ed35ff76075`.
+Related lookalike-arbiter regression coverage added by
+`7a7bef368c609400ca0cd715cb8858cc8d0d8708`.
 
 Severity in report: Medium.
 
 Report title: `Top-level demand extractors silently unwrap every escrow as
 TrustedOracle and hide alternate arbiter branches`.
+
+Current assessment: duplicate class of ALKA-3 and ALKA-20.
+
+The removed root helpers projected every escrow condition through a
+TrustedOracle-shaped envelope and returned only inner data, which could hide the
+actual arbiter and any additional arbiter-controlled demand fields or alternate
+logical branches.
+
+The replacement `decodeEscrowCondition()` returns the actual `{ arbiter, demand
+}` pair and dispatches through the address-keyed arbiter codec registry. The
+generic decoder recursively exposes `AllArbiter` and `AnyArbiter` children, and
+the logical-arbiter-specific decoders also expose shallow raw child
+`{ arbiter, demand }` pairs.
 
 ### ALKA-4: Atomic Attestation Helper Log Attribution
 
