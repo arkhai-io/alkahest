@@ -203,7 +203,7 @@ export const makeCommitRevealObligationClient = (viemClient: ViemClient, address
         address: contractAddress,
         abi,
         functionName: "computeCommitment",
-        args: [refUID, claimer, data],
+        args: [claimer, refUID, data],
       });
     },
 

@@ -47,8 +47,11 @@ test("contextless offchain identity oracle flow", async () => {
   const identityAccount = privateKeyToAccount(generatePrivateKey());
   identityRegistry.set(identityAccount.address, 0);
 
-  // Empty demand for contextless identity oracle
-  const demand = "0x" as `0x${string}`;
+  // Empty inner demand for contextless identity oracle
+  const demand = testContext.charlie.client.arbiters.general.trustedOracle.encodeDemand({
+    oracle: testContext.charlie.address,
+    data: "0x",
+  });
 
   const listener = await testContext.charlie.client.arbiters.general.trustedOracle.arbitrateMany(
     async ({ attestation }) => {

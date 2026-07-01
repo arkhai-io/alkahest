@@ -535,7 +535,7 @@ mod tests {
             data: IEAS::AttestationRequestData {
                 recipient: test.bob.address(),
                 expirationTime: expiration.into(),
-                revocable: true,
+                revocable: false,
                 refUID: FixedBytes::<32>::default(),
                 data: TestStruct {
                     value: "test attestation data".to_string(),
@@ -727,7 +727,7 @@ mod tests {
             data: IEAS::AttestationRequestData {
                 recipient: test.bob.address(),
                 expirationTime: expiration.into(),
-                revocable: true,
+                revocable: false,
                 refUID: FixedBytes::<32>::default(),
                 data: TestStruct {
                     value: "test attestation data".to_string(),
@@ -929,7 +929,10 @@ mod tests {
             &test.god_provider,
         );
 
-        let reference_schema = escrow_contract.REFERENCE_ATTESTATION_SCHEMA().call().await?;
+        let reference_schema = escrow_contract
+            .REFERENCE_ATTESTATION_SCHEMA()
+            .call()
+            .await?;
 
         // Verify reference attestation details
         assert_eq!(
