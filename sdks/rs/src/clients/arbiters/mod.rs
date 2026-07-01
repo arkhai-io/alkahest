@@ -599,4 +599,21 @@ mod tests {
             })
         );
     }
+
+    #[test]
+    fn demand_codec_registry_does_not_register_zero_address() {
+        let mut registry = ArbiterDemandCodecRegistry::new();
+        registry.register(Address::ZERO, TestExtensionCodec);
+
+        let decoded = registry
+            .decode(Address::ZERO, &Bytes::from_static(&[0xab, 0xcd]))
+            .unwrap();
+
+        let DecodedDemand::Unknown { arbiter, raw_data } = decoded else {
+            panic!("expected zero address arbiter to decode as unknown");
+        };
+
+        assert_eq!(arbiter, Address::ZERO);
+        assert_eq!(raw_data, Bytes::from_static(&[0xab, 0xcd]));
+    }
 }

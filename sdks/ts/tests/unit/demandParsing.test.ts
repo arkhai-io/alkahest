@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { createWalletClient, custom, encodeAbiParameters, parseAbiParameters } from "viem";
+import { createWalletClient, custom, encodeAbiParameters, parseAbiParameters, zeroAddress } from "viem";
 import {
   AllArbiter,
   AnyArbiter,
@@ -261,6 +261,25 @@ describe("Demand Parsing and Static Codecs", () => {
 
       expect(result.isUnknown).toBe(true);
       expect(result.arbiter).toBe(unknownDemand.arbiter);
+      expect(result.decoded).toEqual({ raw: "0x" });
+    });
+
+    test("does not register zero addresses as known arbiters", () => {
+      const decoders = createDecodersFromAddresses({
+        ...mockAddresses,
+        referencesEscrowArbiter: zeroAddress,
+      });
+      const result = decodeDemand(
+        {
+          arbiter: zeroAddress,
+          demand: "0x",
+        },
+        decoders,
+      );
+
+      expect(decoders[zeroAddress]).toBeUndefined();
+      expect(result.isUnknown).toBe(true);
+      expect(result.arbiter).toBe(zeroAddress);
       expect(result.decoded).toEqual({ raw: "0x" });
     });
 
