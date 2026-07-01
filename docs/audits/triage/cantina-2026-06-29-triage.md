@@ -613,12 +613,29 @@ terminology.
 
 ### ALKA-20: Generic Demand Helpers Masquerade TrustedOracle Payloads
 
-Status: open.
+Status: fixed.
+
+Helper replacement completed by `f37103668e76f257bcdd3b1353622ed35ff76075`.
+Specific lookalike-arbiter regression coverage added by
+`7a7bef368c609400ca0cd715cb8858cc8d0d8708`.
 
 Severity in report: Medium.
 
 Report title: `Generic demand helpers let arbitrary arbiters masquerade as
 benign TrustedOracle payloads`.
+
+Current assessment: duplicate class of ALKA-3, with an additional regression
+case.
+
+The old root helpers decoded every escrow condition as if the arbiter demand
+were a `TrustedOracleArbiter.DemandData` envelope, so a custom arbiter could
+shape its bytes as `(address oracle, bytes data)` and present benign-looking
+inner data while the real arbiter remained arbitrary or hostile.
+
+The root helpers were removed. `decodeEscrowCondition()` now returns the actual
+`{ arbiter, demand }` pair and dispatches decoding by configured arbiter
+address. Unknown arbiters surface as unknown raw bytes, even when their demand
+bytes are ABI-compatible with TrustedOracle demand data.
 
 ### ALKA-27: Zero Arbiter Decoded As ReferencesEscrowArbiter
 
