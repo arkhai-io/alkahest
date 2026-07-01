@@ -769,12 +769,28 @@ No additional contract or SDK patch is required.
 
 ### ALKA-14: Zero References Arbiter Surfaced As Known Policy
 
-Status: open.
+Status: fixed in `813ddb967c51940fa50c8a4de66602691c72c44c`.
 
 Severity in report: Low.
 
 Report title: `Zero-address references arbiter is surfaced as a safe known
 policy on supported chains`.
+
+Current assessment: valid SDK metadata issue.
+
+The generic demand decoders were already updated so zero-address configured
+arbiters are not registered as known decoder targets. This patch closes the
+remaining TypeScript reverse-index path by making `createAddressIndex()` skip
+zero-address placeholders, so `lookupAddress(addresses, address(0))` no longer
+labels undeployed configured slots as known packaged contracts.
+
+Regression coverage:
+
+- TypeScript demand parsing covers zero-address arbiters decoding as unknown.
+- TypeScript address-index tests cover zero-address placeholders being omitted
+  from reverse lookup.
+- Rust demand codec registry coverage already verifies zero-address arbiters are
+  not registered as known decoders.
 
 ### ALKA-24: Hook Validation Certificate Revocability
 
