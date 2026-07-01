@@ -810,12 +810,29 @@ attestations.
 
 ### ALKA-6: TypeScript Demand Helpers Strip Trusted Oracle Address
 
-Status: open.
+Status: fixed before triage.
 
 Severity in report: Low.
 
 Report title: `TypeScript demand helpers strip the trusted oracle address from
 escrow inspection`.
+
+Current assessment: valid SDK helper issue in the old API, fixed by the generic
+demand decoder replacement.
+
+The old root helpers `extractDemandData` and `getEscrowAndDemand` are no longer
+present in the TypeScript SDK. The replacement `decodeEscrowCondition()` returns
+the raw `{ arbiter, demand }` pair and decodes the arbiter-specific payload
+through the configured address-keyed codec registry. For `TrustedOracleArbiter`,
+the decoded payload preserves both the outer `oracle` settlement-authority field
+and the inner `data` bytes instead of returning only the inner data.
+
+Regression coverage:
+
+- TypeScript demand parsing verifies `decodeEscrowCondition()` preserves the
+  TrustedOracle `oracle` and `data` fields.
+- TypeScript demand parsing also verifies TrustedOracle-shaped bytes are not
+  decoded as TrustedOracle data when the outer arbiter address is unknown.
 
 ### ALKA-11: AttestationEscrowObligation Revocability
 
