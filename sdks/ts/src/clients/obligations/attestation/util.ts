@@ -1,6 +1,7 @@
 import { abi as atomicAttestationUtilsAbi } from "../../../contracts/utils/AtomicAttestationUtils";
 import { assertDeployedContract, getAttestedEventsFromTxHash, type ViemClient } from "../../../utils";
 import type { AttestationAddresses } from "./index";
+import { isAddressEqual, parseEventLogs } from "viem";
 
 /**
  * Security note: the underlying AtomicAttestationUtils contract was not
@@ -53,7 +54,26 @@ export const makeAttestationUtilClient = (viemClient: ViemClient, addresses: Att
       });
 
       const events = await getAttestedEventsFromTxHash(viemClient, hash);
-      return { hash, attestation: events[0]?.args, escrow: events[1]?.args };
+      const receipt = await viemClient.waitForTransactionReceipt({ hash });
+      const referenceEscrowEvents = parseEventLogs({
+        abi: atomicAttestationUtilsAbi.abi,
+        eventName: "ReferenceEscrowCreated",
+        logs: receipt.logs,
+      }).filter((event) => isAddressEqual(event.address, addresses.atomicUtils));
+      const created = referenceEscrowEvents.at(-1);
+
+      if (!created) {
+        throw new Error(`No ReferenceEscrowCreated event found in transaction ${hash}`);
+      }
+
+      const attestation = events.find((event) => event.args.uid === created.args.attestationUid)?.args;
+      const escrow = events.find((event) => event.args.uid === created.args.escrowUid)?.args;
+
+      return {
+        hash,
+        attestation: attestation ?? { uid: created.args.attestationUid },
+        escrow: escrow ?? { uid: created.args.escrowUid },
+      };
     },
   };
 };

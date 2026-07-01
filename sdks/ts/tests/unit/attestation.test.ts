@@ -157,7 +157,7 @@ describe("Attestation Tests", () => {
           data: {
             recipient: bob,
             expirationTime: BigInt(Math.floor(Date.now() / 1000) + 86400),
-            revocable: true,
+            revocable: false,
             refUID: "0x0000000000000000000000000000000000000000000000000000000000000000",
             data: ("0x" + Buffer.from("test attestation data").toString("hex")) as `0x${string}`,
             value: 0n,
@@ -398,7 +398,7 @@ describe("Attestation Tests", () => {
           data: {
             recipient: bob,
             expirationTime: BigInt(Math.floor(Date.now() / 1000) + 86400),
-            revocable: true,
+            revocable: false,
             refUID: "0x0000000000000000000000000000000000000000000000000000000000000000",
             data: ("0x" + Buffer.from("true").toString("hex")) as `0x${string}`,
             value: 0n,

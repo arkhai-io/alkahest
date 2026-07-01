@@ -24,6 +24,10 @@ contract AtomicAttestationUtilsTest is Test {
     address public alice;
     bytes32 public testSchema;
 
+    event ReferenceEscrowCreated(
+        address indexed escrow, bytes32 indexed attestationUid, bytes32 indexed escrowUid, bool unconditional
+    );
+
     function setUp() public {
         EASDeployer easDeployer = new EASDeployer();
         (eas, schemaRegistry) = easDeployer.deployEAS();
@@ -56,6 +60,7 @@ contract AtomicAttestationUtilsTest is Test {
         });
 
         vm.prank(alice);
+        vm.recordLogs();
         (bytes32 attestationUid, bytes32 escrowUid) = atomicUtils.attestAndCreateReferenceEscrow(
             referenceEscrow, request, escrowData, uint64(block.timestamp + 3 days)
         );
@@ -70,6 +75,20 @@ contract AtomicAttestationUtilsTest is Test {
         assertEq(createdEscrow.referencedAttestationUid, attestationUid, "Escrow should reference created attestation");
         assertEq(createdEscrow.arbiter, address(trivialArbiter), "Arbiter should match");
         assertEq(createdEscrow.expirationTime, escrowData.expirationTime, "Reference attestation expiration");
+
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+        bytes32 eventSignature = keccak256("ReferenceEscrowCreated(address,bytes32,bytes32,bool)");
+        bool found;
+        for (uint256 i = 0; i < logs.length; i++) {
+            if (logs[i].emitter == address(atomicUtils) && logs[i].topics[0] == eventSignature) {
+                assertEq(address(uint160(uint256(logs[i].topics[1]))), address(referenceEscrow), "Event escrow");
+                assertEq(logs[i].topics[2], attestationUid, "Event attestation UID");
+                assertEq(logs[i].topics[3], escrowUid, "Event escrow UID");
+                assertEq(abi.decode(logs[i].data, (bool)), false, "Event variant");
+                found = true;
+            }
+        }
+        assertTrue(found, "ReferenceEscrowCreated event should be emitted");
     }
 
     function testRejectsRevocableAttestation() public {

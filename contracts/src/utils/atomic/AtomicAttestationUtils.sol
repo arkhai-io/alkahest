@@ -22,6 +22,11 @@ contract AtomicAttestationUtils {
     /// @notice Raised when the requested attestation is revocable but this utility has no revoke path.
     error UnsupportedRevocableAttestation();
 
+    /// @notice Emitted with the exact UIDs created by an atomic reference-escrow helper call.
+    event ReferenceEscrowCreated(
+        address indexed escrow, bytes32 indexed attestationUid, bytes32 indexed escrowUid, bool unconditional
+    );
+
     /// @notice Escrow parameters shared by default and unconditional attestation-reference escrows.
     struct ReferenceEscrowData {
         /// @notice Arbiter contract that will validate the fulfillment.
@@ -55,6 +60,7 @@ contract AtomicAttestationUtils {
             escrowExpirationTime,
             msg.sender
         );
+        emit ReferenceEscrowCreated(address(escrow), attestationUid, escrowUid, false);
     }
 
     /// @notice Creates an EAS attestation and then creates an unconditional attestation-reference escrow for it.
@@ -75,6 +81,7 @@ contract AtomicAttestationUtils {
             escrowExpirationTime,
             msg.sender
         );
+        emit ReferenceEscrowCreated(address(escrow), attestationUid, escrowUid, true);
     }
 
     /// @notice Creates the EAS attestation after validating the supplied ETH value.
