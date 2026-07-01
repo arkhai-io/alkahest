@@ -2,10 +2,12 @@ import {
   type Address,
   type BlockNumber,
   type BlockTag,
+  concat,
   decodeAbiParameters,
   encodeAbiParameters,
   getAbiItem,
   isAddressEqual,
+  keccak256,
   parseAbiItem,
 } from "viem";
 import { abi as trustedOracleArbiterAbi } from "../../../contracts/arbiters/trusted-oracle/TrustedOracleArbiter";
@@ -143,6 +145,12 @@ export const makeTrustedOracleArbiterClient = (viemClient: ViemClient, addresses
     return decoded.data;
   };
 
+  const decisionKeyFor = (fulfillmentUid: `0x${string}`, decisionContext: `0x${string}`): `0x${string}` =>
+    keccak256(concat([fulfillmentUid, decisionContext]));
+
+  const decisionKeyFromDemand = (fulfillmentUid: `0x${string}`, demand: `0x${string}`): `0x${string}` =>
+    decisionKeyFor(fulfillmentUid, decodeDemand(demand).data);
+
   /**
    * Request arbitration for a fulfillment
    */
@@ -195,10 +203,12 @@ export const makeTrustedOracleArbiterClient = (viemClient: ViemClient, addresses
     if (options.mode === "pastUnarbitrated" || options.mode === "allUnarbitrated") {
       const filteredAttestationsWithDemand = await Promise.all(
         validAttestationsWithDemand.map(async (awd) => {
+          const decisionKey = decisionKeyFromDemand(awd.attestation.uid, awd.demand);
           const existingLogs = await viemClient.getLogs({
             address: addresses.trustedOracleArbiter,
             event: arbitrationMadeEvent,
             args: {
+              decisionKey,
               fulfillmentUid: awd.attestation.uid,
               oracle: viemClient.account.address,
             },
@@ -351,13 +361,16 @@ export const makeTrustedOracleArbiterClient = (viemClient: ViemClient, addresses
      * Check if an arbitration has already been made for a specific fulfillment by a specific oracle
      * @param fulfillmentUid - bytes32 fulfillment UID
      * @param oracle - address of the oracle
+     * @param demand - encoded TrustedOracleArbiter.DemandData bytes for the checked decision context
      * @returns the arbitration result if exists, undefined if not
      */
     checkExistingArbitration: async (
       fulfillmentUid: `0x${string}`,
       oracle: `0x${string}`,
+      demand: `0x${string}`,
     ): Promise<
       | {
+          decisionKey: `0x${string}`;
           fulfillmentUid: `0x${string}`;
           oracle: `0x${string}`;
           decision: boolean;
@@ -367,13 +380,14 @@ export const makeTrustedOracleArbiterClient = (viemClient: ViemClient, addresses
       const logs = await viemClient.getLogs({
         address: addresses.trustedOracleArbiter,
         event: arbitrationMadeEvent,
-        args: { fulfillmentUid, oracle },
+        args: { decisionKey: decisionKeyFromDemand(fulfillmentUid, demand), fulfillmentUid, oracle },
         fromBlock: "earliest",
         toBlock: "latest",
       });
 
       if (logs.length > 0 && logs[0]) {
         return logs[0].args as {
+          decisionKey: `0x${string}`;
           fulfillmentUid: `0x${string}`;
           oracle: `0x${string}`;
           decision: boolean;
@@ -387,22 +401,26 @@ export const makeTrustedOracleArbiterClient = (viemClient: ViemClient, addresses
      * Wait for an arbitration to be made on a TrustedOracleArbiter
      * @param fulfillmentUid - bytes32 fulfillment UID
      * @param oracle - address of the oracle
+     * @param demand - encoded TrustedOracleArbiter.DemandData bytes for the expected decision context
      * @param pollingInterval - polling interval in milliseconds (default: 1000)
      * @returns the event args
      */
     waitForArbitration: async (
       fulfillmentUid: `0x${string}`,
       oracle: `0x${string}`,
+      demand: `0x${string}`,
       pollingInterval?: number,
     ): Promise<{
+      decisionKey?: `0x${string}` | undefined;
       fulfillmentUid?: `0x${string}` | undefined;
       oracle?: `0x${string}` | undefined;
       decision?: boolean | undefined;
     }> => {
+      const decisionKey = decisionKeyFromDemand(fulfillmentUid, demand);
       const logs = await viemClient.getLogs({
         address: addresses.trustedOracleArbiter,
         event: arbitrationMadeEvent,
-        args: { fulfillmentUid, oracle },
+        args: { decisionKey, fulfillmentUid, oracle },
         fromBlock: "earliest",
         toBlock: "latest",
       });
@@ -416,7 +434,7 @@ export const makeTrustedOracleArbiterClient = (viemClient: ViemClient, addresses
         const unwatch = viemClient.watchEvent({
           address: addresses.trustedOracleArbiter,
           event: arbitrationMadeEvent,
-          args: { fulfillmentUid, oracle },
+          args: { decisionKey, fulfillmentUid, oracle },
           pollingInterval: optimalInterval,
           onLogs: (logs) => {
             if (logs[0]) {

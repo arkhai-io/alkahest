@@ -105,6 +105,7 @@ test("contextless offchain identity oracle flow", async () => {
   const goodDecision = await testContext.charlie.client.arbiters.general.trustedOracle.waitForArbitration(
     goodFulfillment.uid,
     testContext.charlie.address,
+    demand,
   );
 
   expect(goodDecision?.decision).toBe(true);
@@ -122,6 +123,7 @@ test("contextless offchain identity oracle flow", async () => {
   const badDecision = await testContext.charlie.client.arbiters.general.trustedOracle.waitForArbitration(
     badFulfillment.uid,
     testContext.charlie.address,
+    demand,
   );
 
   expect(badDecision?.decision).toBe(false);

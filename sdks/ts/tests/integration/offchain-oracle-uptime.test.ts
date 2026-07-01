@@ -233,6 +233,7 @@ test("asynchronous offchain oracle uptime flow", { timeout: 15000 }, async () =>
   const arbitration = await testContext.charlie.client.arbiters.general.trustedOracle.waitForArbitration(
     fulfillment.uid,
     testContext.charlie.address,
+    demand,
   );
 
   expect(arbitration?.decision).toBe(true);

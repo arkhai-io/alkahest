@@ -325,19 +325,20 @@ describe("General Arbiters Tests", () => {
 
       const obligation = attestationEvent.uid;
       const oracle = charlie;
+      const demand = aliceClient.arbiters.general.trustedOracle.encodeDemand({
+        oracle,
+        data: "0x" as `0x${string}`,
+      });
 
       // First check - should be undefined since no arbitration made yet
       const existingBefore = await aliceClient.arbiters.general.trustedOracle.checkExistingArbitration(
         obligation,
         oracle,
+        demand,
       );
       expect(existingBefore).toBeUndefined();
 
       // Request arbitration first (as this creates the initial arbitration request)
-      const demand = aliceClient.arbiters.general.trustedOracle.encodeDemand({
-        oracle,
-        data: "0x" as `0x${string}`,
-      });
       const requestHash = await aliceClient.arbiters.general.trustedOracle.requestArbitration(
         obligation,
         oracle,
