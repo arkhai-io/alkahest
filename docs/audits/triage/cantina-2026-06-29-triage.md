@@ -639,12 +639,32 @@ bytes are ABI-compatible with TrustedOracle demand data.
 
 ### ALKA-27: Zero Arbiter Decoded As ReferencesEscrowArbiter
 
-Status: open.
+Status: fixed in `ccee40b42028366fe49c010c2303d0a4e8b01d5f`.
 
 Severity in report: Medium.
 
 Report title: `Ethereum and GenLayer decoders classify the zero arbiter as
 ReferencesEscrowArbiter instead of unknown`.
+
+Current assessment: valid SDK inspection issue, though the named preset example
+is stale for the currently checked supported-chain configs.
+
+The decoder registries treated any configured packaged arbiter address as a
+known decoder key. Because `address(0)` is a valid non-empty string in
+TypeScript and was inserted unconditionally in Rust, partial configs could make
+`address(0)` decode as `ReferencesEscrowArbiter` or another known packaged
+arbiter instead of surfacing as unknown. On-chain, an escrow with
+`arbiter = address(0)` is not collectible through a packaged arbiter and should
+not be shown as a known policy.
+
+Local fix:
+
+- TypeScript `createDecodersFromAddresses()` skips zero-address packaged and
+  extension decoder registrations.
+- Rust `ArbiterDemandCodecRegistry::register()` ignores `Address::ZERO`, so
+  default and extension registry setup cannot classify zero as known.
+- Added TS and Rust regression coverage proving zero-address arbiters decode as
+  unknown/raw.
 
 ### ALKA-18: Top-Level Demand Extractors Hide Alternate Branches
 
