@@ -719,12 +719,33 @@ Local fix:
 
 ### ALKA-15: createFulfillment Replayed UID Fulfiller Assignment
 
-Status: open.
+Status: acknowledged integration issue.
 
 Severity in report: Medium.
 
 Report title: `createFulfillment accepts replayed same-contract UIDs and can
 retroactively assign EXECUTOR_SENTINEL payouts`.
+
+Current assessment: valid only when an integration chooses a replay-capable or
+malicious obligation contract.
+
+`BaseSplitter._validateCreatedFulfillment()` requires the returned fulfillment
+attestation's `attester` to equal the `obligationContract` supplied by the
+caller. That means a malicious obligation cannot replay UIDs from packaged or
+otherwise unrelated obligation contracts; it can only return old attestations
+that it attested itself.
+
+This can misassign `EXECUTOR_SENTINEL` routing for splitter decisions involving
+that same malicious/replay-capable obligation, but it does not let the caller
+steal funds from escrows whose fulfillment was produced by a different
+obligation contract. A timestamp freshness check would also be incomplete
+because EAS attestation time is block-timestamp based and same-block ordering
+can still make an older attestation look fresh.
+
+No contract-level patch is planned. Integrations should treat arbitrary
+obligation contracts passed to splitter helper functions as trusted execution
+dependencies, and should prefer packaged non-replayable obligations or explicit
+oracle validation of the fulfillment attester and semantics.
 
 ### ALKA-13: Stale Token-Bundle Escrow Address Metadata
 
