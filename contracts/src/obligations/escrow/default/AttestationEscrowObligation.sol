@@ -25,6 +25,7 @@ contract AttestationEscrowObligation is BaseEscrowObligation, BaseArbiter {
     error AttestationCreationFailed();
     error IncorrectPayment(uint256 expected, uint256 received);
     error NativeTokenTransferFailed(address to, uint256 amount);
+    error UnsupportedRevocableAttestation();
 
     constructor(IEAS _eas, ISchemaRegistry _schemaRegistry)
         BaseEscrowObligation(
@@ -56,6 +57,7 @@ contract AttestationEscrowObligation is BaseEscrowObligation, BaseArbiter {
     // No assets to lock for attestation escrows
     function _lockEscrow(bytes memory data, address) internal override {
         ObligationData memory decoded = abi.decode(data, (ObligationData));
+        if (decoded.attestation.data.revocable) revert UnsupportedRevocableAttestation();
         uint256 requiredValue = decoded.attestation.data.value;
         if (msg.value != requiredValue) {
             revert IncorrectPayment(requiredValue, msg.value);

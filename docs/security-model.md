@@ -102,9 +102,10 @@ reverts are part of the configured composition behavior.
 
 ## Attestation References
 
-Attestation reference escrows certify an attestation UID by minting a validation
-attestation when the escrow is collected. The certification attestation can have
-its own expiration and revocability, configured by the escrow data.
+Attestation reference escrows create a new attestation that references an
+existing attestation UID when the escrow is collected. That produced reference
+attestation can have its own expiration, configured by the escrow data, and is
+non-revocable unless a future variant adds an explicit revocation path.
 
 The reference escrow does not itself prove that the referenced attestation is
 currently live, unreverted, has a particular schema, or has a particular

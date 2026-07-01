@@ -42,7 +42,7 @@ contract AtomicAttestationUtilsTest is Test {
             data: AttestationRequestData({
                 recipient: alice,
                 expirationTime: uint64(block.timestamp + 1 days),
-                revocable: true,
+                revocable: false,
                 refUID: bytes32(0),
                 data: abi.encode(true),
                 value: 0
@@ -52,8 +52,7 @@ contract AtomicAttestationUtilsTest is Test {
         AtomicAttestationUtils.ReferenceEscrowData memory escrowData = AtomicAttestationUtils.ReferenceEscrowData({
             arbiter: address(trivialArbiter),
             demand: "",
-            validationExpirationTime: uint64(block.timestamp + 2 days),
-            validationRevocable: true
+            expirationTime: uint64(block.timestamp + 2 days)
         });
 
         vm.prank(alice);
@@ -68,9 +67,32 @@ contract AtomicAttestationUtilsTest is Test {
 
         AttestationReferenceEscrowObligation.ObligationData memory createdEscrow =
             referenceEscrow.getObligationData(escrowUid);
-        assertEq(createdEscrow.attestationUid, attestationUid, "Escrow should reference created attestation");
+        assertEq(createdEscrow.referencedAttestationUid, attestationUid, "Escrow should reference created attestation");
         assertEq(createdEscrow.arbiter, address(trivialArbiter), "Arbiter should match");
-        assertEq(createdEscrow.validationExpirationTime, escrowData.validationExpirationTime, "Validation expiration");
-        assertEq(createdEscrow.validationRevocable, escrowData.validationRevocable, "Validation revocability");
+        assertEq(createdEscrow.expirationTime, escrowData.expirationTime, "Reference attestation expiration");
+    }
+
+    function testRejectsRevocableAttestation() public {
+        AttestationRequest memory request = AttestationRequest({
+            schema: testSchema,
+            data: AttestationRequestData({
+                recipient: alice,
+                expirationTime: uint64(block.timestamp + 1 days),
+                revocable: true,
+                refUID: bytes32(0),
+                data: abi.encode(true),
+                value: 0
+            })
+        });
+
+        AtomicAttestationUtils.ReferenceEscrowData memory escrowData = AtomicAttestationUtils.ReferenceEscrowData({
+            arbiter: address(trivialArbiter),
+            demand: "",
+            expirationTime: uint64(block.timestamp + 2 days)
+        });
+
+        vm.prank(alice);
+        vm.expectRevert(AtomicAttestationUtils.UnsupportedRevocableAttestation.selector);
+        atomicUtils.attestAndCreateReferenceEscrow(referenceEscrow, request, escrowData, uint64(block.timestamp + 3 days));
     }
 }

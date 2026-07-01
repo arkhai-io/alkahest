@@ -28,8 +28,7 @@ export type AttestationRequest = {
 export type ReferenceEscrowData = {
   arbiter: `0x${string}`;
   demand: `0x${string}`;
-  validationExpirationTime: bigint;
-  validationRevocable: boolean;
+  expirationTime: bigint;
 };
 
 /** Create atomic attestation helper methods. */

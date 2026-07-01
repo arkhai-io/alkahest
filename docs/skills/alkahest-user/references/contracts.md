@@ -12,7 +12,7 @@ Each escrow locks assets in a contract until an arbiter validates fulfillment.
 | Native Token | `NativeTokenEscrowObligation` | `amount: uint256`, `arbiter: address`, `demand: bytes` |
 | Token Bundle | `TokenBundleEscrowObligation` | `nativeAmount: uint256`, `erc20Tokens: address[]`, `erc20Amounts: uint256[]`, `erc721Tokens: address[]`, `erc721TokenIds: uint256[]`, `erc1155Tokens: address[]`, `erc1155TokenIds: uint256[]`, `erc1155Amounts: uint256[]`, `arbiter: address`, `demand: bytes` |
 | Attestation | `AttestationEscrowObligation` | `attestation: AttestationRequest`, `arbiter: address`, `demand: bytes` |
-| Attestation Reference | `AttestationReferenceEscrowObligation` | `attestationUid: bytes32`, `arbiter: address`, `demand: bytes`, `validationExpirationTime: uint64`, `validationRevocable: bool` |
+| Attestation Reference | `AttestationReferenceEscrowObligation` | `referencedAttestationUid: bytes32`, `arbiter: address`, `demand: bytes`, `expirationTime: uint64` |
 
 ### Escrow lifecycle
 

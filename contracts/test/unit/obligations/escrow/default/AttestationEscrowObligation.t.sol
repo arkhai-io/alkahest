@@ -180,6 +180,18 @@ contract AttestationEscrowObligationTest is Test {
         assertGt(escrow.revocationTime, 0, "Escrow attestation should be revoked");
     }
 
+    function testDoObligationRejectsRevocableReleasedAttestation() public {
+        AttestationRequest memory attestationRequest = createTestAttestationRequest();
+        attestationRequest.data.revocable = true;
+        AttestationEscrowObligation.ObligationData memory data = AttestationEscrowObligation.ObligationData({
+            attestation: attestationRequest, arbiter: address(mockArbiter), demand: abi.encode("test demand")
+        });
+
+        vm.prank(requester);
+        vm.expectRevert(AttestationEscrowObligation.UnsupportedRevocableAttestation.selector);
+        escrowObligation.doObligation(data, uint64(block.timestamp + EXPIRATION_TIME));
+    }
+
     function testDoObligationRequiresExactPaidAttestationValue() public {
         AttestationRequest memory attestationRequest = createPaidAttestationRequest(1 wei);
         AttestationEscrowObligation.ObligationData memory data = AttestationEscrowObligation.ObligationData({
@@ -230,7 +242,7 @@ contract AttestationEscrowObligationTest is Test {
             data: AttestationRequestData({
                 recipient: requester,
                 expirationTime: uint64(block.timestamp + 1 days),
-                revocable: true,
+                revocable: false,
                 refUID: bytes32(0),
                 data: abi.encode(forgedInnerEscrowData),
                 value: 0
@@ -481,7 +493,7 @@ contract AttestationEscrowObligationTest is Test {
         AttestationRequestData memory requestData = AttestationRequestData({
             recipient: recipient,
             expirationTime: 0,
-            revocable: true,
+            revocable: false,
             refUID: bytes32(0),
             data: abi.encode("test attestation data"),
             value: 0
@@ -494,7 +506,7 @@ contract AttestationEscrowObligationTest is Test {
         AttestationRequestData memory requestData = AttestationRequestData({
             recipient: recipient,
             expirationTime: 0,
-            revocable: true,
+            revocable: false,
             refUID: bytes32(0),
             data: abi.encode("paid attestation data"),
             value: value
