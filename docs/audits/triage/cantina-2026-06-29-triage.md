@@ -874,13 +874,33 @@ report text itself.
 
 ### ALKA-29: CommitReveal Low-Entropy Exhaustive Precommit
 
-Status: open.
+Status: acknowledged limitation; no contract patch planned.
 
 Severity in report: Low.
 
 Report title: `CommitRevealObligation's bond model is exhaustively bypassable
 for low-entropy fulfillments, so attackers can precommit every answer and steal
 the escrow`.
+
+Current assessment: overstated as a distinct protocol exploit.
+
+Commit-reveal cannot make low-entropy answers expensive to enumerate by itself.
+An attacker can commit to every candidate answer with their own salts. If the
+attacker can independently determine the correct candidate, they can fulfill
+directly without waiting for the honest fulfiller. If the attacker cannot
+determine the correct candidate until someone else reveals it publicly, the
+residual risk depends on whether settlement is atomic and whether any async
+oracle path approves copied public payloads for the wrong participant.
+
+This is therefore not a standalone contract-level bug. It is a known limitation
+of using commit-reveal for low-entropy unknown outcomes without additional
+eligibility or identity policy. Integrations should use atomic reveal-and-collect
+where possible, use oracle/arbiter policy that binds solver identity or intended
+attestation fields for async validation, and size bonds relative to the
+candidate space and escrow value when open participation is intended.
+
+The general commit-reveal limitations are documented in
+`docs/security-model.md`.
 
 ### ALKA-1: TrustedOracle allUnarbitrated Demand Suppression
 
