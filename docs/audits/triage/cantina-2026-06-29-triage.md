@@ -595,12 +595,21 @@ Verification:
 
 ### ALKA-7: AttestationReferenceEscrowObligation Revocability
 
-Status: open.
+Status: fixed in `7d756591c464a1738cfa0efa0d632ecc6a882318`.
 
 Severity in report: Medium.
 
 Report title: `AttestationReferenceEscrowObligation can only deliver irrevocable
 validation attestations even when validationRevocable is true`.
+
+Current assessment: valid API semantics issue.
+
+Reference escrow outputs had no revocation path, so accepting a
+`validationRevocable` flag implied semantics the contracts could not actually
+support. The fix removes caller-configured revocability for produced reference
+attestations, registers their produced-attestation schema as non-revocable, and
+renames the fields/schema from validation terminology to reference-attestation
+terminology.
 
 ### ALKA-20: Generic Demand Helpers Masquerade TrustedOracle Payloads
 
@@ -667,12 +676,19 @@ policy on supported chains`.
 
 ### ALKA-24: Hook Validation Certificate Revocability
 
-Status: open.
+Status: fixed in `7d756591c464a1738cfa0efa0d632ecc6a882318`.
 
 Severity in report: Low.
 
 Report title: `Hook-based validation certificates can be labeled revocable even
 though no one can ever revoke them`.
+
+Current assessment: valid API semantics issue, same class as ALKA-7.
+
+`AttestationReferenceEscrowHook` no longer accepts a revocability flag for the
+attestation it creates on release. It registers the produced reference
+attestation schema as non-revocable and always creates non-revocable reference
+attestations.
 
 ### ALKA-6: TypeScript Demand Helpers Strip Trusted Oracle Address
 
@@ -685,12 +701,22 @@ escrow inspection`.
 
 ### ALKA-11: AttestationEscrowObligation Revocability
 
-Status: open.
+Status: fixed in `7d756591c464a1738cfa0efa0d632ecc6a882318`.
 
 Severity in report: Low.
 
 Report title: `AttestationEscrowObligation can only deliver irrevocable
 attestations even when the request says revocable`.
+
+Current assessment: valid API semantics issue.
+
+`AttestationEscrowObligation`,
+`UnconditionalAttestationEscrowObligation`, `AttestationEscrowHook`, and
+`AtomicAttestationUtils` now reject revocable attestation requests because those
+contracts/utilities do not expose an authorization path to revoke the produced
+attestations. Standalone and payment obligation schemas without revocation paths
+are also registered as non-revocable, matching EAS's own schema/request
+semantics.
 
 ### ALKA-26: Stale Token-Bundle Address Docs
 
