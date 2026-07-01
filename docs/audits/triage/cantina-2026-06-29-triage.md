@@ -904,12 +904,25 @@ The general commit-reveal limitations are documented in
 
 ### ALKA-1: TrustedOracle allUnarbitrated Demand Suppression
 
-Status: open.
+Status: fixed before triage.
 
 Severity in report: Low.
 
 Report title: `Trusted-oracle allUnarbitrated mode suppresses demand-specific
 decisions after any earlier decision on the same fulfillment`.
+
+Current assessment: valid SDK backlog-filtering issue in the old helper, fixed
+by demand-specific decision-key filtering.
+
+The TypeScript `TrustedOracleArbiter` helper now computes the on-chain decision
+key from the fulfillment UID and the decoded TrustedOracle demand data when
+filtering historical `ArbitrationMade` logs. `pastUnarbitrated` and
+`allUnarbitrated` therefore skip only requests whose exact demand-specific
+decision key has already been arbitrated, instead of suppressing every later
+request for the same `(fulfillmentUid, oracle)` pair.
+
+Regression coverage verifies that a wrong prior decision context does not hide a
+still-pending request for the same fulfillment and oracle.
 
 ### ALKA-22: Confirmation Request Helper Escrow Binding
 
