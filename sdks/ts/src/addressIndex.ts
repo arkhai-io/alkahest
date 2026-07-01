@@ -1,4 +1,5 @@
 import type { ChainAddresses } from "./types";
+import { isAddressEqual, zeroAddress } from "viem";
 
 export type ContractAddressInfo = {
   address: `0x${string}`;
@@ -176,6 +177,7 @@ export function createAddressIndex(
   for (const slot of ADDRESS_SLOTS) {
     const address = addresses[slot.contract];
     if (!address) continue;
+    if (isAddressEqual(address, zeroAddress)) continue;
 
     const key = address.toLowerCase();
     index[key] ??= [];
