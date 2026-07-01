@@ -523,12 +523,40 @@ Verification:
 
 ### ALKA-3: TrustedOracle Authorizer Hidden By Demand Helpers
 
-Status: open.
+Status: fixed.
+
+Completed by `f37103668e76f257bcdd3b1353622ed35ff76075`.
 
 Severity in report: Medium.
 
 Report title: `extractDemandData/getEscrowAndDemand hide the TrustedOracle
 authorizer from counterparties`.
+
+Current assessment: valid SDK organization issue.
+
+The underlying protocol terminology is `IEscrow.decodeCondition() -> (arbiter,
+demand)`, where `arbiter` is the `IArbiter` contract. `TrustedOracleArbiter` is
+one possible arbiter, and its own `DemandData` contains an `oracle` field plus
+opaque `bytes data`.
+
+The removed root helpers were misleading because they always decoded escrow
+conditions as TrustedOracle demand data and returned only the inner `data`
+payload. That presented a TrustedOracle-specific convenience as a generic
+escrow-demand inspector and could hide the oracle authority from SDK users.
+
+Local fix:
+
+- Removed root `extractDemandData()` and `getEscrowAndDemand()`.
+- Added generic root `decodeEscrowCondition()`, which decodes the escrow
+  condition as `{ arbiter, demand }` and then uses the existing arbiter codec
+  registry to decode `arbiter.demandData`.
+- Added regression coverage showing a TrustedOracle-governed escrow condition
+  decodes through the generic path without hiding `{ oracle, data }`.
+
+Verification:
+
+- `bun test tests/unit/demandParsing.test.ts` passed.
+- `bun run build` passed.
 
 ### ALKA-10: TrustedOracle Status Helper Context
 
