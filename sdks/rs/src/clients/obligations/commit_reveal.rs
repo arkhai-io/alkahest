@@ -4,6 +4,7 @@ use crate::{
     extensions::{AlkahestExtension, ContractModule},
     impl_abi_conversions,
     types::{DecodedAttestation, ProviderContext, SharedWalletProvider},
+    utils::contract_safety::ensure_deployed_contract,
 };
 
 impl_abi_conversions!(contracts::obligations::CommitRevealObligation::ObligationData);
@@ -190,6 +191,7 @@ impl CommitRevealObligationModule {
         ref_uid: Option<FixedBytes<32>>,
         value: U256,
     ) -> eyre::Result<TransactionReceipt> {
+        ensure_deployed_contract(self.addresses.obligation, "CommitRevealObligation")?;
         let contract = contracts::obligations::CommitRevealObligation::new(
             self.addresses.obligation,
             &*self.wallet_provider,
@@ -240,6 +242,7 @@ impl CommitRevealObligationModule {
         bond_amount: U256,
         commit_deadline: U256,
     ) -> eyre::Result<TransactionReceipt> {
+        ensure_deployed_contract(self.addresses.obligation, "CommitRevealObligation")?;
         let contract = contracts::obligations::CommitRevealObligation::new(
             self.addresses.obligation,
             &*self.wallet_provider,
