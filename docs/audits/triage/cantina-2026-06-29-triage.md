@@ -442,12 +442,26 @@ Local fix:
 
 ### ALKA-23: Stale Commit-Reveal Docs
 
-Status: open.
+Status: fixed.
 
 Severity in report: Medium.
 
 Report title: `Commit-reveal docs still prescribe empty demand bytes and a stale
 Base Sepolia deployment, enabling free-work traps`.
+
+Fixed by: `35d1fa556bb1f87bfc9583de26af20dffab96676`.
+
+Current assessment: valid documentation issue. The commit-reveal arbiter no
+longer accepts empty demand bytes; it decodes `DemandData` and checks the
+committed bond amount and reveal deadline against the escrow demand. The skill
+docs also carried stale deployed addresses and obsolete `reclaimBond` /
+`reclaim_bond` SDK references.
+
+Local fix: updated the composed `AllArbiter` example to encode
+`client.commitReveal.encodeDemand({ bondAmount, commitDeadline })`, refreshed
+the commit-reveal address entries to match the SDK configurations, marked
+unreleased mainnet commit-reveal as zero, and removed obsolete explicit bond
+reclaim steps from the TypeScript, Rust, and Python skill references.
 
 ### ALKA-12: Stale ExpirationTimeBefore Address Metadata
 
