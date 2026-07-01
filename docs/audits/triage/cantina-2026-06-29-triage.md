@@ -694,12 +694,28 @@ the logical-arbiter-specific decoders also expose shallow raw child
 
 ### ALKA-4: Atomic Attestation Helper Log Attribution
 
-Status: open.
+Status: fixed in `89f5061141d9f4cd5f1bae98c34674329d021db8`.
 
 Severity in report: Medium.
 
 Report title: `Atomic attestation helper misattributes nested Attested logs and
 can hand out a malicious escrow UID`.
+
+Current assessment: valid SDK attribution issue.
+
+The TypeScript SDK previously inferred the created attestation UID and escrow
+UID from EAS `Attested` log position. A nested call could emit additional EAS
+attestations in the same transaction, making position-based attribution
+ambiguous.
+
+Local fix:
+
+- `AtomicAttestationUtils` now emits `ReferenceEscrowCreated` from the atomic
+  helper itself with the exact created attestation UID and escrow UID.
+- The TypeScript SDK parses that utility-authored event, filters it by the
+  configured atomic utility address, and then matches EAS logs by UID instead
+  of by event position.
+- Solidity and TypeScript tests cover the emitted event and the SDK happy path.
 
 ### ALKA-15: createFulfillment Replayed UID Fulfiller Assignment
 
