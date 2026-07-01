@@ -749,12 +749,23 @@ oracle validation of the fulfillment attester and semantics.
 
 ### ALKA-13: Stale Token-Bundle Escrow Address Metadata
 
-Status: open.
+Status: fixed before triage.
 
 Severity in report: Low.
 
 Report title: `Stale Base Sepolia address metadata still points default users to
 a token-bundle escrow with permissionless destructive partial settlement`.
+
+Current assessment: valid stale-metadata class, no current patch required.
+
+The current Base Sepolia deployment metadata, TypeScript SDK config, Rust SDK
+addresses, and generated contract-reference docs all resolve
+`TokenBundleEscrowObligation` to the newer deployment
+`0xC52c611c0C9A11fF625B93f9D1fb9E74C45d9859`. The stale address cited by the
+report, `0x38e8E5684aFB24A88cD9B276032bCBD19C4b9d6e`, remains only in older
+timestamped deployment snapshots and the audit report text itself.
+
+No additional contract or SDK patch is required.
 
 ### ALKA-14: Zero References Arbiter Surfaced As Known Policy
 
@@ -811,12 +822,22 @@ semantics.
 
 ### ALKA-26: Stale Token-Bundle Address Docs
 
-Status: open.
+Status: duplicate of ALKA-13; fixed before triage.
 
 Severity in report: Low.
 
 Report title: `Base Sepolia address docs still route token-bundle escrows to a
 pre-fix partial-collection deployment`.
+
+Current assessment: duplicate stale-address documentation finding.
+
+The current generated contract-reference docs list the fixed Base Sepolia
+`TokenBundleEscrowObligation` address
+`0xC52c611c0C9A11fF625B93f9D1fb9E74C45d9859` and the fixed
+`CommitRevealObligation` address
+`0x14d0B7D4ed6915CE0b1a0d54F9D5912584dB550E`. The old addresses cited by the
+report remain only in older timestamped deployment snapshots and the audit
+report text itself.
 
 ### ALKA-29: CommitReveal Low-Entropy Exhaustive Precommit
 
