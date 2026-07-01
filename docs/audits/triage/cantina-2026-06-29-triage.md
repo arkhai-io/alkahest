@@ -465,12 +465,26 @@ reclaim steps from the TypeScript, Rust, and Python skill references.
 
 ### ALKA-12: Stale ExpirationTimeBefore Address Metadata
 
-Status: open.
+Status: fixed.
 
 Severity in report: Medium.
 
 Report title: `Stale Base Sepolia address metadata still points default users to
 an ExpirationTimeBefore arbiter that accepts non-expiring fulfillments`.
+
+Fixed by: `229b2552c1c5b162446fc90ba8d458db0a5d8585`.
+
+Current assessment: valid metadata drift issue. The current
+`ExpirationTimeBeforeArbiter` implementation rejects the EAS non-expiring
+sentinel (`expirationTime == 0`) for finite "before" demands, but several
+published Base Sepolia discovery surfaces still pointed at the old deployed
+arbiter.
+
+Local fix: regenerated `deployment_base_sepolia.json`,
+`deployment_sepolia.json`, and the user/developer contract-reference tables
+from the SDK address maps for Base Sepolia and Sepolia. The MCP deployment
+parser now recognizes `deployment_sepolia.json`, so MCP discovery also consumes
+the current Sepolia manifest.
 
 ### ALKA-21: TypeScript Bundle Clients Native Value
 
