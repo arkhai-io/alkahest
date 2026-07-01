@@ -178,9 +178,11 @@ client
     ├── encode({ payload, salt, schema })
     ├── decode(bytes)                      // => { payload, salt, schema }
     ├── doObligation(data, refUID?)
+    ├── doObligationFor(data, recipient, refUID?)
+    ├── doObligationRaw(data, expirationTime?, refUID?, value?)
+    ├── revealAndCollect(data, recipient, escrowContract, escrowUid)
     ├── commit(commitment, bondAmount, commitDeadline)
     ├── computeCommitment(refUID, claimer, data)
-    ├── reclaimBond(fulfillmentUid)
     ├── slashBond(commitment)
     ├── getSlashedBondRecipient()
     ├── getCommitment(commitment)

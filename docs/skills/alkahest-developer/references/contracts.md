@@ -43,12 +43,11 @@ Payments transfer assets immediately upon attestation creation (no escrow hold).
 ### CommitRevealObligation details
 
 - `commit(commitment, commitDeadline)` — submit hash commitment with ETH bond
-- `doObligation(data, refUID)` — reveal fulfillment data
+- `doObligation(data, refUID)` — reveal fulfillment data and reclaim the matching bond
 - `computeCommitment(refUID, claimer, data)` — compute expected commitment hash
-- `reclaimBond(fulfillmentUid)` — reclaim bond after valid reveal
 - `slashBond(commitment)` — slash bond if reveal deadline passes
 - Commitment hash: `keccak256(abi.encode(refUID, claimer, keccak256(abi.encode(obligationData))))`
-- Built-in `IArbiter` implementation verifies commitment exists in an earlier block
+- Built-in `IArbiter` implementation verifies commitment exists in an earlier block and matches the encoded demand's `bondAmount` and `commitDeadline`
 
 ## Atomic Utilities
 
@@ -87,7 +86,7 @@ Atomic utilities combine payment + escrow collection into single-transaction set
 | AtomicAttestationUtils | `0x0000000000000000000000000000000000000000` |
 | **Fulfillment** | |
 | StringObligation | `0x544873C22A3228798F91a71C4ef7a9bFe96E7CE0` |
-| CommitRevealObligation | `0x447b11ce03237f0C674eF7F16c913c3B2e8ef494` |
+| CommitRevealObligation | `0x14d0B7D4ed6915CE0b1a0d54F9D5912584dB550E` |
 | **Arbiters** | |
 | TrivialArbiter | `0x50EDa6c29C740bfbA6875422287025D985b96b7b` |
 | TrustedOracleArbiter | `0x3664b11BcCCeCA27C21BBAB43548961eD14d4D6D` |
@@ -132,7 +131,7 @@ Atomic utilities combine payment + escrow collection into single-transaction set
 | AttestationReferenceEscrowObligation | `0x1A7c6F951e0a33F4910dbe56a200Eb413AEca17b` |
 | AtomicAttestationUtils | `0x0000000000000000000000000000000000000000` |
 | StringObligation | `0xC51C938f5497be8157DAf8CCc3Eb11Afb8b752C0` |
-| CommitRevealObligation | `0x9fD6D7A3B4e4b5dD75c50F5f16Deba46162127C3` |
+| CommitRevealObligation | `0x931b35F81e7A585317f8cF8B45795F403EEfe468` |
 | TrivialArbiter | `0x594E79466b6ac01C6416C929e428264a4bdF0C92` |
 | TrustedOracleArbiter | `0x3B2a812E3eb3B729D40d866Da16c2BB2b6cDd2f2` |
 | AllArbiter | `0x847F69d27E4F1A8a115aCa3F4358B079706dc9CE` |
@@ -176,7 +175,7 @@ Atomic utilities combine payment + escrow collection into single-transaction set
 | AttestationReferenceEscrowObligation | `0x1A7c6F951e0a33F4910dbe56a200Eb413AEca17b` |
 | AtomicAttestationUtils | `0x0000000000000000000000000000000000000000` |
 | StringObligation | `0xC51C938f5497be8157DAf8CCc3Eb11Afb8b752C0` |
-| CommitRevealObligation | `0x05d9Aa2A6AE38619b864Ff7f87A8f94301ecAB42` |
+| CommitRevealObligation | `0x0000000000000000000000000000000000000000` |
 | TrivialArbiter | `0x594E79466b6ac01C6416C929e428264a4bdF0C92` |
 | TrustedOracleArbiter | `0x3B2a812E3eb3B729D40d866Da16c2BB2b6cDd2f2` |
 | AllArbiter | `0x847F69d27E4F1A8a115aCa3F4358B079706dc9CE` |
